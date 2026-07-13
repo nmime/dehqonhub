@@ -1,0 +1,14 @@
+{
+  "name": "@app/frontend-feature-landing-i18n",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/frontend/feature/landing/i18n/lib/src",
+  "projectType": "library",
+  "tags": [
+    "platform:frontend",
+    "type:feature-shared",
+    "scope:landing",
+    "boundary:i18n",
+    "fsd:layer:shared",
+    "framework:neutral"
+  ]
+}

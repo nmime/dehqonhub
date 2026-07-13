@@ -1,0 +1,199 @@
+import type { AuthenticatedPrincipal } from "@app/backend-feature-auth-shared";
+import type {
+  AdminAuditLogRepository,
+  AdminUserMutationRepository,
+  AdminUserMutationResult,
+  AuthUserRepository,
+  AdminAuditLogEntity,
+  AuthUserEntity,
+} from "@app/backend-postgres-main-auth";
+import { AdminApplicationError } from "./admin-errors";
+import {
+  normalizeAdminPage,
+  type AdminRequestContext,
+  type AdminAuditLogListPayload,
+  type AdminAuditQuery,
+  type AdminDashboardSummary,
+  type AdminUserListPayload,
+  type AdminUserQuery,
+  type AdminUserView,
+  type UpdateAdminUserAccessPolicyCommand,
+  type UpdateAdminUserStatusCommand,
+} from "../domain";
+import { toAdminAuditLogView, toAdminUserView } from "./mapper";
+import {
+  requireAllowedPolicy,
+  resolveTenantId,
+  unwrapRepositoryResult,
+  unwrapSensitiveMutationResult,
+} from "./util";
+
+export class AdminUsersUseCase {
+  constructor(
+    private readonly users: AuthUserRepository,
+    private readonly auditLogs: AdminAuditLogRepository,
+    private readonly adminUserMutations: AdminUserMutationRepository,
+  ) {}
+
+  async listUsers(
+    principal: AuthenticatedPrincipal,
+    query: AdminUserQuery,
+  ): Promise<AdminUserListPayload> {
+    const { limit, offset } = normalizeAdminPage(query);
+    const tenantId = resolveTenantId(principal);
+    const filter = {
+      tenantId,
+      search: query.search?.trim(),
+      status: query.status,
+      role: query.role,
+      permission: query.permission,
+      limit,
+      offset,
+    };
+    const [items, total] = await Promise.all([
+      this.users.listUsers(filter),
+      this.users.countUsers(filter),
+    ]);
+
+    return {
+      items:
+        unwrapRepositoryResult<AuthUserEntity[]>(items).map(toAdminUserView),
+      total: unwrapRepositoryResult<number>(total),
+      limit,
+      offset,
+    };
+  }
+
+  async getUser(
+    principal: AuthenticatedPrincipal,
+    id: string,
+  ): Promise<AdminUserView> {
+    const user = await this.users.findById(id, resolveTenantId(principal));
+    const entity = unwrapRepositoryResult<AuthUserEntity | null>(user);
+    if (!entity) {
+      throw new AdminApplicationError("not_found", "Admin user was not found.");
+    }
+
+    return toAdminUserView(entity);
+  }
+
+  async updateUserStatus(
+    principal: AuthenticatedPrincipal,
+    id: string,
+    input: UpdateAdminUserStatusCommand,
+    context: AdminRequestContext,
+  ): Promise<AdminUserView> {
+    const tenantId = resolveTenantId(principal);
+    const mutation = await this.adminUserMutations.mutateAccessPolicyWithAudit({
+      tenantId,
+      targetUserId: id,
+      actorUserId: principal.subject,
+      action: "admin.user.status.update",
+      policy: { status: input.status },
+      audit: {
+        actorUserId: principal.subject,
+        metadata: { ...context },
+      },
+    });
+    const result =
+      unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
+    if (!result) {
+      throw new AdminApplicationError("not_found", "Admin user was not found.");
+    }
+
+    return toAdminUserView(result.after);
+  }
+
+  async updateUserAccessPolicy(
+    principal: AuthenticatedPrincipal,
+    id: string,
+    input: UpdateAdminUserAccessPolicyCommand,
+    context: AdminRequestContext,
+  ): Promise<AdminUserView> {
+    requireAllowedPolicy(input);
+    const tenantId = resolveTenantId(principal);
+    const mutation = await this.adminUserMutations.mutateAccessPolicyWithAudit({
+      tenantId,
+      targetUserId: id,
+      actorUserId: principal.subject,
+      action: "admin.user.access_policy.update",
+      policy: {
+        roles: input.roles,
+        permissions: input.permissions,
+      },
+      audit: {
+        actorUserId: principal.subject,
+        metadata: { ...context },
+      },
+    });
+    const result =
+      unwrapSensitiveMutationResult<AdminUserMutationResult | null>(mutation);
+    if (!result) {
+      throw new AdminApplicationError("not_found", "Admin user was not found.");
+    }
+
+    return toAdminUserView(result.after);
+  }
+
+  async listAudit(
+    principal: AuthenticatedPrincipal,
+    query: AdminAuditQuery,
+  ): Promise<AdminAuditLogListPayload> {
+    const { limit, offset } = normalizeAdminPage(query);
+    const filter = {
+      tenantId: resolveTenantId(principal),
+      action: query.action,
+      actorUserId: query.actorUserId,
+      targetUserId: query.targetUserId,
+      limit,
+      offset,
+    };
+    const [items, total] = await Promise.all([
+      this.auditLogs.list(filter),
+      this.auditLogs.count(filter),
+    ]);
+
+    return {
+      items:
+        unwrapRepositoryResult<AdminAuditLogEntity[]>(items).map(
+          toAdminAuditLogView,
+        ),
+      total: unwrapRepositoryResult<number>(total),
+      limit,
+      offset,
+    };
+  }
+
+  async dashboardSummary(
+    principal: AuthenticatedPrincipal,
+  ): Promise<AdminDashboardSummary> {
+    const tenantId = resolveTenantId(principal);
+    const [
+      totalUsers,
+      activeUsers,
+      disabledUsers,
+      invitedUsers,
+      auditCount,
+      audit,
+    ] = await Promise.all([
+      this.users.countUsers({ tenantId }),
+      this.users.countUsers({ tenantId, status: "active" }),
+      this.users.countUsers({ tenantId, status: "disabled" }),
+      this.users.countUsers({ tenantId, status: "invited" }),
+      this.auditLogs.count({ tenantId }),
+      this.auditLogs.list({ tenantId, limit: 5, offset: 0 }),
+    ]);
+
+    return {
+      totalUsers: unwrapRepositoryResult<number>(totalUsers),
+      activeUsers: unwrapRepositoryResult<number>(activeUsers),
+      disabledUsers: unwrapRepositoryResult<number>(disabledUsers),
+      invitedUsers: unwrapRepositoryResult<number>(invitedUsers),
+      recentAuditEvents: unwrapRepositoryResult<number>(auditCount),
+      recentAudit:
+        unwrapRepositoryResult<AdminAuditLogEntity[]>(audit).map(
+          toAdminAuditLogView,
+        ),
+    };
+  }
+}

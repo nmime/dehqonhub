@@ -1,0 +1,309 @@
+# Staging: docker compose --profile staging up
+# Or set COMPOSE_PROFILES=staging
+#
+# Staging uses a separate database, secrets, and port offsets (+100 from production defaults).
+# Copy .env.staging.example to .env.staging and set NODE_ENV=staging before running.
+# Example:
+#   NODE_ENV=staging docker compose --profile staging -f docker-compose.yml up -d
+#
+# For staging-specific overrides, create docker-compose.staging.yml alongside this file
+# and merge: docker compose -f docker-compose.yml -f docker-compose.staging.yml up
+
+x-backend-env: &backend-env
+  NODE_ENV: ${NODE_ENV:-development}
+  HOST: ${HOST:-0.0.0.0}
+  PORT: 80
+  CORS_ORIGINS: ${CORS_ORIGINS:-}
+  DATABASE_URL: ${CONTAINER_DATABASE_URL:-postgres://postgres:postgres@postgres:5432/nest_react_boilerplate}
+  AUTH_PERSISTENCE: postgres
+  AUTH_JWT_SECRET: ${AUTH_JWT_SECRET:-dev-secret}
+  AUTH_JWT_ISSUER: ${AUTH_JWT_ISSUER:-nest-react-boilerplate}
+  AUTH_JWT_AUDIENCE: ${AUTH_JWT_AUDIENCE:-nest-react-boilerplate-api}
+  AUTH_JWT_EXPIRES_IN_SECONDS: ${AUTH_JWT_EXPIRES_IN_SECONDS:-3600}
+  ADMIN_BOOTSTRAP_EMAILS: ${ADMIN_BOOTSTRAP_EMAILS:-}
+  ADMIN_BOOTSTRAP_ENABLED: ${ADMIN_BOOTSTRAP_ENABLED:-false}
+  OPENAPI_ENABLED: ${OPENAPI_ENABLED:-true}
+  OPENAPI_PATH: ${OPENAPI_PATH:-docs}
+
+x-backend-healthcheck: &backend-healthcheck
+  test:
+    [
+      'CMD-SHELL',
+      'node -e "fetch(''http://127.0.0.1:80/health'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+    ]
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 20s
+
+x-frontend-healthcheck: &frontend-healthcheck
+  test: ['CMD-SHELL', 'wget -qO- http://127.0.0.1:8080/nginx-health | grep -q ok']
+  interval: 10s
+  timeout: 5s
+  retries: 12
+  start_period: 10s
+
+services:
+  redis:
+    image: redis:7.4.3-alpine
+    restart: unless-stopped
+    ports:
+      - '${REDIS_PORT:-6379}:6379'
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  nats:
+    image: nats:2.10.25-alpine
+    restart: unless-stopped
+    ports:
+      - '${NATS_PORT:-4222}:4222'
+      - '${NATS_MONITOR_PORT:-8222}:8222'
+    healthcheck:
+      test: ['CMD', 'nc', '-z', 'localhost', '4222']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  minio:
+    image: minio/minio:RELEASE.2025-09-07T16-13-09Z
+    restart: unless-stopped
+    command: server /data --console-address ":9001"
+    ports:
+      - '${MINIO_PORT:-9000}:9000'
+      - '${MINIO_CONSOLE_PORT:-9001}:9001'
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ['CMD', 'mc', 'ready', 'local']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:17.6-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-nest_react_boilerplate}
+    ports:
+      - '${POSTGRES_PORT:-5432}:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-nest_react_boilerplate}']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  migrate:
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: migrator
+    restart: 'no'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment: *backend-env
+    command: ['pnpm', 'db:migrate']
+
+  admin-app-api:
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: admin-app-api
+        BUILD_OUTPUT: dist/apps/backend/admin/admin-app-api
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - target: 80
+        published: '${ADMIN_APP_API_PORT:-3001}'
+        protocol: tcp
+    healthcheck: *backend-healthcheck
+
+  user-app-api:
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: user-app-api
+        BUILD_OUTPUT: dist/apps/backend/user/user-app-api
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - target: 80
+        published: '${USER_APP_API_PORT:-3002}'
+        protocol: tcp
+    healthcheck: *backend-healthcheck
+
+  auth-app-api:
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: backend
+      args:
+        NX_PROJECT: auth-app-api
+        BUILD_OUTPUT: dist/apps/backend/auth/auth-app-api
+    restart: unless-stopped
+    environment: *backend-env
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      - target: 80
+        published: '${AUTH_APP_API_PORT:-3003}'
+        protocol: tcp
+    healthcheck: *backend-healthcheck
+
+  admin-app:
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: admin-app
+        FRONTEND_OUTPUT: dist/apps/frontend/admin
+        VITE_API_BASE_URL_MODE: same-origin
+    restart: unless-stopped
+    depends_on:
+      admin-app-api:
+        condition: service_healthy
+    ports:
+      - target: 8080
+        published: '${ADMIN_APP_PORT:-4200}'
+        protocol: tcp
+    healthcheck: *frontend-healthcheck
+
+  user-app:
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: user-app
+        FRONTEND_OUTPUT: dist/apps/frontend/app
+        VITE_API_BASE_URL_MODE: same-origin
+    restart: unless-stopped
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
+    ports:
+      - target: 8080
+        published: '${USER_APP_PORT:-4201}'
+        protocol: tcp
+    healthcheck: *frontend-healthcheck
+
+  landing-app:
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: landing-app
+        FRONTEND_OUTPUT: dist/apps/frontend/landing
+        VITE_API_BASE_URL_MODE: same-origin
+    restart: unless-stopped
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
+      admin-app-api:
+        condition: service_healthy
+    ports:
+      - target: 8080
+        published: '${LANDING_APP_PORT:-4202}'
+        protocol: tcp
+    healthcheck: *frontend-healthcheck
+
+  site-app:
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: site-runtime
+      args:
+        NX_PROJECT: site-app
+    restart: unless-stopped
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
+      admin-app-api:
+        condition: service_healthy
+    ports:
+      - target: 80
+        published: '${SITE_APP_PORT:-4203}'
+        protocol: tcp
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          'node -e "fetch(''http://127.0.0.1:80/ready'').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"',
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+  mobile-app:
+    build:
+      context: ..
+      network: ${DOCKER_BUILD_NETWORK:-default}
+      dockerfile: Dockerfile
+      target: frontend
+      args:
+        NX_PROJECT: mobile-app
+        NX_TARGET: export
+        FRONTEND_OUTPUT: dist/apps/frontend/mobile
+        VITE_API_BASE_URL_MODE: same-origin
+    restart: unless-stopped
+    depends_on:
+      auth-app-api:
+        condition: service_healthy
+      user-app-api:
+        condition: service_healthy
+    ports:
+      - target: 8080
+        published: '${MOBILE_APP_PORT:-4300}'
+        protocol: tcp
+    healthcheck: *frontend-healthcheck
+
+volumes:
+  postgres-data:
+  redis-data:
+  minio-data:
