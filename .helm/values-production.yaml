@@ -118,6 +118,7 @@ apps:
       requests: { cpu: 250m, memory: 512Mi }
       limits: { cpu: 1000m, memory: 1Gi }
   discordAppApi:
+    enabled: false
     replicas: 1
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/discord-app-api
@@ -134,6 +135,7 @@ apps:
       requests: { cpu: 100m, memory: 256Mi }
       limits: { cpu: 500m, memory: 512Mi }
   telegramBotApi:
+    enabled: false
     replicas: 1
     image:
       repository: ghcr.io/nmime/nest-react-boilerplate/telegram-bot-api
@@ -151,6 +153,22 @@ apps:
       limits: { cpu: 500m, memory: 512Mi }
   # telegramBotWorker is not deployed in Helm. It uses long-polling (local dev only).
   # In production, use telegramBotApi (webhook mode).
+  starterApp:
+    enabled: false
+    replicas: 3
+    image:
+      repository: ghcr.io/nmime/nest-react-boilerplate/starter-app
+      tag: sha-REPLACE_WITH_RELEASE_GIT_SHA
+      digest: ''
+      pullPolicy: IfNotPresent
+    podSecurityContext:
+      runAsNonRoot: true
+      runAsUser: 101
+      runAsGroup: 101
+      seccompProfile: { type: RuntimeDefault }
+    securityContext:
+      allowPrivilegeEscalation: false
+      capabilities: { drop: ['ALL'] }
   landingApp:
     replicas: 3
     image:
@@ -255,6 +273,20 @@ ingress:
     - host: auth.example.com
       service: auth-app-api
       paths: ['/']
+    - host: api.example.com
+      service: user-app-api
+      paths: ['/']
+    - host: admin-api.example.com
+      service: admin-app-api
+      paths: ['/']
+    - host: discord-api.example.com
+      service: discord-app-api
+      paths: ['/']
+      enabled: false
+    - host: telegram-api.example.com
+      service: telegram-bot-api
+      paths: ['/']
+      enabled: false
   tls:
     - secretName: nest-react-boilerplate-tls
       hosts:
@@ -264,6 +296,8 @@ ingress:
         - mobile.example.com
         - admin.example.com
         - auth.example.com
+        - api.example.com
+        - admin-api.example.com
 
 autoscaling:
   enabled: true

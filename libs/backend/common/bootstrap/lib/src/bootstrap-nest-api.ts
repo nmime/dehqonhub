@@ -1,7 +1,6 @@
-import { randomUUID } from 'node:crypto';
 import fastifyCookie from '@fastify/cookie';
 import fastifySession from '@fastify/session';
-import type { Type } from '@nestjs/common';
+import type { DynamicModule, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import type { FastifySessionObject as Session } from '@fastify/session';
@@ -17,9 +16,11 @@ import {
   type RedisHost,
 } from '@app/backend-common-redis';
 import { ExceptionsFilter, ExceptionsResponseTransformer } from '@app/backend-common-response';
+import { ClsInterceptor } from './cls.interceptor';
 import { createRequestLocaleMiddleware, resolveLocaleFromRequest, translate } from '@app/common-i18n';
 import { setupSwagger } from '@app/backend-common-swagger';
 import { createValidationPipe } from '@app/backend-common-validation';
+import { createRequestLoggingMiddleware } from './request-logging.middleware';
 
 export interface BootstrapNestApiOptions {
   appName: string;
@@ -90,6 +91,7 @@ interface ResponseLike {
   end?: (body?: string) => void;
   on: (event: 'finish', listener: () => void) => void;
   setHeader: (name: string, value: string) => void;
+  getHeader?: (name: string) => unknown;
 }
 
 type NextFunctionLike = () => void;
@@ -724,38 +726,6 @@ export function resolveListenPort(config: BackendEnvironmentConfig): number {
   return config.port;
 }
 
-function getHeader(request: RequestLike, name: string): string | undefined {
-  const value = request.headers?.[name] ?? request.headers?.[name.toLowerCase()];
-  if (Array.isArray(value)) {
-    return value[0];
-  }
-
-  return value;
-}
-
-function createRequestLoggingMiddleware(appName: string) {
-  return (request: RequestLike, response: ResponseLike, next: NextFunctionLike) => {
-    const startedAt = Date.now();
-    const requestId = getHeader(request, 'x-request-id') ?? randomUUID();
-    response.setHeader('x-request-id', requestId);
-
-    response.on('finish', () => {
-      const logEntry = {
-        appName,
-        durationMs: Date.now() - startedAt,
-        method: request.method,
-        /* v8 ignore next -- some adapters expose only one URL-like request field. */
-        path: request.originalUrl ?? request.url ?? request.path,
-        requestId,
-        status: response.statusCode,
-      };
-      process.stdout.write(`${JSON.stringify(logEntry)}\n`);
-    });
-
-    next();
-  };
-}
-
 function createRobotsMiddleware() {
   return (request: RequestLike, response: ResponseLike, next: NextFunctionLike) => {
     const path = request.path ?? request.url ?? request.originalUrl;
@@ -910,7 +880,10 @@ function createRateLimitMiddleware(
   };
 }
 
-export async function bootstrapNestApi(module: Type<unknown>, options: BootstrapNestApiOptions): Promise<void> {
+export async function bootstrapNestApi(
+  module: Type<unknown> | DynamicModule,
+  options: BootstrapNestApiOptions,
+): Promise<void> {
   const config = resolveBackendEnvironmentConfig(options);
   const app = await NestFactory.create<NestFastifyApplication>(
     module,
@@ -926,13 +899,14 @@ export async function bootstrapNestApi(module: Type<unknown>, options: Bootstrap
 
   app.enableShutdownHooks();
   await registerFastifySession(app, config);
+  // CLS: wraps entire async pipeline in AsyncLocalStorage — requestId available everywhere
+  app.useGlobalInterceptors(new ClsInterceptor(), new ExceptionsResponseTransformer());
+  app.useGlobalFilters(new ExceptionsFilter());
   app.use(createRequestLoggingMiddleware(options.appName));
   app.use(createRobotsMiddleware());
   app.use(createRequestLocaleMiddleware());
   app.use(helmet());
   app.useGlobalPipes(createValidationPipe());
-  app.useGlobalInterceptors(new ExceptionsResponseTransformer());
-  app.useGlobalFilters(new ExceptionsFilter());
 
   if (config.rateLimit.enabled) {
     const rateLimitStore = createRateLimitStore(config.rateLimit);

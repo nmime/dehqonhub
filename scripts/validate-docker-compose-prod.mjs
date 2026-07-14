@@ -73,6 +73,9 @@ for (const service of [
   'admin-app-api',
   'user-app-api',
   'auth-app-api',
+  'discord-app-api',
+  'telegram-bot-api',
+  'starter-app',
   'admin-app',
   'user-app',
   'landing-app',
@@ -89,8 +92,13 @@ for (const service of [
 for (const expected of [
   'AUTH_JWT_SECRET_FILE=./secrets/auth_jwt_secret.txt',
   'POSTGRES_PASSWORD_FILE=./secrets/postgres_password.txt',
+  'TELEGRAM_BOT_TOKEN_FILE=./secrets/telegram_bot_token.txt',
+  'TELEGRAM_BOT_WEBHOOK_SECRET_FILE=./secrets/telegram_bot_webhook_secret.txt',
+  'DISCORD_BOT_TOKEN_FILE=./secrets/discord_bot_token.txt',
+  'DISCORD_PUBLIC_KEY_FILE=./secrets/discord_public_key.txt',
   'IMAGE_TAG=sha-000000000000',
   'SITE_APP_PORT=',
+  'STARTER_APP_PORT=',
   'MOBILE_APP_PORT=',
   'VITE_API_BASE_URL_MODE=same-origin',
   'FRONTEND_NGINX_CONFIG=docker/nginx-fullstack.conf',
@@ -119,13 +127,20 @@ for (const correctDefault of [
   'ADMIN_APP_API_PORT:-3001',
   'USER_APP_API_PORT:-3002',
   'AUTH_APP_API_PORT:-3003',
+  'DISCORD_APP_API_PORT:-3007',
+  'TELEGRAM_BOT_API_PORT:-3013',
   'ADMIN_APP_PORT:-4200',
   'USER_APP_PORT:-4201',
   'LANDING_APP_PORT:-4202',
   'SITE_APP_PORT:-4203',
+  'STARTER_APP_PORT:-4204',
   'MOBILE_APP_PORT:-4300',
 ]) {
   has(prodCompose, correctDefault, `production Compose explicit port default ${correctDefault}`);
+}
+
+for (const profile of ['profiles: [starter]', 'profiles: [discord]', 'profiles: [telegram]']) {
+  has(prodCompose, profile, `production Compose optional workload ${profile}`);
 }
 
 for (const expected of [

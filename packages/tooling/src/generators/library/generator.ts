@@ -18,6 +18,9 @@ import { validateName, generateNames } from '../names.ts';
 export interface LibraryGeneratorOptions {
   name: string;
   kind: 'backend' | 'frontend' | 'common';
+  type?: 'common' | 'util' | 'ui' | 'sdk' | 'feature-main' | 'feature-shared' | 'data-access' | 'test-util' | 'asset';
+  scope?: string;
+  fsdLayer?: 'shared' | 'entities' | 'features' | 'widgets' | 'pages';
   directory?: string;
   tags?: string;
   skipFormat?: boolean;
@@ -38,7 +41,13 @@ function findExistingProject(tree: Tree, name: string): string | null {
   return null;
 }
 
-function computeProjectName(kind: string, name: string): string {
+function computeProjectName(kind: string, name: string, type: string, scope: string): string {
+  if (type === 'feature-main' || type === 'feature-shared') {
+    return `@app/${kind === 'common' ? 'common' : kind}-feature-${scope}-${type.replace('feature-', '')}`;
+  }
+  if (type === 'data-access') {
+    return `@app/backend-postgres-main-${scope}`;
+  }
   if (kind === 'backend') {
     return `@app/backend-${name}`;
   }
@@ -48,25 +57,57 @@ function computeProjectName(kind: string, name: string): string {
   return `@app/common-${name}`;
 }
 
-function computeDirectory(kind: string, name: string): string {
+function computeDirectory(kind: string, name: string, type: string, scope: string): string {
   if (kind === 'backend') {
-    return `libs/backend/${name}/lib`;
+    if (type === 'feature-main') {
+      return `libs/backend/feature/${scope}/main/lib`;
+    }
+    if (type === 'feature-shared') {
+      return `libs/backend/feature/${scope}/shared/lib`;
+    }
+    if (type === 'data-access') {
+      return `libs/backend/postgres/main/${scope}/lib`;
+    }
+    return `libs/backend/common/${name}/lib`;
   }
   if (kind === 'frontend') {
+    if (type === 'feature-main') {
+      return `libs/frontend/feature/${scope}/main/lib`;
+    }
+    if (type === 'feature-shared') {
+      return `libs/frontend/feature/${scope}/shared/lib`;
+    }
     return `libs/frontend/${name}/lib`;
   }
   return `libs/common/${name}/lib`;
 }
 
-function computeTags(kind: string, name: string): string[] {
-  const scope = name.split('-')[0];
+function computeTags(kind: string, type: string, scope: string, fsdLayer: string): string[] {
   if (kind === 'backend') {
-    return ['platform:backend', 'type:common', `scope:${scope}`];
+    return ['platform:backend', `type:${type}`, `scope:${scope}`];
   }
   if (kind === 'frontend') {
-    return ['platform:frontend', 'type:common', `scope:${scope}`];
+    return ['platform:frontend', `type:${type}`, `scope:${scope}`, `fsd:layer:${fsdLayer}`];
   }
-  return ['platform:common', 'type:common', `scope:${scope}`];
+  return ['platform:shared', `type:${type}`, `scope:${scope}`, 'framework:neutral'];
+}
+
+function updateTsconfigAlias(tree: Tree, alias: string, sourcePath: string): void {
+  const contents = tree.read('tsconfig.base.json', 'utf8');
+  if (!contents) {
+    return;
+  }
+
+  const tsconfig = JSON.parse(contents) as {
+    compilerOptions?: { paths?: Record<string, string[]> };
+  };
+  const compilerOptions = (tsconfig.compilerOptions ??= {});
+  const paths = (compilerOptions.paths ??= {});
+  if (paths[alias]) {
+    throw new Error(`Tsconfig alias "${alias}" already exists.`);
+  }
+  paths[alias] = [sourcePath];
+  tree.write('tsconfig.base.json', `${JSON.stringify(tsconfig, null, 2)}\n`);
 }
 
 function libDepth(dir: string): number {
@@ -89,7 +130,6 @@ function createNodeLib(
   dir: string,
   projectName: string,
   tags: string[],
-  includeReact = false,
 ): void {
   const srcRoot = `${dir}/src`;
   const d = dots(dir);
@@ -127,26 +167,6 @@ function createNodeLib(
             outputs: [`{workspaceRoot}/coverage/${dir}`],
           },
         },
-      },
-      null,
-      2,
-    ) + '\n',
-  );
-
-  // package.json
-  tree.write(
-    `${dir}/package.json`,
-    JSON.stringify(
-      {
-        name: projectName,
-        version: '0.0.0',
-        private: true,
-        main: './src/index.ts',
-        types: './src/index.ts',
-        type: includeReact ? 'module' : 'commonjs',
-        scripts: { test: 'vitest run', typecheck: 'tsc --noEmit' },
-        dependencies: includeReact ? { react: '^19.0.0' } : {},
-        devDependencies: {},
       },
       null,
       2,
@@ -255,6 +275,82 @@ export default defineConfig({
 });
 `,
   );
+
+  // eslint.config.cjs
+  tree.write(
+    `${dir}/eslint.config.cjs`,
+    `const baseConfig = require("${d}eslint.config.js");
+
+module.exports = [
+  {
+    ignores: [
+      "eslint.config.cjs",
+      "project.json",
+      "tsconfig*.json",
+      "vitest.config.mts",
+    ],
+  },
+  ...baseConfig,
+  {
+    languageOptions: {
+      parserOptions: {
+        project: "tsconfig.*?.json",
+      },
+    },
+  },
+];
+`,
+  );
+
+  // AGENTS.md
+  tree.write(
+    `${dir}/AGENTS.md`,
+    `# ${projectName} Instructions
+
+Follow the root [AGENTS.md](${d}AGENTS.md) and detailed [AI agent policy](${d}docs/ai/agent-policy.md) first.
+
+This is the local policy adapter for \`${projectName}\` at \`${dir}\`.
+Project type: \`library\`.
+Tags: ${tags.map((t) => `\`${t}\``).join(', ')}.\n
+## Local Rules
+
+- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
+- Do not import frontend libraries from backend code. Shared backend dependencies belong in \`libs/backend/package.json\`.
+- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+- Keep this file short; put setup details and command lists in the local README.
+
+See [README.md](./README.md) for project commands and ownership notes.
+`,
+  );
+
+  // README.md
+  tree.write(
+    `${dir}/README.md`,
+    `# ${projectName}
+
+Path: \`${dir}\`
+Nx project: \`${projectName}\`
+Project type: \`library\`
+Tags: ${tags.map((t) => `\`${t}\``).join(', ')}
+
+## Purpose
+
+${names.title} library.
+
+## Ownership
+
+- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
+- Do not import frontend libraries from backend code.
+- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+
+## Commands
+
+\`\`\`bash
+pnpm exec nx run ${projectName}:test
+pnpm exec nx run ${projectName}:build
+\`\`\`
+`,
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -269,6 +365,7 @@ function createFrontendLib(
   dir: string,
   projectName: string,
   tags: string[],
+  type: string,
 ): void {
   const srcRoot = `${dir}/src`;
   const d = dots(dir);
@@ -304,26 +401,6 @@ function createFrontendLib(
             outputs: [`{workspaceRoot}/coverage/${dir}`],
           },
         },
-      },
-      null,
-      2,
-    ) + '\n',
-  );
-
-  // package.json
-  tree.write(
-    `${dir}/package.json`,
-    JSON.stringify(
-      {
-        name: projectName,
-        version: '0.0.0',
-        private: true,
-        main: './src/index.ts',
-        types: './src/index.ts',
-        type: 'module',
-        scripts: { test: 'vitest run', typecheck: 'tsc --noEmit' },
-        dependencies: {},
-        devDependencies: {},
       },
       null,
       2,
@@ -377,38 +454,56 @@ function createFrontendLib(
           outDir: `${d}dist/out-tsc/${dir}-spec`,
           types: ['vitest/globals', 'vite/client'],
         },
-        include: ['**/*.spec.ts', '**/*.test.ts', 'vitest.config.mts'],
+        include: ['**/*.spec.ts', '**/*.test.ts', '**/*.spec.tsx', '**/*.test.tsx', 'vitest.config.mts'],
       },
       null,
       2,
     ) + '\n',
   );
 
-  // src/index.ts
-  tree.write(`${srcRoot}/index.ts`, `export * from "./${names.kebab}.component";\n`);
+  const rendersReact = type === 'ui' || type === 'feature-main';
+  if (rendersReact) {
+    tree.write(`${srcRoot}/index.ts`, `export * from "./${names.kebab}.component";\n`);
+    tree.write(
+      `${srcRoot}/${names.kebab}.component.tsx`,
+      `import type { ReactNode } from "react";
 
-  // src/<name>.component.tsx
-  tree.write(
-    `${srcRoot}/${names.kebab}.component.tsx`,
-    `export function ${names.pascal}Component() {
-  return <p>${names.title}</p>;
+export interface ${names.pascal}ComponentProps {
+  children: ReactNode;
+}
+
+export function ${names.pascal}Component({ children }: ${names.pascal}ComponentProps) {
+  return <section>{children}</section>;
 }
 `,
-  );
-
-  // src/index.spec.tsx
-  tree.write(
-    `${srcRoot}/index.spec.tsx`,
-    `import { describe, it, expect } from "vitest";
+    );
+    tree.write(
+      `${srcRoot}/index.spec.tsx`,
+      `import { describe, expect, it } from "vitest";
 import { ${names.pascal}Component } from "./${names.kebab}.component";
 
 describe("${names.pascal}Component", () => {
-  it("should be defined", () => {
+  it("exports the React boundary", () => {
     expect(${names.pascal}Component).toBeDefined();
   });
 });
 `,
-  );
+    );
+  } else {
+    tree.write(`${srcRoot}/index.ts`, `export const ${names.camel}LibraryId = "${projectName}" as const;\n`);
+    tree.write(
+      `${srcRoot}/index.spec.ts`,
+      `import { describe, expect, it } from "vitest";
+import { ${names.camel}LibraryId } from "./index";
+
+describe("${names.pascal} library boundary", () => {
+  it("exports a stable identifier", () => {
+    expect(${names.camel}LibraryId).toBe("${projectName}");
+  });
+});
+`,
+    );
+  }
 
   // vitest.config.mts
   tree.write(
@@ -428,10 +523,84 @@ export default defineConfig({
     "${d}node_modules/.vitest/${dir}",
   test: {
     environment: "happy-dom",
-    include: ["src/**/*.spec.tsx", "src/**/*.test.tsx"],
+    include: ["src/**/*.spec.ts", "src/**/*.test.ts", "src/**/*.spec.tsx", "src/**/*.test.tsx"],
     globals: false,
   },
 });
+`,
+  );
+
+  // eslint.config.cjs
+  tree.write(
+    `${dir}/eslint.config.cjs`,
+    `const baseConfig = require("${d}eslint.config.js");
+
+module.exports = [
+  {
+    ignores: [
+      "eslint.config.cjs",
+      "project.json",
+      "tsconfig*.json",
+      "vitest.config.mts",
+    ],
+  },
+  ...baseConfig,
+  {
+    languageOptions: {
+      parserOptions: {
+        project: "tsconfig.*?.json",
+      },
+    },
+  },
+];
+`,
+  );
+
+  // AGENTS.md
+  tree.write(
+    `${dir}/AGENTS.md`,
+    `# ${projectName} Instructions
+
+Follow the root [AGENTS.md](${d}AGENTS.md) and detailed [AI agent policy](${d}docs/ai/agent-policy.md) first.
+
+This is the local policy adapter for \`${projectName}\` at \`${dir}\`.
+Project type: \`library\`.
+Tags: ${tags.map((t) => `\`${t}\``).join(', ')}.\n
+## Local Rules
+
+- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
+- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+- Keep this file short; put setup details and command lists in the local README.
+
+See [README.md](./README.md) for project commands and ownership notes.
+`,
+  );
+
+  // README.md
+  tree.write(
+    `${dir}/README.md`,
+    `# ${projectName}
+
+Path: \`${dir}\`
+Nx project: \`${projectName}\`
+Project type: \`library\`
+Tags: ${tags.map((t) => `\`${t}\``).join(', ')}
+
+## Purpose
+
+${names.title} library.
+
+## Ownership
+
+- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
+- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+
+## Commands
+
+\`\`\`bash
+pnpm exec nx run ${projectName}:test
+pnpm exec nx run ${projectName}:build
+\`\`\`
 `,
   );
 }
@@ -449,15 +618,43 @@ export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOpti
     throw new Error(`Unsupported library kind "${options.kind}". Must be one of: ${validKinds.join(', ')}`);
   }
 
+  const type = options.type ?? 'common';
+  const validTypes = [
+    'common',
+    'util',
+    'ui',
+    'sdk',
+    'feature-main',
+    'feature-shared',
+    'data-access',
+    'test-util',
+    'asset',
+  ];
+  if (!validTypes.includes(type)) {
+    throw new Error(`Unsupported library type "${type}". Must be one of: ${validTypes.join(', ')}`);
+  }
+  if (type === 'data-access' && options.kind !== 'backend') {
+    throw new Error('The data-access library type is backend-only.');
+  }
+  if ((type === 'ui' || type === 'asset') && options.kind === 'backend') {
+    throw new Error(`The ${type} library type cannot target the backend platform.`);
+  }
+  if (options.kind === 'common' && ['ui', 'feature-main', 'feature-shared', 'data-access'].includes(type)) {
+    throw new Error(`The ${type} library type must target the frontend or backend platform.`);
+  }
+
   const names = generateNames(options.name);
-  const projectName = computeProjectName(options.kind, names.kebab);
-  const dir = options.directory ?? computeDirectory(options.kind, names.kebab);
+  const [inferredScope] = names.kebab.split('-');
+  const scope = options.scope?.trim() || inferredScope || names.kebab;
+  const fsdLayer = options.fsdLayer ?? (type === 'feature-main' ? 'features' : 'shared');
+  const projectName = computeProjectName(options.kind, names.kebab, type, scope);
+  const dir = options.directory ?? computeDirectory(options.kind, names.kebab, type, scope);
   const tags = options.tags
     ? options.tags
         .split(',')
         .map((t) => t.trim())
         .filter(Boolean)
-    : computeTags(options.kind, names.kebab);
+    : computeTags(options.kind, type, scope, fsdLayer);
 
   const existing = findExistingProject(tree, projectName);
   if (existing) {
@@ -472,9 +669,11 @@ export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOpti
       createNodeLib(tree, names, dir, projectName, tags);
       break;
     case 'frontend':
-      createFrontendLib(tree, names, dir, projectName, tags);
+      createFrontendLib(tree, names, dir, projectName, tags, type);
       break;
   }
+
+  updateTsconfigAlias(tree, projectName, `${dir}/src/index.ts`);
 
   if (!options.skipFormat) {
     await formatFiles(tree);

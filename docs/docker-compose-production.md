@@ -92,9 +92,9 @@ use `/ready`, which is implemented by each API and performs a PostgreSQL
 readiness check when MikroORM is registered. `/health` and `/live` remain
 liveness-only checks and should not replace production dependency readiness.
 
-App services publish loopback-only dynamic host ports by default. Put Caddy,
+App services publish explicit loopback-only host ports by default. Put Caddy,
 nginx, Traefik, or your cloud load balancer in front for public TLS and routing,
-and resolve the assigned ports with `docker compose port <service> <port>`.
+and confirm the assigned ports with `docker compose port <service> <port>`.
 
 ## 5. TLS and reverse proxy
 
@@ -109,6 +109,17 @@ from Compose:
 - `https://auth.example.com` -> `docker compose ... port auth-app-api 80`
 - `https://api.example.com` -> `docker compose ... port user-app-api 80`
 - `https://admin-api.example.com` -> `docker compose ... port admin-app-api 80`
+
+`starter-app` is the neutral shell selected by the `starter` setup preset, not
+an additional production surface. Start its optional Compose profile only when
+it is the selected product frontend, then route the product-owned hostname to
+`docker compose ... port starter-app 8080`.
+
+The bot webhook APIs are also opt-in because they require provider credentials
+and callback registration:
+
+- `https://discord-api.example.com` -> `docker compose --profile discord ... port discord-app-api 80`
+- `https://telegram-api.example.com` -> `docker compose --profile telegram ... port telegram-bot-api 80`
 
 Keep `CORS_ORIGINS` aligned with the public browser origins. If you intentionally
 build standalone split-origin SPA images, set `FRONTEND_NGINX_CONFIG` to

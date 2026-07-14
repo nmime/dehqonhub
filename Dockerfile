@@ -3,7 +3,7 @@
 ARG TARGETPLATFORM
 ARG TARGETARCH
 
-ARG NODE_VERSION=24.11.0-alpine
+ARG NODE_VERSION=24.18.0-alpine
 ARG PNPM_VERSION=11.11.0
 
 FROM node:${NODE_VERSION} AS workspace
@@ -120,4 +120,4 @@ COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
 USER 101
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-  CMD wget -qO- http://localhost:3000/health || exit 1
+  CMD wget -qO- http://localhost:8080/nginx-health || exit 1
