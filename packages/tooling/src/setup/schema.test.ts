@@ -33,15 +33,15 @@ describe('schema — parseNrbConfig', () => {
     assert.deepEqual(c.options, { prune: false, force: false, dryRun: false, nonInteractive: false });
   });
 
-  it('accepts config with preset and explicit overrides', () => {
+  it('accepts config with a preset plus explicit extensions', () => {
     const c = parseNrbConfig({
       schemaVersion,
-      preset: 'starter',
+      preset: 'web',
       apps: ['user-app'],
       capabilities: ['i18n'],
       options: { dryRun: true },
     });
-    assert.equal(c.preset, 'starter');
+    assert.equal(c.preset, 'web');
     assert.deepEqual(c.apps, ['user-app']);
     assert.deepEqual(c.capabilities, ['i18n']);
     assert.equal(c.options.dryRun, true);
@@ -113,7 +113,6 @@ describe('schema — parseNrbConfig', () => {
 describe('schema — constants', () => {
   it('exports all known app IDs', () => {
     const expected = [
-      'starter-app',
       'admin-app',
       'user-app',
       'landing-app',
@@ -124,7 +123,6 @@ describe('schema — constants', () => {
       'auth-app-api',
       'discord-app-api',
       'telegram-bot-api',
-      'telegram-bot-worker',
       'fullstack-e2e',
     ] as const;
     assert.deepEqual([...appIds].sort(), [...expected].sort());
@@ -152,7 +150,7 @@ describe('schema — constants', () => {
   });
 
   it('exports exactly five preset IDs', () => {
-    assert.deepEqual(presetIds, ['minimal', 'starter', 'fullstack', 'enterprise', 'bots']);
+    assert.deepEqual(presetIds, ['minimal', 'web', 'fullstack', 'enterprise', 'bots']);
   });
 
   it('frontend and backend app IDs are disjoint', () => {
@@ -174,8 +172,8 @@ describe('catalog — appCatalog', () => {
     }
   });
 
-  it('admin-app requires admin-app-api', () => {
-    assert.ok(appCatalog['admin-app'].requiresApps.includes('admin-app-api'));
+  it('admin-app requires both APIs used by its authenticated runtime', () => {
+    assert.deepEqual(appCatalog['admin-app'].requiresApps, ['admin-app-api', 'auth-app-api']);
   });
 
   it('user-app requires user-app-api', () => {
@@ -186,6 +184,56 @@ describe('catalog — appCatalog', () => {
     const e = appCatalog['telegram-bot-api'];
     assert.ok(e.requiresCapabilities.includes('telegram-bot'));
     assert.ok(e.requiresCapabilities.includes('postgres'));
+  });
+
+  it('classifies only Telegram and Discord as optional applications', () => {
+    const reference = Object.values(appCatalog)
+      .filter((entry) => entry.classification === 'reference')
+      .map((entry) => entry.id)
+      .sort();
+    const optional = Object.values(appCatalog)
+      .filter((entry) => entry.classification === 'optional')
+      .map((entry) => entry.id)
+      .sort();
+
+    assert.deepEqual(reference, [
+      'admin-app',
+      'admin-app-api',
+      'auth-app-api',
+      'fullstack-e2e',
+      'landing-app',
+      'mobile-app',
+      'site-app',
+      'user-app',
+      'user-app-api',
+    ]);
+    assert.deepEqual(optional, ['discord-app-api', 'telegram-bot-api']);
+  });
+
+  it('uses landing-app as the apex and app IDs for every other deployable hostname', () => {
+    const hostnames = new Set<string>();
+    for (const entry of Object.values(appCatalog)) {
+      if (entry.platform === 'e2e') {
+        assert.equal(entry.publicHostname, null);
+        continue;
+      }
+      const expectedHostname = entry.id === 'landing-app' ? 'example.com' : `${entry.id}.example.com`;
+      assert.equal(entry.publicHostname, expectedHostname);
+      assert.equal(hostnames.has(entry.publicHostname), false, entry.publicHostname);
+      hostnames.add(entry.publicHostname);
+    }
+    assert.equal(hostnames.size, 10);
+  });
+
+  it('fullstack-e2e requires the complete stack it starts', () => {
+    assert.deepEqual(appCatalog['fullstack-e2e'].requiresApps, [
+      'admin-app',
+      'admin-app-api',
+      'auth-app-api',
+      'landing-app',
+      'user-app',
+      'user-app-api',
+    ]);
   });
 
   it('every app references valid capability IDs', () => {
@@ -260,7 +308,10 @@ describe('catalog — validateSelection', () => {
   });
 
   it('no issues when all deps satisfied', () => {
-    assert.deepEqual(validateSelection(['admin-app', 'admin-app-api'], ['authz', 'design-tokens', 'postgres']), []);
+    assert.deepEqual(
+      validateSelection(['admin-app', 'admin-app-api', 'auth-app-api'], ['authz', 'design-tokens', 'postgres']),
+      [],
+    );
   });
 
   it('no issues for telegram-bot-api with telegram-bot capability', () => {
@@ -376,15 +427,21 @@ describe('presets — expandPreset', () => {
     assert.equal(e.apps.length, 2);
   });
 
-  it('starter: neutral starter-app + user-app-api + auth-app-api + deps', () => {
-    const e = expandPreset('starter');
-    assert.ok(e.apps.includes('starter-app'));
-    assert.ok(!e.apps.includes('user-app'));
-    assert.ok(e.apps.includes('user-app-api'));
-    assert.ok(e.apps.includes('auth-app-api'));
-    assert.ok(e.capabilities.includes('postgres'));
-    assert.ok(e.capabilities.includes('design-tokens'));
-    assert.ok(e.capabilities.includes('i18n'));
+  it('web: every core web app, API, and E2E project', () => {
+    const e = expandPreset('web');
+    for (const app of [
+      'admin-app',
+      'admin-app-api',
+      'auth-app-api',
+      'fullstack-e2e',
+      'landing-app',
+      'site-app',
+      'user-app',
+      'user-app-api',
+    ] as const) {
+      assert.ok(e.apps.includes(app), `web missing ${app}`);
+    }
+    assert.equal(e.apps.includes('mobile-app'), false);
   });
 
   it('fullstack: all core apps + capabilities', () => {
@@ -396,6 +453,8 @@ describe('presets — expandPreset', () => {
       'user-app-api',
       'auth-app-api',
       'landing-app',
+      'mobile-app',
+      'site-app',
       'fullstack-e2e',
     ] as const) {
       assert.ok(e.apps.includes(a), `fullstack missing ${a}`);
@@ -490,9 +549,9 @@ describe('component — schema → preset → catalog', () => {
 });
 
 describe('component — preset monotonicity', () => {
-  it('minimal < starter < fullstack <= enterprise (app count)', () => {
-    assert.ok(expandPreset('minimal').apps.length < expandPreset('starter').apps.length);
-    assert.ok(expandPreset('starter').apps.length < expandPreset('fullstack').apps.length);
+  it('minimal < web < fullstack <= enterprise (app count)', () => {
+    assert.ok(expandPreset('minimal').apps.length < expandPreset('web').apps.length);
+    assert.ok(expandPreset('web').apps.length < expandPreset('fullstack').apps.length);
     assert.ok(expandPreset('fullstack').apps.length <= expandPreset('enterprise').apps.length);
   });
 
@@ -512,30 +571,21 @@ describe('component — preset monotonicity', () => {
  * E2E: Full flow — parse example JSON → expand → validate
  * ================================================================== */
 describe('e2e — example config flow', () => {
-  it('parses nrb.config.example.json and validates full preset expansion', () => {
+  it('parses an explicit app selection and validates dependency expansion', () => {
     const raw = {
       schemaVersion: '1.0.0',
-      preset: 'fullstack',
-      apps: [],
-      capabilities: [],
+      apps: ['landing-app', 'user-app'],
+      capabilities: ['otel', 'swagger'],
       options: { prune: false, force: false, dryRun: false, nonInteractive: false },
     };
     const c = parseNrbConfig(raw);
     assert.equal(c.schemaVersion, schemaVersion);
-    assert.equal(c.preset, 'fullstack');
-    const e = expandPreset(c.preset);
+    assert.equal(c.preset, undefined);
+    const e = expandDependencies(c.apps, c.capabilities);
     assert.deepEqual(validateSelection(e.apps, e.capabilities), []);
-    const expectedApps = [
-      'admin-app',
-      'admin-app-api',
-      'auth-app-api',
-      'fullstack-e2e',
-      'landing-app',
-      'user-app',
-      'user-app-api',
-    ];
+    const expectedApps = ['auth-app-api', 'landing-app', 'user-app', 'user-app-api'];
     assert.deepEqual(e.apps.sort(), expectedApps.sort());
-    const expectedCaps = ['authz', 'design-tokens', 'i18n', 'otel', 'postgres', 'redis', 'swagger'];
+    const expectedCaps = ['design-tokens', 'i18n', 'otel', 'postgres', 'swagger'];
     assert.deepEqual(e.capabilities.sort(), expectedCaps.sort());
   });
 

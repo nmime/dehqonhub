@@ -15,6 +15,10 @@ export interface AppEntry {
   label: string;
   /** Platform layer this app belongs to. */
   platform: 'frontend' | 'backend' | 'e2e';
+  /** Whether this is a reference product surface or an optional integration. */
+  classification: 'reference' | 'optional';
+  /** Canonical template hostname; non-deployable projects use null. */
+  publicHostname: string | null;
   /** Capabilities that this app REQUIRES when present. */
   requiresCapabilities: CapabilityId[];
   /** Other apps that must be present when this app is enabled. */
@@ -30,34 +34,32 @@ export interface AppEntry {
  */
 export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
   /* --- Frontend apps --- */
-  'starter-app': {
-    id: 'starter-app',
-    label: 'Neutral Product Starter',
-    platform: 'frontend',
-    requiresCapabilities: ['design-tokens', 'i18n'],
-    requiresApps: ['user-app-api', 'auth-app-api'],
-    conflictsWithCapabilities: [],
-  },
   'admin-app': {
     id: 'admin-app',
     label: 'Admin Dashboard',
     platform: 'frontend',
+    classification: 'reference',
+    publicHostname: 'admin-app.example.com',
     requiresCapabilities: ['authz', 'design-tokens'],
-    requiresApps: ['admin-app-api'],
+    requiresApps: ['admin-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
   },
   'user-app': {
     id: 'user-app',
     label: 'User Application',
     platform: 'frontend',
-    requiresCapabilities: ['design-tokens'],
-    requiresApps: ['user-app-api'],
+    classification: 'reference',
+    publicHostname: 'user-app.example.com',
+    requiresCapabilities: ['design-tokens', 'i18n'],
+    requiresApps: ['user-app-api', 'auth-app-api'],
     conflictsWithCapabilities: [],
   },
   'landing-app': {
     id: 'landing-app',
     label: 'Landing Page',
     platform: 'frontend',
+    classification: 'reference',
+    publicHostname: 'example.com',
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -66,6 +68,8 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'site-app',
     label: 'Marketing Site',
     platform: 'frontend',
+    classification: 'reference',
+    publicHostname: 'site-app.example.com',
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -74,6 +78,8 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'mobile-app',
     label: 'Mobile App',
     platform: 'frontend',
+    classification: 'reference',
+    publicHostname: 'mobile-app.example.com',
     requiresCapabilities: ['design-tokens'],
     requiresApps: ['user-app-api'],
     conflictsWithCapabilities: [],
@@ -84,6 +90,8 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'admin-app-api',
     label: 'Admin API',
     platform: 'backend',
+    classification: 'reference',
+    publicHostname: 'admin-app-api.example.com',
     requiresCapabilities: ['postgres', 'authz'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -92,6 +100,8 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'user-app-api',
     label: 'User API',
     platform: 'backend',
+    classification: 'reference',
+    publicHostname: 'user-app-api.example.com',
     requiresCapabilities: ['postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -100,6 +110,8 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'auth-app-api',
     label: 'Auth API',
     platform: 'backend',
+    classification: 'reference',
+    publicHostname: 'auth-app-api.example.com',
     requiresCapabilities: ['postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -108,6 +120,8 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'discord-app-api',
     label: 'Discord Bot API',
     platform: 'backend',
+    classification: 'optional',
+    publicHostname: 'discord-app-api.example.com',
     requiresCapabilities: ['discord-bot', 'postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
@@ -116,26 +130,21 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     id: 'telegram-bot-api',
     label: 'Telegram Bot API',
     platform: 'backend',
+    classification: 'optional',
+    publicHostname: 'telegram-bot-api.example.com',
     requiresCapabilities: ['telegram-bot', 'postgres'],
     requiresApps: [],
     conflictsWithCapabilities: [],
   },
-  'telegram-bot-worker': {
-    id: 'telegram-bot-worker',
-    label: 'Telegram Bot Worker',
-    platform: 'backend',
-    requiresCapabilities: ['telegram-bot', 'redis'],
-    requiresApps: ['telegram-bot-api'],
-    conflictsWithCapabilities: [],
-  },
-
   /* --- E2E --- */
   'fullstack-e2e': {
     id: 'fullstack-e2e',
     label: 'Fullstack E2E Tests',
     platform: 'e2e',
+    classification: 'reference',
+    publicHostname: null,
     requiresCapabilities: [],
-    requiresApps: ['auth-app-api', 'user-app-api'],
+    requiresApps: ['admin-app', 'admin-app-api', 'auth-app-api', 'landing-app', 'user-app', 'user-app-api'],
     conflictsWithCapabilities: [],
   },
 } as const;

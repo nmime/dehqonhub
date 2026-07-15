@@ -44,6 +44,9 @@ Always-loaded policy for human and AI contributors to
 - Repository tooling lives under `packages/tooling/**`.
 - Public path aliases in `tsconfig.base.json` are stable API. Do not rename,
   remove, or repoint aliases unless the task explicitly includes migration work.
+- Application selection is explicit and repeatable: use `pnpm nrb setup` for
+  interactive choices or `pnpm nrb setup --app <id>` to add later. Never invent
+  a default app or bypass `.nrb/workspace.json` with an implicit all-app fallback.
 
 ## Runtime Stack
 
@@ -60,9 +63,17 @@ Always-loaded policy for human and AI contributors to
   before editing project structure.
 - Use `pnpm nrb add ... --dry-run` first. Do not copy an existing app directory
   or reproduce the reference `admin-app` / `user-app` product UI.
-- `starter-app` is the neutral product starting point. The richer admin/user,
-  landing, site, and mobile apps are reference implementations for architecture
-  and tests, not visual templates.
+- Inspect the Nx project graph, setup catalog, nearest `AGENTS.md`, and owning
+  routes/modules before generating. If the requested behavior belongs to an
+  existing app, library, or feature, modify that owner in place; `pnpm nrb add`
+  is only for genuinely new ownership. Never create an adjacent clone, `-new`,
+  `-v2`, `starter-app`, or nested copy of this boilerplate as a workaround.
+- `--force` is not a normal editing path. Use feature regeneration only when a
+  maintainer explicitly requests it and the dry-run proves every overwritten
+  file is intended; app and library roots are never overwritten by generators.
+- No deployable is the repository's default application. Admin, user, landing,
+  site, mobile, API, worker, and newly generated apps keep separate
+  product/runtime ownership; do not invent an additional generic deployable.
 - Generated roots include their own `AGENTS.md` and `README.md`; read the nearest
   versions before completing product-specific routing, contracts, persistence,
   authorization, and tests.

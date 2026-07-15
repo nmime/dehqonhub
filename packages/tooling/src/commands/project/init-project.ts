@@ -14,7 +14,7 @@
  */
 import { execFileSync } from "node:child_process";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { basename, join, relative } from "node:path";
 
 import { createNodeFilesystem } from "../../setup/adapters/node-filesystem.js";
 import { apply, type ApplyOptions } from "../../setup/apply.js";
@@ -153,7 +153,9 @@ function* walk(dir: string): Generator<string> {
     if (stat.isDirectory()) yield* walk(path);
     else if (stat.isFile()) {
       const dot = path.lastIndexOf(".");
-      if (TEXT_EXTENSIONS.has(dot === -1 ? "" : path.slice(dot))) yield path;
+      const name = basename(path);
+      const isEnvironmentExample = name.startsWith(".env.") && name.endsWith(".example");
+      if (isEnvironmentExample || TEXT_EXTENSIONS.has(dot === -1 ? "" : path.slice(dot))) yield path;
     }
   }
 }
@@ -169,16 +171,10 @@ function buildReplacements(c: InitConfig): Map<string, string> {
     ["nest_react_boilerplate", c.dbName],
     ["nest-react-boilerplate-api", `${c.appSlug}-api`],
     ["NestReactBoilerplate", c.className],
-    ["admin.example.com", `admin.${c.domain}`],
-    ["app.example.com", `app.${c.domain}`],
-    ["auth.example.com", `auth.${c.domain}`],
-    ["issuer.example.com", `issuer.${c.domain}`],
-    ["user@example.com", `user@${c.domain}`],
-    ["admin@example.com", `admin@${c.domain}`],
     ["your-github-org", c.owner],
-    // Keep this last: it covers every remaining public surface, including
-    // site, mobile, user/admin APIs, bot APIs, staging hosts, TLS SANs, CSP,
-    // environment examples, and deployment documentation.
+    // Keep this last: landing-app owns the apex while every other deployable
+    // uses <app-id>.example.com. Replacing the root updates both forms plus
+    // staging hosts, TLS SANs, CSP, environment examples, and deployment docs.
     ["example.com", c.domain],
   ]);
 }

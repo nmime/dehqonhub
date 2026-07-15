@@ -51,9 +51,11 @@ This file is the agent-oriented map for fast context retrieval. It summarizes wh
 
 ## Current deployables
 
-The recommended `starter` baseline requires `starter-app`, `auth-app-api`, and
-`user-app-api`. Admin/user reference frontends, landing, SSR, mobile, bot
-deployables, and the fullstack e2e project are opt-in through other presets.
+Every deployable below is independently selectable. The `fullstack` profile is
+an explicit shortcut for all core product frontends, the admin/user/auth APIs,
+and fullstack E2E; bot APIs remain explicit integrations. No deployable is a
+repository default, and setup may be rerun to add another app without replacing
+the current selection.
 See the [Scaffolding and Extension Contract](../scaffolding-and-extension.md)
 before adding or registering a deployable.
 
@@ -64,13 +66,11 @@ Backend deployables:
 - `user-app-api`: `apps/backend/user/user-app-api`
 - `discord-app-api`: `apps/backend/discord/discord-app-api`
 - `telegram-bot-api`: `apps/backend/telegram/telegram-bot-api`
-- `telegram-bot-worker`: `apps/backend/telegram/telegram-bot-worker`
 
 Frontend deployables:
 
-- `starter-app`: `apps/frontend/starter-app` (neutral product starting point)
 - `admin-app`: `apps/frontend/admin`
-- `user-app`: `apps/frontend/app`
+- `user-app`: `apps/frontend/app` (authenticated user application)
 - `landing-app`: `apps/frontend/landing`
 - `site-app`: `apps/frontend/site`
 - `mobile-app`: `apps/frontend/mobile`

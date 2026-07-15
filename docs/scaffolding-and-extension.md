@@ -23,6 +23,13 @@ The repository separates three decisions that should not be conflated:
 This separation keeps setup repeatable and prevents a generator from silently
 publishing a new network surface.
 
+Before choosing `nrb add`, inspect the Nx project graph, setup catalog, nearest
+`AGENTS.md`, routes, and modules. Product work that belongs to an existing app,
+library, or feature must modify that owner in place. A new generator root is
+correct only when the product needs genuinely new runtime or library ownership;
+never create a sibling clone, `-new`/`-v2` variant, generic starter app, or
+nested copy of this repository to avoid understanding the existing structure.
+
 ## Fresh clone to verified product workspace
 
 Run from a clean branch created from current `main`:
@@ -44,8 +51,7 @@ pnpm nrb init \
   --domain acme.example \
   --owner acme-org
 
-pnpm nrb setup --preset starter --non-interactive --dry-run
-pnpm nrb setup --preset starter --non-interactive
+pnpm nrb setup
 
 cp .env.example .env
 # Replace placeholder secrets in .env from the environment's secret manager.
@@ -65,52 +71,67 @@ runs the workspace doctor, resolves all five presets as dry runs with exact app
 closures, then generates and builds/tests every supported application renderer
 and backend/frontend/common library runtime.
 
-## Required baseline and optional surfaces
+## Selectable reference and optional surfaces
 
-The neutral `starter` preset is the recommended product baseline:
+The repository ships complete reference implementations for each supported
+runtime, but a new product selects only what it needs. No deployable is the
+repository default. `fullstack` is an explicit shortcut for selecting every
+core reference surface, not a mandatory baseline:
 
-| Classification | Application/capability                          | Why it is selected                                      |
-| -------------- | ----------------------------------------------- | ------------------------------------------------------- |
-| Required       | `starter-app`                                   | Neutral Vite product shell without reference-product UI |
-| Required       | `auth-app-api`                                  | Authentication/session boundary                         |
-| Required       | `user-app-api`                                  | Product/user API boundary                               |
-| Required       | PostgreSQL                                      | Auth and product persistence                            |
-| Required       | design tokens and i18n                          | Shared visual/runtime baseline                          |
-| Optional       | `admin-app` + `admin-app-api`                   | Reference admin flow and RBAC surface                   |
-| Optional       | `user-app`                                      | Richer reference user flow                              |
-| Optional       | `landing-app`                                   | Astro public marketing surface                          |
-| Optional       | `site-app`                                      | Vike SSR surface                                        |
-| Optional       | `mobile-app`                                    | Expo/React Native client                                |
-| Optional       | Discord/Telegram APIs and Telegram worker       | Bot and social integrations                             |
-| Optional       | Redis, NATS, S3, OTEL, analytics, notifications | Enable only for selected product capabilities           |
+| Classification | Application/capability                                        | Why it is selected                                 |
+| -------------- | ------------------------------------------------------------- | -------------------------------------------------- |
+| Reference      | `admin-app` + `admin-app-api`                                 | Admin flow and RBAC boundary                       |
+| Reference      | `user-app` + `user-app-api`                                   | Authenticated user flow and API boundary           |
+| Reference      | `auth-app-api`                                                | Authentication/session boundary                    |
+| Reference      | `landing-app`                                                 | Astro public landing surface                       |
+| Reference      | `site-app`                                                    | Vike SSR site surface                              |
+| Reference      | `mobile-app`                                                  | Expo/React Native client                           |
+| Reference      | `fullstack-e2e`                                               | Cross-application contract and browser proof       |
+| Selectable     | PostgreSQL, Redis, OTEL, Swagger                              | Persistence, cache, observability, and API tooling |
+| Selectable     | design tokens, i18n, and authz                                | Shared UI, locale, and authorization capabilities  |
+| Optional       | Discord and Telegram APIs                                     | Bot and social integrations                        |
+| Optional       | NATS, S3, analytics, notifications, feature flags, websockets | Capability-driven extensions                       |
 
-`minimal`, `fullstack`, `enterprise`, and `bots` are deliberate alternatives,
+`minimal`, `web`, `enterprise`, and `bots` are deliberate alternatives,
 documented in [Presets and Technologies](setup/presets-and-technologies.md).
 Unselected applications remain as buildable reference implementations unless a
 maintainer separately scopes their deletion.
 
+Setup is deliberately repeatable:
+
+```bash
+# See what is selected.
+pnpm nrb setup --list
+
+# Add another frontend and its required dependencies later.
+pnpm nrb setup --app mobile-app --non-interactive
+
+# Or rerun the wizard; current choices are kept by default.
+pnpm nrb setup
+```
+
 ## Existing public domain contract
 
 The checked-in `example.com` values are replaceable environment placeholders,
-not live or starter-specific domains.
+not live domains.
 
-| Deployable         | Template hostname          | Default state |
-| ------------------ | -------------------------- | ------------- |
-| `landing-app`      | `example.com`              | enabled       |
-| `site-app`         | `site.example.com`         | enabled       |
-| `user-app`         | `app.example.com`          | enabled       |
-| `admin-app`        | `admin.example.com`        | enabled       |
-| `mobile-app`       | `mobile.example.com`       | enabled       |
-| `auth-app-api`     | `auth.example.com`         | enabled       |
-| `user-app-api`     | `api.example.com`          | enabled       |
-| `admin-app-api`    | `admin-api.example.com`    | enabled       |
-| `discord-app-api`  | `discord-api.example.com`  | opt-in        |
-| `telegram-bot-api` | `telegram-api.example.com` | opt-in        |
+No deployable is selected by default. `landing-app` is the canonical public
+entry point and owns the apex domain. Every other deployable follows
+`<app-id>.<root-domain>`. These hostnames are the complete mapping rewritten
+when `pnpm nrb init` prepares the template for a product.
 
-`starter-app` intentionally has no permanent `starter.*` hostname. When it is
-the product frontend, assign it a product-owned hostname and replace the
-corresponding reference frontend in environment-specific Helm/Compose values.
-See [Frontend Deployment Topology](frontend-deployment-topology.md).
+| Deployable         | Template hostname              | Catalog class |
+| ------------------ | ------------------------------ | ------------- |
+| `landing-app`      | `example.com`                  | reference     |
+| `site-app`         | `site-app.example.com`         | reference     |
+| `user-app`         | `user-app.example.com`         | reference     |
+| `admin-app`        | `admin-app.example.com`        | reference     |
+| `mobile-app`       | `mobile-app.example.com`       | reference     |
+| `auth-app-api`     | `auth-app-api.example.com`     | reference     |
+| `user-app-api`     | `user-app-api.example.com`     | reference     |
+| `admin-app-api`    | `admin-app-api.example.com`    | reference     |
+| `discord-app-api`  | `discord-app-api.example.com`  | optional      |
+| `telegram-bot-api` | `telegram-bot-api.example.com` | optional      |
 
 ## Add an application
 
@@ -149,9 +170,12 @@ A generated app is complete only after the applicable items are explicit:
 
 - **Ownership:** product purpose, owning team, renderer, Nx tags, local port,
   and nearest `README.md`/`AGENTS.md` are correct.
-- **Selection:** if `pnpm nrb setup` should select the app, add its stable ID to
-  `packages/tooling/src/setup/schema.ts`, its dependencies to `catalog.ts`, and
-  the intended preset(s) to `presets.ts`; update schema/planner/preset tests.
+- **Selection:** every generated deployable must be registered with a stable ID
+  in `packages/tooling/src/setup/schema.ts`, classified with its dependencies in
+  `catalog.ts`, and added to the complete `enterprise` profile in `presets.ts`.
+  Add it to other intended profiles only when it belongs there, then update
+  schema/planner/preset tests. `pnpm run onboarding:verify` intentionally fails
+  while any real Nx application is absent from this catalog contract.
 - **Environment:** add only required example variables, validation, secret
   ownership, CORS origins, API base URLs, CSP connect sources, and local ports.
 - **Backend API:** keep standard `/health`, `/health/private`, `/live`, and
@@ -197,11 +221,11 @@ page boundary belong to one product capability:
 ```bash
 pnpm nrb add feature invoices \
   --api-app user-app-api \
-  --frontend-app starter-app \
+  --frontend-app user-app \
   --dry-run
 pnpm nrb add feature invoices \
   --api-app user-app-api \
-  --frontend-app starter-app
+  --frontend-app user-app
 ```
 
 The generator creates backend shared and main libraries, MikroORM persistence
@@ -221,7 +245,8 @@ Before completion:
 
 ## Generator maintenance
 
-Do not create a second scaffold path. Extend the custom generators under
+Do not create a second scaffold path. Do not use generator `--force` as a
+substitute for editing existing product code. Extend the custom generators under
 `packages/tooling/src/generators/**`, update `generators.json` and the unified
 CLI only when a new generator is genuinely needed, and add regression tests.
 

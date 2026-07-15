@@ -17,14 +17,7 @@ import { z } from 'zod';
 // ---------------------------------------------------------------------------
 
 /** Frontend application shells that can be enabled / disabled. */
-export const frontendAppIds = [
-  'starter-app',
-  'admin-app',
-  'user-app',
-  'landing-app',
-  'site-app',
-  'mobile-app',
-] as const;
+export const frontendAppIds = ['admin-app', 'user-app', 'landing-app', 'site-app', 'mobile-app'] as const;
 export type FrontendAppId = (typeof frontendAppIds)[number];
 
 /** Backend services that can be enabled / disabled. */
@@ -34,7 +27,6 @@ export const backendAppIds = [
   'auth-app-api',
   'discord-app-api',
   'telegram-bot-api',
-  'telegram-bot-worker',
 ] as const;
 export type BackendAppId = (typeof backendAppIds)[number];
 
@@ -63,7 +55,7 @@ export const capabilityIds = [
 export type CapabilityId = (typeof capabilityIds)[number];
 
 /** Supported preset names — deterministic, expandable to apps + capabilities. */
-export const presetIds = ['minimal', 'starter', 'fullstack', 'enterprise', 'bots'] as const;
+export const presetIds = ['minimal', 'web', 'fullstack', 'enterprise', 'bots'] as const;
 export type PresetId = (typeof presetIds)[number];
 
 // ---------------------------------------------------------------------------
@@ -76,8 +68,8 @@ export const schemaVersion = '1.0.0' as const;
  * The root configuration schema.
  *
  * - `schemaVersion` MUST equal the current major version string.
- * - `preset` is mutually exclusive with explicit `apps` / `capabilities`
- *   (the preset acts as a starting point; explicit lists override).
+ * - `preset` is an optional exact shortcut; the CLI materializes it into a
+ *   custom selection before additive/removal updates.
  * - `apps` is a flat string[] restricted to known IDs.
  * - `capabilities` is a flat string[] restricted to known IDs.
  * - `options` holds boolean toggles for generation behaviour.

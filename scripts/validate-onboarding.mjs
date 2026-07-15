@@ -2,6 +2,7 @@
 
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const workspaceRoot = process.cwd();
@@ -40,8 +41,27 @@ for (const name of requiredDoctorChecks) {
 
 const presetExpectations = {
   minimal: ['auth-app-api', 'user-app-api'],
-  starter: ['auth-app-api', 'starter-app', 'user-app-api'],
-  fullstack: ['admin-app', 'admin-app-api', 'auth-app-api', 'fullstack-e2e', 'landing-app', 'user-app', 'user-app-api'],
+  web: [
+    'admin-app',
+    'admin-app-api',
+    'auth-app-api',
+    'fullstack-e2e',
+    'landing-app',
+    'site-app',
+    'user-app',
+    'user-app-api',
+  ],
+  fullstack: [
+    'admin-app',
+    'admin-app-api',
+    'auth-app-api',
+    'fullstack-e2e',
+    'landing-app',
+    'mobile-app',
+    'site-app',
+    'user-app',
+    'user-app-api',
+  ],
   enterprise: [
     'admin-app',
     'admin-app-api',
@@ -51,14 +71,114 @@ const presetExpectations = {
     'landing-app',
     'mobile-app',
     'site-app',
-    'starter-app',
     'telegram-bot-api',
-    'telegram-bot-worker',
     'user-app',
     'user-app-api',
   ],
-  bots: ['auth-app-api', 'discord-app-api', 'telegram-bot-api', 'telegram-bot-worker', 'user-app-api'],
+  bots: ['auth-app-api', 'discord-app-api', 'telegram-bot-api', 'user-app-api'],
 };
+
+const referenceApplications = [
+  'admin-app',
+  'admin-app-api',
+  'auth-app-api',
+  'fullstack-e2e',
+  'landing-app',
+  'mobile-app',
+  'site-app',
+  'user-app',
+  'user-app-api',
+];
+const optionalApplications = ['discord-app-api', 'telegram-bot-api'];
+
+function findApplicationProjects(directory) {
+  const projects = [];
+  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+    const path = resolve(directory, entry.name);
+    if (entry.isDirectory()) {
+      projects.push(...findApplicationProjects(path));
+    } else if (entry.name === 'project.json') {
+      const project = JSON.parse(readFileSync(path, 'utf8'));
+      assert.equal(typeof project.name, 'string', `${path} must declare an Nx project name.`);
+      projects.push(project.name);
+    }
+  }
+  return projects;
+}
+
+const actualApplications = findApplicationProjects(resolve(workspaceRoot, 'apps')).sort();
+const selectionCatalog = runJson(['setup', '--list', '--json']);
+const catalogApplications = selectionCatalog.applications ?? [];
+assert.deepEqual(
+  catalogApplications.map((entry) => entry.id).sort(),
+  actualApplications,
+  'The setup catalog must contain every real Nx application and no phantom projects.',
+);
+for (const entry of catalogApplications) {
+  if (entry.platform === 'e2e') {
+    assert.equal(entry.hostname, null, `Non-deployable application ${entry.id} must not publish a hostname.`);
+    continue;
+  }
+
+  const expectedHostname = entry.id === 'landing-app' ? 'example.com' : `${entry.id}.example.com`;
+  assert.equal(entry.hostname, expectedHostname, `Deployable application ${entry.id} has the wrong public hostname.`);
+}
+assert.deepEqual(
+  catalogApplications
+    .filter((entry) => entry.classification === 'reference')
+    .map((entry) => entry.id)
+    .sort(),
+  referenceApplications,
+  'The reference application classification changed unexpectedly.',
+);
+assert.deepEqual(
+  catalogApplications
+    .filter((entry) => entry.classification === 'optional')
+    .map((entry) => entry.id)
+    .sort(),
+  optionalApplications,
+  'Only Telegram and Discord APIs may be optional in the template catalog.',
+);
+assert.deepEqual(
+  [...presetExpectations.enterprise].sort(),
+  actualApplications,
+  'The enterprise profile must contain every real Nx application and no phantom projects.',
+);
+assert.deepEqual(
+  [...presetExpectations.fullstack].sort(),
+  referenceApplications,
+  'The fullstack profile must contain every reference application and no optional integration.',
+);
+
+const adminSelection = runJson([
+  'setup',
+  '--replace',
+  '--app',
+  'admin-app',
+  '--non-interactive',
+  '--dry-run',
+  '--json',
+]);
+assert.deepEqual(
+  adminSelection.summary?.apps,
+  ['admin-app', 'admin-app-api', 'auth-app-api'],
+  'Selecting admin-app must include both APIs used by its runtime.',
+);
+
+const e2eSelection = runJson([
+  'setup',
+  '--replace',
+  '--app',
+  'fullstack-e2e',
+  '--non-interactive',
+  '--dry-run',
+  '--json',
+]);
+assert.deepEqual(
+  e2eSelection.summary?.apps,
+  ['admin-app', 'admin-app-api', 'auth-app-api', 'fullstack-e2e', 'landing-app', 'user-app', 'user-app-api'],
+  'Selecting fullstack-e2e must include the complete stack that its runtime starts.',
+);
 
 const verifiedPresets = [];
 for (const [preset, expectedApps] of Object.entries(presetExpectations)) {
@@ -83,6 +203,10 @@ process.stdout.write(
       status: 'ok',
       node: doctor.checks.find((entry) => entry.name === 'node-version')?.message,
       pnpm: doctor.checks.find((entry) => entry.name === 'pnpm')?.message,
+      catalog: {
+        referenceApplications: referenceApplications.length,
+        optionalApplications: optionalApplications.length,
+      },
       presets: verifiedPresets,
     },
     null,

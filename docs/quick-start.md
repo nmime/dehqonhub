@@ -78,9 +78,9 @@ Skip this step only when evaluating the upstream template unchanged.
 
 ## 4. Select applications and capabilities
 
-The boilerplate ships with neutral and reference applications. The recommended
-`starter` preset selects `starter-app`; it does not reuse the reference
-admin/user page composition.
+No application is selected by default. Choose only the frontend and backend
+deployables this product needs. Profiles such as `web` and `fullstack` are
+optional shortcuts; every application remains individually selectable.
 
 ### Interactive setup (recommended)
 
@@ -88,13 +88,22 @@ admin/user page composition.
 pnpm nrb setup
 ```
 
-You will be guided through preset selection, app toggles, and capability toggles.
+On the first run, `custom` is the default starting point. Select frontend,
+backend, E2E, and capability entries individually. On later runs, the wizard
+loads the current selection; pressing Enter keeps existing choices while `y`
+adds another application.
 
 ### Non-interactive setup (CI / scripted)
 
 ```bash
-# Neutral product baseline:
-pnpm nrb setup --preset starter --non-interactive
+# Exact profile shortcut:
+pnpm nrb setup --preset fullstack --non-interactive
+
+# Add another frontend later without replacing current choices:
+pnpm nrb setup --app mobile-app --non-interactive
+
+# Inspect available/current choices:
+pnpm nrb setup --list
 
 # Using a config file:
 cp nrb.config.example.json nrb.config.json
@@ -102,14 +111,12 @@ cp nrb.config.example.json nrb.config.json
 pnpm nrb setup --config nrb.config.json
 
 # Dry run first:
-pnpm nrb setup --preset starter --dry-run
+pnpm nrb setup --preset fullstack --dry-run
 ```
 
-### Skip setup
-
-Before setup, `pnpm run dev` uses the neutral starter selection:
-`starter-app`, `user-app-api`, and `auth-app-api`. Run the `fullstack` or
-`enterprise` preset only when you intentionally want the richer reference apps.
+`pnpm run dev` requires `.nrb/workspace.json` and starts only its selected
+deployables. This deliberate refusal before setup prevents a hidden default app
+or an accidental all-services development stack.
 
 ## 5. Environment variables
 
@@ -134,24 +141,22 @@ pnpm run db:migrate
 ## 7. Start development servers
 
 ```bash
-# Neutral starter plus its APIs:
+# Applications selected by setup:
 pnpm run dev
 
-# Explicitly start every serve target, including reference apps:
+# Start every serve target, including bot integrations:
 pnpm run dev:all
 
 # Or start specific apps with Nx:
-pnpm exec nx serve starter-app
 pnpm exec nx serve admin-app
 pnpm exec nx serve user-app
 pnpm exec nx serve admin-app-api
 ```
 
-### Default local ports
+### Local port contract
 
 | App         | Port | Framework         |
 | ----------- | ---- | ----------------- |
-| starter-app | 4204 | React + Vite      |
 | admin-app   | 4200 | React + Vite      |
 | user-app    | 4201 | React + Vite      |
 | landing-app | 4202 | Astro             |

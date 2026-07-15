@@ -4,6 +4,30 @@ Common issues and recovery procedures for the NRB setup engine, Nx builds, and t
 
 ## Setup engine issues
 
+### Setup reports that no applications are selected
+
+```
+Configuration error: No applications selected. Run `pnpm nrb setup` interactively or pass --preset, --app, or --config.
+```
+
+**Cause**: A fresh non-interactive workspace has no implicit default
+application.
+
+**Fix**: Run the selection wizard, choose an exact profile, or select individual
+applications:
+
+```bash
+pnpm nrb setup
+pnpm nrb setup --app landing-app --app auth-app-api --non-interactive
+```
+
+After setup, rerun the wizard or use additive flags to extend the selection:
+
+```bash
+pnpm nrb setup --app mobile-app --non-interactive
+pnpm nrb setup --list
+```
+
 ### `pnpm nrb setup` fails with configuration validation error
 
 ```
@@ -13,10 +37,12 @@ Configuration validation failed:
 
 **Cause**: The selected apps require capabilities that are not enabled.
 
-**Fix**: The setup engine auto-enables required capabilities. If running non-interactively, add the missing capabilities:
+**Fix**: The setup engine auto-enables required capabilities. If a hand-authored
+configuration is invalid, add the missing capability or select the application
+again through the CLI:
 
 ```bash
-pnpm nrb setup --preset fullstack --capability authz --non-interactive
+pnpm nrb setup --capability authz --non-interactive
 ```
 
 Or use a preset that includes all required dependencies.
@@ -58,7 +84,7 @@ pnpm nrb setup              # apply
 
 | Check             | Symptom                                                | Fix                                                                         |
 | ----------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `node-version`    | `Node.js v24.x.x — required >=24 <25`                  | `nvm use` or install Node.js 26.                                            |
+| `node-version`    | `Node.js v24.x.x — required >=24 <25`                  | `nvm use` or install the latest Node.js 24 release.                         |
 | `pnpm`            | `pnpm not found`                                       | `corepack enable && corepack prepare pnpm@11.11.0 --activate`.              |
 | `docker`          | `Docker not available`                                 | Install Docker Desktop or Docker Engine. Marked as optional for E2E.        |
 | `manifests`       | `Missing: package.json`                                | Check that you're in the workspace root.                                    |
@@ -104,7 +130,7 @@ error TS2307: Cannot find module '@app/backend-feature-invoices-main'
 **Fix**: The path alias was generated but `tsconfig.base.json` wasn't updated correctly. Run:
 
 ```bash
-pnpm nrb add feature invoices --force
+pnpm nrb add feature invoices --api-app user-app-api --frontend-app user-app --force
 ```
 
 Or manually add the alias to `tsconfig.base.json`:

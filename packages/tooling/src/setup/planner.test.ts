@@ -378,7 +378,7 @@ describe('planner — resolveConfig', () => {
     assert.ok(resolved.capabilities.includes('postgres'));
   });
 
-  it('explicit apps override but preserve preset deps', () => {
+  it('explicit apps extend a preset and preserve its dependencies', () => {
     const config = parseNrbConfig({
       schemaVersion,
       preset: 'minimal',
@@ -417,16 +417,22 @@ describe('planner — M1 validateSelection rejection', () => {
     // but doesn't add its required capabilities.
     // Actually expandDependencies WILL add required caps. So we need
     // a case where an app's requiresApps are missing.
-    // fullstack-e2e requires auth-app-api + user-app-api; if we only
-    // list fullstack-e2e, expandDependencies should add those.
-    // Let's test that validation PASSES for valid deps.
+    // fullstack-e2e declares the exact Docker/runtime stack it starts. If we
+    // list only the E2E project, dependency expansion must add that stack.
     const config = parseNrbConfig({
       schemaVersion,
       apps: ['fullstack-e2e'],
     });
     const resolved = resolveConfig(config);
-    assert.ok(resolved.apps.includes('auth-app-api'));
-    assert.ok(resolved.apps.includes('user-app-api'));
+    assert.deepEqual(resolved.apps, [
+      'admin-app',
+      'admin-app-api',
+      'auth-app-api',
+      'fullstack-e2e',
+      'landing-app',
+      'user-app',
+      'user-app-api',
+    ]);
   });
 
   it('rejects config where expanded deps still have issues', () => {
@@ -456,7 +462,7 @@ describe('planner — generateConfigFile', () => {
   });
 
   it('content is deterministic', () => {
-    const config = parseNrbConfig({ schemaVersion, preset: 'starter' });
+    const config = parseNrbConfig({ schemaVersion, preset: 'web' });
     const c1 = generateConfigFile(config);
     const c2 = generateConfigFile(config);
     assert.equal(c1.content, c2.content);
@@ -472,13 +478,13 @@ describe('planner — generateSummaryMd', () => {
     const summary = {
       apps: ['admin-app'],
       capabilities: ['postgres'],
-      preset: 'starter',
+      preset: 'web',
       configHash: 'abc123',
     };
     const result = generateSummaryMd(summary);
     assert.equal(result.path, '.nrb/summary.md');
     assert.ok(result.content.includes('# Setup Plan Summary'));
-    assert.ok(result.content.includes('`starter`'));
+    assert.ok(result.content.includes('`web`'));
     assert.ok(result.content.includes('- admin-app'));
   });
 
@@ -523,7 +529,7 @@ describe('planner — runtime workspace manifest', () => {
     const result = generateWorkspaceManifest({
       apps: ['user-app', 'user-app-api', 'fullstack-e2e'],
       capabilities: ['postgres'],
-      preset: 'starter',
+      preset: 'web',
       configHash: 'abc',
     });
     const manifest = JSON.parse(result.content);
@@ -562,7 +568,7 @@ describe('planner — plan() basic', () => {
   });
 
   it('generated plan includes the runtime-consumed workspace manifest', () => {
-    const config = parseNrbConfig({ schemaVersion, preset: 'starter' });
+    const config = parseNrbConfig({ schemaVersion, preset: 'web' });
     const result = plan(config, emptyState);
     assert.ok(result.operations.some((operation) => operation.path === '.nrb/workspace.json'));
   });
@@ -675,7 +681,7 @@ describe('planner — E2E full flow', () => {
   });
 
   it('snapshots contain no timestamps or machine paths', () => {
-    const config = parseNrbConfig({ schemaVersion, preset: 'starter' });
+    const config = parseNrbConfig({ schemaVersion, preset: 'web' });
     const result = plan(config, emptyState);
     for (const op of result.operations) {
       assert.ok(!op.path.startsWith('/'), `Path should be relative: ${op.path}`);

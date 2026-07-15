@@ -7,7 +7,8 @@ Product initialization has two deliberate phases:
 1. `pnpm nrb init` owns product identity and all example domains.
 2. `pnpm nrb setup` owns application/capability selection.
 
-Run both from a clean branch and inspect both dry runs:
+Run both from a clean branch. Preview identity replacement, then make the app
+selection interactively:
 
 ```bash
 pnpm nrb init \
@@ -20,8 +21,7 @@ pnpm nrb init \
   --domain acme.example \
   --owner your-github-org
 
-pnpm nrb setup --preset starter --non-interactive --dry-run
-pnpm nrb setup --preset starter --non-interactive
+pnpm nrb setup
 ```
 
 The compatibility alias `pnpm init:project -- ...` invokes the same product
@@ -31,16 +31,22 @@ initializer. New instructions and automation should use `pnpm nrb init`.
 
 The `pnpm nrb setup` engine is the primary way to configure which applications and capabilities your project uses. It is schema-validated, idempotent, and safe to re-run.
 
-The `starter` preset selects `starter-app`, a deliberately neutral Vite shell.
-The existing `admin-app`, `user-app`, landing, site, and mobile surfaces are
-reference implementations; they are not copied into a new product shell.
+There is no default frontend or API application. Interactive setup starts from
+an empty custom selection and asks which frontend, backend, E2E, and capability
+entries the product needs. Profiles remain optional exact shortcuts.
 
 ```bash
 # Interactive wizard:
 pnpm nrb setup
 
-# Non-interactive neutral product baseline:
-pnpm nrb setup --preset starter --non-interactive
+# Non-interactive exact profile shortcut:
+pnpm nrb setup --preset fullstack --non-interactive
+
+# Add another application later, preserving the current selection:
+pnpm nrb setup --app mobile-app --non-interactive
+
+# Review current and available choices:
+pnpm nrb setup --list
 
 # Config file:
 cp nrb.config.example.json nrb.config.json
@@ -48,7 +54,7 @@ cp nrb.config.example.json nrb.config.json
 pnpm nrb setup --config nrb.config.json
 
 # Dry run first:
-pnpm nrb setup --preset starter --dry-run
+pnpm nrb setup --preset fullstack --dry-run
 ```
 
 See [Setup and Configuration](setup/configuration.md) for details.
@@ -58,6 +64,11 @@ not rewrite Git history. Its required `--domain` replaces `example.com` across
 the root site, site/mobile/admin/user surfaces, auth/user/admin APIs, bot APIs,
 staging hosts, TLS/CSP/deployment values, and example emails. It does not create
 DNS records, certificates, environment secrets, or infrastructure accounts.
+`landing-app` is the public entry point and owns the apex domain: `example.com`
+becomes `acme.example`. Every other deployable keeps its exact app ID as the
+hostname prefix; for example, `auth-app-api.example.com` becomes
+`auth-app-api.acme.example`. The `fullstack-e2e` test project is not deployed
+and therefore has no hostname.
 
 ## Manual checklist
 

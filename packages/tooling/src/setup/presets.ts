@@ -28,7 +28,8 @@ export interface PresetDefinition {
 }
 
 /**
- * Five canonical presets, ordered from minimal to enterprise.
+ * Five supported presets, ordered from the smallest specialized profile to
+ * the complete repository profile.
  *
  * Arrays are source-sorted for readability; `expandPreset` returns
  * canonical (sorted + expanded) arrays.
@@ -46,24 +47,42 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
   },
 
   /**
-   * Starter: one frontend app + one backend + auth.  Good for MVP
-   * applications.
+   * Web: every core browser application with its APIs and end-to-end project.
    */
   {
-    id: 'starter',
-    description: 'Neutral frontend + backend + auth — product-ready starting point',
-    apps: ['starter-app', 'user-app-api', 'auth-app-api'],
-    capabilities: ['postgres', 'design-tokens', 'i18n'],
+    id: 'web',
+    description: 'All core web apps, APIs, and E2E coverage — web-only workspace',
+    apps: [
+      'admin-app',
+      'admin-app-api',
+      'user-app',
+      'user-app-api',
+      'auth-app-api',
+      'landing-app',
+      'site-app',
+      'fullstack-e2e',
+    ],
+    capabilities: ['postgres', 'redis', 'design-tokens', 'authz', 'i18n', 'otel', 'swagger'],
   },
 
   /**
-   * Fullstack: all core frontend + backend apps with standard capabilities.
-   * The default for production-ready setups.
+   * Fullstack: every core product app, API, renderer, and E2E project. Bot
+   * integrations remain an explicit opt-in through bots or enterprise.
    */
   {
     id: 'fullstack',
     description: 'All core apps with standard capabilities — production-ready',
-    apps: ['admin-app', 'admin-app-api', 'user-app', 'user-app-api', 'auth-app-api', 'landing-app', 'fullstack-e2e'],
+    apps: [
+      'admin-app',
+      'admin-app-api',
+      'user-app',
+      'user-app-api',
+      'auth-app-api',
+      'landing-app',
+      'site-app',
+      'mobile-app',
+      'fullstack-e2e',
+    ],
     capabilities: ['postgres', 'redis', 'design-tokens', 'authz', 'i18n', 'otel', 'swagger'],
   },
 
@@ -75,7 +94,6 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
     id: 'enterprise',
     description: 'Every supported app and capability — complete stack',
     apps: [
-      'starter-app',
       'admin-app',
       'admin-app-api',
       'user-app',
@@ -86,7 +104,6 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
       'mobile-app',
       'discord-app-api',
       'telegram-bot-api',
-      'telegram-bot-worker',
       'fullstack-e2e',
     ],
     capabilities: [
@@ -114,7 +131,7 @@ export const presets: ReadonlyArray<Readonly<PresetDefinition>> = [
   {
     id: 'bots',
     description: 'Telegram + Discord bots — bot-first setup',
-    apps: ['auth-app-api', 'user-app-api', 'telegram-bot-api', 'telegram-bot-worker', 'discord-app-api'],
+    apps: ['auth-app-api', 'user-app-api', 'telegram-bot-api', 'discord-app-api'],
     capabilities: ['postgres', 'redis', 'telegram-bot', 'discord-bot', 'otel'],
   },
 ] as const;

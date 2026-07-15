@@ -1,3 +1,5 @@
+## [1.3.0](https://github.com/nmime/nest-react-boilerplate/compare/v1.2.0...v1.3.0) (2026-07-15)
+
 ## [1.2.0](https://github.com/nmime/nest-react-boilerplate/compare/v1.1.5...v1.2.0) (2026-07-14)
 
 ## [1.1.5](https://github.com/nmime/nest-react-boilerplate/compare/v1.1.4...v1.1.5) (2026-07-14)
@@ -172,6 +174,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 Version bumps, changelog entries, and git tags are automated by semantic-release via Conventional Commits.
 
 ## [Unreleased]
+
+### Added
+
+- Explicit, repeatable application selection with reference frontend/API/E2E surfaces, optional Telegram and Discord APIs, and dependency-safe reruns.
+- Product initialization now rewrites tracked `.env*.example` domain templates while leaving real `.env` files untouched.
+- Database migration verification now allows cold Docker startup during the full repository test matrix.
+
+### Changed
+
+- Updated `@types/supertest` to 7.2.1 after a registry and peer-compatibility audit; newer incompatible runtime/compiler majors remain documented and intentionally deferred.
+- Standardized public hostnames with `landing-app` on the apex domain and every other deployable on `<app-id>.<root-domain>`; for example, `auth-app-api.example.com` maps directly to `auth-app-api`.
+- Stabilized Node.js 24 tooling tests by isolating Docker migration coverage and running process-output setup tests in-process.
 
 ### Fixed
 

@@ -8,20 +8,30 @@
  */
 import assert from "node:assert/strict";
 import { describe, it, beforeEach, afterEach } from "node:test";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 
 // ---------------------------------------------------------------------------
 // Re-exports from existing modules we test against
 // ---------------------------------------------------------------------------
-import { parseNrbConfig, schemaVersion, type NrbConfig, type AppId, type CapabilityId, presetIds } from "../../setup/schema.js";
+import {
+  parseNrbConfig,
+  schemaVersion,
+  type NrbConfig,
+  type AppId,
+  type CapabilityId,
+  presetIds,
+} from "../../setup/schema.js";
 import { plan, resolveConfig } from "../../setup/planner.js";
 import { emptyState } from "../../setup/state.js";
 import { expandPreset } from "../../setup/presets.js";
-import type { PromptResult } from "../../setup/prompts.js";
+import type { PromptIo, PromptResult } from "../../setup/prompts.js";
 
 // ---------------------------------------------------------------------------
 // Import commands under test
 // ---------------------------------------------------------------------------
-import { parseArgs, runSetupCommand } from "./setup.js";
+import { parseArgs, runSetupCommand, runSetupCommandInteractive } from "./setup.js";
 import { runDoctorCommand, type DoctorCheck } from "./doctor.js";
 
 // ---------------------------------------------------------------------------
@@ -71,9 +81,13 @@ describe("setup — parseArgs", () => {
     assert.equal(args.nonInteractive, false);
     assert.equal(args.json, false);
     assert.equal(args.help, false);
+    assert.equal(args.list, false);
+    assert.equal(args.replace, false);
     assert.equal(args.preset, undefined);
     assert.deepEqual(args.apps, []);
     assert.deepEqual(args.capabilities, []);
+    assert.deepEqual(args.removeApps, []);
+    assert.deepEqual(args.removeCapabilities, []);
   });
 
   it("parses --dry-run", () => {
@@ -104,7 +118,7 @@ describe("setup — parseArgs", () => {
 
   it("parses --preset <name>", () => {
     assert.equal(parseArgs(["--preset", "fullstack"]).preset, "fullstack");
-    assert.equal(parseArgs(["--preset=starter"]).preset, "starter");
+    assert.equal(parseArgs(["--preset=web"]).preset, "web");
   });
 
   it("parses --config <path>", () => {
@@ -122,12 +136,60 @@ describe("setup — parseArgs", () => {
     assert.deepEqual(args.capabilities, ["postgres", "redis"]);
   });
 
+  it("parses additive, removal, replacement, and list selection flags", () => {
+    const args = parseArgs([
+      "--app=mobile-app",
+      "--remove-app",
+      "landing-app",
+      "--remove-capability=analytics",
+      "--replace",
+      "--list",
+    ]);
+    assert.deepEqual(args.apps, ["mobile-app"]);
+    assert.deepEqual(args.removeApps, ["landing-app"]);
+    assert.deepEqual(args.removeCapabilities, ["analytics"]);
+    assert.equal(args.replace, true);
+    assert.equal(args.list, true);
+  });
+
+  it("rejects a missing option value", () => {
+    assert.throws(() => parseArgs(["--app"]), /--app requires a value/);
+    assert.throws(() => parseArgs(["--remove-app="]), /--remove-app requires a value/);
+  });
+
+  it("reports a missing option value without an uncaught CLI error", async () => {
+    let capturedErr = "";
+    const original = process.stderr.write;
+    process.stderr.write = (chunk: string | Buffer) => {
+      capturedErr += String(chunk);
+      return true;
+    };
+    try {
+      const status = await runSetupCommand({
+        argv: ["--app"],
+        packageRoot: "/mock/packages/tooling",
+        workspaceRoot: "/tmp",
+      });
+      assert.equal(status, 1);
+      assert.match(capturedErr, /Configuration error: --app requires a value/);
+    } finally {
+      process.stderr.write = original;
+    }
+  });
+
   it("parses all flags together", () => {
     const args = parseArgs([
-      "--preset", "minimal",
-      "--dry-run", "--prune", "--force", "--non-interactive", "--json",
-      "--app", "auth-app-api",
-      "--capability", "postgres",
+      "--preset",
+      "minimal",
+      "--dry-run",
+      "--prune",
+      "--force",
+      "--non-interactive",
+      "--json",
+      "--app",
+      "auth-app-api",
+      "--capability",
+      "postgres",
     ]);
     assert.equal(args.preset, "minimal");
     assert.equal(args.dryRun, true);
@@ -210,6 +272,71 @@ describe("setup — parseArgs", () => {
       assert.ok(capturedErr.includes("Configuration error"), "Should report configuration error");
     } finally {
       process.stderr.write = orig;
+    }
+  });
+});
+
+describe("setup — repeatable command selection", () => {
+  it("adds applications on rerun and remains idempotent", async () => {
+    const workspaceRoot = mkdtempSync(join(tmpdir(), "nrb-setup-command-"));
+    const context = (argv: string[]) => ({ argv, packageRoot: "/mock/packages/tooling", workspaceRoot });
+    try {
+      assert.equal(await runSetupCommand(context(["--replace", "--app", "landing-app", "--non-interactive"])), 0);
+      assert.equal(await runSetupCommand(context(["--app", "user-app", "--non-interactive"])), 0);
+      const afterAdd = readFileSync(join(workspaceRoot, "nrb.config.json"), "utf8");
+      const selected = JSON.parse(afterAdd) as { apps: string[] };
+      assert.deepEqual(selected.apps, ["auth-app-api", "landing-app", "user-app", "user-app-api"]);
+
+      assert.deepEqual(readdirSync(workspaceRoot).sort(), [".nrb", "nrb.config.json"]);
+      assert.equal(existsSync(join(workspaceRoot, "apps")), false, "setup must not create a parallel app tree");
+      assert.equal(existsSync(join(workspaceRoot, "services")), false, "setup must not invent a services tree");
+      assert.equal(existsSync(join(workspaceRoot, "starter-app")), false, "setup must not invent a default app");
+
+      assert.equal(await runSetupCommand(context(["--app", "user-app", "--non-interactive"])), 0);
+      assert.equal(readFileSync(join(workspaceRoot, "nrb.config.json"), "utf8"), afterAdd);
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("requires an explicit selection in a fresh non-interactive workspace", async () => {
+    const workspaceRoot = mkdtempSync(join(tmpdir(), "nrb-setup-command-"));
+    const original = process.stderr.write;
+    process.stderr.write = () => true;
+    try {
+      const status = await runSetupCommand({
+        argv: ["--non-interactive"],
+        packageRoot: "/mock/packages/tooling",
+        workspaceRoot,
+      });
+      assert.equal(status, 1);
+    } finally {
+      process.stderr.write = original;
+      rmSync(workspaceRoot, { recursive: true, force: true });
+    }
+  });
+
+  it("applies the interactive prompt result instead of discarding it", async () => {
+    const workspaceRoot = mkdtempSync(join(tmpdir(), "nrb-setup-interactive-"));
+    try {
+      const promptRunner = async (): Promise<PromptResult> => ({
+        apps: ["site-app"],
+        capabilities: [],
+        prune: false,
+        force: false,
+        dryRun: false,
+      });
+      const status = await runSetupCommandInteractive(
+        { argv: [], packageRoot: "/mock/packages/tooling", workspaceRoot },
+        promptRunner,
+      );
+      assert.equal(status, 0);
+      const config = JSON.parse(readFileSync(join(workspaceRoot, "nrb.config.json"), "utf8")) as {
+        apps: string[];
+      };
+      assert.deepEqual(config.apps, ["site-app"]);
+    } finally {
+      rmSync(workspaceRoot, { recursive: true, force: true });
     }
   });
 });
@@ -379,15 +506,54 @@ describe("doctor — runDoctorCommand", () => {
 // ============================================================================
 
 describe("prompts — nonInteractive defaults", () => {
-  it("runPrompts with nonInteractive returns minimal defaults", async () => {
+  it("runPrompts with nonInteractive does not invent a default app", async () => {
     const { runPrompts } = await import("../../setup/prompts.js");
     const result = await runPrompts(true); // nonInteractive = true
-    assert.equal(result.preset, "minimal");
-    assert.ok(Array.isArray(result.apps));
-    assert.ok(Array.isArray(result.capabilities));
+    assert.equal(result.preset, undefined);
+    assert.deepEqual(result.apps, []);
+    assert.deepEqual(result.capabilities, []);
     assert.equal(result.prune, false);
     assert.equal(result.force, false);
     assert.equal(result.dryRun, false);
+  });
+});
+
+describe("prompts — interactive selection", () => {
+  it("starts custom and selects individual frontend applications", async () => {
+    const { runPrompts } = await import("../../setup/prompts.js");
+    const writes: string[] = [];
+    const io: PromptIo = {
+      async ask(question, defaultAnswer) {
+        if (question.includes("Select (1-")) return "1";
+        if (question.includes("User Application (user-app)")) return "y";
+        return defaultAnswer ?? "";
+      },
+      write(content) {
+        writes.push(content);
+      },
+    };
+    const result = await runPrompts(false, null, io);
+    assert.deepEqual(result.apps, ["auth-app-api", "user-app", "user-app-api"]);
+    assert.deepEqual(result.capabilities, ["design-tokens", "i18n", "postgres"]);
+    assert.equal(result.preset, undefined);
+    assert.match(writes.join(""), /Frontend applications:/);
+    assert.match(writes.join(""), /Backend APIs:/);
+    assert.match(writes.join(""), /Full-stack E2E applications:/);
+    assert.match(writes.join(""), /Optional integration APIs:/);
+  });
+
+  it("loads the existing selection and preserves it while adding another app", async () => {
+    const { runPrompts } = await import("../../setup/prompts.js");
+    const existing = parseNrbConfig({ schemaVersion, apps: ["landing-app"] });
+    const io: PromptIo = {
+      async ask(question, defaultAnswer) {
+        if (question.includes("Marketing Site (site-app)")) return "y";
+        return defaultAnswer ?? "";
+      },
+      write() {},
+    };
+    const result = await runPrompts(false, existing, io);
+    assert.deepEqual(result.apps, ["landing-app", "site-app"]);
   });
 });
 
@@ -395,7 +561,7 @@ describe("prompts — buildConfig", () => {
   it("buildConfig merges prompts with overrides", async () => {
     const { buildConfig } = await import("../../setup/prompts.js");
     const prompts: PromptResult = {
-      preset: "starter",
+      preset: "web",
       apps: ["user-app"],
       capabilities: ["postgres"],
       prune: false,
@@ -404,7 +570,7 @@ describe("prompts — buildConfig", () => {
     };
     const config = buildConfig(prompts, { options: { nonInteractive: true } });
     assert.equal(config.schemaVersion, schemaVersion);
-    assert.equal(config.preset, "starter");
+    assert.equal(config.preset, "web");
     assert.equal(config.options.force, true);
     assert.equal(config.options.nonInteractive, true);
   });
@@ -429,14 +595,14 @@ describe("prompts — formatConfigSummary", () => {
     const { formatConfigSummary } = await import("../../setup/prompts.js");
     const config: NrbConfig = parseNrbConfig({
       schemaVersion: schemaVersion,
-      preset: "starter",
+      preset: "web",
       apps: ["user-app"] as unknown as string[],
       capabilities: ["postgres"] as unknown as string[],
       options: { prune: true, force: false, dryRun: true, nonInteractive: true },
     });
     const summary = formatConfigSummary(config);
     assert.ok(summary.includes("Configuration:"));
-    assert.ok(summary.includes("starter"));
+    assert.ok(summary.includes("web"));
     assert.ok(summary.includes("user-app"));
     assert.ok(summary.includes("postgres"));
     assert.ok(summary.includes("prune: true"));

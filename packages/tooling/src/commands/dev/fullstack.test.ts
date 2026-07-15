@@ -24,14 +24,10 @@ describe("dev fullstack selection", () => {
     }
   });
 
-  it("preserves a useful default before setup", () => {
+  it("requires an explicit setup selection", () => {
     const root = mkdtempSync(join(tmpdir(), "nrb-fullstack-"));
     try {
-      assert.deepEqual(resolveFullstackSelection(root), {
-        projects: ["user-app-api", "auth-app-api", "starter-app"],
-        capabilities: ["postgres"],
-        source: "default",
-      });
+      assert.throws(() => resolveFullstackSelection(root), /No application selection found/);
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
