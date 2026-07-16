@@ -88,8 +88,17 @@ assertNginxHardening(nginxSpa, 'standalone SPA');
 has(dockerfile, 'USER 101', 'frontend runtime user 101');
 has(dockerfile, 'EXPOSE 8080', 'frontend exposes unprivileged port 8080');
 const migratorStage = section(dockerfile, 'FROM workspace AS migrator', 'FROM workspace AS builder');
-has(migratorStage, 'USER node', 'migrator runs as the non-root node user');
-before(migratorStage, 'USER node', 'CMD ["pnpm", "db:migrate"]', 'migrator USER node before db:migrate command');
+has(
+  migratorStage,
+  'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
+  'migrator loads file secrets and drops privileges through the shared entrypoint',
+);
+before(
+  migratorStage,
+  'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
+  'CMD ["pnpm", "db:migrate"]',
+  'migrator entrypoint before db:migrate command',
+);
 
 // Backend images ship per-app production dependencies computed from each app's
 // generated dist package.json + pruned lockfile, not the whole-workspace tree.
@@ -123,7 +132,11 @@ assert.ok(
   !backendStage.includes('COPY --from=prod-deps /workspace/node_modules'),
   'Backend image must not copy the whole-workspace node_modules.',
 );
-has(backendStage, 'USER node', 'backend runs as the non-root node user');
+has(
+  backendStage,
+  'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
+  'backend loads file secrets and drops privileges through the shared entrypoint',
+);
 has(
   backendStage,
   "setcap 'cap_net_bind_service=+ep'",
@@ -135,6 +148,11 @@ has(
   'backend explicitly assigns container port 80',
 );
 has(backendStage, 'EXPOSE 80', 'backend exposes the API port');
+has(
+  backendStage,
+  "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')",
+  'backend image verifies the canonical backend i18n runtime output',
+);
 const siteStage = section(dockerfile, 'FROM node:${NODE_VERSION} AS site-runtime', 'FROM nginxinc/nginx-unprivileged');
 has(
   siteStage,
@@ -406,6 +424,19 @@ has(prodSiteService, "published: '${SITE_APP_PORT:-4203}'", 'site-app production
 has(prodSiteService, 'target: site-runtime', 'site-app production build uses the Vike Docker runtime target');
 
 const dockerSmoke = read('packages/tooling/src/commands/docker/smoke.ts');
+has(
+  dockerSmoke,
+  "['postgres', ...backendServices, ...frontendServices].join(',')",
+  'Docker smoke activates every dependency profile used by the tested stack',
+);
+has(dockerSmoke, 'async function buildService', 'Docker smoke retries transient image-build failures');
+const fullstackCompose = read('apps/e2e/fullstack/src/compose.ts');
+has(
+  fullstackCompose,
+  "['postgres', ...stackServices.filter((service) => service !== 'migrate')].join(',')",
+  'Full-stack e2e activates every dependency profile used by its tested stack',
+);
+has(fullstackCompose, 'async function buildService', 'Full-stack e2e retries transient image-build failures');
 const smokeJwtSecretDefault = dockerSmoke.match(/AUTH_JWT_SECRET:[\s\S]*?\?\?\s*"([^"]+)"/)?.[1];
 assert.ok(smokeJwtSecretDefault, 'Docker smoke script must set an AUTH_JWT_SECRET default');
 assert.ok(
