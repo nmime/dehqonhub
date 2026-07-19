@@ -1,19 +1,9 @@
 # @app/backend-common-network
 
-Path: `libs/backend/common/network/lib`
-Nx project: `@app/backend-common-network`
-Project type: `library`
-Tags: `platform:backend`, `type:common`, `scope:shared`, `boundary:backend-kernel`
-
 ## Purpose
 
-Backend common library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
-- Respect the declared scope tag: `shared`.
+Extracts trustworthy client IP addresses and classifies private-network
+addresses for health guards and other backend network-boundary checks.
 
 ## Commands
 

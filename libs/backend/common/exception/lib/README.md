@@ -1,19 +1,9 @@
 # @app/backend-common-exception
 
-Path: `libs/backend/common/exception/lib`
-Nx project: `@app/backend-common-exception`
-Project type: `library`
-Tags: `platform:backend`, `type:common`, `scope:shared`, `boundary:backend-kernel`
-
 ## Purpose
 
-Backend common library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
-- Respect the declared scope tag: `shared`.
+Defines the RFC 9457 exception factory, domain exception classes, Problem
+Details schemas, localization, and safe conversion utilities for backend APIs.
 
 ## Commands
 

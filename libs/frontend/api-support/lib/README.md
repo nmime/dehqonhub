@@ -1,19 +1,9 @@
 # @app/frontend-api-support
 
-Path: `libs/frontend/api-support/lib`
-Nx project: `@app/frontend-api-support`
-Project type: `library`
-Tags: `platform:frontend`, `type:util`, `scope:shared`, `fsd:layer:shared`
-
 ## Purpose
 
-Frontend shared library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import backend libraries from frontend code. Respect FSD tags and use frontend platform dependencies from `libs/frontend/package.json`.
-- Respect the declared scope tag: `shared`.
+Owns browser-safe API requests, auth and resilience middleware, environment
+resolution, error normalization, toast events, and the approved raw-fetch boundary.
 
 ## Commands
 

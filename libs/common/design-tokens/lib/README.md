@@ -1,19 +1,9 @@
 # @app/common-design-tokens
 
-Path: `libs/common/design-tokens/lib`
-Nx project: `@app/common-design-tokens`
-Project type: `library`
-Tags: `platform:shared`, `type:common`, `scope:shared`, `boundary:design-system`, `framework:neutral`
-
 ## Purpose
 
-Cross-runtime framework-neutral library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Keep this library framework-neutral so it can be used by both backend and frontend runtimes.
-- Respect the declared scope tag: `shared`.
+Defines renderer-neutral color, spacing, radius, typography, and theme tokens
+consumed by the web CSS and native Tamagui facades.
 
 ## Commands
 

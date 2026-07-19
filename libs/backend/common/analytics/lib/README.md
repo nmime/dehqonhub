@@ -1,19 +1,9 @@
 # @app/backend-common-analytics
 
-Path: `libs/backend/common/analytics/lib`
-Nx project: `@app/backend-common-analytics`
-Project type: `library`
-Tags: `platform:backend`, `type:common`, `scope:shared`, `boundary:infrastructure-adapter`
-
 ## Purpose
 
-Backend common library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
-- Respect the declared scope tag: `shared`.
+Routes typed analytics events through configurable GA4, PostHog, Umami,
+logger, or no-op providers behind one Nest module and service boundary.
 
 ## Commands
 

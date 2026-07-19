@@ -1,19 +1,9 @@
 # @app/backend-common-logger
 
-Path: `libs/backend/common/logger/lib`
-Nx project: `@app/backend-common-logger`
-Project type: `library`
-Tags: `platform:backend`, `type:common`, `scope:shared`, `boundary:infrastructure-adapter`
-
 ## Purpose
 
-Backend common library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
-- Respect the declared scope tag: `shared`.
+Creates the structured Pino logger and canonical correlation fields consumed by
+backend bootstrap, request logging, services, and operational telemetry.
 
 ## Commands
 

@@ -1,19 +1,9 @@
 # @app/backend-common-validation
 
-Path: `libs/backend/common/validation/lib`
-Nx project: `@app/backend-common-validation`
-Project type: `library`
-Tags: `platform:backend`, `type:common`, `scope:shared`, `boundary:interface-helper`
-
 ## Purpose
 
-Backend common library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
-- Respect the declared scope tag: `shared`.
+Builds the shared Nest validation pipe and converts DTO validation failures
+into typed RFC 9457 errors with JSON Pointer field details.
 
 ## Commands
 

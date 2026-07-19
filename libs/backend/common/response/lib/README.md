@@ -1,19 +1,9 @@
 # @app/backend-common-response
 
-Path: `libs/backend/common/response/lib`
-Nx project: `@app/backend-common-response`
-Project type: `library`
-Tags: `platform:backend`, `type:common`, `scope:shared`, `boundary:interface-helper`
-
 ## Purpose
 
-Backend common library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Do not import frontend libraries from backend code. Shared backend dependencies belong in `libs/backend/package.json`.
-- Respect the declared scope tag: `shared`.
+Maps successful values and `neverthrow` results into the API response envelope,
+and transforms HTTP or websocket failures into safe Problem Details payloads.
 
 ## Commands
 

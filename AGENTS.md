@@ -117,6 +117,9 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
   `ForbiddenException`, `ConflictException`, `BadRequestException`,
   `InternalException`.
 - **Validation**: `ClientDataValidationException` with typed `ValidationErrorInfo`.
+- Problem `type` values use `problemTypeForCode()` and the product-owned
+  `https://<root-domain>/problems/<code>` namespace. Never place repository,
+  package, template, or runtime host names in public problem identifiers.
 - Response content type is always `application/problem+json`.
 
 ## Read Next
@@ -124,6 +127,7 @@ All API errors conform to RFC 9457 (`application/problem+json`). Internal
 - Full agent policy: [docs/ai/agent-policy.md](docs/ai/agent-policy.md)
 - Retrieval map: [docs/ai/repo-map.md](docs/ai/repo-map.md)
 - Architecture: [docs/architecture.md](docs/architecture.md)
+- Project catalog: [docs/project-catalog.md](docs/project-catalog.md)
 - Commands: [docs/command-matrix.md](docs/command-matrix.md)
 - Local verification: [docs/local-verification.md](docs/local-verification.md)
 - Single-server operations: [docs/single-server-deployment.md](docs/single-server-deployment.md)

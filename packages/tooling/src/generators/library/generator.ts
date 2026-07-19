@@ -1,9 +1,7 @@
 /**
- * Library generator — creates new libraries following exact repository conventions.
- *
- * Backend libs: libs/backend/<name>/lib/
- * Frontend libs: libs/frontend/<name>/lib/
- * Common libs: libs/common/<name>/lib/
+ * Library generator — creates new libraries following repository ownership
+ * conventions. Backend common, backend feature, backend PostgreSQL, frontend
+ * shared/feature, and common roots are derived from kind, type, and scope.
  *
  * Patterns derived from:
  *   - libs/backend/common/response/lib/{project.json,tsconfig*.json,vitest.config.mts}
@@ -20,6 +18,8 @@ export interface LibraryGeneratorOptions {
   kind: 'backend' | 'frontend' | 'common';
   type?: 'common' | 'util' | 'ui' | 'sdk' | 'feature-main' | 'feature-shared' | 'data-access' | 'test-util' | 'asset';
   scope?: string;
+  /** Concrete responsibility rendered into the local README. */
+  description?: string;
   fsdLayer?: 'shared' | 'entities' | 'features' | 'widgets' | 'pages';
   /** Compatibility input rejected at runtime; custom roots violate ownership. */
   directory?: string;
@@ -120,6 +120,22 @@ function dots(dir: string): string {
   return '../'.repeat(libDepth(dir));
 }
 
+function resolveDescription(
+  description: string | undefined,
+  names: ReturnType<typeof generateNames>,
+  kind: LibraryGeneratorOptions['kind'],
+  type: NonNullable<LibraryGeneratorOptions['type']>,
+): string {
+  const normalized = description?.trim();
+  if (!normalized) {
+    return `${names.title} owns the public ${type} boundary for ${kind} consumers through its src/index.ts entry point.`;
+  }
+  if (/[\r\n]/u.test(normalized) || normalized.length < 40 || normalized.split(/\s+/u).length < 6) {
+    throw new Error('Library description must be a single concrete sentence of at least 40 characters and six words.');
+  }
+  return /[.!?]$/u.test(normalized) ? normalized : `${normalized}.`;
+}
+
 // ---------------------------------------------------------------------------
 
 /**
@@ -132,6 +148,7 @@ function createNodeLib(
   dir: string,
   projectName: string,
   tags: string[],
+  description: string,
 ): void {
   const srcRoot = `${dir}/src`;
   const d = dots(dir);
@@ -311,17 +328,14 @@ module.exports = [
 
 Follow the root [AGENTS.md](${d}AGENTS.md) and detailed [AI agent policy](${d}docs/ai/agent-policy.md) first.
 
-This is the local policy adapter for \`${projectName}\` at \`${dir}\`.
-Project type: \`library\`.
-Tags: ${tags.map((t) => `\`${t}\``).join(', ')}.\n
 ## Local Rules
 
 - Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
 - Do not import frontend libraries from backend code. Shared backend dependencies belong in \`libs/backend/package.json\`.
-- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+- Respect the scope and boundary tags declared in \`project.json\`; do not copy their values into local instructions.
 - Keep this file short; put setup details and command lists in the local README.
 
-See [README.md](./README.md) for project commands and ownership notes.
+See [README.md](./README.md) for the library purpose and verification commands.
 `,
   );
 
@@ -330,20 +344,9 @@ See [README.md](./README.md) for project commands and ownership notes.
     `${dir}/README.md`,
     `# ${projectName}
 
-Path: \`${dir}\`
-Nx project: \`${projectName}\`
-Project type: \`library\`
-Tags: ${tags.map((t) => `\`${t}\``).join(', ')}
-
 ## Purpose
 
-${names.title} library.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
-- Do not import frontend libraries from backend code.
-- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+${description}
 
 ## Commands
 
@@ -368,6 +371,7 @@ function createFrontendLib(
   projectName: string,
   tags: string[],
   type: string,
+  description: string,
 ): void {
   const srcRoot = `${dir}/src`;
   const d = dots(dir);
@@ -565,16 +569,13 @@ module.exports = [
 
 Follow the root [AGENTS.md](${d}AGENTS.md) and detailed [AI agent policy](${d}docs/ai/agent-policy.md) first.
 
-This is the local policy adapter for \`${projectName}\` at \`${dir}\`.
-Project type: \`library\`.
-Tags: ${tags.map((t) => `\`${t}\``).join(', ')}.\n
 ## Local Rules
 
 - Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
-- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+- Respect the scope and boundary tags declared in \`project.json\`; do not copy their values into local instructions.
 - Keep this file short; put setup details and command lists in the local README.
 
-See [README.md](./README.md) for project commands and ownership notes.
+See [README.md](./README.md) for the library purpose and verification commands.
 `,
   );
 
@@ -583,19 +584,9 @@ See [README.md](./README.md) for project commands and ownership notes.
     `${dir}/README.md`,
     `# ${projectName}
 
-Path: \`${dir}\`
-Nx project: \`${projectName}\`
-Project type: \`library\`
-Tags: ${tags.map((t) => `\`${t}\``).join(', ')}
-
 ## Purpose
 
-${names.title} library.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through \`src/index.ts\` when present.
-- Respect the declared scope tag: \`${tags.find((t) => t.startsWith('scope:'))?.replace('scope:', '') ?? names.kebab}\`.
+${description}
 
 ## Commands
 
@@ -658,6 +649,7 @@ export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOpti
   const projectName = computeProjectName(options.kind, names.kebab, type, scope);
   const dir = computeDirectory(options.kind, names.kebab, type, scope);
   const tags = computeTags(options.kind, type, scope, fsdLayer);
+  const description = resolveDescription(options.description, names, options.kind, type);
 
   const existing = findExistingProject(tree, projectName);
   if (existing) {
@@ -679,13 +671,13 @@ export async function libraryGenerator(tree: Tree, options: LibraryGeneratorOpti
 
   switch (options.kind) {
     case 'backend':
-      createNodeLib(tree, names, dir, projectName, tags);
+      createNodeLib(tree, names, dir, projectName, tags, description);
       break;
     case 'common':
-      createNodeLib(tree, names, dir, projectName, tags);
+      createNodeLib(tree, names, dir, projectName, tags, description);
       break;
     case 'frontend':
-      createFrontendLib(tree, names, dir, projectName, tags, type);
+      createFrontendLib(tree, names, dir, projectName, tags, type, description);
       break;
   }
 

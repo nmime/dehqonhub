@@ -1,19 +1,9 @@
 # @app/common-feature-flags
 
-Path: `libs/common/feature-flags/lib`
-Nx project: `@app/common-feature-flags`
-Project type: `library`
-Tags: `platform:shared`, `type:common`, `scope:shared`, `boundary:feature-flags`, `framework:neutral`
-
 ## Purpose
 
-Cross-runtime framework-neutral library for the shared scope.
-
-## Ownership
-
-- Keep the public API behind this library boundary and prefer exports through `src/index.ts` when present.
-- Keep this library framework-neutral so it can be used by both backend and frontend runtimes.
-- Respect the declared scope tag: `shared`.
+Defines feature-flag keys, values, evaluation context, and provider contracts
+with static and environment-backed implementations.
 
 ## Commands
 

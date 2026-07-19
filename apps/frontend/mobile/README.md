@@ -1,11 +1,5 @@
 # mobile-app
 
-Path: `apps/frontend/mobile`
-Nx project: `mobile-app`
-Package: `mobile-app`
-Runtime: Expo Router + React Native
-Local URL: `http://localhost:4300` for Expo web
-
 ## Ownership
 
 This app owns the Expo Router entrypoint, native app config, Metro/Babel config,
@@ -25,12 +19,13 @@ pnpm exec nx run mobile-app:typecheck
 pnpm run frontend:fsd:check
 ```
 
-Android and iOS targets require the matching local native toolchain. The web dev
-server uses port `4300`.
+Android and iOS targets require the matching local native toolchain. Use the
+[service port registry](../../../docs/PORTS.md) for the canonical web dev port.
 
 ## Docs
 
 - [Frontend app rules](../AGENTS.md)
 - [Command matrix](../../../docs/command-matrix.md)
+- [Service port registry](../../../docs/PORTS.md)
 - [Frontend FSD](../../../docs/frontend-fsd.md)
 - [Frontend state](../../../docs/frontend-state.md)

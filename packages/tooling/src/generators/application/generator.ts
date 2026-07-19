@@ -2,10 +2,10 @@
  * Application generator — creates new applications following exact repository
  * conventions for frontend and backend kinds.
  *
- * Patterns derived from:
- *   - apps/backend/user/user-app-api/project.json
- *   - apps/frontend/app/project.json
- *   - tsconfig layouts across backend apps
+ * Canonical roots are apps/backend/<scope>/<name> for backend deployables and
+ * apps/frontend/<name> for frontend deployables. Runtime-specific files are
+ * derived from the selected renderer; identity, tags, and targets stay in the
+ * generated project.json.
  */
 import type { Tree } from 'nx/src/generators/tree';
 import { formatFiles, getProjects } from '@nx/devkit';
@@ -404,7 +404,7 @@ module.exports = [
 
 Follow the root [AGENTS.md](${d}AGENTS.md), the [backend app rules](${d}apps/backend/AGENTS.md), and the [AI agent policy](${d}docs/ai/agent-policy.md).
 
-- Runtime: ${renderer}
+- Read the renderer, identity, tags, and targets from \`project.json\`; do not copy those values into local instructions.
 - Keep transport and process bootstrap code in this deployable application.
 - Put reusable domain logic in \`libs/backend/**\` and cross-runtime contracts in \`libs/common/**\`.
 - Import libraries through public aliases from \`tsconfig.base.json\`; do not reach into another project by relative path.
@@ -415,7 +415,7 @@ Follow the root [AGENTS.md](${d}AGENTS.md), the [backend app rules](${d}apps/bac
     `${dir}/README.md`,
     `# ${names.title}
 
-Generated ${renderer} backend application at \`${dir}\`.
+Backend deployable scaffold for ${names.title}.
 
 ## Verification
 
@@ -433,9 +433,8 @@ membership before \`pnpm nrb setup\` can select it; \`pnpm run onboarding:verify
 fails until every real Nx application is registered. Then complete the applicable
 [deployable registration checklist](${d}docs/scaffolding-and-extension.md#application-completion-checklist)
 for local Compose, Docker/Helm, ingress, DNS, TLS, and observability before
-calling the service production-ready.
-
-Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.
+calling the service production-ready. Keep Nx identity and tags in
+\`project.json\`; do not copy them into this README.
 `,
   );
 }
@@ -793,13 +792,7 @@ function runtimePackage(
   }
 }
 
-function writeFrontendPolicy(
-  tree: Tree,
-  names: ReturnType<typeof generateNames>,
-  dir: string,
-  renderer: string,
-  tags: string[],
-): void {
+function writeFrontendPolicy(tree: Tree, names: ReturnType<typeof generateNames>, dir: string): void {
   const d = dots(dir);
   tree.write(
     `${dir}/AGENTS.md`,
@@ -807,7 +800,7 @@ function writeFrontendPolicy(
 
 Follow the root [AGENTS.md](${d}AGENTS.md) and [frontend app rules](${d}apps/frontend/AGENTS.md).
 
-- Runtime: ${renderer}
+- Read the renderer, identity, tags, and targets from \`project.json\`; do not copy those values into local instructions.
 - Keep renderer entrypoints and routing in this application.
 - Put reusable browser UI, state, and API plumbing in \`libs/frontend/**\`.
 - Never import backend aliases from frontend source.
@@ -818,7 +811,7 @@ Follow the root [AGENTS.md](${d}AGENTS.md) and [frontend app rules](${d}apps/fro
     `${dir}/README.md`,
     `# ${names.title}
 
-Generated ${renderer} frontend application at \`${dir}\`.
+Frontend deployable scaffold for ${names.title}.
 
 ## Verification
 
@@ -836,9 +829,8 @@ membership before \`pnpm nrb setup\` can select it; \`pnpm run onboarding:verify
 fails until every real Nx application is registered. Then complete the applicable
 [deployable registration checklist](${d}docs/scaffolding-and-extension.md#application-completion-checklist)
 for local Compose, Docker/Helm, ingress, DNS, TLS, API routing, and observability
-before calling the application production-ready.
-
-Nx tags: ${tags.map((tag) => `\`${tag}\``).join(', ')}.
+before calling the application production-ready. Keep Nx identity and tags in
+\`project.json\`; do not copy them into this README.
 `,
   );
 }
@@ -972,7 +964,7 @@ const title = "${names.title}";
 `,
   );
   tree.write(`${dir}/src/env.d.ts`, '/// <reference types="astro/client" />\n');
-  writeFrontendPolicy(tree, names, dir, 'Astro', tags);
+  writeFrontendPolicy(tree, names, dir);
 }
 
 function createVikeFrontendApp(
@@ -1052,7 +1044,7 @@ export default defineConfig({
 }
 `,
   );
-  writeFrontendPolicy(tree, names, dir, 'Vike SSR', tags);
+  writeFrontendPolicy(tree, names, dir);
 }
 
 function createExpoFrontendApp(
@@ -1146,7 +1138,7 @@ export default function HomeScreen() {
 }
 `,
   );
-  writeFrontendPolicy(tree, names, dir, 'Expo/React Native', tags);
+  writeFrontendPolicy(tree, names, dir);
 }
 
 function createFrontendApp(
@@ -1160,7 +1152,7 @@ function createFrontendApp(
   switch (renderer) {
     case 'vite':
       createViteFrontendApp(tree, names, dir, tags, port);
-      writeFrontendPolicy(tree, names, dir, 'Vite/React', tags);
+      writeFrontendPolicy(tree, names, dir);
       break;
     case 'astro':
       createAstroFrontendApp(tree, names, dir, tags, port);
