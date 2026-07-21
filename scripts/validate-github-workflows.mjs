@@ -40,6 +40,26 @@ const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.me
 const scripts = packageJson.scripts ?? {};
 const ci = workflows.find((workflow) => workflow.name === 'ci.yml')?.text ?? '';
 const release = workflows.find((workflow) => workflow.name === 'release.yml')?.text ?? '';
+const nxCacheAction = readFileSync(new URL('../.github/actions/nx-cache/action.yml', import.meta.url), 'utf8');
+const nxCacheDocs = readFileSync(new URL('../docs/ci-cache.md', import.meta.url), 'utf8');
+assert.ok(
+  nxCacheAction.includes('actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9'),
+  'Nx cache composite action must pin actions/cache to a full commit SHA',
+);
+assert.ok(nxCacheAction.includes('path: .nx/cache'), 'Nx cache composite action must cache only Nx task outputs');
+assert.ok(!nxCacheAction.includes('secrets.'), 'Nx cache composite action must not receive secrets');
+assert.ok(ci.includes('NX_CACHE_DIRECTORY: .nx/cache'), 'CI must use the explicit Nx cache directory');
+for (const scope of ['fast', 'non-runtime', 'bun', 'quality', 'e2e']) {
+  assert.ok(ci.includes(`scope: ${scope}`), `CI must restore the remote Nx cache for ${scope}`);
+}
+assert.ok(
+  nxCacheDocs.includes('GitHub Actions cache service'),
+  'CI cache documentation must explain the remote backend',
+);
+assert.ok(
+  nxCacheDocs.includes('Do not add `.env*`'),
+  'CI cache documentation must prohibit secret-bearing cache paths',
+);
 assert.ok(release.includes('RELEASE_PROVIDER: github'), 'release.yml must select only the GitHub release provider');
 assert.ok(
   !workflows.some((workflow) => workflow.name === 'release-gitlab.yml'),
@@ -55,6 +75,28 @@ for (const required of [
 ]) {
   assert.ok(gitlabCi.includes(required), `.gitlab-ci.yml missing provider-isolated release contract: ${required}`);
 }
+for (const forbidden of [
+  'gitleaks:latest',
+  '|| true',
+  'allow_failure: true',
+  'mcr.microsoft.com/playwright:v1.54.2',
+  '\n  image: docker:27-dind',
+]) {
+  assert.ok(!gitlabCi.includes(forbidden), `.gitlab-ci.yml contains a fail-open or stale CI contract: ${forbidden}`);
+}
+for (const required of [
+  'gitleaks:',
+  'zricethezav/gitleaks:v8.28.0',
+  'node:24.18.0-alpine',
+  'mcr.microsoft.com/playwright:v1.61.1-noble',
+  'docker:27.5.1-dind',
+  'postgres:17.6-alpine',
+  'docker-cli-compose',
+  'DOCKER_HOST: tcp://docker:2375',
+  "DOCKER_TLS_CERTDIR: ''",
+]) {
+  assert.ok(gitlabCi.includes(required), `.gitlab-ci.yml missing pinned CI contract: ${required}`);
+}
 
 const { buildReleaseConfig } = await import('../release.config.mjs');
 const pluginNames = (config) => config.plugins.map((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin));
@@ -63,6 +105,18 @@ const gitlabReleaseConfig = buildReleaseConfig({
   RELEASE_PROVIDER: 'gitlab',
   CI_REPOSITORY_URL: 'https://gitlab-ci-token:example@gitlab.example.com/group/project.git',
 });
+const configuredReleasePlugins = new Set([...pluginNames(githubReleaseConfig), ...pluginNames(gitlabReleaseConfig)]);
+const declaredDependencies = {
+  ...packageJson.dependencies,
+  ...packageJson.devDependencies,
+};
+for (const plugin of configuredReleasePlugins) {
+  assert.ok(
+    declaredDependencies[plugin],
+    `release.config.mjs plugin must be a direct dependency under pnpm: ${plugin}`,
+  );
+  await import(plugin);
+}
 assert.deepEqual(
   pluginNames(githubReleaseConfig).filter(
     (plugin) => plugin === '@semantic-release/github' || plugin === '@semantic-release/gitlab',

@@ -1,6 +1,7 @@
 import { spawn } from 'node:child_process';
 
-export const composeArgs = ['compose', '-f', 'docker/docker-compose.yml'];
+const composeParallelLimit = process.env.COMPOSE_PARALLEL_LIMIT ?? '2';
+export const composeArgs = ['compose', '--parallel', composeParallelLimit, '-f', 'docker/docker-compose.yml'];
 export const stackServices = [
   'migrate',
   'admin-app-api',
@@ -51,7 +52,10 @@ export const composeEnv = {
   ADMIN_APP_PORT: ports.adminApp,
   USER_APP_PORT: ports.userApp,
   LANDING_APP_PORT: ports.landingApp,
-  COMPOSE_PARALLEL_LIMIT: process.env.COMPOSE_PARALLEL_LIMIT ?? '1',
+  // Cap parallel targets rather than serializing the full stack. Docker shares
+  // the dependency layers across this one invocation, so two builders is a
+  // useful default without exhausting a typical CI runner.
+  COMPOSE_PARALLEL_LIMIT: composeParallelLimit,
   COMPOSE_BAKE: process.env.COMPOSE_BAKE ?? 'false',
   DATABASE_URL: process.env.DOCKER_DATABASE_URL ?? 'postgres://postgres:postgres@postgres:5432/nest_react_boilerplate',
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? '1',
@@ -89,7 +93,8 @@ const stackUpArgs = [...composeArgs, 'up', '--no-build', '-d', ...stackServices]
 export function run(command: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
     const child = spawn(command, args, { stdio: 'inherit', env: composeEnv });
-    child.on('exit', (code) => {
+    child.once('error', reject);
+    child.once('close', (code) => {
       if (code === 0) {
         resolve();
       } else {
@@ -115,19 +120,16 @@ export async function upStack(): Promise<void> {
 
 export async function buildStackImages(): Promise<void> {
   writeStdoutLine(`fullstack compose project=${composeEnv.COMPOSE_PROJECT_NAME} ports=${JSON.stringify(ports)}`);
-  for (const service of stackServices) {
-    // eslint-disable-next-line no-await-in-loop -- sequential builds share the Docker layer cache
-    await buildService(service);
-  }
+  await buildServices(stackServices);
 }
 
-async function buildService(service: string): Promise<void> {
-  const args = [...composeArgs, 'build', service];
+async function buildServices(services: string[]): Promise<void> {
+  const args = [...composeArgs, 'build', ...services];
   try {
     await run('docker', args);
   } catch (error) {
     writeStderrLine(
-      `docker compose build ${service} reported a transient failure; retrying once: ${
+      `docker compose parallel build reported a transient failure; retrying once: ${
         error instanceof Error ? error.message : String(error)
       }`,
     );
@@ -142,14 +144,16 @@ export async function waitForText(label: string, url: string, contains: string):
   while (Date.now() - started < 180_000) {
     try {
       // eslint-disable-next-line no-await-in-loop -- readiness polling is sequential by design
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: AbortSignal.timeout(10_000) });
       // eslint-disable-next-line no-await-in-loop -- readiness polling is sequential by design
       const text = await response.text();
-      if (text.includes(contains)) {
+      if (response.ok && text.includes(contains)) {
         writeStdoutLine(`${label}: ok (${response.status})`);
         return;
       }
-      lastError = `${response.status} missing expected text`;
+      lastError = response.ok
+        ? `${response.status} missing expected text`
+        : `${response.status} ${response.statusText || 'request failed'}`;
     } catch (error) {
       lastError = error instanceof Error ? error.message : String(error);
     }

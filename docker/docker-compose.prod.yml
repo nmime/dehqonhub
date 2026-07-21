@@ -25,6 +25,9 @@ x-backend-env: &backend-env
   TELEGRAM_OIDC_ENABLED: ${TELEGRAM_OIDC_ENABLED:-false}
   TELEGRAM_OIDC_CLIENT_ID: ${TELEGRAM_OIDC_CLIENT_ID:-}
   TELEGRAM_OIDC_SCOPES: ${TELEGRAM_OIDC_SCOPES:-openid profile}
+  TELEGRAM_OIDC_DISCOVERY_URL: ${TELEGRAM_OIDC_DISCOVERY_URL:-}
+  TELEGRAM_OIDC_ISSUER: ${TELEGRAM_OIDC_ISSUER:-}
+  TELEGRAM_OIDC_JWKS_URL: ${TELEGRAM_OIDC_JWKS_URL:-}
   AUTH_TOKEN_CLEANUP_ENABLED: ${AUTH_TOKEN_CLEANUP_ENABLED:-true}
   AUTH_TOKEN_CLEANUP_INTERVAL_MS: ${AUTH_TOKEN_CLEANUP_INTERVAL_MS:-3600000}
   AUTH_TOKEN_CLEANUP_RUN_ON_START: ${AUTH_TOKEN_CLEANUP_RUN_ON_START:-true}
@@ -40,6 +43,13 @@ x-backend-env: &backend-env
   RATE_LIMIT_MAX: ${RATE_LIMIT_MAX:-100}
   REDIS_URL: ${REDIS_URL:-redis://redis:6379/0}
   REDIS_KEY_PREFIX: ${REDIS_KEY_PREFIX:-nrb:}
+  REDIS_LAZY_CONNECT: ${REDIS_LAZY_CONNECT:-true}
+  NATS_SERVERS: ${NATS_SERVERS:-}
+  NATS_NAME: ${NATS_NAME:-nest-react-boilerplate}
+  NATS_USER: ${NATS_USER:-}
+  NATS_PASS: ${NATS_PASS:-}
+  NATS_TOKEN: ${NATS_TOKEN:-}
+  NATS_DRAIN_TIMEOUT_MS: ${NATS_DRAIN_TIMEOUT_MS:-5000}
   OPENAPI_ENABLED: ${OPENAPI_ENABLED:-false}
   OPENAPI_PATH: ${OPENAPI_PATH:-docs}
   LOG_LEVEL: ${LOG_LEVEL:-info}
@@ -51,12 +61,19 @@ x-backend-env: &backend-env
   POSTGRES_SSL_REJECT_UNAUTHORIZED: ${POSTGRES_SSL_REJECT_UNAUTHORIZED:-true}
   POSTGRES_SYNCHRONIZE: 'false'
   POSTGRES_LOGGING: ${POSTGRES_LOGGING:-false}
+  POSTGRES_POOL_MIN: ${POSTGRES_POOL_MIN:-2}
+  POSTGRES_POOL_MAX: ${POSTGRES_POOL_MAX:-10}
+  POSTGRES_POOL_IDLE_TIMEOUT_MS: ${POSTGRES_POOL_IDLE_TIMEOUT_MS:-30000}
+  POSTGRES_SLOW_QUERY_MS: ${POSTGRES_SLOW_QUERY_MS:-}
   OTEL_ENABLED: ${OTEL_ENABLED:-true}
   OTEL_EXPORTER_OTLP_ENDPOINT: ${OTEL_EXPORTER_OTLP_ENDPOINT:-http://otel-collector:4318}
   OTEL_EXPORTER_OTLP_HEADERS: ${OTEL_EXPORTER_OTLP_HEADERS:-}
+  OTEL_EXPORTER_OTLP_METRICS_ENDPOINT: ${OTEL_EXPORTER_OTLP_METRICS_ENDPOINT:-}
+  OTEL_EXPORTER_OTLP_METRICS_HEADERS: ${OTEL_EXPORTER_OTLP_METRICS_HEADERS:-}
+  OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: ${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-}
+  OTEL_EXPORTER_OTLP_TRACES_HEADERS: ${OTEL_EXPORTER_OTLP_TRACES_HEADERS:-}
   OTEL_METRIC_EXPORT_INTERVAL: ${OTEL_METRIC_EXPORT_INTERVAL:-60000}
   OTEL_SDK_DISABLED: false
-  OTEL_SERVICE_NAME: ${OTEL_SERVICE_NAME:-nest-react-boilerplate}
   OTEL_SERVICE_VERSION: ${OTEL_SERVICE_VERSION:-1.0.0}
   S3_ENDPOINT: ${S3_ENDPOINT:-}
   S3_BUCKET: ${S3_BUCKET:-}
@@ -64,6 +81,7 @@ x-backend-env: &backend-env
   S3_ACCESS_KEY: ${S3_ACCESS_KEY:-}
   S3_SECRET_KEY: ${S3_SECRET_KEY:-}
   S3_FORCE_PATH_STYLE: ${S3_FORCE_PATH_STYLE:-false}
+  STATIC_DATA_ROOT: ${STATIC_DATA_ROOT:-data}
 
 x-backend-command: &backend-command
   - sh
@@ -168,10 +186,6 @@ services:
   migrate:
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/migrator:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
     logging: *default-logging
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: migrator
     restart: 'no'
     networks: [app, database]
     secrets: [auth_jwt_secret]
@@ -181,13 +195,6 @@ services:
   admin-app-api:
     <<: *backend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: backend
-      args:
-        NX_PROJECT: admin-app-api
-        BUILD_OUTPUT: dist/apps/backend/admin/admin-app-api
     ports:
       - target: 80
         published: '${ADMIN_APP_API_PORT:-3001}'
@@ -197,13 +204,6 @@ services:
   user-app-api:
     <<: *backend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/user-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: backend
-      args:
-        NX_PROJECT: user-app-api
-        BUILD_OUTPUT: dist/apps/backend/user/user-app-api
     ports:
       - target: 80
         published: '${USER_APP_API_PORT:-3002}'
@@ -213,13 +213,6 @@ services:
   auth-app-api:
     <<: *backend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/auth-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: backend
-      args:
-        NX_PROJECT: auth-app-api
-        BUILD_OUTPUT: dist/apps/backend/auth/auth-app-api
     secrets:
       - auth_jwt_secret
       - session_secret
@@ -236,13 +229,6 @@ services:
     <<: *backend-service
     profiles: [discord]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/discord-app-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: backend
-      args:
-        NX_PROJECT: discord-app-api
-        BUILD_OUTPUT: dist/apps/backend/discord/discord-app-api
     environment:
       <<: *backend-env
       DISCORD_APPLICATION_ID: ${DISCORD_APPLICATION_ID:-}
@@ -262,13 +248,6 @@ services:
     <<: *backend-service
     profiles: [telegram]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/telegram-bot-api:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: backend
-      args:
-        NX_PROJECT: telegram-bot-api
-        BUILD_OUTPUT: dist/apps/backend/telegram/telegram-bot-api
     environment:
       <<: *backend-env
       TELEGRAM_BOT_MODE: ${TELEGRAM_BOT_MODE:-webhook}
@@ -288,19 +267,6 @@ services:
   admin-app:
     <<: *frontend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/admin-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: frontend
-      args:
-        NX_PROJECT: admin-app
-        FRONTEND_OUTPUT: dist/apps/frontend/admin
-        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
-        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
-        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
-        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
-        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
-        VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}
     depends_on:
       admin-app-api:
         condition: service_healthy
@@ -313,19 +279,6 @@ services:
   user-app:
     <<: *frontend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/user-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: frontend
-      args:
-        NX_PROJECT: user-app
-        FRONTEND_OUTPUT: dist/apps/frontend/app
-        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
-        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
-        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
-        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
-        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
-        VITE_TELEGRAM_AUTH_ENABLED: ${VITE_TELEGRAM_AUTH_ENABLED:-false}
     depends_on:
       auth-app-api:
         condition: service_healthy
@@ -340,18 +293,6 @@ services:
   landing-app:
     <<: *frontend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/landing-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: frontend
-      args:
-        NX_PROJECT: landing-app
-        FRONTEND_OUTPUT: dist/apps/frontend/landing
-        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
-        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
-        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
-        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
-        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
     depends_on:
       auth-app-api:
         condition: service_healthy
@@ -370,12 +311,6 @@ services:
     logging: *default-logging
     networks: [app]
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/site-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: site-runtime
-      args:
-        NX_PROJECT: site-app
     depends_on:
       auth-app-api:
         condition: service_healthy
@@ -393,19 +328,6 @@ services:
   mobile-app:
     <<: *frontend-service
     image: ${IMAGE_REGISTRY:-ghcr.io/your-github-org/nest-react-boilerplate}/mobile-app:${IMAGE_TAG:?set IMAGE_TAG to an immutable sha-<git-sha> tag; never use latest}
-    build:
-      context: ..
-      dockerfile: Dockerfile
-      target: frontend
-      args:
-        NX_PROJECT: mobile-app
-        NX_TARGET: export
-        FRONTEND_OUTPUT: dist/apps/frontend/mobile
-        NGINX_CONFIG: ${FRONTEND_NGINX_CONFIG:-docker/nginx-fullstack.conf}
-        VITE_AUTH_API_BASE_URL: ${VITE_AUTH_API_BASE_URL:-}
-        VITE_USER_API_BASE_URL: ${VITE_USER_API_BASE_URL:-}
-        VITE_ADMIN_API_BASE_URL: ${VITE_ADMIN_API_BASE_URL:-}
-        VITE_API_BASE_URL_MODE: ${VITE_API_BASE_URL_MODE:-same-origin}
     depends_on:
       auth-app-api:
         condition: service_healthy
