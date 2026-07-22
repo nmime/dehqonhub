@@ -84,7 +84,7 @@ pnpm nrb setup              # apply
 
 | Check             | Symptom                                                | Fix                                                                         |
 | ----------------- | ------------------------------------------------------ | --------------------------------------------------------------------------- |
-| `node-version`    | `Node.js v24.x.x — required >=24 <25`                  | `nvm use` or install the latest Node.js 24 release.                         |
+| `runtime-version` | `Node.js v24.x.x — repository requires >=24 <25`       | `nvm use` or install the latest Node.js 24 release.                         |
 | `pnpm`            | `pnpm not found`                                       | `corepack enable && corepack prepare pnpm@11.11.0 --activate`.              |
 | `docker`          | `Docker not available`                                 | Install Docker Desktop or Docker Engine. Marked as optional for E2E.        |
 | `manifests`       | `Missing: package.json`                                | Check that you're in the workspace root.                                    |

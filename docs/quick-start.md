@@ -38,7 +38,7 @@ pnpm --filter @repo/tooling tooling doctor
 Expected output (clean install, no setup yet):
 
 ```
-  ✓ node-version         Node.js v24.18.0
+  ✓ runtime-version      Node.js v24.18.0
   ✓ pnpm                 pnpm 11.11.0
   ✓ docker               Docker version ...
   ✓ manifests            package.json, tsconfig.base.json present

@@ -33,7 +33,7 @@ function runJson(args) {
 const doctor = runJson(['doctor', '--json']);
 assert.equal(doctor.summary?.fail, 0, 'Workspace doctor must have zero failures.');
 
-const requiredDoctorChecks = ['node-version', 'pnpm', 'manifests', 'lock-file', 'nx-graph', 'tooling-package'];
+const requiredDoctorChecks = ['runtime-version', 'pnpm', 'manifests', 'lock-file', 'nx-graph', 'tooling-package'];
 for (const name of requiredDoctorChecks) {
   const check = doctor.checks?.find((entry) => entry.name === name);
   assert.equal(check?.status, 'pass', `Doctor check must pass: ${name}`);
@@ -201,7 +201,7 @@ process.stdout.write(
   `${JSON.stringify(
     {
       status: 'ok',
-      node: doctor.checks.find((entry) => entry.name === 'node-version')?.message,
+      node: doctor.checks.find((entry) => entry.name === 'runtime-version')?.message,
       pnpm: doctor.checks.find((entry) => entry.name === 'pnpm')?.message,
       catalog: {
         referenceApplications: referenceApplications.length,
