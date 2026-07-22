@@ -1,7 +1,7 @@
 import { spawn, spawnSync, type ChildProcess } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { createServer } from "node:net";
-import { join } from "node:path";
+import { delimiter, join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import type { CommandContext } from "../../cli.js";
 import { detectJavaScriptRuntime } from "../../runtime/environment.js";
@@ -164,6 +164,9 @@ async function runAuthRuntimeSmoke(workspaceRoot: string, environment: NodeJS.Pr
       NODE_ENV: "development",
       OPENAPI_ENABLED: "true",
       OTEL_ENABLED: "false",
+      NODE_PATH: [join(workspaceRoot, "libs/backend/node_modules"), environment.NODE_PATH]
+        .filter(Boolean)
+        .join(delimiter),
     },
     urls: [`${baseUrl}/live`, readyUrl],
     validate: async () => {
