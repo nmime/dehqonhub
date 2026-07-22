@@ -1,5 +1,18 @@
 const supportedReleaseProviders = new Set(['github', 'gitlab']);
 
+export const releaseNoteTypes = [
+  { type: 'feat', section: 'Features' },
+  { type: 'fix', section: 'Bug Fixes' },
+  { type: 'perf', section: 'Performance Improvements' },
+  { type: 'revert', section: 'Reverts' },
+  { type: 'refactor', section: 'Code Refactoring' },
+  { type: 'docs', section: 'Documentation' },
+  { type: 'build', section: 'Build System' },
+  { type: 'ci', section: 'Continuous Integration' },
+  { type: 'test', section: 'Tests' },
+  { type: 'chore', section: 'Maintenance' },
+];
+
 export function resolveReleaseProvider(environment = process.env) {
   const configuredProvider = environment.RELEASE_PROVIDER?.trim().toLowerCase();
   const provider = configuredProvider || (environment.GITLAB_CI === 'true' ? 'gitlab' : 'github');
@@ -43,6 +56,9 @@ export function buildReleaseConfig(environment = process.env) {
         '@semantic-release/release-notes-generator',
         {
           preset: 'conventionalcommits',
+          presetConfig: {
+            types: releaseNoteTypes,
+          },
         },
       ],
       [

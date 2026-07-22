@@ -64,6 +64,13 @@ fast-check:
     - corepack prepare pnpm@$PNPM_VERSION --activate
     - pnpm install --frozen-lockfile
   script:
+    - |
+      if [ -n "${CI_MERGE_REQUEST_SOURCE_BRANCH_NAME:-}" ]; then
+        git fetch origin "$CI_MERGE_REQUEST_TARGET_BRANCH_NAME"
+        pnpm run git:conventions -- --branch "$CI_MERGE_REQUEST_SOURCE_BRANCH_NAME" --range "origin/$CI_MERGE_REQUEST_TARGET_BRANCH_NAME..HEAD"
+      else
+        pnpm run git:conventions -- --branch "$CI_COMMIT_BRANCH" --range "$CI_COMMIT_BEFORE_SHA..HEAD"
+      fi
     - pnpm exec nx run-many -t lint --all
     - pnpm exec nx run-many -t typecheck --all
     - pnpm format:check
@@ -212,5 +219,9 @@ release:
     - pnpm exec semantic-release
   variables:
     RELEASE_PROVIDER: gitlab
+    GIT_AUTHOR_NAME: nmime
+    GIT_AUTHOR_EMAIL: 66474195+nmime@users.noreply.github.com
+    GIT_COMMITTER_NAME: nmime
+    GIT_COMMITTER_EMAIL: 66474195+nmime@users.noreply.github.com
   rules:
     - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && ($GITLAB_TOKEN != null || $GL_TOKEN != null)'

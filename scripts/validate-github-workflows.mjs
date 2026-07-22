@@ -40,6 +40,8 @@ const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.me
 const scripts = packageJson.scripts ?? {};
 const ci = workflows.find((workflow) => workflow.name === 'ci.yml')?.text ?? '';
 const release = workflows.find((workflow) => workflow.name === 'release.yml')?.text ?? '';
+const githubReleaseNotes = readFileSync(new URL('../.github/release.yml', import.meta.url), 'utf8');
+const gitleaksConfig = readFileSync(new URL('../.gitleaks.toml', import.meta.url), 'utf8');
 const nxCacheAction = readFileSync(new URL('../.github/actions/nx-cache/action.yml', import.meta.url), 'utf8');
 const nxCacheDocs = readFileSync(new URL('../docs/ci-cache.md', import.meta.url), 'utf8');
 assert.ok(
@@ -61,6 +63,32 @@ assert.ok(
   'CI cache documentation must prohibit secret-bearing cache paths',
 );
 assert.ok(release.includes('RELEASE_PROVIDER: github'), 'release.yml must select only the GitHub release provider');
+assert.ok(release.includes('GIT_AUTHOR_NAME: nmime'), 'release.yml must preserve the nmime release author');
+assert.ok(release.includes('GIT_COMMITTER_NAME: nmime'), 'release.yml must preserve the nmime release committer');
+for (const required of [
+  '[extend]',
+  'useDefault = true',
+  'id = "generic-api-key"',
+  'id = "discord-client-id"',
+  '[[rules.allowlists]]',
+  'condition = "AND"',
+  'mailpace-email-notification\\.provider\\.spec\\.ts',
+  'resend-email-notification\\.provider\\.spec\\.ts',
+  'health-sanitize\\.util\\.spec\\.ts',
+  'notification-delivery-1',
+  'sk-live-abc123',
+  'better-auth\\.config\\.spec\\.ts',
+  'test-secret-placeholder-min-32-chars-long',
+  'discord-app-api\\.module\\.spec\\.ts',
+  'discord-command-registration\\.service\\.spec\\.ts',
+  'discord-config\\.spec\\.ts',
+  '123456789012345678',
+]) {
+  assert.ok(gitleaksConfig.includes(required), `.gitleaks.toml missing narrow fixture allowlist: ${required}`);
+}
+for (const section of ['Breaking Changes', 'Features', 'Bug Fixes', 'Performance', 'Security', 'Maintenance']) {
+  assert.ok(githubReleaseNotes.includes(`title: ${section}`), `.github/release.yml missing ${section} category`);
+}
 assert.ok(
   !workflows.some((workflow) => workflow.name === 'release-gitlab.yml'),
   'GitLab releases must run in GitLab CI, not as a second workflow on every GitHub push',
@@ -98,7 +126,7 @@ for (const required of [
   assert.ok(gitlabCi.includes(required), `.gitlab-ci.yml missing pinned CI contract: ${required}`);
 }
 
-const { buildReleaseConfig } = await import('../release.config.mjs');
+const { buildReleaseConfig, releaseNoteTypes } = await import('../release.config.mjs');
 const pluginNames = (config) => config.plugins.map((plugin) => (Array.isArray(plugin) ? plugin[0] : plugin));
 const githubReleaseConfig = buildReleaseConfig({ RELEASE_PROVIDER: 'github' });
 const gitlabReleaseConfig = buildReleaseConfig({
@@ -106,6 +134,11 @@ const gitlabReleaseConfig = buildReleaseConfig({
   CI_REPOSITORY_URL: 'https://gitlab-ci-token:example@gitlab.example.com/group/project.git',
 });
 const configuredReleasePlugins = new Set([...pluginNames(githubReleaseConfig), ...pluginNames(gitlabReleaseConfig)]);
+assert.deepEqual(
+  releaseNoteTypes.map(({ type }) => type),
+  ['feat', 'fix', 'perf', 'revert', 'refactor', 'docs', 'build', 'ci', 'test', 'chore'],
+  'release notes must cover every accepted Conventional Commit type',
+);
 const declaredDependencies = {
   ...packageJson.dependencies,
   ...packageJson.devDependencies,

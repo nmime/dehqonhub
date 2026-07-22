@@ -25,3 +25,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           RELEASE_PROVIDER: github
+          GIT_AUTHOR_NAME: nmime
+          GIT_AUTHOR_EMAIL: 66474195+nmime@users.noreply.github.com
+          GIT_COMMITTER_NAME: nmime
+          GIT_COMMITTER_EMAIL: 66474195+nmime@users.noreply.github.com

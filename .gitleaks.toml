@@ -1,0 +1,53 @@
+title = "Nest React Boilerplate Gitleaks configuration"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "generic-api-key"
+
+[[rules.allowlists]]
+description = "Notification idempotency-key test fixtures"
+condition = "AND"
+paths = [
+  '''^libs/backend/feature/notification/main/lib/src/strategy/transport/providers/mailpace-email-notification\.provider\.spec\.ts$''',
+  '''^libs/backend/feature/notification/main/lib/src/strategy/transport/providers/resend-email-notification\.provider\.spec\.ts$''',
+]
+regexes = [
+  '''notification-delivery-1''',
+]
+
+[[rules.allowlists]]
+description = "Health sanitizer fake API-key fixtures"
+condition = "AND"
+paths = [
+  '''^libs/backend/common/health/lib/src/util/health-sanitize\.util\.spec\.ts$''',
+]
+regexes = [
+  '''sk-live-abc123''',
+]
+
+[[rules.allowlists]]
+description = "Authentication test secret placeholder"
+condition = "AND"
+paths = [
+  '''^libs/backend/feature/auth/main/lib/src/application/better-auth\.config\.spec\.ts$''',
+]
+regexes = [
+  '''test-secret-placeholder-min-32-chars-long''',
+]
+
+[[rules]]
+id = "discord-client-id"
+
+[[rules.allowlists]]
+description = "Discord snowflake test fixtures"
+condition = "AND"
+paths = [
+  '''^apps/backend/discord/discord-app-api/src/discord-app-api\.module\.spec\.ts$''',
+  '''^libs/backend/feature/discord/bot/lib/src/service/discord-command-registration\.service\.spec\.ts$''',
+  '''^libs/backend/feature/discord/bot/lib/src/service/discord-config\.spec\.ts$''',
+]
+regexes = [
+  '''123456789012345678''',
+]

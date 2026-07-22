@@ -132,6 +132,7 @@
     "ci:workflows:check": "node scripts/validate-github-workflows.mjs",
     "branch:cleanup:check": "pnpm --filter @repo/tooling tooling git branch-cleanup --target HEAD",
     "branch:cleanup": "pnpm --filter @repo/tooling tooling git branch-cleanup",
+    "git:conventions": "pnpm --filter @repo/tooling tooling git conventions",
     "db:migrations:rollback-check": "pnpm --filter @repo/tooling tooling db migrations rollback-check",
     "frontend:fsd:check": "pnpm --filter @repo/tooling tooling frontend fsd check",
     "deploy:validate:docker": "node scripts/deploy-validate.mjs --mode=docker",

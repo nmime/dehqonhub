@@ -27,12 +27,17 @@ Always-loaded policy for human and AI contributors to
 ## Branch And Authorship
 
 - Preserve repository ownership with author and committer exactly
-  `nmime <66474195+nmime@users.noreply.github.com>` when committing.
+  `nmime <66474195+nmime@users.noreply.github.com>` for commits produced by
+  repository agents. Do not rewrite legitimate human contributor identities.
 - Configure author and committer explicitly before committing and verify with
   `git show --format=fuller --no-patch HEAD`.
 - Do not add `Co-authored-by`, `Signed-off-by`, Splox, Executor, bot,
   automation, or assistant trailers.
 - Do not force-push `main`; create focused topic branches from current `main`.
+- Name topic branches `<type>/<kebab-case>` using `feat`, `fix`, `docs`,
+  `chore`, `refactor`, `test`, `ci`, `perf`, `build`, `revert`, `release`, or
+  `hotfix`. Never use `codex`, `claude`, or another assistant/vendor identity
+  as a branch path segment.
 
 ## Layout Rules
 

@@ -18,14 +18,35 @@ cp .env.example .env
 
 ## Branch, commit, and PR workflow
 
-1. Branch from current `main` with a focused name, for example `feature/billing-settings` or `fix/auth-cookie-flags`.
-2. Keep commits scoped and explain user-visible behavior in the commit message or PR body.
-3. For author-sensitive work, every commit must use author and committer exactly `nmime <66474195+nmime@users.noreply.github.com>`.
-4. Do not add `Co-authored-by`, `Signed-off-by`, Splox, Executor, bot, automation, or assistant trailers.
+1. Branch from current `main` as `<type>/<kebab-case>`, for example `feat/billing-settings` or `fix/auth-cookie-flags`. Allowed types are `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `build`, `revert`, `release`, and `hotfix`. Never use `codex`, `claude`, or another assistant/vendor identity as a branch segment. Dependabot's generated prefix is the only automation exception.
+2. Use Conventional Commits: `<type>(<optional-scope>)!: <lowercase description>`. Use the same types as branches except `release` and `hotfix`; express release metadata as `chore(release): <version>`.
+3. Human contributors keep their real Git author and committer identity. Commits produced by repository agents must use author and committer exactly `nmime <66474195+nmime@users.noreply.github.com>`.
+4. Agent-produced commits must not add assistant, model, executor, or automation attribution trailers. Legitimate human contribution trailers remain allowed.
 5. Do not use GitHub web merge/squash or GitHub API merge/squash for author-sensitive work; use raw git branch commits and pushes.
 6. Document any new runtime variable in `.env.example`, relevant environment examples, and root/docs guidance.
 7. Update generated contract and client artifacts only when the API source changed and the task includes regeneration.
 8. Do not commit secrets, real `.env*` values, Docker secret files, `dist/`, `coverage/`, `.nx/`, Playwright reports, or local database volumes.
+
+Run `pnpm run git:conventions` before pushing. CI validates the branch name,
+every commit in the PR range, linear history, and agent attribution. Human and
+trusted dependency-bot identities remain valid; known assistant identities must
+be replaced by the required `nmime` author and committer.
+
+## Release numbering
+
+Releases follow Semantic Versioning and are created only from `main` by
+semantic-release. The latest valid `vMAJOR.MINOR.PATCH` tag is the version
+baseline; commit count and squash count never affect the version number.
+
+- `fix`, `perf`, and `revert` produce a patch release.
+- `feat` produces a minor release.
+- `!` after the type/scope or a `BREAKING CHANGE:` footer produces a major release.
+- `build`, `chore`, `ci`, `docs`, `refactor`, and `test` do not release by themselves.
+
+Release commits use `chore(release): MAJOR.MINOR.PATCH [skip ci]`, tags use
+`vMAJOR.MINOR.PATCH`, and both author and committer remain the repository owner.
+Generated notes use stable Features, Bug Fixes, Performance, Reverts,
+Documentation, Build, CI, Tests, and Maintenance sections.
 
 ## Workspace rules
 

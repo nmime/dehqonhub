@@ -108,6 +108,7 @@ These public root scripts are part of the supported DX/CI contract even when the
 | `pnpm run onboarding:verify` | `node scripts/validate-onboarding.mjs && pnpm run agent:verify && pnpm run scaffold:verify` | Non-deploying fresh-install proof for runtime prerequisites, all five required/optional preset closures, and all app/library templates. |
 | `pnpm run branch:cleanup` | `pnpm --filter @repo/tooling tooling git branch-cleanup` | Branch cleanup implementation entrypoint; use explicit flags such as `--apply` and `--remote` for destructive cleanup. |
 | `pnpm run branch:cleanup:check` | `pnpm --filter @repo/tooling tooling git branch-cleanup --target HEAD` | Safe preview of branches already merged into `HEAD`. |
+| `pnpm run git:conventions` | `pnpm --filter @repo/tooling tooling git conventions` | Validate naming, Conventional Commits, linear history, and agent attribution without rejecting legitimate human or dependency-bot identities. CI supplies an explicit push or PR range. |
 | `pnpm run db:migrations:rollback-check` | `pnpm --filter @repo/tooling tooling db migrations rollback-check` | Real Testcontainers/PostgreSQL migration up/down/up rollback validation; requires a Docker-capable environment. |
 
 Formatting uses Prettier defaults intentionally: the repository has `.prettierignore` but no explicit Prettier config, so `pnpm run format`, `pnpm run format:check`, and `pnpm run format:changed` should be interpreted as stock Prettier behavior with `--ignore-unknown`.

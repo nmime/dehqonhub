@@ -614,6 +614,12 @@ function getSmokeCommands(): string[][] {
     ],
     [
       "packages/tooling/bin/repo-tooling.mjs",
+      "git",
+      "conventions",
+      "--help",
+    ],
+    [
+      "packages/tooling/bin/repo-tooling.mjs",
       "project",
       "check-library-configs",
       "--help",

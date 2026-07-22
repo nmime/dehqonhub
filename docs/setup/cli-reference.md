@@ -268,9 +268,10 @@ Existing features must be modified in place; regeneration is rejected.
 
 ## Git commands
 
-| Command              | Description                        |
-| -------------------- | ---------------------------------- |
-| `git:branch-cleanup` | Preview or delete merged branches. |
+| Command              | Description                                                                          |
+| -------------------- | ------------------------------------------------------------------------------------ |
+| `git:branch-cleanup` | Preview or delete merged branches.                                                   |
+| `git:conventions`    | Validate branch naming, Conventional Commits, linear history, and agent attribution. |
 
 ## Image commands
 

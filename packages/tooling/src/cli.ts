@@ -10,6 +10,7 @@ import { runDoctorFromContext } from './commands/project/doctor';
 import { runAddFromContext } from './commands/project/add';
 import { runMutation } from './commands/qa/mutation';
 import { runBranchCleanup } from './commands/git/branch-cleanup';
+import { runGitConventions } from './commands/git/conventions';
 import { runWebpCommand } from './commands/images/webp';
 import { runChangedFormatCheck, runStaticCheck } from './commands/tooling/static-check';
 import { runBunCompatibilityCommand } from './commands/tooling/bun-compat';
@@ -46,6 +47,11 @@ register(
   'git:branch-cleanup',
   'Safely preview or delete local/remote branches already merged into the target branch.',
   runBranchCleanup,
+);
+register(
+  'git:conventions',
+  'Validate branch naming, commit messages, linear history, and agent attribution.',
+  runGitConventions,
 );
 register('images:webp', 'Find PNG/JPG/JPEG assets and convert them to WebP.', ({ argv, workspaceRoot }) =>
   runWebpCommand({ argv, workspaceRoot }),
