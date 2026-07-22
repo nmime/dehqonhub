@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { Language } from '@app/backend-feature-auth-shared';
 import {
   createUserProfile,
   GetCurrentUserProfileUseCase,
@@ -35,7 +34,7 @@ describe('user shared', () => {
       tenantId: 'tenant-1',
       email: 'user@example.com',
       displayName: 'User',
-      locale: Language.Ru,
+      locale: 'ru',
       roles: ['user'],
       permissions: [UserProfileReadPermission],
     };
@@ -60,7 +59,7 @@ describe('user shared', () => {
         tenantId: 'tenant-1',
         email: 'user@example.com',
         displayName: 'User',
-        locale: Language.Ru,
+        locale: 'ru',
         roles: ['user', 'user'],
         permissions: [UserProfileReadPermission],
       }),

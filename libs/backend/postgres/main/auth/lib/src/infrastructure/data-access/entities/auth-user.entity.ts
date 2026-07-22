@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { EntitySchema } from '@mikro-orm/core';
-import type { Locale } from '@app/backend-common-i18n';
+import { defaultLocale, supportedLocales, type Locale } from '@app/backend-common-i18n';
 
 export type AuthUserThemePreference = 'system' | 'light' | 'dark';
 
@@ -16,6 +16,7 @@ export type AuthUserStatus = 'active' | 'disabled' | 'invited';
 export type AuthUserAvatarStatus = 'none' | 'provider' | 'manual' | 'deleted';
 
 export const DefaultAuthTenantId = '00000000-0000-0000-0000-000000000000';
+const SupportedLocaleSqlValues = supportedLocales.map((locale) => `'${locale}'`).join(', ');
 
 export interface AuthUserAccessPolicyInput {
   permissions?: string[];
@@ -47,7 +48,7 @@ export class AuthUserEntity {
   // of the domain/API view but are deliberately not persisted on auth_users.
   roles: string[] = [];
   permissions: string[] = [];
-  locale: Locale = 'en';
+  locale: Locale = defaultLocale;
   theme: AuthUserThemePreference = 'system';
   lastLoginAt: Date = new Date(0);
   avatarUrl = '';
@@ -65,7 +66,7 @@ export class AuthUserEntity {
       this.status = input.status ?? 'active';
       this.roles = input.roles ?? [];
       this.permissions = input.permissions ?? [];
-      this.locale = input.locale ?? 'en';
+      this.locale = input.locale ?? defaultLocale;
       this.theme = input.theme ?? 'system';
       this.lastLoginAt = input.lastLoginAt ?? new Date(0);
       this.avatarUrl = input.avatarUrl ?? '';
@@ -101,7 +102,7 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
     status: { type: 'varchar', length: 32, default: 'active' },
     roles: { type: 'json', persist: false },
     permissions: { type: 'json', persist: false },
-    locale: { type: 'varchar', length: 16, default: 'en' },
+    locale: { type: 'varchar', length: 16, default: defaultLocale },
     theme: { type: 'varchar', length: 16, default: 'system' },
     lastLoginAt: {
       type: 'timestamptz',
@@ -149,7 +150,7 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
   checks: [
     {
       name: 'ck__auth_users__locale',
-      expression: `"locale" in ('en', 'ru')`,
+      expression: `"locale" in (${SupportedLocaleSqlValues})`,
     },
     {
       name: 'ck__auth_users__avatar_status',

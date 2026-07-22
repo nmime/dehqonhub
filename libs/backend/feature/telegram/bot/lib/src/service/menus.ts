@@ -1,8 +1,8 @@
 import { Menu } from '@grammyjs/menu';
-import { FormattedString, fmt } from '@grammyjs/parse-mode';
+import { supportedLocales } from '@app/backend-common-i18n';
 import type { Locale } from '../i18n';
 import { resolveTelegramApplication, type TelegramBotApplicationPort } from './application';
-import { goBack, goHome, navigateTo } from '../navigation';
+import { goBack, menuIdForRoute, navigateTo, replaceCurrentRoute } from '../navigation';
 import type { TelegramBotAuthPort, TelegramBotContext, TelegramBotMenus, TelegramBotRoute } from '../type';
 import { languageLabel, menuFingerprint } from '../util';
 
@@ -14,41 +14,33 @@ export function createTelegramMenus(input: {
   const application = input.application ?? resolveTelegramApplication({ auth: input.auth });
   const main = new Menu<TelegramBotContext>('telegram:menu:main', {
     fingerprint: (ctx) => menuFingerprint(ctx),
-  })
+  });
+
+  if (input.appUrl) {
+    main.webApp((ctx) => ctx.t('bot.menu.openApp'), input.appUrl).row();
+  }
+
+  main
     .submenu(
       (ctx) => ctx.t('bot.menu.profile'),
       'telegram:menu:profile',
       (ctx) => setRoute(ctx, 'profile'),
     )
     .submenu(
-      (ctx) => ctx.t('bot.menu.settings'),
-      'telegram:menu:settings',
-      (ctx) => setRoute(ctx, 'settings'),
+      (ctx) => ctx.t('bot.menu.language'),
+      'telegram:menu:language',
+      (ctx) => setRoute(ctx, 'settings.language'),
     )
     .row()
     .submenu(
       (ctx) => ctx.t('bot.menu.support'),
       'telegram:menu:support',
       (ctx) => setRoute(ctx, 'support'),
-    )
-    .submenu(
-      (ctx) => ctx.t('bot.menu.link'),
-      'telegram:menu:link',
-      (ctx) => setRoute(ctx, 'link'),
     );
-
-  if (input.appUrl) {
-    main.row().webApp((ctx) => ctx.t('bot.menu.openApp'), input.appUrl);
-  }
 
   const profile = new Menu<TelegramBotContext>('telegram:menu:profile', {
     fingerprint: (ctx) => menuFingerprint(ctx),
   })
-    .submenu(
-      (ctx) => ctx.t('bot.menu.settings'),
-      'telegram:menu:settings',
-      (ctx) => setRoute(ctx, 'settings'),
-    )
     .submenu(
       (ctx) => ctx.t('bot.menu.link'),
       'telegram:menu:link',
@@ -58,10 +50,6 @@ export function createTelegramMenus(input: {
     .text(
       (ctx) => ctx.t('bot.menu.back'),
       async (ctx) => navigateBack(ctx),
-    )
-    .text(
-      (ctx) => ctx.t('bot.menu.home'),
-      async (ctx) => navigateHome(ctx),
     );
 
   const settings = new Menu<TelegramBotContext>('telegram:menu:settings', {
@@ -72,66 +60,42 @@ export function createTelegramMenus(input: {
       'telegram:menu:language',
       (ctx) => setRoute(ctx, 'settings.language'),
     )
-    .submenu(
-      (ctx) => ctx.t('bot.menu.support'),
-      'telegram:menu:support',
-      (ctx) => setRoute(ctx, 'support'),
-    )
     .row()
     .text(
       (ctx) => ctx.t('bot.menu.back'),
       async (ctx) => navigateBack(ctx),
-    )
-    .text(
-      (ctx) => ctx.t('bot.menu.home'),
-      async (ctx) => navigateHome(ctx),
     );
 
   const language = new Menu<TelegramBotContext>('telegram:menu:language', {
     fingerprint: (ctx) => menuFingerprint(ctx),
-  })
-    .text(
-      (ctx) => languageLabel(ctx, 'en'),
-      async (ctx) => updateLanguage(ctx, 'en', application),
-    )
-    .text(
-      (ctx) => languageLabel(ctx, 'ru'),
-      async (ctx) => updateLanguage(ctx, 'ru', application),
-    )
-    .row()
-    .text(
-      (ctx) => ctx.t('bot.menu.back'),
-      async (ctx) => navigateBack(ctx),
-    )
-    .text(
-      (ctx) => ctx.t('bot.menu.home'),
-      async (ctx) => navigateHome(ctx),
+  });
+
+  for (const locale of supportedLocales) {
+    language.text(
+      (ctx) => languageLabel(ctx, locale),
+      async (ctx) => updateLanguage(ctx, locale, application),
     );
+  }
+  language.row().text(
+    (ctx) => ctx.t('bot.menu.back'),
+    async (ctx) => navigateBack(ctx),
+  );
 
   const support = new Menu<TelegramBotContext>('telegram:menu:support', {
     fingerprint: (ctx) => menuFingerprint(ctx),
   })
     .text(
-      (ctx) => ctx.t('bot.route.support'),
+      (ctx) => ctx.t('bot.menu.contactSupport'),
       async (ctx) => {
         navigateTo(ctx, 'support.contact');
         await renderRoute(ctx, 'support.contact');
         ctx.menu.update();
       },
     )
-    .submenu(
-      (ctx) => ctx.t('bot.menu.settings'),
-      'telegram:menu:settings',
-      (ctx) => setRoute(ctx, 'settings'),
-    )
     .row()
     .text(
       (ctx) => ctx.t('bot.menu.back'),
       async (ctx) => navigateBack(ctx),
-    )
-    .text(
-      (ctx) => ctx.t('bot.menu.home'),
-      async (ctx) => navigateHome(ctx),
     );
 
   const linkMenu = new Menu<TelegramBotContext>('telegram:menu:link', {
@@ -150,19 +114,10 @@ export function createTelegramMenus(input: {
         ctx.menu.update();
       },
     )
-    .submenu(
-      (ctx) => ctx.t('bot.menu.language'),
-      'telegram:menu:language',
-      (ctx) => setRoute(ctx, 'settings.language'),
-    )
     .row()
     .text(
       (ctx) => ctx.t('bot.menu.back'),
       async (ctx) => navigateBack(ctx),
-    )
-    .text(
-      (ctx) => ctx.t('bot.menu.home'),
-      async (ctx) => navigateHome(ctx),
     );
 
   main.register(profile);
@@ -195,8 +150,7 @@ export function routeText(ctx: TelegramBotContext, route: TelegramBotRoute): str
   }
 
   if (route === 'profile') {
-    const label = ctx.session.auth.linked ? ctx.t('auth.social.status.linked') : ctx.t('auth.social.status.notLinked');
-    return fmt`${FormattedString.link('Telegram', 'https://telegram.org')} ${label}`.text;
+    return ctx.session.auth.linked ? ctx.t('bot.message.profileLinked') : ctx.t('bot.message.profileNotLinked');
   }
 
   if (route.startsWith('support')) {
@@ -218,13 +172,7 @@ async function setRoute(ctx: TelegramBotContext, route: TelegramBotRoute): Promi
 async function navigateBack(ctx: TelegramBotContext): Promise<void> {
   const route = goBack(ctx);
   await renderRoute(ctx, route);
-  ctx.menu.back();
-}
-
-async function navigateHome(ctx: TelegramBotContext): Promise<void> {
-  goHome(ctx);
-  await renderRoute(ctx, 'main');
-  ctx.menu.nav('telegram:menu:main');
+  ctx.menu.nav(menuIdForRoute(route));
 }
 
 async function updateLanguage(
@@ -234,7 +182,7 @@ async function updateLanguage(
 ): Promise<void> {
   ctx.session.locale = locale;
   ctx.session.identityLocale = locale;
-  navigateTo(ctx, 'settings.language.confirm', { locale });
+  replaceCurrentRoute(ctx, 'settings.language.confirm', { locale });
   /* v8 ignore next -- valid Telegram callback queries include sender identity. */
   if (ctx.identity) {
     await application.updateLinkedUserLocale({

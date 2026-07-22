@@ -1,8 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createTelegramBot, handleLink, handleStart, telegramBotCommands } from './bot';
-import { goBack, goHome, navigateTo } from '../navigation';
+import { goBack, goHome, navigateTo, replaceCurrentRoute } from '../navigation';
+import { defaultLocale, supportedLocales, translate, type Locale } from '../i18n';
 import { initialTelegramBotSession } from './session';
 import type { TelegramBotAuthPort, TelegramBotConfig, TelegramBotSession } from '../type';
+
+const telegramUiRegistrations: ReadonlyArray<{ locale: Locale; languageCode?: Locale }> = [
+  { locale: defaultLocale },
+  ...supportedLocales.map((locale) => ({ locale, languageCode: locale })),
+];
+
+const telegramUiRegistrationLabels = ['default', ...supportedLocales] as const;
 
 const botInfo = {
   id: 42,
@@ -299,18 +307,19 @@ describe('createTelegramBot', () => {
 
     await bot.handleUpdate(messageUpdate('/start', 'ru') as never);
 
-    expect(calls.map((call) => call.payload.text)).toContain('Добро пожаловать! Выберите действие.');
+    expect(calls.map((call) => call.payload.text)).toContain(
+      '👋 Добро пожаловать!\n\nВсё необходимое — в одном касании.',
+    );
     expect(calls.at(-1)?.payload.reply_markup).toBeDefined();
 
     const buttons = flattenButtons(calls.at(-1)?.payload ?? {});
     expect(buttons.map((button) => button.text)).toEqual([
-      'Профиль',
-      'Настройки',
-      'Поддержка',
-      'Привязать аккаунт',
-      'Открыть приложение',
+      '🚀 Открыть приложение',
+      '👤 Мой аккаунт',
+      '🌐 Язык',
+      '💬 Помощь',
     ]);
-    expect(visibleTelegramText(calls).join('\n')).not.toContain('Welcome! Choose an action.');
+    expect(visibleTelegramText(calls).join('\n')).not.toContain('Everything you need is one tap away.');
   });
 
   it('renders stable short main-menu callback data', async () => {
@@ -321,14 +330,8 @@ describe('createTelegramBot', () => {
 
     const buttons = flattenButtons(calls.at(-1)?.payload ?? {});
     const callbackData = buttons.flatMap((button) => (button.callback_data ? [button.callback_data] : []));
-    expect(buttons.map((button) => button.text)).toEqual([
-      'Profile',
-      'Settings',
-      'Support',
-      'Link account',
-      'Open app',
-    ]);
-    expect(callbackData).toHaveLength(4);
+    expect(buttons.map((button) => button.text)).toEqual(['🚀 Open app', '👤 My account', '🌐 Language', '💬 Help']);
+    expect(callbackData).toHaveLength(3);
     expect(new Set(callbackData).size).toBe(callbackData.length);
     expect(callbackData.every((data) => data.length <= 64)).toBe(true);
     expect(visibleTelegramText(calls).join('\n')).not.toMatch(/\{\{|\}\}/u);
@@ -344,10 +347,9 @@ describe('createTelegramBot', () => {
 
     expect(configuredWebAppButtons(calls)).toEqual([]);
     expect(flattenButtons(calls.at(-1)?.payload ?? {}).map((button) => button.text)).toEqual([
-      'Профиль',
-      'Настройки',
-      'Поддержка',
-      'Привязать аккаунт',
+      '👤 Мой аккаунт',
+      '🌐 Язык',
+      '💬 Помощь',
     ]);
   });
 
@@ -361,7 +363,7 @@ describe('createTelegramBot', () => {
 
     expect(configuredWebAppButtons(calls)).toEqual([
       {
-        text: 'Open app',
+        text: '🚀 Open app',
         web_app: { url: 'https://frontend.example.test/telegram-mini-app' },
       },
     ]);
@@ -376,7 +378,7 @@ describe('createTelegramBot', () => {
     const { calls, fetchMock } = apiMock();
     const { bot } = createTelegramBot(config(), { fetch: fetchMock });
 
-    for (const command of ['/profile', '/settings', '/support', '/link']) {
+    for (const command of ['/profile', '/language', '/support', '/link']) {
       // Each update mutates one bot session, so exercising the menu sequentially
       // mirrors Telegram delivery and avoids testing impossible concurrent navigation.
       // eslint-disable-next-line no-await-in-loop -- session-backed updates must remain ordered
@@ -394,7 +396,7 @@ describe('createTelegramBot', () => {
       ]),
     ).toEqual([
       {
-        text: 'Open app',
+        text: '🚀 Open app',
         web_app: { url: 'https://app.example.test/tma' },
       },
     ]);
@@ -417,7 +419,6 @@ describe('createTelegramBot', () => {
       'start',
       'app',
       'profile',
-      'settings',
       'language',
       'support',
       'link',
@@ -431,10 +432,13 @@ describe('createTelegramBot', () => {
   it('publishes localized private-chat commands and the persistent app menu button when setup is enabled', async () => {
     const api = {
       config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.resolve(true as const)),
       setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
       setMyCommands: vi.fn<
         (commands: ReturnType<typeof telegramBotCommands>, options?: Record<string, unknown>) => Promise<true>
       >(() => Promise.resolve(true)),
+      setMyDescription: vi.fn(() => Promise.resolve(true as const)),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
     };
 
     createTelegramBot(
@@ -446,27 +450,49 @@ describe('createTelegramBot', () => {
     );
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(api.setMyCommands).toHaveBeenCalledTimes(2);
+    expect(api.setMyCommands).toHaveBeenCalledTimes(telegramUiRegistrations.length);
     expect(api.setMyCommands.mock.calls[0]?.[0].map(({ command }) => command)).toContain('app');
-    expect(api.setMyCommands.mock.calls[0]?.[1]).toEqual({ scope: { type: 'all_private_chats' } });
-    expect(api.setMyCommands.mock.calls[1]?.[1]).toEqual({
-      scope: { type: 'all_private_chats' },
-      language_code: 'ru',
+    telegramUiRegistrations.forEach(({ locale, languageCode }, index) => {
+      const languageOptions = languageCode ? { language_code: languageCode } : undefined;
+      expect(api.setMyCommands.mock.calls[index]?.[1]).toEqual({
+        scope: { type: 'all_private_chats' },
+        ...(languageOptions ?? {}),
+      });
+      expect(api.setMyDescription.mock.calls[index]).toEqual([
+        translate('bot.profile.description', { locale }),
+        languageOptions,
+      ]);
+      expect(api.setMyShortDescription.mock.calls[index]).toEqual([
+        translate('bot.profile.shortDescription', { locale }),
+        languageOptions,
+      ]);
     });
+    expect(api.deleteMyCommands.mock.calls).toEqual(
+      telegramUiRegistrations.flatMap(({ languageCode }) => {
+        const languageOptions = languageCode ? { language_code: languageCode } : {};
+        return [
+          [{ scope: { type: 'default' }, ...languageOptions }],
+          [{ scope: { type: 'all_group_chats' }, ...languageOptions }],
+        ];
+      }),
+    );
     expect(api.setChatMenuButton).toHaveBeenCalledWith({
       menu_button: {
         type: 'web_app',
-        text: 'Open app',
+        text: '🚀 Open app',
         web_app: { url: 'https://frontend.example.test/telegram-mini-app' },
       },
     });
 
     const unsafeApi = {
       config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.resolve(true as const)),
       setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
       setMyCommands: vi.fn<
         (commands: ReturnType<typeof telegramBotCommands>, options?: Record<string, unknown>) => Promise<true>
       >(() => Promise.resolve(true)),
+      setMyDescription: vi.fn(() => Promise.resolve(true as const)),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
     };
     createTelegramBot(
       config({
@@ -478,7 +504,7 @@ describe('createTelegramBot', () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(unsafeApi.setChatMenuButton).not.toHaveBeenCalled();
-    expect(unsafeApi.setMyCommands).toHaveBeenCalledTimes(2);
+    expect(unsafeApi.setMyCommands).toHaveBeenCalledTimes(telegramUiRegistrations.length);
     expect(unsafeApi.setMyCommands.mock.calls[0]?.[0].map(({ command }) => command)).not.toContain('app');
   });
 
@@ -486,8 +512,11 @@ describe('createTelegramBot', () => {
     const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const api = {
       config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.resolve(true as const)),
       setChatMenuButton: vi.fn(() => Promise.reject(new Error('Telegram API unavailable'))),
       setMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setMyDescription: vi.fn(() => Promise.resolve(true as const)),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
     };
 
     expect(() =>
@@ -509,8 +538,11 @@ describe('createTelegramBot', () => {
     const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
     const api = {
       config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.resolve(true as const)),
       setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
       setMyCommands: vi.fn(() => Promise.reject(new Error('command menu unavailable'))),
+      setMyDescription: vi.fn(() => Promise.resolve(true as const)),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
     };
 
     createTelegramBot(
@@ -522,12 +554,62 @@ describe('createTelegramBot', () => {
     );
     await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(stderrWrite).toHaveBeenCalledWith(
-      'Telegram bot command menu setup failed (en) Error: command menu unavailable\n',
+    for (const languageCode of telegramUiRegistrationLabels) {
+      expect(stderrWrite).toHaveBeenCalledWith(
+        `Telegram bot command menu setup failed (${languageCode}) Error: command menu unavailable\n`,
+      );
+    }
+    stderrWrite.mockRestore();
+  });
+
+  it('keeps private command setup running when stale public-scope cleanup is rejected', async () => {
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const api = {
+      config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.reject(new Error('command cleanup unavailable'))),
+      setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setMyDescription: vi.fn(() => Promise.resolve(true as const)),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
+    };
+
+    createTelegramBot(config({ setupMenuButton: true }), { api: api as never });
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(api.setMyCommands).toHaveBeenCalledTimes(telegramUiRegistrations.length);
+    for (const languageCode of telegramUiRegistrationLabels) {
+      expect(stderrWrite).toHaveBeenCalledWith(
+        `Telegram bot public command cleanup failed (${languageCode}) Error: command cleanup unavailable\n`,
+      );
+    }
+    stderrWrite.mockRestore();
+  });
+
+  it('does not fail startup when localized bot profile setup is rejected', async () => {
+    const stderrWrite = vi.spyOn(process.stderr, 'write').mockImplementation(() => true);
+    const api = {
+      config: { use: vi.fn() },
+      deleteMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setChatMenuButton: vi.fn(() => Promise.resolve(true as const)),
+      setMyCommands: vi.fn(() => Promise.resolve(true as const)),
+      setMyDescription: vi.fn(() => Promise.reject(new Error('bot profile unavailable'))),
+      setMyShortDescription: vi.fn(() => Promise.resolve(true as const)),
+    };
+
+    createTelegramBot(
+      config({
+        appUrl: 'https://frontend.example.test/telegram-mini-app',
+        setupMenuButton: true,
+      }),
+      { api: api as never },
     );
-    expect(stderrWrite).toHaveBeenCalledWith(
-      'Telegram bot command menu setup failed (ru) Error: command menu unavailable\n',
-    );
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    for (const languageCode of telegramUiRegistrationLabels) {
+      expect(stderrWrite).toHaveBeenCalledWith(
+        `Telegram bot profile setup failed (${languageCode}) Error: bot profile unavailable\n`,
+      );
+    }
     stderrWrite.mockRestore();
   });
 
@@ -601,7 +683,7 @@ describe('createTelegramBot', () => {
     expect(texts(calls)).toEqual(
       expect.arrayContaining([
         'Ваш аккаунт привязан.',
-        'Добро пожаловать! Выберите действие.',
+        '👋 Добро пожаловать!\n\nВсё необходимое — в одном касании.',
         'Действие бота истекло. Начните заново.',
       ]),
     );
@@ -615,7 +697,10 @@ describe('createTelegramBot', () => {
     await bot.handleUpdate(messageUpdate('/start route:settings') as never);
 
     expect(texts(calls)).toEqual(
-      expect.arrayContaining(['This bot action expired. Please start again.', 'Welcome! Choose an action.']),
+      expect.arrayContaining([
+        'This bot action expired. Please start again.',
+        '👋 Welcome!\n\nEverything you need is one tap away.',
+      ]),
     );
   });
 
@@ -637,7 +722,7 @@ describe('createTelegramBot', () => {
 
     await bot.handleUpdate(messageUpdate('/start', 'en-US') as never);
 
-    expect(texts(calls)).toContain('Добро пожаловать! Выберите действие.');
+    expect(texts(calls)).toContain('👋 Добро пожаловать!\n\nВсё необходимое — в одном касании.');
   });
 
   it('clears sticky link-state when the backend reports the identity is no longer linked', async () => {
@@ -656,11 +741,13 @@ describe('createTelegramBot', () => {
 
     // First update: the identity is linked, so the profile reports the linked status.
     await bot.handleUpdate(messageUpdate('/profile') as never);
-    expect(latestPayload(calls, 'sendMessage').text).toContain('auth.social.status.linked');
+    expect(latestPayload(calls, 'sendMessage').text).toBe('👤 My account\n\n✅ Telegram is linked to your account.');
 
     // Identity is unlinked out-of-band; the next update must clear the sticky flag.
     await bot.handleUpdate(messageUpdate('/profile') as never);
-    expect(latestPayload(calls, 'sendMessage').text).toContain('auth.social.status.notLinked');
+    expect(latestPayload(calls, 'sendMessage').text).toBe(
+      '👤 My account\n\nTelegram is not linked yet. Connect it to keep your account in sync.',
+    );
   });
 
   it('creates link instructions from Telegram identity instead of frontend trust', async () => {
@@ -697,7 +784,9 @@ describe('createTelegramBot', () => {
 
     await bot.handleUpdate(messageUpdate('/link', 'ru') as never);
 
-    expect(texts(calls)).toContain('Начинаем привязку аккаунта.');
+    expect(texts(calls)).toContain(
+      '🔗 Привязка аккаунта\n\nПодключите Telegram к аккаунту, чтобы всё оставалось синхронизировано.',
+    );
     expect(configuredWebAppButtons(calls)).toEqual([]);
   });
 
@@ -707,7 +796,7 @@ describe('createTelegramBot', () => {
 
     await bot.handleUpdate(messageUpdate('hello') as never);
 
-    expect(texts(calls)).toContain('Welcome! Choose an action.');
+    expect(texts(calls)).toContain('👋 Welcome!\n\nEverything you need is one tap away.');
   });
 
   it('falls back to localized link text when instructions are unavailable from a menu callback', async () => {
@@ -715,14 +804,17 @@ describe('createTelegramBot', () => {
     const { bot } = createTelegramBot(config(), { fetch: fetchMock });
 
     await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Link')) as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'My account')) as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Link')) as never);
     await bot.handleUpdate(
       callbackUpdate(
         callbackDataFor(latestPayload(calls, 'editMessageText'), 'auth.social.button.linkTelegram'),
       ) as never,
     );
 
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Starting account link.');
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '🔗 Link your account\n\nConnect Telegram to your account to keep everything in sync.',
+    );
   });
 
   it('covers exported start and link handlers with default dependency resolution', async () => {
@@ -750,45 +842,26 @@ describe('createTelegramBot', () => {
     expect(ctx.reply).toHaveBeenCalledTimes(3);
   });
 
-  it('edits existing messages for callback navigation and keeps Back and Home compact', async () => {
+  it('edits existing messages and returns from a secondary screen with one Back action', async () => {
     const { calls, fetchMock } = apiMock();
     const { bot } = createTelegramBot(config(), { fetch: fetchMock });
 
     await bot.handleUpdate(messageUpdate('/start') as never);
-    const mainButtons = flattenButtons(calls.at(-1)?.payload ?? {});
-    const settings = mainButtons.find((button) => button.text === 'Settings');
-
-    expect(settings?.callback_data).toBeDefined();
-    if (!settings?.callback_data) {
-      throw new Error('Settings callback was not rendered.');
-    }
-
-    await bot.handleUpdate(callbackUpdate(settings.callback_data) as never);
+    const language = callbackDataFor(latestPayload(calls, 'sendMessage'), 'Language');
+    await bot.handleUpdate(callbackUpdate(language) as never);
 
     expect(calls.map((call) => call.method)).toContain('editMessageText');
     expect(calls.filter((call) => call.method === 'sendMessage')).toHaveLength(1);
     expect(calls.map((call) => call.method)).toContain('answerCallbackQuery');
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '🌐 Language\n\nChoose the language I’ll use for messages and menus.',
+    );
 
-    const settingsEdit = [...calls].reverse().find((call) => call.method === 'editMessageText');
-    expect(settingsEdit?.payload.text).toBe('Opening settings.');
-    const back = flattenButtons(settingsEdit?.payload ?? {}).find((button) => button.text === 'Back');
-    expect(back?.callback_data).toBeDefined();
-    if (!back?.callback_data) {
-      throw new Error('Back callback was not rendered.');
-    }
+    const back = callbackDataFor(latestPayload(calls, 'editMessageText'), 'Back');
+    await bot.handleUpdate(callbackUpdate(back) as never);
 
-    await bot.handleUpdate(callbackUpdate(back.callback_data) as never);
-
-    const homeEdit = [...calls].reverse().find((call) => call.method === 'editMessageText');
-    expect(homeEdit?.payload.text).toBe('Welcome! Choose an action.');
+    expect(latestPayload(calls, 'editMessageText').text).toBe('👋 Welcome!\n\nEverything you need is one tap away.');
     expect(calls.filter((call) => call.method === 'sendMessage')).toHaveLength(1);
-
-    await bot.handleUpdate(messageUpdate('/start') as never);
-    const secondSettings = callbackDataFor(latestPayload(calls, 'sendMessage'), 'Settings');
-    await bot.handleUpdate(callbackUpdate(secondSettings) as never);
-    const home = callbackDataFor(latestPayload(calls, 'editMessageText'), 'Home');
-    await bot.handleUpdate(callbackUpdate(home) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Welcome! Choose an action.');
   }, 10_000);
 
   it('updates language in session and calls linked-user preference update', async () => {
@@ -830,10 +903,14 @@ describe('createTelegramBot', () => {
     );
   });
 
-  it('traverses profile, link, language, support, and home menu callbacks', async () => {
+  it('traverses the simplified account, language, and help flows', async () => {
     const { calls, fetchMock } = apiMock();
     const createLinkInstructions = vi.fn(() => Promise.resolve('Open this Telegram-only link from your account page.'));
-    const updateLinkedUserLocale = vi.fn(() => Promise.resolve(undefined));
+    let linkedLocale: Locale = 'en';
+    const updateLinkedUserLocale = vi.fn((input: { locale: Locale }) => {
+      linkedLocale = input.locale;
+      return Promise.resolve(undefined);
+    });
     const auth: TelegramBotAuthPort = {
       consumeLinkPayload: vi.fn(() => Promise.resolve(null)),
       createLinkInstructions,
@@ -841,7 +918,7 @@ describe('createTelegramBot', () => {
         Promise.resolve({
           userId: 'user-1',
           tenantId: 'tenant-1',
-          locale: 'en' as const,
+          locale: linkedLocale,
         }),
       ),
       updateLinkedUserLocale,
@@ -849,12 +926,16 @@ describe('createTelegramBot', () => {
     const { bot } = createTelegramBot(config(), { auth, fetch: fetchMock });
 
     await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Profile')) as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'My account')) as never);
 
-    expect(latestPayload(calls, 'editMessageText').text).toContain('Telegram auth.social.status.linked');
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '👤 My account\n\n✅ Telegram is linked to your account.',
+    );
 
     await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Link')) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Starting account link.');
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '🔗 Link your account\n\nConnect Telegram to your account to keep everything in sync.',
+    );
 
     await bot.handleUpdate(
       callbackUpdate(
@@ -864,10 +945,11 @@ describe('createTelegramBot', () => {
     expect(createLinkInstructions).toHaveBeenCalledWith(expect.objectContaining({ providerSubject: '100' }));
     expect(latestPayload(calls, 'editMessageText').text).toBe('Open this Telegram-only link from your account page.');
 
-    await bot.handleUpdate(
-      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Language')) as never,
+    await bot.handleUpdate(messageUpdate('/start') as never);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Language')) as never);
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '🌐 Language\n\nChoose the language I’ll use for messages and menus.',
     );
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Choose your bot language.');
 
     await bot.handleUpdate(
       callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Russian')) as never,
@@ -879,19 +961,25 @@ describe('createTelegramBot', () => {
         tenantId: 'tenant-1',
       }),
     );
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Выберите язык бота.');
+    expect(latestPayload(calls, 'editMessageText').text).toBe('🌐 Язык\n\nВыберите язык сообщений и меню.');
 
     await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Назад')) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Выберите язык бота.');
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '👋 Добро пожаловать!\n\nВсё необходимое — в одном касании.',
+    );
 
     await bot.handleUpdate(messageUpdate('/start', 'ru') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Support')) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Opening support options.');
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Помощь')) as never);
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '💬 Помощь\n\nНужна помощь? Напишите нашей команде поддержки.',
+    );
 
     await bot.handleUpdate(
-      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Opening support options')) as never,
+      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Написать в поддержку')) as never,
     );
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Opening support options.');
+    expect(latestPayload(calls, 'editMessageText').text).toBe(
+      '💬 Помощь\n\nНужна помощь? Напишите нашей команде поддержки.',
+    );
   }, 15_000);
 
   it('warns users when callback message edits fail', async () => {
@@ -901,7 +989,7 @@ describe('createTelegramBot', () => {
     });
 
     await failingBot.handleUpdate(messageUpdate('/start') as never);
-    const support = callbackDataFor(latestPayload(failingApi.calls, 'sendMessage'), 'Support');
+    const support = callbackDataFor(latestPayload(failingApi.calls, 'sendMessage'), 'Help');
     await failingBot.handleUpdate(callbackUpdate(support) as never);
 
     expect(failingApi.calls.map((call) => call.method)).toEqual(
@@ -912,84 +1000,32 @@ describe('createTelegramBot', () => {
     ).toContain('The bot could not complete this action.');
   });
 
-  it('covers secondary menu navigation buttons', async () => {
+  it('keeps every secondary screen limited to its action and Back', async () => {
     const { calls, fetchMock } = apiMock();
     const { bot } = createTelegramBot(config({ rateLimit: { timeFrameMs: 10, limit: 100 } }), { fetch: fetchMock });
 
     await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Profile')) as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Back')) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Welcome! Choose an action.');
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'My account')) as never);
+    expect(flattenButtons(latestPayload(calls, 'editMessageText')).map((button) => button.text)).toEqual([
+      '🔗 Link account',
+      '‹ Back',
+    ]);
 
     await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Profile')) as never);
-    await bot.handleUpdate(
-      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Settings')) as never,
-    );
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Opening settings.');
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Language')) as never);
+    expect(flattenButtons(latestPayload(calls, 'editMessageText')).map((button) => button.text)).toEqual([
+      '✓ English',
+      'Russian',
+      '‹ Back',
+    ]);
 
     await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Profile')) as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Home')) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Welcome! Choose an action.');
-
-    await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Settings')) as never);
-    await bot.handleUpdate(
-      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Language')) as never,
-    );
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Back')) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Opening settings.');
-
-    await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Settings')) as never);
-    await bot.handleUpdate(
-      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Language')) as never,
-    );
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Home')) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Welcome! Choose an action.');
-
-    await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Settings')) as never);
-    await bot.handleUpdate(
-      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Language')) as never,
-    );
-    await bot.handleUpdate(
-      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'English')) as never,
-    );
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Choose your bot language.');
-
-    await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Settings')) as never);
-    await bot.handleUpdate(
-      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Support')) as never,
-    );
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Opening support options.');
-    await bot.handleUpdate(
-      callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Settings')) as never,
-    );
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Opening settings.');
-
-    await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Support')) as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Home')) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Welcome! Choose an action.');
-
-    await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Support')) as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Back')) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Welcome! Choose an action.');
-
-    await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Link')) as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Home')) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Welcome! Choose an action.');
-
-    await bot.handleUpdate(messageUpdate('/start') as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Link')) as never);
-    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'editMessageText'), 'Back')) as never);
-    expect(latestPayload(calls, 'editMessageText').text).toBe('Welcome! Choose an action.');
-  }, 60_000);
+    await bot.handleUpdate(callbackUpdate(callbackDataFor(latestPayload(calls, 'sendMessage'), 'Help')) as never);
+    expect(flattenButtons(latestPayload(calls, 'editMessageText')).map((button) => button.text)).toEqual([
+      '💬 Contact support',
+      '‹ Back',
+    ]);
+  }, 15_000);
 
   it('answers unknown callback data through the fallback callback handler', async () => {
     const { calls, fetchMock } = apiMock();
@@ -1014,6 +1050,11 @@ describe('createTelegramBot', () => {
 
     expect(goBack(ctx as never)).toBe('settings');
     expect(ctx.session.currentRoute).toBe('settings');
+
+    navigateTo(ctx as never, 'settings.language');
+    replaceCurrentRoute(ctx as never, 'settings.language.confirm', { locale: 'ru' });
+    expect(ctx.session.stack).toEqual(['main', 'settings', 'settings.language.confirm']);
+    expect(goBack(ctx as never)).toBe('settings');
 
     goHome(ctx as never);
     expect(ctx.session.stack).toEqual(['main']);

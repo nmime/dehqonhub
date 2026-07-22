@@ -1,5 +1,5 @@
 import { Bot, Composer, InlineKeyboard, MemorySessionStorage } from 'grammy';
-import type { BotCommand } from 'grammy/types';
+import type { BotCommand, LanguageCode } from 'grammy/types';
 import { sequentialize } from '@grammyjs/runner';
 import { conversations, createConversation } from '@grammyjs/conversations';
 import { hydrate, hydrateApi } from '@grammyjs/hydrate';
@@ -7,7 +7,7 @@ import { limit } from '@grammyjs/ratelimiter';
 import { Router } from '@grammyjs/router';
 import { autoRetry } from '@grammyjs/auto-retry';
 import { apiThrottler } from '@grammyjs/transformer-throttler';
-import { translate, type Locale, type TranslationKey } from '../i18n';
+import { defaultLocale, supportedLocales, translate, type Locale, type TranslationKey } from '../i18n';
 import { createTelegramApplication, resolveTelegramApplication, type TelegramBotApplicationPort } from './application';
 import { isSafeTelegramAppUrl, resolveTelegramBotConfig } from './config';
 import { resolveTelegramIdentity } from '../identity';
@@ -30,13 +30,17 @@ const telegramCommandDefinitions: readonly {
   descriptionKey: TranslationKey;
   requiresApp?: boolean;
 }[] = [
-  { command: 'start', descriptionKey: 'bot.route.main' },
-  { command: 'app', descriptionKey: 'bot.menu.openApp', requiresApp: true },
-  { command: 'profile', descriptionKey: 'bot.route.profile' },
-  { command: 'settings', descriptionKey: 'bot.route.settings' },
-  { command: 'language', descriptionKey: 'bot.route.language' },
-  { command: 'support', descriptionKey: 'bot.route.support' },
-  { command: 'link', descriptionKey: 'bot.route.link' },
+  { command: 'start', descriptionKey: 'bot.command.start' },
+  { command: 'app', descriptionKey: 'bot.command.app', requiresApp: true },
+  { command: 'profile', descriptionKey: 'bot.command.profile' },
+  { command: 'language', descriptionKey: 'bot.command.language' },
+  { command: 'support', descriptionKey: 'bot.command.support' },
+  { command: 'link', descriptionKey: 'bot.command.link' },
+];
+
+const telegramBotUiLocales: ReadonlyArray<{ locale: Locale; languageCode?: LanguageCode }> = [
+  { locale: defaultLocale },
+  ...supportedLocales.map((locale) => ({ locale, languageCode: locale })),
 ];
 
 export function createTelegramBot(
@@ -119,7 +123,6 @@ export function createTelegramBot(
     });
   });
   bot.command('profile', async (ctx) => renderCommandRoute(ctx, 'profile', menus.profile));
-  bot.command('settings', async (ctx) => renderCommandRoute(ctx, 'settings', menus.settings));
   bot.command('support', async (ctx) => renderCommandRoute(ctx, 'support', menus.support));
   bot.command('link', async (ctx) => handleLink(ctx, application, menus.link));
   bot.command('language', async (ctx) => {
@@ -160,28 +163,60 @@ export function telegramBotCommands(locale: Locale, includeApp: boolean): BotCom
 }
 
 export async function setupTelegramBotUi(
-  api: Pick<NonNullable<TelegramBotDependencies['api']>, 'setChatMenuButton' | 'setMyCommands'>,
+  api: Pick<
+    NonNullable<TelegramBotDependencies['api']>,
+    'deleteMyCommands' | 'setChatMenuButton' | 'setMyCommands' | 'setMyDescription' | 'setMyShortDescription'
+  >,
   appUrl?: string,
 ): Promise<void> {
   await Promise.all([
-    setupTelegramCommandMenu(api, 'en', Boolean(appUrl)),
-    setupTelegramCommandMenu(api, 'ru', Boolean(appUrl)),
+    ...telegramBotUiLocales.map(({ locale, languageCode }) =>
+      setupTelegramCommandMenu(api, locale, Boolean(appUrl), languageCode),
+    ),
+    ...telegramBotUiLocales.map(({ locale, languageCode }) => setupTelegramBotProfile(api, locale, languageCode)),
     appUrl ? setupTelegramMenuButton(api, appUrl) : Promise.resolve(),
   ]);
 }
 
 async function setupTelegramCommandMenu(
-  api: Pick<NonNullable<TelegramBotDependencies['api']>, 'setMyCommands'>,
+  api: Pick<NonNullable<TelegramBotDependencies['api']>, 'deleteMyCommands' | 'setMyCommands'>,
   locale: Locale,
   includeApp: boolean,
+  languageCode?: LanguageCode,
 ): Promise<void> {
+  const languageOptions = languageCode ? { language_code: languageCode } : {};
+  try {
+    await Promise.all([
+      api.deleteMyCommands({ scope: { type: 'default' }, ...languageOptions }),
+      api.deleteMyCommands({ scope: { type: 'all_group_chats' }, ...languageOptions }),
+    ]);
+  } catch (error) {
+    writeStderrLine(`Telegram bot public command cleanup failed (${languageCode ?? 'default'}) ${String(error)}`);
+  }
+
   try {
     await api.setMyCommands(telegramBotCommands(locale, includeApp), {
       scope: { type: 'all_private_chats' },
-      ...(locale === 'ru' ? { language_code: 'ru' } : {}),
+      ...languageOptions,
     });
   } catch (error) {
-    writeStderrLine(`Telegram bot command menu setup failed (${locale}) ${String(error)}`);
+    writeStderrLine(`Telegram bot command menu setup failed (${languageCode ?? 'default'}) ${String(error)}`);
+  }
+}
+
+async function setupTelegramBotProfile(
+  api: Pick<NonNullable<TelegramBotDependencies['api']>, 'setMyDescription' | 'setMyShortDescription'>,
+  locale: Locale,
+  languageCode?: LanguageCode,
+): Promise<void> {
+  const options = languageCode ? { language_code: languageCode } : undefined;
+  try {
+    await Promise.all([
+      api.setMyDescription(translate('bot.profile.description', { locale }), options),
+      api.setMyShortDescription(translate('bot.profile.shortDescription', { locale }), options),
+    ]);
+  } catch (error) {
+    writeStderrLine(`Telegram bot profile setup failed (${languageCode ?? 'default'}) ${String(error)}`);
   }
 }
 
@@ -193,7 +228,7 @@ export async function setupTelegramMenuButton(
     await api.setChatMenuButton({
       menu_button: {
         type: 'web_app',
-        text: 'Open app',
+        text: translate('bot.menu.openApp'),
         web_app: { url: appUrl },
       },
     });

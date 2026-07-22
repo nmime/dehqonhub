@@ -44,20 +44,13 @@ export const ProductShell = observer(function ProductShell({
   headerLeading,
   headerTrailing,
 }: Readonly<ProductShellProps>) {
-  const { locale } = useI18n();
+  const { locale, t } = useI18n();
   const uiStore = useOptionalRootStore()?.ui;
-  const defaultLabels =
-    locale === 'ru'
-      ? {
-          actionsLabel: `Навигация ${appName}`,
-          homeLinkLabel: `Домой в ${appName}`,
-          skipLinkLabel: 'Перейти к содержимому',
-        }
-      : {
-          actionsLabel: `${appName} navigation`,
-          homeLinkLabel: `${appName} home`,
-          skipLinkLabel: 'Skip to content',
-        };
+  const defaultLabels = {
+    actionsLabel: t('common.navigation.label', { appName }),
+    homeLinkLabel: t('common.navigation.home', { appName }),
+    skipLinkLabel: t('common.navigation.skip'),
+  };
   const resolvedActionsLabel = actionsLabel ?? defaultLabels.actionsLabel;
   const resolvedSkipLinkLabel = skipLinkLabel ?? defaultLabels.skipLinkLabel;
   const resolvedHomeLinkLabel = defaultLabels.homeLinkLabel;

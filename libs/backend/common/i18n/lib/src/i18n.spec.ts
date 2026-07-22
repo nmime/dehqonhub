@@ -3,8 +3,13 @@ import {
   I18nService,
   backendCatalogFileNames,
   createRequestLocaleMiddleware,
+  getLocalization,
   hasTranslationKey,
+  Language,
+  parseAcceptLanguage,
   resolveLocale,
+  resolveLanguageFromHeaders,
+  resolveLanguageFromRequest,
   translate,
   translations,
 } from './index';
@@ -21,6 +26,11 @@ describe('@app/backend-common-i18n', () => {
     expect(hasTranslationKey('errors.rate-limited.title')).toBe(true);
     expect(translate('common.language', { locale: 'ru' })).toBe('Язык');
     expect(resolveLocale('ru-RU')).toBe('ru');
+    expect(Language.En).toBe('en');
+    expect(Language.Ru).toBe('ru');
+    expect(getLocalization({ en: 'Hello', ru: 'Привет' }, Language.Ru)).toBe('Привет');
+    expect(getLocalization({ en: 'Hello' }, 'fr')).toBe('Hello');
+    expect(getLocalization({ ru: 'Привет' }, Language.En)).toBe('Привет');
     const i18n = new I18nService();
     expect(i18n.translate('common.ready', { locale: 'en' })).toBe('Ready');
     expect(i18n.resolveLocale('ru-RU')).toBe('ru');
@@ -29,5 +39,23 @@ describe('@app/backend-common-i18n', () => {
     createRequestLocaleMiddleware()(request, {}, next);
     expect(request).toMatchObject({ locale: 'ru', language: 'ru' });
     expect(next).toHaveBeenCalledOnce();
+  });
+
+  it('resolves API language from case-insensitive and Fetch-style headers', () => {
+    expect(resolveLanguageFromHeaders({ 'Accept-Language': 'en;q=0.2, ru-RU;q=0.9' })).toBe(Language.Ru);
+    expect(resolveLanguageFromHeaders({ 'X-Locale': 'ru', 'Accept-Language': 'en' })).toBe(Language.Ru);
+    expect(resolveLanguageFromHeaders({ get: (name) => (name === 'accept-language' ? 'ru-RU' : null) })).toBe(
+      Language.Ru,
+    );
+    expect(resolveLanguageFromHeaders({ 'Accept-Language': ['fr', 'ru;q=0.8'] })).toBe(Language.Ru);
+  });
+
+  it('parses Accept-Language quality and preserves request resolver precedence', () => {
+    expect(parseAcceptLanguage('ru;q=0, en;q=0.5')).toBe(Language.En);
+    expect(parseAcceptLanguage('ru;q=bogus, en;q=0.5')).toBe(Language.En);
+    expect(parseAcceptLanguage('fr, *;q=0.9')).toBeUndefined();
+    expect(resolveLanguageFromRequest({ query: { lang: 'en' }, headers: { 'Accept-Language': 'ru' } })).toBe(
+      Language.En,
+    );
   });
 });

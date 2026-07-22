@@ -117,7 +117,7 @@ vi.mock('@app/backend-common-redis', () => ({
 
 vi.mock('@app/backend-common-i18n', () => ({
   createRequestLocaleMiddleware: mocks.createRequestLocaleMiddleware,
-  fallbackLocale: 'en',
+  defaultLocale: 'en',
   hasTranslationKey: (key: string) => key.startsWith('errors.rate-limited.'),
   interpolate: (value: string) => value,
   normalizeLocale: (value: string | undefined) => (value === 'en' || value === 'ru' ? value : undefined),

@@ -8,6 +8,7 @@ import {
   type APIComponentInMessageActionRow,
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from 'discord-api-types/v10';
+import { defaultLocale } from '@app/backend-common-i18n';
 import { localizationsFor, t } from './discord-i18n';
 
 export const DiscordAccountCommandName = 'account';
@@ -23,23 +24,21 @@ export function buildDiscordCommands(): DiscordCommandDefinition[] {
   const commands: RESTPostAPIChatInputApplicationCommandsJSONBody[] = [
     {
       name: DiscordAccountCommandName,
-      description: 'Manage account linking.',
-      name_localizations: {},
-      description_localizations: {
-        ru: 'Управление привязкой аккаунта.',
-      },
+      description: t('discord.commands.account.description', defaultLocale),
+      name_localizations: localizationsFor('discord.commands.account.label'),
+      description_localizations: localizationsFor('discord.commands.account.description'),
       options: [
         {
           type: 1,
           name: 'link',
-          description: t('discord.commands.link.description', 'en'),
+          description: t('discord.commands.link.description', defaultLocale),
           name_localizations: localizationsFor('discord.commands.link.label'),
           description_localizations: localizationsFor('discord.commands.link.description'),
         },
         {
           type: 1,
           name: 'status',
-          description: t('discord.commands.status.description', 'en'),
+          description: t('discord.commands.status.description', defaultLocale),
           name_localizations: localizationsFor('discord.commands.status.label'),
           description_localizations: localizationsFor('discord.commands.status.description'),
         },
@@ -47,7 +46,7 @@ export function buildDiscordCommands(): DiscordCommandDefinition[] {
     },
     {
       name: DiscordHelpCommandName,
-      description: t('discord.commands.help.description', 'en'),
+      description: t('discord.commands.help.description', defaultLocale),
       name_localizations: localizationsFor('discord.commands.help.label'),
       description_localizations: localizationsFor('discord.commands.help.description'),
     },

@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { supportedLocales, type Locale } from '@app/backend-common-i18n';
 import {
   NotificationSegmentResolver,
   type NotificationSegmentResolveInput,
@@ -17,7 +18,7 @@ export class AuthUsersNotificationSegmentResolver extends NotificationSegmentRes
     additionalProperties: false,
     properties: {
       status: { enum: ['active', 'disabled', 'invited'] },
-      locale: { enum: ['en', 'ru'] },
+      locale: { enum: supportedLocales },
       role: { type: 'string' },
       permission: { type: 'string' },
       registeredAfter: { type: 'string', format: 'date-time' },
@@ -68,7 +69,7 @@ export class AuthUsersNotificationSegmentResolver extends NotificationSegmentRes
 function toUserFilters(input: NotificationSegmentResolveInput): {
   tenantId: string;
   status?: 'active' | 'disabled' | 'invited';
-  locale?: 'en' | 'ru';
+  locale?: Locale;
   role?: string;
   permission?: string;
   createdAfter?: Date;
@@ -80,7 +81,7 @@ function toUserFilters(input: NotificationSegmentResolveInput): {
   return {
     tenantId: input.tenantId,
     ...(isOneOf(parameters['status'], ['active', 'disabled', 'invited']) ? { status: parameters['status'] } : {}),
-    ...(isOneOf(parameters['locale'], ['en', 'ru']) ? { locale: parameters['locale'] } : {}),
+    ...(isOneOf(parameters['locale'], supportedLocales) ? { locale: parameters['locale'] } : {}),
     ...(typeof parameters['role'] === 'string' ? { role: parameters['role'] } : {}),
     ...(typeof parameters['permission'] === 'string' ? { permission: parameters['permission'] } : {}),
     ...(dateParameter(parameters, 'registeredAfter')

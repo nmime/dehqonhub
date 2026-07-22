@@ -1,4 +1,10 @@
-import { hasFrontendTranslationKey, translate, type TranslationKey } from '@app/frontend-i18n-shared';
+import {
+  getLocalization,
+  hasFrontendTranslationKey,
+  Language,
+  translate,
+  type TranslationKey,
+} from '@app/frontend-i18n-shared';
 import {
   isProblemPresentationDisplay,
   isProblemPresentationSeverity,
@@ -158,7 +164,13 @@ export const configureProblemPresentationOverrides = (value: unknown): void => {
 };
 
 const localizedOverrideMessage = (override: ProblemPresentationOverride): string | undefined =>
-  getApiLocale() === 'ru' ? (override.messageRu ?? override.messageEn) : (override.messageEn ?? override.messageRu);
+  getLocalization(
+    {
+      [Language.En]: override.messageEn,
+      [Language.Ru]: override.messageRu,
+    },
+    getApiLocale(),
+  );
 
 export const applyProblemPresentationOverrides = (rules: readonly ApiToastRule[]): ApiToastRule[] =>
   rules.map((rule) => {

@@ -1,14 +1,13 @@
-import { fallbackLocale, type Locale } from '@app/frontend-i18n-shared';
+import { defaultLocale, normalizeLocale, type Locale } from '@app/frontend-i18n-shared';
 
-let currentApiLocale: Locale = fallbackLocale;
+let currentApiLocale: Locale = defaultLocale;
 
 const resolveAmbientApiLocale = (): Locale => {
   if (typeof document === 'undefined') {
     return currentApiLocale;
   }
 
-  const documentLocale = document.documentElement.lang;
-  return documentLocale === 'en' || documentLocale === 'ru' ? documentLocale : currentApiLocale;
+  return normalizeLocale(document.documentElement.lang) ?? currentApiLocale;
 };
 
 let apiLocaleGetter: () => Locale = resolveAmbientApiLocale;

@@ -1,5 +1,6 @@
 import { createHmac } from 'node:crypto';
 import { Injectable, Logger, Optional } from '@nestjs/common';
+import { normalizeLocale, parseAcceptLanguage } from '@app/backend-common-i18n';
 import { requestContext } from '@app/backend-common-request-context';
 import { resolveTenantId, type AuthenticatedRequest } from '@app/backend-feature-auth-shared';
 import {
@@ -44,8 +45,8 @@ export class AuthLoginAnalyticsService {
     const ipAddress = resolveRequestIp(input.request);
     const geo = await this.geoIp.resolve(ipAddress);
     const clientTimezone = normalizeTimezone(readHeader(input.request, 'x-client-timezone'));
-    const explicitLanguage = normalizeLanguage(input.language);
-    const requestLanguage = normalizeAcceptLanguage(readHeader(input.request, 'accept-language'));
+    const explicitLanguage = normalizeLocale(input.language);
+    const requestLanguage = parseAcceptLanguage(readHeader(input.request, 'accept-language'));
     const language = explicitLanguage ?? requestLanguage;
     let timezoneSource = 'unknown';
     if (clientTimezone) {
@@ -121,18 +122,12 @@ export const resolveRequestIp = (request: AuthenticatedRequest): string | undefi
 };
 
 const readHeader = (request: AuthenticatedRequest, name: string): string | undefined => {
-  const value = request.headers?.[name] ?? request.headers?.[name.toLowerCase()];
-  return Array.isArray(value) ? value[0] : value;
-};
-
-const normalizeAcceptLanguage = (value: string | undefined): string | undefined =>
-  normalizeLanguage(value?.split(',')[0]?.split(';')[0]);
-
-const normalizeLanguage = (value: string | null | undefined): string | undefined => {
-  const normalized = value?.trim().replace(/_/gu, '-');
-  return normalized && /^[a-z]{2,3}(?:-[a-z0-9]{2,8})*$/iu.test(normalized)
-    ? normalized.slice(0, 35).toLowerCase()
-    : undefined;
+  const normalizedName = name.toLowerCase();
+  const entry = Object.entries(request.headers ?? {}).find(
+    ([headerName]) => headerName.toLowerCase() === normalizedName,
+  );
+  const value = entry?.[1];
+  return Array.isArray(value) ? value.join(',') : value;
 };
 
 const normalizeTimezone = (value: string | undefined): string | undefined => {

@@ -1,4 +1,4 @@
-import { Language } from './language.enum';
+import type { Language } from './language.enum';
 import type { AuthProvider, AuthProviderChannel } from './social-auth.types';
 import { createIsEnum } from '../util';
 

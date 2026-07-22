@@ -18,5 +18,10 @@ if (!existsSync(absoluteModulePath)) {
 
 process.argv = [process.argv[0] ?? 'node', absoluteModulePath, ...args];
 
-const jiti = createJiti(import.meta.url);
+const workspaceRoot = resolve(import.meta.dirname, '../../..');
+const jiti = createJiti(import.meta.url, {
+  alias: {
+    '@app/common-i18n-runtime': resolve(workspaceRoot, 'libs/common/i18n/runtime/lib/src/index.ts'),
+  },
+});
 await jiti.import(absoluteModulePath);

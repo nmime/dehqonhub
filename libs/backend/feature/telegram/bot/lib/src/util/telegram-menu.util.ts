@@ -3,7 +3,8 @@ import type { TelegramBotContext } from '../type/telegram.type';
 
 export function languageLabel(ctx: TelegramBotContext, locale: Locale): string {
   const selected = ctx.session.locale === locale ? '✓ ' : '';
-  return `${selected}${ctx.t(locale === 'en' ? 'common.language.en' : 'common.language.ru')}`;
+  const languageKey = `common.language.${locale}` as const;
+  return `${selected}${ctx.t(languageKey)}`;
 }
 
 export function menuFingerprint(ctx: TelegramBotContext): string {

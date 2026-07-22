@@ -1,15 +1,25 @@
 import { translations, type TranslationKey } from './locales';
 import {
-  fallbackLocale,
+  defaultLocale,
+  getLocalization,
   hasTranslationKeyIn,
   interpolate,
+  isLanguage,
+  isSupportedLocale,
+  Language,
   normalizeLocale,
   parseAcceptLanguage,
   resolveLocale,
+  resolveLocaleFromHeaders,
   resolveLocaleFromRequest,
+  resolveLanguage,
+  resolveLanguageFromHeaders,
+  resolveLanguageFromRequest,
   supportedLocales,
   translateFromCatalog,
   type Locale,
+  type LocaleHeaders,
+  type Localizations,
   type LocaleRequestSource,
   type TranslateOptions,
   type TranslationParams,
@@ -17,15 +27,23 @@ import {
 
 export * from './locales';
 export {
-  fallbackLocale,
+  defaultLocale,
+  getLocalization,
   interpolate,
+  isLanguage,
+  isSupportedLocale,
+  Language,
   normalizeLocale,
   parseAcceptLanguage,
   resolveLocale,
+  resolveLocaleFromHeaders,
   resolveLocaleFromRequest,
+  resolveLanguage,
+  resolveLanguageFromHeaders,
+  resolveLanguageFromRequest,
   supportedLocales,
 };
-export type { Locale, LocaleRequestSource, TranslateOptions, TranslationParams };
+export type { Locale, LocaleHeaders, Localizations, LocaleRequestSource, TranslateOptions, TranslationParams };
 
 export function hasTranslationKey(key: string): key is TranslationKey {
   return hasTranslationKeyIn(translations, key);
@@ -36,7 +54,7 @@ export function translate(key: TranslationKey, options: TranslateOptions = {}): 
 }
 
 export class I18nService {
-  readonly fallbackLocale = fallbackLocale;
+  readonly defaultLocale = defaultLocale;
   readonly supportedLocales = supportedLocales;
 
   translate(key: TranslationKey, options: TranslateOptions = {}): string {
@@ -45,6 +63,10 @@ export class I18nService {
 
   resolveLocale(...values: Array<string | null | undefined>): Locale {
     return resolveLocale(...values);
+  }
+
+  resolveLocaleFromHeaders(headers: LocaleHeaders | undefined): Locale {
+    return resolveLocaleFromHeaders(headers);
   }
 
   resolveLocaleFromRequest(source: LocaleRequestSource): Locale {

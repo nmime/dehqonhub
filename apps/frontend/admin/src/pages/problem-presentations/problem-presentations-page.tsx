@@ -7,6 +7,7 @@ import {
   type ProblemPresentationSeverity,
 } from '@app/common-problem-details';
 import { apiToastRuntime, configureProblemPresentationOverrides } from '@app/frontend-api-support';
+import { getLocalization, Language } from '@app/frontend-i18n-shared';
 import {
   adminApi,
   apiToastRuleCatalog,
@@ -200,7 +201,13 @@ export const ProblemPresentationsPage = ({
     apiToastRuntime.show({
       category: row.severity,
       message:
-        (locale === 'ru' ? row.messageRu || row.messageEn : row.messageEn || row.messageRu) || row.defaultMessage,
+        getLocalization(
+          {
+            [Language.En]: row.messageEn || undefined,
+            [Language.Ru]: row.messageRu || undefined,
+          },
+          locale,
+        ) ?? row.defaultMessage,
       title: `${row.method} ${row.path}`,
     });
   };

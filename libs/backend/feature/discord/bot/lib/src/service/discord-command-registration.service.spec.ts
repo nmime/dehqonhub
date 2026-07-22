@@ -29,7 +29,10 @@ describe('Discord command registration', () => {
       guildId: '234567890123456789',
     });
     expect(snapshot.commands.map((command) => command.name)).toEqual(['account', 'help']);
+    expect(snapshot.commands[0]?.name_localizations).toEqual({ ru: 'аккаунт' });
+    expect(snapshot.commands[0]?.description_localizations).toEqual({ ru: 'Управление привязкой аккаунта.' });
     expect(snapshot.commands[0]?.options?.map((option) => option.name)).toEqual(['link', 'status']);
+    expect(snapshot.commands[0]?.options?.[0]?.name_localizations).toEqual({ ru: 'привязать' });
     expect(snapshot.commands[0]?.options?.[0]?.description_localizations).toEqual({
       ru: 'Привязать Discord к учетной записи на сайте.',
     });

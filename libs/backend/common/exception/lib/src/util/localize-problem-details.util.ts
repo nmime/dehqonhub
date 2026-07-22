@@ -1,7 +1,7 @@
 import { problemCodeFromType } from '@app/common-problem-details';
 import type { TranslationKey } from '@app/common-i18n-keys';
 import {
-  fallbackLocale,
+  defaultLocale,
   hasTranslationKey,
   interpolate,
   normalizeLocale,
@@ -57,8 +57,8 @@ function translationCodeForProblem(problem: ProblemDetailsResponse): string {
 
 export function resolveProblemContentLanguage(problem: ProblemDetailsResponse, requestedLocale?: string): string {
   const titleKey = `errors.${translationCodeForProblem(problem)}.title`;
-  const locale = normalizeLocale(requestedLocale) ?? fallbackLocale;
-  return Object.hasOwn(translations[locale], titleKey) ? locale : fallbackLocale;
+  const locale = normalizeLocale(requestedLocale) ?? defaultLocale;
+  return Object.hasOwn(translations[locale], titleKey) ? locale : defaultLocale;
 }
 
 /** Localize the standard RFC members while preserving the problem type URI. */

@@ -1,4 +1,5 @@
 import type { Logger } from '@nestjs/common';
+import { defaultLocale } from '@app/backend-common-i18n';
 import type { NotificationRecipientResolver } from '@app/backend-feature-notification-shared';
 import {
   NotificationErrorReason,
@@ -39,7 +40,7 @@ export async function deliverNotification(
   }
 
   const messageStrategy = params.messageStrategyResolver.resolve(notification, delivery.channel);
-  const message = messageStrategy.getMessage(notification.extra?.useLanguage ?? recipient.language ?? 'en');
+  const message = messageStrategy.getMessage(notification.extra?.useLanguage ?? recipient.language ?? defaultLocale);
   if (!message) {
     return fail(NotificationErrorReason.NotFoundMessage);
   }

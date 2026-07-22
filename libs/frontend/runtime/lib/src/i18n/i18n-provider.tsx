@@ -2,7 +2,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
 import {
-  fallbackLocale,
+  defaultLocale,
   sharedFrontendTranslations,
   supportedLocales,
   translate,
@@ -23,12 +23,12 @@ export interface FrontendI18nContextValue {
 }
 
 const fallbackContext: FrontendI18nContextValue = {
-  locale: fallbackLocale,
+  locale: defaultLocale,
   supportedLocales,
   setLocale: () => undefined,
   theme: 'system',
   setTheme: () => undefined,
-  t: (key, params) => translate(key, { locale: fallbackLocale, params }),
+  t: (key, params) => translate(key, { locale: defaultLocale, params }),
 };
 
 const FrontendI18nContext = createContext<FrontendI18nContextValue>(fallbackContext);

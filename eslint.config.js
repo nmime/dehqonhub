@@ -72,6 +72,10 @@ module.exports = [
               onlyDependOnLibsWithTags: ['platform:shared'],
             },
             {
+              sourceTag: 'platform:tooling',
+              onlyDependOnLibsWithTags: ['platform:shared', 'platform:tooling'],
+            },
+            {
               sourceTag: 'type:app',
               onlyDependOnLibsWithTags: [
                 'type:feature-main',

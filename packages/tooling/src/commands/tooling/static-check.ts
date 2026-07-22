@@ -4,6 +4,10 @@ import { extname } from "node:path";
 import { dirname, join, relative, resolve } from "node:path";
 import { pathToFileURL } from "node:url";
 import { createJiti } from "jiti";
+import {
+  defaultLocale,
+  supportedLocales,
+} from "@app/common-i18n-runtime";
 import { run } from "../../runtime/process.ts";
 
 export interface StaticCheckOptions {
@@ -190,7 +194,6 @@ export const thinLocaleCatalogFileNames = [
   "bots/discord.json",
 ] as const;
 
-const supportedThinLocaleDirectories = ["en", "ru"] as const;
 const thinLocaleCatalogMaxKeys = 60;
 const thinLocaleCatalogMaxNonEmptyLines = 90;
 
@@ -1247,7 +1250,7 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
   const i18nRoot = join(workspaceRoot, "i18n");
   const failures: CheckFailure[] = [];
 
-  for (const locale of supportedThinLocaleDirectories) {
+  for (const locale of supportedLocales) {
     const localeDirectory = join(i18nRoot, locale);
     if (!existsSync(localeDirectory)) {
       failures.push(thinLocaleFailure(`i18n/${locale}`, "missing locale directory"));
@@ -1280,7 +1283,7 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
 
   const localeKeys = new Map<string, Set<string>>();
 
-  for (const locale of supportedThinLocaleDirectories) {
+  for (const locale of supportedLocales) {
     const mergedKeys = new Set<string>();
     const localeDirectory = join(i18nRoot, locale);
     if (!existsSync(localeDirectory)) continue;
@@ -1365,7 +1368,7 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
     localeKeys.set(locale, mergedKeys);
   }
 
-  const fallbackKeys = localeKeys.get("en") ?? new Set<string>();
+  const fallbackKeys = localeKeys.get(defaultLocale) ?? new Set<string>();
   for (const [locale, keys] of localeKeys.entries()) {
     const missingKeys = [...fallbackKeys].filter((key) => !keys.has(key));
     const extraKeys = [...keys].filter((key) => !fallbackKeys.has(key));
@@ -1443,7 +1446,7 @@ const translationKeyUnionSource = "libs/common/i18n/keys/lib/src/index.ts";
 // sources of truth, so a typo or removal in either drifts silently (catalogs are
 // Record<string, string>). Fail on drift in either direction.
 export function checkTranslationKeyDrift(workspaceRoot: string): CheckFailure[] {
-  const localeDirectory = join(workspaceRoot, "i18n", "en");
+  const localeDirectory = join(workspaceRoot, "i18n", defaultLocale);
   const keysSource = resolve(workspaceRoot, translationKeyUnionSource);
   if (!existsSync(localeDirectory) || !existsSync(keysSource)) return [];
 

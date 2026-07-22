@@ -18,6 +18,19 @@ export function navigateTo(
   }
 }
 
+export function replaceCurrentRoute(
+  ctx: TelegramBotContext,
+  route: TelegramBotRoute,
+  params: Record<string, string> = {},
+): void {
+  const stack: TelegramBotRoute[] = ctx.session.stack.length ? [...ctx.session.stack] : ['main'];
+  stack[stack.length - 1] = route;
+  ctx.session.stack = stack;
+  ctx.session.currentRoute = route;
+  ctx.session.params = params;
+  ctx.session.lastMenuId = menuIdForRoute(route);
+}
+
 export function goBack(ctx: TelegramBotContext): TelegramBotRoute {
   const stack: TelegramBotRoute[] = ctx.session.stack.length ? [...ctx.session.stack] : ['main'];
   if (stack.length > 1) {

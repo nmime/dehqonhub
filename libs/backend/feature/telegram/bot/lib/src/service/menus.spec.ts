@@ -71,13 +71,13 @@ describe('Telegram bot menus', () => {
 
   it('localizes linked and unlinked profile status through ctx.t', () => {
     const unlinked = ctx('profile');
-    expect(routeText(unlinked, 'profile')).toContain('t:auth.social.status.notLinked');
-    expect(unlinked.t).toHaveBeenCalledWith('auth.social.status.notLinked');
+    expect(routeText(unlinked, 'profile')).toBe('t:bot.message.profileNotLinked');
+    expect(unlinked.t).toHaveBeenCalledWith('bot.message.profileNotLinked');
 
     const linked = ctx('profile');
     linked.session.auth.linked = true;
-    expect(routeText(linked, 'profile')).toContain('t:auth.social.status.linked');
-    expect(linked.t).toHaveBeenCalledWith('auth.social.status.linked');
+    expect(routeText(linked, 'profile')).toBe('t:bot.message.profileLinked');
+    expect(linked.t).toHaveBeenCalledWith('bot.message.profileLinked');
   });
 
   it('replies for the current route while preserving the last menu id', async () => {

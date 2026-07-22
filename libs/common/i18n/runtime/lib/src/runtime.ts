@@ -1,22 +1,36 @@
-export type Locale = 'en' | 'ru';
-
 export type RuntimeLocaleCatalog = Record<string, string>;
-export type RuntimeTranslations = Record<Locale, RuntimeLocaleCatalog>;
 export type RuntimeLocaleCatalogFileEntry<FileName extends string = string> = readonly [FileName, RuntimeLocaleCatalog];
 
 export type TranslationParams = Record<string, string | number | boolean | null | undefined>;
 
-export const fallbackLocale: Locale = 'en';
-export const supportedLocales = ['en', 'ru'] as const satisfies readonly Locale[];
+export const supportedLocales = ['en', 'ru'] as const;
+export type Locale = (typeof supportedLocales)[number];
+// eslint-disable-next-line sonarjs/redundant-type-aliases -- Public domain name retained alongside the locale representation.
+export type Language = Locale;
+export type RuntimeTranslations = Record<Locale, RuntimeLocaleCatalog>;
+export const defaultLocale = 'en' satisfies Locale;
+
+type LanguageMap = {
+  readonly [CurrentLocale in Locale as Capitalize<CurrentLocale>]: CurrentLocale;
+};
+
+export const Language = Object.freeze(
+  Object.fromEntries(supportedLocales.map((locale) => [`${locale.charAt(0).toUpperCase()}${locale.slice(1)}`, locale])),
+) as LanguageMap;
+
+export type Localizations<Value> = Partial<Record<Language | 'default', Value>>;
 
 export interface TranslateOptions {
   locale?: string | null;
   params?: TranslationParams;
 }
 
+export type LocaleHeaders =
+  Record<string, string | string[] | undefined> | { get(name: string): string | null | undefined };
+
 export interface LocaleRequestSource {
   query?: Record<string, unknown>;
-  headers?: Record<string, string | string[] | undefined>;
+  headers?: LocaleHeaders;
   cookies?: Record<string, unknown>;
   language?: string;
   locale?: string;
@@ -25,6 +39,36 @@ export interface LocaleRequestSource {
 }
 
 const supportedLocaleSet = new Set<string>(supportedLocales);
+
+export function isSupportedLocale(value: unknown): value is Locale {
+  return typeof value === 'string' && supportedLocaleSet.has(value);
+}
+
+export const isLanguage = isSupportedLocale;
+
+export function getLocalization<Value>(
+  localizations: { readonly [key: string]: Value | undefined } | null | undefined,
+  language?: string | null,
+): Value | undefined {
+  if (!localizations) {
+    return undefined;
+  }
+
+  const resolvedLanguage = normalizeLocale(language) ?? defaultLocale;
+  const preferred = localizations[resolvedLanguage] ?? localizations[defaultLocale] ?? localizations.default;
+  if (preferred !== undefined) {
+    return preferred;
+  }
+
+  for (const supportedLocale of supportedLocales) {
+    const fallback = localizations[supportedLocale];
+    if (fallback !== undefined) {
+      return fallback;
+    }
+  }
+
+  return undefined;
+}
 
 export function mergeLocaleCatalogFiles<FileName extends string>(
   locale: Locale,
@@ -66,19 +110,23 @@ export function parseAcceptLanguage(value: string | null | undefined): Locale | 
 
   return value
     .split(',')
-    .map((part) => {
+    .map((part, order) => {
       const [localePart, ...parameters] = part.trim().split(';');
-      const quality = parameters.map((parameter) => parameter.trim()).find((parameter) => parameter.startsWith('q='));
+      const qualityParameter = parameters
+        .map((parameter) => parameter.trim())
+        .find((parameter) => /^q=/iu.test(parameter));
+      const quality = qualityParameter ? Number(qualityParameter.slice(2)) : 1;
       return {
         locale: normalizeLocale(localePart),
-        quality: quality ? Number.parseFloat(quality.slice(2)) : 1,
+        order,
+        quality,
       };
     })
     .filter(
-      (entry): entry is { locale: Locale; quality: number } =>
-        Boolean(entry.locale) && Number.isFinite(entry.quality) && entry.quality > 0,
+      (entry): entry is { locale: Locale; order: number; quality: number } =>
+        Boolean(entry.locale) && Number.isFinite(entry.quality) && entry.quality > 0 && entry.quality <= 1,
     )
-    .sort((left, right) => right.quality - left.quality)[0]?.locale;
+    .sort((left, right) => right.quality - left.quality || left.order - right.order)[0]?.locale;
 }
 
 export function resolveLocale(...values: Array<string | null | undefined>): Locale {
@@ -89,12 +137,31 @@ export function resolveLocale(...values: Array<string | null | undefined>): Loca
     }
   }
 
-  return fallbackLocale;
+  return defaultLocale;
 }
 
-function firstHeader(headers: LocaleRequestSource['headers'], name: string): string | undefined {
-  const value = headers?.[name] ?? headers?.[name.toLowerCase()];
-  return Array.isArray(value) ? value[0] : value;
+function headerValue(headers: LocaleHeaders | undefined, name: string): string | undefined {
+  if (!headers) {
+    return undefined;
+  }
+
+  if ('get' in headers && typeof headers.get === 'function') {
+    return headers.get(name) ?? undefined;
+  }
+
+  const normalizedName = name.toLowerCase();
+  const headerRecord = headers as Record<string, string | string[] | undefined>;
+  const entry = Object.entries(headerRecord).find(([headerName]) => headerName.toLowerCase() === normalizedName);
+  const value = entry?.[1];
+  return Array.isArray(value) ? value.join(',') : value;
+}
+
+export function resolveLocaleFromHeaders(headers: LocaleHeaders | undefined): Locale {
+  return resolveLocale(
+    headerValue(headers, 'x-locale'),
+    headerValue(headers, 'x-language'),
+    headerValue(headers, 'accept-language'),
+  );
 }
 
 function firstQueryValue(value: unknown): string | undefined {
@@ -127,21 +194,25 @@ export function resolveLocaleFromRequest(source: LocaleRequestSource): Locale {
     firstQueryValue(source.query?.lang),
     firstQueryValue(source.query?.locale),
     localeFromUrl(source.originalUrl ?? source.url),
-    firstHeader(source.headers, 'x-locale'),
-    firstHeader(source.headers, 'x-language'),
+    headerValue(source.headers, 'x-locale'),
+    headerValue(source.headers, 'x-language'),
     firstCookieValue(source.cookies?.locale),
     firstCookieValue(source.cookies?.lang),
     source.locale,
     source.language,
-    firstHeader(source.headers, 'accept-language'),
+    headerValue(source.headers, 'accept-language'),
   );
 }
+
+export const resolveLanguage = resolveLocale;
+export const resolveLanguageFromHeaders = resolveLocaleFromHeaders;
+export const resolveLanguageFromRequest = resolveLocaleFromRequest;
 
 export function hasTranslationKeyIn<Key extends string>(
   translations: Record<Locale, Partial<Record<Key, string>>>,
   key: string,
 ): key is Key {
-  return Object.hasOwn(translations[fallbackLocale], key);
+  return Object.hasOwn(getLocalization(translations, defaultLocale) ?? {}, key);
 }
 
 export function interpolate(message: string, params: TranslationParams = {}): string {
@@ -154,9 +225,11 @@ export function interpolate(message: string, params: TranslationParams = {}): st
 export function translateFromCatalog<Key extends string>(
   translations: Record<Locale, Partial<Record<Key, string>>>,
   key: Key,
-  { locale = fallbackLocale, params = {} }: TranslateOptions = {},
+  { locale = defaultLocale, params = {} }: TranslateOptions = {},
 ): string {
-  const resolvedLocale = normalizeLocale(locale) ?? fallbackLocale;
-  const message = translations[resolvedLocale][key] ?? translations[fallbackLocale][key] ?? key;
+  const resolvedLocale = normalizeLocale(locale) ?? defaultLocale;
+  const localizedCatalog = getLocalization(translations, resolvedLocale);
+  const defaultCatalog = getLocalization(translations, defaultLocale);
+  const message = localizedCatalog?.[key] ?? defaultCatalog?.[key] ?? key;
   return interpolate(message, params);
 }

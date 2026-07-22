@@ -34,7 +34,7 @@ describe('AuthLoginAnalyticsService', () => {
       request: {
         ip: '203.0.113.10',
         headers: {
-          'accept-language': 'ru-RU,ru;q=0.9',
+          'Accept-Language': 'ru-RU,ru;q=0.9',
           'x-client-timezone': 'Europe/Berlin',
           'user-agent': 'Browser/1.0',
         },
@@ -55,7 +55,7 @@ describe('AuthLoginAnalyticsService', () => {
         city: 'Tashkent',
         timezone: 'Europe/Berlin',
         timezoneSource: 'client',
-        language: 'en-us',
+        language: 'en',
         languageSource: 'user',
         ipAddress: '203.0.113.10',
         userAgent: 'Browser/1.0',

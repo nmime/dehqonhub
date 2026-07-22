@@ -4,9 +4,10 @@ import ruTelegramCatalog from '@app/i18n-ru-bots/telegram.json';
 import ruBotSharedCatalog from '@app/i18n-ru-bots/shared.json';
 import { translations as backendTranslations } from '@app/backend-common-i18n';
 import {
-  fallbackLocale,
+  defaultLocale,
   mergeLocaleCatalogFiles,
   resolveLocale,
+  supportedLocales,
   translateFromCatalog,
   type Locale,
   type RuntimeLocaleCatalog,
@@ -16,7 +17,7 @@ import type { TranslationKey } from '@app/common-i18n-keys';
 import type { TelegramBotContext, TelegramLinkedUserProfile } from './type';
 
 export type { Locale, TranslationKey };
-export { fallbackLocale };
+export { defaultLocale, supportedLocales };
 
 export const telegramCatalogFileNames = [
   'common/shared.json',
@@ -53,13 +54,13 @@ export function resolveTelegramLocale(input: {
     input.sessionLocale,
     input.identityLocale,
     input.telegramLanguageCode,
-    fallbackLocale,
+    defaultLocale,
   );
 }
 
 export function createI18nMiddleware() {
   return async (ctx: TelegramBotContext, next: () => Promise<void>) => {
-    ctx.t = (key: TranslationKey) => translate(key, { locale: ctx.session.locale ?? fallbackLocale });
+    ctx.t = (key: TranslationKey) => translate(key, { locale: ctx.session.locale ?? defaultLocale });
     await next();
   };
 }

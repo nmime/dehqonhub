@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { Eta } from 'eta';
 import format from 'string-format';
+import { defaultLocale, getLocalization } from '@app/backend-common-i18n';
 import {
   NotificationChannel,
   NotificationTemplateEngine,
@@ -15,8 +16,6 @@ import {
 } from '@app/common-notifications';
 import type { NotificationRenderedMessage } from '../strategy/transport';
 import { BaseMessageStrategy } from './base-message.strategy';
-
-const defaultLanguage = 'en';
 
 export class DefaultMessageStrategy extends BaseMessageStrategy {
   private readonly logger = new Logger(DefaultMessageStrategy.name);
@@ -122,12 +121,11 @@ export class DefaultMessageStrategy extends BaseMessageStrategy {
     const result: Record<string, NotificationDataValue> = {};
     for (const [key, value] of Object.entries(data)) {
       if (typeof value === 'object' && value !== null) {
-        const hasLanguageKey = [language, defaultLanguage, 'default'].some(
+        const hasLanguageKey = [language, defaultLocale, 'default'].some(
           (candidate) => candidate !== undefined && Object.hasOwn(value, candidate),
         );
         if (hasLanguageKey) {
-          const localizedValue =
-            value[language ?? ''] ?? value[defaultLanguage] ?? value['default'] ?? Object.values(value)[0];
+          const localizedValue = getLocalization(value, language) ?? Object.values(value)[0];
           if (localizedValue !== undefined) {
             result[key] = localizedValue;
           }
@@ -149,7 +147,7 @@ export class DefaultMessageStrategy extends BaseMessageStrategy {
     templateEngine: NotificationTemplateEngine;
   }): string | undefined {
     const { template, language, data, useFormat, templateEngine } = params;
-    const value = template?.[language ?? ''] ?? template?.[defaultLanguage] ?? template?.['default'];
+    const value = getLocalization(template, language);
     if (!value) {
       return undefined;
     }
@@ -163,7 +161,7 @@ export class DefaultMessageStrategy extends BaseMessageStrategy {
     templateEngine: NotificationTemplateEngine;
   }): NotificationMessageButton[][] | undefined {
     const { template, language, data, templateEngine } = params;
-    const rows = template?.[language ?? ''] ?? template?.[defaultLanguage] ?? template?.['default'];
+    const rows = getLocalization(template, language);
     if (!rows) {
       return undefined;
     }
@@ -217,7 +215,7 @@ function isPushChannelContent(value: unknown): value is NotificationPushChannelC
 }
 
 function localizedValue<T>(values: Record<string, T> | undefined, language?: string): T | undefined {
-  return values?.[language ?? ''] ?? values?.[defaultLanguage] ?? values?.['default'];
+  return getLocalization(values, language);
 }
 
 function mergeNotificationData(

@@ -1,6 +1,6 @@
 /* v8 ignore file -- exercised by integration, browser, or framework-metadata tests; excluded from the deterministic 100% unit coverage gate. */
 import { makeAutoObservable } from 'mobx';
-import { fallbackLocale, resolveLocale, supportedLocales, type Locale } from '../i18n/locale';
+import { defaultLocale, resolveLocale, supportedLocales, type Locale } from '../i18n/locale';
 
 export const LocaleStorageKey = 'boilerplate.locale';
 
@@ -50,7 +50,7 @@ export function persistLocale(locale: Locale): void {
 
 export function detectBrowserLocale(): Locale {
   if (typeof window === 'undefined') {
-    return fallbackLocale;
+    return defaultLocale;
   }
 
   let queryLocale: string | null = null;

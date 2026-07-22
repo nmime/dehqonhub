@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import type { Locale } from '@app/frontend-i18n-shared';
 import {
   ApiError,
   apiFetch,
@@ -44,7 +45,7 @@ describe('frontend API client', () => {
   });
 
   it('injects Accept-Language into every request and updates with the locale getter', async () => {
-    let locale: 'en' | 'ru' = 'en';
+    let locale: Locale = 'en';
     configureApiLocale({ getLocale: () => locale });
     const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ data: { ok: true } }));
 

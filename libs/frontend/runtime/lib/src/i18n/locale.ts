@@ -1,5 +1,5 @@
 export {
-  fallbackLocale,
+  defaultLocale,
   normalizeLocale,
   resolveLocale,
   sharedFrontendTranslations,

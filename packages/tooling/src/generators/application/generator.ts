@@ -9,6 +9,7 @@
  */
 import type { Tree } from 'nx/src/generators/tree';
 import { formatFiles, getProjects } from '@nx/devkit';
+import { defaultLocale } from '@app/common-i18n-runtime';
 import { cloneStyleBaseName, findAdjacentOwner, validateName, generateNames } from '../names.ts';
 
 // ---------------------------------------------------------------------------
@@ -543,7 +544,7 @@ function createViteFrontendApp(
   tree.write(
     `${dir}/index.html`,
     `<!DOCTYPE html>
-<html lang="en">
+<html lang="${defaultLocale}">
   <head>
     <meta charset="utf-8" />
     <title>${names.title}</title>
@@ -966,7 +967,7 @@ export default defineConfig({
 const title = "${names.title}";
 ---
 
-<html lang="en">
+<html lang="${defaultLocale}">
   <head><meta charset="utf-8" /><meta name="viewport" content="width=device-width" /><title>{title}</title></head>
   <body><main><h1>{title}</h1><p>Astro application scaffold is ready.</p></main></body>
 </html>

@@ -45,7 +45,9 @@ describe('Telegram bot i18n', () => {
       return Promise.resolve();
     });
 
-    expect(translated).toBe('Добро пожаловать! Выберите действие.|Welcome! Choose an action.');
+    expect(translated).toBe(
+      '👋 Добро пожаловать!\n\nВсё необходимое — в одном касании.|👋 Welcome!\n\nEverything you need is one tap away.',
+    );
   });
 
   it('falls back to the default locale when session locale is missing', async () => {
@@ -58,6 +60,6 @@ describe('Telegram bot i18n', () => {
       return Promise.resolve();
     });
 
-    expect(translated).toBe('Welcome! Choose an action.');
+    expect(translated).toBe('👋 Welcome!\n\nEverything you need is one tap away.');
   });
 });

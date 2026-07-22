@@ -26,7 +26,7 @@ describe('Discord i18n helpers', () => {
   it('returns localized errors and command localization maps', () => {
     expect(t('bot.error.expired', 'ru')).toBe('Действие бота истекло. Начните заново.');
     expect(localizationsFor('discord.commands.help.label')).toEqual({
-      ru: 'help',
+      ru: 'помощь',
     });
   });
 

@@ -22,6 +22,7 @@
 
 import { pbkdf2Sync, randomBytes } from "node:crypto";
 import pg from "pg";
+import { defaultLocale, type Locale } from "@app/common-i18n-runtime";
 import {
   assertSeedSafety,
   DefaultAdminEmail,
@@ -111,7 +112,7 @@ interface SeedUser {
   displayName: string;
   password: string;
   role: string;
-  locale: string;
+  locale: Locale;
   theme: string;
 }
 
@@ -132,7 +133,7 @@ function buildSeedUsers(basePassword: string): SeedUser[] {
       displayName: "Alice Administrator",
       password: adminPwd,
       role: "admin",
-      locale: "en",
+      locale: defaultLocale,
       theme: "system",
     },
     {
@@ -141,7 +142,7 @@ function buildSeedUsers(basePassword: string): SeedUser[] {
       displayName: "Bob User",
       password: "Bob@User456!",
       role: "user",
-      locale: "en",
+      locale: defaultLocale,
       theme: "light",
     },
     {
@@ -150,7 +151,7 @@ function buildSeedUsers(basePassword: string): SeedUser[] {
       displayName: "Charlie Developer",
       password: "Charlie@Dev789!",
       role: "user",
-      locale: "en",
+      locale: defaultLocale,
       theme: "dark",
     },
   ];

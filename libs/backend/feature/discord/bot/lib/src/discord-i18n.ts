@@ -4,7 +4,7 @@ import ruDiscordCatalog from '@app/i18n-ru-bots/discord.json';
 import ruBotSharedCatalog from '@app/i18n-ru-bots/shared.json';
 import { translations as backendTranslations } from '@app/backend-common-i18n';
 import {
-  fallbackLocale,
+  defaultLocale,
   mergeLocaleCatalogFiles,
   normalizeLocale,
   supportedLocales,
@@ -50,7 +50,7 @@ export function resolveDiscordLocale(...values: Array<string | null | undefined>
       return locale;
     }
   }
-  return fallbackLocale;
+  return defaultLocale;
 }
 
 export function resolveInteractionLocale(interaction: APIInteraction): Locale {
@@ -63,7 +63,7 @@ export function resolveInteractionLocale(interaction: APIInteraction): Locale {
 
 export function localizationsFor(key: TranslationKey): Record<string, string> {
   const entries = supportedLocales
-    .filter((locale) => locale !== fallbackLocale)
+    .filter((locale) => locale !== defaultLocale)
     .flatMap((locale) => {
       const value = discordTranslations[locale][key];
       return value ? [[locale, value] as const] : [];

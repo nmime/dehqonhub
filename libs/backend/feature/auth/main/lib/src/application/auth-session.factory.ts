@@ -6,7 +6,7 @@ import {
   type UserThemePreference,
   AuthProvider,
   AuthProviderChannel,
-  Language,
+  type Language,
   isLanguage,
   toAuthenticatedUserView,
 } from '@app/backend-feature-auth-shared';

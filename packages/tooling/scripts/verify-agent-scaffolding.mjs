@@ -4,6 +4,10 @@ import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../..');
+const jitiAlias = {
+  ...JSON.parse(process.env.JITI_ALIAS || '{}'),
+  '@app/common-i18n-runtime': resolve(workspaceRoot, 'libs/common/i18n/runtime/lib/src/index.ts'),
+};
 
 const behaviorTests = [
   'packages/tooling/src/commands/project/add.test.ts',
@@ -17,7 +21,7 @@ const behaviorTests = [
 function run(args) {
   const result = spawnSync(process.execPath, args, {
     cwd: workspaceRoot,
-    env: process.env,
+    env: { ...process.env, JITI_ALIAS: JSON.stringify(jitiAlias) },
     stdio: 'inherit',
   });
   if (result.error) throw result.error;

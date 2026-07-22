@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';
+import type { Locale } from '@app/backend-common-i18n';
 import {
   AuthenticatedTheme,
   AuthProvider,
@@ -50,7 +51,7 @@ const authUserRecord = (
     email: string | null;
     id: string;
     lastLoginAt: Date | null;
-    locale: null | 'en' | 'ru';
+    locale: Locale | null;
     passwordHash: string;
     permissions: string[];
     roles: string[];

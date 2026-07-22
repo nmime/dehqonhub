@@ -9,6 +9,10 @@ const testRoot = resolve(workspaceRoot, 'packages/tooling/src');
 const inProcessTest = 'packages/tooling/src/commands/project/setup.test.ts';
 const integrationTest = 'packages/tooling/src/commands/db/migration.integration.test.ts';
 const skipIntegration = process.env.SKIP_INTEGRATION === '1';
+const jitiAlias = {
+  ...JSON.parse(process.env.JITI_ALIAS || '{}'),
+  '@app/common-i18n-runtime': resolve(workspaceRoot, 'libs/common/i18n/runtime/lib/src/index.ts'),
+};
 
 function collectTests(directory) {
   const tests = [];
@@ -26,7 +30,7 @@ function collectTests(directory) {
 function run(args) {
   const result = spawnSync(process.execPath, args, {
     cwd: workspaceRoot,
-    env: process.env,
+    env: { ...process.env, JITI_ALIAS: JSON.stringify(jitiAlias) },
     stdio: 'inherit',
   });
   if (result.error) throw result.error;

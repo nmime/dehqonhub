@@ -1,6 +1,6 @@
 import { errAsync, okAsync } from 'neverthrow';
 import { describe, expect, it, vi } from 'vitest';
-import { AuthenticatedTheme, DefaultAuthTenantId, Language } from '@app/backend-feature-auth-shared';
+import { AuthenticatedTheme, DefaultAuthTenantId, type Language } from '@app/backend-feature-auth-shared';
 import { InMemoryAuthUserStore, PostgresAuthUserStore, toAuthUserRecord, type AuthUserRecord } from './auth-user-store';
 
 const record: AuthUserRecord = {
@@ -48,12 +48,12 @@ describe('auth user stores', () => {
     expect((await store.findByEmail('missing@example.com'))._unsafeUnwrap()).toBeNull();
     expect((await store.findById(record.id))._unsafeUnwrap()).toEqual(record);
     expect((await store.findById('missing'))._unsafeUnwrap()).toBeNull();
-    expect((await store.setLocale(record.id, Language.Ru))._unsafeUnwrap()).toMatchObject({ locale: 'ru' });
-    expect((await store.setLocale('missing', Language.Ru))._unsafeUnwrap()).toBeNull();
+    expect((await store.setLocale(record.id, 'ru'))._unsafeUnwrap()).toMatchObject({ locale: 'ru' });
+    expect((await store.setLocale('missing', 'ru'))._unsafeUnwrap()).toBeNull();
     expect(
       (
         await store.setPreferences(record.id, {
-          locale: Language.En,
+          locale: 'en',
           theme: AuthenticatedTheme.Dark,
         })
       )._unsafeUnwrap(),
@@ -77,7 +77,7 @@ describe('auth user stores', () => {
     expect((await store.create(record))._unsafeUnwrapErr()).toEqual(error);
     expect((await store.findByEmail(record.email))._unsafeUnwrapErr()).toEqual(error);
     expect((await store.findById(record.id))._unsafeUnwrapErr()).toEqual(error);
-    expect((await store.setLocale(record.id, Language.Ru))._unsafeUnwrapErr()).toEqual(error);
+    expect((await store.setLocale(record.id, 'ru'))._unsafeUnwrapErr()).toEqual(error);
     expect(
       (
         await store.setPreferences(record.id, {
@@ -114,8 +114,8 @@ describe('auth user stores', () => {
     expect((await store.findByEmail('missing@example.com'))._unsafeUnwrap()).toBeNull();
     expect((await store.findById(created.id))._unsafeUnwrap()).toEqual(created);
     expect((await store.findById('missing'))._unsafeUnwrap()).toBeNull();
-    expect((await store.setLocale(created.id, Language.Ru))._unsafeUnwrap()).toMatchObject({ locale: 'ru' });
-    expect((await store.setLocale('missing', Language.Ru))._unsafeUnwrap()).toBeNull();
+    expect((await store.setLocale(created.id, 'ru'))._unsafeUnwrap()).toMatchObject({ locale: 'ru' });
+    expect((await store.setLocale('missing', 'ru'))._unsafeUnwrap()).toBeNull();
     expect(
       (
         await store.setPreferences(created.id, {

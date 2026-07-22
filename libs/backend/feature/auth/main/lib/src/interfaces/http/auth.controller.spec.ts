@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { supportedLocales } from '@app/backend-common-i18n';
 import {
   AuthenticatedTheme,
   AuthProvider,
   AuthProviderChannel,
   DefaultAuthTenantId,
   ExternalAuthIntent,
-  Language,
   type AuthenticatedPrincipal,
   type AuthenticatedRequest,
   type AuthenticatedResponse,
@@ -67,7 +67,7 @@ const sessionView = {
     tenantId: DefaultAuthTenantId,
     email: 'user@example.com',
     displayName: 'Ada Lovelace',
-    locale: Language.Ru,
+    locale: 'ru',
     theme: AuthenticatedTheme.Dark,
     roles: ['user', 'admin'],
     permissions: ['profile:read', 'admin:profile:read'],
@@ -222,7 +222,7 @@ describe('AuthController', () => {
       },
     });
     expect(controller.locales()).toEqual({
-      data: { supportedLocales: ['en', 'ru'] },
+      data: { supportedLocales },
     });
 
     expect(service.register).toHaveBeenCalledWith({
@@ -282,7 +282,7 @@ describe('AuthController', () => {
       tenantId: DefaultAuthTenantId,
       email: 'user@example.com',
       displayName: 'Ada Lovelace',
-      locale: Language.Ru,
+      locale: 'ru',
       theme: AuthenticatedTheme.Dark,
       amr: ['pwd'],
       authProvider: AuthProvider.Password,
@@ -493,7 +493,7 @@ describe('AuthController', () => {
       tenantId: DefaultAuthTenantId,
       email: 'user@example.com',
       displayName: 'Ada Lovelace',
-      locale: Language.Ru,
+      locale: 'ru',
       theme: AuthenticatedTheme.Dark,
       roles: ['user'],
       permissions: ['profile:read'],
@@ -524,7 +524,7 @@ describe('AuthController', () => {
       tenantId: DefaultAuthTenantId,
       email: 'user@example.com',
       displayName: 'Ada Lovelace',
-      locale: Language.Ru,
+      locale: 'ru',
       theme: AuthenticatedTheme.Dark,
       roles: ['user'],
       permissions: ['profile:read'],

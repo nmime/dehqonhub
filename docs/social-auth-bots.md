@@ -66,18 +66,32 @@ transport-focused:
 - Keep session, menu, rate-limit, and i18n plugins close to the bot adapter.
 - Keep account-link tokens short lived and single use.
 
-The bot publishes its private-chat command menu on startup in English and
-Russian. The commands are `/start`, `/app`, `/profile`, `/settings`,
+The bot publishes a language-neutral default command menu from `defaultLocale`,
+then one localized menu for every entry in `supportedLocales`. Every menu uses
+Telegram's `all_private_chats` scope, so group chats do not advertise product
+commands; startup clears the matching default and all-group scopes before
+publishing the private menus. The commands are `/start`, `/app`, `/profile`,
 `/language`, `/support`, and `/link`; `/app` is omitted when the Mini App URL is
-missing or unsafe. With `TELEGRAM_BOT_MENU_BUTTON_ENABLED=true` (the scaffold
-default), users can launch the same canonical TMA from the persistent chat menu
-button, the `/start` inline menu, and the `/app` command. In webhook mode,
-startup also registers the configured HTTPS `TELEGRAM_BOT_WEBHOOK_URL` with
-Telegram using the configured secret token.
+missing or unsafe. The same fallback-plus-supported-locales loop publishes the
+long and short bot descriptions from each locale's owned bot catalog. Adding a
+supported locale therefore extends commands, About, and Description without a
+Telegram-specific registration edit. With
+`TELEGRAM_BOT_MENU_BUTTON_ENABLED=true` (the scaffold default), users can launch
+the same canonical TMA from the persistent chat menu button, the `/start` inline
+menu, and the `/app` command. In webhook mode, startup also registers the
+configured HTTPS `TELEGRAM_BOT_WEBHOOK_URL` with Telegram using the configured
+secret token.
+
+The in-chat home menu is intentionally shallow: Open App is the primary action;
+Account, Language, and Help are the only secondary destinations. Account owns
+the link action, and each secondary screen offers one Back action instead of
+duplicating Settings and Home shortcuts.
 
 Bot copy keys are grouped as:
 
-- `bot.menu.*` for keyboard/menu labels such as main, profile, settings, language, support, link, unlink, back, home, and cancel.
+- `bot.command.*` for concise localized command descriptions.
+- `bot.profile.*` for the localized long and short bot-profile descriptions.
+- `bot.menu.*` for keyboard/menu labels such as account, language, help, link, app, and back.
 - `bot.route.*` for route transition messages.
 - `bot.error.*` for expired actions, rate limits, unauthorized actions, unavailable service, and link/unlink failures.
 - `bot.message.*` for generic bot messages.

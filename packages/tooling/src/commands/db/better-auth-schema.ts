@@ -7,6 +7,7 @@
  * Returns { created: string[], skipped: string[] } so callers can report progress.
  */
 import { type PoolClient, Pool } from "pg";
+import { defaultLocale } from "@app/common-i18n-runtime";
 
 export interface BetterAuthSchemaResult {
   created: string[];
@@ -54,7 +55,7 @@ export async function applyBetterAuthSchema(
     const pluginColumns = [
       { name: "tenantId", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "tenantId" varchar(128) NOT NULL DEFAULT '00000000-0000-0000-0000-000000000000'` },
       { name: "status", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "status" varchar(32) NOT NULL DEFAULT 'active'` },
-      { name: "locale", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "locale" varchar(16) NOT NULL DEFAULT 'en'` },
+      { name: "locale", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "locale" varchar(16) NOT NULL DEFAULT '${defaultLocale}'` },
       { name: "theme", sql: `ALTER TABLE "user" ADD COLUMN IF NOT EXISTS "theme" varchar(16) NOT NULL DEFAULT 'system'` },
     ];
     for (const col of pluginColumns) {

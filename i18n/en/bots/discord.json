@@ -1,4 +1,6 @@
 {
+  "discord.commands.account.label": "account",
+  "discord.commands.account.description": "Manage account linking.",
   "discord.commands.link.label": "link",
   "discord.commands.link.description": "Link your Discord account to the web account.",
   "discord.commands.link.message": "Use the button below to link your Discord account.",

@@ -20,6 +20,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { defaultLocale } from '@app/backend-common-i18n';
 import {
   NotificationBroadcastStatus,
   NotificationChannel,
@@ -112,7 +113,7 @@ export class PreviewAdminNotificationTemplateDto {
   @IsEnum(NotificationChannel)
   channel!: NotificationChannel.Bot | NotificationChannel.Email | NotificationChannel.Push;
 
-  @ApiProperty({ default: 'en' })
+  @ApiProperty({ default: defaultLocale })
   @IsString()
   language!: string;
 

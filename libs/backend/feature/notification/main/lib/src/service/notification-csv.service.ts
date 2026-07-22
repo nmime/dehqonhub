@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { isSupportedLocale, supportedLocales } from '@app/backend-common-i18n';
 import {
   NotificationTargetType,
   type NotificationAudienceMember,
@@ -75,8 +76,8 @@ function parseMember(headers: string[], row: string[]): NotificationAudienceMemb
   const targetType = parseTargetType(values['target_type']);
   const targetId = normalizeTarget(targetType, values['target_id'] ?? '');
   const language = values['language'] || undefined;
-  if (language && language !== 'en' && language !== 'ru') {
-    throw new Error('language must be en or ru');
+  if (language && !isSupportedLocale(language)) {
+    throw new Error(`language must be ${supportedLocales.join(' or ')}`);
   }
   const variables: NotificationData = {};
   for (const header of headers) {

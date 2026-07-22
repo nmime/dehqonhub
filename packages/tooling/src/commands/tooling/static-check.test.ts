@@ -3,6 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { describe, it } from "node:test";
+import { supportedLocales } from "@app/common-i18n-runtime";
 import {
   checkCommandImportSmoke,
   checkTranslationKeyDrift,
@@ -1022,7 +1023,7 @@ describe("static-check package project reference guard", () => {
 
 describe("static-check thin locale catalog guard", () => {
   function writeThinLocaleWorkspace(workspaceRoot: string): void {
-    for (const locale of ["en", "ru"]) {
+    for (const locale of supportedLocales) {
       for (const fileName of thinLocaleCatalogFileNames) {
         writeText(
           workspaceRoot,
