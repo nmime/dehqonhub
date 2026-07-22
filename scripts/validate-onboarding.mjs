@@ -47,6 +47,8 @@ const presetExpectations = {
     'auth-app-api',
     'fullstack-e2e',
     'landing-app',
+    'notification-consumer',
+    'notification-scheduler',
     'site-app',
     'user-app',
     'user-app-api',
@@ -58,6 +60,8 @@ const presetExpectations = {
     'fullstack-e2e',
     'landing-app',
     'mobile-app',
+    'notification-consumer',
+    'notification-scheduler',
     'site-app',
     'user-app',
     'user-app-api',
@@ -70,6 +74,8 @@ const presetExpectations = {
     'fullstack-e2e',
     'landing-app',
     'mobile-app',
+    'notification-consumer',
+    'notification-scheduler',
     'site-app',
     'telegram-bot-api',
     'user-app',
@@ -89,7 +95,8 @@ const referenceApplications = [
   'user-app',
   'user-app-api',
 ];
-const optionalApplications = ['discord-app-api', 'telegram-bot-api'];
+const optionalApplications = ['discord-app-api', 'notification-consumer', 'notification-scheduler', 'telegram-bot-api'];
+const nonDeployableApplications = new Set(['fullstack-e2e', 'notification-consumer', 'notification-scheduler']);
 
 function findApplicationProjects(directory) {
   const projects = [];
@@ -115,7 +122,7 @@ assert.deepEqual(
   'The setup catalog must contain every real Nx application and no phantom projects.',
 );
 for (const entry of catalogApplications) {
-  if (entry.platform === 'e2e') {
+  if (nonDeployableApplications.has(entry.id)) {
     assert.equal(entry.hostname, null, `Non-deployable application ${entry.id} must not publish a hostname.`);
     continue;
   }
@@ -137,7 +144,7 @@ assert.deepEqual(
     .map((entry) => entry.id)
     .sort(),
   optionalApplications,
-  'Only Telegram and Discord APIs may be optional in the template catalog.',
+  'Only integration APIs and notification workers may be optional in the template catalog.',
 );
 assert.deepEqual(
   [...presetExpectations.enterprise].sort(),
@@ -146,8 +153,8 @@ assert.deepEqual(
 );
 assert.deepEqual(
   [...presetExpectations.fullstack].sort(),
-  referenceApplications,
-  'The fullstack profile must contain every reference application and no optional integration.',
+  [...referenceApplications, 'notification-consumer', 'notification-scheduler'].sort(),
+  'The fullstack profile must contain every reference application and its required notification workers.',
 );
 
 const adminSelection = runJson([
@@ -161,8 +168,8 @@ const adminSelection = runJson([
 ]);
 assert.deepEqual(
   adminSelection.summary?.apps,
-  ['admin-app', 'admin-app-api', 'auth-app-api'],
-  'Selecting admin-app must include both APIs used by its runtime.',
+  ['admin-app', 'admin-app-api', 'auth-app-api', 'notification-consumer', 'notification-scheduler'],
+  'Selecting admin-app must include its APIs and notification workers.',
 );
 
 const e2eSelection = runJson([
@@ -176,7 +183,17 @@ const e2eSelection = runJson([
 ]);
 assert.deepEqual(
   e2eSelection.summary?.apps,
-  ['admin-app', 'admin-app-api', 'auth-app-api', 'fullstack-e2e', 'landing-app', 'user-app', 'user-app-api'],
+  [
+    'admin-app',
+    'admin-app-api',
+    'auth-app-api',
+    'fullstack-e2e',
+    'landing-app',
+    'notification-consumer',
+    'notification-scheduler',
+    'user-app',
+    'user-app-api',
+  ],
   'Selecting fullstack-e2e must include the complete stack that its runtime starts.',
 );
 
