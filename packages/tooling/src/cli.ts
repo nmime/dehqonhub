@@ -4,6 +4,7 @@ import { runCheckFrontendFsd } from './commands/frontend/check-fsd';
 import { runToastConfigCheck, runToastConfigGenerate } from './commands/api/toast-config';
 import { fileURLToPath } from 'node:url';
 import { runCheckLibraryConfigs } from './commands/project/check-library-configs';
+import { runDependencyMap } from './commands/project/dependency-map';
 import { runGenerateVerticalSliceFromContext } from './commands/project/generate-vertical-slice';
 import { runSetupFromContext } from './commands/project/setup';
 import { runDoctorFromContext } from './commands/project/doctor';
@@ -81,6 +82,9 @@ register('frontend:fsd:check', 'Enforce strict frontend Feature-Sliced Design bo
 
 register('project:check-library-configs', 'Validate Nx library config placement.', ({ workspaceRoot }) =>
   runCheckLibraryConfigs({ workspaceRoot }),
+);
+register('project:dependency-map', 'Show dependency ownership across workspace scopes.', ({ argv, workspaceRoot }) =>
+  runDependencyMap({ argv, workspaceRoot }),
 );
 register(
   'project:generate-vertical-slice',

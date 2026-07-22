@@ -203,11 +203,26 @@ Exit codes: `0` success, `1` missing args or unknown kind.
 
 ## Project commands
 
-| Command                                  | Description                           |
-| ---------------------------------------- | ------------------------------------- |
-| `project:init`                           | Compatibility alias for `nrb init`.   |
-| `project:generate-vertical-slice <name>` | Deprecated adapter to `add feature`.  |
-| `project:check-library-configs`          | Validate Nx library config placement. |
+| Command                                  | Description                                                   |
+| ---------------------------------------- | ------------------------------------------------------------- |
+| `project:init`                           | Compatibility alias for `nrb init`.                           |
+| `project:generate-vertical-slice <name>` | Deprecated adapter to `add feature`.                          |
+| `project:check-library-configs`          | Validate Nx library config placement.                         |
+| `project:dependency-map`                 | Show dependency ownership and counts across workspace scopes. |
+
+### `project:dependency-map`
+
+```bash
+pnpm run deps:map
+pnpm run deps:map -- --json
+```
+
+The default output is a Markdown map of all pnpm workspace manifests, grouped
+by application, library, root, and tooling scope. `--json` emits the same data,
+including sorted dependency names, for scripts. The command is read-only and
+derives its result from `pnpm-workspace.yaml` and each live `package.json`.
+
+Exit codes: `0` success, `1` invalid arguments or malformed workspace metadata.
 
 ### `project:generate-vertical-slice`
 

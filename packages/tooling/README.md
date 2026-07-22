@@ -15,6 +15,7 @@ pnpm --filter @repo/tooling tooling ui shadcn add dialog
 pnpm --filter @repo/tooling tooling ui registry search --source magicui --query ripple
 pnpm --filter @repo/tooling tooling ui registry add --source magicui ripple --view
 pnpm --filter @repo/tooling tooling tooling static-check
+pnpm --filter @repo/tooling tooling project dependency-map --json
 pnpm --filter @repo/tooling tooling db migrations rollback-check
 pnpm run bun:check
 ```
@@ -28,6 +29,7 @@ TS-first command implementations live under `packages/tooling/src/commands` grou
 - `docker/` Docker runtime checks, smoke tests, and fullstack e2e wrappers.
 - `dev/` local fullstack orchestration.
 - `project/` repository/project maintenance helpers.
+  `project dependency-map` reports live dependency ownership and counts for every pnpm workspace.
 - `images/` asset optimization helpers such as PNG/JPG/JPEG to WebP conversion.
 - `ui/` reviewed source-owned shadcn/Magic UI discovery and import helpers.
   Aceternity is non-persistent research preview only: this template never

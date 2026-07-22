@@ -9,7 +9,7 @@ const SystemThemeMediaQuery = '(prefers-color-scheme: dark)';
 const LegacyAddListener = 'addListener';
 const LegacyRemoveListener = 'removeListener';
 
-type LegacyMediaQueryList = MediaQueryList & {
+type LegacyMediaQueryList = {
   [LegacyAddListener]?: (listener: (event: MediaQueryListEvent) => void) => void;
   [LegacyRemoveListener]?: (listener: (event: MediaQueryListEvent) => void) => void;
 };
@@ -73,32 +73,26 @@ function addMediaQueryChangeListener(
   mediaQueryList: MediaQueryList,
   listener: (event: MediaQueryListEvent) => void,
 ): void {
-  if (typeof mediaQueryList.addEventListener === 'function') {
+  if (Reflect.has(mediaQueryList, 'addEventListener')) {
     mediaQueryList.addEventListener('change', listener);
     return;
   }
 
-  const legacyMediaQueryList = mediaQueryList as LegacyMediaQueryList;
-  const addListener = legacyMediaQueryList[LegacyAddListener];
-  if (typeof addListener === 'function') {
-    addListener.call(mediaQueryList, listener);
-  }
+  const legacyMediaQueryList = mediaQueryList as unknown as LegacyMediaQueryList;
+  legacyMediaQueryList[LegacyAddListener]?.(listener);
 }
 
 function removeMediaQueryChangeListener(
   mediaQueryList: MediaQueryList,
   listener: (event: MediaQueryListEvent) => void,
 ): void {
-  if (typeof mediaQueryList.removeEventListener === 'function') {
+  if (Reflect.has(mediaQueryList, 'removeEventListener')) {
     mediaQueryList.removeEventListener('change', listener);
     return;
   }
 
-  const legacyMediaQueryList = mediaQueryList as LegacyMediaQueryList;
-  const removeListener = legacyMediaQueryList[LegacyRemoveListener];
-  if (typeof removeListener === 'function') {
-    removeListener.call(mediaQueryList, listener);
-  }
+  const legacyMediaQueryList = mediaQueryList as unknown as LegacyMediaQueryList;
+  legacyMediaQueryList[LegacyRemoveListener]?.(listener);
 }
 
 export class UiStore {
