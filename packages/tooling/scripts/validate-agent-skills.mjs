@@ -95,6 +95,31 @@ function validateSkillSource(skillSource, directoryName, errors) {
   }
 }
 
+const rootedReadFirstPathPattern = /`((?:docs|packages|libs|apps|scripts|tools)\/[^`\r\n]+\.md)`/gu;
+
+function validateReadFirstPaths(skillSource, directoryName, errors) {
+  const lines = skillSource.split(/\r?\n/u);
+  const start = lines.findIndex((line) => /^## Read first\s*$/u.test(line));
+  if (start === -1) return;
+  let end = lines.length;
+  for (let index = start + 1; index < lines.length; index += 1) {
+    if (/^## /u.test(lines[index])) {
+      end = index;
+      break;
+    }
+  }
+  const section = lines.slice(start + 1, end).join('\n');
+  const seen = new Set();
+  for (const match of section.matchAll(rootedReadFirstPathPattern)) {
+    const reference = match[1];
+    if (seen.has(reference)) continue;
+    seen.add(reference);
+    errors.push(
+      `${directoryName}/SKILL.md: Read-first reference \`${reference}\` must be repository-relative (prefix with ../../../)`,
+    );
+  }
+}
+
 async function validateLocalReferences(skillSource, skillDirectory, directoryName, errors) {
   const references = new Set([...skillSource.matchAll(/`((?:\.\.\/)+[^`\r\n]+\.md)`/gu)].map((match) => match[1]));
   for (const reference of references) {
@@ -205,6 +230,7 @@ export async function validateSkillDirectory(skillDirectory) {
 
   validateSkillMetadata(metadata, directoryName, errors);
   validateSkillSource(skillSource, directoryName, errors);
+  validateReadFirstPaths(skillSource, directoryName, errors);
   await validateLocalReferences(skillSource, skillDirectory, directoryName, errors);
   await validateSkillFiles(skillDirectory, directoryName, errors);
 

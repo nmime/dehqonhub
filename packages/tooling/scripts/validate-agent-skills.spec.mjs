@@ -134,6 +134,64 @@ Use this skill for everything. Read \`../missing/README.md\`.
   assert.ok(errors.some((error) => error.includes('missing referenced file')));
 });
 
+test('validateSkillsRoot rejects non-repository-relative Read-first paths', async () => {
+  const root = await createRoot();
+  await writeSkill(root, 'bare-path-skill', {
+    skill: `---
+name: bare-path-skill
+description: Follow the repository-owned workflow for this bounded task. Use for changes that require its specialized ownership and verification rules.
+---
+
+# Example
+
+## Read first
+
+- Read \`docs/architecture.md\` and \`../../../AGENTS.md\` before editing.
+
+## Verification
+
+Run the narrowest check that proves the requested behavior.
+`,
+  });
+
+  const errors = await validateSkillsRoot(root);
+  assert.ok(
+    errors.some((error) => error.includes('docs/architecture.md') && error.includes('repository-relative')),
+    `expected a repository-relative Read-first error, got: ${JSON.stringify(errors)}`,
+  );
+});
+
+test('validateSkillsRoot does not flag prefixed Read-first paths or repo-root prose outside Read first', async () => {
+  const root = await createRoot();
+  await writeSkill(root, 'relative-path-skill', {
+    skill: `---
+name: relative-path-skill
+description: Follow the repository-owned workflow for this bounded task. Use for changes that require its specialized ownership and verification rules.
+---
+
+# Example
+
+## Read first
+
+- Read the canonical owner, current tests, both \`components.json\` files (root and \`libs/frontend\`), and the nearest \`AGENTS.md\` files.
+
+## Workflow
+
+Make the document reachable from \`docs/README.md\` and register it in \`docs/agent-skills.md\`.
+
+## Verification
+
+Run the narrowest check that proves the requested behavior.
+`,
+  });
+
+  const errors = await validateSkillsRoot(root);
+  assert.ok(
+    !errors.some((error) => error.includes('repository-relative')),
+    `expected no repository-relative error, got: ${JSON.stringify(errors)}`,
+  );
+});
+
 test('validateSkillsRoot enforces minimal interface metadata structure', async () => {
   const root = await createRoot();
   await writeSkill(root, 'interface-skill', {

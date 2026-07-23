@@ -7,9 +7,9 @@ description: Scaffold a genuinely new application, library, or vertical feature 
 
 ## Read first
 
-1. `AGENTS.md` and `docs/ai/agent-policy.md`.
-2. `docs/architecture.md`, `docs/frontend-fsd.md`, and the closest nested `AGENTS.md` files.
-3. `docs/scaffolding-and-extension.md`, `docs/setup/cli-reference.md`, and the source/tests of the owning API and frontend app.
+1. `../../../AGENTS.md` and `../../../docs/ai/agent-policy.md`.
+2. `../../../docs/architecture.md`, `../../../docs/frontend-fsd.md`, and the closest nested `AGENTS.md` files.
+3. `../../../docs/scaffolding-and-extension.md`, `../../../docs/setup/cli-reference.md`, and the source/tests of the owning API and frontend app.
 
 ## Workflow
 
