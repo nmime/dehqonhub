@@ -75,7 +75,7 @@ assert.match(
 );
 assert.ok(!/github\.com\/example\//u.test(argoRepo), 'GitOps repository must not use an example owner.');
 
-has(releaseWorkflow, 'sha-${{ github.sha }}', 'release images use the full GitHub SHA');
+has(releaseWorkflow, 'sha-${GITHUB_SHA}', 'release images use the full GitHub SHA');
 has(releaseWorkflow, 'image-plan', 'release workflow builds only selected images');
 has(releaseWorkflow, 'node-version-file: .nvmrc', 'release image planner uses the repository Node version');
 has(releaseWorkflow, 'workspace-cache', 'release workflow primes shared Docker dependency cache');

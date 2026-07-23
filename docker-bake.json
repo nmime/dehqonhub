@@ -1,0 +1,141 @@
+{
+  "group": {
+    "default": {
+      "targets": [
+        "migrator",
+        "admin-app-api",
+        "user-app-api",
+        "auth-app-api",
+        "discord-app-api",
+        "telegram-bot-api",
+        "notification-scheduler",
+        "notification-consumer",
+        "admin-app",
+        "user-app",
+        "landing-app",
+        "site-app",
+        "mobile-app"
+      ]
+    }
+  },
+  "target": {
+    "migrator": {
+      "dockerfile": "Dockerfile",
+      "target": "migrator",
+      "args": {
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "admin-app-api": {
+      "dockerfile": "Dockerfile",
+      "target": "backend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "BUILD_OUTPUT": "dist/apps/backend/admin/admin-app-api",
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "user-app-api": {
+      "dockerfile": "Dockerfile",
+      "target": "backend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "BUILD_OUTPUT": "dist/apps/backend/user/user-app-api",
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "auth-app-api": {
+      "dockerfile": "Dockerfile",
+      "target": "backend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "BUILD_OUTPUT": "dist/apps/backend/auth/auth-app-api",
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "discord-app-api": {
+      "dockerfile": "Dockerfile",
+      "target": "backend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "BUILD_OUTPUT": "dist/apps/backend/discord/discord-app-api",
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "telegram-bot-api": {
+      "dockerfile": "Dockerfile",
+      "target": "backend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "BUILD_OUTPUT": "dist/apps/backend/telegram/telegram-bot-api",
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "notification-scheduler": {
+      "dockerfile": "Dockerfile",
+      "target": "backend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "BUILD_OUTPUT": "dist/apps/backend/notification/notification-scheduler",
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "notification-consumer": {
+      "dockerfile": "Dockerfile",
+      "target": "backend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "BUILD_OUTPUT": "dist/apps/backend/notification/notification-consumer",
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "admin-app": {
+      "dockerfile": "Dockerfile",
+      "target": "frontend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "FRONTEND_OUTPUT": "dist/apps/frontend/admin",
+        "VITE_API_BASE_URL_MODE": "same-origin",
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "user-app": {
+      "dockerfile": "Dockerfile",
+      "target": "frontend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "FRONTEND_OUTPUT": "dist/apps/frontend/app",
+        "VITE_API_BASE_URL_MODE": "same-origin",
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "landing-app": {
+      "dockerfile": "Dockerfile",
+      "target": "frontend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "FRONTEND_OUTPUT": "dist/apps/frontend/landing",
+        "VITE_API_BASE_URL_MODE": "same-origin",
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "site-app": {
+      "dockerfile": "Dockerfile",
+      "target": "site-runtime",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "PNPM_VERSION": "11.11.0"
+      }
+    },
+    "mobile-app": {
+      "dockerfile": "Dockerfile",
+      "target": "frontend",
+      "args": {
+        "NX_BUILD_PROJECTS": "admin-app-api,user-app-api,auth-app-api,discord-app-api,telegram-bot-api,notification-scheduler,notification-consumer,admin-app,user-app,landing-app,site-app,mobile-app",
+        "FRONTEND_OUTPUT": "dist/apps/frontend/mobile",
+        "VITE_API_BASE_URL_MODE": "same-origin",
+        "PNPM_VERSION": "11.11.0"
+      }
+    }
+  }
+}

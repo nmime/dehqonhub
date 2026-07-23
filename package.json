@@ -71,6 +71,8 @@
     "test:compose-production-config": "node --test scripts/compose-production.spec.mjs",
     "test:deploy-tag-updater": "node --test scripts/update-deploy-tags.spec.mjs",
     "test:release-image-plan": "node --test scripts/release-image-plan.spec.mjs",
+    "test:generate-bake-file": "node --test scripts/generate-bake-file.spec.mjs",
+    "bake:generate": "node scripts/generate-bake-file.mjs",
     "test:single-server-deployment": "node --test scripts/single-server-deployment.spec.mjs",
     "server:validate": "node scripts/validate-single-server-deployment.mjs",
     "server:render-nginx": "node scripts/single-server-deployment.mjs render-nginx",
