@@ -1,7 +1,7 @@
 # Build optimization across all shapes — design
 
 - **Date:** 2026-07-23
-- **Status:** Draft (awaiting review)
+- **Status:** Approved — image build strategy Option A confirmed by owner 2026-07-23
 - **Branch:** `chore/build-optimization-all-shapes`
 - **Owner:** build/deploy tooling
 
@@ -198,7 +198,8 @@ fat image ships the union of all backend deps + all app code to every pod
 ("add an app = add a values file") is delivered instead by Phase 1's
 single-source catalog (finding #1) without sacrificing per-app isolation.
 
-**Chosen structure (finding #7 fix):** keep the single unified Dockerfile and
+**Chosen structure (finding #7 fix) — Option A, confirmed by owner
+2026-07-23:** keep the single unified Dockerfile and
 its pruned per-app runtime images, but make the shared `builder` stage compile
 the workspace **once** (`nx run-many` / `nx affected -t build`, libs once) and
 drive the image set with **`docker buildx bake`**, so BuildKit runs the shared
