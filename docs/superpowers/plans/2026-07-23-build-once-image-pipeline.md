@@ -334,37 +334,55 @@ git commit -m "docs: record Option A after-numbers (single shared compile)"
 
 ---
 
-### Task 5: Local full-stack smoke on bake-built images
+### Task 5: Compose backward-compatibility + docker smoke
 
 **Files:**
-- Modify: `Dockerfile` only if smoke surfaces a regression (otherwise none)
+- Modify: `Dockerfile` (the `builder` stage — add an `NX_PROJECT` fallback)
 
 **Interfaces:**
-- Consumes: the repo's existing `pnpm run test:docker-smoke` gate.
+- Consumes: `docker/docker-compose.yml`, `docker/docker-compose.prod.build.yml` (both pass the legacy `NX_PROJECT` build arg per service — 12 each), and the repo's `pnpm run test:docker-smoke` gate.
 
-- [ ] **Step 1: Run the repo's docker smoke gate**
+**Why this task exists:** Task 3 replaced the builder's `ARG NX_PROJECT` with `ARG NX_BUILD_PROJECTS` and guards on `test -n "${NX_BUILD_PROJECTS}"`. But `docker/docker-compose.yml` and `docker/docker-compose.prod.build.yml` still build each service with `NX_PROJECT: <app>` (verified: 12 occurrences each). Left as-is, every compose build now fails the guard. Rather than rewrite 24 compose service definitions, make the builder accept `NX_PROJECT` as a single-project fallback — bake keeps passing `NX_BUILD_PROJECTS` (the union), compose keeps passing `NX_PROJECT` (one app), both work.
 
-Run:
+Execution rules: FOREGROUND builds only, Bash `timeout: 600000`, never background, never pause. The `workspace` layer is warm on this host.
+
+- [ ] **Step 1: Add the `NX_PROJECT` fallback to the builder stage**
+
+In the `builder` stage of `Dockerfile`, keep `ARG NX_BUILD_PROJECTS`, add `ARG NX_PROJECT` right after it, and change the RUN so it uses whichever is set:
+```dockerfile
+FROM workspace AS builder
+ARG NX_BUILD_PROJECTS
+ARG NX_PROJECT
+... VITE ARG/ENV lines unchanged ...
+RUN --mount=type=cache,target=/workspace/.nx/cache,sharing=locked \
+  PROJECTS="${NX_BUILD_PROJECTS:-$NX_PROJECT}" \
+  && test -n "${PROJECTS}" \
+  && pnpm exec nx run-many -t build export --projects="${PROJECTS}"
+```
+Keep the `build export` target list and the cache mount exactly as in Task 3. Do not touch any other stage.
+
+- [ ] **Step 2: Verify a representative compose build now succeeds (backend + frontend + migrator)**
+
+`test:docker-smoke` builds the whole stack and can be very slow; first prove the fallback fixes the arg mismatch with a bounded build of three representative services:
+```bash
+docker compose -f docker/docker-compose.yml build migrate admin-app-api admin-app 2>&1 | tail -15; echo "compose-build exit=$?"
+```
+Expected: `compose-build exit=0` — each service's `NX_PROJECT` arg now drives the builder via the fallback (the old failure mode was the empty-`NX_BUILD_PROJECTS` guard). If it fails, debug the root cause in the `builder` stage only (do not weaken the build); do not modify the compose files.
+
+- [ ] **Step 3: Run the repo's docker smoke gate**
+
+Run (long-running; foreground, max timeout):
 ```bash
 pnpm run test:docker-smoke; echo "smoke exit=$?"
 ```
-Expected: `smoke exit=0`. This builds and boots the compose stack via the same `Dockerfile`; it must still pass unchanged (the runtime stages were not modified).
+Expected: `smoke exit=0`. If the gate cannot finish within the 600000ms foreground timeout on this host, do NOT background it: record in your report that Step 2's representative compose build passed and that the full smoke gate exceeded the local timeout (it runs in CI), and report DONE_WITH_CONCERNS. A real failure (non-zero exit, not a timeout) must be root-caused in the `builder` stage and re-run until green.
 
-- [ ] **Step 2: If it fails, debug via systematic-debugging**
-
-If exit is non-zero, capture the failing service logs:
-```bash
-pnpm run docker:down; docker compose -f docker/docker-compose.yml logs --no-color | tail -60
-```
-Fix the root cause in `Dockerfile` (do not weaken the smoke test), then re-run Step 1 until `smoke exit=0`.
-
-- [ ] **Step 3: Commit any fix**
+- [ ] **Step 4: Commit**
 
 ```bash
 git add Dockerfile
-git commit -m "fix(docker): <specific fix> surfaced by docker smoke"
+git commit -m "fix(docker): accept NX_PROJECT fallback in build-once builder for compose"
 ```
-(Skip if Step 1 passed with no change.)
 
 ---
 
