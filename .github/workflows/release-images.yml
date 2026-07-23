@@ -57,7 +57,6 @@ jobs:
     outputs:
       base: ${{ steps.plan.outputs.base }}
       has_images: ${{ steps.plan.outputs.has_images }}
-      matrix: ${{ steps.plan.outputs.matrix }}
       reason: ${{ steps.plan.outputs.reason }}
       selected_images: ${{ steps.plan.outputs.selected_images }}
     steps:
@@ -194,7 +193,9 @@ jobs:
         uses: anchore/sbom-action/download-syft@e22c389904149dbc22b58101806040fa8d37a610 # v0
 
       - name: Install trivy
-        run: curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+        uses: aquasecurity/setup-trivy@81e514348e19b6112ce2a7e3ecbafe19c1e1f567 # v0.3.1
+        with:
+          version: v0.72.0
 
       - name: Install cosign
         uses: sigstore/cosign-installer@6f9f17788090df1f26f669e9d70d6ae9567deba6 # v4.1.2
@@ -208,9 +209,12 @@ jobs:
             digest=$(jq -r --arg t "$name" '.[$t]."containerimage.digest"' bake-metadata.json)
             ref="${IMAGE_PREFIX}/${name}@${digest}"
             syft "$ref" -o "spdx-json=sboms/sbom-${name}.spdx.json"
-            trivy image --format sarif --output "sarifs/trivy-${name}.sarif" \
-              --vuln-type os,library --severity CRITICAL,HIGH --exit-code 1 "$ref" || scan_failed=1
-            cosign sign --yes "$ref"
+            if trivy image --format sarif --output "sarifs/trivy-${name}.sarif" \
+              --pkg-types os,library --severity CRITICAL,HIGH --exit-code 1 "$ref"; then
+              cosign sign --yes "$ref"
+            else
+              scan_failed=1
+            fi
           done
           echo "scan_failed=${scan_failed}" >> "$GITHUB_ENV"
 
