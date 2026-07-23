@@ -215,6 +215,14 @@ jobs:
             else
               scan_failed=1
             fi
+            # Stamp a distinct CodeQL category per image (via automationDetails.id)
+            # so the combined directory upload is not rejected for multiple runs
+            # sharing one category.
+            if [ -f "sarifs/trivy-${name}.sarif" ]; then
+              tmp=$(mktemp)
+              jq --arg cat "trivy-${name}/" '.runs[].automationDetails.id = $cat' \
+                "sarifs/trivy-${name}.sarif" > "$tmp" && mv "$tmp" "sarifs/trivy-${name}.sarif"
+            fi
           done
           echo "scan_failed=${scan_failed}" >> "$GITHUB_ENV"
 
