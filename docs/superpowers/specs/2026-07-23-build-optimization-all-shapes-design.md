@@ -38,6 +38,7 @@ set of concrete, worthwhile candidates:
 | 4 | HPA is CPU-only (no memory / custom metrics) | Scaling |
 | 5 | Backend builds via `tsc` (needs path-transform); no `composite`/`incremental` | Build speed |
 | 6 | Frontend Vite builds use defaults (no explicit chunking/compression/budgets) | Bundle size |
+| 7 | **Shared libs recompile once per app image in the release CI matrix** — each image runs `nx run <app>:build` on its own runner; the Nx cache is a BuildKit cache mount that `cache-to: type=gha` does not export, and the `builder` layer is keyed by `NX_PROJECT`, so lib compilation is never shared across images (local `nx run-many` is unaffected — libs build once there) | Build speed |
 
 ## Goals
 
@@ -81,6 +82,9 @@ Capture a baseline table and confirm green:
 - Every Docker target built cold and warm (`workspace`, `migrator`, `builder`,
   `backend`, `site-runtime`, `frontend`) — record wall-clock + final image
   size per target.
+- Build several backend app images in sequence and isolate how much of each
+  build is shared-lib recompilation (finding #7) — the number that justifies
+  the Phase 3 build-once restructure.
 - Dev compose boots (`docker/docker-compose.yml` selected/fullstack); prod
   compose config + boot for `bundled-db` and `external-db` modes
   (`scripts/compose-production.mjs`).
@@ -144,6 +148,16 @@ Measure → change → re-measure. Keep only what beats baseline.
 - **Docker** — verify cache-mount and layer-order effectiveness; enable
   `COMPOSE_BAKE` for parallel multi-image builds where not already on;
   consider a pnpm-store cache mount on the per-app prod install layer.
+- **Compile the workspace once, not per image (finding #7)** — the release
+  matrix recompiles shared libs inside every app image because the Nx cache
+  mount is not shared across runners. Evaluate a single shared build:
+  a "build" stage/job runs `nx run-many`/`nx affected -t build` once,
+  producing the full `dist/`, and each image `COPY`s only its slice; or
+  export the Nx cache / prebuilt `dist` to the matrix (gha artifact or a
+  shared exported stage) so lib compilation happens once total. Keep
+  `nx affected` image selection. Quantify the per-image lib-recompile cost in
+  Phase 0 and keep whichever structure builds the full image set fastest
+  without weakening per-image reproducibility.
 - **Frontend** — explicit `manualChunks`/vendor splitting where it helps;
   nginx brotli + gzip precompression of static assets; per-app bundle-size
   budgets to catch regressions; confirm prod sourcemaps stay off outside E2E.
