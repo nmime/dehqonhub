@@ -30,7 +30,11 @@ COPY packages ./packages
 COPY i18n ./i18n
 
 FROM workspace AS migrator
-RUN apk add --no-cache su-exec
+# Drop the unused npm CLI + corepack: their bundled tar/undici/brace-expansion
+# carry CVEs, and the runtime only ever invokes node/pnpm (globally installed).
+RUN apk add --no-cache su-exec \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
 CMD ["pnpm", "db:migrate"]
@@ -87,7 +91,9 @@ WORKDIR /app
 ARG BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
 ENV BUILD_OUTPUT=${BUILD_OUTPUT}
 RUN apk add --no-cache libcap su-exec \
-  && setcap 'cap_net_bind_service=+ep' "$(which node)"
+  && setcap 'cap_net_bind_service=+ep' "$(which node)" \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 # Placed at /app so both the app and the libs it inlines resolve modules from
 # a shared ancestor node_modules.
 COPY --from=backend-deps /workspace/${BUILD_OUTPUT}/package.json ./package.json
@@ -115,7 +121,9 @@ WORKDIR /app
 ARG BUILD_OUTPUT=dist/apps/frontend/site
 ENV BUILD_OUTPUT=${BUILD_OUTPUT}
 RUN apk add --no-cache libcap \
-  && setcap 'cap_net_bind_service=+ep' "$(which node)"
+  && setcap 'cap_net_bind_service=+ep' "$(which node)" \
+  && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 COPY --from=site-deps /site-deploy/package.json ./package.json
 COPY --from=site-deps /site-deploy/node_modules ./node_modules
 COPY --from=builder /workspace/dist ./dist
@@ -123,7 +131,7 @@ USER node
 EXPOSE 80
 CMD ["node", "dist/apps/frontend/site/server/index.js"]
 
-FROM nginxinc/nginx-unprivileged:1.31.2-alpine AS frontend
+FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:44e36330f74d4f3a1d4e222acca9e23b401fb87811a7597024502bb759c4dd49 AS frontend
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin
 ARG NGINX_CONFIG=docker/nginx-fullstack.conf
 USER root

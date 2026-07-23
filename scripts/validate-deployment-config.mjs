@@ -89,7 +89,7 @@ has(
   'Docker workspace manifests are out of date',
   'manifest sync fails CI when generated inputs are stale',
 );
-has(dockerfile, 'FROM nginxinc/nginx-unprivileged:1.31.2-alpine AS frontend', 'unprivileged frontend base image');
+has(dockerfile, 'FROM nginxinc/nginx-unprivileged:', 'unprivileged frontend base image');
 has(
   dockerfile,
   'run-many -t build export',
