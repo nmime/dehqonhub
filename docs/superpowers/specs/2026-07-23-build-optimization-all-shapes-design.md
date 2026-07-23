@@ -38,7 +38,7 @@ set of concrete, worthwhile candidates:
 | 4 | HPA is CPU-only (no memory / custom metrics) | Scaling |
 | 5 | Backend builds via `tsc` (needs path-transform); no `composite`/`incremental` | Build speed |
 | 6 | Frontend Vite builds use defaults (no explicit chunking/compression/budgets) | Bundle size |
-| 7 | **Shared libs recompile once per app image in the release CI matrix** — each image runs `nx run <app>:build` on its own runner; the Nx cache is a BuildKit cache mount that `cache-to: type=gha` does not export, and the `builder` layer is keyed by `NX_PROJECT`, so lib compilation is never shared across images (local `nx run-many` is unaffected — libs build once there) | Build speed |
+| 7 | **Shared libs recompile once per app image in the release CI matrix** — each image runs `nx run <app>:build` on its own runner; the Nx cache is a BuildKit cache mount that `cache-to: type=gha` does not export, and the `builder` layer is keyed by `NX_PROJECT`, so lib compilation is never shared across images (local `nx run-many` is unaffected — libs build once there) — resolved by Option A (build-once + bake), 2026-07-23 | Build speed |
 
 ## Goals
 
