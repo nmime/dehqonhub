@@ -37,6 +37,7 @@ CMD ["pnpm", "db:migrate"]
 
 FROM workspace AS builder
 ARG NX_BUILD_PROJECTS
+ARG NX_PROJECT
 ARG VITE_API_BASE_URL_MODE=same-origin
 ARG VITE_AUTH_API_BASE_URL
 ARG VITE_USER_API_BASE_URL
@@ -53,8 +54,9 @@ ENV VITE_API_BASE_URL_MODE=${VITE_API_BASE_URL_MODE} \
 # Reuse Nx task outputs while BuildKit builds several application targets. The
 # cache mount never enters a runtime image and is safe to discard at any time.
 RUN --mount=type=cache,target=/workspace/.nx/cache,sharing=locked \
-  test -n "${NX_BUILD_PROJECTS}" \
-  && pnpm exec nx run-many -t build export --projects="${NX_BUILD_PROJECTS}"
+  PROJECTS="${NX_BUILD_PROJECTS:-$NX_PROJECT}" \
+  && test -n "${PROJECTS}" \
+  && pnpm exec nx run-many -t build export --projects="${PROJECTS}"
 
 # Per-app production dependencies. Installing from the app's generated
 # dist package.json + pruned lockfile against the store already populated by
