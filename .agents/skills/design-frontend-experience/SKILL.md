@@ -18,7 +18,7 @@ description: Design or substantially reshape a web or native product experience 
 4. Design semantics with the visuals: landmarks, heading order, labels, error association, keyboard path, focus placement/restoration, live regions, contrast, touch targets, safe areas, and motion alternatives.
 5. Prove the 320 px web floor and RU at 375 px without horizontal overflow. For native, account for safe areas, keyboards, screen readers, platform conventions, and explicit platform variants.
 6. Prefer a small number of intentional compositional decisions over ornamental complexity. Do not add one-off colors, duplicated primitives, speculative registry blocks, or a second UI framework.
-7. Use external reference research only when it materially helps the requested surface. Record applicable patterns rather than copying third-party screens or assets. Shadcn owns controls and primitives; consider Magic UI only for a justified signature effect. In this template, keep Aceternity to non-persistent visual research and route any later integration decision to the downstream product owner through `../shadcn-ui/SKILL.md`.
+7. Use external reference research only when it materially helps the requested surface. Record applicable patterns rather than copying third-party screens or assets. When the direction is anchored to a specific real-world example, start from `../design-from-reference/SKILL.md`. Shadcn owns controls and primitives; consider Magic UI only for a justified signature effect. In this template, keep Aceternity to non-persistent visual research and route any later integration decision to the downstream product owner through `../shadcn-ui/SKILL.md`.
 
 ## Turn design into code
 

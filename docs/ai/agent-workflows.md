@@ -14,6 +14,7 @@ These workflows keep repeatable agent procedures out of the always-loaded [AGENT
 | Plan multi-owner backend work          | `$plan-backend-change`        | deployable, domain, contracts, data, runtime tests   |
 | Plan multi-owner frontend work         | `$plan-frontend-change`       | selected app, routes, slices, UI, contracts, tests   |
 | Define frontend UX or visual direction | `$design-frontend-experience` | app surface, tokens, shared web/native UI            |
+| Match an external visual reference     | `$design-from-reference`      | brand/site/DESIGN.md reference, tokens, primitives   |
 | Build an HTTP API                      | `$develop-backend-api`        | backend deployable and domain library                |
 | Build a consumer or scheduler          | `$develop-background-process` | process entrypoint and job/event owner               |
 | Build Vite, Astro, or Vike UI          | `$develop-web-frontend`       | frontend deployable, feature slice, web UI           |
@@ -83,8 +84,9 @@ When adding request-scoped data (correlation IDs, user context, tracing):
   `$change-api-contract` and `$validate-change`.
 - For substantial frontend work, use `$plan-frontend-change`, add
   `$design-frontend-experience` only when UX or visual direction changes,
-  implement with the matching web/native skill, and finish with
-  `$validate-frontend-quality`.
+  start from `$design-from-reference` when the direction is anchored to a
+  real-world example, implement with the matching web/native skill, and finish
+  with `$validate-frontend-quality`.
 - For substantial backend work, use `$plan-backend-change`, implement with the
   matching API/process skill, chain contract/auth/database/notification skills
   only for changed boundaries, and finish with `$validate-backend-quality`.

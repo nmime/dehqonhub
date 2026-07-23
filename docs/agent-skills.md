@@ -48,6 +48,10 @@ validation also checks every root command referenced by repo-local skills.
   renderer, ownership, user states, cross-boundary work, and proof before implementation.
 - [Design frontend experience](../.agents/skills/design-frontend-experience/SKILL.md)
   defines intentional accessible web/native UX within shared token and component boundaries.
+- [Design from reference](../.agents/skills/design-from-reference/SKILL.md) turns a
+  real-world example (brand, live site, screenshot, or DESIGN.md file) into
+  intentional, original UI expressed through `--xr-*` tokens and shared primitives
+  without cloning third-party identity.
 - [Plan backend change](../.agents/skills/plan-backend-change/SKILL.md) resolves
   runtime ownership, invariants, contracts, consistency, failure modes, rollout,
   and proof before backend implementation.
@@ -118,7 +122,8 @@ native test lane.
 ## Frontend delivery workflow
 
 Use `$plan-frontend-change` for scope and ownership, `$design-frontend-experience`
-when visual or UX direction changes, the matching web/mobile development skill
+when visual or UX direction changes, `$design-from-reference` when the direction
+is anchored to a real-world example, the matching web/mobile development skill
 for implementation, and `$validate-frontend-quality` for risk-based proof.
 LazyWeb is optional reference research, not a prerequisite or source of truth.
 
