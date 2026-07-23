@@ -17,6 +17,17 @@ const ignoredDirectories = new Set([
   'test-results',
   'tmp',
 ]);
+// Superpowers writes brainstorming/design specs under docs/superpowers/** as a
+// working-tool artifact, not canonical repository documentation. Exempt that
+// subtree from link and index-reachability validation so tool specs never break
+// the documentation gate.
+const workingSpecPrefixes = ['docs/superpowers/'];
+
+function isWorkingSpecDoc(filePath, workspaceRoot) {
+  const workspacePath = relative(workspaceRoot, filePath).replaceAll('\\', '/');
+  return workingSpecPrefixes.some((prefix) => workspacePath.startsWith(prefix));
+}
+
 const markdownLinkPattern = /!?(?:\[[^\]]*\])\(([^)]+)\)/gu;
 const pnpmRunPattern = /\bpnpm\s+run\s+([@A-Za-z0-9_.:-]+)/gu;
 const duplicatedProjectMetadataPattern =
@@ -53,10 +64,11 @@ export function collectTrackedMarkdown(workspaceRoot) {
 export function validateWorkspace({ workspaceRoot, markdownFiles = collectTrackedMarkdown(workspaceRoot) }) {
   const rootScripts = readRootScripts(workspaceRoot);
   const failures = [];
-  const counts = { anchors: 0, files: markdownFiles.length, links: 0, scripts: 0 };
+  const includedFiles = markdownFiles.filter((filePath) => !isWorkingSpecDoc(filePath, workspaceRoot));
+  const counts = { anchors: 0, files: includedFiles.length, links: 0, scripts: 0 };
   const headingCache = new Map();
 
-  for (const filePath of markdownFiles) {
+  for (const filePath of includedFiles) {
     const content = readFileSync(filePath, 'utf8');
     const workspacePath = relative(workspaceRoot, filePath).replaceAll('\\', '/');
 
@@ -148,7 +160,7 @@ export function validateWorkspace({ workspaceRoot, markdownFiles = collectTracke
     }
   }
 
-  validateDocumentationReachability({ failures, markdownFiles, workspaceRoot });
+  validateDocumentationReachability({ failures, markdownFiles: includedFiles, workspaceRoot });
 
   return { counts, failures };
 }

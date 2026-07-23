@@ -134,6 +134,23 @@ test('requires every documentation file to be reachable from the documentation i
   assert.match(result.failures[0], /docs\/orphan\.md:1: documentation is not reachable/);
 });
 
+test('exempts the superpowers working-spec area from documentation validation', () => {
+  write('docs/README.md', '# Documentation\n\n[Guide](guide.md)\n');
+  write('docs/guide.md', '# Guide\n');
+  write('docs/superpowers/specs/2026-01-01-example-design.md', '# Example spec\n\n[dangling](../../nowhere.md)\n');
+
+  const result = validateWorkspace({
+    workspaceRoot,
+    markdownFiles: [
+      resolve(workspaceRoot, 'docs/README.md'),
+      resolve(workspaceRoot, 'docs/guide.md'),
+      resolve(workspaceRoot, 'docs/superpowers/specs/2026-01-01-example-design.md'),
+    ],
+  });
+
+  assert.deepEqual(result.failures, []);
+});
+
 test('collects untracked documentation and repo-local skill files', () => {
   write('README.md', '# Root\n');
   execFileSync('git', ['init', '--quiet'], { cwd: workspaceRoot });
