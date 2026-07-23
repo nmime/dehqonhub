@@ -25,8 +25,7 @@ the images an affected release actually touches.
 The Dockerfile's `builder` stage compiles the workspace **once** —
 `pnpm exec nx run-many -t build export --projects="${NX_BUILD_PROJECTS:-$NX_PROJECT}"`
 — so shared libraries build a single time no matter how many app images are
-requested in the same bake; each per-app runtime image then copies only its
-`dist/` slice plus its own pruned dependency graph. Compose still passes the
+requested in the same bake. Frontend (nginx) images copy only their per-app `dist/` output via `FRONTEND_OUTPUT`; backend and site-runtime images copy the shared builder's full `dist/` and select their entrypoint via the `BUILD_OUTPUT` environment variable, with only `node_modules`/`package.json` per-app pruned. Compose still passes the
 legacy `NX_PROJECT` arg per service — the `${NX_BUILD_PROJECTS:-$NX_PROJECT}`
 fallback keeps that path working unchanged.
 
