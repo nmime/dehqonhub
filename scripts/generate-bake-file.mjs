@@ -22,14 +22,17 @@ const parseBuildArgs = (buildArgs) =>
       }),
   );
 
-export function buildBakeConfig(images) {
-  const nxBuildProjects = images
+export function buildBakeConfig(images, selectedNames) {
+  const selected = Array.isArray(selectedNames) && selectedNames.length > 0 ? new Set(selectedNames) : undefined;
+  const scoped = selected ? images.filter((image) => selected.has(image.name)) : images;
+
+  const nxBuildProjects = scoped
     .filter((image) => image.project)
     .map((image) => image.project)
     .join(',');
 
   const target = {};
-  for (const image of images) {
+  for (const image of scoped) {
     const parsed = parseBuildArgs(image.buildArgs);
     delete parsed.NX_PROJECT;
     delete parsed.NX_TARGET;
@@ -37,15 +40,37 @@ export function buildBakeConfig(images) {
     target[image.name] = { dockerfile: 'Dockerfile', target: image.target, args };
   }
 
-  return { group: { default: { targets: images.map((image) => image.name) } }, target };
+  return { group: { default: { targets: scoped.map((image) => image.name) } }, target };
 }
 
-export function renderBakeJson(images) {
-  return `${JSON.stringify(buildBakeConfig(images), null, 2)}\n`;
+export function renderBakeJson(images, selectedNames) {
+  return `${JSON.stringify(buildBakeConfig(images, selectedNames), null, 2)}\n`;
 }
+
+const parseOnlyFlag = (argv) => {
+  for (let index = 0; index < argv.length; index += 1) {
+    const argument = argv[index];
+    if (argument === '--only') {
+      const value = argv[index + 1];
+      if (!value) throw new Error('--only requires a value.');
+      return value;
+    }
+    if (argument.startsWith('--only=')) {
+      return argument.slice('--only='.length);
+    }
+  }
+  return undefined;
+};
 
 const main = () => {
-  writeFileSync(join(rootDir, 'docker-bake.json'), renderBakeJson(releaseImages));
+  const only = parseOnlyFlag(process.argv.slice(2));
+  const names = only
+    ? only
+        .split(',')
+        .map((name) => name.trim())
+        .filter(Boolean)
+    : undefined;
+  writeFileSync(join(rootDir, 'docker-bake.json'), renderBakeJson(releaseImages, names));
   console.log('Wrote docker-bake.json');
 };
 

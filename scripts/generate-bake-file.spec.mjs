@@ -39,3 +39,10 @@ test('per-image slice args are preserved from buildArgs (BUILD_OUTPUT / FRONTEND
   assert.equal(target['auth-app-api'].args.BUILD_OUTPUT, 'dist/apps/backend/auth/auth-app-api');
   assert.equal(target['admin-app'].args.FRONTEND_OUTPUT, 'dist/apps/frontend/admin');
 });
+
+test('buildBakeConfig can restrict the default group to selected image names', () => {
+  const { group, target } = buildBakeConfig(releaseImages, ['auth-app-api', 'migrator']);
+  assert.deepEqual([...group.default.targets].sort(), ['auth-app-api', 'migrator']);
+  assert.ok(target['auth-app-api'] && target.migrator);
+  assert.equal(target['auth-app-api'].args.NX_BUILD_PROJECTS, 'auth-app-api');
+});
