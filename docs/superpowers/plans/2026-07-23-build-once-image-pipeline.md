@@ -35,31 +35,40 @@ docker buildx version && docker info --format '{{.NCPU}} CPUs, {{.MemTotal}} byt
 ```
 Expected: buildx present; CPU/mem printed; `v24.18.0`; `11.11.0`.
 
-- [ ] **Step 2: Cold-build two backend images that share libs, no cache, and time each**
+- [ ] **Step 2: Prime the shared workspace layer once (foreground)**
 
-Run:
+The redundant work Option A removes is the per-image `nx` compile, not the shared dependency install — that `workspace` layer is already shared in CI. So warm it once, then measure each backend build against it. Run this in the FOREGROUND (it is the slowest single step; give it a long timeout):
 ```bash
-docker buildx build --no-cache --target backend \
+docker buildx build --target workspace --build-arg PNPM_VERSION=11.11.0 \
+  -t nrb-baseline/workspace -f Dockerfile . 2>&1 | tail -3
+```
+Expected: the `workspace` stage builds and is now cached for the next two builds.
+
+- [ ] **Step 3: Build two lib-sharing backend images against the warm workspace, timing each**
+
+Run each in the FOREGROUND, timing with `date +%s` deltas (do NOT background these):
+```bash
+S=$(date +%s); docker buildx build --target backend \
   --build-arg NX_PROJECT=auth-app-api \
   --build-arg BUILD_OUTPUT=dist/apps/backend/auth/auth-app-api \
   --build-arg PNPM_VERSION=11.11.0 \
-  -t nrb-baseline/auth-app-api -f Dockerfile . 2>&1 | tail -5
+  -t nrb-baseline/auth-app-api -f Dockerfile . 2>&1 | tail -4; E=$(date +%s); echo "auth-app-api elapsed=$((E-S))s"
 ```
-Then repeat for `user-app-api` (`BUILD_OUTPUT=dist/apps/backend/user/user-app-api`), also `--no-cache`. Record the wall-clock of each (use `/usr/bin/time -p` prefix or read the buildx summary). Expected: both succeed; each spends a comparable chunk of time inside the `nx run` step compiling the same shared libs — that duplicated portion is the waste Option A removes.
+Then the same for `user-app-api` (`BUILD_OUTPUT=dist/apps/backend/user/user-app-api`, tag `nrb-baseline/user-app-api`). Record each `elapsed=` value. With the workspace warm, that time is dominated by the `builder` stage's `nx run <app>:build` — the shared-lib compile that repeats for every app image. The two together are what a single shared compile (Option A) collapses into one.
 
-- [ ] **Step 3: Record image sizes**
+- [ ] **Step 4: Record image sizes**
 
 Run:
 ```bash
 docker image ls --format '{{.Repository}}:{{.Tag}} {{.Size}}' | grep nrb-baseline
 ```
-Expected: two sizes printed; record them.
+Expected: workspace + two backend sizes printed; record the two backend image sizes.
 
-- [ ] **Step 4: Write the baseline doc**
+- [ ] **Step 5: Write the baseline doc**
 
-Create `docs/superpowers/specs/2026-07-23-build-baseline.md` with a table: columns `image | cold build (s) | image size`, the two rows measured, an `environment` line (CPUs/mem/versions), and a one-paragraph note stating the observed per-image shared-lib recompilation is the quantity Option A eliminates. Fill in the real measured numbers — no placeholders.
+Create `docs/superpowers/specs/2026-07-23-build-baseline.md` with a table: columns `image | build time warm-workspace (s) | image size`, the two backend rows measured, an `environment` line (CPUs/mem/versions from Step 1), and a one-paragraph note stating that with the workspace layer warm the measured time is dominated by the per-image `nx` shared-lib compile — the quantity Option A collapses to a single compile. Real measured numbers only — no placeholders.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
 git add docs/superpowers/specs/2026-07-23-build-baseline.md
