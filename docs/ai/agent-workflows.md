@@ -7,6 +7,7 @@ These workflows keep repeatable agent procedures out of the always-loaded [AGENT
 | Task                                   | Use                           | Primary owner to inspect                             |
 | -------------------------------------- | ----------------------------- | ---------------------------------------------------- |
 | Initialize or select applications      | `$initialize-product`         | setup catalog and `.nrb/workspace.json`              |
+| Update a downstream boilerplate base   | `$update-boilerplate-base`    | Git ancestry, upstream tag, product-owned changes    |
 | Add a new app, library, or feature     | `$scaffold-feature`           | Nx graph, generator dry-run, target owners           |
 | Change a generator                     | `$maintain-generators`        | schema, implementation, templates, tests             |
 | Integrate an optional capability       | `$activate-capability`        | setup catalog and target composition roots           |

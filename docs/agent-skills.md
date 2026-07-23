@@ -32,6 +32,9 @@ validation also checks every root command referenced by repo-local skills.
 
 - [Initialize product](../.agents/skills/initialize-product/SKILL.md) selects and
   verifies applications through the repository CLI.
+- [Update boilerplate base](../.agents/skills/update-boilerplate-base/SKILL.md)
+  reconciles a downstream product with a newer tagged boilerplate release while
+  preserving product ownership, migrations, selections, and published history.
 - [Scaffold feature](../.agents/skills/scaffold-feature/SKILL.md) creates genuinely
   new application, library, or vertical-feature ownership.
 - [Maintain generators](../.agents/skills/maintain-generators/SKILL.md) changes
