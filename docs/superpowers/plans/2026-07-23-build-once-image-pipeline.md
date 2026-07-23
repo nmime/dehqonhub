@@ -495,7 +495,61 @@ git commit -m "ci(release): build affected images in one shared bake, loop scan/
 
 ---
 
-### Task 7: Documentation
+### Task 7: Sync deployment validators to the build-once pipeline
+
+**Files:**
+- Modify: `scripts/validate-deployment-config.mjs` (and any other validator whose assertions our Dockerfile/CI changes broke — candidates: `scripts/validate-github-workflows.mjs`, `scripts/validate-gitops-config.mjs`).
+
+**Why this task exists:** Task 3 removed `ARG NX_TARGET=build` from the Dockerfile builder and Task 6 replaced the per-image release matrix with a single bake job. Several repo validators assert the OLD structure by substring, so `pnpm run deploy:validate` now fails — and one of these (`validate-deployment-config.mjs`) is the CI `helm-render` gate, so the release pipeline is red until fixed. Each broken assertion's INTENT still holds under the new form; update the evidence string to match, do not delete the check.
+
+**Interfaces:**
+- Consumes: the new `Dockerfile` builder (`pnpm exec nx run-many -t build export --projects="${PROJECTS}"`, with `ARG NX_BUILD_PROJECTS` + `ARG NX_PROJECT` fallback) and the new single-bake `release-images.yml`.
+
+- [ ] **Step 1: Reproduce the full failure set**
+
+Run and capture EVERY assertion failure (run each mode; they abort on first failure, so re-run after each fix):
+```bash
+pnpm run deploy:validate 2>&1 | tail -20; echo "all exit=$?"
+node scripts/validate-github-workflows.mjs 2>&1 | tail -20; echo "workflows exit=$?"
+```
+Known starting failures (confirmed): `validate-deployment-config.mjs:93` asserts the literal `ARG NX_TARGET=build`; `:638` asserts the old matrix build-arg `VITE_TELEGRAM_AUTH_ENABLED=${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}`; `:669` has a now-stale label mentioning "matrix builds". There may be more in the other two validators — find them all.
+
+- [ ] **Step 2: Fix `validate-deployment-config.mjs:93` (mobile-export evidence)**
+
+The intent is "the builder supports non-`build` targets such as mobile export". The new evidence is the run-many target list. Change the needle from `'ARG NX_TARGET=build'` to `'run-many -t build export'` (keep the same label), so it asserts the builder actually runs the `export` target.
+
+- [ ] **Step 3: Fix `validate-deployment-config.mjs:638` (VITE_TELEGRAM flag flows into the release build)**
+
+The intent is "the release build passes `VITE_TELEGRAM_AUTH_ENABLED` from repo vars (default false)". Read the new `.github/workflows/release-images.yml`, find the exact line that now carries `vars.VITE_TELEGRAM_AUTH_ENABLED || 'false'` (the step `env:` entry `VITE_TELEGRAM_AUTH_ENABLED: ${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}`), and update the needle to that exact substring. Preserve the assertion's label/intent.
+
+- [ ] **Step 4: Fix `validate-deployment-config.mjs:669` label + any matrix-era wording**
+
+The `'workspace-cache'` needle still passes, but its label says "before matrix builds". Update the label to reflect the single shared bake (e.g. "release workflow primes a shared dependency cache before the bake build"). Fix any other now-false label wording you touched.
+
+- [ ] **Step 5: Fix any additional breaks in the other validators**
+
+For each remaining failure surfaced in Step 1 (e.g. in `validate-github-workflows.mjs` or `validate-gitops-config.mjs`), update the evidence string to the new build-once/single-bake form, preserving the check's intent. Do not weaken or remove a check to make it pass.
+
+- [ ] **Step 6: Confirm the whole validation suite is green**
+
+```bash
+pnpm run deploy:validate; echo "deploy:validate exit=$?"
+node scripts/validate-github-workflows.mjs; echo "workflows exit=$?"
+node --test scripts/generate-bake-file.spec.mjs 2>&1 | tail -3
+pnpm run docker:manifests:check; echo "manifests exit=$?"
+```
+Expected: all exit 0; bake tests still 6/6. If a validator legitimately cannot be satisfied by the new design (not just an evidence-string mismatch), STOP and report it — do not delete the assertion.
+
+- [ ] **Step 7: Commit**
+
+```bash
+git add scripts/
+git commit -m "fix(validate): sync deployment validators to build-once bake pipeline"
+```
+
+---
+
+### Task 8: Documentation
 
 **Files:**
 - Modify: `docs/deployment.md` or the nearest build doc (grep for the current image-build description) — document the bake path and the single-source `releaseImages` → `docker-bake.json` flow.
