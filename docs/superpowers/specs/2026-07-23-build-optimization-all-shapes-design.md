@@ -176,6 +176,38 @@ Measure → change → re-measure. Keep only what beats baseline.
 `test:docker-smoke` and the app boots; a change that only speeds things up but
 weakens verification is not kept.
 
+## Decision: image build strategy (vs the xrocket reference)
+
+The xrocket monorepo (`/Users/nmi/IT/Projects/xrocket/monorepo`, a reference,
+not part of this repo) was reviewed for its build approach. It uses Werf with
+two Dockerfiles (one for all backends, one per frontend); the backend build
+runs a single `nx run-many -t build --projects='tag:platform:backend'`, bakes
+the whole `dist/` into one `wallet` image, and selects the running service at
+**runtime** via Helm `args`. It compiles shared libs exactly once, aided by an
+Nx **S3/MinIO remote cache**.
+
+**Adopted:** xrocket's *insight* — compile the workspace once so shared libs
+build a single time.
+
+**Not adopted:** its *machinery* — Werf, private base-image registry, external
+Helm chart, S3 remote cache, and the fat single-image + runtime-selection
+model. Reasons: a boilerplate must be self-contained/forkable; the remote
+cache conflicts with this project's deliberate no-remote-cache policy; and the
+fat image ships the union of all backend deps + all app code to every pod
+(larger, less isolated, no per-app rollback). The one fat-image advantage
+("add an app = add a values file") is delivered instead by Phase 1's
+single-source catalog (finding #1) without sacrificing per-app isolation.
+
+**Chosen structure (finding #7 fix):** keep the single unified Dockerfile and
+its pruned per-app runtime images, but make the shared `builder` stage compile
+the workspace **once** (`nx run-many` / `nx affected -t build`, libs once) and
+drive the image set with **`docker buildx bake`**, so BuildKit runs the shared
+`builder` node a single time and emits N slim per-app images that each `COPY`
+only their `dist/` slice + pruned deps. No remote cache required. The exact CI
+shape (single bake job vs. matrix that restores a shared build) is chosen in
+Phase 3 from the Phase 0 numbers, but the recompile-per-image behavior is
+eliminated either way.
+
 ## Testing & verification strategy
 
 - **TDD** for Phase 1 (spec asserts derived == hand-maintained before switch)
