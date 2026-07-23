@@ -415,32 +415,82 @@ Expected: FAIL — `buildBakeConfig` ignores the second argument / arity mismatc
 
 - [ ] **Step 3: Implement the filter**
 
-Update `buildBakeConfig(images, selectedNames)`: when `selectedNames` is provided, build the `group.default.targets` and `target` map from only those images, and compute `NX_BUILD_PROJECTS` from the *selected* projects (so an affected subset compiles just those). Default (no arg) keeps the full set. Add a `--only=name,name` CLI flag in `main()` that forwards to the filter.
+Update `buildBakeConfig(images, selectedNames)`: when `selectedNames` is a non-empty array, build `group.default.targets` and the `target` map from only the images whose `name` is in `selectedNames`, and compute `NX_BUILD_PROJECTS` from the *selected* images' `project` fields (so an affected subset compiles just those, not the full union). When `selectedNames` is undefined/empty, keep the full set (existing behavior — do not break Task 2's 5 tests). Add a `--only=a,b,c` (and space-tolerant `--only "a,b"`) CLI flag in `main()` that splits on commas, trims, drops empties, and forwards to `renderBakeJson(releaseImages, names)`; with no `--only`, `main()` behaves exactly as before.
 
 - [ ] **Step 4: Run tests green**
 
 Run: `node --test scripts/generate-bake-file.spec.mjs`
-Expected: PASS (6 tests).
+Expected: PASS (6 tests — the 5 from Task 2 plus the new filter test).
 
-- [ ] **Step 5: Rewire the CI job to bake once**
+- [ ] **Step 5: Commit the generator filter (verifiable half)**
 
-Replace the per-image `strategy.matrix` build with a single job that: (a) runs `node scripts/generate-bake-file.mjs --only "${{ needs.image-plan.outputs.selected_images }}"`, (b) `docker buildx bake -f docker-bake.json --push --set '*.cache-from=type=gha,scope=release-workspace' --set '*.cache-to=type=gha,mode=max,scope=release-bake' --set '*.tags=${IMAGE_PREFIX}/TARGET:sha-${{ github.sha }}'` (use bake's `${target}`/matrix or a small emitted tags map so each image gets its own tag), then (c) a shell `for` loop over `selected_images` running the existing anchore SBOM, Trivy, and cosign steps against `${IMAGE_PREFIX}/<name>@<digest>`. Keep `provenance`/`sbom` via bake `--set '*.attest='` equivalents. Preserve `workspace-cache` priming.
+```bash
+git add scripts/generate-bake-file.mjs scripts/generate-bake-file.spec.mjs
+git commit -m "feat(build): affected-only bake filter (generate-bake-file --only)"
+```
 
-- [ ] **Step 6: Validate the workflow and deploy config statically**
+- [ ] **Step 6: Rewire the release CI to one shared bake job**
+
+This half changes `.github/workflows/release-images.yml` and can only be validated statically here (no GHCR/runners locally); a real CI run is the final proof. Replace the entire `strategy.matrix` `build-scan-sign` job (currently lines ~133-222) with a SINGLE non-matrix job. Keep the `helm-render`, `image-plan`, and `workspace-cache` jobs and all `env`/`permissions` unchanged. The new job's steps, concretely:
+
+1. `actions/checkout` (pin unchanged), `pnpm/action-setup` (`version: ${{ env.PNPM_VERSION }}`), `actions/setup-node` (`node-version-file: .nvmrc`) — needed to run the generator; `docker/setup-buildx-action`; `docker/login-action` to GHCR (all with the SAME pinned SHAs already in the file).
+2. Generate the affected bake file:
+   ```bash
+   node scripts/generate-bake-file.mjs --only "${SELECTED_IMAGES}"
+   ```
+   with `SELECTED_IMAGES: ${{ needs.image-plan.outputs.selected_images }}` in the step `env`.
+3. Build, push, attest — ONE bake invocation builds all affected targets from the single shared `builder`:
+   ```bash
+   IFS=',' read -ra NAMES <<< "${SELECTED_IMAGES}"
+   set_args=()
+   for name in "${NAMES[@]}"; do
+     set_args+=(--set "${name}.tags=${IMAGE_PREFIX}/${name}:sha-${GITHUB_SHA}")
+   done
+   docker buildx bake -f docker-bake.json "${NAMES[@]}" "${set_args[@]}" \
+     --set "*.args.VITE_TELEGRAM_AUTH_ENABLED=${VITE_TELEGRAM_AUTH_ENABLED}" \
+     --set "*.cache-from=type=gha,scope=release-workspace" \
+     --set "*.cache-from=type=gha,scope=release-bake" \
+     --set "*.cache-to=type=gha,mode=max,scope=release-bake" \
+     --set "*.attest=type=provenance,mode=max" \
+     --set "*.attest=type=sbom" \
+     --push --metadata-file bake-metadata.json
+   ```
+   env: `VITE_TELEGRAM_AUTH_ENABLED: ${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}`. This preserves the current `provenance: mode=max` + `sbom: true` as bake `attest` entries and the `release-workspace` cache reuse. (OCI `labels` via `--set '*.labels.<key>=<value>'` are best-effort — if this buildx version rejects the dotted-key form, omit the labels and note it; they are metadata, not security-critical.)
+4. Install the scan/sign CLIs (Actions can't be looped, so use the tools directly): `anchore/sbom-action`'s syft, `aquasecurity/setup-trivy` (or the trivy install script), and `sigstore/cosign-installer` (pin to the SAME cosign-installer SHA already in the file). syft can be installed via `anchore/sbom-action/download-syft` at its pinned SHA.
+5. SBOM + scan + sign each pushed digest from the bake metadata, collecting outputs into dirs, WITHOUT failing before uploads:
+   ```bash
+   mkdir -p sboms sarifs
+   IFS=',' read -ra NAMES <<< "${SELECTED_IMAGES}"
+   scan_failed=0
+   for name in "${NAMES[@]}"; do
+     digest=$(jq -r --arg t "$name" '.[$t]."containerimage.digest"' bake-metadata.json)
+     ref="${IMAGE_PREFIX}/${name}@${digest}"
+     syft "$ref" -o "spdx-json=sboms/sbom-${name}.spdx.json"
+     trivy image --format sarif --output "sarifs/trivy-${name}.sarif" \
+       --vuln-type os,library --severity CRITICAL,HIGH --exit-code 1 "$ref" || scan_failed=1
+     cosign sign --yes "$ref"
+   done
+   echo "scan_failed=${scan_failed}" >> "$GITHUB_ENV"
+   ```
+6. Upload SBOMs (`actions/upload-artifact`, `if: always()`, `path: sboms/`, `if-no-files-found: error`) and Trivy SARIFs (`github/codeql-action/upload-sarif` at its pinned SHA, `if: always()`, `sarif_file: sarifs`).
+7. Final gate step: `if: always()` `run: test "${scan_failed:-0}" = 0` so a CRITICAL/HIGH finding still fails the job AFTER the SARIF upload (matching the current `exit-code: 1` behavior).
+
+- [ ] **Step 7: Validate statically**
 
 Run:
 ```bash
 node scripts/generate-bake-file.mjs --only "migrator,auth-app-api,user-app-api"
-docker buildx bake -f docker-bake.json --print auth-app-api user-app-api migrator
+docker buildx bake -f docker-bake.json --print migrator auth-app-api user-app-api 2>&1 | tail -40
+node -e "const c=require('./docker-bake.json'); if(c.group.default.targets.length!==3) throw new Error('expected 3 selected targets'); if(c.target['auth-app-api'].args.NX_BUILD_PROJECTS!=='auth-app-api,user-app-api') throw new Error('NX_BUILD_PROJECTS should be the selected projects only: '+c.target['auth-app-api'].args.NX_BUILD_PROJECTS); console.log('bake --only shape ok')"
 pnpm run deploy:validate:docker; echo "validate exit=$?"
 ```
-Expected: `--print` shows the resolved bake plan with a shared builder and correct per-image tags/targets; `validate exit=0`. (Actual push/scan/sign only runs in CI; local proof is the `--print` plan + validators.)
+Expected: `--print` resolves a plan whose targets all share ONE `builder` (identical `NX_BUILD_PROJECTS=auth-app-api,user-app-api`, migrator excepted); the node assertion prints `bake --only shape ok`; `validate exit=0`. If `actionlint` is available (`command -v actionlint`), also run it on the workflow and fix any error it reports. Regenerate the committed full `docker-bake.json` afterward (`pnpm run bake:generate`) so the repo copy is the full set, not the 3-image `--only` output.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit the CI rewrite**
 
 ```bash
-git add scripts/generate-bake-file.mjs scripts/generate-bake-file.spec.mjs .github/workflows/release-images.yml docker-bake.json
-git commit -m "ci(release): build affected images in one bake run, share the compile"
+git add .github/workflows/release-images.yml docker-bake.json
+git commit -m "ci(release): build affected images in one shared bake, loop scan/sign"
 ```
 
 ---
