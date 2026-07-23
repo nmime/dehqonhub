@@ -90,7 +90,11 @@ has(
   'manifest sync fails CI when generated inputs are stale',
 );
 has(dockerfile, 'FROM nginxinc/nginx-unprivileged:1.31.2-alpine AS frontend', 'unprivileged frontend base image');
-has(dockerfile, 'ARG NX_TARGET=build', 'Dockerfile builder supports non-build frontend targets such as mobile export');
+has(
+  dockerfile,
+  'run-many -t build export',
+  'Dockerfile builder supports non-build frontend targets such as mobile export',
+);
 has(
   dockerfile,
   'ARG NGINX_CONFIG=docker/nginx-fullstack.conf',
@@ -635,7 +639,7 @@ if (validateHelmStatic) {
   const releaseImagePlan = read('scripts/release-image-plan.mjs');
   has(
     releaseWorkflow,
-    "VITE_TELEGRAM_AUTH_ENABLED=${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}",
+    "VITE_TELEGRAM_AUTH_ENABLED: ${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}",
     'release user-app supports an explicit Telegram auth build flag',
   );
   const frontendDomainAssignments = [
@@ -666,7 +670,11 @@ if (validateHelmStatic) {
   }
   has(releaseImagePlan, "'site-runtime'", 'release image plan uses the actual Vike runtime Docker target');
   has(releaseWorkflow, 'image-plan', 'release workflow selects affected images before build');
-  has(releaseWorkflow, 'workspace-cache', 'release workflow primes a shared dependency cache before matrix builds');
+  has(
+    releaseWorkflow,
+    'workspace-cache',
+    'release workflow primes a shared dependency cache before the bake build',
+  );
   has(
     releaseWorkflow,
     'scope=release-workspace',
@@ -675,7 +683,7 @@ if (validateHelmStatic) {
   has(
     releaseWorkflow,
     'cache-to: type=gha,mode=max,scope=release-',
-    'release workflow persists BuildKit cache per image',
+    'release workflow persists the shared BuildKit dependency cache for reuse across the bake build',
   );
   for (const [, service, host] of [...publicDomainAssignments, ...optionalApiDomainAssignments]) {
     const expectedHost = service === 'landing-app' ? 'example.com' : `${service}.example.com`;
