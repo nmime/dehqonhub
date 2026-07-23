@@ -1,3 +1,5 @@
+## [1.17.0](https://github.com/[secure]/nest-react-boilerplate/compare/v1.16.0...v1.17.0) (2026-07-23)
+
 ## [1.16.0](https://github.com/[secure]/nest-react-boilerplate/compare/v1.15.3...v1.16.0) (2026-07-22)
 
 ## [1.15.3](https://github.com/[secure]/nest-react-boilerplate/compare/v1.15.2...v1.15.3) (2026-07-22)
