@@ -302,27 +302,30 @@ git commit -m "refactor(docker): build the workspace once in the shared builder 
 **Interfaces:**
 - Consumes: `docker-bake.json` (Task 2), the build-once `builder` (Task 3).
 
-- [ ] **Step 1: Cold-bake the two baseline backend images together, no cache**
+Execution rules: run every build in the FOREGROUND with Bash `timeout: 600000`; never background, never pause. The `workspace` layer is already warm on this host.
 
-Run:
+- [ ] **Step 1 (PRIMARY — the proof): bake the two backend images together and confirm ONE shared compile**
+
+The committed `docker-bake.json` sets `NX_BUILD_PROJECTS` to the full 12-project union (correct for a full release). For an apples-to-apples comparison with Task 1's "before" (which timed only auth + user), override the arg to just those two so the shared builder compiles the same graph the "before" measured — once — and force the compile-bearing stages to actually run while keeping the warm `workspace`:
 ```bash
-docker buildx bake -f docker-bake.json --no-cache auth-app-api user-app-api 2>&1 | tee /tmp/bake-after.log | tail -12
+S=$(date +%s); docker buildx bake -f docker-bake.json \
+  --set '*.args.NX_BUILD_PROJECTS=auth-app-api,user-app-api' \
+  --set '*.no-cache-filter=builder,backend-deps,backend' \
+  auth-app-api user-app-api 2>&1 | tee /tmp/bake-after.log | tail -20; E=$(date +%s); echo "bake-both elapsed=$((E-S))s"
 ```
-Expected: the `builder` stage runs ONCE (grep confirms a single `nx run-many`), both images produced. Record total wall-clock.
-
-- [ ] **Step 2: Confirm the shared builder ran once, not twice**
-
-Run:
+Then confirm the shared builder ran exactly once:
 ```bash
 grep -c "nx run-many" /tmp/bake-after.log
 ```
-Expected: `1` (the shared builder node is deduplicated by BuildKit across both targets).
+Expected: both images build; `nx run-many` appears a single time (count `1`) — the builder node is shared across both targets, so shared libs compile once. Record `elapsed=`.
 
-- [ ] **Step 3: Append the after-numbers to the baseline doc**
+If `docker buildx bake` rejects either `--set` flag on this buildx version, fall back to `docker buildx bake -f docker-bake.json auth-app-api user-app-api` (full union, still one shared compile), record that timing, and note in the doc that the wall-clock then covers the full 12-project compile rather than just auth+user. The single-`nx run-many` proof (grep count `1`) is the required deliverable either way.
 
-In `docs/superpowers/specs/2026-07-23-build-baseline.md`, add an "After Option A" table: total cold wall-clock for `auth-app-api`+`user-app-api` built together via bake vs. the Task 1 sum of building them separately. State the delta. Real numbers only.
+- [ ] **Step 2: Append the after-numbers to the baseline doc**
 
-- [ ] **Step 4: Commit**
+In `docs/superpowers/specs/2026-07-23-build-baseline.md`, add an "After Option A" section: the measured `elapsed=` for building `auth-app-api`+`user-app-api` together via bake with a single shared compile, next to Task 1's "before" sum (auth 75s + user 45s = 120s built separately, two compiles). State the delta and the `grep` count proving one compile. Note any fallback used. Real numbers only.
+
+- [ ] **Step 3: Commit**
 
 ```bash
 git add docs/superpowers/specs/2026-07-23-build-baseline.md
