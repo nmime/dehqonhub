@@ -23,8 +23,11 @@ const parseBuildArgs = (buildArgs) =>
   );
 
 export function buildBakeConfig(images, selectedNames) {
-  const selected = Array.isArray(selectedNames) && selectedNames.length > 0 ? new Set(selectedNames) : undefined;
-  const scoped = selected ? images.filter((image) => selected.has(image.name)) : images;
+  const hasFilter = Array.isArray(selectedNames) && selectedNames.length > 0;
+  const byName = new Map(images.map((image) => [image.name, image]));
+  // Preserve the order the caller selected images in (e.g. the --only list) so
+  // NX_BUILD_PROJECTS reflects the affected-set order, not the full catalogue order.
+  const scoped = hasFilter ? selectedNames.map((name) => byName.get(name)).filter(Boolean) : images;
 
   const nxBuildProjects = scoped
     .filter((image) => image.project)
