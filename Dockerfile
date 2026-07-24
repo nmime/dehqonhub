@@ -34,7 +34,8 @@ FROM workspace AS migrator
 # carry CVEs, and the runtime only ever invokes node/pnpm (globally installed).
 RUN apk add --no-cache su-exec \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
-    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
+    /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+  && find /workspace/node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -prune -exec rm -rf {} + 2>/dev/null || true
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
 CMD ["pnpm", "db:migrate"]
@@ -81,7 +82,11 @@ RUN --mount=type=cache,target=/workspace/.nx/cache,sharing=locked \
 FROM builder AS backend-deps
 ARG BUILD_OUTPUT=dist/apps/backend/admin/admin-app-api
 WORKDIR /workspace/${BUILD_OUTPUT}
-RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts
+# Drop esbuild/drizzle-kit: they arrive as dead weight via better-auth's
+# drizzle-kit dependency (this app uses MikroORM, not drizzle), are never run at
+# runtime, and their bundled Go binaries carry the bulk of the image's CVEs.
+RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts \
+  && find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -prune -exec rm -rf {} +
 
 FROM node:${NODE_VERSION} AS backend
 ENV CONTAINER=true \
@@ -111,7 +116,8 @@ CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
 # portable, production-only dependency graph derived from the reviewed root
 # lockfile and supply-chain policy.
 FROM builder AS site-deps
-RUN pnpm --filter site-app deploy --prod /site-deploy
+RUN pnpm --filter site-app deploy --prod /site-deploy \
+  && find /site-deploy/node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -prune -exec rm -rf {} + 2>/dev/null || true
 
 FROM node:${NODE_VERSION} AS site-runtime
 ENV CONTAINER=true \
