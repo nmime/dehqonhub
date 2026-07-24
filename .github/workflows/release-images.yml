@@ -126,8 +126,8 @@ jobs:
           file: Dockerfile
           target: workspace
           outputs: type=cacheonly
-          cache-from: type=gha,scope=release-workspace
-          cache-to: type=gha,mode=max,scope=release-workspace
+          cache-from: type=gha,scope=release-workspace-v2
+          cache-to: type=gha,mode=max,scope=release-workspace-v2
 
   build-scan-sign:
     name: Build, scan, and sign affected images
@@ -179,7 +179,7 @@ jobs:
           done
           docker buildx bake -f docker-bake.json "${NAMES[@]}" "${set_args[@]}" \
             --set "*.args.VITE_TELEGRAM_AUTH_ENABLED=${VITE_TELEGRAM_AUTH_ENABLED}" \
-            --set "*.cache-from=type=gha,scope=release-workspace" \
+            --set "*.cache-from=type=gha,scope=release-workspace-v2" \
             --set "*.cache-from=type=gha,scope=release-bake-v2" \
             --set "*.cache-to=type=gha,mode=max,scope=release-bake-v2" \
             --set "*.attest=type=provenance,mode=max" \
