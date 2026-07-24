@@ -103,19 +103,17 @@ WORKDIR /workspace/${BUILD_OUTPUT}
 # Drop esbuild/drizzle-kit: they arrive as dead weight via better-auth's
 # drizzle-kit dependency (this app uses MikroORM, not drizzle), are never run at
 # runtime, and their bundled Go binaries carry the bulk of the image's CVEs.
-# The standalone install runs with --ignore-workspace, so the root
-# pnpm-workspace.yaml overrides do not apply. Re-assert the security-relevant
-# find-my-way bump (fastify pins ^9.6.0; CVE-2026-47219 fixed in 9.7.0) as a
-# local pnpm.overrides on the generated app manifest so the pruned install picks
-# it up.
-RUN node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.pnpm={...(p.pnpm||{}),overrides:{...((p.pnpm||{}).overrides||{}),'find-my-way':'9.7.0'}};fs.writeFileSync('package.json',JSON.stringify(p,null,2))" \
-  && rm -f pnpm-lock.yaml \
-  && pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts \
+# find-my-way: the standalone install runs --ignore-workspace, so the root
+# pnpm-workspace.yaml `find-my-way: 9.7.0` override does not apply and fastify's
+# ^9.6.0 resolves to the vulnerable 9.6.x (CVE-2026-47219). The workspace stage
+# already installed the overridden 9.7.0, so overlay that real 9.7.0 code onto
+# the pruned 9.6.x path.
+RUN pnpm install --prod --prefer-offline --ignore-workspace --no-frozen-lockfile --ignore-scripts \
   && find node_modules/.pnpm -maxdepth 1 -type d \( -name '@esbuild+*' -o -name 'esbuild@*' -o -name '@esbuild-kit+*' -o -name 'drizzle-kit@*' \) -exec rm -rf {} + \
   && for old in node_modules/.pnpm/find-my-way@9.6.*; do \
        [ -d "$old" ] || continue; \
        rm -rf "$old/node_modules/find-my-way"; \
-       cp -a node_modules/.pnpm/find-my-way@9.7.0/node_modules/find-my-way "$old/node_modules/find-my-way"; \
+       cp -a /workspace/node_modules/.pnpm/find-my-way@9.7.0/node_modules/find-my-way "$old/node_modules/find-my-way"; \
      done
 
 FROM node:${NODE_VERSION} AS backend
