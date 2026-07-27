@@ -1,4 +1,8 @@
+// @requirements REQ-FRONTEND-JOURNEY-001
+// Evidence for: REQ-AUTH-FRONTEND-009 REQ-AUTH-IDENTITY-005 REQ-AUTH-SESSION-002 REQ-FRONTEND-ACCESSIBILITY-003 REQ-FRONTEND-ERROR-005 REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-SHELL-004 REQ-FRONTEND-SSR-007 REQ-NOTIFY-PREFERENCE-006
 import { expect, test, type Page } from '@playwright/test';
+// Runtime journey evidence for REQ-AUTH-SESSION-002 and
+// REQ-FRONTEND-JOURNEY-001.
 import { sign } from '@tma.js/init-data-node';
 import { composeEnv, urls } from './compose';
 

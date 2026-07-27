@@ -1,4 +1,7 @@
+// @requirements REQ-SOCIAL-INGRESS-001
+// Evidence for: REQ-SOCIAL-INGRESS-001
 import { ForbiddenException } from '@nestjs/common';
+// Security and domain evidence for REQ-SOCIAL-INGRESS-001.
 import { describe, expect, it, vi } from 'vitest';
 import { TelegramWebhookController } from './telegram-webhook.controller';
 import { createTelegramBot, type TelegramBotConfig, type TelegramBotInstance } from '@app/backend-feature-telegram-bot';
