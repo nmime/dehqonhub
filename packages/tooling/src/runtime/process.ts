@@ -9,6 +9,8 @@ export interface RunResult {
   stdout: string;
   stderr: string;
   error?: string;
+  signal?: NodeJS.Signals;
+  timedOut?: boolean;
 }
 
 export interface RunOptions {
@@ -16,6 +18,18 @@ export interface RunOptions {
   env?: NodeJS.ProcessEnv;
   shell?: boolean;
   stdio?: StdioOptions;
+  timeoutMs?: number;
+}
+
+export interface CommandInvocation {
+  command: string;
+  args: string[];
+}
+
+export interface PackageManagerInvocationOptions {
+  env?: NodeJS.ProcessEnv;
+  nodeExecutable?: string;
+  platform?: NodeJS.Platform;
 }
 
 export function commandExists(command: string): boolean {
@@ -29,6 +43,11 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
     env: { ...process.env, ...(options.env ?? {}) },
     shell: options.shell ?? false,
     stdio: options.stdio ?? 'pipe',
+    timeout: options.timeoutMs,
+    // spawnSync defaults to a 1 MiB output buffer and SIGTERMs the child past it, with
+    // `status` coming back null. Coerced to 1 below, that reads as a genuine gate failure when
+    // it is really harness truncation — verbose gates (semgrep --json over the whole repo) hit it.
+    maxBuffer: 64 * 1024 * 1024,
   };
 
   if (spawnOptions.stdio !== 'inherit') {
@@ -36,6 +55,7 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
   }
 
   const result = spawnSync(command, args, spawnOptions);
+  const timedOut = result.error !== undefined && 'code' in result.error && result.error.code === 'ETIMEDOUT';
 
   return {
     command: [command, ...args].join(' '),
@@ -43,7 +63,31 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
     stdout: typeof result.stdout === 'string' ? result.stdout : '',
     stderr: typeof result.stderr === 'string' ? result.stderr : '',
     error: result.error?.message,
+    signal: result.signal ?? undefined,
+    timedOut,
   };
+}
+
+export function packageManagerInvocation(
+  args: string[],
+  options: PackageManagerInvocationOptions = {},
+): CommandInvocation {
+  const env = options.env ?? process.env;
+  const packageManagerPath = env.npm_execpath?.trim();
+  if (packageManagerPath) {
+    return {
+      command: options.nodeExecutable ?? process.execPath,
+      args: [packageManagerPath, ...args],
+    };
+  }
+
+  if ((options.platform ?? process.platform) === 'win32') {
+    throw new Error(
+      'Cannot locate the active pnpm/Corepack executable on Windows; invoke repository tooling through pnpm.',
+    );
+  }
+
+  return { command: 'pnpm', args };
 }
 
 function getCommandCandidates(command: string): string[] {

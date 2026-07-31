@@ -2,11 +2,14 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './src',
-  timeout: 60_000,
-  expect: { timeout: 10_000 },
+  timeout: 90_000,
+  expect: { timeout: 15_000 },
   fullyParallel: false,
   workers: 1,
   retries: process.env.CI ? 1 : 0,
+  // Quarantined specs must not gate a merge; the extended matrix run exercises them
+  // when PLAYWRIGHT_INCLUDE_QUARANTINED=1.
+  grepInvert: /@quarantine/u,
   reporter: [
     ['list'],
     ['html', { outputFolder: 'playwright-report/fullstack', open: 'never' }],

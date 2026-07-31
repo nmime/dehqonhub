@@ -3,7 +3,10 @@ import type { SpawnSyncOptions, StdioOptions } from "node:child_process";
 import type { Stats } from "node:fs";
 import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
-import { commandExists as commandExistsInPath } from "../../runtime/process.ts";
+import {
+  commandExists as commandExistsInPath,
+  packageManagerInvocation as resolvePackageManagerInvocation,
+} from "../../runtime/process.ts";
 import { consumerContracts, openApiContracts } from "../api/contracts-manifest.ts";
 
 /** Any value produced by JSON.parse; used where a shape is intentionally open. */
@@ -35,6 +38,8 @@ export interface OpenApiSchema {
   examples?: unknown[];
   default?: unknown;
   properties?: Record<string, OpenApiSchema>;
+  /** `true`/a schema opts a closed object out of undeclared-property checking. */
+  additionalProperties?: boolean | OpenApiSchema;
   items?: OpenApiSchema;
   oneOf?: OpenApiSchema[];
   anyOf?: OpenApiSchema[];
@@ -140,6 +145,7 @@ export interface RunOptions {
   cwd?: string;
   env?: NodeJS.ProcessEnv;
   stdio?: StdioOptions;
+  timeoutMs?: number;
 }
 
 export interface RunResult {
@@ -148,6 +154,8 @@ export interface RunResult {
   stdout: string;
   stderr: string;
   error?: string;
+  signal?: NodeJS.Signals;
+  timedOut?: boolean;
 }
 
 export interface CollectFilesOptions {
@@ -211,6 +219,11 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
     encoding: "utf8",
     shell: false,
     stdio: options.stdio ?? "pipe",
+    timeout: options.timeoutMs,
+    // spawnSync defaults to a 1 MiB output buffer and SIGTERMs the child past it, with
+    // `status` coming back null. Coerced to 1 below, that reads as a genuine gate failure when
+    // it is really harness truncation — verbose gates (semgrep --json over the whole repo) hit it.
+    maxBuffer: 64 * 1024 * 1024,
   };
   const result = spawnSync(command, args, spawnOptions);
   return {
@@ -219,7 +232,13 @@ export function run(command: string, args: string[] = [], options: RunOptions = 
     stdout: typeof result.stdout === "string" ? result.stdout : "",
     stderr: typeof result.stderr === "string" ? result.stderr : "",
     error: result.error?.message,
+    signal: result.signal ?? undefined,
+    timedOut: (result.error as NodeJS.ErrnoException | undefined)?.code === "ETIMEDOUT",
   };
+}
+
+export function packageManagerInvocation(args: string[]): { command: string; args: string[] } {
+  return resolvePackageManagerInvocation(args);
 }
 
 export function defaultIgnore(rel: string): boolean {
@@ -390,6 +409,15 @@ export function validateSchema(value: unknown, schema: OpenApiSchema | undefined
       const record = value as Record<string, unknown>;
       for (const key of resolved.required ?? []) if (!Object.hasOwn(record, key)) errors.push(`${path}.${key}: missing required property`);
       for (const [key, child] of Object.entries(resolved.properties ?? {})) if (Object.hasOwn(record, key)) errors.push(...validateSchema(record[key], child, doc, `${path}.${key}`, new Set(seen)));
+      // Walking only declared keys makes this check one-directional: a provider that drops or
+      // renames a property still validates, which is exactly the breaking change consumer
+      // contracts exist to catch. Enforce the other direction whenever the schema is closed —
+      // a schema with no properties is free-form, and additionalProperties opts out explicitly.
+      const declaredProperties = resolved.properties ?? {};
+      const opensAdditional = resolved.additionalProperties === true || typeof resolved.additionalProperties === "object";
+      if (Object.keys(declaredProperties).length > 0 && !opensAdditional) {
+        for (const key of Object.keys(record)) if (!Object.hasOwn(declaredProperties, key)) errors.push(`${path}.${key}: not declared by the provider schema`);
+      }
     }
   }
   return errors;

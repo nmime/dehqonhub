@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Test, type TestingModule } from '@nestjs/testing';
 import type { NatsConnection, QueuedIterator } from '@nats-io/nats-core';
+import { GenericContainer, Wait, type StartedTestContainer } from 'testcontainers';
 import {
   NatsHealthIndicator,
   NatsInjectToken,
@@ -15,25 +16,21 @@ import {
   NatsServicesService,
   closeNatsConnection,
 } from './index';
-import {
-  hasDockerRuntime,
-  startNatsContainer,
-  stopNatsContainer,
-  type StartedServiceContainer,
-} from '@app/backend-common-component-test';
-
-interface StartedNatsRuntimeContainer extends StartedServiceContainer {
+interface StartedNatsRuntimeContainer {
+  container: StartedTestContainer;
   server: string;
 }
 
-const dockerAvailable = hasDockerRuntime();
 const actualDockerRuntimeAvailable = hasActualDockerRuntime();
-const runRuntimeSmoke = dockerAvailable && actualDockerRuntimeAvailable;
+const runRuntimeSmoke = actualDockerRuntimeAvailable;
 
 if (!runRuntimeSmoke) {
   describe('NATS runtime smoke', () => {
-    it('does not start without an actual Docker runtime', () => {
-      expect(runRuntimeSmoke).toBe(false);
+    // A passing `expect(false).toBe(false)` here reported success with zero verification, and a
+    // slow `docker info` probe on a machine that *does* have Docker silently took this branch.
+    // A reported skip keeps the absence visible; the probe below fails closed in CI.
+    it.skip('requires an actual Docker runtime', () => {
+      expect(runRuntimeSmoke).toBe(true);
     });
   });
 } else {
@@ -213,6 +210,24 @@ if (!runRuntimeSmoke) {
   });
 }
 
+async function startNatsContainer(options: { jetStream?: boolean } = {}): Promise<StartedNatsRuntimeContainer> {
+  const clientPort = 4222;
+  const monitoringPort = 8222;
+  const container = await new GenericContainer('nats:2.10-alpine')
+    .withExposedPorts(clientPort, monitoringPort)
+    .withCommand(options.jetStream ? ['-js', '-m', `${monitoringPort}`] : ['-m', `${monitoringPort}`])
+    .withWaitStrategy(Wait.forLogMessage(/Server is ready/))
+    .start();
+  return {
+    container,
+    server: `nats://${container.getHost()}:${container.getMappedPort(clientPort)}`,
+  };
+}
+
+async function stopNatsContainer(started: StartedNatsRuntimeContainer | undefined): Promise<void> {
+  await started?.container.stop();
+}
+
 async function collectQueuedIterator<T>(iterator: QueuedIterator<T> | undefined): Promise<T[]> {
   if (!iterator) {
     return [];
@@ -244,13 +259,21 @@ function hasActualDockerRuntime(): boolean {
     return false;
   }
 
+  // Fail closed in CI, matching hasDockerRuntime() in the shared component-test helper: a
+  // missing daemon there is an infrastructure fault, not a reason to skip the smoke.
+  if (process.env.CI === 'true') {
+    return true;
+  }
+
   const dockerBinaryPaths = ['docker', '/usr/bin/docker', '/usr/local/bin/docker', '/opt/homebrew/bin/docker'] as const;
 
   return dockerBinaryPaths.some((dockerBinaryPath) => {
     try {
+      // 5s was tight enough that a loaded machine with a healthy daemon timed out and the
+      // suite degraded to a pass. `docker info` contacts the daemon, so allow for it.
       const result = spawnSync(dockerBinaryPath, ['info'], {
         stdio: 'ignore',
-        timeout: 5_000,
+        timeout: 30_000,
       });
       return result.status === 0;
     } catch {
