@@ -42,6 +42,14 @@ product code.
 - Presets expand to explicit catalog application identifiers.
 - An end-to-end project selects every application required by its runtime journeys.
 - In-place ownership wins over adjacent clones.
+- Repository formatting leaves setup-managed manifests and generated capability modules byte-stable.
+- Selected closures retain packages required by source, shared configuration,
+  test environments, and renderer commands without leaking unselected apps or
+  the opposite durable provider.
+- Bot application selections retain Redis for replay protection independently
+  of whether deployment owns the service or connects to an external instance.
+- Managed full-stack MongoDB uses the selected port consistently for the
+  server, replica-set identity, migrations, and application connection URI.
 
 **Failure behavior:**
 
@@ -116,6 +124,21 @@ offline-capable where documented, and avoid hidden mutation or network effects.
 
 - Public root scripts remain thin stable entrypoints.
 - Mutating commands provide explicit apply intent and bounded targets.
+- Bun compatibility keeps Node-only child tools on Node, executes each selected
+  server artifact under canonical Node and pinned Bun, and verifies the artifact
+  reports the invoked child runtime identity.
+- Bun compatibility starts only the selected durable provider plus supporting
+  infrastructure required by selected runtime probes, keeps them available
+  across closure tests and runtime probes, and requests teardown on success or
+  failure.
+- Bun compatibility gives Node-only descendants canonical Node identity and
+  applies finite request, command, process-tree termination, and cleanup bounds.
+- Bun compatibility keeps provider bot probes offline so synthetic credentials
+  are never sent to public provider endpoints.
+- Bun compatibility keeps compatibility-started infrastructure available
+  without leaking infrastructure selectors or connection values into ordinary
+  closure unit tests; selected durable application-composition tests receive
+  only the compatibility-owned infrastructure environment.
 
 **Failure behavior:**
 
@@ -145,6 +168,8 @@ blockers.
 - Focused gates report unselected gates separately without making them skipped.
 - The browser matrix includes a 320px Chromium viewport.
 - Aggregate test limits constrain both Nx/Vitest and Node test-runner fan-out.
+- Static e2e coverage excludes Docker-owned fullstack targets, whose provider
+  browser evidence remains required through the fullstack lane.
 
 **Failure behavior:**
 

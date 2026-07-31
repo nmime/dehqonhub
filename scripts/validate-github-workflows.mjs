@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Evidence for: REQ-ASSURANCE-RELEASE-003
-// Security and operations evidence for REQ-ASSURANCE-RELEASE-003.
+// Evidence for: REQ-ASSURANCE-RELEASE-003 REQ-SCAFFOLD-QUALITY-006
+// Security, operations, and quality-lane evidence.
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
@@ -149,7 +149,7 @@ for (const required of [
   assert.ok(ci.includes(required), `ci.yml must run the previously unwired gate: ${required}`);
 }
 assert.ok(
-  !/nx run-many -t e2e --all(?! --exclude fullstack-e2e)/u.test(JSON.stringify(scripts)),
+  !/nx run-many -t e2e --all(?! --exclude(?:=| )fullstack-e2e)/u.test(JSON.stringify(scripts)),
   'package.json e2e aggregates must exclude fullstack-e2e; the Docker-managed Playwright suite rejects forwarded flags and needs a Compose stack',
 );
 
@@ -226,6 +226,11 @@ assert.ok(
 for (const required of ['pnpm run test:coverage:all', 'pnpm run test:e2e:coverage:all']) {
   assert.ok(ci.includes(required), `ci.yml missing explicit maintainer test command: ${required}`);
 }
+assert.match(
+  scripts['test:e2e:coverage:all'] ?? '',
+  /--all --exclude=fullstack-e2e -- --coverage/u,
+  'Static e2e coverage must exclude the Docker-owned fullstack Playwright target',
+);
 for (const required of [
   '[extend]',
   'useDefault = true',
@@ -312,9 +317,6 @@ for (const required of [
   "DOCKER_TLS_CERTDIR: ''",
   'mongodb-validation:',
   'docker-fullstack-mongodb:',
-  'DATABASE_ENGINE: mongodb',
-  'AUTH_PERSISTENCE: mongodb',
-  'MONGODB_REPLICA_SET: rs0',
   // The GitLab lane claims to mirror ci.yml, so it must evaluate the coverage contract too:
   // plain `test:all` leaves coverage.enabled false and every threshold unchecked.
   'pnpm run test:coverage:all',
@@ -388,6 +390,21 @@ assert.ok(
   gitlabMongoFullstackJob.includes("NRB_CLOSURE_CONTEXT: '$CI_PROJECT_DIR/.nrb/closure'"),
   '.gitlab-ci.yml MongoDB fullstack must pass its installed selected closure context.',
 );
+for (const staleOverride of [
+  'AUTH_PERSISTENCE:',
+  'COMPOSE_PROFILES:',
+  'DATABASE_ENGINE:',
+  'FULLSTACK_API_CRITICAL_ONLY:',
+  'FULLSTACK_CRITICAL_ONLY:',
+  'MONGODB_DATABASE:',
+  'MONGODB_REPLICA_SET:',
+  'MONGODB_URI:',
+]) {
+  assert.ok(
+    !gitlabMongoFullstackJob.includes(staleOverride),
+    `.gitlab-ci.yml MongoDB fullstack must derive ${staleOverride} from its selected closure and managed stack.`,
+  );
+}
 
 for (const [command, expectedCount] of [
   ['pnpm run deploy:validate:helm', 1],
@@ -490,9 +507,14 @@ const assertDirectComposeBuildContext = (workflowName, job) => {
   const materialize = 'pnpm nrb closure materialize --all-reference --provider postgres';
   const build = 'docker compose -f docker/docker-compose.yml up -d --build';
   const context = 'NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres';
+  const jobEnvironment = job.slice(0, job.indexOf('    steps:'));
   assert.ok(job.includes(build), `${workflowName} runtime job must retain its direct Compose build.`);
   assert.ok(job.includes(materialize), `${workflowName} direct Compose build must materialize a closure context.`);
   assert.ok(job.includes(context), `${workflowName} direct Compose build must pass NRB_CLOSURE_CONTEXT.`);
+  assert.ok(
+    jobEnvironment.includes(context),
+    `${workflowName} runtime job must keep NRB_CLOSURE_CONTEXT available to post-build Compose commands.`,
+  );
   assert.ok(
     job.indexOf(materialize) < job.indexOf(build),
     `${workflowName} must materialize its closure context before direct Compose --build.`,
@@ -502,6 +524,37 @@ const opsGatesJob = ci.slice(ci.indexOf('  ops-gates:'), ci.indexOf('  fullstack
 const qualityPresetsJob = qualityPresets.slice(qualityPresets.indexOf('  presets:'));
 assertDirectComposeBuildContext('ci.yml ops-gates', opsGatesJob);
 assertDirectComposeBuildContext('quality-presets.yml presets', qualityPresetsJob);
+assertDirectComposeBuildContext('spec-assurance-nightly.yml assurance', nightlyAssurance);
+for (const [workflowName, workflowText] of [
+  ['ci.yml', opsGatesJob],
+  ['quality-presets.yml', qualityPresetsJob],
+  ['spec-assurance-nightly.yml', nightlyAssurance],
+]) {
+  assert.ok(
+    workflowText.includes('CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate'),
+    `${workflowName} runtime stack must pass the PostgreSQL service URL through CONTAINER_DATABASE_URL`,
+  );
+  const notificationKey = /NOTIFICATION_PAYLOAD_ENCRYPTION_KEY:\s*['"]([^'"]+)['"]/u.exec(workflowText)?.[1];
+  assert.equal(
+    Buffer.from(notificationKey ?? '', 'base64').byteLength,
+    32,
+    `${workflowName} runtime stack must use a 32-byte notification payload encryption fixture`,
+  );
+  assert.ok(
+    workflowText.includes("SITE_APP_PORT: '4203'"),
+    `${workflowName} runtime stack must avoid the runner-reserved 8084 port`,
+  );
+  for (const expected of [
+    "FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true'",
+    'LANDING_ADMIN_APP_URL: http://127.0.0.1:8081',
+    'LANDING_USER_APP_URL: http://127.0.0.1:8082',
+  ]) {
+    assert.ok(
+      workflowText.includes(expected),
+      `${workflowName} runtime stack missing landing destination: ${expected}`,
+    );
+  }
+}
 assert.ok(
   developmentCompose.includes(
     'nrb-closure: ${NRB_CLOSURE_CONTEXT:?run pnpm nrb closure install before Docker source builds}',
@@ -560,14 +613,18 @@ for (const required of [
   'validateFullstackEnvironment',
   'fullstackSelection?.services',
   "pickPort('MONGODB_PORT', 0)",
-  'mongodb://mongodb.localhost:27017/nest_react_boilerplate?replicaSet=rs0&retryWrites=true',
+  '`mongodb://mongodb.localhost:${ports.mongodb}/${mongodbDatabase}?replicaSet=rs0&retryWrites=true`',
   "selectedEnvironment.MONGODB_REPLICA_SET ?? 'rs0'",
-  "'--entrypoint'",
+  "'--no-deps'",
   "'mongodb-init'",
   "'mongodb-migrate'",
 ]) {
   assert.ok(fullstackCompose.includes(required), `fullstack Compose helper missing provider contract: ${required}`);
 }
+assert.ok(
+  !fullstackCompose.includes('mongoInitCommand') && !fullstackCompose.includes("'--entrypoint'"),
+  'fullstack Compose must invoke the canonical MongoDB initializer without a weaker entrypoint override',
+);
 assert.ok(
   fullstackSpec.includes('@critical @api-critical registration and login preserve the durable API session'),
   'fullstack e2e must retain the API-only critical auth/session smoke for browserless CI runners',

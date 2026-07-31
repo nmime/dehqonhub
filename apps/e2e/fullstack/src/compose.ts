@@ -112,6 +112,7 @@ const writeStderrLine = (message: string): void => {
 };
 
 const selectedEnvironment = { ...process.env };
+const mongodbDatabase = selectedEnvironment.MONGODB_DATABASE ?? 'nest_react_boilerplate';
 
 export const composeEnv = {
   ...selectedEnvironment,
@@ -147,17 +148,18 @@ export const composeEnv = {
   MONGODB_URI:
     databaseProvider === 'mongodb'
       ? (selectedEnvironment.DOCKER_MONGODB_URI ??
-        selectedEnvironment.MONGODB_URI ??
-        'mongodb://mongodb.localhost:27017/nest_react_boilerplate?replicaSet=rs0&retryWrites=true')
+        `mongodb://mongodb.localhost:${ports.mongodb}/${mongodbDatabase}?replicaSet=rs0&retryWrites=true`)
       : undefined,
-  MONGODB_DATABASE:
-    databaseProvider === 'mongodb' ? (selectedEnvironment.MONGODB_DATABASE ?? 'nest_react_boilerplate') : undefined,
+  MONGODB_DATABASE: databaseProvider === 'mongodb' ? mongodbDatabase : undefined,
   MONGODB_REPLICA_SET: databaseProvider === 'mongodb' ? (selectedEnvironment.MONGODB_REPLICA_SET ?? 'rs0') : undefined,
   DOCKER_BUILDKIT: process.env.DOCKER_BUILDKIT ?? '1',
   HOST: process.env.DOCKER_BACKEND_HOST ?? '0.0.0.0',
   NX_DAEMON: 'false',
   NX_PARALLEL: process.env.NX_PARALLEL ?? '1',
   CORS_ORIGINS: process.env.CORS_ORIGINS ?? frontendOrigins,
+  FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true',
+  LANDING_ADMIN_APP_URL: urls.adminApp,
+  LANDING_USER_APP_URL: urls.userApp,
   USER_APP_URL: urls.userApp,
   FULLSTACK_BASE_URL: urls.userApp,
   SESSION_SECRET: process.env.SESSION_SECRET ?? 'fullstack-e2e-session-secret-change-me',
@@ -167,7 +169,7 @@ export const composeEnv = {
   RATE_LIMIT_IN_MEMORY_ALLOWED: process.env.RATE_LIMIT_IN_MEMORY_ALLOWED ?? 'true',
   BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET ?? 'fullstack-e2e-better-auth-secret-change-me',
   NOTIFICATION_PAYLOAD_ENCRYPTION_KEY:
-    process.env.NOTIFICATION_PAYLOAD_ENCRYPTION_KEY ?? 'fullstack-e2e-notification-key-change-me',
+    process.env.NOTIFICATION_PAYLOAD_ENCRYPTION_KEY ?? Buffer.alloc(32, 7).toString('base64'),
   BETTER_AUTH_URL: process.env.BETTER_AUTH_URL ?? urls.userApp,
   BETTER_AUTH_TRUSTED_ORIGINS: process.env.BETTER_AUTH_TRUSTED_ORIGINS ?? urls.userApp,
   AUTH_TELEGRAM_ENABLED: process.env.AUTH_TELEGRAM_ENABLED ?? 'true',
@@ -182,18 +184,6 @@ export const composeEnv = {
 export const stackIncludes = (service: string): boolean =>
   fullstackSelection === undefined || applicationServices.includes(service);
 const stackUpArgs = [...composeArgs, 'up', '--no-build', '-d', ...stackServices];
-const mongoInitCommand = `
-set -euo pipefail
-bash /opt/mongodb/prepare-replica-set.sh
-mongosh 'mongodb://mongodb:27017/admin?directConnection=true' --quiet --eval '
-  const config = rs.conf();
-  if (config.members[0].host !== "mongodb.localhost:27017") {
-    config.members[0].host = "mongodb.localhost:27017";
-    rs.reconfig(config);
-  }
-'
-until mongosh 'mongodb://mongodb:27017/admin?directConnection=true' --quiet --eval 'quit(db.hello().isWritablePrimary ? 0 : 1)'; do sleep 2; done
-`;
 
 export function run(command: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -213,18 +203,7 @@ export async function upStack(): Promise<void> {
   const startStack = async (): Promise<void> => {
     if (databaseProvider === 'mongodb') {
       await run('docker', [...composeArgs, 'up', '--no-build', '-d', 'mongodb']);
-      // Bind-mounted scripts can lose their executable bit on some runners.
-      await run('docker', [
-        ...composeArgs,
-        'run',
-        '--rm',
-        '--no-deps',
-        '--entrypoint',
-        'bash',
-        'mongodb-init',
-        '-c',
-        mongoInitCommand,
-      ]);
+      await run('docker', [...composeArgs, 'run', '--rm', '--no-deps', 'mongodb-init']);
       await run('docker', [...composeArgs, 'run', '--rm', '--no-deps', 'mongodb-migrate']);
       const remainingServices = stackServices.filter(
         (service) => !['mongodb', 'mongodb-init', 'mongodb-migrate'].includes(service),
@@ -248,26 +227,6 @@ export async function upStack(): Promise<void> {
     await new Promise((resolve) => setTimeout(resolve, 5_000));
     await startStack();
   }
-}
-
-export async function configureLandingDestinations(): Promise<void> {
-  const runtimeConfig = `window.__APP_RUNTIME_CONFIG__ = ${JSON.stringify({
-    adminAppUrl: urls.adminApp,
-    userAppUrl: urls.userApp,
-  })};`;
-  await run('docker', [
-    ...composeArgs,
-    'exec',
-    '-T',
-    '--user',
-    '0',
-    'landing-app',
-    'sh',
-    '-c',
-    'printf "%s\\n" "$1" > /usr/share/nginx/html/runtime-config.js',
-    'sh',
-    runtimeConfig,
-  ]);
 }
 
 export async function buildStackImages(): Promise<void> {

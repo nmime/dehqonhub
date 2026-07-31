@@ -24,7 +24,7 @@ COPY --from=nrb-closure . ./.nrb/closure
 COPY --from=nrb-closure closure.json ./.nrb/closure.json
 COPY --from=nrb-closure nrb.config.json ./nrb.config.json
 COPY --from=nrb-closure workspace.json ./.nrb/workspace.json
-COPY .npmrc nx.json tsconfig.base.json tsconfig.lint.json eslint.config.js ./
+COPY .npmrc .nxignore nx.json tsconfig.base.json tsconfig.lint.json eslint.config.js ./
 RUN pnpm fetch --frozen-lockfile
 RUN pnpm install --frozen-lockfile --offline \
   && chown -R node:node /workspace
@@ -188,12 +188,20 @@ EXPOSE 80
 CMD ["node", "dist/apps/frontend/site/server/index.js"]
 
 FROM nginxinc/nginx-unprivileged:stable-alpine@sha256:44e36330f74d4f3a1d4e222acca9e23b401fb87811a7597024502bb759c4dd49 AS frontend
+ARG NX_PROJECT
 ARG FRONTEND_OUTPUT=dist/apps/frontend/admin
 ARG NGINX_CONFIG=docker/nginx-fullstack.conf
 USER root
 RUN apk add --no-cache wget
 COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
+# Astro emits a hash-based meta CSP for its inline hydration bootstrap. Relax
+# only the landing image's outer nginx policy when that stricter generated
+# policy is present; browsers enforce both policies together.
+RUN if [ "${NX_PROJECT}" = landing-app ]; then \
+      grep -Eq 'http-equiv="content-security-policy"[^>]+sha256-' /usr/share/nginx/html/index.html \
+      && sed -i "s/script-src 'self';/script-src 'self' 'unsafe-inline';/g" /etc/nginx/conf.d/default.conf; \
+    fi
 # Per-deployment runtime config: the nginx entrypoint runs /docker-entrypoint.d/
 # hooks (as uid 101) before starting, so flags come from the container
 # environment instead of the Vite build. Only runtime-config.js is made writable

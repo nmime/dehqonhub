@@ -57,12 +57,15 @@ jobs:
       DATABASE_ENGINE: postgres
       AUTH_PERSISTENCE: postgres
       DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
+      CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
       ADMIN_BOOTSTRAP_ENABLED: 'true'
       ADMIN_BOOTSTRAP_EMAILS: admin@example.com
       AUTH_TELEGRAM_ENABLED: 'true'
       EXTERNAL_AUTH_AUTO_PROVISION_ENABLED: 'true'
       TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'
       VITE_TELEGRAM_AUTH_ENABLED: 'true'
+      # Deterministic CI-only AES-256 fixture; production loads an external secret.
+      NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc='
       # Six browser/device projects share the same runtime client address.
       RATE_LIMIT_MAX: '1000'
       COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app,site-app
@@ -75,7 +78,11 @@ jobs:
       ADMIN_APP_PORT: '8081'
       USER_APP_PORT: '8082'
       LANDING_APP_PORT: '8083'
-      SITE_APP_PORT: '8084'
+      SITE_APP_PORT: '4203'
+      NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
+      FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true'
+      LANDING_ADMIN_APP_URL: http://127.0.0.1:8081
+      LANDING_USER_APP_URL: http://127.0.0.1:8082
       # This lane has a live stack, so the fuzz gate must actually send its generated cases
       # instead of reporting ok with zero requests.
       OPENAPI_FUZZ_BASE_URL: http://127.0.0.1:3001,http://127.0.0.1:3002,http://127.0.0.1:3003
@@ -116,15 +123,11 @@ jobs:
       - name: Materialize explicit PostgreSQL reference build context
         run: pnpm nrb closure materialize --all-reference --provider postgres
       - name: Start local runtime stack
-        env:
-          NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
         run: docker compose -f docker/docker-compose.yml up -d --build
       - name: Run quality presets
         run: pnpm run quality:presets
       - name: Stop local runtime stack
         if: always()
-        env:
-          NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
         run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
       - name: Upload test result artifacts
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

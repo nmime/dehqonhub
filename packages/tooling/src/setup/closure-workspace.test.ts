@@ -1,14 +1,16 @@
-// @requirements REQ-SCAFFOLD-SELECTION-002
+// @requirements REQ-SCAFFOLD-SELECTION-002 REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
-import type { SelectedClosureManifest } from './closure.js';
+import type { ProjectGraphLike, SelectedClosureManifest } from './closure.js';
 import { appCatalog, capabilityCatalog, type DurableDatabaseProviderId } from './catalog.js';
 import {
+  configuredClosureGraph,
   materializeAllReferenceClosure,
+  referenceLockInvocation,
   referenceClosureContextPath,
   validateCurrentClosure,
 } from './closure-workspace.js';
@@ -79,8 +81,39 @@ describe('current closure validation', () => {
 });
 
 describe('all-reference closure context', () => {
+  it('projects checked-in application edges onto the selected reference provider', () => {
+    const root = mkdtempSync(join(tmpdir(), 'nrb-reference-graph-'));
+    mkdirSync(join(root, '.nrb'));
+    writeFileSync(join(root, '.nrb/workspace.json'), JSON.stringify({ mode: 'all-reference', provider: 'mongodb' }));
+    const graph: ProjectGraphLike = {
+      nodes: {
+        'auth-app-api': { data: {} },
+        '@app/backend-common-bootstrap': { data: {} },
+        '@app/backend-mongodb-main': { data: {} },
+        '@app/backend-postgres-main': { data: {} },
+      },
+      dependencies: {
+        'auth-app-api': [
+          { target: '@app/backend-common-bootstrap' },
+          { target: '@app/backend-mongodb-main' },
+          { target: '@app/backend-postgres-main' },
+        ],
+      },
+    };
+
+    try {
+      const projected = configuredClosureGraph(root, graph);
+      assert.deepEqual(projected.dependencies['auth-app-api'], [
+        { target: '@app/backend-common-bootstrap' },
+        { target: '@app/backend-mongodb-main' },
+      ]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
   for (const provider of ['postgres', 'mongodb'] as const) {
-    it(`materializes a complete offline ${provider} context without a product selection`, async () => {
+    it(`materializes a complete isolated ${provider} context without a product selection`, async () => {
       const root = mkdtempSync(join(tmpdir(), `nrb-reference-${provider}-`));
       writeFileSync(
         join(root, 'package.json'),
@@ -121,6 +154,16 @@ describe('all-reference closure context', () => {
       }
     });
   }
+
+  it('prefers cached metadata but permits a cold runner to resolve the reference lock', () => {
+    const invocation = referenceLockInvocation();
+
+    assert.equal(invocation.command, 'pnpm');
+    assert.ok(invocation.args.includes('--prefer-offline'));
+    assert.ok(invocation.args.includes('--no-frozen-lockfile'));
+    assert.ok(!invocation.args.includes('--offline'));
+    assert.ok(invocation.args.includes('--ignore-scripts'));
+  });
 });
 
 function referenceFixture(provider: DurableDatabaseProviderId): SelectedClosureManifest {

@@ -17,6 +17,11 @@ describe('selected closure live Nx graph', () => {
       capabilities: ['postgres'],
       configHash,
     });
+    const standaloneUserApi = buildSelectedClosure(graph, {
+      apps: ['user-app-api'],
+      capabilities: ['postgres'],
+      configHash,
+    });
     assert.equal(providerFree.provider, null);
     assert.deepEqual(providerFree.releaseImages, ['landing-app']);
     assert.ok(
@@ -28,6 +33,7 @@ describe('selected closure live Nx graph', () => {
     assert.ok(postgres.projects.every((name) => !name.includes('backend-mongodb')));
     assert.ok(postgres.productExternalPackages?.pg);
     assert.ok(postgres.productExternalPackages?.['@opentelemetry/instrumentation-pg']);
+    assert.ok(standaloneUserApi.productExternalPackages?.['class-transformer']);
     assert.equal(postgres.productExternalPackages?.['@opentelemetry/instrumentation-mongodb'], undefined);
     assertNoProviderPackages(postgres.productExternalPackages, providerExternalPackages('mongodb'));
     assert.deepEqual(postgres.releaseImages, ['auth-app-api', 'migrator', 'user-app-api']);
@@ -49,6 +55,13 @@ describe('selected closure live Nx graph', () => {
     assertRuntimeDependenciesSelected(
       site,
       Object.fromEntries(siteRuntimeDependencies.map((name) => [name, name])),
+      new Set(),
+    );
+    assertRuntimeDependenciesSelected(
+      site,
+      Object.fromEntries(
+        ['@tailwindcss/vite', '@vitejs/plugin-react', 'happy-dom', 'vite-plugin-istanbul'].map((name) => [name, name]),
+      ),
       new Set(),
     );
     assertRuntimeDependenciesSelected(
@@ -121,11 +134,13 @@ describe('selected closure live Nx graph', () => {
       ['mobile-app', 'apps/frontend/mobile', true],
     ] as const;
     const selectedByApp = new Map<string, Set<string>>();
+    const externalByApp = new Map<string, Set<string>>();
 
     for (const [appId, appRoot, hasRendererDependencyBoundary] of apps) {
       const closure = buildSelectedClosure(graph, { apps: [appId], capabilities: [], configHash });
       const selectedDependencies = new Set(Object.keys(closure.productExternalPackages ?? {}));
       selectedByApp.set(appId, selectedDependencies);
+      externalByApp.set(appId, new Set(Object.keys(closure.externalPackages)));
       assert.deepEqual(
         [...selectedDependencies].filter(
           (dependency) => !dependencyOwners.has(dependency) && !dependency.startsWith('@types/'),
@@ -148,6 +163,7 @@ describe('selected closure live Nx graph', () => {
     assert.equal(selectedByApp.get('landing-app')?.has('astro'), true);
     assert.equal(selectedByApp.get('site-app')?.has('vike'), true);
     assert.equal(selectedByApp.get('mobile-app')?.has('expo'), true);
+    assert.equal(externalByApp.get('mobile-app')?.has('react-native-web'), true);
   });
 });
 

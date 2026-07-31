@@ -21,12 +21,15 @@ env:
   NODE_VERSION_FILE: .nvmrc
   PNPM_VERSION: 11.15.1
   DATABASE_URL: postgres://postgres:postgres@127.0.0.1:5432/nest_react_boilerplate
+  CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
   ADMIN_BOOTSTRAP_ENABLED: 'true'
   ADMIN_BOOTSTRAP_EMAILS: admin@example.com
   AUTH_TELEGRAM_ENABLED: 'true'
   EXTERNAL_AUTH_AUTO_PROVISION_ENABLED: 'true'
   TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'
   VITE_TELEGRAM_AUTH_ENABLED: 'true'
+  # Deterministic CI-only AES-256 fixture; production loads an external secret.
+  NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc='
   RATE_LIMIT_MAX: '1000'
   COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app,site-app
   PLAYWRIGHT_BASE_URL: http://127.0.0.1:8082
@@ -38,7 +41,11 @@ env:
   ADMIN_APP_PORT: '8081'
   USER_APP_PORT: '8082'
   LANDING_APP_PORT: '8083'
-  SITE_APP_PORT: '8084'
+  SITE_APP_PORT: '4203'
+  NRB_CLOSURE_CONTEXT: ${{ github.workspace }}/.nrb/reference/postgres
+  FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true'
+  LANDING_ADMIN_APP_URL: http://127.0.0.1:8081
+  LANDING_USER_APP_URL: http://127.0.0.1:8082
   A11Y_URLS: http://127.0.0.1:8081,http://127.0.0.1:8082,http://127.0.0.1:8083
   PERF_URLS: http://127.0.0.1:8082,http://127.0.0.1:8083
   PERF_API_URLS: http://127.0.0.1:3001/health,http://127.0.0.1:3002/health,http://127.0.0.1:3003/health
@@ -83,10 +90,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y postgresql-client
 
+      - name: Materialize explicit PostgreSQL reference build context
+        run: pnpm nrb closure materialize --all-reference --provider postgres
+
       - name: Start local runtime stack
         run: docker compose -f docker/docker-compose.yml up -d --build
-        env:
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
 
       - name: Execute all nightly requirement evidence
         run: pnpm run spec:verify -- --all --lane nightly --report test-results/spec-evidence/nightly.json
@@ -94,8 +102,6 @@ jobs:
       - name: Stop local runtime stack
         if: always()
         run: docker compose -f docker/docker-compose.yml down --remove-orphans --volumes
-        env:
-          DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate
 
       - name: Upload nightly assurance dossier
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

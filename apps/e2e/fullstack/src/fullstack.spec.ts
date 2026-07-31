@@ -1,5 +1,6 @@
 // @requirements REQ-FRONTEND-JOURNEY-001
 // Evidence for: REQ-AUTH-FRONTEND-009 REQ-AUTH-IDENTITY-005 REQ-AUTH-SESSION-002 REQ-FRONTEND-ACCESSIBILITY-003 REQ-FRONTEND-ERROR-005 REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-SHELL-004 REQ-FRONTEND-SSR-007 REQ-NOTIFY-PREFERENCE-006
+import { randomUUID } from 'node:crypto';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 // Runtime journey evidence for REQ-AUTH-SESSION-002 and
 // REQ-FRONTEND-JOURNEY-001.
@@ -184,7 +185,7 @@ async function register(baseUrl: string, email: string): Promise<SessionResponse
 }
 
 test('@critical @api-critical registration and login preserve the durable API session', async ({ request }) => {
-  const email = `fullstack-api-${Date.now()}@example.com`;
+  const email = `fullstack-api-${randomUUID()}@example.com`;
   const registration = await request.post(`${urls.authApi}/auth/register`, {
     data: { displayName: 'Fullstack API User', email, password: authPassword },
   });
@@ -224,7 +225,7 @@ test('API and SSR readiness endpoints identify the Docker services', async () =>
 
   const siteReady = await fetch(`${urls.siteApp}/ready`);
   expect(siteReady.status).toBe(200);
-  await expect(siteReady.json()).resolves.toEqual({ service: 'site-app', status: 'ok' });
+  await expect(siteReady.json()).resolves.toEqual({ runtime: 'node', service: 'site-app', status: 'ok' });
 });
 
 test('landing journey exposes public destinations at the 320px viewport floor', async ({ page }) => {
@@ -483,6 +484,10 @@ test('admin API accepts only its cookie session and ignores browser URL tokens',
 
   await gotoWithRetry(page, `${urls.adminApp}/admin`);
   await expect(page.getByRole('heading', { level: 1, name: 'Admin dashboard' })).toBeVisible();
+  const openNavigation = page.getByRole('button', { name: 'Open navigation' });
+  if (await openNavigation.isVisible()) {
+    await openNavigation.click();
+  }
   await page.getByRole('button', { name: 'Users' }).click();
   await page.getByRole('link', { name: 'Roles' }).click();
   await expect(page).toHaveURL(`${urls.adminApp}/admin/roles`);

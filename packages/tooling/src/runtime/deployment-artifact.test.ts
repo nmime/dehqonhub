@@ -1,4 +1,4 @@
-// @requirements REQ-SCAFFOLD-SELECTION-002
+// @requirements REQ-SCAFFOLD-SELECTION-002 REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
 import { lstatSync, mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -11,6 +11,7 @@ import {
   deploymentInstallPlan,
   isolatedRuntimeEnvironment,
   linkSelectedSourceDependencies,
+  matchesConfiguredClosure,
   selectedProjectClosure,
   selectedProjectOutputPaths,
   stageDeploymentArtifact,
@@ -86,7 +87,7 @@ function siteClosure(): SelectedClosureManifest {
     graphDigest: 'b'.repeat(64),
     provider: null,
     roots: ['site-app'],
-    projects: ['site-app'],
+    projects: ['@app/common-i18n-keys', 'site-app'],
     targets: { build: ['site-app'] },
     externalPackages: {
       '@fastify/static': '1.0.0',
@@ -109,8 +110,19 @@ function siteGraph() {
           },
         },
       },
+      '@app/common-i18n-keys': {
+        data: {
+          root: 'libs/common/i18n/keys/lib',
+          targets: {
+            build: { options: { outputPath: 'dist/libs/common/i18n-keys' } },
+          },
+        },
+      },
     },
-    dependencies: { 'site-app': [] },
+    dependencies: {
+      'site-app': [{ target: '@app/common-i18n-keys' }],
+      '@app/common-i18n-keys': [],
+    },
   };
 }
 
@@ -133,6 +145,20 @@ function writeBackendOutputs(root: string, provider: 'postgres' | 'mongodb' = 'p
 }
 
 void describe('deployment artifact closure', () => {
+  void it('keeps product graph validation exact while accepting locked all-reference package classification', () => {
+    const actual = closure('mongodb');
+    const expected = {
+      ...actual,
+      graphDigest: 'c'.repeat(64),
+      productExternalPackages: { jsdom: '29.1.1' },
+      toolingExternalPackages: { 'react-native-web': '0.21.2' },
+    };
+
+    assert.equal(matchesConfiguredClosure(actual, expected, false), false);
+    assert.equal(matchesConfiguredClosure(actual, expected, true), true);
+    assert.equal(matchesConfiguredClosure(actual, { ...expected, roots: ['user-app-api'] }, true), false);
+  });
+
   void it('validates exact selected build roots and rejects closure escapes', () => {
     const selected = closure();
     assert.deepEqual(validateSelectedBuildProjects(selected, 'auth-app-api'), ['auth-app-api']);
@@ -240,6 +266,7 @@ void describe('deployment artifact closure', () => {
       dependencies: Record<string, string>;
     };
     assert.equal(artifact.kind, 'site');
+    assert.deepEqual(artifact.outputPaths, ['dist/apps/frontend/site']);
     assert.equal(manifest.name, 'site-app');
     assert.equal(manifest.type, 'module');
     assert.deepEqual(manifest.dependencies, { '@fastify/static': '1.0.0', fastify: '1.0.0' });

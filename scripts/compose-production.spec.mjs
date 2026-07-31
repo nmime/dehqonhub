@@ -8,8 +8,10 @@ import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import {
   buildComposeInvocation as buildComposeInvocationBase,
+  composeExecutionStatus,
   derivePublicDomains,
   parseEnvFile,
+  productionComposeDiagnostics,
   validateBaseDomain,
   validateExternalMongoUri,
 } from './compose-production.mjs';
@@ -50,7 +52,53 @@ const mongoClosureDependencies = {
   readProductionClosure: () => closure('mongodb', allApps, ['mongodb', 'mongodb-init', 'mongodb-migrate', 'redis']),
 };
 
-test('frontend runtime config emits only same-origin or HTTPS landing destinations', (context) => {
+test('keeps production Compose process diagnostics fixed and secret-safe', () => {
+  const serialized = JSON.stringify(productionComposeDiagnostics);
+
+  assert.deepEqual(JSON.parse(productionComposeDiagnostics.dryRun), {
+    status: 'validated',
+    execution: 'skipped',
+  });
+  assert.match(productionComposeDiagnostics.start, /starting Docker Compose/u);
+  assert.match(productionComposeDiagnostics.closureFailure, /pnpm nrb closure check/u);
+  assert.match(productionComposeDiagnostics.configurationFailure, /documented arguments and required settings/u);
+  assert.match(productionComposeDiagnostics.executionFailure, /Docker availability/u);
+  assert.doesNotMatch(serialized, /database|domain|profile|public|secret|tls/iu);
+});
+
+test('reports fixed execution diagnostics for Docker launch and exit failures', () => {
+  const diagnostics = [];
+  assert.equal(
+    composeExecutionStatus({ status: 0 }, (message) => diagnostics.push(message)),
+    0,
+  );
+  assert.deepEqual(diagnostics, []);
+
+  assert.equal(
+    composeExecutionStatus({ status: 17 }, (message) => diagnostics.push(message)),
+    17,
+  );
+  assert.deepEqual(diagnostics, [productionComposeDiagnostics.executionFailure]);
+
+  const launchError = new Error('docker unavailable');
+  assert.throws(
+    () => composeExecutionStatus({ error: launchError }, () => undefined),
+    (error) => error === launchError,
+  );
+});
+
+test('stages bundled MongoDB bootstrap secrets for its non-root entrypoint', () => {
+  const entrypoint = readFileSync(resolve(root, 'docker/mongodb/start-authenticated-replica-set.sh'), 'utf8');
+
+  assert.ok(
+    entrypoint.includes(
+      'install -o mongodb -g mongodb -m 0400 /run/secrets/mongodb_root_password /tmp/mongodb-root-password',
+    ),
+  );
+  assert.ok(entrypoint.includes('export MONGO_INITDB_ROOT_PASSWORD_FILE=/tmp/mongodb-root-password'));
+});
+
+test('frontend runtime config emits only same-origin, HTTPS, or loopback HTTP landing destinations', (context) => {
   const temporaryDirectory = mkdtempSync(join(tmpdir(), 'nrb-frontend-runtime-config-'));
   context.after(() => rmSync(temporaryDirectory, { force: true, recursive: true }));
   const target = join(temporaryDirectory, 'runtime-config.js');
@@ -76,6 +124,20 @@ test('frontend runtime config emits only same-origin or HTTPS landing destinatio
   });
   assert.match(valid, /"userAppUrl": "\/app"/u);
   assert.match(valid, /"adminAppUrl": "https:\/\/admin\.product\.example"/u);
+
+  const local = render({
+    FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true',
+    LANDING_ADMIN_APP_URL: 'http://localhost:4200',
+    LANDING_USER_APP_URL: 'http://127.0.0.1:4201',
+  });
+  assert.match(local, /"userAppUrl": "http:\/\/127\.0\.0\.1:4201"/u);
+  assert.match(local, /"adminAppUrl": "http:\/\/localhost:4200"/u);
+
+  const disallowedLocal = render({
+    LANDING_ADMIN_APP_URL: 'http://localhost:4200',
+    LANDING_USER_APP_URL: 'http://127.0.0.1:4201',
+  });
+  assert.doesNotMatch(disallowedLocal, /userAppUrl|adminAppUrl/u);
 
   const invalid = render({
     LANDING_ADMIN_APP_URL: 'https://user@admin.product.example',
