@@ -99,7 +99,16 @@
       "@app/common-problem-details": ["libs/common/problem-details/lib/src/index.ts"],
       "@app/backend-feature-notification-admin": ["libs/backend/feature/notification/admin/lib/src/index.ts"],
       "@app/backend-feature-audit-log-admin": ["libs/backend/feature/audit-log/admin/lib/src/index.ts"],
-      "@app/backend-feature-auth-admin": ["libs/backend/feature/auth/admin/lib/src/index.ts"]
+      "@app/backend-feature-auth-admin": ["libs/backend/feature/auth/admin/lib/src/index.ts"],
+      "@app/backend-feature-farmer-main": ["libs/backend/feature/farmer/main/lib/src/index.ts"],
+      "@app/backend-feature-farmer-shared": ["libs/backend/feature/farmer/shared/lib/src/index.ts"],
+      "@app/backend-feature-product-main": ["libs/backend/feature/product/main/lib/src/index.ts"],
+      "@app/backend-feature-product-shared": ["libs/backend/feature/product/shared/lib/src/index.ts"],
+      "@app/backend-feature-order-main": ["libs/backend/feature/order/main/lib/src/index.ts"],
+      "@app/backend-feature-order-shared": ["libs/backend/feature/order/shared/lib/src/index.ts"],
+      "@app/backend-postgres-main-agritech": ["libs/backend/postgres/main/agritech/lib/src/index.ts"],
+      "@app/backend-feature-telegram-agritech": ["libs/backend/feature/telegram-agritech/lib/src/index.ts"],
+      "@app/backend-feature-payment": ["libs/backend/feature/payment/lib/src/index.ts"]
     },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

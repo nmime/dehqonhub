@@ -1,0 +1,20 @@
+{
+  "name": "@app/backend-feature-order-main",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/feature/order/main/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:feature-main", "scope:order"],
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/libs/backend/feature/order/main/lib",
+        "main": "libs/backend/feature/order/main/lib/src/index.ts",
+        "tsConfig": "libs/backend/feature/order/main/lib/tsconfig.lib.json",
+        "assets": [],
+        "rootDir": "."
+      }
+    }
+  }
+}

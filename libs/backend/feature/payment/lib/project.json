@@ -1,0 +1,7 @@
+{
+  "name": "@app/backend-feature-payment",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/feature/payment/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:feature", "scope:payment"]
+}

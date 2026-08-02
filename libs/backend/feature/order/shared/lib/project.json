@@ -1,0 +1,7 @@
+{
+  "name": "@app/backend-feature-order-shared",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/feature/order/shared/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:feature-shared", "scope:order"]
+}
