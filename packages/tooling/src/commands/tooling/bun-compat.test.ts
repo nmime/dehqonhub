@@ -57,6 +57,8 @@ function closure(options: {
     roots: options.roots,
     projects: options.projects ?? options.roots,
     targets: { build: options.roots, test: options.roots, e2e: options.roots, ...options.targets },
+    productExternalPackages: options.externalPackages ?? {},
+    toolingExternalPackages: {},
     externalPackages: options.externalPackages ?? {},
     services: options.services ?? options.roots,
     releaseImages: options.roots,
@@ -349,6 +351,17 @@ Promise.all([
       externalPackages: { mongodb: '7.0.0' },
     });
     assert.throws(() => assertProviderIsolation(leaked), /opposite-provider ownership/u);
+  });
+
+  it('allows provider-complete tooling while keeping the selected product provider isolated', () => {
+    const selected = closure({
+      provider: 'postgres',
+      roots: ['auth-app-api'],
+    });
+    selected.toolingExternalPackages = { mongodb: '7.0.0' };
+    selected.externalPackages = { mongodb: '7.0.0' };
+
+    assert.doesNotThrow(() => assertProviderIsolation(selected));
   });
 
   it('creates valid probes and runtime selections for every preset closure', async () => {

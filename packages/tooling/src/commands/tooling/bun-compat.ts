@@ -530,7 +530,9 @@ export function assertProviderIsolation(closure: SelectedClosureManifest): void 
       : closure.provider === 'mongodb'
         ? providerExternalPackages('postgres')
         : new Set([...providerExternalPackages('postgres'), ...providerExternalPackages('mongodb')]);
-  const leakedPackages = Object.keys(closure.externalPackages).filter((dependency) => forbiddenPackages.has(dependency));
+  const leakedPackages = Object.keys(closure.productExternalPackages ?? closure.externalPackages).filter((dependency) =>
+    forbiddenPackages.has(dependency),
+  );
   if (leakedProjects.length > 0 || leakedPackages.length > 0) {
     throw new Error(
       `Selected Bun closure contains opposite-provider ownership (projects: ${leakedProjects.join(', ') || 'none'}; packages: ${leakedPackages.join(', ') || 'none'}).`,
