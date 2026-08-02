@@ -6,6 +6,7 @@ import enUserCatalog from '@app/i18n-en-user/shell.json';
 import enUserSiteCatalog from '@app/i18n-en-user/site.json';
 import enMobileCatalog from '@app/i18n-en-user/mobile.json';
 import enTmaCatalog from '@app/i18n-en-user/tma.json';
+import enAgriTechCatalog from '@app/i18n-en-user/agritech.json';
 import ruErrorsCatalog from '@app/i18n-ru-common/errors.json';
 import ruCommonCatalog from '@app/i18n-ru-common/shared.json';
 import ruAuthCatalog from '@app/i18n-ru-user/auth.json';
@@ -14,6 +15,7 @@ import ruUserCatalog from '@app/i18n-ru-user/shell.json';
 import ruUserSiteCatalog from '@app/i18n-ru-user/site.json';
 import ruMobileCatalog from '@app/i18n-ru-user/mobile.json';
 import ruTmaCatalog from '@app/i18n-ru-user/tma.json';
+import ruAgriTechCatalog from '@app/i18n-ru-user/agritech.json';
 import { mergeLocaleCatalogFiles } from '@app/common-i18n-runtime';
 import type { FrontendLocaleCatalogFileEntry, FrontendTranslations } from '@app/frontend-i18n-shared';
 
@@ -26,6 +28,7 @@ export const userFrontendCatalogFileNames = [
   'user/auth.json',
   'user/social-auth.json',
   'user/tma.json',
+  'user/agritech.json',
 ] as const;
 
 const enFiles = [
@@ -37,6 +40,7 @@ const enFiles = [
   ['user/auth.json', enAuthCatalog],
   ['user/social-auth.json', enSocialAuthCatalog],
   ['user/tma.json', enTmaCatalog],
+  ['user/agritech.json', enAgriTechCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const ruFiles = [
@@ -48,6 +52,7 @@ const ruFiles = [
   ['user/auth.json', ruAuthCatalog],
   ['user/social-auth.json', ruSocialAuthCatalog],
   ['user/tma.json', ruTmaCatalog],
+  ['user/agritech.json', ruAgriTechCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 export const userFrontendTranslations = {

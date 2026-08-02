@@ -13,6 +13,7 @@
   "bot.menu.cancel": "Отмена",
   "bot.command.start": "Открыть главное меню",
   "bot.command.app": "Открыть приложение",
+  "bot.command.agritech": "Открыть AgriTech",
   "bot.command.profile": "Посмотреть аккаунт",
   "bot.command.language": "Сменить язык",
   "bot.command.support": "Получить помощь",
@@ -31,5 +32,7 @@
   "bot.message.profileNotLinked": "👤 Мой аккаунт\n\nTelegram пока не привязан. Подключите его, чтобы синхронизировать аккаунт.",
   "bot.message.linked": "Ваш аккаунт привязан.",
   "bot.message.unlinked": "Ваш аккаунт отвязан.",
-  "bot.message.chooseLanguage": "🌐 Язык\n\nВыберите язык сообщений и меню."
+  "bot.message.chooseLanguage": "🌐 Язык\n\nВыберите язык сообщений и меню.",
+  "bot.message.agritechUnavailable": "Данные AgriTech здесь недоступны. Откройте веб-приложение после его настройки.",
+  "bot.message.agritechOpenApp": "Откройте рабочее пространство AgriTech в веб-приложении."
 }

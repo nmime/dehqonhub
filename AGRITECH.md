@@ -1,136 +1,73 @@
-# AgroUz — AgriTech B2B Platform for Uzbekistan
+# AgroUz AgriTech scope
 
-DeHaat-style B2B platform targeting 414K dehqan farms in Uzbekistan. Digitizes input procurement (fertilizers, seeds, pesticides) and output aggregation for smallholder farmers.
+The reports in [`docs/research`](docs/research/) describe the market thesis and
+a proposed 12-week roadmap. They are research inputs, not evidence that the
+product, pilot, provider integrations, or deployment exist.
 
-## Market Context
-- **$34.2B** agricultural output (24.3% of GDP)
-- **414K** dehqan farms producing 65% of ag output
-- **60+** AgriTech players (fragmented, no end-to-end platform)
-- **52 subsidy types**, $700M+ donor funding available
-- PTA Incubation deadline: **August 10, 2026**
+## Implemented source boundary
 
-## Architecture
+- Authenticated farmer profile create/read/update, owned by `tenantId` and
+  `userId`; callers cannot choose their role or verification status.
+- Read-only active input catalog. Supplier/admin product management is not
+  exposed by the farmer API.
+- Owned order create/read/list with positive integral lines, server-owned
+  prices, pessimistic stock locking, and one PostgreSQL transaction.
+- Versioned PostgreSQL schema migration for farmers, products, and orders.
+- Generated user OpenAPI contracts and frontend client paths.
+- User registration, catalog, and dashboard pages with real loading, error,
+  empty, and success states; no sample business records.
+- `/agritech` in the selected Telegram bot opens the configured web app or
+  returns an explicit localized unavailable state. It does not fabricate
+  orders, weather, or agronomy advice.
+- Click and Payme handoff returns `503` until merchant configuration,
+  provider authentication, idempotent persistence, and canary evidence exist.
+  Callback routes are deliberately absent.
 
-```
-┌─────────────────────────────────────────────────────┐
-│                    Frontend                          │
-│  /register    Farmer Registration (React + Vite)     │
-│  /dashboard   Farmer Dashboard with stats            │
-│  /catalog     Input Catalog (fertilizer/seed/etc)    │
-│  Telegram Bot Farmer engagement via @AgroUzBot       │
-└─────────────────────────────────────────────────────┘
-                        ↕ REST API
-┌─────────────────────────────────────────────────────┐
-│                  Backend (NestJS)                    │
-│                                                      │
-│  Feature: farmer    Registration, profile, list      │
-│  Feature: product   Input catalog, supplier mgmt     │
-│  Feature: order     Order placement, tracking        │
-│  Feature: payment   Click/Payme integration          │
-│  Feature: telegram  Bot commands & notifications     │
-│                                                      │
-│  DDD Pattern: domain → application → interfaces      │
-│  Database: PostgreSQL + MikroORM                     │
-└─────────────────────────────────────────────────────┘
-```
+## Current API
 
-## Tech Stack
-- **Backend**: NestJS + Fastify, MikroORM, PostgreSQL
-- **Frontend**: React + Vite (FSD architecture), TanStack Router
-- **Telegram**: grammy framework
-- **Payments**: Click API, Payme API
-- **i18n**: EN, RU, UZ support
-- **Deployment**: Docker, NX monorepo
+All routes require the user API's authenticated session guard.
 
-## Quick Start
+| Method  | Path                    | Behavior                           |
+| ------- | ----------------------- | ---------------------------------- |
+| `POST`  | `/agritech/farmer`      | Create the caller's farmer profile |
+| `GET`   | `/agritech/farmer`      | Read the caller's farmer profile   |
+| `PATCH` | `/agritech/farmer`      | Update allowed profile fields      |
+| `GET`   | `/agritech/catalog`     | List active catalog products       |
+| `GET`   | `/agritech/catalog/:id` | Read one active catalog product    |
+| `POST`  | `/agritech/orders`      | Create a server-priced owned order |
+| `GET`   | `/agritech/orders`      | List the caller's orders           |
+| `GET`   | `/agritech/orders/:id`  | Read one owned order               |
+| `POST`  | `/agritech/payments`    | Explicit unavailable response      |
+
+## Not delivered by this source revision
+
+The following research milestones still require separate product decisions,
+owners, credentials, external systems, runtime evidence, or field operations:
+
+- supplier onboarding/admin product mutation and inventory operations;
+- live Click/Payme checkout, callbacks, settlement, refunds, and sandbox canaries;
+- field-agent workflows and output aggregation/buyer marketplace;
+- price discovery, grading, logistics, weather, and agronomy providers;
+- Uzbek runtime locale (the selected repository locales are currently EN/RU);
+- deployment, production observability, security review, and disaster recovery;
+- the proposed 100-farmer/5-10-supplier pilot and its commercial metrics.
+
+These items must not be described as production-ready until their own
+requirements and exact-revision/runtime evidence exist.
+
+## Verification
 
 ```bash
-# Install dependencies
-npm install -g pnpm@11.15.1
-pnpm install --frozen-lockfile
-
-# Initialize product identity
-pnpm nrb init --name "AgroUz" --domain agrouz.uz --apex-app landing-app --owner agrouz-team
-
-# Setup with Telegram bot
-pnpm nrb setup --app telegram-bot-api --non-interactive
-pnpm nrb closure install
-
-# Configure environment
-cp .env.example .env
-# Set DATABASE_URL, TELEGRAM_BOT_TOKEN, CLICK_MERCHANT_ID, PAYME_ORG_ID
-
-# Start database (Docker required)
-docker compose --profile postgres up -d postgres
-pnpm run db:migrate
-
-# Run development server
-pnpm run dev
+pnpm exec nx run user-app-api:build
+pnpm exec nx run user-app:build
+pnpm exec nx run-many -t test -p @app/backend-feature-farmer-shared,@app/backend-feature-product-shared,@app/backend-feature-order-shared,@app/backend-feature-payment-main,@app/backend-postgres-main-agritech
+pnpm exec nx run @app/backend-feature-telegram-bot:test
+pnpm run api:contracts:check
+pnpm run api:clients:check
+pnpm run spec:validate
 ```
 
-## API Endpoints
+## Research
 
-| Method | Path | Description |
-|--------|------|-------------|
-| POST | `/api/v1/farmers` | Register farmer |
-| GET | `/api/v1/farmers/:id` | Get farmer profile |
-| GET | `/api/v1/farmers?region=&role=` | List farmers |
-| PUT | `/api/v1/farmers/:id` | Update farmer |
-| POST | `/api/v1/products` | Create product listing |
-| GET | `/api/v1/products?category=&region=` | Browse catalog |
-| POST | `/api/v1/orders` | Place input order |
-| GET | `/api/v1/orders?farmerId=` | List farmer orders |
-| PATCH | `/api/v1/orders/:id/status` | Update order status |
-| POST | `/api/v1/payments` | Create payment intent |
-| POST | `/api/v1/payments/callback/click` | Click callback |
-| POST | `/api/v1/payments/callback/payme` | Payme callback |
-
-## Telegram Bot Commands
-
-| Command | Description |
-|---------|-------------|
-| `/agristart` | Start AgriTech assistant |
-| `/menu` | Show main menu |
-| `/orders` | View recent orders |
-| `/catalog` | Browse input catalog |
-| `/weather` | Get weather forecast |
-| `/advice` | Get crop recommendations |
-
-## Project Structure
-
-```
-libs/backend/feature/
-├── farmer/main/lib/       # Farmer feature (controllers, modules)
-├── farmer/shared/lib/     # Domain entities, use-cases, repository interfaces
-├── product/main/lib/      # Product catalog feature
-├── product/shared/lib/    # Domain entities, use-cases
-├── order/main/lib/        # Order management feature
-├── order/shared/lib/      # Domain entities, use-cases
-├── payment/lib/           # Click/Payme payment integration
-└── telegram-agritech/lib/ # Telegram bot handler for AgriTech
-
-libs/backend/postgres/main/agritech/lib/
-├── entities/              # MikroORM entity schemas
-└── repositories/          # PostgreSQL repository implementations
-
-apps/frontend/app/src/pages/
-├── farmer-register/       # Registration page
-├── farmer-dashboard/      # Dashboard with stats
-└── product-catalog/       # Input catalog browsing
-
-i18n/{en,ru}/agritech/     # Translations (EN + RU)
-```
-
-## Research Reports
-- [English Report](https://41999-f0svjqrodn66pn99.splox.app/report_en.html) (60KB)
-- [Russian Report](https://41999-4uellwd7q9mptbox.splox.app/report_ru.html) (60KB)
-
-## PTA Pitch Strategy
-1. **Working MVP** with 100+ pilot farmers (Fergana Valley)
-2. **Real metrics**: order volume, farmer retention, supplier count
-3. **Clear story**: "DeHaat for Uzbekistan" — digitizing $4.8-6.2B TAM
-4. **Team**: 2-5 members (recruit agribusiness co-founder)
-5. **Government alignment**: Agroportal integration, 52 subsidy types leveraged
-
-## License
-MIT
+- [English report](docs/research/report_en.html)
+- [Russian report](docs/research/report_ru.html)

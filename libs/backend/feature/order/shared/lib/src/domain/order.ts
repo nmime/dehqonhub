@@ -1,21 +1,27 @@
 export type OrderStatus = 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
-export type PaymentMethod = 'click' | 'payme' | 'cash_on_delivery' | 'bank_transfer';
 
-export interface OrderItem {
+export interface OrderOwner {
+  tenantId: string;
+  userId: string;
+}
+
+export interface OrderItemRequest {
   productId: string;
-  productName: string;
   quantity: number;
+}
+
+export interface OrderItem extends OrderItemRequest {
+  productName: string;
   unitPriceUzs: number;
   totalUzs: number;
 }
 
-export interface Order {
+export interface Order extends OrderOwner {
   id: string;
   farmerId: string;
   items: OrderItem[];
   totalAmountUzs: number;
   status: OrderStatus;
-  paymentMethod?: PaymentMethod;
   deliveryAddress: string;
   region: string;
   notes?: string;
@@ -24,26 +30,19 @@ export interface Order {
 }
 
 export interface CreateOrderDto {
-  farmerId: string;
-  items: { productId: string; quantity: number }[];
+  items: OrderItemRequest[];
   deliveryAddress: string;
   region: string;
-  paymentMethod?: PaymentMethod;
   notes?: string;
 }
 
-export function calculateOrderTotal(items: OrderItem[]): number {
-  return items.reduce((sum, item) => sum + item.totalUzs, 0);
-}
+export type CreateOwnedOrderResult =
+  | { status: 'created'; order: Order }
+  | { status: 'farmer_not_found' }
+  | { status: 'invalid_product' | 'insufficient_stock'; productId: string };
 
 export interface OrderRepository {
-  findById(id: string): Promise<Order | undefined>;
-  findByFarmerId(farmerId: string): Promise<Order[]>;
-  create(order: Order): Promise<void>;
-  updateStatus(id: string, status: string): Promise<void>;
+  createOwned(owner: OrderOwner, input: CreateOrderDto): Promise<CreateOwnedOrderResult>;
+  findOwned(owner: OrderOwner, id: string): Promise<Order | undefined>;
+  listOwned(owner: OrderOwner): Promise<Order[]>;
 }
-
-export interface ProductQueryService {
-  getProduct(productId: string): Promise<{ id: string; name: string; priceUzs: number } | undefined>;
-}
-

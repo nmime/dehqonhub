@@ -6,6 +6,7 @@ import * as generatedUserApi from './generated/user';
 import * as userApi from './user';
 
 export { adminApi, authApi, generatedAdminApi, generatedAuthApi, generatedUserApi, userApi };
+export * from './user';
 
 export * from './client-registry';
 export * from './service-options';

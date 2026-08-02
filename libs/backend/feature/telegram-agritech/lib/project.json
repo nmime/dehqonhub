@@ -1,7 +1,0 @@
-{
-  "name": "@app/backend-feature-telegram-agritech",
-  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/backend/feature/telegram-agritech/lib/src",
-  "projectType": "library",
-  "tags": ["platform:backend", "type:feature", "scope:telegram-agritech"]
-}

@@ -1,43 +1,47 @@
-import { Injectable, Inject } from '@nestjs/common';
-import { FarmerProfile, CreateFarmerDto } from '../domain';
-import type { FarmerRepository } from '../domain';
+import { Inject, Injectable } from '@nestjs/common';
+import { ConflictException, ResourceNotFoundException } from '@app/backend-common-exception';
+import type { CreateFarmerDto, FarmerOwner, FarmerProfile, FarmerRepository, UpdateFarmerDto } from '../domain';
 import { FarmerRepositoryInjectToken } from './inject-tokens';
 
 @Injectable()
 export class CreateFarmerUseCase {
   constructor(@Inject(FarmerRepositoryInjectToken) private readonly repository: FarmerRepository) {}
 
-  async execute(dto: CreateFarmerDto): Promise<FarmerProfile> {
-    const existing = await this.repository.findByPhone(dto.phone);
-    if (existing) {
-      throw new Error(`Farmer with phone ${dto.phone} already exists`);
+  async execute(owner: FarmerOwner, input: CreateFarmerDto): Promise<FarmerProfile> {
+    const existingOwner = await this.repository.findByOwner(owner);
+    if (existingOwner) {
+      throw new ConflictException('farmer-profile', 'owner');
     }
-    const id = crypto.randomUUID();
-    const profile: FarmerProfile = {
-      id, phone: dto.phone, firstName: dto.firstName, lastName: dto.lastName,
-      region: dto.region, district: dto.district, village: dto.village,
-      farmSizeHectares: dto.farmSizeHectares, crops: dto.crops,
-      role: dto.role ?? 'dehqan', status: 'pending_verification',
-      telegramId: dto.telegramId, latitude: dto.latitude, longitude: dto.longitude,
-      createdAt: new Date(), updatedAt: new Date(),
-    };
-    await this.repository.create(profile);
-    return profile;
+    const existingPhone = await this.repository.findByPhone(owner.tenantId, input.phone);
+    if (existingPhone) {
+      throw new ConflictException('farmer-profile', 'phone');
+    }
+    return this.repository.create(owner, input);
   }
 }
 
 @Injectable()
 export class GetFarmerProfileUseCase {
   constructor(@Inject(FarmerRepositoryInjectToken) private readonly repository: FarmerRepository) {}
-  async execute(id: string): Promise<FarmerProfile | undefined> {
-    return this.repository.findById(id);
+
+  async execute(owner: FarmerOwner): Promise<FarmerProfile> {
+    const profile = await this.repository.findByOwner(owner);
+    if (!profile) {
+      throw new ResourceNotFoundException('farmer-profile');
+    }
+    return profile;
   }
 }
 
 @Injectable()
-export class ListFarmersUseCase {
+export class UpdateFarmerUseCase {
   constructor(@Inject(FarmerRepositoryInjectToken) private readonly repository: FarmerRepository) {}
-  async execute(filter?: { region?: string; role?: string }): Promise<FarmerProfile[]> {
-    return this.repository.findAll(filter);
+
+  async execute(owner: FarmerOwner, input: UpdateFarmerDto): Promise<FarmerProfile> {
+    const profile = await this.repository.update(owner, input);
+    if (!profile) {
+      throw new ResourceNotFoundException('farmer-profile');
+    }
+    return profile;
   }
 }

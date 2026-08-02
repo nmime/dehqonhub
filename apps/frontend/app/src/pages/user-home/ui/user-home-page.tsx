@@ -3,8 +3,13 @@ import { UiButton, UiCard, UiSection } from '../../../shared/ui';
 
 const homeDestinations = [
   {
+    descriptionKey: 'user.auth.description',
+    href: '/auth',
+    titleKey: 'user.auth.title',
+  },
+  {
     descriptionKey: 'agritech.register.description',
-    href: '/register',
+    href: '/farmer/register',
     titleKey: 'farmer.register.title',
   },
   {
@@ -16,11 +21,6 @@ const homeDestinations = [
     descriptionKey: 'agritech.catalog.description',
     href: '/catalog',
     titleKey: 'product.catalog.title',
-  },
-  {
-    descriptionKey: 'user.auth.description',
-    href: '/auth',
-    titleKey: 'user.auth.title',
   },
   {
     descriptionKey: 'user.home.profile.description',

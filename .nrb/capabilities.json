@@ -191,6 +191,7 @@
       "activation": "infrastructure",
       "projects": [
         "@app/backend-postgres-main",
+        "@app/backend-postgres-main-agritech",
         "@app/backend-postgres-main-auth"
       ],
       "dockerServices": [
@@ -209,12 +210,72 @@
       ],
       "backendWiring": [
         {
+          "hosts": [
+            "user-app-api"
+          ],
+          "moduleExpression": "AgriTechPostgresModule",
+          "imports": [
+            {
+              "importName": "AgriTechPostgresModule",
+              "importPath": "@app/backend-postgres-main-agritech"
+            }
+          ]
+        },
+        {
+          "hosts": [
+            "user-app-api"
+          ],
+          "moduleExpression": "FarmerMainModule",
+          "imports": [
+            {
+              "importName": "FarmerMainModule",
+              "importPath": "@app/backend-feature-farmer-main"
+            }
+          ]
+        },
+        {
+          "hosts": [
+            "user-app-api"
+          ],
+          "moduleExpression": "OrderMainModule",
+          "imports": [
+            {
+              "importName": "OrderMainModule",
+              "importPath": "@app/backend-feature-order-main"
+            }
+          ]
+        },
+        {
+          "hosts": [
+            "user-app-api"
+          ],
+          "moduleExpression": "PaymentModule",
+          "imports": [
+            {
+              "importName": "PaymentModule",
+              "importPath": "@app/backend-feature-payment-main"
+            }
+          ]
+        },
+        {
           "hosts": "selected-backend",
           "moduleExpression": "PostgresMainModule.forRoot()",
           "imports": [
             {
               "importName": "PostgresMainModule",
               "importPath": "@app/backend-postgres-main"
+            }
+          ]
+        },
+        {
+          "hosts": [
+            "user-app-api"
+          ],
+          "moduleExpression": "ProductMainModule",
+          "imports": [
+            {
+              "importName": "ProductMainModule",
+              "importPath": "@app/backend-feature-product-main"
             }
           ]
         },

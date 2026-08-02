@@ -119,7 +119,7 @@ const linkDiscordRoute = createRoute({
 // AgriTech routes
 const farmerRegisterRoute = createRoute({
   getParentRoute: () => rootRoute,
-  path: '/register',
+  path: '/farmer/register',
   component: FarmerRegisterPage,
 });
 

@@ -107,8 +107,7 @@
       "@app/backend-feature-order-main": ["libs/backend/feature/order/main/lib/src/index.ts"],
       "@app/backend-feature-order-shared": ["libs/backend/feature/order/shared/lib/src/index.ts"],
       "@app/backend-postgres-main-agritech": ["libs/backend/postgres/main/agritech/lib/src/index.ts"],
-      "@app/backend-feature-telegram-agritech": ["libs/backend/feature/telegram-agritech/lib/src/index.ts"],
-      "@app/backend-feature-payment": ["libs/backend/feature/payment/lib/src/index.ts"]
+      "@app/backend-feature-payment-main": ["libs/backend/feature/payment/main/lib/src/index.ts"]
     },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,

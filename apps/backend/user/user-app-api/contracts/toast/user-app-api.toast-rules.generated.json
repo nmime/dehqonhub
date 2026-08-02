@@ -18,6 +18,2250 @@
   },
   "rules": [
     {
+      "id": "user-app-api:GET:/agritech/catalog:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog",
+        "operationId": "ProductController_list",
+        "tags": ["agritech-catalog"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-list.get.200",
+          "default": "Product list completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog",
+        "operationId": "ProductController_list",
+        "tags": ["agritech-catalog"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-list.get.400",
+          "default": "Product list failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog:401",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog",
+        "operationId": "ProductController_list",
+        "tags": ["agritech-catalog"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-list.get.401",
+          "default": "Product list failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog:404",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog",
+        "operationId": "ProductController_list",
+        "tags": ["agritech-catalog"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-list.get.404",
+          "default": "Product list failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog:500",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog",
+        "operationId": "ProductController_list",
+        "tags": ["agritech-catalog"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-list.get.500",
+          "default": "Product list failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog",
+        "operationId": "ProductController_list",
+        "tags": ["agritech-catalog"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-list.get.err",
+          "default": "Product list failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog",
+        "operationId": "ProductController_list",
+        "tags": ["agritech-catalog"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-list.get.net",
+          "default": "Product list could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog/{id}:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog/{id}",
+        "operationId": "ProductController_getById",
+        "tags": ["agritech-catalog"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-getbyid.get.200",
+          "default": "Product get By Id completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog/{id}:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog/{id}",
+        "operationId": "ProductController_getById",
+        "tags": ["agritech-catalog"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-getbyid.get.400",
+          "default": "Product get By Id failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog/{id}:401",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog/{id}",
+        "operationId": "ProductController_getById",
+        "tags": ["agritech-catalog"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-getbyid.get.401",
+          "default": "Product get By Id failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog/{id}:404",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog/{id}",
+        "operationId": "ProductController_getById",
+        "tags": ["agritech-catalog"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-getbyid.get.404",
+          "default": "Product get By Id failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog/{id}:500",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog/{id}",
+        "operationId": "ProductController_getById",
+        "tags": ["agritech-catalog"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-getbyid.get.500",
+          "default": "Product get By Id failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog/{id}:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog/{id}",
+        "operationId": "ProductController_getById",
+        "tags": ["agritech-catalog"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-getbyid.get.err",
+          "default": "Product get By Id failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/catalog/{id}:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/catalog/{id}",
+        "operationId": "ProductController_getById",
+        "tags": ["agritech-catalog"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.productcontroller-getbyid.get.net",
+          "default": "Product get By Id could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/farmer:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_get",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-get.get.200",
+          "default": "Farmer get completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:GET:/agritech/farmer:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_get",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-get.get.400",
+          "default": "Farmer get failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/farmer:401",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_get",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-get.get.401",
+          "default": "Farmer get failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/farmer:404",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_get",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-get.get.404",
+          "default": "Farmer get failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/farmer:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_get",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_409",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-get.get.409",
+          "default": "Farmer get failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/farmer:500",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_get",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-get.get.500",
+          "default": "Farmer get failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/farmer:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_get",
+        "tags": ["agritech-farmer"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-get.get.err",
+          "default": "Farmer get failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/farmer:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_get",
+        "tags": ["agritech-farmer"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-get.get.net",
+          "default": "Farmer get could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:PATCH:/agritech/farmer:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "PATCH",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_update",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_200",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-update.patch.200",
+          "default": "Farmer update completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:PATCH:/agritech/farmer:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "PATCH",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_update",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_400",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-update.patch.400",
+          "default": "Farmer update failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:PATCH:/agritech/farmer:401",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "PATCH",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_update",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_401",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-update.patch.401",
+          "default": "Farmer update failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:PATCH:/agritech/farmer:404",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "PATCH",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_update",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_404",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-update.patch.404",
+          "default": "Farmer update failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:PATCH:/agritech/farmer:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "PATCH",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_update",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_409",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-update.patch.409",
+          "default": "Farmer update failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:PATCH:/agritech/farmer:500",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "PATCH",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_update",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_500",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-update.patch.500",
+          "default": "Farmer update failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:PATCH:/agritech/farmer:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "PATCH",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_update",
+        "tags": ["agritech-farmer"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-update.patch.err",
+          "default": "Farmer update failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:PATCH:/agritech/farmer:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "PATCH",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_update",
+        "tags": ["agritech-farmer"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-update.patch.net",
+          "default": "Farmer update could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/farmer:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_create",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-create.post.200",
+          "default": "Farmer create completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:POST:/agritech/farmer:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_create",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-create.post.400",
+          "default": "Farmer create failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/farmer:401",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_create",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_401",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-create.post.401",
+          "default": "Farmer create failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/farmer:404",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_create",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_404",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-create.post.404",
+          "default": "Farmer create failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/farmer:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_create",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-create.post.409",
+          "default": "Farmer create failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/farmer:500",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_create",
+        "tags": ["agritech-farmer"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_500",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-create.post.500",
+          "default": "Farmer create failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/farmer:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_create",
+        "tags": ["agritech-farmer"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-create.post.err",
+          "default": "Farmer create failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/farmer:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/farmer",
+        "operationId": "FarmerController_create",
+        "tags": ["agritech-farmer"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.farmercontroller-create.post.net",
+          "default": "Farmer create could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_list",
+        "tags": ["agritech-orders"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-list.get.200",
+          "default": "Order list completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_list",
+        "tags": ["agritech-orders"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-list.get.400",
+          "default": "Order list failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders:401",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_list",
+        "tags": ["agritech-orders"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-list.get.401",
+          "default": "Order list failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders:404",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_list",
+        "tags": ["agritech-orders"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-list.get.404",
+          "default": "Order list failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_list",
+        "tags": ["agritech-orders"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_409",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-list.get.409",
+          "default": "Order list failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders:500",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_list",
+        "tags": ["agritech-orders"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-list.get.500",
+          "default": "Order list failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_list",
+        "tags": ["agritech-orders"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-list.get.err",
+          "default": "Order list failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_list",
+        "tags": ["agritech-orders"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-list.get.net",
+          "default": "Order list could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/orders:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_create",
+        "tags": ["agritech-orders"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-create.post.200",
+          "default": "Order create completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:POST:/agritech/orders:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_create",
+        "tags": ["agritech-orders"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-create.post.400",
+          "default": "Order create failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/orders:401",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_create",
+        "tags": ["agritech-orders"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_401",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-create.post.401",
+          "default": "Order create failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/orders:404",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_create",
+        "tags": ["agritech-orders"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_404",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-create.post.404",
+          "default": "Order create failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/orders:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_create",
+        "tags": ["agritech-orders"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-create.post.409",
+          "default": "Order create failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/orders:500",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_create",
+        "tags": ["agritech-orders"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_500",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-create.post.500",
+          "default": "Order create failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/orders:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_create",
+        "tags": ["agritech-orders"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-create.post.err",
+          "default": "Order create failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/orders:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/orders",
+        "operationId": "OrderController_create",
+        "tags": ["agritech-orders"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-create.post.net",
+          "default": "Order create could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders/{id}:200",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders/{id}",
+        "operationId": "OrderController_get",
+        "tags": ["agritech-orders"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-get.get.200",
+          "default": "Order get completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders/{id}:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders/{id}",
+        "operationId": "OrderController_get",
+        "tags": ["agritech-orders"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-get.get.400",
+          "default": "Order get failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders/{id}:401",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders/{id}",
+        "operationId": "OrderController_get",
+        "tags": ["agritech-orders"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-get.get.401",
+          "default": "Order get failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders/{id}:404",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders/{id}",
+        "operationId": "OrderController_get",
+        "tags": ["agritech-orders"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-get.get.404",
+          "default": "Order get failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders/{id}:409",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders/{id}",
+        "operationId": "OrderController_get",
+        "tags": ["agritech-orders"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_409",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-get.get.409",
+          "default": "Order get failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders/{id}:500",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders/{id}",
+        "operationId": "OrderController_get",
+        "tags": ["agritech-orders"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-get.get.500",
+          "default": "Order get failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders/{id}:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders/{id}",
+        "operationId": "OrderController_get",
+        "tags": ["agritech-orders"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-get.get.err",
+          "default": "Order get failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:GET:/agritech/orders/{id}:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "GET",
+        "path": "/agritech/orders/{id}",
+        "operationId": "OrderController_get",
+        "tags": ["agritech-orders"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.ordercontroller-get.get.net",
+          "default": "Order get could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/payments:201",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/payments",
+        "operationId": "PaymentController_create",
+        "tags": ["agritech-payments"]
+      },
+      "status": 201,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_201",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.user-app-api.paymentcontroller-create.post.201",
+          "default": "Payment create completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "user-app-api:POST:/agritech/payments:400",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/payments",
+        "operationId": "PaymentController_create",
+        "tags": ["agritech-payments"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentcontroller-create.post.400",
+          "default": "Payment create failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/payments:401",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/payments",
+        "operationId": "PaymentController_create",
+        "tags": ["agritech-payments"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_401",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentcontroller-create.post.401",
+          "default": "Payment create failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/payments:503",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/payments",
+        "operationId": "PaymentController_create",
+        "tags": ["agritech-payments"]
+      },
+      "status": 503,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_503",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentcontroller-create.post.503",
+          "default": "Payment create failed: Service Unavailable."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/payments:ERR",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/payments",
+        "operationId": "PaymentController_create",
+        "tags": ["agritech-payments"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.user-app-api.paymentcontroller-create.post.err",
+          "default": "Payment create failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "user-app-api:POST:/agritech/payments:NET",
+      "endpoint": {
+        "app": "user-app-api",
+        "method": "POST",
+        "path": "/agritech/payments",
+        "operationId": "PaymentController_create",
+        "tags": ["agritech-payments"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.user-app-api.paymentcontroller-create.post.net",
+          "default": "Payment create could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "user-app-api:GET:/health:200",
       "endpoint": {
         "app": "user-app-api",

@@ -1,40 +1,32 @@
-import { IsString, IsNumber, IsArray, IsOptional, IsIn, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+import { IsArray, IsInt, IsOptional, IsString, Min, ValidateNested } from 'class-validator';
 
 class OrderItemDto {
-  @ApiProperty({ example: 'product-123' })
+  @ApiProperty({ format: 'uuid' })
   @IsString()
   productId!: string;
 
-  @ApiProperty({ example: 5 })
-  @IsNumber()
+  @ApiProperty({ example: 2, minimum: 1 })
+  @IsInt()
+  @Min(1)
   quantity!: number;
 }
 
 export class CreateOrderDto {
-  @ApiProperty({ example: 'farmer-456' })
-  @IsString()
-  farmerId!: string;
-
   @ApiProperty({ type: [OrderItemDto] })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items!: OrderItemDto[];
 
-  @ApiProperty({ example: "Toshkent viloyati, Chirchiq tumani" })
+  @ApiProperty({ example: 'Fargona, Quva tumani' })
   @IsString()
   deliveryAddress!: string;
 
-  @ApiProperty({ example: "Toshkent viloyati" })
+  @ApiProperty({ example: "Farg'ona viloyati" })
   @IsString()
   region!: string;
-
-  @ApiProperty({ required: false, enum: ['click', 'payme', 'cash_on_delivery', 'bank_transfer'] })
-  @IsOptional()
-  @IsIn(['click', 'payme', 'cash_on_delivery', 'bank_transfer'])
-  paymentMethod?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -42,8 +34,27 @@ export class CreateOrderDto {
   notes?: string;
 }
 
-export class UpdateOrderStatusDto {
-  @ApiProperty({ enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] })
-  @IsIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'])
-  status!: string;
+export class OrderItemViewDto extends OrderItemDto {
+  @ApiProperty() productName!: string;
+  @ApiProperty() unitPriceUzs!: number;
+  @ApiProperty() totalUzs!: number;
+}
+
+export class OrderViewDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty() tenantId!: string;
+  @ApiProperty() userId!: string;
+  @ApiProperty({ format: 'uuid' }) farmerId!: string;
+  @ApiProperty({ type: [OrderItemViewDto] }) items!: OrderItemViewDto[];
+  @ApiProperty() totalAmountUzs!: number;
+  @ApiProperty({ enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'] }) status!: string;
+  @ApiProperty() deliveryAddress!: string;
+  @ApiProperty() region!: string;
+  @ApiProperty({ required: false }) notes?: string;
+  @ApiProperty({ format: 'date-time' }) createdAt!: string;
+  @ApiProperty({ format: 'date-time' }) updatedAt!: string;
+}
+
+export class OrderListDto {
+  @ApiProperty({ type: [OrderViewDto] }) items!: OrderViewDto[];
 }

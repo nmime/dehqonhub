@@ -1,76 +1,107 @@
+// REQ-AGRITECH-WEB-006: dashboard statistics and orders are source-backed or explicitly empty.
+import { useCallback, useEffect, useState } from 'react';
 import { observer, useI18n } from '@app/frontend-runtime';
+import {
+  isApiClientError,
+  throwOnOpenApiErrorData,
+  useUserApiClient,
+  type FarmerProfileDto,
+  type OrderViewDto,
+} from '@app/frontend-api-client';
 import { UiButton, UiCard, UiSection, UiStatCard } from '../../../shared/ui';
-
-const stats = [
-  { label: 'Active Orders', value: '3', detail: '2 pending delivery', color: '#22c55e' },
-  { label: 'Total Spent', value: '2.4M UZS', detail: 'This season', color: '#3b82f6' },
-  { label: 'Farm Size', value: '2.5 ha', detail: 'Fergana Valley', color: '#a855f7' },
-  { label: 'Next Delivery', value: 'Aug 5', detail: 'NitroAmmonka 46%', color: '#f59e0b' },
-];
-
-const quickActions = [
-  { title: 'Order Inputs', description: 'Fertilizers, seeds, pesticides', href: '/catalog', icon: '🌱' },
-  { title: 'My Orders', description: 'Track order status', href: '/orders', icon: '📦' },
-  { title: 'Crop Advisory', description: 'AI recommendations', href: '/advisory', icon: '🤖' },
-  { title: 'Weather', description: '7-day forecast', href: '/weather', icon: '🌤️' },
-];
 
 export const FarmerDashboardPage = observer(function FarmerDashboardPage() {
   const { t } = useI18n();
+  const { api, requestOptions } = useUserApiClient();
+  const [profile, setProfile] = useState<FarmerProfileDto>();
+  const [orders, setOrders] = useState<OrderViewDto[]>([]);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'missing' | 'error'>('loading');
+
+  const load = useCallback(async () => {
+    setStatus('loading');
+    try {
+      const [farmerProfile, farmerOrders] = await Promise.all([
+        throwOnOpenApiErrorData(api.farmerControllerGet(requestOptions)),
+        throwOnOpenApiErrorData(api.orderControllerList(requestOptions)),
+      ]);
+      setProfile(farmerProfile);
+      setOrders(farmerOrders.items);
+      setStatus('ready');
+    } catch (error) {
+      setStatus(isApiClientError(error) && error.status === 404 ? 'missing' : 'error');
+    }
+  }, [api, requestOptions]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
 
   return (
-    <UiSection className="farmer-dashboard" eyebrow="AgroUz" title={t('farmer.dashboard.title')}>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-        {stats.map(s => (
-          <UiStatCard key={s.label} label={s.label} value={s.value} detail={s.detail} color={s.color} />
-        ))}
-      </div>
-
-      <h3 style={{ color: '#f0fdf4', marginBottom: '1rem' }}>Quick Actions</h3>
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
-        {quickActions.map(action => (
-          <UiCard key={action.title}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>{action.icon}</div>
-            <h4 style={{ color: '#fff', marginBottom: '0.25rem' }}>{action.title}</h4>
-            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '0.75rem' }}>{action.description}</p>
-            <UiButton href={action.href} variant="secondary">{action.title}</UiButton>
-          </UiCard>
-        ))}
-      </div>
-
-      <div style={{ marginTop: '2rem' }}>
-        <h3 style={{ color: '#f0fdf4', marginBottom: '1rem' }}>Recent Orders</h3>
+    <UiSection className="farmer-dashboard" eyebrow={t('agritech.brand')} title={t('farmer.dashboard.title')}>
+      {status === 'loading' && <p role="status">{t('common.loading')}</p>}
+      {status === 'error' && (
         <UiCard>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ borderBottom: '2px solid #166534' }}>
-                {['Order', 'Date', 'Amount', 'Status'].map(h => (
-                  <th key={h} style={{ padding: '0.75rem', textAlign: 'left', color: '#22c55e' }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { id: '#1001', date: 'Aug 1', amount: '850,000 UZS', status: 'Processing', statusColor: '#f59e0b' },
-                { id: '#1002', date: 'Jul 28', amount: '420,000 UZS', status: 'Delivered', statusColor: '#22c55e' },
-                { id: '#1003', date: 'Jul 25', amount: '1,200,000 UZS', status: 'Delivered', statusColor: '#22c55e' },
-              ].map(order => (
-                <tr key={order.id} style={{ borderBottom: '1px solid #1e293b' }}>
-                  <td style={{ padding: '0.75rem', color: '#e5e7eb' }}>{order.id}</td>
-                  <td style={{ padding: '0.75rem', color: '#94a3b8' }}>{order.date}</td>
-                  <td style={{ padding: '0.75rem', color: '#e5e7eb' }}>{order.amount}</td>
-                  <td style={{ padding: '0.75rem' }}>
-                    <span style={{ background: order.statusColor + '20', color: order.statusColor,
-                      padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.75rem', fontWeight: 600 }}>
-                      {order.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <p role="alert">{t('farmer.dashboard.error')}</p>
+          <UiButton onClick={() => void load()}>{t('ui.runtime.retry')}</UiButton>
         </UiCard>
-      </div>
+      )}
+      {status === 'missing' && (
+        <UiCard>
+          <p>{t('farmer.dashboard.missing')}</p>
+          <UiButton href="/farmer/register">{t('farmer.register.submit')}</UiButton>
+        </UiCard>
+      )}
+      {status === 'ready' && profile && (
+        <>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
+            <UiStatCard
+              label={t('farmer.dashboard.status')}
+              value={profile.status}
+              detail={`${profile.firstName} ${profile.lastName}`}
+            />
+            <UiStatCard
+              label={t('farmer.dashboard.farmSize')}
+              value={`${profile.farmSizeHectares} ha`}
+              detail={profile.region}
+            />
+            <UiStatCard
+              label={t('farmer.dashboard.orders')}
+              value={String(orders.length)}
+              detail={t('farmer.dashboard.ordersDetail')}
+            />
+          </div>
+          <UiButton href="/catalog" variant="primary">
+            {t('farmer.dashboard.products')}
+          </UiButton>
+          <h3>{t('farmer.dashboard.recentOrders')}</h3>
+          {orders.length === 0 ? (
+            <p role="status">{t('farmer.dashboard.emptyOrders')}</p>
+          ) : (
+            <UiCard>
+              <table>
+                <thead>
+                  <tr>
+                    <th>{t('order.id')}</th>
+                    <th>{t('order.date')}</th>
+                    <th>{t('order.amount')}</th>
+                    <th>{t('order.status')}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {orders.map((order) => (
+                    <tr key={order.id}>
+                      <td>{order.id}</td>
+                      <td>{new Date(order.createdAt).toLocaleDateString()}</td>
+                      <td>{order.totalAmountUzs.toLocaleString()} UZS</td>
+                      <td>{order.status}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </UiCard>
+          )}
+        </>
+      )}
     </UiSection>
   );
 });

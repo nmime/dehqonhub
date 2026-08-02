@@ -194,6 +194,7 @@ export const thinLocaleCatalogFileNames = [
   "user/auth.json",
   "user/social-auth.json",
   "user/tma.json",
+  "user/agritech.json",
   "bots/shared.json",
   "bots/telegram.json",
   "bots/discord.json",

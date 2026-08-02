@@ -1,0 +1,132 @@
+version: 3
+capability: agritech-marketplace
+owners:
+  product: agritech-maintainers
+  verification: quality-engineering
+  security: security-maintainers
+  operations: platform-operations
+requirements:
+  - id: REQ-AGRITECH-PROFILE-001
+    projects:
+      [
+        '@app/backend-feature-farmer-main',
+        '@app/backend-feature-farmer-shared',
+        '@app/backend-postgres-main-agritech',
+        user-app-api,
+      ]
+    risk: high
+    profiles: [domain, api]
+    cucumber:
+      disposition: not-applicable
+      reason: Owner isolation and schema constraints require direct domain and migration evidence.
+      alternativeEvidence: [vitest, static, contract]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/farmer/shared/lib/src/application/farmer.use-cases.spec.ts
+        target: '@app/backend-feature-farmer-shared:test'
+        lanes: [pr, main]
+      - kind: static
+        file: libs/backend/postgres/main/agritech/lib/src/migrations/agritech.migration.spec.ts
+        target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/backend/feature/farmer/main/lib/src/interfaces/http/farmer.controller.ts
+        target: '@app/backend-feature-farmer-main:build'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-CATALOG-002
+    projects:
+      [
+        '@app/backend-feature-product-main',
+        '@app/backend-feature-product-shared',
+        '@app/backend-postgres-main-agritech',
+        user-app-api,
+      ]
+    risk: normal
+    profiles: [domain, api]
+    cucumber:
+      disposition: not-applicable
+      reason: Active-only catalog filtering is deterministic at the domain repository boundary.
+      alternativeEvidence: [vitest, contract]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/product/shared/lib/src/application/product.use-cases.spec.ts
+        target: '@app/backend-feature-product-shared:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/backend/feature/product/main/lib/src/interfaces/http/product.controller.ts
+        target: '@app/backend-feature-product-main:build'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-ORDER-003
+    projects:
+      [
+        '@app/backend-feature-order-main',
+        '@app/backend-feature-order-shared',
+        '@app/backend-postgres-main-agritech',
+        user-app-api,
+      ]
+    risk: high
+    profiles: [domain, api]
+    cucumber:
+      disposition: not-applicable
+      reason: Server pricing, ownership, and rollback semantics require domain and persistence evidence.
+      alternativeEvidence: [vitest, static, contract]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/order/shared/lib/src/application/order.use-cases.spec.ts
+        target: '@app/backend-feature-order-shared:test'
+        lanes: [pr, main]
+      - kind: static
+        file: libs/backend/postgres/main/agritech/lib/src/migrations/agritech.migration.spec.ts
+        target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/backend/feature/order/main/lib/src/interfaces/http/order.controller.ts
+        target: '@app/backend-feature-order-main:build'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-PAYMENT-004
+    projects: ['@app/backend-feature-payment-main', user-app-api]
+    risk: critical
+    profiles: [domain, security]
+    cucumber:
+      disposition: not-applicable
+      reason: Provider readiness is deliberately disabled and verified through a fail-closed security assertion.
+      alternativeEvidence: [vitest, security]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/payment/main/lib/src/application/payment.use-cases.spec.ts
+        target: '@app/backend-feature-payment-main:test'
+        lanes: [pr, main]
+      - kind: security
+        file: libs/backend/feature/payment/main/lib/src/application/payment.use-cases.spec.ts
+        target: '@app/backend-feature-payment-main:test'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-TELEGRAM-005
+    projects: ['@app/backend-feature-telegram-bot']
+    risk: high
+    profiles: [domain]
+    cucumber:
+      disposition: not-applicable
+      reason: Telegram command routing and unavailable presentation are verified at the bot update boundary.
+      alternativeEvidence: [vitest]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts
+        target: '@app/backend-feature-telegram-bot:test'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-WEB-006
+    projects: [user-app, '@app/frontend-api-client', '@app/frontend-feature-user-i18n']
+    risk: high
+    profiles: [api]
+    cucumber:
+      disposition: not-applicable
+      reason: Request-state rendering and generated-client usage are verified by typed production builds in this source lane.
+      alternativeEvidence: [static, contract]
+    evidence:
+      - kind: static
+        file: apps/frontend/app/src/pages/product-catalog/ui/product-catalog-page.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/user.ts
+        target: '@app/frontend-api-client:build'
+        lanes: [pr, main]

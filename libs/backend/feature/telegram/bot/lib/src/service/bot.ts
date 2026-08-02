@@ -32,6 +32,7 @@ const telegramCommandDefinitions: readonly {
 }[] = [
   { command: 'start', descriptionKey: 'bot.command.start' },
   { command: 'app', descriptionKey: 'bot.command.app', requiresApp: true },
+  { command: 'agritech', descriptionKey: 'bot.command.agritech' },
   { command: 'profile', descriptionKey: 'bot.command.profile' },
   { command: 'language', descriptionKey: 'bot.command.language' },
   { command: 'support', descriptionKey: 'bot.command.support' },
@@ -119,6 +120,15 @@ export function createTelegramBot(
       return;
     }
     await ctx.reply(ctx.t('bot.menu.openApp'), {
+      reply_markup: new InlineKeyboard().webApp(ctx.t('bot.menu.openApp'), safeAppUrl),
+    });
+  });
+  bot.command('agritech', async (ctx) => {
+    if (!safeAppUrl) {
+      await ctx.reply(ctx.t('bot.message.agritechUnavailable'), { reply_markup: menus.main });
+      return;
+    }
+    await ctx.reply(ctx.t('bot.message.agritechOpenApp'), {
       reply_markup: new InlineKeyboard().webApp(ctx.t('bot.menu.openApp'), safeAppUrl),
     });
   });

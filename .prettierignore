@@ -45,3 +45,6 @@ tmp
 docs/command-matrix.md
 
 docs/testing/modern-qa.md
+
+# Research reports are preserved external HTML exports, not formatter-owned source.
+docs/research/*.html

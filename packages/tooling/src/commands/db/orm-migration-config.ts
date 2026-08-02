@@ -29,6 +29,14 @@ const { FeatureFlagEntitySchema } = require(resolve(
   workspaceRoot,
   "libs/backend/postgres/main/feature-flags/lib/src/infrastructure/data-access/entities/index.ts",
 ));
+const { FarmerEntitySchema, ProductEntitySchema, OrderEntitySchema } = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/agritech/lib/src/entities/index.ts",
+));
+const { agritechMigrations } = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/agritech/lib/src/migrations/index.ts",
+));
 const {
   NotificationAudienceSnapshotEntitySchema,
   NotificationAudienceSnapshotMemberEntitySchema,
@@ -63,6 +71,9 @@ export function createAuthMigrationOrmOptions(env = process.env) {
         AuthUserEntitySchema,
         AuthLoginEventEntitySchema,
         FeatureFlagEntitySchema,
+        FarmerEntitySchema,
+        ProductEntitySchema,
+        OrderEntitySchema,
         NotificationDeliveryEntitySchema,
         NotificationEntitySchema,
         NotificationTemplateEntitySchema,
@@ -81,7 +92,7 @@ export function createAuthMigrationOrmOptions(env = process.env) {
       allowGlobalContext: true,
       migrations: {
         ...authMigrationOptions,
-        migrationsList: [...authMigrations, ...notificationMigrations],
+        migrationsList: [...authMigrations, ...notificationMigrations, ...agritechMigrations],
       },
     },
     env,

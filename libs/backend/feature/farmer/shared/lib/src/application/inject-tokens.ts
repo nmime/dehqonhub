@@ -1,5 +1,3 @@
-import { InjectionToken } from '@nestjs/common';
-
 // Farmer repository token
 export const FarmerRepositoryInjectToken = 'FarmerRepository';
 

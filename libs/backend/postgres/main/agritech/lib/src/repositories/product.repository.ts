@@ -1,25 +1,24 @@
 import { EntityManager } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
+import type { Product, ProductCategory, ProductRepository } from '@app/backend-feature-product-shared';
 import { ProductEntity } from '../entities/product.entity';
-import { Product, CreateProductDto, UpdateProductDto, ProductRepository } from '@app/backend-feature-product-shared';
 
-function toProduct(e: ProductEntity): Product {
+export function toProduct(entity: ProductEntity): Product {
   return {
-    id: e.id,
-    name: e.name,
-    nameRu: e.nameRu ?? undefined,
-    category: e.category,
-    description: e.description,
-    supplierId: e.supplierId,
-    supplierName: e.supplierName,
-    priceUzs: Number(e.priceUzs),
-    unit: e.unit,
-    stockQuantity: e.stockQuantity,
-    region: e.region,
-    status: e.status,
-    images: e.images,
-    createdAt: e.createdAt,
-    updatedAt: e.updatedAt,
+    id: entity.id,
+    name: entity.name,
+    nameRu: entity.nameRu ?? undefined,
+    category: entity.category,
+    description: entity.description,
+    supplierName: entity.supplierName,
+    priceUzs: Number(entity.priceUzs),
+    unit: entity.unit,
+    stockQuantity: entity.stockQuantity,
+    region: entity.region,
+    status: entity.status,
+    images: entity.images,
+    createdAt: entity.createdAt,
+    updatedAt: entity.updatedAt,
   };
 }
 
@@ -27,31 +26,20 @@ function toProduct(e: ProductEntity): Product {
 export class PostgresProductRepository implements ProductRepository {
   constructor(@Inject(EntityManager) private readonly em: EntityManager) {}
 
-  async findById(id: string): Promise<Product | undefined> {
-    const e = await this.em.findOne(ProductEntity, { id });
-    return e ? toProduct(e) : undefined;
+  async findActiveById(id: string): Promise<Product | undefined> {
+    const entity = await this.em.findOne(ProductEntity, { id, status: 'active' });
+    return entity ? toProduct(entity) : undefined;
   }
 
-  async findAll(filter?: { category?: string; region?: string; supplierId?: string }): Promise<Product[]> {
-    const where: Record<string, unknown> = {};
-    if (filter?.category) where.category = filter.category;
-    if (filter?.region) where.region = filter.region;
-    if (filter?.supplierId) where.supplierId = filter.supplierId;
-    const list = await this.em.find(ProductEntity, where, { orderBy: { createdAt: 'DESC' } });
-    return list.map(toProduct);
-  }
-
-  async create(product: Product): Promise<void> {
-    const e = new ProductEntity();
-    Object.assign(e, product);
-    this.em.persist(e);
-    await this.em.flush();
-  }
-
-  async update(id: string, data: UpdateProductDto): Promise<void> {
-    const e = await this.em.findOne(ProductEntity, { id });
-    if (!e) throw new Error(`Product ${id} not found`);
-    Object.assign(e, data, { updatedAt: new Date() });
-    await this.em.flush();
+  async findActive(filter?: { category?: ProductCategory; region?: string }): Promise<Product[]> {
+    const where: { status: 'active'; category?: ProductCategory; region?: string } = { status: 'active' };
+    if (filter?.category) {
+      where.category = filter.category;
+    }
+    if (filter?.region) {
+      where.region = filter.region;
+    }
+    const entities = await this.em.find(ProductEntity, where, { orderBy: { createdAt: 'DESC' } });
+    return entities.map(toProduct);
   }
 }

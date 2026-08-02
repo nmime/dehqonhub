@@ -172,6 +172,7 @@ describe('selected closure', () => {
       projects: {
         'user-app-api': ['build', 'serve'],
         '@app/backend-postgres-main': ['build'],
+        '@app/backend-postgres-main-agritech': ['build'],
         '@app/backend-postgres-main-auth': ['build'],
       },
       dependencies: {
@@ -229,6 +230,7 @@ describe('selected closure', () => {
       projects: {
         'user-app-api': ['build'],
         '@app/backend-postgres-main': ['build'],
+        '@app/backend-postgres-main-agritech': ['build'],
         '@app/backend-postgres-main-auth': ['build'],
         '@app/backend-mongodb-main': ['build'],
       },
@@ -246,6 +248,7 @@ describe('selected closure', () => {
       projects: {
         'user-app-api': ['build'],
         '@app/backend-postgres-main': ['build'],
+        '@app/backend-postgres-main-agritech': ['build'],
         '@app/backend-postgres-main-auth': ['build'],
       },
       dependencies: {

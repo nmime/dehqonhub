@@ -1,80 +1,85 @@
+// REQ-AGRITECH-WEB-006: catalog data is loaded through the generated user API boundary.
+import { useCallback, useEffect, useState } from 'react';
 import { observer, useI18n } from '@app/frontend-runtime';
+import { throwOnOpenApiErrorData, useUserApiClient, type ProductViewDto } from '@app/frontend-api-client';
 import { UiButton, UiCard, UiSection, UiTextField } from '../../../shared/ui';
-import { useState } from 'react';
 
-const CATEGORIES = ['all', 'fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation'];
-
-const SAMPLE_PRODUCTS = [
-  { id: 1, name: 'NitroAmmonka 46%', category: 'fertilizer', price: 85000, unit: '50kg bag', stock: 500, supplier: 'AgroHub' },
-  { id: 2, name: 'Petrovics Super (Cotton)', category: 'seed', price: 240000, unit: '1kg pack', stock: 120, supplier: 'UFarmer' },
-  { id: 3, name: 'Karate Zeon 05CS', category: 'pesticide', price: 155000, unit: '1L bottle', stock: 80, supplier: 'AgroMart' },
-  { id: 4, name: 'Drip Irrigation Kit', category: 'irrigation', price: 890000, unit: 'per hectare', stock: 30, supplier: 'Qidirpotizlik' },
-  { id: 5, name: 'Urea 46%', category: 'fertilizer', price: 72000, unit: '50kg bag', stock: 350, supplier: 'AgroHub' },
-  { id: 6, name: 'Wheat Seed (Lokal)', category: 'seed', price: 180000, unit: '15kg bag', stock: 200, supplier: 'UFarmer' },
-];
+const CATEGORIES = ['all', 'fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation'] as const;
 
 export const ProductCatalogPage = observer(function ProductCatalogPage() {
   const { t } = useI18n();
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const { api, requestOptions } = useUserApiClient();
+  const [products, setProducts] = useState<ProductViewDto[]>([]);
+  const [status, setStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [selectedCategory, setSelectedCategory] = useState<(typeof CATEGORIES)[number]>('all');
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filtered = SAMPLE_PRODUCTS.filter(p => {
-    const matchCat = selectedCategory === 'all' || p.category === selectedCategory;
-    const matchSearch = p.name.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchCat && matchSearch;
-  });
+  const load = useCallback(async () => {
+    setStatus('loading');
+    try {
+      const catalog = await throwOnOpenApiErrorData(api.productControllerList(requestOptions));
+      setProducts(catalog.items);
+      setStatus('ready');
+    } catch {
+      setStatus('error');
+    }
+  }, [api, requestOptions]);
+
+  useEffect(() => {
+    void load();
+  }, [load]);
+  const filtered = products.filter(
+    (product) =>
+      (selectedCategory === 'all' || product.category === selectedCategory) &&
+      product.name.toLowerCase().includes(searchQuery.toLowerCase()),
+  );
 
   return (
     <UiSection className="product-catalog" title={t('product.catalog.title')}>
-      <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        <UiTextField label="" placeholder="Search products..." value={searchQuery}
-          onChange={e => setSearchQuery(e.target.value)} style={{ flex: 1, minWidth: '200px' }} />
-        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-          {CATEGORIES.map(cat => (
-            <button key={cat} onClick={() => setSelectedCategory(cat)}
-              style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', cursor: 'pointer',
-                background: selectedCategory === cat ? '#22c55e' : '#1e293b',
-                color: selectedCategory === cat ? '#000' : '#e5e7eb', textTransform: 'capitalize' }}>
-              {cat}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
-        {filtered.map(product => (
-          <UiCard key={product.id}>
-            <div style={{ marginBottom: '0.75rem' }}>
-              <span style={{ background: '#166534', color: '#bbf7d0', padding: '0.15rem 0.5rem',
-                borderRadius: '4px', fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase' }}>
-                {product.category}
-              </span>
-            </div>
-            <h4 style={{ color: '#fff', marginBottom: '0.5rem' }}>{product.name}</h4>
-            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '0.25rem' }}>
-              Supplier: {product.supplier}
-            </p>
-            <p style={{ color: '#94a3b8', fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-              Unit: {product.unit}
-            </p>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <span style={{ color: '#22c55e', fontWeight: 700, fontSize: '1.1rem' }}>
-                {product.price.toLocaleString()} UZS
-              </span>
-              <span style={{ color: product.stock > 50 ? '#22c55e' : '#f59e0b', fontSize: '0.8rem' }}>
-                {product.stock} in stock
-              </span>
-            </div>
-            <UiButton variant="primary" style={{ width: '100%' }}>{t('product.add_to_cart')}</UiButton>
-          </UiCard>
-        ))}
-      </div>
-
-      {filtered.length === 0 && (
-        <div style={{ textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-          <p style={{ fontSize: '3rem', marginBottom: '1rem' }}>🔍</p>
-          <p>No products found. Try a different search or category.</p>
-        </div>
+      {status === 'loading' && <p role="status">{t('common.loading')}</p>}
+      {status === 'error' && (
+        <UiCard>
+          <p role="alert">{t('product.catalog.error')}</p>
+          <UiButton onClick={() => void load()}>{t('ui.runtime.retry')}</UiButton>
+        </UiCard>
+      )}
+      {status === 'ready' && (
+        <>
+          <UiTextField
+            label={t('product.catalog.search')}
+            value={searchQuery}
+            onChange={(event) => {
+              setSearchQuery(event.target.value);
+            }}
+          />
+          <div>
+            {CATEGORIES.map((category) => (
+              <UiButton
+                key={category}
+                onClick={() => {
+                  setSelectedCategory(category);
+                }}
+                variant={selectedCategory === category ? 'primary' : 'secondary'}
+              >
+                {category}
+              </UiButton>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem' }}>
+            {filtered.map((product) => (
+              <UiCard key={product.id}>
+                <h4>{product.name}</h4>
+                <p>{product.supplierName}</p>
+                <p>{product.unit}</p>
+                <strong>{product.priceUzs.toLocaleString()} UZS</strong>
+                <p>
+                  {product.stockQuantity} {t('product.stock')}
+                </p>
+              </UiCard>
+            ))}
+          </div>
+          {filtered.length === 0 && <p role="status">{t('product.catalog.empty')}</p>}
+        </>
       )}
     </UiSection>
   );

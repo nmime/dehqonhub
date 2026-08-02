@@ -1,9 +1,9 @@
 import { Module } from '@nestjs/common';
-import { CreateFarmerUseCase, GetFarmerProfileUseCase, ListFarmersUseCase } from '@app/backend-feature-farmer-shared';
+import { CreateFarmerUseCase, GetFarmerProfileUseCase, UpdateFarmerUseCase } from '@app/backend-feature-farmer-shared';
 import { FarmerController } from './interfaces/http';
 
 @Module({
   controllers: [FarmerController],
-  providers: [CreateFarmerUseCase, GetFarmerProfileUseCase, ListFarmersUseCase],
+  providers: [CreateFarmerUseCase, GetFarmerProfileUseCase, UpdateFarmerUseCase],
 })
 export class FarmerMainModule {}

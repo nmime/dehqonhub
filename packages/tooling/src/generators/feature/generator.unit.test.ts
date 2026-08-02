@@ -339,7 +339,10 @@ describe('feature generator', () => {
         migrationRunner,
         /const \{ supportCasesMigrations \} = require\("@app\/backend-postgres-main-support-cases"\);/u,
       );
-      assert.match(migrationRunner, /\.\.\.notificationMigrations, \.\.\.supportCasesMigrations/u);
+      assert.match(
+        migrationRunner,
+        /\.\.\.notificationMigrations, \.\.\.agritechMigrations, \.\.\.supportCasesMigrations/u,
+      );
       assert.ok(tree.exists('libs/backend/feature/support-cases/main/lib/AGENTS.md'));
       assert.ok(tree.exists('libs/backend/feature/support-cases/shared/lib/README.md'));
       assert.ok(tree.exists('libs/backend/postgres/main/support-cases/lib/AGENTS.md'));

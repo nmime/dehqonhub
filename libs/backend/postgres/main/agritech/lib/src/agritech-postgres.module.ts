@@ -1,42 +1,24 @@
 import { MikroOrmModule } from '@mikro-orm/nestjs';
-import { Module } from '@nestjs/common';
-import { FarmerEntitySchema, ProductEntitySchema, OrderEntitySchema } from './entities';
-import { PostgresFarmerRepository, PostgresProductRepository, PostgresOrderRepository, PostgresProductQueryService } from './repositories';
-import {
-  FarmerRepositoryInjectToken,
-  ProductRepositoryInjectToken,
-  OrderRepositoryInjectToken,
-  ProductQueryServiceInjectToken,
-} from '@app/backend-feature-farmer-shared';
+import { Global, Module } from '@nestjs/common';
+import { FarmerRepositoryInjectToken } from '@app/backend-feature-farmer-shared';
+import { ProductRepositoryInjectToken } from '@app/backend-feature-product-shared';
+import { OrderRepositoryInjectToken } from '@app/backend-feature-order-shared';
+import { FarmerEntitySchema, OrderEntitySchema, ProductEntitySchema } from './entities';
+import { PostgresFarmerRepository, PostgresOrderRepository, PostgresProductRepository } from './repositories';
 
+const repositoryProviders = [
+  PostgresFarmerRepository,
+  PostgresProductRepository,
+  PostgresOrderRepository,
+  { provide: FarmerRepositoryInjectToken, useExisting: PostgresFarmerRepository },
+  { provide: ProductRepositoryInjectToken, useExisting: PostgresProductRepository },
+  { provide: OrderRepositoryInjectToken, useExisting: PostgresOrderRepository },
+];
+
+@Global()
 @Module({
-  imports: [
-    MikroOrmModule.forFeature([
-      FarmerEntitySchema,
-      ProductEntitySchema,
-      OrderEntitySchema,
-    ]),
-  ],
-  providers: [
-    PostgresFarmerRepository,
-    PostgresProductRepository,
-    PostgresOrderRepository,
-    PostgresProductQueryService,
-    { provide: FarmerRepositoryInjectToken, useExisting: PostgresFarmerRepository },
-    { provide: ProductRepositoryInjectToken, useExisting: PostgresProductRepository },
-    { provide: OrderRepositoryInjectToken, useExisting: PostgresOrderRepository },
-    { provide: ProductQueryServiceInjectToken, useExisting: PostgresProductQueryService },
-  ],
-  exports: [
-    MikroOrmModule,
-    PostgresFarmerRepository,
-    PostgresProductRepository,
-    PostgresOrderRepository,
-    PostgresProductQueryService,
-    FarmerRepositoryInjectToken,
-    ProductRepositoryInjectToken,
-    OrderRepositoryInjectToken,
-    ProductQueryServiceInjectToken,
-  ],
+  imports: [MikroOrmModule.forFeature([FarmerEntitySchema, ProductEntitySchema, OrderEntitySchema])],
+  providers: repositoryProviders,
+  exports: repositoryProviders,
 })
 export class AgriTechPostgresModule {}

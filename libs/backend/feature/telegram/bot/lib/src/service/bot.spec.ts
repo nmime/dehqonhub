@@ -1,4 +1,4 @@
-// @requirements REQ-SOCIAL-COMMANDS-003
+// @requirements REQ-SOCIAL-COMMANDS-003 REQ-AGRITECH-TELEGRAM-005
 import { describe, expect, it, vi } from 'vitest';
 import { createTelegramBot, handleLink, handleStart, telegramBotCommands } from './bot';
 import { goBack, goHome, navigateTo, replaceCurrentRoute } from '../navigation';
@@ -419,6 +419,7 @@ describe('createTelegramBot', () => {
     expect(telegramBotCommands('en', true).map(({ command }) => command)).toEqual([
       'start',
       'app',
+      'agritech',
       'profile',
       'language',
       'support',
@@ -428,6 +429,16 @@ describe('createTelegramBot', () => {
       'Открыть приложение',
     );
     expect(telegramBotCommands('en', false).map(({ command }) => command)).not.toContain('app');
+    expect(telegramBotCommands('en', false).map(({ command }) => command)).toContain('agritech');
+  });
+
+  it('returns an explicit unavailable state instead of fabricated AgriTech data', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config({ appUrl: undefined }), { fetch: fetchMock });
+    await bot.handleUpdate(messageUpdate('/agritech') as never);
+    expect(latestPayload(calls, 'sendMessage').text).toBe(
+      'AgriTech data is unavailable here. Open the web app after it is configured.',
+    );
   });
 
   it('publishes localized private-chat commands and the persistent app menu button when setup is enabled', async () => {

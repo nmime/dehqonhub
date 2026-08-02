@@ -1,44 +1,47 @@
-import { Controller, Get, Post, Put, Body, Param, Query, UseGuards } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
-import { CreateFarmerUseCase, GetFarmerProfileUseCase, ListFarmersUseCase } from '@app/backend-feature-farmer-shared';
-import { CreateFarmerDto, UpdateFarmerDto } from './farmer.dto';
+// REQ-AGRITECH-PROFILE-001: authority comes from the authenticated principal, never route or body IDs.
+import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
+import { ApiTags } from '@nestjs/swagger';
+import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
+import { createOkResponse } from '@app/backend-common-response';
+import { CurrentUser, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
+import {
+  CreateFarmerUseCase,
+  GetFarmerProfileUseCase,
+  UpdateFarmerUseCase,
+  type FarmerOwner,
+} from '@app/backend-feature-farmer-shared';
+import { CreateFarmerDto, FarmerProfileDto, UpdateFarmerDto } from './farmer.dto';
 
-@ApiTags('farmers')
-@Controller('api/v1/farmers')
+@ApiTags('agritech-farmer')
+@ApiExceptions(400, 401, 404, 409, 500)
+@ApiSessionCookieAuth()
+@Controller('agritech/farmer')
 export class FarmerController {
   constructor(
     private readonly createFarmer: CreateFarmerUseCase,
     private readonly getFarmer: GetFarmerProfileUseCase,
-    private readonly listFarmers: ListFarmersUseCase,
+    private readonly updateFarmer: UpdateFarmerUseCase,
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Register a new farmer' })
-  @ApiResponse({ status: 201, description: 'Farmer registered successfully' })
-  @ApiResponse({ status: 409, description: 'Farmer with this phone already exists' })
-  async create(@Body() dto: CreateFarmerDto) {
-    return this.createFarmer.execute(dto);
-  }
-
-  @Get(':id')
-  @ApiOperation({ summary: 'Get farmer profile by ID' })
-  async getById(@Param('id') id: string) {
-    return this.getFarmer.execute(id);
+  @ApiOkDataResponse(FarmerProfileDto)
+  async create(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreateFarmerDto) {
+    return createOkResponse(await this.createFarmer.execute(ownerFrom(principal), input));
   }
 
   @Get()
-  @ApiOperation({ summary: 'List farmers with optional filters' })
-  async list(
-    @Query('region') region?: string,
-    @Query('role') role?: string,
-  ) {
-    return this.listFarmers.execute({ region, role });
+  @ApiOkDataResponse(FarmerProfileDto)
+  async get(@CurrentUser() principal: AuthenticatedPrincipal) {
+    return createOkResponse(await this.getFarmer.execute(ownerFrom(principal)));
   }
 
-  @Put(':id')
-  @ApiOperation({ summary: 'Update farmer profile' })
-  async update(@Param('id') id: string, @Body() dto: UpdateFarmerDto) {
-    // TODO: Implement update use-case
-    return { id, ...dto };
+  @Patch()
+  @ApiOkDataResponse(FarmerProfileDto)
+  async update(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: UpdateFarmerDto) {
+    return createOkResponse(await this.updateFarmer.execute(ownerFrom(principal), input));
   }
+}
+
+function ownerFrom(principal: AuthenticatedPrincipal): FarmerOwner {
+  return { tenantId: principal.tenantId, userId: principal.subject };
 }

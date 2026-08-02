@@ -1,10 +1,8 @@
-import { FarmerProfile, CreateFarmerDto, UpdateFarmerDto } from './farmer-profile';
+import type { CreateFarmerDto, FarmerOwner, FarmerProfile, UpdateFarmerDto } from './farmer-profile';
 
 export interface FarmerRepository {
-  findById(id: string): Promise<FarmerProfile | undefined>;
-  findByPhone(phone: string): Promise<FarmerProfile | undefined>;
-  findByTelegramId(telegramId: string): Promise<FarmerProfile | undefined>;
-  findAll(filter?: { region?: string; role?: string }): Promise<FarmerProfile[]>;
-  create(profile: FarmerProfile): Promise<void>;
-  update(id: string, data: UpdateFarmerDto): Promise<void>;
+  findByOwner(owner: FarmerOwner): Promise<FarmerProfile | undefined>;
+  findByPhone(tenantId: string, phone: string): Promise<FarmerProfile | undefined>;
+  create(owner: FarmerOwner, input: CreateFarmerDto): Promise<FarmerProfile>;
+  update(owner: FarmerOwner, input: UpdateFarmerDto): Promise<FarmerProfile | undefined>;
 }

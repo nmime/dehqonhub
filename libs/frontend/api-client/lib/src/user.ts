@@ -1,3 +1,4 @@
+// REQ-AGRITECH-WEB-006: AgriTech pages consume generated OpenAPI path and schema types through this boundary.
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import createClient from 'openapi-fetch';
 import createQueryClient from 'openapi-react-query';
@@ -20,6 +21,28 @@ export const query = createQueryClient(client);
 export type AuthenticatedPrincipalDto = components['schemas']['AuthenticatedPrincipalDto'];
 export type UserProfileViewDto = components['schemas']['UserProfileViewDto'];
 export type ProfilePayloadDto = components['schemas']['ProfilePayloadDto'];
+export type CreateFarmerDto = components['schemas']['CreateFarmerDto'];
+export type FarmerProfileDto = components['schemas']['FarmerProfileDto'];
+export type ProductViewDto = components['schemas']['ProductViewDto'];
+export type ProductListDto = components['schemas']['ProductListDto'];
+export type OrderViewDto = components['schemas']['OrderViewDto'];
+export type OrderListDto = components['schemas']['OrderListDto'];
+
+const farmerPath = '/agritech/farmer';
+const catalogPath = '/agritech/catalog';
+const ordersPath = '/agritech/orders';
+
+export const farmerControllerCreate = (body: CreateFarmerDto, options?: ApiClientRequestOptions) =>
+  client.POST(farmerPath, { ...toOpenApiFetchOptions(options), body });
+
+export const farmerControllerGet = (options?: ApiClientRequestOptions) =>
+  client.GET(farmerPath, toOpenApiFetchOptions(options));
+
+export const productControllerList = (options?: ApiClientRequestOptions) =>
+  client.GET(catalogPath, toOpenApiFetchOptions(options));
+
+export const orderControllerList = (options?: ApiClientRequestOptions) =>
+  client.GET(ordersPath, toOpenApiFetchOptions(options));
 
 export const profileControllerMe = (options?: ApiClientRequestOptions) =>
   client.GET(profileMePath, toOpenApiFetchOptions(options));

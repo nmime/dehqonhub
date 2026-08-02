@@ -2,6 +2,28 @@ import { IsString, IsNumber, IsArray, IsOptional, IsIn, Min } from 'class-valida
 import { ApiProperty } from '@nestjs/swagger';
 import type { ProductCategory } from '@app/backend-feature-product-shared';
 
+export class ProductViewDto {
+  @ApiProperty({ format: 'uuid' }) id!: string;
+  @ApiProperty() name!: string;
+  @ApiProperty({ required: false }) nameRu?: string;
+  @ApiProperty({ enum: ['fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation', 'other'] })
+  category!: ProductCategory;
+  @ApiProperty() description!: string;
+  @ApiProperty() supplierName!: string;
+  @ApiProperty() priceUzs!: number;
+  @ApiProperty() unit!: string;
+  @ApiProperty() stockQuantity!: number;
+  @ApiProperty() region!: string;
+  @ApiProperty({ enum: ['active', 'inactive', 'out_of_stock'] }) status!: string;
+  @ApiProperty({ type: [String] }) images!: string[];
+  @ApiProperty({ format: 'date-time' }) createdAt!: string;
+  @ApiProperty({ format: 'date-time' }) updatedAt!: string;
+}
+
+export class ProductListDto {
+  @ApiProperty({ type: [ProductViewDto] }) items!: ProductViewDto[];
+}
+
 export class CreateProductDto {
   @ApiProperty({ example: 'NitroAmmonka 46%' })
   @IsString()
@@ -42,7 +64,7 @@ export class CreateProductDto {
   @Min(0)
   stockQuantity!: number;
 
-  @ApiProperty({ example: "Toshkent viloyati" })
+  @ApiProperty({ example: 'Toshkent viloyati' })
   @IsString()
   region!: string;
 

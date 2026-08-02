@@ -584,7 +584,11 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
     requiresCapabilities: [],
     requiresApps: [],
     conflictsWith: ['mongodb'],
-    ownedProjects: ['@app/backend-postgres-main', '@app/backend-postgres-main-auth'],
+    ownedProjects: [
+      '@app/backend-postgres-main',
+      '@app/backend-postgres-main-auth',
+      '@app/backend-postgres-main-agritech',
+    ],
     dockerServices: ['postgres', 'migrate'],
     environmentVariables: ['DATABASE_URL'],
     providerTelemetryInstrumentation: {
@@ -593,10 +597,40 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
     },
     backendWiring: [
       {
+        hosts: ['user-app-api'],
+        importName: 'AgriTechPostgresModule',
+        importPath: '@app/backend-postgres-main-agritech',
+        moduleExpression: 'AgriTechPostgresModule',
+      },
+      {
+        hosts: ['user-app-api'],
+        importName: 'FarmerMainModule',
+        importPath: '@app/backend-feature-farmer-main',
+        moduleExpression: 'FarmerMainModule',
+      },
+      {
+        hosts: ['user-app-api'],
+        importName: 'OrderMainModule',
+        importPath: '@app/backend-feature-order-main',
+        moduleExpression: 'OrderMainModule',
+      },
+      {
+        hosts: ['user-app-api'],
+        importName: 'PaymentModule',
+        importPath: '@app/backend-feature-payment-main',
+        moduleExpression: 'PaymentModule',
+      },
+      {
         hosts: 'selected-backend',
         importName: 'PostgresMainModule',
         importPath: '@app/backend-postgres-main',
         moduleExpression: 'PostgresMainModule.forRoot()',
+      },
+      {
+        hosts: ['user-app-api'],
+        importName: 'ProductMainModule',
+        importPath: '@app/backend-feature-product-main',
+        moduleExpression: 'ProductMainModule',
       },
       {
         hosts: 'selected-backend',
