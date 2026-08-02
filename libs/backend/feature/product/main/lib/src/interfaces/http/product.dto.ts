@@ -1,50 +1,50 @@
 import { IsString, IsNumber, IsArray, IsOptional, IsIn, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { ProductCategory } from '@app/backend-feature-product-shared';
+import type { ProductCategory } from '@app/backend-feature-product-shared';
 
 export class CreateProductDto {
   @ApiProperty({ example: 'NitroAmmonka 46%' })
   @IsString()
-  name: string;
+  name!: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
   nameRu?: string;
 
-  @ApiProperty({ enum: ProductCategory })
+  @ApiProperty({ enum: ['fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation', 'other'] })
   @IsIn(['fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation', 'other'])
-  category: ProductCategory;
+  category!: ProductCategory;
 
   @ApiProperty({ example: 'High nitrogen fertilizer for cotton' })
   @IsString()
-  description: string;
+  description!: string;
 
   @ApiProperty({ example: 'supplier-123' })
   @IsString()
-  supplierId: string;
+  supplierId!: string;
 
   @ApiProperty({ example: 'AgroHub' })
   @IsString()
-  supplierName: string;
+  supplierName!: string;
 
   @ApiProperty({ example: 85000 })
   @IsNumber()
   @Min(0)
-  priceUzs: number;
+  priceUzs!: number;
 
   @ApiProperty({ example: '50kg bag' })
   @IsString()
-  unit: string;
+  unit!: string;
 
   @ApiProperty({ example: 500 })
   @IsNumber()
   @Min(0)
-  stockQuantity: number;
+  stockQuantity!: number;
 
   @ApiProperty({ example: "Toshkent viloyati" })
   @IsString()
-  region: string;
+  region!: string;
 
   @ApiProperty({ required: false, isArray: true })
   @IsOptional()

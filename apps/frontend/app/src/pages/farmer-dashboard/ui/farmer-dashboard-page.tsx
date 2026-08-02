@@ -2,10 +2,10 @@ import { observer, useI18n } from '@app/frontend-runtime';
 import { UiButton, UiCard, UiSection, UiStatCard } from '../../../shared/ui';
 
 const stats = [
-  { label: 'Active Orders', value: '3', color: '#22c55e' },
-  { label: 'Total Spent', value: '2.4M UZS', color: '#3b82f6' },
-  { label: 'Farm Size', value: '2.5 ha', color: '#a855f7' },
-  { label: 'Next Delivery', value: 'Aug 5', color: '#f59e0b' },
+  { label: 'Active Orders', value: '3', detail: '2 pending delivery', color: '#22c55e' },
+  { label: 'Total Spent', value: '2.4M UZS', detail: 'This season', color: '#3b82f6' },
+  { label: 'Farm Size', value: '2.5 ha', detail: 'Fergana Valley', color: '#a855f7' },
+  { label: 'Next Delivery', value: 'Aug 5', detail: 'NitroAmmonka 46%', color: '#f59e0b' },
 ];
 
 const quickActions = [
@@ -22,7 +22,7 @@ export const FarmerDashboardPage = observer(function FarmerDashboardPage() {
     <UiSection className="farmer-dashboard" eyebrow="AgroUz" title={t('farmer.dashboard.title')}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
         {stats.map(s => (
-          <UiStatCard key={s.label} label={s.label} value={s.value} color={s.color} />
+          <UiStatCard key={s.label} label={s.label} value={s.value} detail={s.detail} color={s.color} />
         ))}
       </div>
 

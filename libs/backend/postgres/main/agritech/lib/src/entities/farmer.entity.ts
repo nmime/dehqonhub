@@ -29,7 +29,7 @@ export const FarmerEntitySchema = new EntitySchema<FarmerEntity>({
   tableName: 'farmers',
   properties: {
     id: { type: 'uuid', primary: true },
-    phone: { type: 'varchar', length: 20 },
+    phone: { type: 'varchar', length: 20, unique: true },
     firstName: { type: 'varchar', length: 100, fieldName: 'first_name' },
     lastName: { type: 'varchar', length: 100, fieldName: 'last_name' },
     region: { type: 'varchar', length: 100 },
@@ -46,7 +46,7 @@ export const FarmerEntitySchema = new EntitySchema<FarmerEntity>({
     updatedAt: { type: 'timestamptz', fieldName: 'updated_at', onCreate: () => new Date(), onUpdate: () => new Date() },
   },
   indexes: [
-    { name: 'ix__farmers__phone', properties: ['phone'], unique: true },
+    { name: 'ix__farmers__phone', properties: ['phone'] },
     { name: 'ix__farmers__region', properties: ['region'] },
     { name: 'ix__farmers__role', properties: ['role'] },
     { name: 'ix__farmers__telegram_id', properties: ['telegramId'] },

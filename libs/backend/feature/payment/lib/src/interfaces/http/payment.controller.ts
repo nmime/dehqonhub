@@ -1,6 +1,6 @@
 import { Controller, Post, Body } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
-import { CreatePaymentUseCase, HandlePaymentCallbackUseCase } from '../application/payment.use-cases';
+import { CreatePaymentUseCase, HandlePaymentCallbackUseCase } from '@app/backend-feature-payment';
 
 @ApiTags('payments')
 @Controller('api/v1/payments')

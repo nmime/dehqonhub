@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Patch, Body, Param, Query } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { CreateOrderUseCase, GetOrderUseCase, ListFarmerOrdersUseCase } from '@app/backend-feature-order-shared';
+import type { CreateOrderDto as DomainCreateOrderDto } from '@app/backend-feature-order-shared';
 import { CreateOrderDto, UpdateOrderStatusDto } from './order.dto';
 
 @ApiTags('orders')
@@ -15,7 +16,7 @@ export class OrderController {
   @Post()
   @ApiOperation({ summary: 'Place a new input order' })
   async create(@Body() dto: CreateOrderDto) {
-    return this.createOrder.execute(dto);
+    return this.createOrder.execute(dto as unknown as DomainCreateOrderDto);
   }
 
   @Get(':id')

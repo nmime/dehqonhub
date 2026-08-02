@@ -1,3 +1,1 @@
-import { InjectionToken } from '@nestjs/common';
-
-export const ProductRepositoryInjectToken = new InjectionToken('ProductRepository');
+export const ProductRepositoryInjectToken = 'ProductRepository';

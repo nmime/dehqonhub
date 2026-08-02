@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { Order, CreateOrderDto, OrderItem, OrderRepository, ProductQueryService } from '../domain';
+import { Order, CreateOrderDto, OrderItem, ProductQueryService } from '../domain';
+import type { OrderRepository } from '../domain';
 import { OrderRepositoryInjectToken, ProductQueryServiceInjectToken } from './inject-tokens';
 
 @Injectable()

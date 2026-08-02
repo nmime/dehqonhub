@@ -1,5 +1,6 @@
 import { Injectable, Inject } from '@nestjs/common';
-import { FarmerProfile, CreateFarmerDto, FarmerRepository } from '../domain';
+import { FarmerProfile, CreateFarmerDto } from '../domain';
+import type { FarmerRepository } from '../domain';
 import { FarmerRepositoryInjectToken } from './inject-tokens';
 
 @Injectable()
