@@ -1,4 +1,4 @@
-// REQ-AGRITECH-WEB-006: AgriTech pages consume generated OpenAPI path and schema types through this boundary.
+// REQ-AGRITECH-WEB-006 REQ-AGRITECH-ROUTING-015: AgriTech pages consume generated OpenAPI path and schema types through this boundary.
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import createClient from 'openapi-fetch';
 import createQueryClient from 'openapi-react-query';
@@ -51,22 +51,22 @@ export type AdvisoryListDto = components['schemas']['AdvisoryListDto'];
 export type CreatePaymentDto = components['schemas']['CreatePaymentDto'];
 export type PaymentHandoffViewDto = components['schemas']['PaymentHandoffViewDto'];
 
-const farmerPath = '/agritech/farmer';
-const catalogPath = '/agritech/catalog';
-const ordersPath = '/agritech/orders';
-const agritechPartnersPath = '/agritech/partners';
-const agritechSupplierProductsPath = '/agritech/supplier/products';
-const agritechSupplierProductPath = '/agritech/supplier/products/{id}';
-const agritechProducePath = '/agritech/produce';
-const agritechProducePricesPath = '/agritech/produce/prices';
-const agritechProduceReservationPath = '/agritech/produce/{id}/reservations';
-const agritechProduceCancelPath = '/agritech/produce/{id}/cancel';
-const agritechAssignedFarmersPath = '/agritech/field-agent/farmers';
-const agritechDeliveriesPath = '/agritech/deliveries';
-const agritechDeliveryPath = '/agritech/deliveries/{id}';
-const agritechFieldVisitsPath = '/agritech/field-visits';
-const agritechAdvisoriesPath = '/agritech/advisories';
-const agritechPaymentsPath = '/agritech/payments';
+const farmerPath = '/farmer';
+const catalogPath = '/catalog';
+const ordersPath = '/orders';
+const agritechPartnersPath = '/partners';
+const agritechSupplierProductsPath = '/supplier/products';
+const agritechSupplierProductPath = '/supplier/products/{id}';
+const agritechProducePath = '/produce';
+const agritechProducePricesPath = '/produce/prices';
+const agritechProduceReservationPath = '/produce/{id}/reservations';
+const agritechProduceCancelPath = '/produce/{id}/cancel';
+const agritechAssignedFarmersPath = '/field-agent/farmers';
+const agritechDeliveriesPath = '/deliveries';
+const agritechDeliveryPath = '/deliveries/{id}';
+const agritechFieldVisitsPath = '/field-visits';
+const agritechAdvisoriesPath = '/advisories';
+const agritechPaymentsPath = '/payments';
 
 export const agriTechOperationsControllerListPartners = (options?: ApiClientRequestOptions) =>
   client.GET(agritechPartnersPath, toOpenApiFetchOptions(options));

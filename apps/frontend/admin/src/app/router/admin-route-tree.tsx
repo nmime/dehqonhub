@@ -41,7 +41,6 @@ const paths = [
   '/audit',
   '/audit/$',
   '/auth/login-analytics',
-  '/agritech',
   '/profile',
   '/settings/errors',
   '/settings/feature-flags',

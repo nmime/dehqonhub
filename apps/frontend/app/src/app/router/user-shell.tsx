@@ -66,18 +66,14 @@ export const UserShell = observer(function UserShell() {
   const actions = [
     { href: '/', isCurrent: route === '/', label: t('user.nav.home') },
     {
-      href: '/marketplace',
-      isCurrent: route === '/marketplace',
-      label: t('user.nav.marketplace'),
+      href: '/auth',
+      isCurrent: route === '/auth' || route === '/auth/discord/callback' || route === '/auth/telegram/callback',
+      label: t('user.nav.auth'),
       variant: 'secondary' as const,
     },
     {
       href: '/profile',
-      isCurrent:
-        route === '/profile' ||
-        route === '/auth' ||
-        route === '/auth/discord/callback' ||
-        route === '/auth/telegram/callback',
+      isCurrent: route === '/profile',
       label: t('user.nav.profile'),
       variant: 'secondary' as const,
     },

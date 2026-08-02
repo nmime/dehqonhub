@@ -788,7 +788,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/admin/agritech/partners': {
+  '/admin/partners': {
     parameters: {
       query?: never;
       header?: never;
@@ -804,7 +804,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/admin/agritech/partners/{id}/status': {
+  '/admin/partners/{id}/status': {
     parameters: {
       query?: never;
       header?: never;
@@ -820,7 +820,7 @@ export interface paths {
     patch: operations['AgriTechAdminController_setPartnerStatus'];
     trace?: never;
   };
-  '/admin/agritech/farmers/{id}/assignment': {
+  '/admin/farmers/{id}/assignment': {
     parameters: {
       query?: never;
       header?: never;
@@ -836,7 +836,7 @@ export interface paths {
     patch: operations['AgriTechAdminController_assignFarmer'];
     trace?: never;
   };
-  '/admin/agritech/farmers': {
+  '/admin/farmers': {
     parameters: {
       query?: never;
       header?: never;
@@ -852,7 +852,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/admin/agritech/farmers/{id}/status': {
+  '/admin/farmers/{id}/status': {
     parameters: {
       query?: never;
       header?: never;
@@ -868,7 +868,7 @@ export interface paths {
     patch: operations['AgriTechAdminController_setFarmerStatus'];
     trace?: never;
   };
-  '/admin/agritech/orders': {
+  '/admin/orders': {
     parameters: {
       query?: never;
       header?: never;
@@ -884,7 +884,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/admin/agritech/deliveries': {
+  '/admin/deliveries': {
     parameters: {
       query?: never;
       header?: never;
@@ -900,7 +900,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/admin/agritech/advisories': {
+  '/admin/advisories': {
     parameters: {
       query?: never;
       header?: never;
@@ -916,7 +916,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/admin/agritech/analytics': {
+  '/admin/analytics': {
     parameters: {
       query?: never;
       header?: never;
@@ -932,7 +932,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/admin/agritech/pilots': {
+  '/admin/pilots': {
     parameters: {
       query?: never;
       header?: never;
@@ -948,7 +948,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/admin/agritech/pilots/{id}/status': {
+  '/admin/pilots/{id}/status': {
     parameters: {
       query?: never;
       header?: never;
@@ -964,7 +964,7 @@ export interface paths {
     patch: operations['AgriTechAdminController_setPilotStatus'];
     trace?: never;
   };
-  '/admin/agritech/integrations': {
+  '/admin/integrations': {
     parameters: {
       query?: never;
       header?: never;

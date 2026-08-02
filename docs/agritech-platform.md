@@ -40,6 +40,28 @@ wiring and `.nrb` ownership metadata. AgriTech has no implicit default app: the
 capability explicitly wires its user module to `user-app-api`, its admin module
 to `admin-app-api`, and its persistence adapter to both processes.
 
+## Canonical product routes
+
+This repository is the AgriTech product, so its first-party HTTP surfaces do
+not add a second `agritech` namespace:
+
+- the user product starts at `/`, with direct workflows such as `/catalog`,
+  `/dashboard`, and `/farmer/register`;
+- user API resources are direct paths such as `/farmer`, `/catalog`, `/orders`,
+  `/partners`, `/produce`, `/deliveries`, `/advisories`, and `/payments`;
+- the privileged product starts at `/admin`, while the generic operational
+  dashboard remains available at `/admin/dashboard`;
+- privileged AgriTech APIs retain the authorization boundary but use direct
+  resources such as `/admin/partners`, `/admin/farmers`, `/admin/orders`,
+  `/admin/analytics`, and `/admin/integrations`.
+
+The old `/marketplace`, `/admin/agritech`, `/agritech/*`, and
+`/admin/agritech/*` HTTP routes are breaking removals. They have no redirects or
+compatibility aliases: deploy the matching API and first-party clients as one
+revision, and roll them back together if needed. No database rollback is
+required. AgriTech domain names and the Telegram `/agritech` command remain
+intentional because they are not HTTP namespace ownership.
+
 ## State and isolation guarantees
 
 - Every mutable marketplace record carries `tenantId`; user operations derive

@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-FULFILLMENT-010
+// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ROUTING-015
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -102,7 +102,7 @@ class CreateFieldVisitDto {
 @ApiTags('agritech-operations')
 @ApiExceptions(400, 401, 403, 404, 409, 500)
 @ApiSessionCookieAuth()
-@Controller('agritech')
+@Controller()
 export class AgriTechOperationsController {
   constructor(private readonly service: AgriTechOperationsService) {}
 

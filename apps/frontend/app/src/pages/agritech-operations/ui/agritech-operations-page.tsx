@@ -206,7 +206,7 @@ export const AgriTechOperationsPage = observer(function AgriTechOperationsPage()
           {
             orderId,
             provider,
-            returnUrl: `${globalThis.location.origin}/marketplace`,
+            returnUrl: `${globalThis.location.origin}/`,
             idempotencyKey: `${provider}:${orderId}`,
             locale,
           },

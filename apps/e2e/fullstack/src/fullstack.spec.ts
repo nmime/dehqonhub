@@ -1,5 +1,5 @@
-// @requirements REQ-FRONTEND-JOURNEY-001
-// Evidence for: REQ-AUTH-FRONTEND-009 REQ-AUTH-IDENTITY-005 REQ-AUTH-SESSION-002 REQ-FRONTEND-ACCESSIBILITY-003 REQ-FRONTEND-ERROR-005 REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-SHELL-004 REQ-FRONTEND-SSR-007 REQ-NOTIFY-PREFERENCE-006
+// @requirements REQ-AGRITECH-ROUTING-015 REQ-FRONTEND-JOURNEY-001
+// Evidence for: REQ-AGRITECH-ROUTING-015 REQ-AUTH-FRONTEND-009 REQ-AUTH-IDENTITY-005 REQ-AUTH-SESSION-002 REQ-FRONTEND-ACCESSIBILITY-003 REQ-FRONTEND-ERROR-005 REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-SHELL-004 REQ-FRONTEND-SSR-007 REQ-NOTIFY-PREFERENCE-006
 import { randomUUID } from 'node:crypto';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 // Runtime journey evidence for REQ-AUTH-SESSION-002 and
@@ -137,24 +137,28 @@ async function expectPageQuality(page: Page, label: string): Promise<void> {
 }
 
 async function focusWithKeyboard(page: Page, target: Locator, label: string): Promise<void> {
-  await page.evaluate(() => {
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-  });
+  const traversalKeys = ['Tab', 'Alt+Tab'] as const;
 
   /* eslint-disable no-await-in-loop -- keyboard focus order and its presentation must be inspected sequentially */
-  for (let index = 0; index < 30; index += 1) {
-    await page.keyboard.press('Tab');
-    if (await target.evaluate((element) => element === document.activeElement)) {
-      await expect(target, `${label} should remain visible when keyboard-focused`).toBeVisible();
-      const focusPresentation = await target.evaluate((element) => ({
-        boxShadow: getComputedStyle(element).boxShadow,
-        focusVisible: element.matches(':focus-visible'),
-      }));
-      expect(focusPresentation.focusVisible, `${label} should match :focus-visible`).toBe(true);
-      expect(focusPresentation.boxShadow, `${label} should render a visible focus indicator`).not.toBe('none');
-      return;
+  for (const traversalKey of traversalKeys) {
+    await page.evaluate(() => {
+      if (document.activeElement instanceof HTMLElement) {
+        document.activeElement.blur();
+      }
+    });
+
+    for (let index = 0; index < 30; index += 1) {
+      await page.keyboard.press(traversalKey);
+      if (await target.evaluate((element) => element === document.activeElement)) {
+        await expect(target, `${label} should remain visible when keyboard-focused`).toBeVisible();
+        const focusPresentation = await target.evaluate((element) => ({
+          boxShadow: getComputedStyle(element).boxShadow,
+          focusVisible: element.matches(':focus-visible'),
+        }));
+        expect(focusPresentation.focusVisible, `${label} should match :focus-visible`).toBe(true);
+        expect(focusPresentation.boxShadow, `${label} should render a visible focus indicator`).not.toBe('none');
+        return;
+      }
     }
   }
   /* eslint-enable no-await-in-loop */
@@ -247,7 +251,7 @@ test('landing journey exposes public destinations at the 320px viewport floor', 
   await focusWithKeyboard(page, userAppLink, 'landing user-app link');
   await page.keyboard.press('Enter');
   await expect(page).toHaveURL(`${urls.userApp}/`);
-  await expect(page.getByRole('heading', { level: 1, name: 'A clear place to manage your account.' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Agriculture, coordinated from one place.' })).toBeVisible();
 
   await gotoWithRetry(page, urls.landingApp);
   const adminAppLink = page.getByRole('link', { name: 'Preview admin app' });
@@ -287,7 +291,7 @@ test('site sends meaningful SSR HTML and hydrates client-side navigation without
   await page.evaluate(() => {
     document.documentElement.dataset['hydrationNavigationProof'] = 'preserved';
   });
-  await page.getByRole('link', { name: 'Nest React Boilerplate' }).click();
+  await page.getByRole('link', { name: 'AgriTech' }).click();
   await expect(
     page.getByRole('heading', {
       level: 1,
@@ -483,7 +487,7 @@ test('admin API accepts only its cookie session and ignores browser URL tokens',
   expect(await adminProfile.text()).toContain('admin@example.com');
 
   await gotoWithRetry(page, `${urls.adminApp}/admin`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Admin dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'AgriTech control center' })).toBeVisible();
   const openNavigation = page.getByRole('button', { name: 'Open navigation' });
   if (await openNavigation.isVisible()) {
     await openNavigation.click();
@@ -493,11 +497,11 @@ test('admin API accepts only its cookie session and ignores browser URL tokens',
   await expect(page).toHaveURL(`${urls.adminApp}/admin/roles`);
   await expect(page.getByRole('heading', { level: 1, name: 'Roles and permissions' })).toBeVisible();
   await page.goBack();
-  await expect(page.getByRole('heading', { level: 1, name: 'Admin dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'AgriTech control center' })).toBeVisible();
   await page.reload();
-  await expect(page.getByRole('heading', { level: 1, name: 'Admin dashboard' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'AgriTech control center' })).toBeVisible();
   await page.setViewportSize({ width: 320, height: 720 });
-  await expectPageQuality(page, 'authenticated admin dashboard');
+  await expectPageQuality(page, 'authenticated AgriTech admin root');
 
   const rolesNavigation = await page.context().request.get(`${urls.adminApp}/admin/roles`, {
     headers: { Accept: 'text/html' },

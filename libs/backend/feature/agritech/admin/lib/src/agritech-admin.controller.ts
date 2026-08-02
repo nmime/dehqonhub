@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013
+// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-ROUTING-015
 import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
 import { ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
@@ -78,7 +78,7 @@ class PilotStatusDto {
 @ApiExceptions(400, 401, 403, 404, 409, 500)
 @ApiSessionCookieAuth()
 @UseGuards(new AdminRbacGuard())
-@Controller('admin/agritech')
+@Controller('admin')
 export class AgriTechAdminController {
   constructor(private readonly service: AgriTechOperationsService) {}
 

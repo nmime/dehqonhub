@@ -390,3 +390,73 @@ requirements:
         file: scripts/compose-production.spec.mjs
         script: test:deploy
         lanes: [pr, main]
+  - id: REQ-AGRITECH-ROUTING-015
+    projects:
+      [
+        user-app,
+        admin-app,
+        mobile-app,
+        fullstack-e2e,
+        user-app-api,
+        admin-app-api,
+        '@repo/tooling',
+        '@app/frontend-api-client',
+        '@app/frontend-feature-user-i18n',
+        '@app/backend-feature-agritech-main',
+        '@app/backend-feature-agritech-admin',
+        '@app/backend-feature-farmer-main',
+        '@app/backend-feature-order-main',
+        '@app/backend-feature-payment-main',
+        '@app/backend-feature-product-main',
+      ]
+    risk: high
+    profiles: [api]
+    cucumber:
+      disposition: not-applicable
+      reason: Exact product-root provider and consumer paths are more faithfully verified through route metadata, rendered route boundaries, and generated contract freshness.
+      alternativeEvidence: [vitest, playwright, contract, static]
+    evidence:
+      - kind: vitest
+        file: apps/frontend/app/src/app/app.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/admin/src/app/admin-routing.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/backend/user/user-app-api/src/agritech-product-routes.spec.ts
+        target: user-app-api:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/backend/admin/admin-app-api/src/agritech-product-routes.spec.ts
+        target: admin-app-api:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/e2e/fullstack/src/fullstack.spec.ts
+        target: fullstack-e2e:e2e
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/user.ts
+        target: '@app/frontend-api-client:build'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/admin.ts
+        target: '@app/frontend-api-client:build'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/user.ts
+        script: api:contracts:check
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/user.ts
+        script: api:clients:check
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/user.ts
+        script: api:toast-config:check
+        lanes: [pr, main]
+      - kind: static
+        file: libs/frontend/api-client/lib/src/user.ts
+        script: api:openapi:lint
+        lanes: [pr, main]

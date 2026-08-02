@@ -1,5 +1,5 @@
-// @requirements REQ-FRONTEND-SHELL-004
-// Evidence for: REQ-FRONTEND-SHELL-004
+// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015
+// Evidence for: REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -21,7 +21,7 @@ describe('admin route base handling', () => {
   const access = createAdminAccess({
     subject: 'admin-id',
     roles: ['admin'],
-    permissions: ['admin:dashboard:read', 'admin:profile:read'],
+    permissions: ['admin:agritech:read', 'admin:dashboard:read', 'admin:profile:read'],
   });
   const payload = {
     principal: { subject: 'admin-id' },
@@ -41,8 +41,13 @@ describe('admin route base handling', () => {
     expect(normalizeAdminPath('/profile')).toBe('/profile');
   });
 
-  it('renders dashboard and profile routes when mounted at /admin', () => {
-    expect(renderAdminMarkup(renderAdminRoute('/admin', { status: 'ready', payload, access }))).toContain(
+  it('renders the AgriTech product root, dashboard, and profile under /admin', () => {
+    expect(
+      renderAdminMarkup(
+        renderAdminRoute('/admin', { status: 'ready', payload, access }, undefined, { requestOptions: {} }),
+      ),
+    ).toContain('AgriTech control center');
+    expect(renderAdminMarkup(renderAdminRoute('/admin/dashboard', { status: 'ready', payload, access }))).toContain(
       'Admin dashboard',
     );
     expect(
@@ -79,6 +84,7 @@ describe('admin route base handling', () => {
       roles: ['admin'],
       permissions: [
         'admin:dashboard:read',
+        'admin:agritech:read',
         'admin:profile:read',
         'admin:users:read',
         'admin:roles:read',
@@ -98,6 +104,9 @@ describe('admin route base handling', () => {
     );
 
     expect(html).toContain('href="/admin/users"');
+    expect(html).toContain('href="/admin"');
+    expect(html).toContain('href="/admin/dashboard"');
+    expect(html).not.toContain('href="/admin/agritech"');
     expect(html).toContain('href="/admin/roles"');
     expect(html).toContain('href="/admin/audit"');
     expect(html).toContain('href="/admin/auth/login-analytics"');
@@ -145,6 +154,15 @@ describe('admin route base handling', () => {
 
     expect(
       renderAdminMarkup(
+        renderAdminRoute('/admin/agritech', {
+          status: 'ready',
+          payload,
+          access: fullAccess,
+        }),
+      ),
+    ).toContain('Admin page not found');
+    expect(
+      renderAdminMarkup(
         renderAdminRoute('/users-but-not-users', {
           status: 'ready',
           payload,
@@ -185,6 +203,9 @@ describe('admin frontend CASL RBAC gating', () => {
     expect(access.canReadDashboard).toBe(false);
     expect(access.canReadProfile).toBe(false);
     expect(renderAdminMarkup(renderAdminRoute('/admin', { status: 'ready', payload: {}, access }))).toContain(
+      'AgriTech read permission is required.',
+    );
+    expect(renderAdminMarkup(renderAdminRoute('/admin/dashboard', { status: 'ready', payload: {}, access }))).toContain(
       'Missing admin dashboard permission',
     );
   });

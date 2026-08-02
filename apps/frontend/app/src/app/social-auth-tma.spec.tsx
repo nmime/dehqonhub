@@ -175,7 +175,7 @@ describe('social auth and TMA UI', () => {
     fireEvent.click(screen.getAllByRole('button', { name: 'Share' })[0]);
     expect(tma.shareURL).toHaveBeenCalledWith(
       'https://app.local.test/tma?startapp=profile',
-      'Sign in, review your profile, and manage preferences across web and Telegram.',
+      'Manage partners, inputs, produce, orders, delivery, payments, and field operations.',
     );
     act(() => {
       tma.backButton.onClick.mock.calls[0]?.[0]();
@@ -198,8 +198,8 @@ describe('social auth and TMA UI', () => {
       expect(share).toHaveBeenCalledOnce();
     });
     expect(share).toHaveBeenCalledWith({
-      text: 'Sign in, review your profile, and manage preferences across web and Telegram.',
-      title: 'Nest React Boilerplate',
+      text: 'Manage partners, inputs, produce, orders, delivery, payments, and field operations.',
+      title: 'AgriTech',
       url: 'https://app.local.test/profile?ref=friend',
     });
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));

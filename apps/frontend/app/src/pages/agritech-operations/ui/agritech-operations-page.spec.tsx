@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006
+// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-ROUTING-015
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiClientProvider, userApi } from '@app/frontend-api-client';
@@ -147,6 +147,32 @@ describe('AgriTech operations page', () => {
     });
   });
 
+  it('does not coerce binary form entries into API text fields', async () => {
+    mockInitialLoad();
+    const createPartner = vi
+      .spyOn(userApi, 'agriTechOperationsControllerCreatePartner')
+      .mockResolvedValue(ok({ id: 'partner-1' }) as never);
+    renderPage();
+    await screen.findByRole('heading', { name: 'AgriTech Operations' });
+
+    vi.stubGlobal(
+      'FormData',
+      class {
+        get() {
+          return new File(['binary'], 'binary.dat');
+        }
+      },
+    );
+    fireEvent.submit(screen.getByRole('button', { name: 'Register organization' }).closest('form')!);
+
+    await waitFor(() => {
+      expect(createPartner).toHaveBeenCalledWith(
+        { kind: '', legalName: '', phone: '', region: '', taxId: '' },
+        expect.any(Object),
+      );
+    });
+  });
+
   it('runs inventory, produce, reservation, pricing, payment, delivery, and advisory workflows', async () => {
     mockOperationalLoad();
     const createPartner = vi
@@ -243,7 +269,12 @@ describe('AgriTech operations page', () => {
       // eslint-disable-next-line no-await-in-loop -- each payment handoff must complete before the next click.
       await waitFor(() => {
         expect(createPayment).toHaveBeenCalledWith(
-          expect.objectContaining({ orderId: 'order-new', provider, idempotencyKey: `${provider}:order-new` }),
+          expect.objectContaining({
+            orderId: 'order-new',
+            provider,
+            idempotencyKey: `${provider}:order-new`,
+            returnUrl: 'http://localhost/',
+          }),
           expect.any(Object),
         );
       });

@@ -1,8 +1,9 @@
-// @requirements REQ-FRONTEND-SHELL-004
+// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015
 import type { ReactElement } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { adminApi } from '@app/frontend-api-client';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
 import { adminFrontendTranslations } from '@app/frontend-feature-admin-i18n';
 import App, { getProfileState, renderAdminRoute } from '../App';
@@ -104,6 +105,7 @@ const profilePayload = {
     roles: ['admin'],
     permissions: [
       'admin:dashboard:read',
+      'admin:agritech:read',
       'admin:profile:read',
       'admin:users:read',
       'admin:roles:read',
@@ -134,6 +136,39 @@ const renderAdminMarkup = (element: ReactElement): string =>
     </FrontendStateProvider>,
   );
 
+const mockAgriTechAdminLoad = () => {
+  const ok = <T,>(data: T) => ({ data, error: undefined, response: new Response(null, { status: 200 }) });
+  vi.spyOn(adminApi, 'agriTechAdminControllerListPartners').mockResolvedValue(ok({ items: [] }) as never);
+  vi.spyOn(adminApi, 'agriTechAdminControllerListFarmers').mockResolvedValue(ok({ items: [] }) as never);
+  vi.spyOn(adminApi, 'agriTechAdminControllerListOrders').mockResolvedValue(ok({ items: [] }) as never);
+  vi.spyOn(adminApi, 'agriTechAdminControllerListPilots').mockResolvedValue(ok({ items: [] }) as never);
+  vi.spyOn(adminApi, 'agriTechAdminControllerIntegrations').mockResolvedValue(ok({ items: [] }) as never);
+  vi.spyOn(adminApi, 'agriTechAdminControllerAnalytics').mockResolvedValue(
+    ok({
+      activeInputProducts: 0,
+      activeProduceListings: 0,
+      activeFarmers: 0,
+      approvedBuyers: 0,
+      approvedSuppliers: 0,
+      commissionBasisPoints: 800,
+      deliveredOrders: 0,
+      farmers: 0,
+      fulfillmentRateBasisPoints: 0,
+      gmvUzs: 0,
+      inputStockUnits: 0,
+      orders: 0,
+      paidPayments: 0,
+      partnerApplications: 0,
+      pendingFarmers: 0,
+      pendingPartners: 0,
+      platformCommissionUzs: 0,
+      produceAvailableKg: 0,
+      repeatBuyerRateBasisPoints: 0,
+      repeatBuyers: 0,
+    }) as never,
+  );
+};
+
 describe('App', () => {
   beforeEach(() => {
     installRadixPointerMocks();
@@ -147,6 +182,7 @@ describe('App', () => {
     });
     window.localStorage.clear();
     window.sessionStorage.clear();
+    window.history.pushState({}, '', '/admin/dashboard');
     vi.stubEnv('VITE_ADMIN_API_BASE_URL', 'https://admin.example.test');
     vi.stubEnv('VITE_AUTH_API_BASE_URL', 'https://auth.example.test');
     vi.stubEnv('VITE_API_BASE_URL_MODE', undefined);
@@ -159,14 +195,18 @@ describe('App', () => {
     vi.restoreAllMocks();
   });
 
-  it('renders the admin dashboard from live profile and summary responses', async () => {
+  it('renders the AgriTech admin product from the canonical root', async () => {
+    window.history.pushState({}, '', '/admin');
+    mockAgriTechAdminLoad();
     const fetchImpl = mockFetch(true, profilePayload);
     vi.stubGlobal('fetch', fetchImpl);
     vi.spyOn(window.history, 'replaceState').mockImplementation(() => undefined);
 
     render(<App />);
 
-    expect((await screen.findAllByText(/Admin dashboard|Панель администратора/u)).length).toBeGreaterThan(0);
+    expect((await screen.findAllByText(/AgriTech control center|Центр управления AgriTech/u)).length).toBeGreaterThan(
+      0,
+    );
     expect(getRequest(fetchImpl).url).toBe('https://auth.example.test/auth/me');
   });
 

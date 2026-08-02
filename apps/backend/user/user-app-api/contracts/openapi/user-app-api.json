@@ -297,7 +297,7 @@
         "tags": ["Profile"]
       }
     },
-    "/agritech/partners": {
+    "/partners": {
       "post": {
         "operationId": "AgriTechOperationsController_createPartner",
         "parameters": [],
@@ -887,7 +887,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/supplier/products": {
+    "/supplier/products": {
       "post": {
         "operationId": "AgriTechOperationsController_createSupplierProduct",
         "parameters": [],
@@ -1477,7 +1477,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/supplier/products/{id}": {
+    "/supplier/products/{id}": {
       "patch": {
         "operationId": "AgriTechOperationsController_updateSupplierProduct",
         "parameters": [
@@ -1787,7 +1787,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/produce": {
+    "/produce": {
       "post": {
         "operationId": "AgriTechOperationsController_createProduce",
         "parameters": [],
@@ -2403,7 +2403,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/produce/prices": {
+    "/produce/prices": {
       "get": {
         "operationId": "AgriTechOperationsController_discoverPrice",
         "parameters": [
@@ -2720,7 +2720,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/produce/{id}/reservations": {
+    "/produce/{id}/reservations": {
       "post": {
         "operationId": "AgriTechOperationsController_reserveProduce",
         "parameters": [
@@ -3030,7 +3030,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/produce/{id}/cancel": {
+    "/produce/{id}/cancel": {
       "patch": {
         "operationId": "AgriTechOperationsController_cancelProduce",
         "parameters": [
@@ -3330,7 +3330,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/field-agent/farmers": {
+    "/field-agent/farmers": {
       "get": {
         "operationId": "AgriTechOperationsController_listAssignedFarmers",
         "parameters": [],
@@ -3621,7 +3621,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/deliveries": {
+    "/deliveries": {
       "get": {
         "operationId": "AgriTechOperationsController_listDeliveries",
         "parameters": [],
@@ -3912,7 +3912,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/deliveries/{id}": {
+    "/deliveries/{id}": {
       "patch": {
         "operationId": "AgriTechOperationsController_transitionDelivery",
         "parameters": [
@@ -4222,7 +4222,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/field-visits": {
+    "/field-visits": {
       "post": {
         "operationId": "AgriTechOperationsController_recordFieldVisit",
         "parameters": [],
@@ -4523,7 +4523,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/advisories": {
+    "/advisories": {
       "get": {
         "operationId": "AgriTechOperationsController_listAdvisories",
         "parameters": [],
@@ -4814,7 +4814,7 @@
         "tags": ["agritech-operations"]
       }
     },
-    "/agritech/farmer": {
+    "/farmer": {
       "post": {
         "operationId": "FarmerController_create",
         "parameters": [],
@@ -5574,7 +5574,7 @@
         "tags": ["agritech-farmer"]
       }
     },
-    "/agritech/orders": {
+    "/orders": {
       "post": {
         "operationId": "OrderController_create",
         "parameters": [],
@@ -6078,7 +6078,7 @@
         "tags": ["agritech-orders"]
       }
     },
-    "/agritech/orders/{id}": {
+    "/orders/{id}": {
       "get": {
         "operationId": "OrderController_get",
         "parameters": [
@@ -6335,7 +6335,7 @@
         "tags": ["agritech-orders"]
       }
     },
-    "/agritech/payments": {
+    "/payments": {
       "post": {
         "operationId": "PaymentController_create",
         "parameters": [],
@@ -6636,7 +6636,7 @@
         "tags": ["agritech-payments"]
       }
     },
-    "/agritech/payments/payme/callback": {
+    "/payments/payme/callback": {
       "post": {
         "operationId": "PaymentController_payme",
         "parameters": [],
@@ -6648,7 +6648,7 @@
         "tags": ["agritech-payments"]
       }
     },
-    "/agritech/payments/click/prepare": {
+    "/payments/click/prepare": {
       "post": {
         "operationId": "PaymentController_clickPrepare",
         "parameters": [],
@@ -6660,7 +6660,7 @@
         "tags": ["agritech-payments"]
       }
     },
-    "/agritech/payments/click/complete": {
+    "/payments/click/complete": {
       "post": {
         "operationId": "PaymentController_clickComplete",
         "parameters": [],
@@ -6672,7 +6672,7 @@
         "tags": ["agritech-payments"]
       }
     },
-    "/agritech/catalog": {
+    "/catalog": {
       "get": {
         "operationId": "ProductController_list",
         "parameters": [],
@@ -6877,7 +6877,7 @@
         "tags": ["agritech-catalog"]
       }
     },
-    "/agritech/catalog/{id}": {
+    "/catalog/{id}": {
       "get": {
         "operationId": "ProductController_getById",
         "parameters": [

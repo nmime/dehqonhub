@@ -9,9 +9,9 @@
   "rules": [
     {
       "display": "silent",
-      "id": "admin-app-api:POST:/admin/agritech/advisories:200",
+      "id": "admin-app-api:POST:/admin/advisories:200",
       "match": {
-        "endpoint": "/admin/agritech/advisories",
+        "endpoint": "/admin/advisories",
         "method": "POST",
         "status": 200
       },
@@ -24,7 +24,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_publishAdvisory",
-        "path": "/admin/agritech/advisories",
+        "path": "/admin/advisories",
         "method": "POST",
         "status": 200,
         "tags": ["admin-agritech"],
@@ -35,9 +35,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/advisories:400",
+      "id": "admin-app-api:POST:/admin/advisories:400",
       "match": {
-        "endpoint": "/admin/agritech/advisories",
+        "endpoint": "/admin/advisories",
         "method": "POST",
         "status": 400
       },
@@ -50,7 +50,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_publishAdvisory",
-        "path": "/admin/agritech/advisories",
+        "path": "/admin/advisories",
         "method": "POST",
         "status": 400,
         "tags": ["admin-agritech"],
@@ -61,9 +61,9 @@
     },
     {
       "display": "silent",
-      "id": "admin-app-api:POST:/admin/agritech/advisories:401",
+      "id": "admin-app-api:POST:/admin/advisories:401",
       "match": {
-        "endpoint": "/admin/agritech/advisories",
+        "endpoint": "/admin/advisories",
         "method": "POST",
         "status": 401
       },
@@ -76,7 +76,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_publishAdvisory",
-        "path": "/admin/agritech/advisories",
+        "path": "/admin/advisories",
         "method": "POST",
         "status": 401,
         "tags": ["admin-agritech"],
@@ -87,9 +87,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/advisories:403",
+      "id": "admin-app-api:POST:/admin/advisories:403",
       "match": {
-        "endpoint": "/admin/agritech/advisories",
+        "endpoint": "/admin/advisories",
         "method": "POST",
         "status": 403
       },
@@ -102,7 +102,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_publishAdvisory",
-        "path": "/admin/agritech/advisories",
+        "path": "/admin/advisories",
         "method": "POST",
         "status": 403,
         "tags": ["admin-agritech"],
@@ -113,9 +113,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/advisories:404",
+      "id": "admin-app-api:POST:/admin/advisories:404",
       "match": {
-        "endpoint": "/admin/agritech/advisories",
+        "endpoint": "/admin/advisories",
         "method": "POST",
         "status": 404
       },
@@ -128,7 +128,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_publishAdvisory",
-        "path": "/admin/agritech/advisories",
+        "path": "/admin/advisories",
         "method": "POST",
         "status": 404,
         "tags": ["admin-agritech"],
@@ -139,9 +139,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/advisories:409",
+      "id": "admin-app-api:POST:/admin/advisories:409",
       "match": {
-        "endpoint": "/admin/agritech/advisories",
+        "endpoint": "/admin/advisories",
         "method": "POST",
         "status": 409
       },
@@ -154,7 +154,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_publishAdvisory",
-        "path": "/admin/agritech/advisories",
+        "path": "/admin/advisories",
         "method": "POST",
         "status": 409,
         "tags": ["admin-agritech"],
@@ -165,9 +165,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/advisories:500",
+      "id": "admin-app-api:POST:/admin/advisories:500",
       "match": {
-        "endpoint": "/admin/agritech/advisories",
+        "endpoint": "/admin/advisories",
         "method": "POST",
         "status": 500
       },
@@ -180,7 +180,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_publishAdvisory",
-        "path": "/admin/agritech/advisories",
+        "path": "/admin/advisories",
         "method": "POST",
         "status": 500,
         "tags": ["admin-agritech"],
@@ -191,9 +191,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/advisories:ERR",
+      "id": "admin-app-api:POST:/admin/advisories:ERR",
       "match": {
-        "endpoint": "/admin/agritech/advisories",
+        "endpoint": "/admin/advisories",
         "method": "POST",
         "kind": "unknown"
       },
@@ -206,7 +206,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_publishAdvisory",
-        "path": "/admin/agritech/advisories",
+        "path": "/admin/advisories",
         "method": "POST",
         "status": "ERR",
         "tags": ["admin-agritech"],
@@ -217,9 +217,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/advisories:NET",
+      "id": "admin-app-api:POST:/admin/advisories:NET",
       "match": {
-        "endpoint": "/admin/agritech/advisories",
+        "endpoint": "/admin/advisories",
         "method": "POST",
         "kind": "network"
       },
@@ -232,7 +232,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_publishAdvisory",
-        "path": "/admin/agritech/advisories",
+        "path": "/admin/advisories",
         "method": "POST",
         "status": "NET",
         "tags": ["admin-agritech"],
@@ -243,9 +243,9 @@
     },
     {
       "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/analytics:200",
+      "id": "admin-app-api:GET:/admin/analytics:200",
       "match": {
-        "endpoint": "/admin/agritech/analytics",
+        "endpoint": "/admin/analytics",
         "method": "GET",
         "status": 200
       },
@@ -258,7 +258,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_analytics",
-        "path": "/admin/agritech/analytics",
+        "path": "/admin/analytics",
         "method": "GET",
         "status": 200,
         "tags": ["admin-agritech"],
@@ -269,9 +269,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/analytics:400",
+      "id": "admin-app-api:GET:/admin/analytics:400",
       "match": {
-        "endpoint": "/admin/agritech/analytics",
+        "endpoint": "/admin/analytics",
         "method": "GET",
         "status": 400
       },
@@ -284,7 +284,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_analytics",
-        "path": "/admin/agritech/analytics",
+        "path": "/admin/analytics",
         "method": "GET",
         "status": 400,
         "tags": ["admin-agritech"],
@@ -295,9 +295,9 @@
     },
     {
       "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/analytics:401",
+      "id": "admin-app-api:GET:/admin/analytics:401",
       "match": {
-        "endpoint": "/admin/agritech/analytics",
+        "endpoint": "/admin/analytics",
         "method": "GET",
         "status": 401
       },
@@ -310,7 +310,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_analytics",
-        "path": "/admin/agritech/analytics",
+        "path": "/admin/analytics",
         "method": "GET",
         "status": 401,
         "tags": ["admin-agritech"],
@@ -321,9 +321,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/analytics:403",
+      "id": "admin-app-api:GET:/admin/analytics:403",
       "match": {
-        "endpoint": "/admin/agritech/analytics",
+        "endpoint": "/admin/analytics",
         "method": "GET",
         "status": 403
       },
@@ -336,7 +336,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_analytics",
-        "path": "/admin/agritech/analytics",
+        "path": "/admin/analytics",
         "method": "GET",
         "status": 403,
         "tags": ["admin-agritech"],
@@ -347,9 +347,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/analytics:404",
+      "id": "admin-app-api:GET:/admin/analytics:404",
       "match": {
-        "endpoint": "/admin/agritech/analytics",
+        "endpoint": "/admin/analytics",
         "method": "GET",
         "status": 404
       },
@@ -362,7 +362,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_analytics",
-        "path": "/admin/agritech/analytics",
+        "path": "/admin/analytics",
         "method": "GET",
         "status": 404,
         "tags": ["admin-agritech"],
@@ -373,9 +373,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/analytics:409",
+      "id": "admin-app-api:GET:/admin/analytics:409",
       "match": {
-        "endpoint": "/admin/agritech/analytics",
+        "endpoint": "/admin/analytics",
         "method": "GET",
         "status": 409
       },
@@ -388,7 +388,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_analytics",
-        "path": "/admin/agritech/analytics",
+        "path": "/admin/analytics",
         "method": "GET",
         "status": 409,
         "tags": ["admin-agritech"],
@@ -399,9 +399,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/analytics:500",
+      "id": "admin-app-api:GET:/admin/analytics:500",
       "match": {
-        "endpoint": "/admin/agritech/analytics",
+        "endpoint": "/admin/analytics",
         "method": "GET",
         "status": 500
       },
@@ -414,7 +414,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_analytics",
-        "path": "/admin/agritech/analytics",
+        "path": "/admin/analytics",
         "method": "GET",
         "status": 500,
         "tags": ["admin-agritech"],
@@ -425,9 +425,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/analytics:ERR",
+      "id": "admin-app-api:GET:/admin/analytics:ERR",
       "match": {
-        "endpoint": "/admin/agritech/analytics",
+        "endpoint": "/admin/analytics",
         "method": "GET",
         "kind": "unknown"
       },
@@ -440,7 +440,7 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_analytics",
-        "path": "/admin/agritech/analytics",
+        "path": "/admin/analytics",
         "method": "GET",
         "status": "ERR",
         "tags": ["admin-agritech"],
@@ -451,9 +451,9 @@
     },
     {
       "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/analytics:NET",
+      "id": "admin-app-api:GET:/admin/analytics:NET",
       "match": {
-        "endpoint": "/admin/agritech/analytics",
+        "endpoint": "/admin/analytics",
         "method": "GET",
         "kind": "network"
       },
@@ -466,2586 +466,12 @@
         "app": "admin-app-api",
         "errorCode": null,
         "operationId": "AgriTechAdminController_analytics",
-        "path": "/admin/agritech/analytics",
+        "path": "/admin/analytics",
         "method": "GET",
         "status": "NET",
         "tags": ["admin-agritech"],
         "defaultDisplay": "toast",
         "defaultMessage": "Agri Tech Admin analytics could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:POST:/admin/agritech/deliveries:200",
-      "match": {
-        "endpoint": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_scheduleDelivery",
-        "path": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 200,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin schedule Delivery completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/deliveries:400",
-      "match": {
-        "endpoint": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_scheduleDelivery",
-        "path": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 400,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:POST:/admin/agritech/deliveries:401",
-      "match": {
-        "endpoint": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_scheduleDelivery",
-        "path": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 401,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/deliveries:403",
-      "match": {
-        "endpoint": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_scheduleDelivery",
-        "path": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 403,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/deliveries:404",
-      "match": {
-        "endpoint": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_scheduleDelivery",
-        "path": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 404,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/deliveries:409",
-      "match": {
-        "endpoint": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_scheduleDelivery",
-        "path": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 409,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/deliveries:500",
-      "match": {
-        "endpoint": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_scheduleDelivery",
-        "path": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": 500,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/deliveries:ERR",
-      "match": {
-        "endpoint": "/admin/agritech/deliveries",
-        "method": "POST",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_scheduleDelivery",
-        "path": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": "ERR",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin schedule Delivery failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/deliveries:NET",
-      "match": {
-        "endpoint": "/admin/agritech/deliveries",
-        "method": "POST",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_scheduleDelivery",
-        "path": "/admin/agritech/deliveries",
-        "method": "POST",
-        "status": "NET",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin schedule Delivery could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/farmers:200",
-      "match": {
-        "endpoint": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listFarmers",
-        "path": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 200,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin list Farmers completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/farmers:400",
-      "match": {
-        "endpoint": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listFarmers",
-        "path": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 400,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Farmers failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/farmers:401",
-      "match": {
-        "endpoint": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listFarmers",
-        "path": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 401,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin list Farmers failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/farmers:403",
-      "match": {
-        "endpoint": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listFarmers",
-        "path": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 403,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Farmers failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/farmers:404",
-      "match": {
-        "endpoint": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listFarmers",
-        "path": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 404,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Farmers failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/farmers:409",
-      "match": {
-        "endpoint": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listFarmers",
-        "path": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 409,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Farmers failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/farmers:500",
-      "match": {
-        "endpoint": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listFarmers",
-        "path": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": 500,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Farmers failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/farmers:ERR",
-      "match": {
-        "endpoint": "/admin/agritech/farmers",
-        "method": "GET",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listFarmers",
-        "path": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": "ERR",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Farmers failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/farmers:NET",
-      "match": {
-        "endpoint": "/admin/agritech/farmers",
-        "method": "GET",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listFarmers",
-        "path": "/admin/agritech/farmers",
-        "method": "GET",
-        "status": "NET",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Farmers could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/assignment:200",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_assignFarmer",
-        "path": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 200,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin assign Farmer completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/assignment:400",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_assignFarmer",
-        "path": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 400,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin assign Farmer failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/assignment:401",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_assignFarmer",
-        "path": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 401,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin assign Farmer failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/assignment:403",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_assignFarmer",
-        "path": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 403,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin assign Farmer failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/assignment:404",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_assignFarmer",
-        "path": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 404,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin assign Farmer failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/assignment:409",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_assignFarmer",
-        "path": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 409,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin assign Farmer failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/assignment:500",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_assignFarmer",
-        "path": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": 500,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin assign Farmer failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/assignment:ERR",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_assignFarmer",
-        "path": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": "ERR",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin assign Farmer failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/assignment:NET",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_assignFarmer",
-        "path": "/admin/agritech/farmers/{id}/assignment",
-        "method": "PATCH",
-        "status": "NET",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin assign Farmer could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/status:200",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setFarmerStatus",
-        "path": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 200,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin set Farmer Status completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/status:400",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setFarmerStatus",
-        "path": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 400,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/status:401",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setFarmerStatus",
-        "path": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 401,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/status:403",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setFarmerStatus",
-        "path": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 403,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/status:404",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setFarmerStatus",
-        "path": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 404,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/status:409",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setFarmerStatus",
-        "path": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 409,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/status:500",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setFarmerStatus",
-        "path": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": 500,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/status:ERR",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setFarmerStatus",
-        "path": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": "ERR",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Farmer Status failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/farmers/{id}/status:NET",
-      "match": {
-        "endpoint": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setFarmerStatus",
-        "path": "/admin/agritech/farmers/{id}/status",
-        "method": "PATCH",
-        "status": "NET",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Farmer Status could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/integrations:200",
-      "match": {
-        "endpoint": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_integrations",
-        "path": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 200,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin integrations completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/integrations:400",
-      "match": {
-        "endpoint": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_integrations",
-        "path": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 400,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin integrations failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/integrations:401",
-      "match": {
-        "endpoint": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_integrations",
-        "path": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 401,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin integrations failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/integrations:403",
-      "match": {
-        "endpoint": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_integrations",
-        "path": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 403,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin integrations failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/integrations:404",
-      "match": {
-        "endpoint": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_integrations",
-        "path": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 404,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin integrations failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/integrations:409",
-      "match": {
-        "endpoint": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_integrations",
-        "path": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 409,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin integrations failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/integrations:500",
-      "match": {
-        "endpoint": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_integrations",
-        "path": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": 500,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin integrations failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/integrations:ERR",
-      "match": {
-        "endpoint": "/admin/agritech/integrations",
-        "method": "GET",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_integrations",
-        "path": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": "ERR",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin integrations failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/integrations:NET",
-      "match": {
-        "endpoint": "/admin/agritech/integrations",
-        "method": "GET",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_integrations",
-        "path": "/admin/agritech/integrations",
-        "method": "GET",
-        "status": "NET",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin integrations could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/orders:200",
-      "match": {
-        "endpoint": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listOrders",
-        "path": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 200,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin list Orders completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/orders:400",
-      "match": {
-        "endpoint": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listOrders",
-        "path": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 400,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Orders failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/orders:401",
-      "match": {
-        "endpoint": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listOrders",
-        "path": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 401,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin list Orders failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/orders:403",
-      "match": {
-        "endpoint": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listOrders",
-        "path": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 403,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Orders failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/orders:404",
-      "match": {
-        "endpoint": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listOrders",
-        "path": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 404,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Orders failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/orders:409",
-      "match": {
-        "endpoint": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listOrders",
-        "path": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 409,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Orders failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/orders:500",
-      "match": {
-        "endpoint": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listOrders",
-        "path": "/admin/agritech/orders",
-        "method": "GET",
-        "status": 500,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Orders failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/orders:ERR",
-      "match": {
-        "endpoint": "/admin/agritech/orders",
-        "method": "GET",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listOrders",
-        "path": "/admin/agritech/orders",
-        "method": "GET",
-        "status": "ERR",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Orders failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/orders:NET",
-      "match": {
-        "endpoint": "/admin/agritech/orders",
-        "method": "GET",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listOrders",
-        "path": "/admin/agritech/orders",
-        "method": "GET",
-        "status": "NET",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Orders could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/partners:200",
-      "match": {
-        "endpoint": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPartners",
-        "path": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 200,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin list Partners completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/partners:400",
-      "match": {
-        "endpoint": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPartners",
-        "path": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 400,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Partners failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/partners:401",
-      "match": {
-        "endpoint": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPartners",
-        "path": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 401,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin list Partners failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/partners:403",
-      "match": {
-        "endpoint": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPartners",
-        "path": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 403,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Partners failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/partners:404",
-      "match": {
-        "endpoint": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPartners",
-        "path": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 404,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Partners failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/partners:409",
-      "match": {
-        "endpoint": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPartners",
-        "path": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 409,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Partners failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/partners:500",
-      "match": {
-        "endpoint": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPartners",
-        "path": "/admin/agritech/partners",
-        "method": "GET",
-        "status": 500,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Partners failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/partners:ERR",
-      "match": {
-        "endpoint": "/admin/agritech/partners",
-        "method": "GET",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPartners",
-        "path": "/admin/agritech/partners",
-        "method": "GET",
-        "status": "ERR",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Partners failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/partners:NET",
-      "match": {
-        "endpoint": "/admin/agritech/partners",
-        "method": "GET",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPartners",
-        "path": "/admin/agritech/partners",
-        "method": "GET",
-        "status": "NET",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Partners could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PATCH:/admin/agritech/partners/{id}/status:200",
-      "match": {
-        "endpoint": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPartnerStatus",
-        "path": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 200,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin set Partner Status completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/partners/{id}/status:400",
-      "match": {
-        "endpoint": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPartnerStatus",
-        "path": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 400,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Partner Status failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PATCH:/admin/agritech/partners/{id}/status:401",
-      "match": {
-        "endpoint": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPartnerStatus",
-        "path": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 401,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin set Partner Status failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/partners/{id}/status:403",
-      "match": {
-        "endpoint": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPartnerStatus",
-        "path": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 403,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Partner Status failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/partners/{id}/status:404",
-      "match": {
-        "endpoint": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPartnerStatus",
-        "path": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 404,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Partner Status failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/partners/{id}/status:409",
-      "match": {
-        "endpoint": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPartnerStatus",
-        "path": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 409,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Partner Status failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/partners/{id}/status:500",
-      "match": {
-        "endpoint": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPartnerStatus",
-        "path": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": 500,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Partner Status failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/partners/{id}/status:ERR",
-      "match": {
-        "endpoint": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPartnerStatus",
-        "path": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": "ERR",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Partner Status failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/partners/{id}/status:NET",
-      "match": {
-        "endpoint": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPartnerStatus",
-        "path": "/admin/agritech/partners/{id}/status",
-        "method": "PATCH",
-        "status": "NET",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Partner Status could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/pilots:200",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPilots",
-        "path": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 200,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin list Pilots completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/pilots:400",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPilots",
-        "path": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 400,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Pilots failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/agritech/pilots:401",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPilots",
-        "path": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 401,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin list Pilots failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/pilots:403",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPilots",
-        "path": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 403,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Pilots failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/pilots:404",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPilots",
-        "path": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 404,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Pilots failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/pilots:409",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPilots",
-        "path": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 409,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Pilots failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/pilots:500",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPilots",
-        "path": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": 500,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Pilots failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/pilots:ERR",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "GET",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPilots",
-        "path": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": "ERR",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Pilots failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/agritech/pilots:NET",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "GET",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_listPilots",
-        "path": "/admin/agritech/pilots",
-        "method": "GET",
-        "status": "NET",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin list Pilots could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:POST:/admin/agritech/pilots:200",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_createPilot",
-        "path": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 200,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin create Pilot completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/pilots:400",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_createPilot",
-        "path": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 400,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin create Pilot failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:POST:/admin/agritech/pilots:401",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_createPilot",
-        "path": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 401,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin create Pilot failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/pilots:403",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_createPilot",
-        "path": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 403,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin create Pilot failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/pilots:404",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_createPilot",
-        "path": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 404,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin create Pilot failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/pilots:409",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_createPilot",
-        "path": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 409,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin create Pilot failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/pilots:500",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_createPilot",
-        "path": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": 500,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin create Pilot failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/pilots:ERR",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "POST",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_createPilot",
-        "path": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": "ERR",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin create Pilot failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/agritech/pilots:NET",
-      "match": {
-        "endpoint": "/admin/agritech/pilots",
-        "method": "POST",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_createPilot",
-        "path": "/admin/agritech/pilots",
-        "method": "POST",
-        "status": "NET",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin create Pilot could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PATCH:/admin/agritech/pilots/{id}/status:200",
-      "match": {
-        "endpoint": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPilotStatus",
-        "path": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 200,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin set Pilot Status completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/pilots/{id}/status:400",
-      "match": {
-        "endpoint": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPilotStatus",
-        "path": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 400,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PATCH:/admin/agritech/pilots/{id}/status:401",
-      "match": {
-        "endpoint": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPilotStatus",
-        "path": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 401,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/pilots/{id}/status:403",
-      "match": {
-        "endpoint": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPilotStatus",
-        "path": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 403,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/pilots/{id}/status:404",
-      "match": {
-        "endpoint": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPilotStatus",
-        "path": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 404,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/pilots/{id}/status:409",
-      "match": {
-        "endpoint": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPilotStatus",
-        "path": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 409,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/pilots/{id}/status:500",
-      "match": {
-        "endpoint": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPilotStatus",
-        "path": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": 500,
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/pilots/{id}/status:ERR",
-      "match": {
-        "endpoint": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPilotStatus",
-        "path": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": "ERR",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Pilot Status failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/agritech/pilots/{id}/status:NET",
-      "match": {
-        "endpoint": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "AgriTechAdminController_setPilotStatus",
-        "path": "/admin/agritech/pilots/{id}/status",
-        "method": "PATCH",
-        "status": "NET",
-        "tags": ["admin-agritech"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Agri Tech Admin set Pilot Status could not reach the service.",
         "defaultSeverity": "warning"
       }
     },
@@ -4403,6 +1829,942 @@
     },
     {
       "display": "silent",
+      "id": "admin-app-api:POST:/admin/deliveries:200",
+      "match": {
+        "endpoint": "/admin/deliveries",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_scheduleDelivery",
+        "path": "/admin/deliveries",
+        "method": "POST",
+        "status": 200,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin schedule Delivery completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/deliveries:400",
+      "match": {
+        "endpoint": "/admin/deliveries",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_scheduleDelivery",
+        "path": "/admin/deliveries",
+        "method": "POST",
+        "status": 400,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/admin/deliveries:401",
+      "match": {
+        "endpoint": "/admin/deliveries",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_scheduleDelivery",
+        "path": "/admin/deliveries",
+        "method": "POST",
+        "status": 401,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/deliveries:403",
+      "match": {
+        "endpoint": "/admin/deliveries",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_scheduleDelivery",
+        "path": "/admin/deliveries",
+        "method": "POST",
+        "status": 403,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/deliveries:404",
+      "match": {
+        "endpoint": "/admin/deliveries",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_scheduleDelivery",
+        "path": "/admin/deliveries",
+        "method": "POST",
+        "status": 404,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/deliveries:409",
+      "match": {
+        "endpoint": "/admin/deliveries",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_scheduleDelivery",
+        "path": "/admin/deliveries",
+        "method": "POST",
+        "status": 409,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/deliveries:500",
+      "match": {
+        "endpoint": "/admin/deliveries",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_scheduleDelivery",
+        "path": "/admin/deliveries",
+        "method": "POST",
+        "status": 500,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin schedule Delivery failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/deliveries:ERR",
+      "match": {
+        "endpoint": "/admin/deliveries",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_scheduleDelivery",
+        "path": "/admin/deliveries",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin schedule Delivery failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/deliveries:NET",
+      "match": {
+        "endpoint": "/admin/deliveries",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_scheduleDelivery",
+        "path": "/admin/deliveries",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin schedule Delivery could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/farmers:200",
+      "match": {
+        "endpoint": "/admin/farmers",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listFarmers",
+        "path": "/admin/farmers",
+        "method": "GET",
+        "status": 200,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin list Farmers completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/farmers:400",
+      "match": {
+        "endpoint": "/admin/farmers",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listFarmers",
+        "path": "/admin/farmers",
+        "method": "GET",
+        "status": 400,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Farmers failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/farmers:401",
+      "match": {
+        "endpoint": "/admin/farmers",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listFarmers",
+        "path": "/admin/farmers",
+        "method": "GET",
+        "status": 401,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin list Farmers failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/farmers:403",
+      "match": {
+        "endpoint": "/admin/farmers",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listFarmers",
+        "path": "/admin/farmers",
+        "method": "GET",
+        "status": 403,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Farmers failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/farmers:404",
+      "match": {
+        "endpoint": "/admin/farmers",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listFarmers",
+        "path": "/admin/farmers",
+        "method": "GET",
+        "status": 404,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Farmers failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/farmers:409",
+      "match": {
+        "endpoint": "/admin/farmers",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listFarmers",
+        "path": "/admin/farmers",
+        "method": "GET",
+        "status": 409,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Farmers failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/farmers:500",
+      "match": {
+        "endpoint": "/admin/farmers",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listFarmers",
+        "path": "/admin/farmers",
+        "method": "GET",
+        "status": 500,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Farmers failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/farmers:ERR",
+      "match": {
+        "endpoint": "/admin/farmers",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listFarmers",
+        "path": "/admin/farmers",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Farmers failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/farmers:NET",
+      "match": {
+        "endpoint": "/admin/farmers",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listFarmers",
+        "path": "/admin/farmers",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Farmers could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/assignment:200",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_assignFarmer",
+        "path": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin assign Farmer completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/assignment:400",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_assignFarmer",
+        "path": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin assign Farmer failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/assignment:401",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_assignFarmer",
+        "path": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin assign Farmer failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/assignment:403",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_assignFarmer",
+        "path": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin assign Farmer failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/assignment:404",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_assignFarmer",
+        "path": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin assign Farmer failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/assignment:409",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_assignFarmer",
+        "path": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin assign Farmer failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/assignment:500",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_assignFarmer",
+        "path": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin assign Farmer failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/assignment:ERR",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_assignFarmer",
+        "path": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin assign Farmer failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/assignment:NET",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_assignFarmer",
+        "path": "/admin/farmers/{id}/assignment",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin assign Farmer could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/status:200",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setFarmerStatus",
+        "path": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin set Farmer Status completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/status:400",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setFarmerStatus",
+        "path": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/status:401",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setFarmerStatus",
+        "path": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/status:403",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setFarmerStatus",
+        "path": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/status:404",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setFarmerStatus",
+        "path": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/status:409",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setFarmerStatus",
+        "path": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/status:500",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setFarmerStatus",
+        "path": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Farmer Status failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/status:ERR",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setFarmerStatus",
+        "path": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Farmer Status failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/farmers/{id}/status:NET",
+      "match": {
+        "endpoint": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setFarmerStatus",
+        "path": "/admin/farmers/{id}/status",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Farmer Status could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
       "id": "admin-app-api:GET:/admin/feature-flags:200",
       "match": {
         "endpoint": "/admin/feature-flags",
@@ -5074,6 +3436,240 @@
         "tags": ["AdminHealth"],
         "defaultDisplay": "toast",
         "defaultMessage": "Admin Health get Private Health could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/integrations:200",
+      "match": {
+        "endpoint": "/admin/integrations",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_integrations",
+        "path": "/admin/integrations",
+        "method": "GET",
+        "status": 200,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin integrations completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/integrations:400",
+      "match": {
+        "endpoint": "/admin/integrations",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_integrations",
+        "path": "/admin/integrations",
+        "method": "GET",
+        "status": 400,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin integrations failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/integrations:401",
+      "match": {
+        "endpoint": "/admin/integrations",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_integrations",
+        "path": "/admin/integrations",
+        "method": "GET",
+        "status": 401,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin integrations failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/integrations:403",
+      "match": {
+        "endpoint": "/admin/integrations",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_integrations",
+        "path": "/admin/integrations",
+        "method": "GET",
+        "status": 403,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin integrations failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/integrations:404",
+      "match": {
+        "endpoint": "/admin/integrations",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_integrations",
+        "path": "/admin/integrations",
+        "method": "GET",
+        "status": 404,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin integrations failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/integrations:409",
+      "match": {
+        "endpoint": "/admin/integrations",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_integrations",
+        "path": "/admin/integrations",
+        "method": "GET",
+        "status": 409,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin integrations failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/integrations:500",
+      "match": {
+        "endpoint": "/admin/integrations",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_integrations",
+        "path": "/admin/integrations",
+        "method": "GET",
+        "status": 500,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin integrations failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/integrations:ERR",
+      "match": {
+        "endpoint": "/admin/integrations",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_integrations",
+        "path": "/admin/integrations",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin integrations failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/integrations:NET",
+      "match": {
+        "endpoint": "/admin/integrations",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_integrations",
+        "path": "/admin/integrations",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin integrations could not reach the service.",
         "defaultSeverity": "warning"
       }
     },
@@ -12432,6 +11028,1410 @@
         "tags": ["AdminNotifications"],
         "defaultDisplay": "toast",
         "defaultMessage": "Admin Notifications test Send could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/orders:200",
+      "match": {
+        "endpoint": "/admin/orders",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listOrders",
+        "path": "/admin/orders",
+        "method": "GET",
+        "status": 200,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin list Orders completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/orders:400",
+      "match": {
+        "endpoint": "/admin/orders",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listOrders",
+        "path": "/admin/orders",
+        "method": "GET",
+        "status": 400,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Orders failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/orders:401",
+      "match": {
+        "endpoint": "/admin/orders",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listOrders",
+        "path": "/admin/orders",
+        "method": "GET",
+        "status": 401,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin list Orders failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/orders:403",
+      "match": {
+        "endpoint": "/admin/orders",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listOrders",
+        "path": "/admin/orders",
+        "method": "GET",
+        "status": 403,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Orders failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/orders:404",
+      "match": {
+        "endpoint": "/admin/orders",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listOrders",
+        "path": "/admin/orders",
+        "method": "GET",
+        "status": 404,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Orders failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/orders:409",
+      "match": {
+        "endpoint": "/admin/orders",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listOrders",
+        "path": "/admin/orders",
+        "method": "GET",
+        "status": 409,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Orders failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/orders:500",
+      "match": {
+        "endpoint": "/admin/orders",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listOrders",
+        "path": "/admin/orders",
+        "method": "GET",
+        "status": 500,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Orders failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/orders:ERR",
+      "match": {
+        "endpoint": "/admin/orders",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listOrders",
+        "path": "/admin/orders",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Orders failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/orders:NET",
+      "match": {
+        "endpoint": "/admin/orders",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listOrders",
+        "path": "/admin/orders",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Orders could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/partners:200",
+      "match": {
+        "endpoint": "/admin/partners",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPartners",
+        "path": "/admin/partners",
+        "method": "GET",
+        "status": 200,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin list Partners completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/partners:400",
+      "match": {
+        "endpoint": "/admin/partners",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPartners",
+        "path": "/admin/partners",
+        "method": "GET",
+        "status": 400,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Partners failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/partners:401",
+      "match": {
+        "endpoint": "/admin/partners",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPartners",
+        "path": "/admin/partners",
+        "method": "GET",
+        "status": 401,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin list Partners failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/partners:403",
+      "match": {
+        "endpoint": "/admin/partners",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPartners",
+        "path": "/admin/partners",
+        "method": "GET",
+        "status": 403,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Partners failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/partners:404",
+      "match": {
+        "endpoint": "/admin/partners",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPartners",
+        "path": "/admin/partners",
+        "method": "GET",
+        "status": 404,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Partners failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/partners:409",
+      "match": {
+        "endpoint": "/admin/partners",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPartners",
+        "path": "/admin/partners",
+        "method": "GET",
+        "status": 409,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Partners failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/partners:500",
+      "match": {
+        "endpoint": "/admin/partners",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPartners",
+        "path": "/admin/partners",
+        "method": "GET",
+        "status": 500,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Partners failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/partners:ERR",
+      "match": {
+        "endpoint": "/admin/partners",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPartners",
+        "path": "/admin/partners",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Partners failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/partners:NET",
+      "match": {
+        "endpoint": "/admin/partners",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPartners",
+        "path": "/admin/partners",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Partners could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/partners/{id}/status:200",
+      "match": {
+        "endpoint": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPartnerStatus",
+        "path": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin set Partner Status completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/partners/{id}/status:400",
+      "match": {
+        "endpoint": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPartnerStatus",
+        "path": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Partner Status failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/partners/{id}/status:401",
+      "match": {
+        "endpoint": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPartnerStatus",
+        "path": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin set Partner Status failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/partners/{id}/status:403",
+      "match": {
+        "endpoint": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPartnerStatus",
+        "path": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Partner Status failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/partners/{id}/status:404",
+      "match": {
+        "endpoint": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPartnerStatus",
+        "path": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Partner Status failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/partners/{id}/status:409",
+      "match": {
+        "endpoint": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPartnerStatus",
+        "path": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Partner Status failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/partners/{id}/status:500",
+      "match": {
+        "endpoint": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPartnerStatus",
+        "path": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Partner Status failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/partners/{id}/status:ERR",
+      "match": {
+        "endpoint": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPartnerStatus",
+        "path": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Partner Status failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/partners/{id}/status:NET",
+      "match": {
+        "endpoint": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPartnerStatus",
+        "path": "/admin/partners/{id}/status",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Partner Status could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/pilots:200",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPilots",
+        "path": "/admin/pilots",
+        "method": "GET",
+        "status": 200,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin list Pilots completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/pilots:400",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPilots",
+        "path": "/admin/pilots",
+        "method": "GET",
+        "status": 400,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Pilots failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/admin/pilots:401",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPilots",
+        "path": "/admin/pilots",
+        "method": "GET",
+        "status": 401,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin list Pilots failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/pilots:403",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPilots",
+        "path": "/admin/pilots",
+        "method": "GET",
+        "status": 403,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Pilots failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/pilots:404",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPilots",
+        "path": "/admin/pilots",
+        "method": "GET",
+        "status": 404,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Pilots failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/pilots:409",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPilots",
+        "path": "/admin/pilots",
+        "method": "GET",
+        "status": 409,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Pilots failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/pilots:500",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPilots",
+        "path": "/admin/pilots",
+        "method": "GET",
+        "status": 500,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Pilots failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/pilots:ERR",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPilots",
+        "path": "/admin/pilots",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Pilots failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/admin/pilots:NET",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_listPilots",
+        "path": "/admin/pilots",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin list Pilots could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/admin/pilots:200",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_createPilot",
+        "path": "/admin/pilots",
+        "method": "POST",
+        "status": 200,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin create Pilot completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/pilots:400",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_createPilot",
+        "path": "/admin/pilots",
+        "method": "POST",
+        "status": 400,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin create Pilot failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/admin/pilots:401",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_createPilot",
+        "path": "/admin/pilots",
+        "method": "POST",
+        "status": 401,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin create Pilot failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/pilots:403",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_createPilot",
+        "path": "/admin/pilots",
+        "method": "POST",
+        "status": 403,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin create Pilot failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/pilots:404",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_createPilot",
+        "path": "/admin/pilots",
+        "method": "POST",
+        "status": 404,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin create Pilot failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/pilots:409",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_createPilot",
+        "path": "/admin/pilots",
+        "method": "POST",
+        "status": 409,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin create Pilot failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/pilots:500",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_createPilot",
+        "path": "/admin/pilots",
+        "method": "POST",
+        "status": 500,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin create Pilot failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/pilots:ERR",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_createPilot",
+        "path": "/admin/pilots",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin create Pilot failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/admin/pilots:NET",
+      "match": {
+        "endpoint": "/admin/pilots",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_createPilot",
+        "path": "/admin/pilots",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin create Pilot could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/pilots/{id}/status:200",
+      "match": {
+        "endpoint": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPilotStatus",
+        "path": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin set Pilot Status completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/pilots/{id}/status:400",
+      "match": {
+        "endpoint": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPilotStatus",
+        "path": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/admin/pilots/{id}/status:401",
+      "match": {
+        "endpoint": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPilotStatus",
+        "path": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/pilots/{id}/status:403",
+      "match": {
+        "endpoint": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPilotStatus",
+        "path": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/pilots/{id}/status:404",
+      "match": {
+        "endpoint": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPilotStatus",
+        "path": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/pilots/{id}/status:409",
+      "match": {
+        "endpoint": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPilotStatus",
+        "path": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/pilots/{id}/status:500",
+      "match": {
+        "endpoint": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPilotStatus",
+        "path": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Pilot Status failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/pilots/{id}/status:ERR",
+      "match": {
+        "endpoint": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPilotStatus",
+        "path": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Pilot Status failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/admin/pilots/{id}/status:NET",
+      "match": {
+        "endpoint": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechAdminController_setPilotStatus",
+        "path": "/admin/pilots/{id}/status",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["admin-agritech"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Admin set Pilot Status could not reach the service.",
         "defaultSeverity": "warning"
       }
     },

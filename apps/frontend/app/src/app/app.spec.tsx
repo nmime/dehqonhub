@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-SHELL-004
+// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiRuntimeEvents } from '@app/frontend-api-support';
@@ -75,6 +75,22 @@ const setFetch = (...responses: FetchReply[]) => {
   });
   vi.stubGlobal('fetch', fetchMock);
   return fetchMock;
+};
+
+const installAgriTechRootFetch = () => {
+  vi.stubGlobal(
+    'fetch',
+    vi.fn((input: RequestInfo | URL) => {
+      const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+      if (pathname === '/auth/me') {
+        return Promise.resolve(jsonResponse({}, false, 401));
+      }
+      if (['/partners', '/supplier/products', '/produce', '/deliveries', '/advisories'].includes(pathname)) {
+        return Promise.resolve(jsonResponse({ data: { items: [] } }));
+      }
+      return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
+    }),
+  );
 };
 
 type FetchInit = {
@@ -199,7 +215,7 @@ const awaitShell = () => screen.findAllByRole('link', { name: 'Home' });
 const submitLogin = async (email = 'user@example.com') => {
   await awaitShell();
   if (!screen.queryByLabelText('Login email')) {
-    fireEvent.click(screen.getAllByRole('link', { name: 'Open' })[0]!);
+    fireEvent.click(screen.getAllByRole('link', { name: /^(Auth|Вход)$/u })[0]!);
   }
   fireEvent.change(await screen.findByLabelText('Login email'), {
     target: { value: email },
@@ -226,15 +242,15 @@ describe('User app shell', () => {
     vi.unstubAllEnvs();
   });
 
-  it('renders a neutral account home through the shared shell', async () => {
+  it('renders the AgriTech product at the repository root', async () => {
+    installAgriTechRootFetch();
     const { container } = render(<App />);
-    await screen.findByText('Account essentials');
+    await screen.findByRole('heading', { name: 'AgriTech Operations' });
     const html = container.innerHTML;
 
-    expect(html).toContain('Nest React Boilerplate');
-    expect(html).toContain('A clear place to manage your account.');
-    expect(html).toContain('Account essentials');
-    expect(html).toContain('Choose how to sign in');
+    expect(html).toContain('AgriTech');
+    expect(html).toContain('Agriculture, coordinated from one place.');
+    expect(html).toContain('AgriTech Operations');
     expect(html).not.toContain('design v3');
     expect(html).not.toContain('route readiness');
     expect(html).not.toContain('3003');
@@ -254,6 +270,7 @@ describe('User app shell', () => {
   });
 
   it('falls back to home when there is no in-app history to pop', async () => {
+    installAgriTechRootFetch();
     window.history.pushState({}, '', '/settings');
     const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
 
@@ -261,7 +278,7 @@ describe('User app shell', () => {
     await awaitShell();
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
-    expect(await screen.findByText('Account essentials')).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'AgriTech Operations' })).toBeTruthy();
     expect(back).not.toHaveBeenCalled();
     back.mockRestore();
   });
@@ -355,6 +372,7 @@ describe('User app shell', () => {
   });
 
   it('renders the home shell even when local storage access throws', async () => {
+    installAgriTechRootFetch();
     installStorage();
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
@@ -364,11 +382,12 @@ describe('User app shell', () => {
     });
 
     const { container } = render(<App />);
-    await screen.findByText('Account essentials');
-    expect(container.innerHTML).toContain('Nest React Boilerplate');
+    await screen.findByRole('heading', { name: 'AgriTech Operations' });
+    expect(container.innerHTML).toContain('AgriTech');
   });
 
   it('loads a profile after login establishes a cookie session', async () => {
+    window.history.pushState({}, '', '/auth');
     vi.stubEnv('VITE_USER_API_BASE_URL', 'https://user-api/');
     const fetchMock = setFetch(
       jsonResponse({ data: { user: {} } }),
@@ -414,12 +433,14 @@ describe('User app shell', () => {
   });
 
   it('shows forbidden states for profile response and thrown failures', async () => {
+    window.history.pushState({}, '', '/auth');
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), jsonResponse({}, false, 403));
     const { unmount } = render(<App />);
     await submitLogin();
     expect(await screen.findByText('Forbidden: Request failed with 403.')).toBeTruthy();
     unmount();
 
+    window.history.pushState({}, '', '/auth');
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), {
       rejectsWith: 'network failed',
     });
@@ -429,6 +450,7 @@ describe('User app shell', () => {
   });
 
   it('handles incomplete profile payloads and non-error auth rejections', async () => {
+    window.history.pushState({}, '', '/auth');
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), jsonResponse({ data: {} }));
     const { unmount } = render(<App />);
     await submitLogin();
@@ -438,7 +460,7 @@ describe('User app shell', () => {
     window.localStorage.clear();
     document.cookie = 'locale=; path=/; max-age=0';
     document.cookie = 'lang=; path=/; max-age=0';
-    window.history.pushState({}, '', '/');
+    window.history.pushState({}, '', '/auth');
 
     const rejectAuthJson = vi.fn<() => Promise<unknown>>().mockRejectedValue('auth offline');
     const rejectAuthResponse = new Response(null, {
@@ -456,6 +478,7 @@ describe('User app shell', () => {
   });
 
   it('uses saved user locale before profile calls and ignores stale local storage', async () => {
+    window.history.pushState({}, '', '/auth');
     window.localStorage.setItem('boilerplate.locale', 'en');
     vi.stubEnv('VITE_USER_API_BASE_URL', 'https://user-api/');
     const fetchMock = setFetch(
@@ -481,6 +504,7 @@ describe('User app shell', () => {
   });
 
   it('persists language switches for authenticated users and subsequent calls', async () => {
+    window.history.pushState({}, '', '/auth');
     const fetchMock = setFetch(
       jsonResponse({ data: { user: {} } }),
       jsonResponse({ data: { user: { locale: 'en' } } }),
@@ -539,6 +563,7 @@ describe('User app shell', () => {
   });
 
   it('persists theme switches for authenticated users', async () => {
+    window.history.pushState({}, '', '/auth');
     const fetchMock = setFetch(
       jsonResponse({ data: { user: {} } }),
       jsonResponse({ data: { user: { locale: 'en', theme: 'system' } } }),
@@ -640,6 +665,7 @@ describe('User app shell', () => {
     expect(await screen.findByText('Ready: after-auth@example.com')).toBeTruthy();
     unmount();
 
+    window.history.pushState({}, '', '/auth');
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), {
       rejectsWith: { detail: 'Object detail' },
     });
@@ -649,6 +675,7 @@ describe('User app shell', () => {
   });
 
   it('applies profile locales and auth success locale/theme payloads', async () => {
+    window.history.pushState({}, '', '/auth');
     setFetch(
       jsonResponse({ data: { user: {} } }),
       jsonResponse({ data: { user: { locale: 'en', theme: 'light' } } }),
@@ -690,7 +717,7 @@ describe('User app shell', () => {
     expect(await screen.findByText('Готово: registered@example.com')).toBeTruthy();
   });
 
-  it('renders link-discord and unknown routes through the shell', async () => {
+  it('renders link-discord and the removed marketplace route through the shell', async () => {
     window.history.pushState({}, '', '/link/discord');
     const { unmount } = render(<App />);
 
@@ -702,11 +729,11 @@ describe('User app shell', () => {
     expect(await screen.findByText('Preferences')).toBeTruthy();
     trailingSlash.unmount();
 
-    window.history.pushState({}, '', '/unknown');
+    window.history.pushState({}, '', '/marketplace');
     render(<App />);
 
-    expect(await screen.findByText('Account essentials')).toBeTruthy();
-    expect(window.location.pathname).toBe('/unknown');
+    expect(await screen.findByText('This route is not available.')).toBeTruthy();
+    expect(window.location.pathname).toBe('/marketplace');
   });
 
   it('lets the browser handle non-SPA link clicks', () => {

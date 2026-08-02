@@ -19,7 +19,7 @@ const UserHomeComposition = () => {
 };
 
 const meta = {
-  title: 'Applications/User/Home',
+  title: 'Applications/User/AgriTech Home',
   component: UserHomeComposition,
   tags: ['visual'],
   decorators: [
@@ -44,7 +44,7 @@ export const Default: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    await expect(canvas.getByRole('heading', { name: 'Account essentials' })).toBeVisible();
+    await expect(canvas.getByRole('heading', { name: 'AgriTech Operations' })).toBeVisible();
     await expect(
       canvas.getAllByRole('link', { name: 'Home' }).some((link) => link.getAttribute('aria-current') === 'page'),
     ).toBe(true);

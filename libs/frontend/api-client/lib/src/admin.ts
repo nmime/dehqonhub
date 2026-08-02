@@ -1,3 +1,4 @@
+// @requirements REQ-AGRITECH-ROUTING-015
 import { useMutation, useQuery, type UseMutationOptions, type UseQueryOptions } from '@tanstack/react-query';
 import createClient from 'openapi-fetch';
 import createQueryClient from 'openapi-react-query';
@@ -117,18 +118,18 @@ export type PilotStatusDto = components['schemas']['PilotStatusDto'];
 export type IntegrationReadinessViewDto = components['schemas']['IntegrationReadinessViewDto'];
 export type IntegrationReadinessListDto = components['schemas']['IntegrationReadinessListDto'];
 
-const adminAgriTechPartnersPath = '/admin/agritech/partners';
-const adminAgriTechPartnerStatusPath = '/admin/agritech/partners/{id}/status';
-const adminAgriTechFarmersPath = '/admin/agritech/farmers';
-const adminAgriTechFarmerAssignmentPath = '/admin/agritech/farmers/{id}/assignment';
-const adminAgriTechFarmerStatusPath = '/admin/agritech/farmers/{id}/status';
-const adminAgriTechOrdersPath = '/admin/agritech/orders';
-const adminAgriTechDeliveriesPath = '/admin/agritech/deliveries';
-const adminAgriTechAdvisoriesPath = '/admin/agritech/advisories';
-const adminAgriTechAnalyticsPath = '/admin/agritech/analytics';
-const adminAgriTechPilotsPath = '/admin/agritech/pilots';
-const adminAgriTechPilotStatusPath = '/admin/agritech/pilots/{id}/status';
-const adminAgriTechIntegrationsPath = '/admin/agritech/integrations';
+const adminAgriTechPartnersPath = '/admin/partners';
+const adminAgriTechPartnerStatusPath = '/admin/partners/{id}/status';
+const adminAgriTechFarmersPath = '/admin/farmers';
+const adminAgriTechFarmerAssignmentPath = '/admin/farmers/{id}/assignment';
+const adminAgriTechFarmerStatusPath = '/admin/farmers/{id}/status';
+const adminAgriTechOrdersPath = '/admin/orders';
+const adminAgriTechDeliveriesPath = '/admin/deliveries';
+const adminAgriTechAdvisoriesPath = '/admin/advisories';
+const adminAgriTechAnalyticsPath = '/admin/analytics';
+const adminAgriTechPilotsPath = '/admin/pilots';
+const adminAgriTechPilotStatusPath = '/admin/pilots/{id}/status';
+const adminAgriTechIntegrationsPath = '/admin/integrations';
 
 export const agriTechAdminControllerListPartners = (options?: ApiClientRequestOptions) =>
   client.GET(adminAgriTechPartnersPath, toOpenApiFetchOptions(options));

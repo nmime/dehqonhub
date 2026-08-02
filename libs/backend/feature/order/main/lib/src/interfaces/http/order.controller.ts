@@ -1,4 +1,4 @@
-// REQ-AGRITECH-ORDER-003: all order routes derive ownership from the authenticated principal.
+// REQ-AGRITECH-ORDER-003 REQ-AGRITECH-ROUTING-015: all order routes derive ownership from the authenticated principal.
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
@@ -15,7 +15,7 @@ import { CreateOrderDto, OrderListDto, OrderViewDto } from './order.dto';
 @ApiTags('agritech-orders')
 @ApiExceptions(400, 401, 404, 409, 500)
 @ApiSessionCookieAuth()
-@Controller('agritech/orders')
+@Controller('orders')
 export class OrderController {
   constructor(
     private readonly createOrder: CreateOrderUseCase,

@@ -1,3 +1,4 @@
+// @requirements REQ-AGRITECH-PAYMENT-004 REQ-AGRITECH-ROUTING-015
 import { Body, Controller, Headers, Post } from '@nestjs/common';
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import { IsIn, IsString, IsUrl, Matches } from 'class-validator';
@@ -47,7 +48,7 @@ interface ClickDto {
 }
 
 @ApiTags('agritech-payments')
-@Controller('agritech/payments')
+@Controller('payments')
 export class PaymentController {
   constructor(
     private readonly createPayment: CreatePaymentUseCase,

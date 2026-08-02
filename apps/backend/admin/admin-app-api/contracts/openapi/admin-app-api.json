@@ -16762,7 +16762,7 @@
         "tags": ["AdminNotifications"]
       }
     },
-    "/admin/agritech/partners": {
+    "/admin/partners": {
       "get": {
         "operationId": "AgriTechAdminController_listPartners",
         "parameters": [],
@@ -17053,7 +17053,7 @@
         "tags": ["admin-agritech"]
       }
     },
-    "/admin/agritech/partners/{id}/status": {
+    "/admin/partners/{id}/status": {
       "patch": {
         "operationId": "AgriTechAdminController_setPartnerStatus",
         "parameters": [
@@ -17363,7 +17363,7 @@
         "tags": ["admin-agritech"]
       }
     },
-    "/admin/agritech/farmers/{id}/assignment": {
+    "/admin/farmers/{id}/assignment": {
       "patch": {
         "operationId": "AgriTechAdminController_assignFarmer",
         "parameters": [
@@ -17673,7 +17673,7 @@
         "tags": ["admin-agritech"]
       }
     },
-    "/admin/agritech/farmers": {
+    "/admin/farmers": {
       "get": {
         "operationId": "AgriTechAdminController_listFarmers",
         "parameters": [],
@@ -17964,7 +17964,7 @@
         "tags": ["admin-agritech"]
       }
     },
-    "/admin/agritech/farmers/{id}/status": {
+    "/admin/farmers/{id}/status": {
       "patch": {
         "operationId": "AgriTechAdminController_setFarmerStatus",
         "parameters": [
@@ -18274,7 +18274,7 @@
         "tags": ["admin-agritech"]
       }
     },
-    "/admin/agritech/orders": {
+    "/admin/orders": {
       "get": {
         "operationId": "AgriTechAdminController_listOrders",
         "parameters": [],
@@ -18565,7 +18565,7 @@
         "tags": ["admin-agritech"]
       }
     },
-    "/admin/agritech/deliveries": {
+    "/admin/deliveries": {
       "post": {
         "operationId": "AgriTechAdminController_scheduleDelivery",
         "parameters": [],
@@ -18866,7 +18866,7 @@
         "tags": ["admin-agritech"]
       }
     },
-    "/admin/agritech/advisories": {
+    "/admin/advisories": {
       "post": {
         "operationId": "AgriTechAdminController_publishAdvisory",
         "parameters": [],
@@ -19167,7 +19167,7 @@
         "tags": ["admin-agritech"]
       }
     },
-    "/admin/agritech/analytics": {
+    "/admin/analytics": {
       "get": {
         "operationId": "AgriTechAdminController_analytics",
         "parameters": [],
@@ -19458,7 +19458,7 @@
         "tags": ["admin-agritech"]
       }
     },
-    "/admin/agritech/pilots": {
+    "/admin/pilots": {
       "post": {
         "operationId": "AgriTechAdminController_createPilot",
         "parameters": [],
@@ -20048,7 +20048,7 @@
         "tags": ["admin-agritech"]
       }
     },
-    "/admin/agritech/pilots/{id}/status": {
+    "/admin/pilots/{id}/status": {
       "patch": {
         "operationId": "AgriTechAdminController_setPilotStatus",
         "parameters": [
@@ -20358,7 +20358,7 @@
         "tags": ["admin-agritech"]
       }
     },
-    "/admin/agritech/integrations": {
+    "/admin/integrations": {
       "get": {
         "operationId": "AgriTechAdminController_integrations",
         "parameters": [],

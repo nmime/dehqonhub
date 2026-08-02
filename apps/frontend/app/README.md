@@ -18,7 +18,7 @@ pnpm run test:storybook
 pnpm run frontend:fsd:check
 ```
 
-`storybook/home.stories.tsx` composes the account home screen with
+`storybook/home.stories.tsx` composes the AgriTech product home screen with
 deterministic providers. Keep routing, authentication, API behavior, Telegram
 integration, and complete account flows in `user-app:e2e`.
 

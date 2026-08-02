@@ -26,6 +26,7 @@ describe('admin preferences accessibility', () => {
   });
 
   it('keeps language and theme selectors discoverable by accessible names', async () => {
+    window.history.pushState({}, '', '/admin/dashboard');
     vi.stubEnv('VITE_ADMIN_API_BASE_URL', 'https://admin.example.test');
     vi.stubEnv('VITE_AUTH_API_BASE_URL', 'https://auth.example.test');
     vi.stubGlobal(

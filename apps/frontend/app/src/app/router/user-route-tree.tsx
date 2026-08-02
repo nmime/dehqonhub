@@ -11,24 +11,24 @@ import { AuthTelegramCallbackPage } from '../../pages/auth-telegram-callback';
 import { ProfilePage } from '../../pages/profile';
 import { SettingsPage } from '../../pages/settings';
 import { TmaPage } from '../../pages/tma';
-import { UserHomeContent } from '../../pages/user-home';
 import { FarmerRegisterPage } from '../../pages/farmer-register';
 import { FarmerDashboardPage } from '../../pages/farmer-dashboard';
 import { ProductCatalogPage } from '../../pages/product-catalog';
 import { AgriTechOperationsPage } from '../../pages/agritech-operations';
+import { NotFoundPage } from '../../pages/not-found';
 import { UserShell } from './user-shell';
 import { useUserNavigate } from './user-navigation';
 import { useUserRuntime } from './user-runtime-context';
 
 const rootRoute = createRootRoute({
   component: UserShell,
-  notFoundComponent: () => <UserHomeContent />,
+  notFoundComponent: NotFoundPage,
 });
 
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: UserHomeContent,
+  component: AgriTechOperationsPage,
 });
 
 function AuthRouteComponent() {
@@ -136,12 +136,6 @@ const productCatalogRoute = createRoute({
   component: ProductCatalogPage,
 });
 
-const agritechOperationsRoute = createRoute({
-  getParentRoute: () => rootRoute,
-  path: '/marketplace',
-  component: AgriTechOperationsPage,
-});
-
 const routeTree = rootRoute.addChildren([
   indexRoute,
   authRoute,
@@ -157,7 +151,6 @@ const routeTree = rootRoute.addChildren([
   farmerRegisterRoute,
   farmerDashboardRoute,
   productCatalogRoute,
-  agritechOperationsRoute,
 ]);
 
 export const createUserRouter = (history: RouterHistory = createBrowserHistory()) =>

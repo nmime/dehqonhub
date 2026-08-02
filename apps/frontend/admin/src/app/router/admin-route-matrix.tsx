@@ -41,7 +41,14 @@ function renderReadyAdminRoute(
   runtime: AdminRouteRuntime,
 ): ReactElement {
   const routePath = normalizeAdminPath(path);
-  if (routePath === '/' || routePath === '/dashboard') {
+  if (routePath === '/') {
+    return state.access.canReadAgriTech ? (
+      <AgriTechAdminPage access={state.access} requestOptions={runtime.requestOptions} />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.agritechMissing')} />
+    );
+  }
+  if (routePath === '/dashboard') {
     return state.access.canReadDashboard ? (
       <DashboardPage access={state.access} requestOptions={runtime.requestOptions} />
     ) : (
@@ -74,13 +81,6 @@ function renderReadyAdminRoute(
       <AuthLoginAnalyticsPage currentPath={path} requestOptions={runtime.requestOptions} />
     ) : (
       <ForbiddenPage reason={t('admin.permission.authLoginAnalyticsMissing')} />
-    );
-  }
-  if (routePath === '/agritech') {
-    return state.access.canReadAgriTech ? (
-      <AgriTechAdminPage access={state.access} requestOptions={runtime.requestOptions} />
-    ) : (
-      <ForbiddenPage reason={t('admin.permission.agritechMissing')} />
     );
   }
   if (routePath === '/profile') {

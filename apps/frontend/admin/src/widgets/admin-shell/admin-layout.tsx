@@ -38,15 +38,6 @@ const buildAdminNavigation = ({
   const users = visibleNavigationItems([
     {
       item: {
-        href: '/admin/agritech',
-        icon: 'analytics',
-        isCurrent: path === '/agritech',
-        label: t('admin.action.agritech'),
-      },
-      visible: Boolean(access?.canReadAgriTech),
-    },
-    {
-      item: {
         href: '/admin/users',
         icon: 'users',
         isCurrent: path.startsWith('/users'),
@@ -146,8 +137,17 @@ const buildAdminNavigation = ({
       {
         item: {
           href: '/admin',
+          icon: 'analytics',
+          isCurrent: path === '/',
+          label: t('admin.action.agritech'),
+        },
+        visible: Boolean(access?.canReadAgriTech),
+      },
+      {
+        item: {
+          href: '/admin/dashboard',
           icon: 'dashboard',
-          isCurrent: path === '/' || path === '/dashboard',
+          isCurrent: path === '/dashboard',
           label: t('admin.action.dashboard'),
         },
         visible: access?.canReadDashboard ?? true,
@@ -211,7 +211,7 @@ export const AdminLayout = observer(function AdminLayout({
       brandHref="/admin"
       breadcrumbLabel={t('admin.navigation.breadcrumbs')}
       breadcrumbs={[
-        { href: '/admin', label: t('admin.action.dashboard') },
+        { href: '/admin', label: t('admin.action.agritech') },
         ...(currentItem && currentItem.href !== '/admin' ? [{ label: currentItem.label }] : []),
       ]}
       className="admin-shell"

@@ -1,4 +1,4 @@
-// REQ-AGRITECH-CATALOG-002: the farmer-facing API exposes active catalog reads only.
+// REQ-AGRITECH-CATALOG-002 REQ-AGRITECH-ROUTING-015: the farmer-facing API exposes active catalog reads only.
 import { Controller, Get, Param, Query } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString } from 'class-validator';
@@ -21,7 +21,7 @@ class CatalogQueryDto {
 @ApiTags('agritech-catalog')
 @ApiExceptions(400, 401, 404, 500)
 @ApiSessionCookieAuth()
-@Controller('agritech/catalog')
+@Controller('catalog')
 export class ProductController {
   constructor(
     private readonly getProduct: GetProductUseCase,

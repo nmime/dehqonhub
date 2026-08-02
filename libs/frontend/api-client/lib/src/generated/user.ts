@@ -84,7 +84,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/partners': {
+  '/partners': {
     parameters: {
       query?: never;
       header?: never;
@@ -100,7 +100,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/supplier/products': {
+  '/supplier/products': {
     parameters: {
       query?: never;
       header?: never;
@@ -116,7 +116,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/supplier/products/{id}': {
+  '/supplier/products/{id}': {
     parameters: {
       query?: never;
       header?: never;
@@ -132,7 +132,7 @@ export interface paths {
     patch: operations['AgriTechOperationsController_updateSupplierProduct'];
     trace?: never;
   };
-  '/agritech/produce': {
+  '/produce': {
     parameters: {
       query?: never;
       header?: never;
@@ -148,7 +148,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/produce/prices': {
+  '/produce/prices': {
     parameters: {
       query?: never;
       header?: never;
@@ -164,7 +164,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/produce/{id}/reservations': {
+  '/produce/{id}/reservations': {
     parameters: {
       query?: never;
       header?: never;
@@ -180,7 +180,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/produce/{id}/cancel': {
+  '/produce/{id}/cancel': {
     parameters: {
       query?: never;
       header?: never;
@@ -196,7 +196,7 @@ export interface paths {
     patch: operations['AgriTechOperationsController_cancelProduce'];
     trace?: never;
   };
-  '/agritech/field-agent/farmers': {
+  '/field-agent/farmers': {
     parameters: {
       query?: never;
       header?: never;
@@ -212,7 +212,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/deliveries': {
+  '/deliveries': {
     parameters: {
       query?: never;
       header?: never;
@@ -228,7 +228,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/deliveries/{id}': {
+  '/deliveries/{id}': {
     parameters: {
       query?: never;
       header?: never;
@@ -244,7 +244,7 @@ export interface paths {
     patch: operations['AgriTechOperationsController_transitionDelivery'];
     trace?: never;
   };
-  '/agritech/field-visits': {
+  '/field-visits': {
     parameters: {
       query?: never;
       header?: never;
@@ -260,7 +260,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/advisories': {
+  '/advisories': {
     parameters: {
       query?: never;
       header?: never;
@@ -276,7 +276,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/farmer': {
+  '/farmer': {
     parameters: {
       query?: never;
       header?: never;
@@ -292,7 +292,7 @@ export interface paths {
     patch: operations['FarmerController_update'];
     trace?: never;
   };
-  '/agritech/orders': {
+  '/orders': {
     parameters: {
       query?: never;
       header?: never;
@@ -308,7 +308,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/orders/{id}': {
+  '/orders/{id}': {
     parameters: {
       query?: never;
       header?: never;
@@ -324,7 +324,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/payments': {
+  '/payments': {
     parameters: {
       query?: never;
       header?: never;
@@ -340,7 +340,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/payments/payme/callback': {
+  '/payments/payme/callback': {
     parameters: {
       query?: never;
       header?: never;
@@ -356,7 +356,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/payments/click/prepare': {
+  '/payments/click/prepare': {
     parameters: {
       query?: never;
       header?: never;
@@ -372,7 +372,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/payments/click/complete': {
+  '/payments/click/complete': {
     parameters: {
       query?: never;
       header?: never;
@@ -388,7 +388,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/catalog': {
+  '/catalog': {
     parameters: {
       query?: never;
       header?: never;
@@ -404,7 +404,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/catalog/{id}': {
+  '/catalog/{id}': {
     parameters: {
       query?: never;
       header?: never;

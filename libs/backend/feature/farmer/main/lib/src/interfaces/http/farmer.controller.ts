@@ -1,4 +1,4 @@
-// REQ-AGRITECH-PROFILE-001: authority comes from the authenticated principal, never route or body IDs.
+// REQ-AGRITECH-PROFILE-001 REQ-AGRITECH-ROUTING-015: authority comes from the authenticated principal, never route or body IDs.
 import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
@@ -15,7 +15,7 @@ import { CreateFarmerDto, FarmerProfileDto, UpdateFarmerDto } from './farmer.dto
 @ApiTags('agritech-farmer')
 @ApiExceptions(400, 401, 404, 409, 500)
 @ApiSessionCookieAuth()
-@Controller('agritech/farmer')
+@Controller('farmer')
 export class FarmerController {
   constructor(
     private readonly createFarmer: CreateFarmerUseCase,

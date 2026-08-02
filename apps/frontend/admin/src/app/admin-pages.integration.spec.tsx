@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-SHELL-004
+// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015
 import type { ReactElement } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -188,7 +188,7 @@ describe('admin pages integration', () => {
       );
     };
 
-    renderRoute('/admin');
+    renderRoute('/admin/dashboard');
     expect((await screen.findAllByText('42')).length).toBeGreaterThan(0);
     expect(screen.getByText('7')).toBeTruthy();
     expect(screen.getByText('3')).toBeTruthy();
@@ -220,7 +220,7 @@ describe('admin pages integration', () => {
     });
 
     renderAdminRouteForTest(
-      renderAdminRoute('/admin', { status: 'ready', payload, access: adminAccess }, undefined, {
+      renderAdminRoute('/admin/dashboard', { status: 'ready', payload, access: adminAccess }, undefined, {
         requestOptions: {
           baseUrl: 'https://admin.example.test',
         },
