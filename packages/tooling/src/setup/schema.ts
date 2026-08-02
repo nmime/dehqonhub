@@ -45,6 +45,7 @@ export const capabilityIds = [
   'notifications',
   'design-tokens',
   'authz',
+  'agritech',
   'postgres',
   'mongodb',
   'redis',

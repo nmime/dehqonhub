@@ -68,7 +68,7 @@ describe('session lifecycle utilities', () => {
       subject: 'user-id',
       tenantId: 'tenant-id',
       email: undefined,
-      locale: undefined,
+      locale: 'uz',
     });
 
     delete process.env.NODE_ENV;

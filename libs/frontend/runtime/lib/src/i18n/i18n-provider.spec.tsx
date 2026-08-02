@@ -15,6 +15,10 @@ const testTranslations = {
     ...sharedFrontendTranslations.ru,
     'landing.title': 'Запустите готовую full-stack основу',
   },
+  uz: {
+    ...sharedFrontendTranslations.uz,
+    'landing.title': 'Ishlab chiqarishga tayyor full-stack asosni ishga tushiring',
+  },
 } satisfies FrontendTranslations;
 
 function Example() {

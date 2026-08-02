@@ -24,6 +24,9 @@ export const AdminNotificationBroadcastsSendPermission = 'admin:notification-bro
 export const AdminNotificationBroadcastsApprovePermission = 'admin:notification-broadcasts:approve';
 export const AdminFeatureFlagsReadPermission = 'admin:feature-flags:read';
 export const AdminFeatureFlagsWritePermission = 'admin:feature-flags:write';
+export const AdminAgriTechReadPermission = 'admin:agritech:read';
+export const AdminAgriTechWritePermission = 'admin:agritech:write';
+export const AdminAgriTechApprovePermission = 'admin:agritech:approve';
 export const AdminManageAllPermission = 'admin:manage:all';
 
 // Single source of truth for every RBAC permission. Resource/action pairs are
@@ -173,6 +176,24 @@ export const permissionCatalog = [
     resource: 'admin.feature-flags',
     action: 'write',
     description: 'Create and update tenant-scoped runtime feature flags.',
+  },
+  {
+    key: AdminAgriTechReadPermission,
+    resource: 'admin.agritech',
+    action: 'read',
+    description: 'Read tenant-scoped AgriTech operations, analytics, integrations, and pilots.',
+  },
+  {
+    key: AdminAgriTechWritePermission,
+    resource: 'admin.agritech',
+    action: 'write',
+    description: 'Assign field work and manage AgriTech delivery, advisory, and pilot operations.',
+  },
+  {
+    key: AdminAgriTechApprovePermission,
+    resource: 'admin.agritech',
+    action: 'approve',
+    description: 'Approve or reject AgriTech supplier and buyer organizations.',
   },
   {
     key: AdminManageAllPermission,

@@ -447,6 +447,15 @@ describe('App', () => {
     ).toContain('Missing admin settings permission.');
     expect(
       renderAdminMarkup(
+        renderAdminRoute('/notifications/templates', {
+          status: 'ready',
+          payload,
+          access: deniedAccess,
+        }),
+      ),
+    ).toContain('Missing notification template read permission.');
+    expect(
+      renderAdminMarkup(
         renderAdminRoute('/tenants', {
           status: 'ready',
           payload,

@@ -149,6 +149,7 @@ describe('schema — constants', () => {
       'notifications',
       'design-tokens',
       'authz',
+      'agritech',
       'postgres',
       'mongodb',
       'redis',
@@ -629,7 +630,7 @@ describe('presets — expandPreset', () => {
     for (const a of appIds) {
       assert.ok(e.apps.includes(a), `enterprise missing app: ${a}`);
     }
-    for (const c of capabilityIds.filter((capability) => capability !== 'mongodb')) {
+    for (const c of capabilityIds.filter((capability) => !['mongodb', 'agritech'].includes(capability))) {
       assert.ok(e.capabilities.includes(c), `enterprise missing cap: ${c}`);
     }
     assert.ok(!e.capabilities.includes('mongodb'));

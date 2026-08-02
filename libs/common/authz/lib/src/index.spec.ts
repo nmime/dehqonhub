@@ -4,6 +4,9 @@ import { describe, expect, it } from 'vitest';
 // Domain evidence for REQ-AUTH-ACCESS-001.
 import {
   AdminAuthLoginAnalyticsReadPermission,
+  AdminAgriTechApprovePermission,
+  AdminAgriTechReadPermission,
+  AdminAgriTechWritePermission,
   AdminDashboardReadPermission,
   AdminFeatureFlagsReadPermission,
   AdminFeatureFlagsWritePermission,
@@ -72,6 +75,9 @@ describe('@app/common-authz permission catalog', () => {
       AdminNotificationBroadcastsApprovePermission,
       AdminFeatureFlagsReadPermission,
       AdminFeatureFlagsWritePermission,
+      AdminAgriTechReadPermission,
+      AdminAgriTechWritePermission,
+      AdminAgriTechApprovePermission,
       AdminManageAllPermission,
     ]);
   });
@@ -148,6 +154,9 @@ describe('@app/common-authz role matrix', () => {
       AdminNotificationBroadcastsApprovePermission,
       AdminFeatureFlagsReadPermission,
       AdminFeatureFlagsWritePermission,
+      AdminAgriTechReadPermission,
+      AdminAgriTechWritePermission,
+      AdminAgriTechApprovePermission,
       AdminManageAllPermission,
     ]);
     expect(permissionsForRoles([UserRole])).toEqual([UserProfileReadPermission]);

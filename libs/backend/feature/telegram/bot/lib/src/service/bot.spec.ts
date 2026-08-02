@@ -403,6 +403,19 @@ describe('createTelegramBot', () => {
     ]);
   });
 
+  it('opens the complete AgriTech workspace from its dedicated command', async () => {
+    const { calls, fetchMock } = apiMock();
+    const { bot } = createTelegramBot(config(), { fetch: fetchMock });
+
+    await bot.handleUpdate(messageUpdate('/agritech') as never);
+
+    expect(latestPayload(calls, 'sendMessage').text).toBe('Open the AgriTech workspace in the web app.');
+    expect(configuredWebAppButtons(calls).at(-1)).toEqual({
+      text: '🚀 Open app',
+      web_app: { url: 'https://app.example.test/tma' },
+    });
+  });
+
   it('explains that the Mini App is unavailable when no safe URL is configured', async () => {
     const { calls, fetchMock } = apiMock();
     const { bot } = createTelegramBot(config({ appUrl: 'https://telegram-bot.example.test/' }), {
@@ -1028,6 +1041,7 @@ describe('createTelegramBot', () => {
     expect(flattenButtons(latestPayload(calls, 'editMessageText')).map((button) => button.text)).toEqual([
       '✓ English',
       'Russian',
+      'Uzbek',
       '‹ Back',
     ]);
 

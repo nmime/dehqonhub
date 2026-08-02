@@ -1,0 +1,7 @@
+services:
+  user-app-api:
+    secrets: [payme_secret_key]
+
+secrets:
+  payme_secret_key:
+    file: ${PAYME_SECRET_KEY_FILE:?set PAYME_SECRET_KEY_FILE when Payme is configured}

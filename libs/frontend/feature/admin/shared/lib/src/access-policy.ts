@@ -25,6 +25,9 @@ import {
   AdminNotificationBroadcastsApprovePermission,
   AdminFeatureFlagsReadPermission,
   AdminFeatureFlagsWritePermission,
+  AdminAgriTechReadPermission,
+  AdminAgriTechWritePermission,
+  AdminAgriTechApprovePermission,
   AdminManageAllPermission,
   normalizeStringList,
 } from '@app/common-authz';
@@ -58,6 +61,9 @@ export {
   AdminNotificationBroadcastsApprovePermission,
   AdminFeatureFlagsReadPermission,
   AdminFeatureFlagsWritePermission,
+  AdminAgriTechReadPermission,
+  AdminAgriTechWritePermission,
+  AdminAgriTechApprovePermission,
   AdminManageAllPermission,
   normalizeStringList,
 };
@@ -95,6 +101,9 @@ export interface AdminAccessPolicy {
   canApproveNotificationBroadcasts: boolean;
   canReadFeatureFlags: boolean;
   canWriteFeatureFlags: boolean;
+  canReadAgriTech: boolean;
+  canWriteAgriTech: boolean;
+  canApproveAgriTech: boolean;
 }
 
 const hasPermission = (permissions: readonly string[], permission: string): boolean =>
@@ -128,6 +137,9 @@ export const createAdminAccessPolicy = (principal?: AdminPrincipalClaims): Admin
     canApproveNotificationBroadcasts: capability(AdminNotificationBroadcastsApprovePermission),
     canReadFeatureFlags: capability(AdminFeatureFlagsReadPermission),
     canWriteFeatureFlags: capability(AdminFeatureFlagsWritePermission),
+    canReadAgriTech: capability(AdminAgriTechReadPermission),
+    canWriteAgriTech: capability(AdminAgriTechWritePermission),
+    canApproveAgriTech: capability(AdminAgriTechApprovePermission),
   };
 
   return {

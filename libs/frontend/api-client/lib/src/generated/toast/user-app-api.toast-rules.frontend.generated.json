@@ -9,6 +9,240 @@
   "rules": [
     {
       "display": "silent",
+      "id": "user-app-api:GET:/agritech/advisories:200",
+      "match": {
+        "endpoint": "/agritech/advisories",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAdvisories",
+        "path": "/agritech/advisories",
+        "method": "GET",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Advisories completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/advisories:400",
+      "match": {
+        "endpoint": "/agritech/advisories",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAdvisories",
+        "path": "/agritech/advisories",
+        "method": "GET",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Advisories failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/agritech/advisories:401",
+      "match": {
+        "endpoint": "/agritech/advisories",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAdvisories",
+        "path": "/agritech/advisories",
+        "method": "GET",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Advisories failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/advisories:403",
+      "match": {
+        "endpoint": "/agritech/advisories",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAdvisories",
+        "path": "/agritech/advisories",
+        "method": "GET",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Advisories failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/advisories:404",
+      "match": {
+        "endpoint": "/agritech/advisories",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAdvisories",
+        "path": "/agritech/advisories",
+        "method": "GET",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Advisories failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/advisories:409",
+      "match": {
+        "endpoint": "/agritech/advisories",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAdvisories",
+        "path": "/agritech/advisories",
+        "method": "GET",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Advisories failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/advisories:500",
+      "match": {
+        "endpoint": "/agritech/advisories",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAdvisories",
+        "path": "/agritech/advisories",
+        "method": "GET",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Advisories failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/advisories:ERR",
+      "match": {
+        "endpoint": "/agritech/advisories",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAdvisories",
+        "path": "/agritech/advisories",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Advisories failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/advisories:NET",
+      "match": {
+        "endpoint": "/agritech/advisories",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAdvisories",
+        "path": "/agritech/advisories",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Advisories could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
       "id": "user-app-api:GET:/agritech/catalog:200",
       "match": {
         "endpoint": "/agritech/catalog",
@@ -368,6 +602,474 @@
         "tags": ["agritech-catalog"],
         "defaultDisplay": "toast",
         "defaultMessage": "Product get By Id could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/agritech/deliveries:200",
+      "match": {
+        "endpoint": "/agritech/deliveries",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listDeliveries",
+        "path": "/agritech/deliveries",
+        "method": "GET",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Deliveries completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/deliveries:400",
+      "match": {
+        "endpoint": "/agritech/deliveries",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listDeliveries",
+        "path": "/agritech/deliveries",
+        "method": "GET",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Deliveries failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/agritech/deliveries:401",
+      "match": {
+        "endpoint": "/agritech/deliveries",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listDeliveries",
+        "path": "/agritech/deliveries",
+        "method": "GET",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Deliveries failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/deliveries:403",
+      "match": {
+        "endpoint": "/agritech/deliveries",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listDeliveries",
+        "path": "/agritech/deliveries",
+        "method": "GET",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Deliveries failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/deliveries:404",
+      "match": {
+        "endpoint": "/agritech/deliveries",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listDeliveries",
+        "path": "/agritech/deliveries",
+        "method": "GET",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Deliveries failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/deliveries:409",
+      "match": {
+        "endpoint": "/agritech/deliveries",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listDeliveries",
+        "path": "/agritech/deliveries",
+        "method": "GET",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Deliveries failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/deliveries:500",
+      "match": {
+        "endpoint": "/agritech/deliveries",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listDeliveries",
+        "path": "/agritech/deliveries",
+        "method": "GET",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Deliveries failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/deliveries:ERR",
+      "match": {
+        "endpoint": "/agritech/deliveries",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listDeliveries",
+        "path": "/agritech/deliveries",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Deliveries failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/deliveries:NET",
+      "match": {
+        "endpoint": "/agritech/deliveries",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listDeliveries",
+        "path": "/agritech/deliveries",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Deliveries could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:PATCH:/agritech/deliveries/{id}:200",
+      "match": {
+        "endpoint": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_transitionDelivery",
+        "path": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations transition Delivery completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/deliveries/{id}:400",
+      "match": {
+        "endpoint": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_transitionDelivery",
+        "path": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations transition Delivery failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:PATCH:/agritech/deliveries/{id}:401",
+      "match": {
+        "endpoint": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_transitionDelivery",
+        "path": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations transition Delivery failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/deliveries/{id}:403",
+      "match": {
+        "endpoint": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_transitionDelivery",
+        "path": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations transition Delivery failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/deliveries/{id}:404",
+      "match": {
+        "endpoint": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_transitionDelivery",
+        "path": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations transition Delivery failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/deliveries/{id}:409",
+      "match": {
+        "endpoint": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_transitionDelivery",
+        "path": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations transition Delivery failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/deliveries/{id}:500",
+      "match": {
+        "endpoint": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_transitionDelivery",
+        "path": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations transition Delivery failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/deliveries/{id}:ERR",
+      "match": {
+        "endpoint": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_transitionDelivery",
+        "path": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations transition Delivery failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/deliveries/{id}:NET",
+      "match": {
+        "endpoint": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_transitionDelivery",
+        "path": "/agritech/deliveries/{id}",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations transition Delivery could not reach the service.",
         "defaultSeverity": "warning"
       }
     },
@@ -997,6 +1699,474 @@
     },
     {
       "display": "silent",
+      "id": "user-app-api:GET:/agritech/field-agent/farmers:200",
+      "match": {
+        "endpoint": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAssignedFarmers",
+        "path": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Assigned Farmers completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/field-agent/farmers:400",
+      "match": {
+        "endpoint": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAssignedFarmers",
+        "path": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Assigned Farmers failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/agritech/field-agent/farmers:401",
+      "match": {
+        "endpoint": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAssignedFarmers",
+        "path": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Assigned Farmers failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/field-agent/farmers:403",
+      "match": {
+        "endpoint": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAssignedFarmers",
+        "path": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Assigned Farmers failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/field-agent/farmers:404",
+      "match": {
+        "endpoint": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAssignedFarmers",
+        "path": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Assigned Farmers failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/field-agent/farmers:409",
+      "match": {
+        "endpoint": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAssignedFarmers",
+        "path": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Assigned Farmers failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/field-agent/farmers:500",
+      "match": {
+        "endpoint": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAssignedFarmers",
+        "path": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Assigned Farmers failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/field-agent/farmers:ERR",
+      "match": {
+        "endpoint": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAssignedFarmers",
+        "path": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Assigned Farmers failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/field-agent/farmers:NET",
+      "match": {
+        "endpoint": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listAssignedFarmers",
+        "path": "/agritech/field-agent/farmers",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Assigned Farmers could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/field-visits:200",
+      "match": {
+        "endpoint": "/agritech/field-visits",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_recordFieldVisit",
+        "path": "/agritech/field-visits",
+        "method": "POST",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations record Field Visit completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/field-visits:400",
+      "match": {
+        "endpoint": "/agritech/field-visits",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_recordFieldVisit",
+        "path": "/agritech/field-visits",
+        "method": "POST",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations record Field Visit failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/field-visits:401",
+      "match": {
+        "endpoint": "/agritech/field-visits",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_recordFieldVisit",
+        "path": "/agritech/field-visits",
+        "method": "POST",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations record Field Visit failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/field-visits:403",
+      "match": {
+        "endpoint": "/agritech/field-visits",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_recordFieldVisit",
+        "path": "/agritech/field-visits",
+        "method": "POST",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations record Field Visit failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/field-visits:404",
+      "match": {
+        "endpoint": "/agritech/field-visits",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_recordFieldVisit",
+        "path": "/agritech/field-visits",
+        "method": "POST",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations record Field Visit failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/field-visits:409",
+      "match": {
+        "endpoint": "/agritech/field-visits",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_recordFieldVisit",
+        "path": "/agritech/field-visits",
+        "method": "POST",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations record Field Visit failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/field-visits:500",
+      "match": {
+        "endpoint": "/agritech/field-visits",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_recordFieldVisit",
+        "path": "/agritech/field-visits",
+        "method": "POST",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations record Field Visit failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/field-visits:ERR",
+      "match": {
+        "endpoint": "/agritech/field-visits",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_recordFieldVisit",
+        "path": "/agritech/field-visits",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations record Field Visit failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/field-visits:NET",
+      "match": {
+        "endpoint": "/agritech/field-visits",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_recordFieldVisit",
+        "path": "/agritech/field-visits",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations record Field Visit could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
       "id": "user-app-api:GET:/agritech/orders:200",
       "match": {
         "endpoint": "/agritech/orders",
@@ -1621,11 +2791,479 @@
     },
     {
       "display": "silent",
-      "id": "user-app-api:POST:/agritech/payments:201",
+      "id": "user-app-api:GET:/agritech/partners:200",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listPartners",
+        "path": "/agritech/partners",
+        "method": "GET",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Partners completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/partners:400",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listPartners",
+        "path": "/agritech/partners",
+        "method": "GET",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Partners failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/agritech/partners:401",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listPartners",
+        "path": "/agritech/partners",
+        "method": "GET",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Partners failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/partners:403",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listPartners",
+        "path": "/agritech/partners",
+        "method": "GET",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Partners failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/partners:404",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listPartners",
+        "path": "/agritech/partners",
+        "method": "GET",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Partners failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/partners:409",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listPartners",
+        "path": "/agritech/partners",
+        "method": "GET",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Partners failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/partners:500",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listPartners",
+        "path": "/agritech/partners",
+        "method": "GET",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Partners failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/partners:ERR",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listPartners",
+        "path": "/agritech/partners",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Partners failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/partners:NET",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listPartners",
+        "path": "/agritech/partners",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Partners could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/partners:200",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createPartner",
+        "path": "/agritech/partners",
+        "method": "POST",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations create Partner completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/partners:400",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createPartner",
+        "path": "/agritech/partners",
+        "method": "POST",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Partner failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/partners:401",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createPartner",
+        "path": "/agritech/partners",
+        "method": "POST",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations create Partner failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/partners:403",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createPartner",
+        "path": "/agritech/partners",
+        "method": "POST",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Partner failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/partners:404",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createPartner",
+        "path": "/agritech/partners",
+        "method": "POST",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Partner failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/partners:409",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createPartner",
+        "path": "/agritech/partners",
+        "method": "POST",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Partner failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/partners:500",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createPartner",
+        "path": "/agritech/partners",
+        "method": "POST",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Partner failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/partners:ERR",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createPartner",
+        "path": "/agritech/partners",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Partner failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/partners:NET",
+      "match": {
+        "endpoint": "/agritech/partners",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createPartner",
+        "path": "/agritech/partners",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Partner could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/payments:200",
       "match": {
         "endpoint": "/agritech/payments",
         "method": "POST",
-        "status": 201
+        "status": 200
       },
       "toast": {
         "category": "success",
@@ -1638,7 +3276,7 @@
         "operationId": "PaymentController_create",
         "path": "/agritech/payments",
         "method": "POST",
-        "status": 201,
+        "status": 200,
         "tags": ["agritech-payments"],
         "defaultDisplay": "silent",
         "defaultMessage": "Payment create completed successfully.",
@@ -1694,6 +3332,84 @@
         "tags": ["agritech-payments"],
         "defaultDisplay": "silent",
         "defaultMessage": "Payment create failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/payments:403",
+      "match": {
+        "endpoint": "/agritech/payments",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_create",
+        "path": "/agritech/payments",
+        "method": "POST",
+        "status": 403,
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Payment create failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/payments:404",
+      "match": {
+        "endpoint": "/agritech/payments",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_create",
+        "path": "/agritech/payments",
+        "method": "POST",
+        "status": 404,
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Payment create failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/payments:409",
+      "match": {
+        "endpoint": "/agritech/payments",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_create",
+        "path": "/agritech/payments",
+        "method": "POST",
+        "status": 409,
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Payment create failed: Conflict.",
         "defaultSeverity": "error"
       }
     },
@@ -1772,6 +3488,2112 @@
         "tags": ["agritech-payments"],
         "defaultDisplay": "toast",
         "defaultMessage": "Payment create could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/payments/click/complete:201",
+      "match": {
+        "endpoint": "/agritech/payments/click/complete",
+        "method": "POST",
+        "status": 201
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_clickComplete",
+        "path": "/agritech/payments/click/complete",
+        "method": "POST",
+        "status": 201,
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Payment click Complete completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/payments/click/complete:ERR",
+      "match": {
+        "endpoint": "/agritech/payments/click/complete",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_clickComplete",
+        "path": "/agritech/payments/click/complete",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Payment click Complete failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/payments/click/complete:NET",
+      "match": {
+        "endpoint": "/agritech/payments/click/complete",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_clickComplete",
+        "path": "/agritech/payments/click/complete",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Payment click Complete could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/payments/click/prepare:201",
+      "match": {
+        "endpoint": "/agritech/payments/click/prepare",
+        "method": "POST",
+        "status": 201
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_clickPrepare",
+        "path": "/agritech/payments/click/prepare",
+        "method": "POST",
+        "status": 201,
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Payment click Prepare completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/payments/click/prepare:ERR",
+      "match": {
+        "endpoint": "/agritech/payments/click/prepare",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_clickPrepare",
+        "path": "/agritech/payments/click/prepare",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Payment click Prepare failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/payments/click/prepare:NET",
+      "match": {
+        "endpoint": "/agritech/payments/click/prepare",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_clickPrepare",
+        "path": "/agritech/payments/click/prepare",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Payment click Prepare could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/payments/payme/callback:201",
+      "match": {
+        "endpoint": "/agritech/payments/payme/callback",
+        "method": "POST",
+        "status": 201
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_payme",
+        "path": "/agritech/payments/payme/callback",
+        "method": "POST",
+        "status": 201,
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Payment payme completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/payments/payme/callback:ERR",
+      "match": {
+        "endpoint": "/agritech/payments/payme/callback",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_payme",
+        "path": "/agritech/payments/payme/callback",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Payment payme failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/payments/payme/callback:NET",
+      "match": {
+        "endpoint": "/agritech/payments/payme/callback",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "PaymentController_payme",
+        "path": "/agritech/payments/payme/callback",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["agritech-payments"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Payment payme could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/agritech/produce:200",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listProduce",
+        "path": "/agritech/produce",
+        "method": "GET",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Produce completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce:400",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listProduce",
+        "path": "/agritech/produce",
+        "method": "GET",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Produce failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/agritech/produce:401",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listProduce",
+        "path": "/agritech/produce",
+        "method": "GET",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Produce failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce:403",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listProduce",
+        "path": "/agritech/produce",
+        "method": "GET",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Produce failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce:404",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listProduce",
+        "path": "/agritech/produce",
+        "method": "GET",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Produce failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce:409",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listProduce",
+        "path": "/agritech/produce",
+        "method": "GET",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Produce failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce:500",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listProduce",
+        "path": "/agritech/produce",
+        "method": "GET",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Produce failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce:ERR",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listProduce",
+        "path": "/agritech/produce",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Produce failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce:NET",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listProduce",
+        "path": "/agritech/produce",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Produce could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/produce:200",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createProduce",
+        "path": "/agritech/produce",
+        "method": "POST",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations create Produce completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce:400",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createProduce",
+        "path": "/agritech/produce",
+        "method": "POST",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Produce failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/produce:401",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createProduce",
+        "path": "/agritech/produce",
+        "method": "POST",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations create Produce failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce:403",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createProduce",
+        "path": "/agritech/produce",
+        "method": "POST",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Produce failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce:404",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createProduce",
+        "path": "/agritech/produce",
+        "method": "POST",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Produce failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce:409",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createProduce",
+        "path": "/agritech/produce",
+        "method": "POST",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Produce failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce:500",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createProduce",
+        "path": "/agritech/produce",
+        "method": "POST",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Produce failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce:ERR",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createProduce",
+        "path": "/agritech/produce",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Produce failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce:NET",
+      "match": {
+        "endpoint": "/agritech/produce",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createProduce",
+        "path": "/agritech/produce",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Produce could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:PATCH:/agritech/produce/{id}/cancel:200",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_cancelProduce",
+        "path": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations cancel Produce completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/produce/{id}/cancel:400",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_cancelProduce",
+        "path": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations cancel Produce failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:PATCH:/agritech/produce/{id}/cancel:401",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_cancelProduce",
+        "path": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations cancel Produce failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/produce/{id}/cancel:403",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_cancelProduce",
+        "path": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations cancel Produce failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/produce/{id}/cancel:404",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_cancelProduce",
+        "path": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations cancel Produce failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/produce/{id}/cancel:409",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_cancelProduce",
+        "path": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations cancel Produce failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/produce/{id}/cancel:500",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_cancelProduce",
+        "path": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations cancel Produce failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/produce/{id}/cancel:ERR",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_cancelProduce",
+        "path": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations cancel Produce failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/produce/{id}/cancel:NET",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_cancelProduce",
+        "path": "/agritech/produce/{id}/cancel",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations cancel Produce could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/produce/{id}/reservations:200",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_reserveProduce",
+        "path": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations reserve Produce completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce/{id}/reservations:400",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_reserveProduce",
+        "path": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations reserve Produce failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/produce/{id}/reservations:401",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_reserveProduce",
+        "path": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations reserve Produce failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce/{id}/reservations:403",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_reserveProduce",
+        "path": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations reserve Produce failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce/{id}/reservations:404",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_reserveProduce",
+        "path": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations reserve Produce failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce/{id}/reservations:409",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_reserveProduce",
+        "path": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations reserve Produce failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce/{id}/reservations:500",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_reserveProduce",
+        "path": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations reserve Produce failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce/{id}/reservations:ERR",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_reserveProduce",
+        "path": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations reserve Produce failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/produce/{id}/reservations:NET",
+      "match": {
+        "endpoint": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_reserveProduce",
+        "path": "/agritech/produce/{id}/reservations",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations reserve Produce could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/agritech/produce/prices:200",
+      "match": {
+        "endpoint": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_discoverPrice",
+        "path": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations discover Price completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce/prices:400",
+      "match": {
+        "endpoint": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_discoverPrice",
+        "path": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations discover Price failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/agritech/produce/prices:401",
+      "match": {
+        "endpoint": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_discoverPrice",
+        "path": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations discover Price failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce/prices:403",
+      "match": {
+        "endpoint": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_discoverPrice",
+        "path": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations discover Price failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce/prices:404",
+      "match": {
+        "endpoint": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_discoverPrice",
+        "path": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations discover Price failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce/prices:409",
+      "match": {
+        "endpoint": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_discoverPrice",
+        "path": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations discover Price failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce/prices:500",
+      "match": {
+        "endpoint": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_discoverPrice",
+        "path": "/agritech/produce/prices",
+        "method": "GET",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations discover Price failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce/prices:ERR",
+      "match": {
+        "endpoint": "/agritech/produce/prices",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_discoverPrice",
+        "path": "/agritech/produce/prices",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations discover Price failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/produce/prices:NET",
+      "match": {
+        "endpoint": "/agritech/produce/prices",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_discoverPrice",
+        "path": "/agritech/produce/prices",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations discover Price could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/agritech/supplier/products:200",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listSupplierProducts",
+        "path": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Supplier Products completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/supplier/products:400",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listSupplierProducts",
+        "path": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Supplier Products failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:GET:/agritech/supplier/products:401",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listSupplierProducts",
+        "path": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations list Supplier Products failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/supplier/products:403",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listSupplierProducts",
+        "path": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Supplier Products failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/supplier/products:404",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listSupplierProducts",
+        "path": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Supplier Products failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/supplier/products:409",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listSupplierProducts",
+        "path": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Supplier Products failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/supplier/products:500",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listSupplierProducts",
+        "path": "/agritech/supplier/products",
+        "method": "GET",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Supplier Products failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/supplier/products:ERR",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listSupplierProducts",
+        "path": "/agritech/supplier/products",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Supplier Products failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:GET:/agritech/supplier/products:NET",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_listSupplierProducts",
+        "path": "/agritech/supplier/products",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations list Supplier Products could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/supplier/products:200",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createSupplierProduct",
+        "path": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations create Supplier Product completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/supplier/products:400",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createSupplierProduct",
+        "path": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Supplier Product failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:POST:/agritech/supplier/products:401",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createSupplierProduct",
+        "path": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations create Supplier Product failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/supplier/products:403",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createSupplierProduct",
+        "path": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Supplier Product failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/supplier/products:404",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createSupplierProduct",
+        "path": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Supplier Product failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/supplier/products:409",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createSupplierProduct",
+        "path": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Supplier Product failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/supplier/products:500",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createSupplierProduct",
+        "path": "/agritech/supplier/products",
+        "method": "POST",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Supplier Product failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/supplier/products:ERR",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createSupplierProduct",
+        "path": "/agritech/supplier/products",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Supplier Product failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:POST:/agritech/supplier/products:NET",
+      "match": {
+        "endpoint": "/agritech/supplier/products",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_createSupplierProduct",
+        "path": "/agritech/supplier/products",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations create Supplier Product could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:PATCH:/agritech/supplier/products/{id}:200",
+      "match": {
+        "endpoint": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_updateSupplierProduct",
+        "path": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations update Supplier Product completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/supplier/products/{id}:400",
+      "match": {
+        "endpoint": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_updateSupplierProduct",
+        "path": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations update Supplier Product failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "user-app-api:PATCH:/agritech/supplier/products/{id}:401",
+      "match": {
+        "endpoint": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_updateSupplierProduct",
+        "path": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Agri Tech Operations update Supplier Product failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/supplier/products/{id}:403",
+      "match": {
+        "endpoint": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_updateSupplierProduct",
+        "path": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations update Supplier Product failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/supplier/products/{id}:404",
+      "match": {
+        "endpoint": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_updateSupplierProduct",
+        "path": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations update Supplier Product failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/supplier/products/{id}:409",
+      "match": {
+        "endpoint": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_updateSupplierProduct",
+        "path": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations update Supplier Product failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/supplier/products/{id}:500",
+      "match": {
+        "endpoint": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_updateSupplierProduct",
+        "path": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations update Supplier Product failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/supplier/products/{id}:ERR",
+      "match": {
+        "endpoint": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_updateSupplierProduct",
+        "path": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations update Supplier Product failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "user-app-api:PATCH:/agritech/supplier/products/{id}:NET",
+      "match": {
+        "endpoint": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "user-app-api",
+        "errorCode": null,
+        "operationId": "AgriTechOperationsController_updateSupplierProduct",
+        "path": "/agritech/supplier/products/{id}",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["agritech-operations"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Agri Tech Operations update Supplier Product could not reach the service.",
         "defaultSeverity": "warning"
       }
     },

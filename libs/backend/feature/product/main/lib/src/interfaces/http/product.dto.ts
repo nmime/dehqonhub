@@ -6,6 +6,7 @@ export class ProductViewDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() name!: string;
   @ApiProperty({ required: false }) nameRu?: string;
+  @ApiProperty({ required: false }) nameUz?: string;
   @ApiProperty({ enum: ['fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation', 'other'] })
   category!: ProductCategory;
   @ApiProperty() description!: string;

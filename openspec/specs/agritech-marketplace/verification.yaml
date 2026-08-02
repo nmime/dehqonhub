@@ -61,6 +61,8 @@ requirements:
       [
         '@app/backend-feature-order-main',
         '@app/backend-feature-order-shared',
+        '@app/backend-feature-agritech-main',
+        '@app/backend-feature-agritech-shared',
         '@app/backend-postgres-main-agritech',
         user-app-api,
       ]
@@ -75,6 +77,10 @@ requirements:
         file: libs/backend/feature/order/shared/lib/src/application/order.use-cases.spec.ts
         target: '@app/backend-feature-order-shared:test'
         lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/shared/lib/src/agritech-policies.spec.ts
+        target: '@app/backend-feature-agritech-shared:test'
+        lanes: [pr, main]
       - kind: static
         file: libs/backend/postgres/main/agritech/lib/src/migrations/agritech.migration.spec.ts
         target: '@app/backend-postgres-main-agritech:test'
@@ -84,24 +90,34 @@ requirements:
         target: '@app/backend-feature-order-main:build'
         lanes: [pr, main]
   - id: REQ-AGRITECH-PAYMENT-004
-    projects: ['@app/backend-feature-payment-main', user-app-api]
+    projects:
+      [
+        '@app/backend-feature-payment-main',
+        '@app/backend-feature-payment-shared',
+        '@app/backend-postgres-main-agritech',
+        user-app-api,
+      ]
     risk: critical
     profiles: [domain, security]
     cucumber:
       disposition: not-applicable
-      reason: Provider readiness is deliberately disabled and verified through a fail-closed security assertion.
+      reason: Provider authentication, amount binding, idempotency, replay behavior, and fail-closed configuration require direct domain and persistence evidence.
       alternativeEvidence: [vitest, security]
     evidence:
       - kind: vitest
         file: libs/backend/feature/payment/main/lib/src/application/payment.use-cases.spec.ts
         target: '@app/backend-feature-payment-main:test'
         lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/payment/shared/lib/src/index.spec.ts
+        target: '@app/backend-feature-payment-shared:test'
+        lanes: [pr, main]
       - kind: security
         file: libs/backend/feature/payment/main/lib/src/application/payment.use-cases.spec.ts
         target: '@app/backend-feature-payment-main:test'
         lanes: [pr, main]
   - id: REQ-AGRITECH-TELEGRAM-005
-    projects: ['@app/backend-feature-telegram-bot']
+    projects: ['@app/backend-feature-telegram-bot', '@app/backend-feature-agritech-main']
     risk: high
     profiles: [domain]
     cucumber:
@@ -113,20 +129,264 @@ requirements:
         file: libs/backend/feature/telegram/bot/lib/src/service/bot.spec.ts
         target: '@app/backend-feature-telegram-bot:test'
         lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/main/lib/src/agritech-notification.publisher.spec.ts
+        target: '@app/backend-feature-agritech-main:test'
+        lanes: [pr, main]
   - id: REQ-AGRITECH-WEB-006
-    projects: [user-app, '@app/frontend-api-client', '@app/frontend-feature-user-i18n']
+    projects: [user-app, admin-app, mobile-app, '@app/frontend-api-client', '@app/frontend-feature-user-i18n']
     risk: high
     profiles: [api]
     cucumber:
       disposition: not-applicable
       reason: Request-state rendering and generated-client usage are verified by typed production builds in this source lane.
-      alternativeEvidence: [static, contract]
+      alternativeEvidence: [vitest, contract]
     evidence:
-      - kind: static
-        file: apps/frontend/app/src/pages/product-catalog/ui/product-catalog-page.tsx
+      - kind: vitest
+        file: apps/frontend/app/src/pages/agritech-operations/ui/agritech-operations-page.spec.tsx
         target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/admin/src/pages/agritech/agritech-page.spec.tsx
+        target: admin-app:test
         lanes: [pr, main]
       - kind: contract
         file: libs/frontend/api-client/lib/src/user.ts
         target: '@app/frontend-api-client:build'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-PARTNER-007
+    projects:
+      [
+        '@app/backend-feature-agritech-main',
+        '@app/backend-feature-agritech-shared',
+        '@app/backend-feature-agritech-admin',
+        '@app/backend-postgres-main-agritech',
+        acceptance-e2e,
+      ]
+    risk: high
+    profiles: [acceptance, domain, api, security]
+    cucumber:
+      disposition: acceptance
+    evidence:
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-PARTNER-01
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-PARTNER-02
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/admin/lib/src/index.spec.ts
+        target: '@app/backend-feature-agritech-admin:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/shared/lib/src/index.spec.ts
+        target: '@app/backend-feature-agritech-shared:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/backend/feature/agritech/admin/lib/src/agritech-admin.controller.ts
+        target: '@app/backend-feature-agritech-admin:build'
+        lanes: [pr, main]
+      - kind: security
+        file: libs/backend/feature/agritech/admin/lib/src/index.spec.ts
+        target: '@app/backend-feature-agritech-admin:test'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-OUTPUT-008
+    projects:
+      [
+        '@app/backend-feature-agritech-main',
+        '@app/backend-feature-agritech-shared',
+        '@app/backend-postgres-main-agritech',
+        acceptance-e2e,
+      ]
+    risk: critical
+    profiles: [acceptance, domain, api]
+    cucumber:
+      disposition: acceptance
+    evidence:
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-OUTPUT-01
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-OUTPUT-02
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/main/lib/src/index.spec.ts
+        target: '@app/backend-feature-agritech-main:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/shared/lib/src/agritech-policies.spec.ts
+        target: '@app/backend-feature-agritech-shared:test'
+        lanes: [pr, main]
+      - kind: static
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/operations.repository.ts
+        target: '@app/backend-postgres-main-agritech:build'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/backend/feature/agritech/main/lib/src/agritech.controller.ts
+        target: '@app/backend-feature-agritech-main:build'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-ADVISORY-009
+    projects:
+      [
+        '@app/backend-feature-agritech-main',
+        '@app/backend-feature-agritech-admin',
+        '@app/backend-postgres-main-agritech',
+      ]
+    risk: high
+    profiles: [domain, api]
+    cucumber:
+      disposition: not-applicable
+      reason: Source attribution, expiry, and stale-state handling are deterministic repository and API contracts.
+      alternativeEvidence: [vitest, contract, static]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/agritech/main/lib/src/index.spec.ts
+        target: '@app/backend-feature-agritech-main:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/backend/feature/agritech/main/lib/src/agritech.controller.ts
+        target: '@app/backend-feature-agritech-main:build'
+        lanes: [pr, main]
+      - kind: static
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/operations.repository.ts
+        target: '@app/backend-postgres-main-agritech:build'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-FULFILLMENT-010
+    projects:
+      [
+        '@app/backend-feature-agritech-main',
+        '@app/backend-feature-agritech-shared',
+        '@app/backend-feature-agritech-admin',
+        '@app/backend-postgres-main-agritech',
+        mobile-app,
+        acceptance-e2e,
+      ]
+    risk: critical
+    profiles: [acceptance, domain, api]
+    cucumber:
+      disposition: acceptance
+    evidence:
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-FULFILLMENT-01
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-FULFILLMENT-02
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/main/lib/src/index.spec.ts
+        target: '@app/backend-feature-agritech-main:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/shared/lib/src/agritech-policies.spec.ts
+        target: '@app/backend-feature-agritech-shared:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/backend/feature/agritech/main/lib/src/agritech.controller.ts
+        target: '@app/backend-feature-agritech-main:build'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-ANALYTICS-011
+    projects:
+      [
+        '@app/backend-feature-agritech-main',
+        '@app/backend-feature-agritech-admin',
+        '@app/backend-postgres-main-agritech',
+        admin-app,
+      ]
+    risk: high
+    profiles: [domain, api]
+    cucumber:
+      disposition: not-applicable
+      reason: Evidence-bounded targets and actuals are verified against persisted aggregate queries and admin contracts.
+      alternativeEvidence: [vitest, contract]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/agritech/admin/lib/src/index.spec.ts
+        target: '@app/backend-feature-agritech-admin:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/backend/feature/agritech/admin/lib/src/agritech-admin.controller.ts
+        target: '@app/backend-feature-agritech-admin:build'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-I18N-012
+    projects:
+      [
+        '@app/common-i18n-runtime',
+        '@app/frontend-feature-user-i18n',
+        '@app/frontend-feature-admin-i18n',
+        '@app/backend-postgres-main-auth',
+        '@app/i18n-uz-common',
+        '@app/i18n-uz-user',
+        '@app/i18n-uz-admin',
+        '@app/i18n-uz-bots',
+        '@app/i18n-uz-landing',
+      ]
+    risk: high
+    profiles: [api]
+    cucumber:
+      disposition: not-applicable
+      reason: Locale negotiation and complete catalog parity are enforced by typed runtime and static catalog gates.
+      alternativeEvidence: [contract, static]
+    evidence:
+      - kind: static
+        file: libs/frontend/feature/user/i18n/lib/src/translations.ts
+        target: '@app/frontend-feature-user-i18n:build'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/feature/user/i18n/lib/src/translations.ts
+        target: '@app/frontend-feature-user-i18n:build'
+        lanes: [pr, main]
+      - kind: static
+        file: libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/migrations/auth-locale-schema.migration.spec.ts
+        target: '@app/backend-postgres-main-auth:test'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-INTEGRATION-013
+    projects:
+      [
+        '@app/backend-feature-agritech-main',
+        '@app/backend-feature-agritech-admin',
+        '@app/backend-postgres-main-agritech',
+      ]
+    risk: critical
+    profiles: [api]
+    cucumber:
+      disposition: not-applicable
+      reason: External providers are intentionally represented by explicit disabled, ready, or degraded states until a named contract is configured.
+      alternativeEvidence: [contract, static]
+    evidence:
+      - kind: contract
+        file: libs/backend/feature/agritech/admin/lib/src/agritech-admin.controller.ts
+        target: '@app/backend-feature-agritech-admin:build'
+        lanes: [pr, main]
+      - kind: static
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/operations.repository.ts
+        target: '@app/backend-postgres-main-agritech:build'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-DEPLOYMENT-014
+    projects: ['@repo/tooling']
+    risk: critical
+    profiles: [operations, security]
+    cucumber:
+      disposition: not-applicable
+      reason: Secret mounting, immutable deployment inputs, migration ordering, and readiness are deployment configuration contracts.
+      alternativeEvidence: [operations, security]
+    evidence:
+      - kind: operations
+        file: scripts/compose-production.spec.mjs
+        script: test:deploy
+        lanes: [pr, main]
+      - kind: security
+        file: scripts/compose-production.spec.mjs
+        script: test:deploy
         lanes: [pr, main]

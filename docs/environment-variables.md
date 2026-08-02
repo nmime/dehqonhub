@@ -198,6 +198,25 @@ provider uses `ANALYTICS_POSTHOG_API_KEY` and
 `ANALYTICS_PROVIDERS` selects the active provider set. Do not use the obsolete
 unprefixed PostHog key.
 
+## AgriTech marketplace
+
+The AgriTech capability is selected explicitly and stays provider-disabled
+until merchant configuration is complete.
+
+| Variable                                                           | Purpose                                                                                              |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| `PAYMENT_TENANT_ID`                                                | Tenant used by provider callback endpoints that cannot carry an authenticated application principal. |
+| `PAYMENT_RETURN_URL_ORIGINS`                                       | Comma-separated HTTPS origins accepted for post-payment browser returns.                             |
+| `AGRITECH_COMMISSION_BASIS_POINTS`                                 | Integer platform commission from 0 through 10000; defaults to `800` (8%).                            |
+| `PAYME_MERCHANT_ID` / `PAYME_SECRET_KEY_FILE`                      | Payme merchant identity and production secret file.                                                  |
+| `PAYME_CHECKOUT_URL`                                               | Payme checkout origin; defaults to the official checkout service.                                    |
+| `CLICK_SERVICE_ID` / `CLICK_MERCHANT_ID` / `CLICK_SECRET_KEY_FILE` | Click merchant identity and production secret file.                                                  |
+| `CLICK_CHECKOUT_URL`                                               | Click checkout origin; defaults to the official checkout service.                                    |
+| `BNPL_CHECKOUT_URL`                                                | Contracted BNPL checkout endpoint; empty keeps BNPL disabled.                                        |
+
+See [AgriTech Platform](agritech-platform.md) for callback, pilot, and launch
+readiness boundaries.
+
 ## Notifications
 
 Canonical authentication publishes verification/reset codes through the

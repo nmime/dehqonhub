@@ -3,7 +3,7 @@
   "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
   "sourceRoot": "libs/backend/postgres/main/agritech/lib/src",
   "projectType": "library",
-  "tags": ["platform:backend", "type:data-access", "scope:user"],
+  "tags": ["platform:backend", "type:data-access", "scope:shared"],
   "targets": {
     "build": {
       "executor": "@nx/js:tsc",

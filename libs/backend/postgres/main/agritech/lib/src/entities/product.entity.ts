@@ -6,8 +6,10 @@ export type ProductStatus = 'active' | 'inactive' | 'out_of_stock';
 
 export class ProductEntity {
   id: string = randomUUID();
+  tenantId!: string;
   name!: string;
   nameRu: string | null = null;
+  nameUz: string | null = null;
   category!: ProductCategory;
   description!: string;
   supplierId!: string;
@@ -27,8 +29,10 @@ export const ProductEntitySchema = new EntitySchema<ProductEntity>({
   tableName: 'products',
   properties: {
     id: { type: 'uuid', primary: true },
+    tenantId: { type: 'varchar', length: 100, fieldName: 'tenant_id' },
     name: { type: 'varchar', length: 200 },
     nameRu: { type: 'varchar', length: 200, nullable: true, fieldName: 'name_ru' },
+    nameUz: { type: 'varchar', length: 200, nullable: true, fieldName: 'name_uz' },
     category: { type: 'varchar', length: 30 },
     description: { type: 'text' },
     supplierId: { type: 'varchar', length: 100, fieldName: 'supplier_id' },
@@ -47,5 +51,6 @@ export const ProductEntitySchema = new EntitySchema<ProductEntity>({
     { name: 'ix__products__region', properties: ['region'] },
     { name: 'ix__products__supplier_id', properties: ['supplierId'] },
     { name: 'ix__products__status', properties: ['status'] },
+    { name: 'ix__products__tenant_id_status', properties: ['tenantId', 'status'] },
   ],
 });

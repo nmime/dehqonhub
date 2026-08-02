@@ -1,7 +1,135 @@
 {
   "schemaVersion": 1,
-  "configHash": "a79ad8dbbd3c74b146446a6fa453d7b30d1ff6e0f7a391afd28b1481dd101a10",
+  "configHash": "92165a6c6a271252648f12c42077ce16ae3bc81950b0c332414219edd1125e48",
   "capabilities": [
+    {
+      "id": "agritech",
+      "activation": "nest-module",
+      "projects": [
+        "@app/backend-feature-agritech-admin",
+        "@app/backend-feature-agritech-main",
+        "@app/backend-feature-agritech-shared",
+        "@app/backend-feature-farmer-main",
+        "@app/backend-feature-farmer-shared",
+        "@app/backend-feature-order-main",
+        "@app/backend-feature-order-shared",
+        "@app/backend-feature-payment-main",
+        "@app/backend-feature-payment-shared",
+        "@app/backend-feature-product-main",
+        "@app/backend-feature-product-shared",
+        "@app/backend-postgres-main-agritech"
+      ],
+      "dockerServices": [],
+      "environmentVariables": [
+        "AGRITECH_COMMISSION_BASIS_POINTS",
+        "BNPL_CHECKOUT_URL",
+        "CLICK_CHECKOUT_URL",
+        "CLICK_MERCHANT_ID",
+        "CLICK_SECRET_KEY",
+        "CLICK_SECRET_KEY_FILE",
+        "CLICK_SERVICE_ID",
+        "PAYMENT_RETURN_URL_ORIGINS",
+        "PAYMENT_TENANT_ID",
+        "PAYME_CHECKOUT_URL",
+        "PAYME_MERCHANT_ID",
+        "PAYME_SECRET_KEY",
+        "PAYME_SECRET_KEY_FILE"
+      ],
+      "generatedFiles": [
+        "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
+        "apps/backend/user/user-app-api/src/capabilities.generated.ts"
+      ],
+      "backendWiring": [
+        {
+          "hosts": [
+            "user-app-api",
+            "admin-app-api"
+          ],
+          "moduleExpression": "AgriTechPostgresModule",
+          "imports": [
+            {
+              "importName": "AgriTechPostgresModule",
+              "importPath": "@app/backend-postgres-main-agritech"
+            }
+          ]
+        },
+        {
+          "hosts": [
+            "user-app-api"
+          ],
+          "moduleExpression": "AgriTechMainModule",
+          "imports": [
+            {
+              "importName": "AgriTechMainModule",
+              "importPath": "@app/backend-feature-agritech-main"
+            }
+          ]
+        },
+        {
+          "hosts": [
+            "admin-app-api"
+          ],
+          "moduleExpression": "AgriTechAdminModule",
+          "imports": [
+            {
+              "importName": "AgriTechAdminModule",
+              "importPath": "@app/backend-feature-agritech-admin"
+            }
+          ]
+        },
+        {
+          "hosts": [
+            "user-app-api"
+          ],
+          "moduleExpression": "FarmerMainModule",
+          "imports": [
+            {
+              "importName": "FarmerMainModule",
+              "importPath": "@app/backend-feature-farmer-main"
+            }
+          ]
+        },
+        {
+          "hosts": [
+            "user-app-api"
+          ],
+          "moduleExpression": "OrderMainModule",
+          "imports": [
+            {
+              "importName": "OrderMainModule",
+              "importPath": "@app/backend-feature-order-main"
+            }
+          ]
+        },
+        {
+          "hosts": [
+            "user-app-api"
+          ],
+          "moduleExpression": "PaymentModule",
+          "imports": [
+            {
+              "importName": "PaymentModule",
+              "importPath": "@app/backend-feature-payment-main"
+            }
+          ]
+        },
+        {
+          "hosts": [
+            "user-app-api"
+          ],
+          "moduleExpression": "ProductMainModule",
+          "imports": [
+            {
+              "importName": "ProductMainModule",
+              "importPath": "@app/backend-feature-product-main"
+            }
+          ]
+        }
+      ],
+      "telemetryWiring": null,
+      "providerTelemetryInstrumentation": null,
+      "deploymentOwnership": null
+    },
     {
       "id": "authz",
       "activation": "source-library",
@@ -44,6 +172,7 @@
         "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
         "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
         "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
+        "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts",
         "apps/backend/user/user-app-api/src/capabilities.generated.ts"
       ],
       "backendWiring": [
@@ -72,7 +201,12 @@
         "@app/frontend-feature-admin-i18n",
         "@app/frontend-feature-landing-i18n",
         "@app/frontend-feature-user-i18n",
-        "@app/frontend-i18n-shared"
+        "@app/frontend-i18n-shared",
+        "@app/i18n-uz-admin",
+        "@app/i18n-uz-bots",
+        "@app/i18n-uz-common",
+        "@app/i18n-uz-landing",
+        "@app/i18n-uz-user"
       ],
       "dockerServices": [],
       "environmentVariables": [
@@ -129,6 +263,7 @@
         "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
         "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
         "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
+        "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts",
         "apps/backend/user/user-app-api/src/capabilities.generated.ts"
       ],
       "backendWiring": [
@@ -191,7 +326,6 @@
       "activation": "infrastructure",
       "projects": [
         "@app/backend-postgres-main",
-        "@app/backend-postgres-main-agritech",
         "@app/backend-postgres-main-auth"
       ],
       "dockerServices": [
@@ -206,57 +340,10 @@
         "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
         "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
         "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
+        "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts",
         "apps/backend/user/user-app-api/src/capabilities.generated.ts"
       ],
       "backendWiring": [
-        {
-          "hosts": [
-            "user-app-api"
-          ],
-          "moduleExpression": "AgriTechPostgresModule",
-          "imports": [
-            {
-              "importName": "AgriTechPostgresModule",
-              "importPath": "@app/backend-postgres-main-agritech"
-            }
-          ]
-        },
-        {
-          "hosts": [
-            "user-app-api"
-          ],
-          "moduleExpression": "FarmerMainModule",
-          "imports": [
-            {
-              "importName": "FarmerMainModule",
-              "importPath": "@app/backend-feature-farmer-main"
-            }
-          ]
-        },
-        {
-          "hosts": [
-            "user-app-api"
-          ],
-          "moduleExpression": "OrderMainModule",
-          "imports": [
-            {
-              "importName": "OrderMainModule",
-              "importPath": "@app/backend-feature-order-main"
-            }
-          ]
-        },
-        {
-          "hosts": [
-            "user-app-api"
-          ],
-          "moduleExpression": "PaymentModule",
-          "imports": [
-            {
-              "importName": "PaymentModule",
-              "importPath": "@app/backend-feature-payment-main"
-            }
-          ]
-        },
         {
           "hosts": "selected-backend",
           "moduleExpression": "PostgresMainModule.forRoot()",
@@ -264,18 +351,6 @@
             {
               "importName": "PostgresMainModule",
               "importPath": "@app/backend-postgres-main"
-            }
-          ]
-        },
-        {
-          "hosts": [
-            "user-app-api"
-          ],
-          "moduleExpression": "ProductMainModule",
-          "imports": [
-            {
-              "importName": "ProductMainModule",
-              "importPath": "@app/backend-feature-product-main"
             }
           ]
         },
@@ -296,6 +371,47 @@
         "importPath": "@app/backend-postgres-main-otel"
       },
       "deploymentOwnership": null
+    },
+    {
+      "id": "redis",
+      "activation": "nest-module",
+      "projects": [
+        "@app/backend-common-redis"
+      ],
+      "dockerServices": [
+        "redis"
+      ],
+      "environmentVariables": [
+        "REDIS_URL"
+      ],
+      "generatedFiles": [
+        "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
+        "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
+        "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
+        "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
+        "apps/backend/user/user-app-api/src/capabilities.generated.ts"
+      ],
+      "backendWiring": [
+        {
+          "hosts": [
+            "admin-app-api",
+            "auth-app-api",
+            "notification-consumer",
+            "notification-scheduler",
+            "user-app-api"
+          ],
+          "moduleExpression": "RedisModule.forRoot()",
+          "imports": [
+            {
+              "importName": "RedisModule",
+              "importPath": "@app/backend-common-redis"
+            }
+          ]
+        }
+      ],
+      "telemetryWiring": null,
+      "providerTelemetryInstrumentation": null,
+      "deploymentOwnership": "bundled"
     },
     {
       "id": "s3",
@@ -319,6 +435,7 @@
         "apps/backend/auth/auth-app-api/src/capabilities.generated.ts",
         "apps/backend/notification/notification-consumer/src/capabilities.generated.ts",
         "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
+        "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts",
         "apps/backend/user/user-app-api/src/capabilities.generated.ts"
       ],
       "backendWiring": [
@@ -336,6 +453,37 @@
       "telemetryWiring": null,
       "providerTelemetryInstrumentation": null,
       "deploymentOwnership": "bundled"
+    },
+    {
+      "id": "telegram-bot",
+      "activation": "application",
+      "projects": [
+        "@app/backend-feature-telegram-bot",
+        "@app/backend-feature-telegram-shared"
+      ],
+      "dockerServices": [
+        "telegram-bot-api"
+      ],
+      "environmentVariables": [
+        "AUTH_ALLOWED_RETURN_URLS",
+        "AUTH_TELEGRAM_ENABLED",
+        "BETTER_AUTH_SECRET",
+        "BETTER_AUTH_TRUSTED_ORIGINS",
+        "BETTER_AUTH_URL",
+        "TELEGRAM_BOT_MODE",
+        "TELEGRAM_BOT_TOKEN",
+        "TELEGRAM_MINI_APP_URL",
+        "TELEGRAM_OIDC_CLIENT_ID",
+        "TELEGRAM_OIDC_CLIENT_SECRET",
+        "TELEGRAM_OIDC_ENABLED",
+        "TELEGRAM_TMA_MAX_AGE_SECONDS",
+        "VITE_TELEGRAM_AUTH_ENABLED"
+      ],
+      "generatedFiles": [],
+      "backendWiring": [],
+      "telemetryWiring": null,
+      "providerTelemetryInstrumentation": null,
+      "deploymentOwnership": null
     }
   ]
 }

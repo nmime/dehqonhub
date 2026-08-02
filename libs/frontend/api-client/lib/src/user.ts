@@ -27,10 +27,96 @@ export type ProductViewDto = components['schemas']['ProductViewDto'];
 export type ProductListDto = components['schemas']['ProductListDto'];
 export type OrderViewDto = components['schemas']['OrderViewDto'];
 export type OrderListDto = components['schemas']['OrderListDto'];
+export type PartnerViewDto = components['schemas']['PartnerViewDto'];
+export type PartnerListDto = components['schemas']['PartnerListDto'];
+export type CreatePartnerDto = components['schemas']['CreatePartnerDto'];
+export type SupplierProductViewDto = components['schemas']['SupplierProductViewDto'];
+export type SupplierProductListDto = components['schemas']['SupplierProductListDto'];
+export type CreateSupplierProductDto = components['schemas']['CreateSupplierProductDto'];
+export type UpdateSupplierProductDto = components['schemas']['UpdateSupplierProductDto'];
+export type ProduceListingViewDto = components['schemas']['ProduceListingViewDto'];
+export type ProduceListingListDto = components['schemas']['ProduceListingListDto'];
+export type CreateProduceDto = components['schemas']['CreateProduceDto'];
+export type PriceDiscoveryViewDto = components['schemas']['PriceDiscoveryViewDto'];
+export type ProduceReservationViewDto = components['schemas']['ProduceReservationViewDto'];
+export type ReserveProduceDto = components['schemas']['ReserveProduceDto'];
+export type AssignedFarmerViewDto = components['schemas']['AssignedFarmerViewDto'];
+export type AssignedFarmerListDto = components['schemas']['AssignedFarmerListDto'];
+export type DeliveryViewDto = components['schemas']['DeliveryViewDto'];
+export type DeliveryListDto = components['schemas']['DeliveryListDto'];
+export type TransitionDeliveryDto = components['schemas']['TransitionDeliveryDto'];
+export type CreateFieldVisitDto = components['schemas']['CreateFieldVisitDto'];
+export type AdvisoryViewDto = components['schemas']['AdvisoryViewDto'];
+export type AdvisoryListDto = components['schemas']['AdvisoryListDto'];
+export type CreatePaymentDto = components['schemas']['CreatePaymentDto'];
+export type PaymentHandoffViewDto = components['schemas']['PaymentHandoffViewDto'];
 
 const farmerPath = '/agritech/farmer';
 const catalogPath = '/agritech/catalog';
 const ordersPath = '/agritech/orders';
+const agritechPartnersPath = '/agritech/partners';
+const agritechSupplierProductsPath = '/agritech/supplier/products';
+const agritechSupplierProductPath = '/agritech/supplier/products/{id}';
+const agritechProducePath = '/agritech/produce';
+const agritechProducePricesPath = '/agritech/produce/prices';
+const agritechProduceReservationPath = '/agritech/produce/{id}/reservations';
+const agritechProduceCancelPath = '/agritech/produce/{id}/cancel';
+const agritechAssignedFarmersPath = '/agritech/field-agent/farmers';
+const agritechDeliveriesPath = '/agritech/deliveries';
+const agritechDeliveryPath = '/agritech/deliveries/{id}';
+const agritechFieldVisitsPath = '/agritech/field-visits';
+const agritechAdvisoriesPath = '/agritech/advisories';
+const agritechPaymentsPath = '/agritech/payments';
+
+export const agriTechOperationsControllerListPartners = (options?: ApiClientRequestOptions) =>
+  client.GET(agritechPartnersPath, toOpenApiFetchOptions(options));
+export const agriTechOperationsControllerCreatePartner = (body: CreatePartnerDto, options?: ApiClientRequestOptions) =>
+  client.POST(agritechPartnersPath, { ...toOpenApiFetchOptions(options), body });
+export const agriTechOperationsControllerListSupplierProducts = (options?: ApiClientRequestOptions) =>
+  client.GET(agritechSupplierProductsPath, toOpenApiFetchOptions(options));
+export const agriTechOperationsControllerCreateSupplierProduct = (
+  body: CreateSupplierProductDto,
+  options?: ApiClientRequestOptions,
+) => client.POST(agritechSupplierProductsPath, { ...toOpenApiFetchOptions(options), body });
+export const agriTechOperationsControllerUpdateSupplierProduct = (
+  id: string,
+  body: UpdateSupplierProductDto,
+  options?: ApiClientRequestOptions,
+) => client.PATCH(agritechSupplierProductPath, { ...toOpenApiFetchOptions(options), params: { path: { id } }, body });
+export const agriTechOperationsControllerListProduce = (
+  params: { crop?: string; region?: string; grade?: 'A' | 'B' | 'C' } = {},
+  options?: ApiClientRequestOptions,
+) => client.GET(agritechProducePath, { ...toOpenApiFetchOptions(options), params: { query: params } });
+export const agriTechOperationsControllerCreateProduce = (body: CreateProduceDto, options?: ApiClientRequestOptions) =>
+  client.POST(agritechProducePath, { ...toOpenApiFetchOptions(options), body });
+export const agriTechOperationsControllerDiscoverPrice = (
+  params: { crop: string; region: string; grade?: 'A' | 'B' | 'C' },
+  options?: ApiClientRequestOptions,
+) => client.GET(agritechProducePricesPath, { ...toOpenApiFetchOptions(options), params: { query: params } });
+export const agriTechOperationsControllerReserveProduce = (
+  id: string,
+  body: ReserveProduceDto,
+  options?: ApiClientRequestOptions,
+) => client.POST(agritechProduceReservationPath, { ...toOpenApiFetchOptions(options), params: { path: { id } }, body });
+export const agriTechOperationsControllerCancelProduce = (id: string, options?: ApiClientRequestOptions) =>
+  client.PATCH(agritechProduceCancelPath, { ...toOpenApiFetchOptions(options), params: { path: { id } } });
+export const agriTechOperationsControllerListAssignedFarmers = (options?: ApiClientRequestOptions) =>
+  client.GET(agritechAssignedFarmersPath, toOpenApiFetchOptions(options));
+export const agriTechOperationsControllerListDeliveries = (options?: ApiClientRequestOptions) =>
+  client.GET(agritechDeliveriesPath, toOpenApiFetchOptions(options));
+export const agriTechOperationsControllerTransitionDelivery = (
+  id: string,
+  body: TransitionDeliveryDto,
+  options?: ApiClientRequestOptions,
+) => client.PATCH(agritechDeliveryPath, { ...toOpenApiFetchOptions(options), params: { path: { id } }, body });
+export const agriTechOperationsControllerRecordFieldVisit = (
+  body: CreateFieldVisitDto,
+  options?: ApiClientRequestOptions,
+) => client.POST(agritechFieldVisitsPath, { ...toOpenApiFetchOptions(options), body });
+export const agriTechOperationsControllerListAdvisories = (options?: ApiClientRequestOptions) =>
+  client.GET(agritechAdvisoriesPath, toOpenApiFetchOptions(options));
+export const paymentControllerCreate = (body: CreatePaymentDto, options?: ApiClientRequestOptions) =>
+  client.POST(agritechPaymentsPath, { ...toOpenApiFetchOptions(options), body });
 
 export const farmerControllerCreate = (body: CreateFarmerDto, options?: ApiClientRequestOptions) =>
   client.POST(farmerPath, { ...toOpenApiFetchOptions(options), body });

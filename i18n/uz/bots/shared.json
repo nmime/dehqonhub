@@ -1,0 +1,13 @@
+{
+  "bot.error.expired": "Bu bot amali eskirdi. Qayta boshlang.",
+  "bot.error.rateLimited": "Juda ko'p amal bajarildi. Biroz kutib, qayta urinib ko'ring.",
+  "bot.error.unauthorized": "Bu amaldan foydalanish uchun kiring yoki hisobingizni bog'lang.",
+  "bot.error.unavailable": "Bot xizmati vaqtincha mavjud emas.",
+  "bot.error.linkFailed": "Hisobni bot orqali bog'lab bo'lmadi.",
+  "bot.error.unlinkFailed": "Hisobni bot orqali uzib bo'lmadi.",
+  "bot.error.tampered": "Bu bot amalini tekshirib bo'lmadi. Qayta boshlang.",
+  "bot.error.wrongOwner": "Bu amal boshqa Discord foydalanuvchisiga tegishli.",
+  "bot.error.wrongGuild": "Bu amal boshqa Discord serveriga tegishli.",
+  "bot.error.wrongTenant": "Bu amal boshqa ish maydoniga tegishli.",
+  "bot.error.unknown": "Bot bu amalni bajara olmadi."
+}

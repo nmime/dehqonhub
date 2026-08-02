@@ -127,9 +127,7 @@ export function referenceClosureContextPath(provider: DurableDatabaseProviderId)
 
 function allReferenceConfig(provider: DurableDatabaseProviderId) {
   const apps = Object.keys(appCatalog).sort() as Array<keyof typeof appCatalog>;
-  const capabilities = Object.keys(capabilityCatalog)
-    .filter((capability) => capability !== (provider === 'postgres' ? 'mongodb' : 'postgres'))
-    .sort() as Array<keyof typeof capabilityCatalog>;
+  const capabilities = referenceCapabilities(provider);
   const config = parseNrbConfig({
     schemaVersion,
     apps,
@@ -138,6 +136,26 @@ function allReferenceConfig(provider: DurableDatabaseProviderId) {
     options: { prune: false, force: false, dryRun: false, nonInteractive: true },
   });
   return { apps, capabilities, config };
+}
+
+export function referenceCapabilities(provider: DurableDatabaseProviderId): Array<keyof typeof capabilityCatalog> {
+  const oppositeProvider = provider === 'postgres' ? 'mongodb' : 'postgres';
+  return (Object.keys(capabilityCatalog) as Array<keyof typeof capabilityCatalog>)
+    .filter((capability) => !capabilityRequires(capability, oppositeProvider))
+    .sort();
+}
+
+function capabilityRequires(
+  capability: keyof typeof capabilityCatalog,
+  required: DurableDatabaseProviderId,
+  visited = new Set<keyof typeof capabilityCatalog>(),
+): boolean {
+  if (capability === required) return true;
+  if (visited.has(capability)) return false;
+  visited.add(capability);
+  return capabilityCatalog[capability].requiresCapabilities.some((dependency) =>
+    capabilityRequires(dependency, required, visited),
+  );
 }
 
 export async function buildAllReferenceClosure(
@@ -156,7 +174,17 @@ export async function buildAllReferenceClosure(
 }
 
 function referenceProviderGraph(graph: ProjectGraphLike, provider: DurableDatabaseProviderId): ProjectGraphLike {
-  const oppositeProviderProjects = new Set(providerProjects(provider === 'postgres' ? 'mongodb' : 'postgres'));
+  const oppositeProvider = provider === 'postgres' ? 'mongodb' : 'postgres';
+  const oppositeProviderProjects = new Set(providerProjects(oppositeProvider));
+  for (const [capability, entry] of Object.entries(capabilityCatalog) as Array<
+    [keyof typeof capabilityCatalog, (typeof capabilityCatalog)[keyof typeof capabilityCatalog]]
+  >) {
+    if (!capabilityRequires(capability, oppositeProvider)) continue;
+    for (const project of entry.ownedProjects) oppositeProviderProjects.add(project);
+    for (const project of entry.providerOwnedProjects?.[oppositeProvider] ?? []) {
+      oppositeProviderProjects.add(project);
+    }
+  }
   const applicationProjects = new Set(Object.keys(appCatalog));
   return {
     ...graph,

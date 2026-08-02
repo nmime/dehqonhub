@@ -96,6 +96,84 @@ export type AdminNotificationBroadcastViewDto = components['schemas']['AdminNoti
 export type CreateAdminNotificationBroadcastDto = components['schemas']['CreateAdminNotificationBroadcastDto'];
 export type UpdateAdminNotificationBroadcastDto = components['schemas']['UpdateAdminNotificationBroadcastDto'];
 export type ScheduleAdminNotificationBroadcastDto = components['schemas']['ScheduleAdminNotificationBroadcastDto'];
+export type PartnerViewDto = components['schemas']['PartnerViewDto'];
+export type PartnerListDto = components['schemas']['PartnerListDto'];
+export type PartnerStatusDto = components['schemas']['PartnerStatusDto'];
+export type AssignedFarmerViewDto = components['schemas']['AssignedFarmerViewDto'];
+export type AssignedFarmerListDto = components['schemas']['AssignedFarmerListDto'];
+export type AssignFarmerDto = components['schemas']['AssignFarmerDto'];
+export type FarmerStatusDto = components['schemas']['FarmerStatusDto'];
+export type AgriTechOrderSummaryViewDto = components['schemas']['AgriTechOrderSummaryViewDto'];
+export type AgriTechOrderSummaryListDto = components['schemas']['AgriTechOrderSummaryListDto'];
+export type DeliveryViewDto = components['schemas']['DeliveryViewDto'];
+export type ScheduleDeliveryDto = components['schemas']['ScheduleDeliveryDto'];
+export type AdvisoryViewDto = components['schemas']['AdvisoryViewDto'];
+export type PublishAdvisoryDto = components['schemas']['PublishAdvisoryDto'];
+export type AnalyticsViewDto = components['schemas']['AnalyticsViewDto'];
+export type PilotViewDto = components['schemas']['PilotViewDto'];
+export type PilotListDto = components['schemas']['PilotListDto'];
+export type CreatePilotDto = components['schemas']['CreatePilotDto'];
+export type PilotStatusDto = components['schemas']['PilotStatusDto'];
+export type IntegrationReadinessViewDto = components['schemas']['IntegrationReadinessViewDto'];
+export type IntegrationReadinessListDto = components['schemas']['IntegrationReadinessListDto'];
+
+const adminAgriTechPartnersPath = '/admin/agritech/partners';
+const adminAgriTechPartnerStatusPath = '/admin/agritech/partners/{id}/status';
+const adminAgriTechFarmersPath = '/admin/agritech/farmers';
+const adminAgriTechFarmerAssignmentPath = '/admin/agritech/farmers/{id}/assignment';
+const adminAgriTechFarmerStatusPath = '/admin/agritech/farmers/{id}/status';
+const adminAgriTechOrdersPath = '/admin/agritech/orders';
+const adminAgriTechDeliveriesPath = '/admin/agritech/deliveries';
+const adminAgriTechAdvisoriesPath = '/admin/agritech/advisories';
+const adminAgriTechAnalyticsPath = '/admin/agritech/analytics';
+const adminAgriTechPilotsPath = '/admin/agritech/pilots';
+const adminAgriTechPilotStatusPath = '/admin/agritech/pilots/{id}/status';
+const adminAgriTechIntegrationsPath = '/admin/agritech/integrations';
+
+export const agriTechAdminControllerListPartners = (options?: ApiClientRequestOptions) =>
+  client.GET(adminAgriTechPartnersPath, toOpenApiFetchOptions(options));
+export const agriTechAdminControllerSetPartnerStatus = (
+  id: string,
+  body: PartnerStatusDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(adminAgriTechPartnerStatusPath, { ...toOpenApiFetchOptions(options), params: { path: { id } }, body });
+export const agriTechAdminControllerListFarmers = (options?: ApiClientRequestOptions) =>
+  client.GET(adminAgriTechFarmersPath, toOpenApiFetchOptions(options));
+export const agriTechAdminControllerListOrders = (options?: ApiClientRequestOptions) =>
+  client.GET(adminAgriTechOrdersPath, toOpenApiFetchOptions(options));
+export const agriTechAdminControllerAssignFarmer = (
+  id: string,
+  body: AssignFarmerDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(adminAgriTechFarmerAssignmentPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { id } },
+    body,
+  });
+export const agriTechAdminControllerSetFarmerStatus = (
+  id: string,
+  body: FarmerStatusDto,
+  options?: ApiClientRequestOptions,
+) => client.PATCH(adminAgriTechFarmerStatusPath, { ...toOpenApiFetchOptions(options), params: { path: { id } }, body });
+export const agriTechAdminControllerScheduleDelivery = (body: ScheduleDeliveryDto, options?: ApiClientRequestOptions) =>
+  client.POST(adminAgriTechDeliveriesPath, { ...toOpenApiFetchOptions(options), body });
+export const agriTechAdminControllerPublishAdvisory = (body: PublishAdvisoryDto, options?: ApiClientRequestOptions) =>
+  client.POST(adminAgriTechAdvisoriesPath, { ...toOpenApiFetchOptions(options), body });
+export const agriTechAdminControllerAnalytics = (options?: ApiClientRequestOptions) =>
+  client.GET(adminAgriTechAnalyticsPath, toOpenApiFetchOptions(options));
+export const agriTechAdminControllerListPilots = (options?: ApiClientRequestOptions) =>
+  client.GET(adminAgriTechPilotsPath, toOpenApiFetchOptions(options));
+export const agriTechAdminControllerCreatePilot = (body: CreatePilotDto, options?: ApiClientRequestOptions) =>
+  client.POST(adminAgriTechPilotsPath, { ...toOpenApiFetchOptions(options), body });
+export const agriTechAdminControllerSetPilotStatus = (
+  id: string,
+  body: PilotStatusDto,
+  options?: ApiClientRequestOptions,
+) => client.PATCH(adminAgriTechPilotStatusPath, { ...toOpenApiFetchOptions(options), params: { path: { id } }, body });
+export const agriTechAdminControllerIntegrations = (options?: ApiClientRequestOptions) =>
+  client.GET(adminAgriTechIntegrationsPath, toOpenApiFetchOptions(options));
 
 export const adminHealthControllerHealth = (options?: ApiClientRequestOptions) =>
   client.GET(adminHealthPath, toOpenApiFetchOptions(options));

@@ -9,6 +9,7 @@ deployment:
     - notification-consumer
     - notification-scheduler
     - site-app
+    - telegram-bot-api
     - user-app
     - user-app-api
   provider: postgres
@@ -47,7 +48,7 @@ apps:
   discordAppApi:
     enabled: false
   telegramBotApi:
-    enabled: false
+    enabled: true
   notificationScheduler:
     enabled: true
   notificationConsumer:

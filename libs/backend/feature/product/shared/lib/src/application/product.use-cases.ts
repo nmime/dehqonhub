@@ -7,8 +7,8 @@ import { ProductRepositoryInjectToken } from './inject-tokens';
 export class GetProductUseCase {
   constructor(@Inject(ProductRepositoryInjectToken) private readonly repository: ProductRepository) {}
 
-  async execute(id: string): Promise<Product> {
-    const product = await this.repository.findActiveById(id);
+  async execute(tenantId: string, id: string): Promise<Product> {
+    const product = await this.repository.findActiveById(tenantId, id);
     if (!product) {
       throw new ResourceNotFoundException('catalog-product', id);
     }
@@ -20,7 +20,7 @@ export class GetProductUseCase {
 export class ListProductsUseCase {
   constructor(@Inject(ProductRepositoryInjectToken) private readonly repository: ProductRepository) {}
 
-  execute(filter?: { category?: ProductCategory; region?: string }): Promise<Product[]> {
-    return this.repository.findActive(filter);
+  execute(tenantId: string, filter?: { category?: ProductCategory; region?: string }): Promise<Product[]> {
+    return this.repository.findActive(tenantId, filter);
   }
 }

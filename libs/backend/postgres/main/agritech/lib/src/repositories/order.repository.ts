@@ -45,7 +45,7 @@ export class PostgresOrderRepository implements OrderRepository {
         // eslint-disable-next-line no-await-in-loop
         const product = await em.findOne(
           ProductEntity,
-          { id: requested.productId, status: 'active' },
+          { tenantId: owner.tenantId, id: requested.productId, status: 'active' },
           { lockMode: LockMode.PESSIMISTIC_WRITE },
         );
         if (!product) {

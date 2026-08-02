@@ -9,6 +9,7 @@ import enAdminNotificationsCatalog from '@app/i18n-en-admin/notifications.json';
 import enAdminNotificationNavigationCatalog from '@app/i18n-en-admin/notification-navigation.json';
 import enAdminLoginAnalyticsCatalog from '@app/i18n-en-admin/login-analytics.json';
 import enAdminCatalog from '@app/i18n-en-admin/shell.json';
+import enAdminAgriTechCatalog from '@app/i18n-en-admin/agritech.json';
 import enAdminUsersCatalog from '@app/i18n-en-admin/users.json';
 import enErrorsCatalog from '@app/i18n-en-common/errors.json';
 import enCommonCatalog from '@app/i18n-en-common/shared.json';
@@ -23,9 +24,25 @@ import ruAdminNotificationsCatalog from '@app/i18n-ru-admin/notifications.json';
 import ruAdminNotificationNavigationCatalog from '@app/i18n-ru-admin/notification-navigation.json';
 import ruAdminLoginAnalyticsCatalog from '@app/i18n-ru-admin/login-analytics.json';
 import ruAdminCatalog from '@app/i18n-ru-admin/shell.json';
+import ruAdminAgriTechCatalog from '@app/i18n-ru-admin/agritech.json';
 import ruAdminUsersCatalog from '@app/i18n-ru-admin/users.json';
 import ruErrorsCatalog from '@app/i18n-ru-common/errors.json';
 import ruCommonCatalog from '@app/i18n-ru-common/shared.json';
+import uzAdminAuditCatalog from '@app/i18n-uz-admin/audit.json';
+import uzAdminDashboardCatalog from '@app/i18n-uz-admin/dashboard.json';
+import uzAdminFeatureFlagsCatalog from '@app/i18n-uz-admin/feature-flags.json';
+import uzAdminNavigationCatalog from '@app/i18n-uz-admin/navigation.json';
+import uzAdminNotificationOptionsCatalog from '@app/i18n-uz-admin/notification-options.json';
+import uzAdminRolesCatalog from '@app/i18n-uz-admin/roles.json';
+import uzAdminProblemPresentationsCatalog from '@app/i18n-uz-admin/problem-presentations.json';
+import uzAdminNotificationsCatalog from '@app/i18n-uz-admin/notifications.json';
+import uzAdminNotificationNavigationCatalog from '@app/i18n-uz-admin/notification-navigation.json';
+import uzAdminLoginAnalyticsCatalog from '@app/i18n-uz-admin/login-analytics.json';
+import uzAdminCatalog from '@app/i18n-uz-admin/shell.json';
+import uzAdminAgriTechCatalog from '@app/i18n-uz-admin/agritech.json';
+import uzAdminUsersCatalog from '@app/i18n-uz-admin/users.json';
+import uzErrorsCatalog from '@app/i18n-uz-common/errors.json';
+import uzCommonCatalog from '@app/i18n-uz-common/shared.json';
 import { mergeLocaleCatalogFiles } from '@app/common-i18n-runtime';
 import type { FrontendLocaleCatalogFileEntry, FrontendTranslations } from '@app/frontend-i18n-shared';
 
@@ -44,6 +61,7 @@ export const adminFrontendCatalogFileNames = [
   'admin/notification-options.json',
   'admin/notification-navigation.json',
   'admin/login-analytics.json',
+  'admin/agritech.json',
 ] as const;
 
 const enFiles = [
@@ -61,6 +79,7 @@ const enFiles = [
   ['admin/notification-options.json', enAdminNotificationOptionsCatalog],
   ['admin/notification-navigation.json', enAdminNotificationNavigationCatalog],
   ['admin/login-analytics.json', enAdminLoginAnalyticsCatalog],
+  ['admin/agritech.json', enAdminAgriTechCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const ruFiles = [
@@ -78,9 +97,29 @@ const ruFiles = [
   ['admin/notification-options.json', ruAdminNotificationOptionsCatalog],
   ['admin/notification-navigation.json', ruAdminNotificationNavigationCatalog],
   ['admin/login-analytics.json', ruAdminLoginAnalyticsCatalog],
+  ['admin/agritech.json', ruAdminAgriTechCatalog],
+] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
+
+const uzFiles = [
+  ['common/shared.json', uzCommonCatalog],
+  ['common/errors.json', uzErrorsCatalog],
+  ['admin/shell.json', uzAdminCatalog],
+  ['admin/navigation.json', uzAdminNavigationCatalog],
+  ['admin/dashboard.json', uzAdminDashboardCatalog],
+  ['admin/feature-flags.json', uzAdminFeatureFlagsCatalog],
+  ['admin/users.json', uzAdminUsersCatalog],
+  ['admin/audit.json', uzAdminAuditCatalog],
+  ['admin/roles.json', uzAdminRolesCatalog],
+  ['admin/problem-presentations.json', uzAdminProblemPresentationsCatalog],
+  ['admin/notifications.json', uzAdminNotificationsCatalog],
+  ['admin/notification-options.json', uzAdminNotificationOptionsCatalog],
+  ['admin/notification-navigation.json', uzAdminNotificationNavigationCatalog],
+  ['admin/login-analytics.json', uzAdminLoginAnalyticsCatalog],
+  ['admin/agritech.json', uzAdminAgriTechCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 export const adminFrontendTranslations = {
   en: mergeLocaleCatalogFiles('en', enFiles),
   ru: mergeLocaleCatalogFiles('ru', ruFiles),
+  uz: mergeLocaleCatalogFiles('uz', uzFiles),
 } as const satisfies FrontendTranslations;

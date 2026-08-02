@@ -1,3 +1,4 @@
+// @requirements REQ-AGRITECH-I18N-012
 import enErrorsCatalog from '@app/i18n-en-common/errors.json';
 import enCommonCatalog from '@app/i18n-en-common/shared.json';
 import enAuthCatalog from '@app/i18n-en-user/auth.json';
@@ -7,6 +8,7 @@ import enUserSiteCatalog from '@app/i18n-en-user/site.json';
 import enMobileCatalog from '@app/i18n-en-user/mobile.json';
 import enTmaCatalog from '@app/i18n-en-user/tma.json';
 import enAgriTechCatalog from '@app/i18n-en-user/agritech.json';
+import enAgriTechOperationsCatalog from '@app/i18n-en-user/agritech-operations.json';
 import ruErrorsCatalog from '@app/i18n-ru-common/errors.json';
 import ruCommonCatalog from '@app/i18n-ru-common/shared.json';
 import ruAuthCatalog from '@app/i18n-ru-user/auth.json';
@@ -16,6 +18,17 @@ import ruUserSiteCatalog from '@app/i18n-ru-user/site.json';
 import ruMobileCatalog from '@app/i18n-ru-user/mobile.json';
 import ruTmaCatalog from '@app/i18n-ru-user/tma.json';
 import ruAgriTechCatalog from '@app/i18n-ru-user/agritech.json';
+import ruAgriTechOperationsCatalog from '@app/i18n-ru-user/agritech-operations.json';
+import uzErrorsCatalog from '@app/i18n-uz-common/errors.json';
+import uzCommonCatalog from '@app/i18n-uz-common/shared.json';
+import uzAuthCatalog from '@app/i18n-uz-user/auth.json';
+import uzSocialAuthCatalog from '@app/i18n-uz-user/social-auth.json';
+import uzUserCatalog from '@app/i18n-uz-user/shell.json';
+import uzUserSiteCatalog from '@app/i18n-uz-user/site.json';
+import uzMobileCatalog from '@app/i18n-uz-user/mobile.json';
+import uzTmaCatalog from '@app/i18n-uz-user/tma.json';
+import uzAgriTechCatalog from '@app/i18n-uz-user/agritech.json';
+import uzAgriTechOperationsCatalog from '@app/i18n-uz-user/agritech-operations.json';
 import { mergeLocaleCatalogFiles } from '@app/common-i18n-runtime';
 import type { FrontendLocaleCatalogFileEntry, FrontendTranslations } from '@app/frontend-i18n-shared';
 
@@ -29,6 +42,7 @@ export const userFrontendCatalogFileNames = [
   'user/social-auth.json',
   'user/tma.json',
   'user/agritech.json',
+  'user/agritech-operations.json',
 ] as const;
 
 const enFiles = [
@@ -41,6 +55,7 @@ const enFiles = [
   ['user/social-auth.json', enSocialAuthCatalog],
   ['user/tma.json', enTmaCatalog],
   ['user/agritech.json', enAgriTechCatalog],
+  ['user/agritech-operations.json', enAgriTechOperationsCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const ruFiles = [
@@ -53,9 +68,24 @@ const ruFiles = [
   ['user/social-auth.json', ruSocialAuthCatalog],
   ['user/tma.json', ruTmaCatalog],
   ['user/agritech.json', ruAgriTechCatalog],
+  ['user/agritech-operations.json', ruAgriTechOperationsCatalog],
+] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
+
+const uzFiles = [
+  ['common/shared.json', uzCommonCatalog],
+  ['common/errors.json', uzErrorsCatalog],
+  ['user/shell.json', uzUserCatalog],
+  ['user/site.json', uzUserSiteCatalog],
+  ['user/mobile.json', uzMobileCatalog],
+  ['user/auth.json', uzAuthCatalog],
+  ['user/social-auth.json', uzSocialAuthCatalog],
+  ['user/tma.json', uzTmaCatalog],
+  ['user/agritech.json', uzAgriTechCatalog],
+  ['user/agritech-operations.json', uzAgriTechOperationsCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 export const userFrontendTranslations = {
   en: mergeLocaleCatalogFiles('en', enFiles),
   ru: mergeLocaleCatalogFiles('ru', ruFiles),
+  uz: mergeLocaleCatalogFiles('uz', uzFiles),
 } as const satisfies FrontendTranslations;

@@ -1,4 +1,4 @@
-// @requirements REQ-RUNTIME-DELIVERY-009
+// @requirements REQ-RUNTIME-DELIVERY-009 REQ-AGRITECH-DEPLOYMENT-014
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -244,6 +244,29 @@ test('builds the per-app automatic HTTPS topology from the production example', 
     'https://example.com,https://site-app.example.com,https://user-app.example.com,https://admin-app.example.com,https://mobile-app.example.com',
   );
   assert.match(invocation.env.CORS_ORIGINS, /https:\/\/admin-app\.example\.com/u);
+});
+
+test('mounts payment secrets only for fully configured providers', () => {
+  const disabled = buildComposeInvocation(['config', '--env-file=.env.production.example'], {});
+  assert.ok(!disabled.files.includes('docker/docker-compose.prod.payme.yml'));
+  assert.ok(!disabled.files.includes('docker/docker-compose.prod.click.yml'));
+
+  const enabled = buildComposeInvocation(['config', '--env-file=.env.production.example'], {
+    PAYME_MERCHANT_ID: 'merchant',
+    PAYME_SECRET_KEY_FILE: '/run/operator-secrets/payme',
+    CLICK_SERVICE_ID: 'service',
+    CLICK_MERCHANT_ID: 'merchant',
+    CLICK_SECRET_KEY_FILE: '/run/operator-secrets/click',
+  });
+  assert.ok(enabled.files.includes('docker/docker-compose.prod.payme.yml'));
+  assert.ok(enabled.files.includes('docker/docker-compose.prod.click.yml'));
+
+  const incomplete = buildComposeInvocation(['config', '--env-file=.env.production.example'], {
+    PAYME_MERCHANT_ID: 'merchant-without-secret',
+    CLICK_SERVICE_ID: 'service-without-merchant',
+  });
+  assert.ok(!incomplete.files.includes('docker/docker-compose.prod.payme.yml'));
+  assert.ok(!incomplete.files.includes('docker/docker-compose.prod.click.yml'));
 });
 
 test('models database engine independently from bundled or external ownership', (context) => {

@@ -30,12 +30,7 @@ const postgresPackages = new Set([
   '@types/pg',
   'pg',
 ]);
-const mongodbPackages = new Set([
-  '@opentelemetry/instrumentation-mongodb',
-  '@testcontainers/mongodb',
-  'mongodb',
-  'mongodb-connection-string-url',
-]);
+const mongodbPackages = new Set(['@opentelemetry/instrumentation-mongodb', '@testcontainers/mongodb', 'mongodb']);
 const closureToolchainPackages = [
   '@eslint/js',
   '@nx/devkit',
@@ -147,7 +142,7 @@ export function buildSelectedClosure(graph: ProjectGraphLike, input: ClosureInpu
   ]);
   const projects = traverseProjects(graph, seedProjects, selectedApps, forbiddenProjects);
   const productExternalPackages = collectProductExternalPackages(graph, projects, provider);
-  const toolingExternalPackages = collectToolingExternalPackages(graph, projects, provider);
+  const toolingExternalPackages = collectToolingExternalPackages(graph, projects);
   for (const packageName of Object.keys(productExternalPackages)) {
     delete toolingExternalPackages[packageName];
   }
@@ -420,18 +415,9 @@ function collectDeclaredTargetPackages(graph: ProjectGraphLike, projects: readon
   return [...declared].sort((left, right) => left.localeCompare(right));
 }
 
-function collectToolingExternalPackages(
-  graph: ProjectGraphLike,
-  projects: readonly string[],
-  provider: DurableDatabaseProviderId | undefined,
-): Record<string, string> {
+function collectToolingExternalPackages(graph: ProjectGraphLike, projects: readonly string[]): Record<string, string> {
   const selected = new Map<string, string>();
-  const forbidden =
-    provider === 'postgres'
-      ? mongodbPackages
-      : provider === 'mongodb'
-        ? postgresPackages
-        : new Set([...postgresPackages, ...mongodbPackages]);
+  const forbidden = new Set<string>();
 
   for (const dependency of graph.dependencies['@repo/tooling'] ?? []) {
     const external = graph.externalNodes?.[dependency.target];
@@ -448,12 +434,9 @@ function collectToolingExternalPackages(
     addExternalPackage(selected, external, forbidden);
   }
 
-  // Skip rather than throw on an unresolvable or forbidden name: a declaration can legitimately
-  // reference a package the opposite database provider owns, matching the @repo/tooling loop above.
+  // Tooling validates and materializes both provider variants even when the product runtime
+  // selects one provider, so tooling dependencies intentionally remain provider-complete.
   for (const packageName of collectDeclaredTargetPackages(graph, projects)) {
-    if (forbidden.has(packageName)) {
-      continue;
-    }
     const external = findExternalNode(graph, packageName);
     if (external) {
       addExternalPackage(selected, external, forbidden);

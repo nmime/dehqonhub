@@ -1,8 +1,8 @@
 // @requirements REQ-AGRITECH-PROFILE-001
-import { describe, expect, it } from 'vitest';
-import { ConflictException } from '@app/backend-common-exception';
-import type { FarmerRepository } from '../domain';
-import { CreateFarmerUseCase } from './farmer.use-cases';
+import { describe, expect, it, vi } from 'vitest';
+import { ConflictException, ResourceNotFoundException } from '@app/backend-common-exception';
+import { CropTypes, UzbekistanRegions, type FarmerRepository } from '../domain';
+import { CreateFarmerUseCase, GetFarmerProfileUseCase, UpdateFarmerUseCase } from './farmer.use-cases';
 
 const profile = {
   id: 'farmer-1',
@@ -26,5 +26,38 @@ describe('CreateFarmerUseCase', () => {
     await expect(useCase.execute({ tenantId: 'tenant-1', userId: 'user-1' }, profile)).rejects.toBeInstanceOf(
       ConflictException,
     );
+  });
+
+  it('rejects a duplicate tenant phone and creates a unique profile', async () => {
+    const findByOwner = vi.fn().mockResolvedValue(undefined);
+    const findByPhone = vi.fn().mockResolvedValueOnce(profile).mockResolvedValueOnce(undefined);
+    const create = vi.fn().mockResolvedValue(profile);
+    const repository = { findByOwner, findByPhone, create } as unknown as FarmerRepository;
+    const useCase = new CreateFarmerUseCase(repository);
+    const owner = { tenantId: 'tenant-1', userId: 'user-1' };
+
+    await expect(useCase.execute(owner, profile)).rejects.toBeInstanceOf(ConflictException);
+    await expect(useCase.execute(owner, profile)).resolves.toBe(profile);
+    expect(create).toHaveBeenCalledWith(owner, profile);
+    expect(UzbekistanRegions).toContain(profile.region);
+    expect(CropTypes).toContain('cotton');
+  });
+});
+
+describe('farmer profile queries', () => {
+  it('returns existing profiles and rejects absent owners', async () => {
+    const findByOwner = vi.fn().mockResolvedValueOnce(profile).mockResolvedValueOnce(undefined);
+    const useCase = new GetFarmerProfileUseCase({ findByOwner } as unknown as FarmerRepository);
+    const owner = { tenantId: 'tenant-1', userId: 'user-1' };
+    await expect(useCase.execute(owner)).resolves.toBe(profile);
+    await expect(useCase.execute(owner)).rejects.toBeInstanceOf(ResourceNotFoundException);
+  });
+
+  it('updates existing profiles and rejects an absent profile', async () => {
+    const update = vi.fn().mockResolvedValueOnce(profile).mockResolvedValueOnce(undefined);
+    const useCase = new UpdateFarmerUseCase({ update } as unknown as FarmerRepository);
+    const owner = { tenantId: 'tenant-1', userId: 'user-1' };
+    await expect(useCase.execute(owner, { firstName: 'Alisher' })).resolves.toBe(profile);
+    await expect(useCase.execute(owner, { firstName: 'Alisher' })).rejects.toBeInstanceOf(ResourceNotFoundException);
   });
 });

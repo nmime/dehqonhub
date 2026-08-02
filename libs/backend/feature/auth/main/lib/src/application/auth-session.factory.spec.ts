@@ -33,6 +33,6 @@ describe('auth session factory', () => {
     expect(session).not.toHaveProperty('tokenType');
     expect(principal.email).toBeUndefined();
     expect(principal.avatarUrl).toBe('https://cdn.example.test/avatar.png');
-    expect(principal.locale).toBeUndefined();
+    expect(principal.locale).toBe('uz');
   });
 });

@@ -38,6 +38,7 @@
   "user.loadingProfile": "Loading profile...",
   "user.profile.unknown": "unknown",
   "user.nav.home": "Home",
+  "user.nav.marketplace": "Marketplace",
   "user.nav.auth": "Auth",
   "user.nav.profile": "Profile",
   "user.nav.settings": "Settings",

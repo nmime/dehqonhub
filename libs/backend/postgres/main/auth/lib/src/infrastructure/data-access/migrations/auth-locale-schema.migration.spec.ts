@@ -1,6 +1,7 @@
-// @requirements REQ-AUTH-PERSISTENCE-007
+// @requirements REQ-AUTH-PERSISTENCE-007 REQ-AGRITECH-I18N-012
 import { describe, expect, it } from 'vitest';
 import { Migration20260607080000AlignAuthUserLocaleConstraint } from './Migration20260607080000AlignAuthUserLocaleConstraint';
+import { Migration20260802170000AddUzbekLocale } from './Migration20260802170000AddUzbekLocale';
 import { Migration20260609100000CreateFeatureFlags } from '@app/backend-postgres-main-feature-flags';
 import { authMigrations } from './index';
 
@@ -31,5 +32,12 @@ describe('auth locale schema migration', () => {
     expect(authMigrations.indexOf(Migration20260607080000AlignAuthUserLocaleConstraint)).toBeLessThan(
       authMigrations.indexOf(Migration20260609100000CreateFeatureFlags),
     );
+  });
+
+  it('extends the persisted locale constraint to Uzbek after the baseline migration', () => {
+    const sql = collectSql(new Migration20260802170000AddUzbekLocale(undefined as never, undefined as never));
+
+    expect(sql).toContain(`check ("locale" in ('en', 'ru', 'uz'))`);
+    expect(authMigrations.at(-1)).toBe(Migration20260802170000AddUzbekLocale);
   });
 });

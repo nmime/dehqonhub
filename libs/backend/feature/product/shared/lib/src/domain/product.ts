@@ -6,6 +6,7 @@ export interface Product {
   id: string;
   name: string;
   nameRu?: string;
+  nameUz?: string;
   category: ProductCategory;
   description: string;
   supplierName: string;
@@ -20,6 +21,6 @@ export interface Product {
 }
 
 export interface ProductRepository {
-  findActiveById(id: string): Promise<Product | undefined>;
-  findActive(filter?: { category?: ProductCategory; region?: string }): Promise<Product[]>;
+  findActiveById(tenantId: string, id: string): Promise<Product | undefined>;
+  findActive(tenantId: string, filter?: { category?: ProductCategory; region?: string }): Promise<Product[]>;
 }

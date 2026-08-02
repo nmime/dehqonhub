@@ -1,0 +1,218 @@
+// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-FULFILLMENT-010
+import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import { ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import { IsDate, IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
+import { createOkResponse } from '@app/backend-common-response';
+import { CurrentUser, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
+import { AgriTechOperationsService } from './agritech.service';
+import type { AgriTechOwner, DeliveryStatus, ProduceGrade } from '@app/backend-feature-agritech-shared';
+import {
+  AdvisoryListDto,
+  AssignedFarmerListDto,
+  CreatedResourceDto,
+  DeliveryListDto,
+  DeliveryViewDto,
+  FieldVisitViewDto,
+  PartnerListDto,
+  PartnerViewDto,
+  PriceDiscoveryViewDto,
+  ProduceListingListDto,
+  ProduceListingViewDto,
+  ProduceReservationViewDto,
+  SupplierProductListDto,
+  SupplierProductViewDto,
+} from './agritech.view-dto';
+
+const partnerKinds = ['supplier', 'buyer'] as const;
+const produceGrades = ['A', 'B', 'C'] as const;
+const productCategories = ['fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation', 'other'] as const;
+const deliveryStatuses = ['assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'] as const;
+
+class CreatePartnerDto {
+  @ApiProperty({ enum: partnerKinds }) @IsIn(partnerKinds) kind!: 'supplier' | 'buyer';
+  @ApiProperty() @IsString() legalName!: string;
+  @ApiProperty() @IsString() taxId!: string;
+  @ApiProperty({ example: '+998901234567' }) @IsString() phone!: string;
+  @ApiProperty() @IsString() region!: string;
+}
+
+class CreateSupplierProductDto {
+  @ApiProperty({ format: 'uuid' }) @IsString() partnerId!: string;
+  @ApiProperty() @IsString() name!: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() nameRu?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() nameUz?: string;
+  @ApiProperty({ enum: productCategories }) @IsIn(productCategories) category!: (typeof productCategories)[number];
+  @ApiProperty() @IsString() description!: string;
+  @ApiProperty({ minimum: 0 }) @IsNumber() @Min(0) priceUzs!: number;
+  @ApiProperty() @IsString() unit!: string;
+  @ApiProperty({ minimum: 0 }) @IsInt() @Min(0) stockQuantity!: number;
+  @ApiProperty() @IsString() region!: string;
+}
+
+class UpdateSupplierProductDto {
+  @ApiProperty({ minimum: 0 }) @IsNumber() @Min(0) priceUzs!: number;
+  @ApiProperty({ minimum: 0 }) @IsInt() @Min(0) stockQuantity!: number;
+  @ApiProperty({ enum: ['active', 'inactive', 'out_of_stock'] })
+  @IsIn(['active', 'inactive', 'out_of_stock'])
+  status!: 'active' | 'inactive' | 'out_of_stock';
+}
+
+class CreateProduceDto {
+  @ApiProperty() @IsString() crop!: string;
+  @ApiProperty({ enum: produceGrades }) @IsIn(produceGrades) grade!: ProduceGrade;
+  @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) quantityKg!: number;
+  @ApiProperty({ minimum: 1 }) @IsNumber() @Min(1) pricePerKgUzs!: number;
+  @ApiProperty() @IsString() region!: string;
+  @ApiProperty({ format: 'date-time' }) @Type(() => Date) @IsDate() availableFrom!: Date;
+  @ApiProperty({ format: 'date-time' }) @Type(() => Date) @IsDate() availableUntil!: Date;
+}
+
+class ProduceQueryDto {
+  @ApiPropertyOptional() @IsOptional() @IsString() crop?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() region?: string;
+  @ApiPropertyOptional({ enum: produceGrades }) @IsOptional() @IsIn(produceGrades) grade?: ProduceGrade;
+}
+
+class PriceQueryDto {
+  @ApiProperty() @IsString() crop!: string;
+  @ApiProperty() @IsString() region!: string;
+  @ApiPropertyOptional({ enum: produceGrades }) @IsOptional() @IsIn(produceGrades) grade?: ProduceGrade;
+}
+
+class ReserveProduceDto {
+  @ApiProperty({ format: 'uuid' }) @IsString() partnerId!: string;
+  @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) quantityKg!: number;
+  @ApiProperty() @IsString() deliveryAddress!: string;
+}
+
+class TransitionDeliveryDto {
+  @ApiProperty({ enum: deliveryStatuses }) @IsIn(deliveryStatuses) status!: DeliveryStatus;
+  @ApiPropertyOptional() @IsOptional() @IsString() proofReference?: string;
+}
+
+class CreateFieldVisitDto {
+  @ApiProperty({ format: 'uuid' }) @IsString() farmerId!: string;
+  @ApiProperty() @IsString() notes!: string;
+  @ApiPropertyOptional({ enum: produceGrades }) @IsOptional() @IsIn(produceGrades) observedGrade?: ProduceGrade;
+  @ApiProperty({ format: 'date-time' }) @Type(() => Date) @IsDate() observedAt!: Date;
+}
+
+@ApiTags('agritech-operations')
+@ApiExceptions(400, 401, 403, 404, 409, 500)
+@ApiSessionCookieAuth()
+@Controller('agritech')
+export class AgriTechOperationsController {
+  constructor(private readonly service: AgriTechOperationsService) {}
+
+  @Post('partners')
+  @ApiOkDataResponse(PartnerViewDto)
+  async createPartner(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreatePartnerDto) {
+    return createOkResponse(await this.service.createPartner(ownerFrom(principal), input));
+  }
+
+  @Get('partners')
+  @ApiOkDataResponse(PartnerListDto)
+  async listPartners(@CurrentUser() principal: AuthenticatedPrincipal) {
+    return createOkResponse({ items: await this.service.listOwnedPartners(ownerFrom(principal)) });
+  }
+
+  @Post('supplier/products')
+  @ApiOkDataResponse(CreatedResourceDto)
+  async createSupplierProduct(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Body() input: CreateSupplierProductDto,
+  ) {
+    return createOkResponse(await this.service.createSupplierProduct(ownerFrom(principal), input));
+  }
+
+  @Get('supplier/products')
+  @ApiOkDataResponse(SupplierProductListDto)
+  async listSupplierProducts(@CurrentUser() principal: AuthenticatedPrincipal) {
+    return createOkResponse({ items: await this.service.listSupplierProducts(ownerFrom(principal)) });
+  }
+
+  @Patch('supplier/products/:id')
+  @ApiOkDataResponse(SupplierProductViewDto)
+  async updateSupplierProduct(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Param('id') id: string,
+    @Body() input: UpdateSupplierProductDto,
+  ) {
+    return createOkResponse(await this.service.updateSupplierProduct(ownerFrom(principal), id, input));
+  }
+
+  @Post('produce')
+  @ApiOkDataResponse(ProduceListingViewDto)
+  async createProduce(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreateProduceDto) {
+    return createOkResponse(await this.service.createProduceListing(ownerFrom(principal), input));
+  }
+
+  @Get('produce')
+  @ApiOkDataResponse(ProduceListingListDto)
+  async listProduce(@CurrentUser() principal: AuthenticatedPrincipal, @Query() query: ProduceQueryDto) {
+    return createOkResponse({ items: await this.service.listProduce(ownerFrom(principal), query) });
+  }
+
+  @Get('produce/prices')
+  @ApiOkDataResponse(PriceDiscoveryViewDto)
+  async discoverPrice(@CurrentUser() principal: AuthenticatedPrincipal, @Query() query: PriceQueryDto) {
+    return createOkResponse(await this.service.discoverPrice(ownerFrom(principal), query));
+  }
+
+  @Post('produce/:id/reservations')
+  @ApiOkDataResponse(ProduceReservationViewDto)
+  async reserveProduce(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Param('id') id: string,
+    @Body() input: ReserveProduceDto,
+  ) {
+    return createOkResponse(await this.service.reserveProduce(ownerFrom(principal), id, input));
+  }
+
+  @Patch('produce/:id/cancel')
+  @ApiOkDataResponse(ProduceListingViewDto)
+  async cancelProduce(@CurrentUser() principal: AuthenticatedPrincipal, @Param('id') id: string) {
+    return createOkResponse(await this.service.cancelProduceListing(ownerFrom(principal), id));
+  }
+
+  @Get('field-agent/farmers')
+  @ApiOkDataResponse(AssignedFarmerListDto)
+  async listAssignedFarmers(@CurrentUser() principal: AuthenticatedPrincipal) {
+    return createOkResponse({ items: await this.service.listAssignedFarmers(ownerFrom(principal)) });
+  }
+
+  @Get('deliveries')
+  @ApiOkDataResponse(DeliveryListDto)
+  async listDeliveries(@CurrentUser() principal: AuthenticatedPrincipal) {
+    return createOkResponse({ items: await this.service.listDeliveries(ownerFrom(principal)) });
+  }
+
+  @Patch('deliveries/:id')
+  @ApiOkDataResponse(DeliveryViewDto)
+  async transitionDelivery(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Param('id') id: string,
+    @Body() input: TransitionDeliveryDto,
+  ) {
+    return createOkResponse(await this.service.transitionDelivery(ownerFrom(principal), id, input));
+  }
+
+  @Post('field-visits')
+  @ApiOkDataResponse(FieldVisitViewDto)
+  async recordFieldVisit(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreateFieldVisitDto) {
+    return createOkResponse(await this.service.recordFieldVisit(ownerFrom(principal), input));
+  }
+
+  @Get('advisories')
+  @ApiOkDataResponse(AdvisoryListDto)
+  async listAdvisories(@CurrentUser() principal: AuthenticatedPrincipal) {
+    return createOkResponse({ items: await this.service.listAdvisories(ownerFrom(principal)) });
+  }
+}
+
+export const ownerFrom = (principal: AuthenticatedPrincipal): AgriTechOwner => ({
+  tenantId: principal.tenantId,
+  userId: principal.subject,
+});

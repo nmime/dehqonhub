@@ -1,0 +1,7 @@
+services:
+  user-app-api:
+    secrets: [click_secret_key]
+
+secrets:
+  click_secret_key:
+    file: ${CLICK_SECRET_KEY_FILE:?set CLICK_SECRET_KEY_FILE when Click is configured}

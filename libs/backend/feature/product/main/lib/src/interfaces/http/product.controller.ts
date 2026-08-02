@@ -4,6 +4,7 @@ import { ApiTags } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString } from 'class-validator';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse } from '@app/backend-common-response';
+import { CurrentUser, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import {
   GetProductUseCase,
   ListProductsUseCase,
@@ -29,13 +30,13 @@ export class ProductController {
 
   @Get()
   @ApiOkDataResponse(ProductListDto)
-  async list(@Query() query: CatalogQueryDto) {
-    return createOkResponse({ items: await this.listProducts.execute(query) });
+  async list(@CurrentUser() principal: AuthenticatedPrincipal, @Query() query: CatalogQueryDto) {
+    return createOkResponse({ items: await this.listProducts.execute(principal.tenantId, query) });
   }
 
   @Get(':id')
   @ApiOkDataResponse(ProductViewDto)
-  async getById(@Param('id') id: string) {
-    return createOkResponse(await this.getProduct.execute(id));
+  async getById(@CurrentUser() principal: AuthenticatedPrincipal, @Param('id') id: string) {
+    return createOkResponse(await this.getProduct.execute(principal.tenantId, id));
   }
 }

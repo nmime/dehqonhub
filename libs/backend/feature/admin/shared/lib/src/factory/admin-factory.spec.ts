@@ -74,6 +74,9 @@ describe('createAdminAccessPolicy factory', () => {
       canReadAudit: false,
       canReadSettings: false,
       canUpdateSettings: false,
+      canReadAgriTech: false,
+      canWriteAgriTech: false,
+      canApproveAgriTech: false,
     });
   });
 
@@ -118,6 +121,9 @@ describe('createAdminAccessPolicy factory', () => {
       canReadAudit: true,
       canReadSettings: true,
       canUpdateSettings: true,
+      canReadAgriTech: false,
+      canWriteAgriTech: false,
+      canApproveAgriTech: false,
     });
   });
 

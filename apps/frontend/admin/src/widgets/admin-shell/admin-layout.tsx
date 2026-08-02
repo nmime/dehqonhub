@@ -38,6 +38,15 @@ const buildAdminNavigation = ({
   const users = visibleNavigationItems([
     {
       item: {
+        href: '/admin/agritech',
+        icon: 'analytics',
+        isCurrent: path === '/agritech',
+        label: t('admin.action.agritech'),
+      },
+      visible: Boolean(access?.canReadAgriTech),
+    },
+    {
+      item: {
         href: '/admin/users',
         icon: 'users',
         isCurrent: path.startsWith('/users'),

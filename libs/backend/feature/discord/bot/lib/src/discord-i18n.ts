@@ -2,6 +2,8 @@ import enDiscordCatalog from '@app/i18n-en-bots/discord.json';
 import enBotSharedCatalog from '@app/i18n-en-bots/shared.json';
 import ruDiscordCatalog from '@app/i18n-ru-bots/discord.json';
 import ruBotSharedCatalog from '@app/i18n-ru-bots/shared.json';
+import uzDiscordCatalog from '@app/i18n-uz-bots/discord.json';
+import uzBotSharedCatalog from '@app/i18n-uz-bots/shared.json';
 import { translations as backendTranslations } from '@app/backend-common-i18n';
 import {
   defaultLocale,
@@ -32,6 +34,11 @@ export const discordTranslations = {
     ['backend-common', backendTranslations.ru],
     ['bots/shared.json', ruBotSharedCatalog],
     ['bots/discord.json', ruDiscordCatalog],
+  ]),
+  uz: mergeLocaleCatalogFiles('uz', [
+    ['backend-common', backendTranslations.uz],
+    ['bots/shared.json', uzBotSharedCatalog],
+    ['bots/discord.json', uzDiscordCatalog],
   ]),
 } as const satisfies Record<Locale, RuntimeLocaleCatalog>;
 

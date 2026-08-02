@@ -12,8 +12,8 @@ describe('mobile home model', () => {
     ]);
   });
 
-  it('offers the shared en/ru locale switch options', () => {
-    expect(mobileLocaleOptions.map((option) => option.locale)).toEqual(['en', 'ru']);
-    expect(mobileLocaleOptions.map((option) => option.label)).toEqual(['EN', 'RU']);
+  it('offers every shared product locale switch option', () => {
+    expect(mobileLocaleOptions.map((option) => option.locale)).toEqual(['en', 'ru', 'uz']);
+    expect(mobileLocaleOptions.map((option) => option.label)).toEqual(['EN', 'RU', 'UZ']);
   });
 });

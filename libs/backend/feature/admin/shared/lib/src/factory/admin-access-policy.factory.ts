@@ -17,6 +17,9 @@ export const createAdminAccessPolicy = (principal?: AdminPrincipalClaims): Admin
   const canReadAudit = canAdmin(ability, 'read', 'admin.audit');
   const canReadSettings = canAdmin(ability, 'read', 'admin.settings');
   const canUpdateSettings = canAdmin(ability, 'update', 'admin.settings');
+  const canReadAgriTech = canAdmin(ability, 'read', 'admin.agritech');
+  const canWriteAgriTech = canAdmin(ability, 'write', 'admin.agritech');
+  const canApproveAgriTech = canAdmin(ability, 'approve', 'admin.agritech');
 
   return {
     isAuthenticated: Boolean(principal?.subject),
@@ -29,6 +32,7 @@ export const createAdminAccessPolicy = (principal?: AdminPrincipalClaims): Admin
       canReadRoles ||
       canReadAudit ||
       canReadSettings ||
+      canReadAgriTech ||
       canAdmin(ability, AdminManageAction, AdminAllResource),
     canReadDashboard,
     canReadProfile,
@@ -39,5 +43,8 @@ export const createAdminAccessPolicy = (principal?: AdminPrincipalClaims): Admin
     canReadAudit,
     canReadSettings,
     canUpdateSettings,
+    canReadAgriTech,
+    canWriteAgriTech,
+    canApproveAgriTech,
   };
 };

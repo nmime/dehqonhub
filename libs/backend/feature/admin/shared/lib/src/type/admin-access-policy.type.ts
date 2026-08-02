@@ -18,6 +18,9 @@ export interface AdminAccessPolicy {
   canReadAudit: boolean;
   canReadSettings: boolean;
   canUpdateSettings: boolean;
+  canReadAgriTech: boolean;
+  canWriteAgriTech: boolean;
+  canApproveAgriTech: boolean;
 }
 
 export interface AdminProfileView {

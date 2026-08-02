@@ -25,6 +25,9 @@ import {
   AdminNotificationBroadcastsApprovePermission,
   AdminFeatureFlagsReadPermission,
   AdminFeatureFlagsWritePermission,
+  AdminAgriTechReadPermission,
+  AdminAgriTechWritePermission,
+  AdminAgriTechApprovePermission,
   AdminManageAllPermission,
   defaultRolePermissions,
   permissionCatalog,
@@ -60,6 +63,9 @@ export {
   AdminNotificationBroadcastsApprovePermission,
   AdminFeatureFlagsReadPermission,
   AdminFeatureFlagsWritePermission,
+  AdminAgriTechReadPermission,
+  AdminAgriTechWritePermission,
+  AdminAgriTechApprovePermission,
   AdminManageAllPermission,
 };
 
@@ -92,6 +98,7 @@ export const adminResources = [
   'admin.notification-segments',
   'admin.notification-broadcasts',
   'admin.feature-flags',
+  'admin.agritech',
 ] as const;
 
 export type AdminAction = (typeof adminActions)[number];

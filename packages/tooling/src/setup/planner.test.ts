@@ -639,11 +639,7 @@ describe('planner — concrete capability activation', () => {
 
     assert.deepEqual(featureFlags.projects, ['@app/backend-postgres-main-feature-flags', '@app/common-feature-flags']);
     assert.ok(notifications.projects.includes('@app/backend-postgres-main-notification'));
-    assert.deepEqual(postgres.projects, [
-      '@app/backend-postgres-main',
-      '@app/backend-postgres-main-agritech',
-      '@app/backend-postgres-main-auth',
-    ]);
+    assert.deepEqual(postgres.projects, ['@app/backend-postgres-main', '@app/backend-postgres-main-auth']);
     assert.ok(projects.every((project: string) => !project.includes('backend-mongodb')));
 
     const generatedModule = generateBackendCapabilityModule('user-app-api', postgresSummary).content;

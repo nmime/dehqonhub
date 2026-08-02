@@ -58,6 +58,9 @@ describe('@app/frontend-feature-admin-shared access policy', () => {
       canWriteNotificationBroadcasts: false,
       canSendNotificationBroadcasts: false,
       canApproveNotificationBroadcasts: false,
+      canReadAgriTech: false,
+      canWriteAgriTech: false,
+      canApproveAgriTech: false,
     });
   });
 

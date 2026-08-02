@@ -14,6 +14,7 @@ import { ProblemPresentationsPage } from '../../pages/problem-presentations';
 import { ProfilePage } from '../../pages/profile';
 import { RolesPage } from '../../pages/roles';
 import { UsersPage } from '../../pages/users';
+import { AgriTechAdminPage } from '../../pages/agritech';
 import {
   fallbackTranslate,
   isUsersRoute,
@@ -73,6 +74,13 @@ function renderReadyAdminRoute(
       <AuthLoginAnalyticsPage currentPath={path} requestOptions={runtime.requestOptions} />
     ) : (
       <ForbiddenPage reason={t('admin.permission.authLoginAnalyticsMissing')} />
+    );
+  }
+  if (routePath === '/agritech') {
+    return state.access.canReadAgriTech ? (
+      <AgriTechAdminPage access={state.access} requestOptions={runtime.requestOptions} />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.agritechMissing')} />
     );
   }
   if (routePath === '/profile') {

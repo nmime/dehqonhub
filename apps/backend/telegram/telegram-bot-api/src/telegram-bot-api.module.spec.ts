@@ -14,12 +14,14 @@ describe('TelegramBotApiModule', () => {
     const previousWebhookUrl = process.env.TELEGRAM_BOT_WEBHOOK_URL;
     const previousMenuSetup = process.env.TELEGRAM_BOT_MENU_BUTTON_ENABLED;
     const previousMode = process.env.TELEGRAM_BOT_MODE;
+    const previousOpenapiEnabled = process.env.OPENAPI_ENABLED;
 
     process.env.TELEGRAM_BOT_TOKEN = '123:test';
     process.env.TELEGRAM_BOT_WEBHOOK_SECRET = 'secret';
     process.env.TELEGRAM_BOT_WEBHOOK_URL = 'https://telegram-bot-api.example.test/telegram/webhook';
     process.env.TELEGRAM_BOT_MENU_BUTTON_ENABLED = 'false';
     process.env.TELEGRAM_BOT_MODE = 'webhook';
+    process.env.OPENAPI_ENABLED = 'true';
 
     try {
       const compiledModule = await Test.createTestingModule({
@@ -38,6 +40,7 @@ describe('TelegramBotApiModule', () => {
       restoreEnv('TELEGRAM_BOT_WEBHOOK_URL', previousWebhookUrl);
       restoreEnv('TELEGRAM_BOT_MENU_BUTTON_ENABLED', previousMenuSetup);
       restoreEnv('TELEGRAM_BOT_MODE', previousMode);
+      restoreEnv('OPENAPI_ENABLED', previousOpenapiEnabled);
       await moduleRef?.close();
     }
   });
@@ -48,11 +51,13 @@ describe('TelegramBotApiModule', () => {
     const previousWebhookSecret = process.env.TELEGRAM_BOT_WEBHOOK_SECRET;
     const previousMode = process.env.TELEGRAM_BOT_MODE;
     const previousMenuSetup = process.env.TELEGRAM_BOT_MENU_BUTTON_ENABLED;
+    const previousOpenapiEnabled = process.env.OPENAPI_ENABLED;
 
     process.env.TELEGRAM_BOT_TOKEN = '123:test';
     process.env.TELEGRAM_BOT_WEBHOOK_SECRET = 'secret';
     process.env.TELEGRAM_BOT_MODE = 'polling';
     process.env.TELEGRAM_BOT_MENU_BUTTON_ENABLED = 'false';
+    process.env.OPENAPI_ENABLED = 'true';
 
     try {
       const compiledModule = await Test.createTestingModule({
@@ -70,6 +75,7 @@ describe('TelegramBotApiModule', () => {
       restoreEnv('TELEGRAM_BOT_WEBHOOK_SECRET', previousWebhookSecret);
       restoreEnv('TELEGRAM_BOT_MODE', previousMode);
       restoreEnv('TELEGRAM_BOT_MENU_BUTTON_ENABLED', previousMenuSetup);
+      restoreEnv('OPENAPI_ENABLED', previousOpenapiEnabled);
       await moduleRef?.close();
     }
   });

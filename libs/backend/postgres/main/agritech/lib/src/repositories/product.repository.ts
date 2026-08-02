@@ -8,6 +8,7 @@ export function toProduct(entity: ProductEntity): Product {
     id: entity.id,
     name: entity.name,
     nameRu: entity.nameRu ?? undefined,
+    nameUz: entity.nameUz ?? undefined,
     category: entity.category,
     description: entity.description,
     supplierName: entity.supplierName,
@@ -26,13 +27,16 @@ export function toProduct(entity: ProductEntity): Product {
 export class PostgresProductRepository implements ProductRepository {
   constructor(@Inject(EntityManager) private readonly em: EntityManager) {}
 
-  async findActiveById(id: string): Promise<Product | undefined> {
-    const entity = await this.em.findOne(ProductEntity, { id, status: 'active' });
+  async findActiveById(tenantId: string, id: string): Promise<Product | undefined> {
+    const entity = await this.em.findOne(ProductEntity, { tenantId, id, status: 'active' });
     return entity ? toProduct(entity) : undefined;
   }
 
-  async findActive(filter?: { category?: ProductCategory; region?: string }): Promise<Product[]> {
-    const where: { status: 'active'; category?: ProductCategory; region?: string } = { status: 'active' };
+  async findActive(tenantId: string, filter?: { category?: ProductCategory; region?: string }): Promise<Product[]> {
+    const where: { tenantId: string; status: 'active'; category?: ProductCategory; region?: string } = {
+      tenantId,
+      status: 'active',
+    };
     if (filter?.category) {
       where.category = filter.category;
     }

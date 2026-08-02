@@ -33,6 +33,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 
 ## Architecture
 
+- [AgriTech Platform](agritech-platform.md) — complete marketplace scope, actor journeys, payments, Telegram, pilots, and launch gates.
 - [Architecture Overview](architecture.md) — app/library split, runtime boundaries, data flow.
 - [Architecture Deep Dives](architecture/README.md) — DDD boundaries, naming conventions, and library contracts.
 - [Architecture Decision Records](adr/README.md) — durable decisions and ADR template.

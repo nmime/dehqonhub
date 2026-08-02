@@ -2,6 +2,8 @@ import enErrorsCatalog from '@app/i18n-en-common/errors.json';
 import enCommonCatalog from '@app/i18n-en-common/shared.json';
 import ruErrorsCatalog from '@app/i18n-ru-common/errors.json';
 import ruCommonCatalog from '@app/i18n-ru-common/shared.json';
+import uzErrorsCatalog from '@app/i18n-uz-common/errors.json';
+import uzCommonCatalog from '@app/i18n-uz-common/shared.json';
 import type { TranslationKey } from '@app/common-i18n-keys';
 import {
   hasTranslationKeyIn,
@@ -35,9 +37,15 @@ const ruFiles = [
   ['common/errors.json', ruErrorsCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
+const uzFiles = [
+  ['common/shared.json', uzCommonCatalog],
+  ['common/errors.json', uzErrorsCatalog],
+] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
+
 export const sharedFrontendTranslations = {
   en: mergeLocaleCatalogFiles('en', enFiles),
   ru: mergeLocaleCatalogFiles('ru', ruFiles),
+  uz: mergeLocaleCatalogFiles('uz', uzFiles),
 } as const satisfies FrontendTranslations;
 
 export function hasFrontendTranslationKey(

@@ -19,6 +19,7 @@ export class Migration20260802120000CreateAgriTechMarketplace extends Migration 
         "telegram_id" varchar(50) null,
         "latitude" numeric(10,6) null,
         "longitude" numeric(10,6) null,
+        "field_agent_user_id" varchar(100) null,
         "created_at" timestamptz not null default now(),
         "updated_at" timestamptz not null default now(),
         constraint "pk__farmers" primary key ("id"),
@@ -30,12 +31,15 @@ export class Migration20260802120000CreateAgriTechMarketplace extends Migration 
     `);
     this.addSql('create index "ix__farmers__region" on "farmers" ("region");');
     this.addSql('create index "ix__farmers__telegram_id" on "farmers" ("telegram_id");');
+    this.addSql('create index "ix__farmers__field_agent_user_id" on "farmers" ("field_agent_user_id");');
 
     this.addSql(`
       create table "products" (
         "id" uuid not null,
+        "tenant_id" varchar(100) not null,
         "name" varchar(200) not null,
         "name_ru" varchar(200) null,
+        "name_uz" varchar(200) null,
         "category" varchar(30) not null,
         "description" text not null,
         "supplier_id" varchar(100) not null,
@@ -55,6 +59,7 @@ export class Migration20260802120000CreateAgriTechMarketplace extends Migration 
       );
     `);
     this.addSql('create index "ix__products__status_category_region" on "products" ("status", "category", "region");');
+    this.addSql('create index "ix__products__tenant_id_status" on "products" ("tenant_id", "status");');
 
     this.addSql(`
       create table "orders" (
@@ -62,16 +67,21 @@ export class Migration20260802120000CreateAgriTechMarketplace extends Migration 
         "tenant_id" varchar(100) not null,
         "user_id" varchar(100) not null,
         "farmer_id" uuid not null,
+        "kind" varchar(20) not null default 'input',
+        "buyer_partner_id" uuid null,
+        "produce_listing_id" uuid null,
         "items" jsonb not null,
         "total_amount_uzs" numeric(15,2) not null,
         "status" varchar(20) not null default 'pending',
         "delivery_address" text not null,
         "region" varchar(100) not null,
         "notes" text null,
+        "history" jsonb not null default '[]'::jsonb,
         "created_at" timestamptz not null default now(),
         "updated_at" timestamptz not null default now(),
         constraint "pk__orders" primary key ("id"),
         constraint "fk__orders__farmer_id" foreign key ("farmer_id") references "farmers" ("id") on delete restrict,
+        constraint "ck__orders__kind" check ("kind" in ('input', 'produce')),
         constraint "ck__orders__status" check ("status" in ('pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled')),
         constraint "ck__orders__total" check ("total_amount_uzs" >= 0)
       );

@@ -9,17 +9,20 @@
     "notification-consumer",
     "notification-scheduler",
     "site-app",
+    "telegram-bot-api",
     "user-app",
     "user-app-api"
   ],
   "capabilities": [
+    "agritech",
     "authz",
     "design-tokens",
     "feature-flags",
     "i18n",
     "notifications",
     "postgres",
-    "s3"
+    "s3",
+    "telegram-bot"
   ],
   "product": {
     "ciMode": "product",

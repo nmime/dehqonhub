@@ -10,6 +10,7 @@ import { appCatalog, capabilityCatalog, type DurableDatabaseProviderId } from '.
 import {
   configuredClosureGraph,
   materializeAllReferenceClosure,
+  referenceCapabilities,
   referenceLockInvocation,
   referenceClosureContextPath,
   validateCurrentClosure,
@@ -168,9 +169,7 @@ describe('all-reference closure context', () => {
 
 function referenceFixture(provider: DurableDatabaseProviderId): SelectedClosureManifest {
   const apps = Object.keys(appCatalog).sort() as Array<keyof typeof appCatalog>;
-  const capabilities = Object.keys(capabilityCatalog)
-    .filter((capability) => capability !== (provider === 'postgres' ? 'mongodb' : 'postgres'))
-    .sort() as Array<keyof typeof capabilityCatalog>;
+  const capabilities = referenceCapabilities(provider);
   const config = parseNrbConfig({
     schemaVersion,
     apps,

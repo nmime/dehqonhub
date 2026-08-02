@@ -602,6 +602,16 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
     );
   }
   if (closure.services.includes('redis')) files.push('docker/docker-compose.prod.redis.yml');
+  if (effectiveEnvironment.PAYME_MERCHANT_ID?.trim() && effectiveEnvironment.PAYME_SECRET_KEY_FILE?.trim()) {
+    files.push('docker/docker-compose.prod.payme.yml');
+  }
+  if (
+    effectiveEnvironment.CLICK_SERVICE_ID?.trim() &&
+    effectiveEnvironment.CLICK_MERCHANT_ID?.trim() &&
+    effectiveEnvironment.CLICK_SECRET_KEY_FILE?.trim()
+  ) {
+    files.push('docker/docker-compose.prod.click.yml');
+  }
   if (profiles.includes('telegram')) files.push('docker/docker-compose.prod.telegram.yml');
   if (profiles.includes('discord')) files.push('docker/docker-compose.prod.discord.yml');
   if (domainMode !== 'external-proxy') files.push('docker/docker-compose.prod.edge.yml');

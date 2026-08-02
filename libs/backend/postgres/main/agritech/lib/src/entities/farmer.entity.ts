@@ -20,6 +20,7 @@ export class FarmerEntity {
   telegramId: string | null = null;
   latitude: number | null = null;
   longitude: number | null = null;
+  fieldAgentUserId: string | null = null;
   createdAt: Date = new Date();
   updatedAt: Date = new Date();
 }
@@ -43,6 +44,7 @@ export const FarmerEntitySchema = new EntitySchema<FarmerEntity>({
     telegramId: { type: 'varchar', length: 50, nullable: true, fieldName: 'telegram_id' },
     latitude: { type: 'decimal', precision: 10, scale: 6, nullable: true },
     longitude: { type: 'decimal', precision: 10, scale: 6, nullable: true },
+    fieldAgentUserId: { type: 'varchar', length: 100, nullable: true, fieldName: 'field_agent_user_id' },
     createdAt: { type: 'timestamptz', fieldName: 'created_at', onCreate: () => new Date() },
     updatedAt: { type: 'timestamptz', fieldName: 'updated_at', onCreate: () => new Date(), onUpdate: () => new Date() },
   },
@@ -54,5 +56,6 @@ export const FarmerEntitySchema = new EntitySchema<FarmerEntity>({
     { name: 'ix__farmers__phone', properties: ['phone'] },
     { name: 'ix__farmers__region', properties: ['region'] },
     { name: 'ix__farmers__telegram_id', properties: ['telegramId'] },
+    { name: 'ix__farmers__field_agent_user_id', properties: ['fieldAgentUserId'] },
   ],
 });

@@ -33,6 +33,8 @@ has_declared_docker_secret() {
     /run/secrets/discord_client_secret \
     /run/secrets/discord_public_key \
     /run/secrets/discord_custom_id_secret \
+    /run/secrets/payme_secret_key \
+    /run/secrets/click_secret_key \
     /run/secrets/resend_api_key \
     /run/secrets/mailpace_server_token \
     /run/secrets/notification_fcm_private_key \
@@ -64,6 +66,8 @@ if [ "$(id -u)" -eq 0 ]; then
   load_secret DISCORD_CLIENT_SECRET /run/secrets/discord_client_secret
   load_secret DISCORD_PUBLIC_KEY /run/secrets/discord_public_key
   load_secret DISCORD_CUSTOM_ID_SECRET /run/secrets/discord_custom_id_secret
+  load_secret PAYME_SECRET_KEY /run/secrets/payme_secret_key
+  load_secret CLICK_SECRET_KEY /run/secrets/click_secret_key
   load_secret RESEND_API_KEY /run/secrets/resend_api_key
   load_secret MAILPACE_SERVER_TOKEN /run/secrets/mailpace_server_token
   load_secret NOTIFICATION_FCM_PRIVATE_KEY /run/secrets/notification_fcm_private_key

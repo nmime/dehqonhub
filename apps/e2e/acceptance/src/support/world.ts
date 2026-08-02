@@ -11,6 +11,12 @@ export class AcceptanceWorld extends World {
   externalDelivery: boolean | undefined;
   assuranceExitCode: number | null | undefined;
   releaseWorkflow: string | undefined;
+  agriTechPartnerStatus: 'pending' | 'approved' | undefined;
+  agriTechAvailableQuantityKg: number | undefined;
+  agriTechRequestedQuantityKg: number | undefined;
+  agriTechReservationAllowed: boolean | undefined;
+  agriTechDeliveryProof: string | undefined;
+  agriTechDeliveryAllowed: boolean | undefined;
 
   constructor(options: IWorldOptions) {
     super(options);
