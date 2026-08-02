@@ -12,6 +12,9 @@ import { ProfilePage } from '../../pages/profile';
 import { SettingsPage } from '../../pages/settings';
 import { TmaPage } from '../../pages/tma';
 import { UserHomeContent } from '../../pages/user-home';
+import { FarmerRegisterPage } from '../../pages/farmer-register';
+import { FarmerDashboardPage } from '../../pages/farmer-dashboard';
+import { ProductCatalogPage } from '../../pages/product-catalog';
 import { UserShell } from './user-shell';
 import { useUserNavigate } from './user-navigation';
 import { useUserRuntime } from './user-runtime-context';
@@ -113,6 +116,25 @@ const linkDiscordRoute = createRoute({
   component: SettingsRouteComponent,
 });
 
+// AgriTech routes
+const farmerRegisterRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/register',
+  component: FarmerRegisterPage,
+});
+
+const farmerDashboardRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/dashboard',
+  component: FarmerDashboardPage,
+});
+
+const productCatalogRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/catalog',
+  component: ProductCatalogPage,
+});
+
 const routeTree = rootRoute.addChildren([
   indexRoute,
   authRoute,
@@ -125,6 +147,9 @@ const routeTree = rootRoute.addChildren([
   telegramMiniAppRoute,
   linkTelegramRoute,
   linkDiscordRoute,
+  farmerRegisterRoute,
+  farmerDashboardRoute,
+  productCatalogRoute,
 ]);
 
 export const createUserRouter = (history: RouterHistory = createBrowserHistory()) =>

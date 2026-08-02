@@ -1,0 +1,7 @@
+{
+  "name": "@app/backend-postgres-main-agritech",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/postgres/main/agritech/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:postgres-main", "scope:agritech"]
+}

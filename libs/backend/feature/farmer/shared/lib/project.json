@@ -1,0 +1,7 @@
+{
+  "name": "@app/backend-feature-farmer-shared",
+  "$schema": "../../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/backend/feature/farmer/shared/lib/src",
+  "projectType": "library",
+  "tags": ["platform:backend", "type:feature-shared", "scope:farmer"]
+}
