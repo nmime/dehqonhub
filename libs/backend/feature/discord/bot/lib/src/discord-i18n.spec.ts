@@ -28,19 +28,26 @@ describe('Discord i18n helpers', () => {
     expect(t('bot.error.expired', 'ru')).toBe('Действие бота истекло. Начните заново.');
     expect(localizationsFor('discord.commands.help.label')).toEqual({
       ru: 'помощь',
+      uz: 'help',
     });
   });
 
   it('omits supported locales that have no value for the key', () => {
     const key = 'discord.commands.help.label';
     const ruCatalog = discordTranslations.ru;
-    const original = ruCatalog[key];
+    const uzCatalog = discordTranslations.uz;
+    const originalRu = ruCatalog[key];
+    const originalUz = uzCatalog[key];
     delete ruCatalog[key];
+    delete uzCatalog[key];
     try {
       expect(localizationsFor(key)).toEqual({});
     } finally {
-      if (original !== undefined) {
-        ruCatalog[key] = original;
+      if (originalRu !== undefined) {
+        ruCatalog[key] = originalRu;
+      }
+      if (originalUz !== undefined) {
+        uzCatalog[key] = originalUz;
       }
     }
   });
