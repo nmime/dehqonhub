@@ -1,0 +1,106 @@
+import { readFileSync } from "node:fs";
+import { createRequire } from "node:module";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+const require = createRequire(import.meta.url);
+const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../../../../..");
+const tsconfigPath = resolve(workspaceRoot, "tsconfig.base.json");
+process.env.SWC_NODE_PROJECT ??= tsconfigPath;
+require("@swc-node/register");
+const tsconfig = JSON.parse(readFileSync(tsconfigPath, "utf8"));
+require("tsconfig-paths").register({ baseUrl: workspaceRoot, paths: tsconfig.compilerOptions.paths });
+const { MikroORM } = require("@mikro-orm/core");
+const {
+  AuthUserEntitySchema,
+  AuthLoginEventEntitySchema,
+} = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/entities/index.ts",
+));
+const {
+  authMigrationOptions,
+  authMigrations,
+  AuthMigrationsTableName,
+} = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/migrations/index.ts",
+));
+const { FeatureFlagEntitySchema } = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/feature-flags/lib/src/infrastructure/data-access/entities/index.ts",
+));
+const { FarmerEntitySchema, ProductEntitySchema, OrderEntitySchema } = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/agritech/lib/src/entities/index.ts",
+));
+const { agritechMigrations } = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/agritech/lib/src/migrations/index.ts",
+));
+const {
+  NotificationAudienceSnapshotEntitySchema,
+  NotificationAudienceSnapshotMemberEntitySchema,
+  NotificationBroadcastCommandEntitySchema,
+  NotificationBroadcastEntitySchema,
+  NotificationBroadcastSegmentEntitySchema,
+  NotificationDeliveryEntitySchema,
+  NotificationEntitySchema,
+  NotificationSegmentEntitySchema,
+  NotificationSegmentMemberEntitySchema,
+  NotificationSegmentUploadEntitySchema,
+  NotificationTemplateEntitySchema,
+  NotificationTemplateVersionChannelEntitySchema,
+  NotificationTemplateVersionEntitySchema,
+} = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/notification/lib/src/infrastructure/data-access/entities/index.ts",
+));
+const { notificationMigrations } = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/notification/lib/src/infrastructure/data-access/migrations/index.ts",
+));
+const { createPostgresMikroOrmOptions } = require(resolve(
+  workspaceRoot,
+  "libs/backend/postgres/main/shared/lib/src/data-source-options.ts",
+));
+export const authMigrationTableName = AuthMigrationsTableName;
+export function createAuthMigrationOrmOptions(env = process.env) {
+  return createPostgresMikroOrmOptions(
+    {
+      entities: [
+        AuthUserEntitySchema,
+        AuthLoginEventEntitySchema,
+        FeatureFlagEntitySchema,
+        FarmerEntitySchema,
+        ProductEntitySchema,
+        OrderEntitySchema,
+        NotificationDeliveryEntitySchema,
+        NotificationEntitySchema,
+        NotificationTemplateEntitySchema,
+        NotificationTemplateVersionEntitySchema,
+        NotificationTemplateVersionChannelEntitySchema,
+        NotificationSegmentEntitySchema,
+        NotificationSegmentMemberEntitySchema,
+        NotificationSegmentUploadEntitySchema,
+        NotificationBroadcastEntitySchema,
+        NotificationBroadcastSegmentEntitySchema,
+        NotificationAudienceSnapshotEntitySchema,
+        NotificationAudienceSnapshotMemberEntitySchema,
+        NotificationBroadcastCommandEntitySchema,
+      ],
+      autoLoadEntities: false,
+      allowGlobalContext: true,
+      migrations: {
+        ...authMigrationOptions,
+        migrationsList: [...authMigrations, ...notificationMigrations, ...agritechMigrations],
+      },
+    },
+    env,
+  );
+}
+export async function initAuthMigrationOrm(env = process.env) {
+  return MikroORM.init(createAuthMigrationOrmOptions(env));
+}
+export function migrationNames(migrations: readonly { name: string }[]) {
+  return migrations.map((migration) => migration.name);
+}
