@@ -1,0 +1,70 @@
+{
+  "schemaVersion": 1,
+  "configHash": "df5655e4a6e2157ea0bcaddc3f8ae0f3ed0b3692d14fda5c3b195ee806b19627",
+  "preset": null,
+  "apps": [
+    "admin-app",
+    "admin-app-api",
+    "auth-app-api",
+    "fullstack-e2e",
+    "landing-app",
+    "mobile-app",
+    "notification-consumer",
+    "notification-scheduler",
+    "site-app",
+    "telegram-bot-api",
+    "user-app",
+    "user-app-api"
+  ],
+  "capabilities": [
+    "agritech",
+    "authz",
+    "design-tokens",
+    "feature-flags",
+    "i18n",
+    "notifications",
+    "postgres",
+    "redis",
+    "s3",
+    "telegram-bot"
+  ],
+  "product": {
+    "ciMode": "product",
+    "frontendApiMode": "same-origin",
+    "mobileTargets": [
+      "web"
+    ]
+  },
+  "deployment": {
+    "targets": [
+      "docker"
+    ],
+    "publicTopology": "single-domain",
+    "kubernetesDelivery": "direct",
+    "infrastructure": {
+      "redis": "bundled",
+      "nats": "bundled",
+      "s3": "bundled"
+    }
+  },
+  "byPlatform": {
+    "backend": [
+      "admin-app-api",
+      "auth-app-api",
+      "notification-consumer",
+      "notification-scheduler",
+      "telegram-bot-api",
+      "user-app-api"
+    ],
+    "e2e": [
+      "fullstack-e2e"
+    ],
+    "frontend": [
+      "admin-app",
+      "landing-app",
+      "mobile-app",
+      "site-app",
+      "user-app"
+    ]
+  }
+}
