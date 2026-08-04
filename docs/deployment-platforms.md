@@ -1,0 +1,77 @@
+# Deployment Platform Support
+
+This boilerplate keeps deployment configuration provider-neutral. GitHub hosts
+collaboration metadata and may host images in GHCR, but the repository contains
+no GitHub Actions execution. `.gitlab-ci.yml` is an optional external runner.
+
+## CI/CD comparison
+
+| Feature            | GitHub                             | GitLab                             |
+| ------------------ | ---------------------------------- | ---------------------------------- |
+| CI config          | None in repository                 | Optional `.gitlab-ci.yml`          |
+| MR/PR templates    | `.github/PULL_REQUEST_TEMPLATE.md` | `.gitlab/merge_request_templates/` |
+| Issue templates    | `.github/ISSUE_TEMPLATE/`          | `.gitlab/issue_templates/`         |
+| Dependency updates | Maintainer-owned                   | GitLab Dependency Scanning         |
+| GitOps promotion   | Maintainer-owned reviewed PR       | Product-owned pipeline/MR          |
+| Releases           | Manual/trusted-runner invocation   | Optional native GitLab CI          |
+| Container registry | GHCR                               | GitLab Container Registry          |
+
+## Helm values
+
+Helm charts in `.helm/` are platform-agnostic. They reference container images by repository/tag — adjust the `image.repository` values for your registry:
+
+Every product render must load setup-generated `.helm/values-selection.yaml` last. It
+is platform-agnostic and prevents environment values from enabling an app or
+migrator outside the fresh selected closure.
+
+- GitHub: `ghcr.io/your-github-org/nest-react-boilerplate/${service}`
+- GitLab: `registry.gitlab.com/${CI_PROJECT_PATH}/${service}`
+
+## GitOps reconciliation
+
+Argo CD and Flux manifests are provider-agnostic. For any trusted operator or
+GitLab runner:
+
+1. Build and verify full-SHA image digests for the fresh selected closure.
+2. Intersect that inventory with enabled Helm deployment ownership and update
+   exactly those image tags and digests in `.helm/values-production.yaml` on a
+   topic branch.
+3. Run `pnpm run deploy:validate:gitops` and merge through normal review.
+4. Let Argo CD or Flux reconcile the same chart and values.
+
+See [GITOPS.md](../GITOPS.md) for both controller setups.
+
+## Release providers
+
+`release.config.mjs` selects exactly one semantic-release provider when a
+maintainer or trusted runner invokes it. GitHub publication requires an
+explicit protected token; no checked-in GitHub workflow invokes it. GitLab CI
+sets `RELEASE_PROVIDER=gitlab` and runs the release job on the default
+branch push pipeline only when `GITLAB_TOKEN` or `GL_TOKEN` is configured as a
+protected CI/CD variable. Immediately before semantic-release, the job fetches
+the remote default branch and refuses to publish unless it still equals
+`CI_COMMIT_SHA`, preventing a delayed successful pipeline from releasing after
+the branch advances. GitLab uses `CI_REPOSITORY_URL` so release tags target the
+GitLab clone instead of this template's GitHub repository metadata.
+
+GitLab Helm jobs materialize an explicit provider-free, PostgreSQL, or MongoDB
+selection before rendering. Docker smoke uses provider-specific all-reference
+contexts, while each fullstack job installs its matching selected closure and
+passes `.nrb/closure` as `NRB_CLOSURE_CONTEXT`; no Docker build falls back to
+the default source context.
+
+Both provider modes use the latest `vMAJOR.MINOR.PATCH` tag as the Semantic
+Versioning baseline. `fix`, `perf`, and `revert` commits increment patch;
+`feat` increments minor; and `!` or a `BREAKING CHANGE:` footer increments
+major. Other accepted commit types do not publish by themselves. Squashing or
+rewriting commit history never changes a release number unless the release tag
+itself is deliberately replaced. Releases tag the already-reviewed default
+branch commit and publish generated notes through the selected provider; they
+never push an unreviewed changelog commit to a protected branch.
+
+Semantic-release groups Conventional Commits into stable sections for
+features, fixes, performance, reverts, refactors, documentation, build, CI,
+tests, and maintenance. GitHub's `.github/release.yml` uses corresponding PR
+label categories when a maintainer generates notes manually. Add the
+`skip-changelog` label only when a PR must be omitted from manual generated
+notes; it does not override semantic-release commit analysis.

@@ -1,0 +1,177 @@
+# Canonical testing and QA matrix
+
+This repository treats QA as runner-neutral and contains no GitHub Actions. Every preset below is a real command that runs from a developer workstation or a separately configured trusted runner with the required runtime.
+
+## Local command matrix
+
+| Category                   | Purpose                                                                            | Local command                     | Default gate                      | Environment / notes                                                                                                                                                                                                                                                                                                         |
+| -------------------------- | ---------------------------------------------------------------------------------- | --------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Formatting                 | Stable source, config, generated artifacts, and docs formatting                    | `pnpm run format:check`           | Blocking                          | `pnpm run format` fixes formatting.                                                                                                                                                                                                                                                                                         |
+| Documentation contracts    | Generated catalog parity, indexed document reachability, unique project metadata, local targets, anchors, and root script references | `pnpm run docs:check`             | Blocking                          | Runs in `check:fast`, `check`, and the PR aggregate without network access.                                                                                                                                                                                                                                                  |
+| Specification trace        | OpenSpec validity, requirement project ownership, complete executable-test markers, stable IDs, and selected evidence mappings | `pnpm run spec:validate` | Blocking | Writes exact-SHA project/test/feature/requirement/evidence totals under `test-results/spec-evidence`; see [Specification assurance](../specification-assurance.md). |
+| Cucumber acceptance        | Stakeholder-readable executable examples                                                      | `pnpm exec nx run acceptance-e2e:acceptance` | Blocking/selected                 | Complements Vitest and Playwright; does not replace either suite. |
+| Requirement evidence       | Risk-proportional impacted commands and exact-SHA dossier                                      | `pnpm run spec:verify -- --lane pr --base origin/main --head HEAD` | Blocking by lane | PR/main are impacted; nightly/runtime can select every requirement. |
+| Unit tests                 | Pure functions, services, components, and isolated modules                         | `pnpm run test`                   | Blocking                          | Runs every `test` target in the selected closure; maintainers use `test:all`.                                                                                                                                                                                                                                                |
+| Coverage gates             | Enforce test coverage expectations                                                 | `pnpm run test:coverage`          | Blocking/manual                   | Runs selected closure test targets with coverage; maintainers use `test:coverage:all`.                                                                                                                                                                                                                                      |
+| Integration tests          | Multiple modules without the full system                                           | `pnpm run test`                   | Blocking                          | Kept inside project test targets.                                                                                                                                                                                                                                                                                           |
+| DB component tests         | Real PostgreSQL/Testcontainers module coverage                                     | `pnpm run test:component`         | Blocking when Docker is available | Runs selected closure component targets and requires Docker/Testcontainers; maintainers use `test:component:all`.                                                                                                                                                                                                           |
+| Migration safety           | Migration presence, apply/rollback/seed drift checks                               | `pnpm run db:migrations:check`    | Blocking                          | Runtime migration helpers are implemented as TS commands under `packages/tooling/src/commands/db`.                                                                                                                                                                                                                                                       |
+| Backend API e2e            | Nest HTTP/API behavior with real request paths                                     | `pnpm run test:e2e`               | Blocking/manual                   | Runs selected closure e2e targets; maintainers use `test:e2e:all`.                                                                                                                                                                                                                                                          |
+| Frontend component/UI      | jsdom/RTL/Vitest UI behavior                                                       | `pnpm run test`                   | Blocking                          | Covered by frontend project test targets.                                                                                                                                                                                                                                                                                   |
+| Browser e2e                | Real-browser app flows                                                             | `pnpm run test:e2e`               | Blocking/manual                   | Project-level browser tests.                                                                                                                                                                                                                                                                                                |
+| Cross-browser/mobile e2e   | Chromium, 320px Chromium, Firefox, WebKit, mobile Chrome, mobile Safari             | `pnpm run test:e2e:matrix`        | Manual/nightly                    | Uses `playwright.extended.config.ts`; set `PLAYWRIGHT_BASE_URL` to derive every explicit app/API/site URL for an existing stack, provide every `FULLSTACK_*_URL`, or set `PLAYWRIGHT_MANAGE_STACK=1` for selected-closure Docker management. External stacks must include `site-app`. Set `PLAYWRIGHT_INCLUDE_QUARANTINED=1` to include `@quarantine` specs. Use `-- --dry-run` to print the command. |
+| Fullstack e2e              | Docker Compose, browser, DB, APIs, nginx/proxy checks                              | `pnpm run test:fullstack`         | Blocking/manual                   | Requires Docker and Playwright browsers.                                                                                                                                                                                                                                                                                    |
+| Docker smoke               | Stack boots and probes critical endpoints                                          | `pnpm run test:docker-smoke`      | Blocking/manual                   | Requires Docker.                                                                                                                                                                                                                                                                                                            |
+| Storybook interaction      | Shared web components plus deterministic web app screen compositions               | `pnpm run test:storybook`         | Blocking/manual                   | Uses the shared UI config and runs component plus `Applications/*` stories in Chromium. Keep routing, auth, API integration, and complete page flows in app e2e. Build first with `pnpm run storybook:build`. |
+| Visual regression          | Reviewed full-page Storybook diffs, including portaled UI and app compositions      | `pnpm run test:visual`            | Blocking PR + nightly matrix      | Runs only stories tagged `visual`. Chromium is the PR default; `pnpm run test:visual:matrix` covers desktop Chromium, Firefox, WebKit, mobile Chrome, and mobile Safari. Build Storybook first. Update snapshots only with the explicit update commands. |
+| OpenAPI contract freshness | Generated OpenAPI JSON drift                                                       | `pnpm run api:contracts:check`    | Blocking                          | Contracts live in `apps/backend/*/*-app-api/contracts/openapi`; `docs/openapi` must not be reintroduced as hand docs.                                                                                                                                                                                                                                |
+| Frontend client freshness  | Generated typed clients drift                                                      | `pnpm run api:clients:check`      | Blocking                          | Uses committed OpenAPI contracts as inputs.                                                                                                                                                                                                                                                                                 |
+| OpenAPI linting            | Structural/style contract quality                                                  | `pnpm run api:openapi:lint`       | Blocking                          | Native lint validates OpenAPI version, operation IDs, tags, responses, schemas, refs, and security schemes. Optional Spectral is pinned by default: `OPENAPI_LINT_ENGINE=spectral pnpm run api:openapi:lint`; override planned upgrades with `SPECTRAL_CLI_VERSION`. Reports to `test-results/openapi-lint/report.json`.                                                                                |
+| OpenAPI fuzzing            | Contract-derived request case generation and safe live probes                      | `pnpm run api:openapi:fuzz`       | Manual/nightly                    | Always writes generated cases. Set `OPENAPI_FUZZ_BASE_URL` for safe live `GET/HEAD/OPTIONS` probes. Set `OPENAPI_FUZZ_UNSAFE=1` only against disposable systems. Optional Schemathesis: `OPENAPI_FUZZ_ENGINE=schemathesis`. Dry run: `pnpm run api:openapi:fuzz -- --dry-run`.                                              |
+| Consumer-driven contracts  | Pact-style frontend/backend contract expectations                                  | `pnpm run api:contracts:consumer` | Blocking                          | Reads `apps/frontend/app/contracts/consumers/*.json` and verifies interactions against `apps/backend/*/*-app-api/contracts/openapi`. Add new consumers as Pact-compatible JSON fixtures.                                                                                                                                                                               |
+| Accessibility              | WCAG-oriented semantic checks plus axe                                             | `pnpm run test:a11y`              | Manual/nightly                    | Set `A11Y_URLS` or build static apps/Storybook. Uses the pinned `axe-core` dependency owned by `@repo/tooling`, or an explicit `AXE_CORE_PATH`. Set `A11Y_PROFILES=desktop,mobile`; `A11Y_STRICT_AXE=0` allows semantic-only fallback. Dry run: `pnpm run test:a11y -- --dry-run`.                                                               |
+| Performance                | Page budgets, API p95/load probes, optional Lighthouse                             | `pnpm run test:perf`              | Manual/nightly                    | Set `PERF_URLS` and/or `PERF_API_URLS`. Budgets: `PERF_TTFB_BUDGET_MS`, `PERF_HTML_BUDGET_BYTES`, `PERF_API_P95_BUDGET_MS`, `PERF_API_REQUESTS`. Optional Lighthouse is pinned by default: `PERF_ENGINE=lighthouse` or `PERF_LIGHTHOUSE=1`; override planned upgrades with `LIGHTHOUSE_VERSION`. Dry run supported.                                                                                   |
+| Security SAST              | Lightweight JS/TS static security checks, optional Semgrep                         | `pnpm run test:security:sast`     | Blocking PR gate/manual          | Native rules flag eval, dynamic Function, disabled TLS, dangerous HTML sinks, shell exec, weak random. Optional Semgrep uses a pinned Docker image with `SEMGREP_DOCKER_IMAGE` override. Dry run supported.                                                                                                                                                 |
+| Dependency audit           | Package vulnerability gate                                                         | `pnpm run audit`                  | Blocking/manual                   | Uses `pnpm audit --audit-level=moderate`.                                                                                                                                                                                                                                                                                   |
+| Secret scanning            | Leaked keys/tokens/high-entropy strings                                            | `pnpm run test:security:secrets`  | Blocking PR gate/manual          | Native scan ignores generated/build dirs and placeholders. Gitleaks extends its default rules with path-and-value allowlists in `.gitleaks.toml` for explicit test fixtures only; add no real credential or broad path exclusion. Optional local scans use a pinned Docker image with `GITLEAKS_DOCKER_IMAGE` override. Dry run supported.                                                                                   |
+| Security DAST              | Runtime header, reflected payload, 5xx, sensitive path probes                      | `pnpm run test:security:dast`     | Manual/nightly                    | Set `SECURITY_DAST_URLS`. Required headers default to `x-content-type-options,referrer-policy`; override with `SECURITY_DAST_REQUIRED_HEADERS`. Optional OWASP ZAP: `SECURITY_DAST_ENGINE=zap`. Dry run supported.                                                                                                          |
+| Security aggregate         | SAST + secrets + DAST                                                              | `pnpm run test:security`          | Manual/nightly                    | Pass `-- --dry-run` to validate configuration without targets.                                                                                                                                                                                                                                                              |
+| Property-based invariants  | Randomized OpenAPI/schema/path/workspace invariants                                | `pnpm run test:property`          | Blocking                          | Native randomized checks over contracts, schema examples, path templates, package script references, workspace tooling. Uses `fast-check` automatically if it is present, but does not require lockfile churn.                                                                                                              |
+| Mutation testing           | Mutation score for app/libs source                                                 | `pnpm run test:mutation`          | Nightly                           | Uses a pinned Stryker `pnpm dlx @stryker-mutator/core` version. It executes by default; explicit `--dry-run` only validates config and writes a planned command report. |
+| Flake and quarantine       | Keep unstable e2e specs out of normal matrix                                       | `pnpm run test:e2e:matrix`        | Manual/nightly                    | Specs tagged `@quarantine` are skipped unless `PLAYWRIGHT_INCLUDE_QUARANTINED=1`. Playwright retries remain enabled in CI.                                                                                                                                                                                                  |
+
+## Visual regression contract
+
+The shared web Storybook is the visual fixture server. Reusable
+`@app/frontend-ui-web` states and explicit, deterministic `Applications/*`
+screen compositions may opt in with the `visual` story tag. Routes,
+authentication, production providers, API integration, and complete page flows
+remain app browser-test responsibilities.
+
+Run the workflow in this order:
+
+```bash
+pnpm run storybook:build
+pnpm run test:storybook
+pnpm run test:visual
+```
+
+`test:visual` checks the current operating system's reviewed Chromium
+baselines. `test:visual:matrix` checks Chromium, Firefox, WebKit, mobile Chrome,
+and mobile Safari and is part of the scheduled quality preset. Baselines live
+under
+`packages/tooling/baselines/visual/screenshots/<platform>/<project>/`, because
+browser screenshots are not portable across operating systems. The generated
+manifest records the story set, platform, projects, and comparison thresholds.
+CI uses the digest-pinned Playwright Noble image; representative component and
+full-screen comparisons are also verified across ARM64 and x64 Linux under the
+same strict tolerance.
+
+The runner fixes locale, timezone, color scheme, reduced motion, time, random
+input, viewport/device profiles, and the screenshot font. It waits for the
+story root, Storybook play-function completion, fonts, images, and two animation
+frames before taking a full-page screenshot. Full-page capture is required so
+Radix/shadcn dialogs, selects, and menus rendered through portals remain inside
+the regression image.
+
+Baseline changes are review artifacts, never an automatic recovery path:
+
+```bash
+pnpm run test:visual:update
+pnpm run test:visual:update:matrix
+```
+
+Use only the command matching the intended browser scope, inspect every changed
+PNG, and rerun the corresponding non-update command. Normal checks fail before
+Playwright when a baseline is missing, so they do not create expected images as
+a side effect. CI refuses snapshot updates unless a maintainer explicitly sets
+`VISUAL_ALLOW_CI_UPDATE=1` for a controlled maintenance run. Failed comparisons
+write expected/actual/diff images, traces, video, and an HTML report under
+`test-results/storybook-visual/` and `playwright-report/storybook-visual/`; both
+CI systems retain those paths as artifacts.
+
+This lane is repository-owned and does not require Chromatic or another hosted
+visual-review account. Add a hosted service only as a separate product/cost
+decision; it must not replace the checked-in Playwright baselines.
+
+Advanced focused runs accept `--projects <csv>` and `--stories <csv>` or the
+equivalent `VISUAL_PROJECTS` and `VISUAL_STORY_IDS` variables. Use
+`VISUAL_MAX_STORIES` only for diagnostics. `VISUAL_WORKERS` defaults to one for
+maximum determinism and may be raised deliberately on a controlled baseline
+runner. Comparison tolerance defaults to a
+0.1% changed-pixel ratio and a 0.15 pixelmatch threshold; overrides must remain
+an intentional, reviewed exception rather than a way to accept a real layout
+change.
+
+
+## Runtime QA/world-class gate flow
+
+```mermaid
+flowchart LR
+  dev[Developer or CI runner] --> install[CI=true pnpm install --frozen-lockfile]
+  install --> static[pnpm run tooling:static-check]
+  install --> deploy[pnpm run deploy:validate]
+  install --> secrets[pnpm run test:security:secrets]
+  install --> qa[pnpm run test:world-class]
+  qa --> runtime{Runtime available?}
+  runtime -- Docker/Compose running --> gates[Run reliability, migration rollback, observability, load/security/a11y/perf gates]
+  runtime -- Optional target missing locally --> partial[Local partial evidence with explicit skips]
+  runtime -- Missing in CI without allow flag --> fail[Fail closed]
+  gates --> artifacts[Playwright reports, QA logs, coverage, runtime artifacts]
+  static --> decision{Release confidence}
+  deploy --> decision
+  secrets --> decision
+  artifacts --> decision
+  partial --> decision
+  fail --> decision
+```
+
+Use this flow with the command matrix above: local developers may record partial
+runtime evidence when optional Docker, browser, or scanner targets are
+unavailable, but CI and release candidates should fail closed unless a
+documented allow flag is set for a non-production dry run. Real-user journey,
+observability, and concurrency gates are never reachability substitutes: each
+requires its corresponding `QA_*_COMMAND` as a JSON argv array and fails when
+that behavior command is absent or unsuccessful.
+
+## Preset bundles
+
+- Cheap local gate: `pnpm run check`
+- Optional preset smoke/dry-run bundle: `pnpm run quality:presets`
+- Storybook interaction plus visual browser/mobile matrix: `pnpm run quality:visual`
+- Security suite only: `pnpm run test:security`
+
+`pnpm run check` runs mostly local, deterministic gates: formatting,
+migration/config drift, OpenAPI/client freshness, OpenAPI lint, consumer
+contracts, OpenAPI fuzz case generation, property invariants, the runtime
+world-class gate (`test:world-class`), lint, typecheck, and unit tests. Every
+step except the world-class gate is deterministic and needs no runtime;
+optional missing runtime targets report `partial`, while missing authoritative
+journey, observability, or concurrency commands fail.
+
+`pnpm run quality:presets` validates all preset entry points. Optional
+runtime-backed world-class gates keep local developer runs flexible and report
+`partial` when a target is absent. In CI, a missing selected optional target
+fails unless the runner explicitly sets `WORLD_CLASS_ALLOW_CI_SKIPS=1`. The
+real-user journey, observability, and concurrency gates always require an
+authoritative command and ignore that skip allowance. Configure commands as
+JSON argv arrays, for example
+`QA_OBSERVABILITY_COMMAND='["pnpm","run","test:otel"]'`; shell expressions are
+not supported. `WORLD_CLASS_COMMAND_TIMEOUT_MS` defaults to 30 minutes and is
+bounded at two hours. Reliability URL concurrency is capped at 32 through
+`QA_RELIABILITY_CONCURRENCY`. A focused `--gate <name>` run reports all other
+gates as `notSelected`; those omissions do not fail or make the selected gate
+partial.
+
+## Contracts as generated artifacts
+
+Generated API contracts are committed under `apps/backend/*/*-app-api/contracts/openapi`. They are machine-readable inputs for linting, fuzzing, client generation, and consumer contract checks. Do not move them back under `docs/openapi` as hand-authored documentation.
+
+Consumer expectations live under `apps/frontend/app/contracts/consumers` as Pact-style JSON. Each interaction names a provider matching an OpenAPI contract title or filename and validates request/response bodies against the committed provider schema.
+
+
+## Pinned optional validator versions
+
+Optional validators that are executed through `pnpm dlx` or Docker default to fixed versions so CI and local reproductions are deterministic. Upgrade them intentionally by changing the defaults in the relevant tooling script, or temporarily override with `SPECTRAL_CLI_VERSION`, `LIGHTHOUSE_VERSION`, `GITLEAKS_DOCKER_IMAGE`, `SEMGREP_DOCKER_IMAGE`, or the Stryker package version in the mutation command.
+
+Docker builds default to the Node 24.18.0 image configured in the Dockerfile, matching the repository Node `>=24 <25` engine range and CI's `node-version-file`; update these together when upgrading Node.
