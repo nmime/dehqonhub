@@ -224,7 +224,7 @@ describe('PostgresFarmerRepository', () => {
       const profile = await repository.create(owner, input);
 
       expect(em.persist).toHaveBeenCalledTimes(1);
-      const persisted = em.persist.mock.calls[0][0] as FarmerEntity;
+      const persisted = em.persist.mock.calls[0]?.[0] as FarmerEntity;
       expect(persisted).toBeInstanceOf(FarmerEntity);
       expect(persisted.tenantId).toBe(owner.tenantId);
       expect(persisted.userId).toBe(owner.userId);
@@ -484,7 +484,7 @@ describe('PostgresOrderRepository', () => {
 
       expect(product.stockQuantity).toBe(3);
       expect(txEm.persist).toHaveBeenCalledTimes(1);
-      const persisted = txEm.persist.mock.calls[0][0] as OrderEntity;
+      const persisted = txEm.persist.mock.calls[0]?.[0] as OrderEntity;
       expect(persisted).toBeInstanceOf(OrderEntity);
       expect(persisted.tenantId).toBe(owner.tenantId);
       expect(persisted.userId).toBe(owner.userId);
@@ -525,7 +525,7 @@ describe('PostgresOrderRepository', () => {
         notes: undefined,
       });
 
-      const persisted = txEm.persist.mock.calls[0][0] as OrderEntity;
+      const persisted = txEm.persist.mock.calls[0]?.[0] as OrderEntity;
       expect(persisted.notes).toBeNull();
       expect(result.status).toBe('created');
       if (result.status === 'created') {

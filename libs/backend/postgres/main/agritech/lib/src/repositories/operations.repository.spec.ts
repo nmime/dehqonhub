@@ -69,7 +69,7 @@ describe('PostgresAgriTechOperationsRepository — partners', () => {
     const result = await repo.listOwnedPartners(owner);
     expect(em.find).toHaveBeenCalledWith(expect.anything(), { tenantId: 'tenant-1', ownerUserId: 'user-1' }, expect.anything());
     expect(result).toHaveLength(1);
-    expect(result[0].legalName).toBe('Agro Supply');
+    expect(result[0]?.legalName).toBe('Agro Supply');
   });
 
   it('sets partner status and records reviewer', async () => {
@@ -148,7 +148,7 @@ describe('PostgresAgriTechOperationsRepository — supplier products', () => {
       .mockResolvedValueOnce([{ id: 'p1', tenantId: 'tenant-1', supplierId: 'partner-1', name: 'Seed', nameRu: null, nameUz: null, category: 'seed', description: 'd', priceUzs: 1000, unit: 'kg', stockQuantity: 5, region: 'R', status: 'active', createdAt: now }]);
     const result = await repo.listSupplierProducts(owner);
     expect(result).toHaveLength(1);
-    expect(result[0].name).toBe('Seed');
+    expect(result[0]?.name).toBe('Seed');
   });
 
   it('returns empty when the user owns no supplier partners', async () => {
