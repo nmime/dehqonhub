@@ -17,7 +17,7 @@ function createEntityManagerMock() {
   const flush = vi.fn(() => Promise.resolve());
   const find = vi.fn(() => Promise.resolve<unknown[]>([]));
   const findOne = vi.fn((_entity: unknown, _where: unknown, _options?: FindOneOptions) =>
-    Promise.resolve<unknown | null>(null),
+    Promise.resolve(null as unknown),
   );
   const entityManager = { persist, flush, find, findOne } as unknown as EntityManager;
   const transactional = vi.fn(async (handler: (manager: EntityManager) => Promise<unknown>) =>

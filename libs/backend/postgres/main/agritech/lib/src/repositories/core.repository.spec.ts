@@ -92,7 +92,7 @@ function emMock() {
     find: vi.fn(),
     persist: vi.fn(),
     flush: vi.fn().mockResolvedValue(undefined),
-    assign: vi.fn((target: object, input: object) => Object.assign(target, input)),
+    assign: vi.fn((target: Record<string, unknown>, input: Record<string, unknown>) => Object.assign(target, input)),
     transactional: vi.fn(
       async (callback: (em: ReturnType<typeof emMock>) => Promise<unknown>) => {
         const txEm = emMock();
