@@ -34,6 +34,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 ## Architecture
 
 - [AgriTech Platform](agritech-platform.md) — complete marketplace scope, actor journeys, payments, Telegram, pilots, and launch gates.
+- [Why AgroUz — not UFarmer (EN)](why-us.md) / [Почему AgroUz — не UFarmer (RU)](why-us.ru.md) — competitive positioning report for the PTA 2026 pitch: structural reasons the marketplace incumbents cannot serve the 414K smallholder majority, and how our agent-verified credit-trade model does.
 - [Architecture Overview](architecture.md) — app/library split, runtime boundaries, data flow.
 - [Architecture Deep Dives](architecture/README.md) — DDD boundaries, naming conventions, and library contracts.
 - [Architecture Decision Records](adr/README.md) — durable decisions and ADR template.

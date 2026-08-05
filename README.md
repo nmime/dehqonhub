@@ -116,6 +116,7 @@ Also supported: Kubernetes/Helm (`.helm/`), single-server (`deploy/single-server
 
 | Doc | Contents |
 | --- | --- |
+| [docs/why-us.md](docs/why-us.md) / [docs/why-us.ru.md](docs/why-us.ru.md) | **Positioning report: why AgroUz, not UFarmer** (EN/RU) |
 | [docs/agritech-platform.md](docs/agritech-platform.md) | Canonical product and operator guide |
 | [openspec/specs/agritech-marketplace/spec.md](openspec/specs/agritech-marketplace/spec.md) | Requirements (source of truth) |
 | [docs/research/report_en.html](docs/research/report_en.html) / [report_ru.html](docs/research/report_ru.html) | Uzbekistan market research (EN/RU) |
