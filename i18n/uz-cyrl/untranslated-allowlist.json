@@ -1,0 +1,45 @@
+{
+  "description": "Reviewed brands, identifiers, protocol names, accepted loanwords, and example addresses intentionally shared with English. Ordinary prose must be translated in both Uzbek scripts.",
+  "categories": {
+    "acceptedLoanwords": ["admin.action.audit", "admin.notification.option.channel.bot"],
+    "brands": [
+      "admin.action.agritech",
+      "admin.notification.option.provider.appleApns",
+      "admin.notification.option.provider.googleFcm",
+      "admin.notification.option.provider.mailPace",
+      "admin.notification.option.provider.resend",
+      "agritech.brand",
+      "agritech.marketplace.brand",
+      "auth.provider.discord",
+      "auth.provider.telegram",
+      "landing.productName",
+      "user.appName"
+    ],
+    "emailExamples": ["user.form.emailPlaceholder", "user.form.registerEmailPlaceholder"],
+    "protocolsAndIdentifiers": [
+      "admin.audit.filter.uuidPlaceholder",
+      "admin.loginAnalytics.column.geo",
+      "auth.social.protocol.oauth"
+    ]
+  },
+  "keys": [
+    "admin.action.agritech",
+    "admin.action.audit",
+    "admin.audit.filter.uuidPlaceholder",
+    "admin.loginAnalytics.column.geo",
+    "admin.notification.option.channel.bot",
+    "admin.notification.option.provider.appleApns",
+    "admin.notification.option.provider.googleFcm",
+    "admin.notification.option.provider.mailPace",
+    "admin.notification.option.provider.resend",
+    "agritech.brand",
+    "agritech.marketplace.brand",
+    "auth.provider.discord",
+    "auth.provider.telegram",
+    "auth.social.protocol.oauth",
+    "landing.productName",
+    "user.appName",
+    "user.form.emailPlaceholder",
+    "user.form.registerEmailPlaceholder"
+  ]
+}

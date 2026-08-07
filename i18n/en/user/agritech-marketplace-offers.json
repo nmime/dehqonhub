@@ -1,0 +1,14 @@
+{
+  "agritech.marketplace.orders.makeOffer": "Make an offer",
+  "agritech.marketplace.orders.offering": "Offering",
+  "agritech.marketplace.orders.offerSent": "Offer sent",
+  "agritech.marketplace.orders.bestOffer": "Lowest current offer",
+  "agritech.marketplace.orders.confirmOffer": "Choose this offer",
+  "agritech.marketplace.orders.confirmOfferDescription": "Choosing creates a draft contract from the offer. Review it before either party records consent.",
+  "agritech.marketplace.orders.noOffers": "No seller offers yet",
+  "agritech.marketplace.orders.offerCount": "{{count}} offers",
+  "agritech.marketplace.orders.offerStatus.accepted": "Accepted",
+  "agritech.marketplace.orders.offerStatus.declined": "Declined",
+  "agritech.marketplace.orders.offerStatus.pending": "Pending",
+  "agritech.marketplace.orders.submitOffer": "Submit seller offer"
+}

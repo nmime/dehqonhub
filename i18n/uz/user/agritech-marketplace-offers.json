@@ -1,0 +1,14 @@
+{
+  "agritech.marketplace.orders.makeOffer": "Taklif berish",
+  "agritech.marketplace.orders.offering": "Takliflar",
+  "agritech.marketplace.orders.offerSent": "Taklif yuborildi",
+  "agritech.marketplace.orders.bestOffer": "Joriy eng past taklif",
+  "agritech.marketplace.orders.confirmOffer": "Shu taklifni tanlash",
+  "agritech.marketplace.orders.confirmOfferDescription": "Tanlash taklifdan shartnoma qoralamasini yaratadi. Biror tomon rozilik bildirishidan oldin uni ko'rib chiqing.",
+  "agritech.marketplace.orders.noOffers": "Hozircha sotuvchi taklifi yo'q",
+  "agritech.marketplace.orders.offerCount": "{{count}} ta taklif",
+  "agritech.marketplace.orders.offerStatus.accepted": "Qabul qilingan",
+  "agritech.marketplace.orders.offerStatus.declined": "Rad etilgan",
+  "agritech.marketplace.orders.offerStatus.pending": "Kutilmoqda",
+  "agritech.marketplace.orders.submitOffer": "Sotuvchi taklifini yuborish"
+}

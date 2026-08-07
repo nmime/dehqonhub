@@ -1,0 +1,20 @@
+{
+  "landing.appName": "Taqdimot ilovasi",
+  "landing.eyebrow": "Bog‘langan mahsulot tajribalari",
+  "landing.title": "Keyingi mahsulotingiz uchun mustahkam poydevor.",
+  "landing.description": "Mukammal ommaviy sayt va ulangan shaxsiy kabinetdan boshlang, so‘ng har bir ilovani domeningiz ehtiyojlariga moslang.",
+  "landing.action.user": "Foydalanuvchi ilovasini oldindan koʻrish",
+  "landing.action.admin": "Administrator ilovasini oldindan koʻrish",
+  "landing.action.docs": "Dasturchilar uchun hujjatlar",
+  "landing.productName": "Nest React Boilerplate",
+  "landing.section.title": "Har bir qismning masʼuliyati ilk ekrandanoq aniq.",
+  "landing.section.eyebrow": "Ommaviy sayt, shaxsiy kabinet va boshqaruv",
+  "landing.section.description": "Tashrif buyuruvchilarni tushunarli ommaviy tanishtiruv sahifasidan izchil shaxsiy kabinet va boshqaruv tajribasiga yo‘naltiring.",
+  "landing.surface.public.title": "Ommaviy sayt",
+  "landing.surface.public.description": "Brend, matn va asosiy harakatlari oson almashtiriladigan ixcham marketing sahifasi.",
+  "landing.surface.account.title": "Mijoz kabineti",
+  "landing.surface.account.description": "Mahsulot funksiyalariga tayyor bo‘lgan ishlaydigan kirish, profil, sozlamalar va bog‘langan hisoblar oqimi.",
+  "landing.surface.admin.title": "Administrator ish maydoni",
+  "landing.surface.admin.description": "Operatsion jarayonlar va rolga asoslangan kirish uchun alohida himoyalangan boshqaruv muhiti.",
+  "landing.statGrid.label": "Bog‘langan mahsulot tajribalari"
+}

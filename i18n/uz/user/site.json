@@ -1,0 +1,23 @@
+{
+  "site.title": "Odamlar qaytadigan sahifalar uchun ishonchli uy.",
+  "site.description": "Barqaror kontent uchun serverda render qilinadigan ushbu sahifalardan foydalaning, soʻng tashrif buyuruvchilarni mahsulotning boshqa qismlaridagi yagona hisob tajribasiga yoʻnaltiring.",
+  "site.actionGroup.label": "Sayt harakatlari",
+  "site.action.app": "Hisobni ochish",
+  "site.action.docs": "Ommaviy bosh sahifani koʻrish",
+  "site.metricGroup.label": "Sayt tamoyillari",
+  "site.metric.apis.label": "Tezkor dastlabki koʻrinish",
+  "site.metric.apis.detail": "Muhim kontent dastlabki javob bilan keladi va faqat mijoz tomoni ishlashiga tayanmasdan ochiq qoladi.",
+  "site.metric.frontends.label": "Hisobga oʻtish",
+  "site.metric.frontends.detail": "Ommaviy kontent foydalanuvchi ilovasidagi ayni kirish va profil jarayoniga olib boradi.",
+  "site.metric.runtime.label": "Moslashuvchan tuzilma",
+  "site.metric.runtime.detail": "Mahsulotga tegishli sahifalarni landing, hisob yoki administrator masʼuliyatiga aralashtirmasdan qoʻshing.",
+  "site.problems.kicker": "RFC 9457 roʻyxatga olish kitobi",
+  "site.problems.title": "API muammo turlari",
+  "site.problems.intro": "Ushbu hujjat muammo turi URI manzillarining inson oʻqiy oladigan tavsifidir.",
+  "site.problems.instanceDetail": "Fragment barqaror turni aniqlaydi; URI misoli bitta hodisani aniqlaydi.",
+  "site.problems.aboutBlank": "Umumiy HTTP xatolari status iborasini sarlavha sifatida ishlatadi va maxsus semantikani aniqlamaydi.",
+  "site.problems.status": "Holat",
+  "site.problems.meaning": "Maʼnosi",
+  "site.problems.resolution": "Yechim",
+  "site.problems.extensions": "Kengaytmalar"
+}

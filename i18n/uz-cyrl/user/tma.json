@@ -1,0 +1,21 @@
+{
+  "tma.title": "Telegram мини иловаси",
+  "tma.description": "Telegram хавфсиз ишга тушириш контекстини тақдим этади; оддий браузерда очилганда бир хил экран тушунарли бўлиб қолади.",
+  "tma.loading": "Telegram Мини иловаси юкланмоқда…",
+  "tma.idle": "Telegram имзоланган Мини иловани ишга тушириш маълумотларини тақдим этишини кутмоқдамиз.",
+  "tma.unsupported": "Давом этиш учун ушбу саҳифани Telegramда очинг.",
+  "tma.authenticated": "Telegram Мини иловаси сеанси тасдиқланди.",
+  "tma.link.required": "Давом этиш учун Telegram ҳисобингизни уланг.",
+  "tma.link.pending": "Telegramда улаш жараёнини якунланг.",
+  "tma.link.success": "Telegram ҳисоби Мини илова орқали уланди.",
+  "tma.link.error": "Telegram ҳисобини Мини илова орқали улаб бўлмади.",
+  "tma.deepNavigation.loading": "Сўралган мини илова манзили очилмоқда…",
+  "tma.deepNavigation.unsupported": "Бу мини илова манзили ҳали қўллаб-қувватланмайди.",
+  "tma.deepNavigation.notFound": "Сўралган мини илова манзили топилмади.",
+  "deepNav.loading": "Сўралган манзил очилмоқда…",
+  "deepNav.unsupported": "Ушбу тўғридан-тўғри ҳавола қўллаб-қувватланмайди.",
+  "deepNav.authenticated": "Сеансингиз учун тўғридан-тўғри ҳавола тасдиқланди.",
+  "deepNav.linkRequired": "Бу манзилни очишдан олдин ҳисобингизни уланг.",
+  "deepNav.expired": "Ушбу тўғридан-тўғри ҳаволанинг муддати тугаган.",
+  "deepNav.notFound": "Манзил топилмади."
+}

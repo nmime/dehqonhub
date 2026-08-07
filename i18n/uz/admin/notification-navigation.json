@@ -1,0 +1,11 @@
+{
+  "admin.action.notificationTemplates": "Xabar shablonlari",
+  "admin.action.notificationSegments": "Auditoriyalar",
+  "admin.action.notificationBroadcasts": "Tarqatmalar",
+  "admin.notification.description": "Mahalliylashtirilgan xabarlarni yarating, qayta foydalaniladigan auditoriyalarni tanlang va elektron pochta, botlar hamda push-bildirishnomalar orqali barqaror tarqatmalarni boshqaring.",
+  "admin.notification.common.success": "Bildirishnoma amali bajarildi.",
+  "admin.notification.common.failed": "Bildirishnoma amali bajarilmadi.",
+  "admin.permission.notificationTemplatesMissing": "Xabar shablonlarini ko‘rish ruxsati yo‘q.",
+  "admin.permission.notificationSegmentsMissing": "Auditoriya segmentlarini ko‘rish ruxsati yo‘q.",
+  "admin.permission.notificationBroadcastsMissing": "Bildirishnoma tarqatmalarini ko‘rish ruxsati yo‘q."
+}
