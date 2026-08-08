@@ -31,7 +31,10 @@ function createEntityManagerMock() {
 const tenantId = 'tenant-1';
 const userId = 'user-1';
 const owner = { tenantId, userId };
-const now = new Date('2026-08-05T12:00:00Z');
+// Far-future fixture so the payme 12h timeout (compared against the real clock)
+// never fires for "fresh" transactions; the timeout scenario builds its own
+// explicitly stale providerCreatedAt instead.
+const now = new Date('2099-01-01T00:00:00Z');
 
 const orderItems: OrderItemData[] = [
   { productId: 'product-1', productName: 'Fertilizer', quantity: 2, unitPriceUzs: 25_000, totalUzs: 50_000 },
