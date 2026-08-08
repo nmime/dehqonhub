@@ -1,0 +1,71 @@
+{
+  "name": "user-app",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/frontend/app/src",
+  "projectType": "application",
+  "tags": ["platform:frontend", "type:frontend-app", "scope:user", "fsd:layer:app"],
+  "// requirements": "REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019",
+  "// targets": "to see all targets run: nx show project user-app --web",
+  "targets": {
+    "test": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/frontend/app",
+        "command": "NODE_ENV=test vitest run --config vitest.config.mts"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["vitest"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/apps/frontend/app"]
+    },
+    "e2e": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "options": {
+        "command": "VITE_E2E_COVERAGE=true VITE_API_BASE_URL_MODE=same-origin node_modules/.bin/vite build --config apps/frontend/app/vite.config.mts && node packages/tooling/bin/repo-tooling.mjs testing frontend-browser-e2e-coverage --dist dist/apps/frontend/app --app-name user-app --contains \"DehqonHub\" --coverage-dir coverage/e2e/apps/frontend/app --journey-click \"Retry\" --journey-path / --journey-click \"Catalog\" --journey-path /catalog --journey-click \"Search products, sellers and purchase requests…\" --journey-path /catalog --journey-click \"Seeds\" --journey-path \"/catalog?section=seeds\" --journey-click \"Equipment\" --journey-path \"/catalog?section=equipment\" --journey-click \"Produce\" --journey-path \"/catalog?section=produce\" --journey-click \"All\" --journey-path /catalog --journey-click \"Purchase requests\" --journey-path /requests --journey-click \"Verification\" --journey-path /verification --journey-click \"Cart\" --journey-path /cart --journey-click \"Favorites\" --journey-path /favorites --journey-click \"Account\" --journey-path /account --journey-click \"DehqonHub\" --journey-path / --journey-click \"For buyers: Catalog\" --journey-path /catalog --journey-click \"For buyers: Purchase requests\" --journey-path /requests --journey-click \"For sellers: Purchase request feed\" --journey-path /requests --journey-click \"For sellers: Verification\" --journey-path /verification --journey-click \"DehqonHub\" --journey-path / && node apps/frontend/app/scripts/assert-browser-coverage.mjs"
+      },
+      "inputs": [
+        "production",
+        {
+          "externalDependencies": ["@playwright/test", "vite-plugin-istanbul"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/coverage/e2e/apps/frontend/app"]
+    },
+    "e2e-typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/frontend/app",
+        "command": "tsc --noEmit -p tsconfig.e2e.json"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["@playwright/test", "typescript"]
+        }
+      ]
+    },
+    "e2e-authenticated": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["e2e-typecheck"],
+      "options": {
+        "command": "VITE_API_BASE_URL_MODE=same-origin node_modules/.bin/vite build --config apps/frontend/app/vite.config.mts && PLAYWRIGHT_HTML_OPEN=never node_modules/.bin/playwright test --config apps/frontend/app/playwright.config.ts"
+      },
+      "inputs": [
+        "production",
+        {
+          "externalDependencies": ["@playwright/test"]
+        }
+      ],
+      "outputs": ["{projectRoot}/test-results/user-app-authenticated"]
+    }
+  }
+}
