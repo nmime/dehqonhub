@@ -49,7 +49,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 
 ## Frontend
 
-- [Agro Marketplace Design Reference](design/CLAUDE-design.md) — DehqonHub visual language, marketplace structure, responsive patterns, and UI anti-patterns.
+- [DehqonHub Marketplace Design Reference](design/dehqonhub-marketplace.md) — product visual language, marketplace structure, responsive patterns, and UI anti-patterns.
 - [Frontend FSD](frontend-fsd.md) — Feature-Sliced Design boundaries and enforcement.
 - [Frontend State](frontend-state.md) — TanStack Query, MobX shell state, theme/i18n ownership.
 - [Frontend UX](frontend-ux.md) — shared UI primitives, Storybook, and accessibility.

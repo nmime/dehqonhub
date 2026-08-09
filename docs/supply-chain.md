@@ -106,9 +106,10 @@ Critical transitive dependencies are pinned to safe versions in `pnpm-workspace.
 | ------------------ | --------------- | -------------------------------------------------- |
 | `@fastify/static`  | `10.1.2`        | CVE-2026-7120 and CVE-2026-15074                   |
 | `better-auth`      | `1.6.23`        | Multiple CVEs in `1.4.21`                          |
-| `brace-expansion`  | `5.0.8`         | CVE-2026-14257                                     |
+| `brace-expansion`  | `5.0.9`         | Current regular-expression DoS advisories          |
 | `drizzle-orm`      | `0.45.2`        | SQL injection in `0.41.0`                          |
-| `js-yaml`          | `5.2.2`         | GHSA-pm4m-ph32-ghv5                                |
+| `ip-address`       | `10.3.1`        | Current address-parser advisories                  |
+| `js-yaml`          | version-scoped  | Security-patched 3.x, 4.x, and 5.x floors          |
 | `typescript`       | `6.0.3`         | Workspace consistency until NestJS/Nx support TS 7 |
 | `follow-redirects` | security-pinned | CVE in older versions                              |
 | `axios`            | security-pinned | Multiple CVEs in older versions                    |

@@ -1,8 +1,8 @@
-# CLAUDE.md — Agro Marketplace (B2B AgriMarket, Uzbekistan)
+# DehqonHub Marketplace Design Reference
 
-This document is the single source of truth for the site's design and structure.
-Follow it strictly in any UI implementation. If a user instruction conflicts with this
-file — ask for clarification; otherwise this file is mandatory.
+This document records the product's visual language, marketplace structure,
+responsive patterns, and UI constraints. Repository design-system ownership,
+current product requirements, and implementation source remain authoritative.
 
 Two pillars of the project:
 
@@ -32,38 +32,38 @@ factoring / deferred payment, AI consultant.
 
 ---
 
-## 2. Design tokens (mandatory)
+## 2. Design tokens
 
 ### 2.1 Colors
 
 ```css
 :root {
   /* Backgrounds */
-  --bg-cream:        #FAF0DE;  /* main page background (cream from the screenshots) */
-  --bg-cream-card:   #FDF6E9;  /* light cards on green / inner panels */
-  --surface-white:   #FFFFFF;  /* product cards, popovers, modals */
+  --bg-cream: #faf0de; /* main page background (cream from the screenshots) */
+  --bg-cream-card: #fdf6e9; /* light cards on green / inner panels */
+  --surface-white: #ffffff; /* product cards, popovers, modals */
 
   /* Green range (brand) */
-  --green-primary:   #1CA24C;  /* main brand green: buttons, active chips, deal prices */
-  --green-primary-2: #17924B;  /* hover/pressed for primary, dark edge of gradients */
-  --green-accent:    #7ED957;  /* light green accent: secondary chips, badges, icon plates */
-  --green-tint:      #E4F6E3;  /* hover fill, selected-filter background, status stripes */
-  --green-deep:      #0E7A3C;  /* text on light green, silhouette illustrations */
+  --green-primary: #1ca24c; /* main brand green: buttons, active chips, deal prices */
+  --green-primary-2: #17924b; /* hover/pressed for primary, dark edge of gradients */
+  --green-accent: #7ed957; /* light green accent: secondary chips, badges, icon plates */
+  --green-tint: #e4f6e3; /* hover fill, selected-filter background, status stripes */
+  --green-deep: #0e7a3c; /* text on light green, silhouette illustrations */
 
   /* Text */
-  --ink:             #2B2B2B;  /* headings and body text (soft black, NOT #000) */
-  --ink-soft:        #6B6B63;  /* secondary text, captions, meta */
-  --ink-on-green:    #FFFFFF;  /* text on green surfaces */
+  --ink: #2b2b2b; /* headings and body text (soft black, NOT #000) */
+  --ink-soft: #6b6b63; /* secondary text, captions, meta */
+  --ink-on-green: #ffffff; /* text on green surfaces */
 
   /* Utility */
-  --line:            #E9DFC9;  /* dividers/borders on cream */
-  --line-on-white:   #EFEFEA;  /* dividers on white */
-  --danger:          #E5484D;  /* errors, "rejected" — use rarely */
-  --warning:         #E8A33D;  /* "under review", "pending" */
-  --star:            #FFB800;  /* ratings */
+  --line: #e9dfc9; /* dividers/borders on cream */
+  --line-on-white: #efefea; /* dividers on white */
+  --danger: #e5484d; /* errors, "rejected" — use rarely */
+  --warning: #e8a33d; /* "under review", "pending" */
+  --star: #ffb800; /* ratings */
 
   /* Gradients (decorative panels, banners) */
-  --grad-green: linear-gradient(120deg, #17924B 0%, #35C264 55%, #7ED957 100%);
+  --grad-green: linear-gradient(120deg, #17924b 0%, #35c264 55%, #7ed957 100%);
 }
 ```
 
@@ -87,30 +87,30 @@ is needed for ru/uz). If Poppins lacks Cyrillic in the needed weights, use the f
 
 ```css
 --font-display: 'Poppins', 'Montserrat', sans-serif; /* 700–800 */
---font-body:    'Poppins', 'Manrope', sans-serif;    /* 400–600 */
+--font-body: 'Poppins', 'Manrope', sans-serif; /* 400–600 */
 ```
 
 Scale (desktop / mobile):
 
-| Role | Size | Weight | Notes |
-|---|---|---|---|
-| H1 (hero, page title) | 44–56 / 30px | 800 | letter-spacing −0.02em, line-height 1.05 |
-| H2 (section/shelf title) | 28–32 / 22px | 700 | |
-| H3 (card title) | 18–20 / 16px | 600 | |
-| Body | 15–16 / 14px | 400–500 | line-height 1.55 |
-| Price in a card | 18–20px | 700 | |
-| Chips, badges, meta | 13–14px | 600 | |
-| Caption | 12px | 500 | `--ink-soft` |
+| Role                     | Size         | Weight  | Notes                                    |
+| ------------------------ | ------------ | ------- | ---------------------------------------- |
+| H1 (hero, page title)    | 44–56 / 30px | 800     | letter-spacing −0.02em, line-height 1.05 |
+| H2 (section/shelf title) | 28–32 / 22px | 700     |                                          |
+| H3 (card title)          | 18–20 / 16px | 600     |                                          |
+| Body                     | 15–16 / 14px | 400–500 | line-height 1.55                         |
+| Price in a card          | 18–20px      | 700     |                                          |
+| Chips, badges, meta      | 13–14px      | 600     |                                          |
+| Caption                  | 12px         | 500     | `--ink-soft`                             |
 
 Headings use Sentence case only ("Seed catalog", not "SEED CATALOG"). Never use all caps.
 
 ### 2.3 Border radii (brand signature — very soft)
 
 ```css
---r-pill:  999px; /* chips, tags, buttons, search, inputs */
---r-card:  24px;  /* product cards, filter panels, account blocks */
---r-panel: 32px;  /* large sections, banners, hero blocks, modals */
---r-img:   16px;  /* photos inside cards */
+--r-pill: 999px; /* chips, tags, buttons, search, inputs */
+--r-card: 24px; /* product cards, filter panels, account blocks */
+--r-panel: 32px; /* large sections, banners, hero blocks, modals */
+--r-img: 16px; /* photos inside cards */
 ```
 
 - **Every button, chip, the search field, and all inputs are full pills (999px).** This is
@@ -122,9 +122,9 @@ Headings use Sentence case only ("Seed catalog", not "SEED CATALOG"). Never use 
 The style is flat, "print-like". Shadows are minimal:
 
 ```css
---shadow-card:  0 1px 0 rgba(43,43,43,.04);              /* at rest */
---shadow-hover: 0 8px 24px rgba(28,162,76,.14);          /* card hover */
---shadow-pop:   0 16px 48px rgba(43,43,43,.16);          /* popovers/modals */
+--shadow-card: 0 1px 0 rgba(43, 43, 43, 0.04); /* at rest */
+--shadow-hover: 0 8px 24px rgba(28, 162, 76, 0.14); /* card hover */
+--shadow-pop: 0 16px 48px rgba(43, 43, 43, 0.16); /* popovers/modals */
 ```
 
 Outline elements (inactive chip, secondary button): transparent/white background,
@@ -326,7 +326,7 @@ Answers may include mini product cards (a compact version of the 4.3 card).
   hover `--green-primary-2`; secondary — white background, 1.5px `--ink` border;
   ghost — `--green-deep` text, no background. Disabled — `--line` + `--ink-soft`.
 - **Inputs/selects**: pill, white, `--line` border; focus — `--green-primary` border
-  + a `--green-tint` ring. Labels above, 13px 600.
+  plus a `--green-tint` ring. Labels above, 13px 600.
 - **Filter chips**: default — white + `--line` border; hover — `--green-tint`;
   active — `--green-primary` with white text.
 - **Tabs** — the same pill chips, no underlines.

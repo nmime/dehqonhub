@@ -401,7 +401,7 @@ const staleReferenceIgnoredFiles = new Set([
 ]);
 
 const localWorktreePrefix = ".claude/worktrees/";
-const staleReferenceArchivePrefix = "docs/superpowers/";
+const workingSpecArchivePrefix = "docs/archive/working-specs/";
 
 const generatedContractImportExtensions = new Set([
   ".cjs",
@@ -1848,7 +1848,7 @@ function envExampleFailure(file: string, message: string): CheckFailure {
 export function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
   return collectStaleReferenceTargets(workspaceRoot).flatMap((file) => {
     const relativeFile = relativeToWorkspace(workspaceRoot, file);
-    if (relativeFile.startsWith(staleReferenceArchivePrefix)) return [];
+    if (relativeFile.startsWith(workingSpecArchivePrefix)) return [];
     const text = readFileSync(file, "utf8");
     const failures: CheckFailure[] = [];
 

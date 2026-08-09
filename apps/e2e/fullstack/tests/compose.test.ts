@@ -98,6 +98,7 @@ void describe('fullstack selected closure', () => {
       );
       assert.equal(composeEnv.MONGODB_DATABASE, 'fullstack_test');
       assert.equal(composeEnv.FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP, 'true');
+      assert.equal(composeEnv.RATE_LIMIT_MAX, '1000');
       assert.equal(composeEnv.LANDING_ADMIN_APP_URL, urls.adminApp);
       assert.equal(composeEnv.LANDING_USER_APP_URL, urls.userApp);
       assert.equal(Buffer.from(composeEnv.NOTIFICATION_PAYLOAD_ENCRYPTION_KEY, 'base64').byteLength, 32);

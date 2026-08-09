@@ -120,12 +120,14 @@ describe('DehqonHub marketplace components', () => {
     const onRetry = vi.fn();
     render(
       <MarketplaceProductDetail
+        canReview={false}
         favoriteIds={new Set()}
         locale="en"
         navigate={vi.fn()}
         onAdd={vi.fn()}
         onFavorite={vi.fn()}
         onOpen={vi.fn()}
+        onReview={vi.fn()}
         onRetry={onRetry}
         onSample={vi.fn()}
         product={seed}
@@ -140,6 +142,89 @@ describe('DehqonHub marketplace components', () => {
     expect(screen.getByText('agritech.marketplace.samples.usageUnavailable')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.samples.retry' }));
     expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it('submits an eligible buyer review from the product page', async () => {
+    const onReview = vi.fn().mockResolvedValue(true);
+    render(
+      <MarketplaceProductDetail
+        canReview
+        favoriteIds={new Set()}
+        locale="en"
+        navigate={vi.fn()}
+        onAdd={vi.fn()}
+        onFavorite={vi.fn()}
+        onOpen={vi.fn()}
+        onReview={onReview}
+        onRetry={vi.fn()}
+        onSample={vi.fn()}
+        product={seed}
+        reviews={{ data: [], status: 'empty' }}
+        sampleUsage={{ data: { limit: 5, remaining: 5, used: 0 }, status: 'ready' }}
+        similar={[]}
+        t={t}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.reviews.rating'), { target: { value: '4' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.reviews.comment'), {
+      target: { value: 'Reliable quality' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.submit' }));
+
+    expect(onReview).toHaveBeenCalledWith(seed, 4, 'Reliable quality');
+    await waitFor(() => {
+      expect((screen.getByLabelText('agritech.marketplace.reviews.comment') as HTMLTextAreaElement).value).toBe('');
+    });
+  });
+
+  it('preserves review input when the server rejects submission', async () => {
+    const onReview = vi.fn().mockResolvedValue(false);
+    render(
+      <MarketplaceProductDetail
+        canReview
+        favoriteIds={new Set()}
+        locale="en"
+        navigate={vi.fn()}
+        onAdd={vi.fn()}
+        onFavorite={vi.fn()}
+        onOpen={vi.fn()}
+        onReview={onReview}
+        onRetry={vi.fn()}
+        onSample={vi.fn()}
+        product={seed}
+        reviews={{ data: [], status: 'empty' }}
+        sampleUsage={{ data: { limit: 5, remaining: 5, used: 0 }, status: 'ready' }}
+        similar={[]}
+        t={t}
+      />,
+    );
+
+    const comment = screen.getByLabelText('agritech.marketplace.reviews.comment');
+    fireEvent.change(comment, { target: { value: 'Keep this on failure' } });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.submit' }));
+
+    await waitFor(() => {
+      expect(onReview).toHaveBeenCalledOnce();
+    });
+    expect((comment as HTMLTextAreaElement).value).toBe('Keep this on failure');
+  });
+
+  it('keeps an accessible cart page heading when the cart is empty', () => {
+    render(
+      <MarketplaceCart
+        carts={{ data: [], status: 'empty' }}
+        locale="en"
+        navigate={vi.fn()}
+        onCheckout={vi.fn()}
+        onUpdate={vi.fn()}
+        products={[]}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { level: 1, name: 'agritech.marketplace.cart.title' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'agritech.marketplace.cart.empty' })).toBeTruthy();
   });
 
   it('does not invite offers on closed or expired purchase requests', () => {
@@ -171,6 +256,46 @@ describe('DehqonHub marketplace components', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'agritech.marketplace.orders.makeOffer' })).toBeNull();
+  });
+
+  it('submits the visible request deadline even before controlled state catches up', () => {
+    const onCreate = vi.fn();
+    render(
+      <MarketplaceRequests
+        isVerified
+        locale="en"
+        myRequests={{ data: [], status: 'empty' }}
+        navigate={vi.fn()}
+        offersByRequest={{ data: {}, status: 'empty' }}
+        onChoose={vi.fn()}
+        onCreate={onCreate}
+        onOffer={vi.fn()}
+        onRetry={vi.fn()}
+        requests={{ data: [], status: 'empty' }}
+        role="buyer"
+        t={t}
+      />,
+    );
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0]);
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.requestTitle'), {
+      target: { value: 'Deadline-sensitive request' },
+    });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.region'), {
+      target: { value: 'Tashkent' },
+    });
+    const deadlineInput = screen.getByLabelText('agritech.marketplace.orders.deadline') as HTMLInputElement;
+    const setInputValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+    expect(setInputValue).toBeDefined();
+    setInputValue?.call(deadlineInput, '2026-09-01');
+    expect(deadlineInput.value).toBe('2026-09-01');
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.publish' }));
+
+    expect(onCreate).toHaveBeenCalledWith({
+      deadline: '2026-09-01',
+      region: 'Tashkent',
+      title: 'Deadline-sensitive request',
+    });
   });
 
   it('submits a seller-authored delivery quote with an offer', () => {
@@ -493,5 +618,33 @@ describe('DehqonHub marketplace components', () => {
       expect(screen.queryByRole('dialog')).toBeNull();
       expect(document.activeElement).toBe(launcher);
     });
+  });
+
+  it('renders grounded AI results through the current locale translator', async () => {
+    const onAsk = vi.fn().mockResolvedValue({
+      answer: 'Unlocalized server explanation',
+      createdAt: '2026-08-09T10:00:00.000Z',
+      id: 'ai-locale',
+      kind: 'recommendation',
+      productIds: [seed.id],
+      question: 'seed',
+      tenantId: 'tenant-1',
+      userId: 'buyer-1',
+    });
+    const english: MarketplaceTranslate = (key) => `en:${key}`;
+    const russian: MarketplaceTranslate = (key) => `ru:${key}`;
+    const view = render(
+      <MarketplaceAi locale="en" onAsk={onAsk} onOpenProduct={vi.fn()} products={[seed]} t={english} />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'en:agritech.marketplace.ai.open' }));
+    const question = screen.getByRole('textbox', { name: 'en:agritech.marketplace.ai.placeholder' });
+    fireEvent.change(question, { target: { value: 'seed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'en:agritech.marketplace.ai.send' }));
+    expect(await screen.findByText('en:agritech.marketplace.ai.result.recommendation')).toBeTruthy();
+
+    view.rerender(<MarketplaceAi locale="ru" onAsk={onAsk} onOpenProduct={vi.fn()} products={[seed]} t={russian} />);
+    expect(screen.getByText('ru:agritech.marketplace.ai.result.recommendation')).toBeTruthy();
+    expect(screen.queryByText('en:agritech.marketplace.ai.result.recommendation')).toBeNull();
   });
 });

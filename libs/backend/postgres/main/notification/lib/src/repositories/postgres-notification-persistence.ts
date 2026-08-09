@@ -100,6 +100,7 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
           updatedAt: now,
         });
         em.persist(template);
+        await em.flush();
       }
 
       const currentVersion = template.currentVersionId
@@ -137,8 +138,13 @@ export class PostgresNotificationPersistence extends NotificationPersistence {
               createdAt: now,
             }),
         );
+        // Channel entities expose the version foreign key as a scalar, so the
+        // unit of work cannot infer their insert dependency. Flush the parent
+        // version first, then point the template and channel rows at it.
+        em.persist(version);
+        await em.flush();
         template.currentVersionId = version.id;
-        em.persist([version, ...versionChannels]);
+        em.persist(versionChannels);
       }
       await em.flush();
       return mapTemplate(template, versionChannels, version ?? undefined);

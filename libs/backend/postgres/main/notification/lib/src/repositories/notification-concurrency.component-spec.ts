@@ -1,4 +1,4 @@
-// @requirements REQ-NOTIFY-PERSISTENCE-005
+// @requirements REQ-NOTIFY-TEMPLATE-003 REQ-NOTIFY-PERSISTENCE-005
 import { randomUUID } from 'node:crypto';
 import { MikroORM } from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';
@@ -11,7 +11,12 @@ import {
   startPostgresContainer,
   stopPostgresContainer,
 } from '@app/backend-common-component-test';
-import { NotificationStatus, NotificationTargetType } from '@app/common-notifications';
+import {
+  NotificationChannel,
+  NotificationDeliveryProvider,
+  NotificationStatus,
+  NotificationTargetType,
+} from '@app/common-notifications';
 import {
   EmptyNotificationDeliveryClaimId,
   NotificationAudienceSnapshotEntitySchema,
@@ -59,6 +64,83 @@ describeIfDocker('notification persistence concurrency', () => {
   afterAll(async () => {
     await orm.close(true);
     await stopPostgresContainer(container);
+  });
+
+  it('publishes immediately after persisting a code-owned template and its channel rows', async () => {
+    const code = `partner-status-${randomUUID()}`;
+    const persistence = deliveryPersistence(orm.em.fork());
+
+    await persistence.upsertTemplate({
+      code,
+      channels: [
+        {
+          channel: NotificationChannel.Bot,
+          content: { body: { en: 'Partner status changed.' } },
+        },
+      ],
+    });
+    const template = await persistence.upsertTemplate({
+      code,
+      channels: [
+        {
+          channel: NotificationChannel.Bot,
+          content: { body: { en: 'Partner status changed.' } },
+        },
+        {
+          channel: NotificationChannel.InApp,
+          content: { body: { en: 'Partner status changed.' } },
+        },
+      ],
+    });
+
+    expect(template).toMatchObject({ code, version: 2 });
+    const notification = await persistence.create({
+      targetType: NotificationTargetType.User,
+      targetId: `partner-owner-${randomUUID()}`,
+      templateCode: code,
+      deliveries: [
+        {
+          channel: NotificationChannel.Bot,
+          provider: NotificationDeliveryProvider.TelegramBot,
+        },
+      ],
+      inAppVisible: true,
+      data: { legalName: 'Fermer Servis', status: 'approved' },
+    });
+
+    expect(typeof notification.id).toBe('string');
+    expect(notification).toMatchObject({ inAppVisible: true, template: { code, version: 2 } });
+    await expect(
+      rows<{ channel: string; version: number }>(
+        orm.em,
+        `select c.channel, v.version
+           from notification_template_version_channels c
+           join notification_template_versions v on v.id = c.template_version_id
+           join notification_templates t on t.current_version_id = v.id
+          where t.code = ?
+          order by c.channel`,
+        [code],
+      ),
+    ).resolves.toEqual([
+      { channel: NotificationChannel.Bot, version: 2 },
+      { channel: NotificationChannel.InApp, version: 2 },
+    ]);
+    await expect(
+      rows<{ channel: string; inAppVisible: boolean; provider: string }>(
+        orm.em,
+        `select d.channel, n.in_app_visible as "inAppVisible", d.provider
+           from notifications n
+           join notification_deliveries d on d.notification_id = n.id
+          where n.id = ?`,
+        [notification.id],
+      ),
+    ).resolves.toEqual([
+      {
+        channel: NotificationChannel.Bot,
+        inAppVisible: true,
+        provider: NotificationDeliveryProvider.TelegramBot,
+      },
+    ]);
   });
 
   it('materializes, activates, claims, and records one delivery under concurrent workers', async () => {

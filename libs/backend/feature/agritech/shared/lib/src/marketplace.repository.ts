@@ -10,7 +10,6 @@ import type {
   ContractDeliveryQuoteInput,
   DeliveryTerms,
   Favorite,
-  OfferStatus,
   RequestOffer,
   Review,
   SampleRequest,
@@ -34,7 +33,6 @@ export interface MarketplaceRepository {
     reason?: VerificationRejectionReason,
   ): Promise<OperationResult<Verification>>;
   listVerifications(tenantId: string): Promise<Verification[]>;
-  isVerified(owner: AgriTechOwner): Promise<boolean>;
   isApprovedOrganization(owner: AgriTechOwner, kind: 'buyer' | 'supplier'): Promise<boolean>;
 
   // Cart
@@ -109,11 +107,3 @@ export interface MarketplaceRepository {
   // Role helpers
   roleOf(owner: AgriTechOwner): Promise<VerificationRole | undefined>;
 }
-
-export interface MarketplaceReviewInput {
-  productId: string;
-  rating: number;
-  comment?: string;
-}
-
-export type { OfferStatus };

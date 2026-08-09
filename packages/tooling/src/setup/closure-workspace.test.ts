@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { describe, it } from 'node:test';
 
 import type { ProjectGraphLike, SelectedClosureManifest } from './closure.js';
-import { appCatalog, capabilityCatalog, type DurableDatabaseProviderId } from './catalog.js';
+import { appCatalog, type DurableDatabaseProviderId } from './catalog.js';
 import {
   configuredClosureGraph,
   materializeAllReferenceClosure,

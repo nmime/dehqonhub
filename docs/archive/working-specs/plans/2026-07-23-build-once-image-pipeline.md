@@ -1,6 +1,6 @@
 # Build-once image pipeline (Option A) Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> Archived implementation plan. Checkbox (`- [ ]`) steps preserve the original sequencing record.
 
 **Goal:** Compile the workspace once per image build so shared libraries are built a single time (not once per app image), while keeping the existing single unified `Dockerfile` and small pruned per-app runtime images.
 
@@ -23,7 +23,7 @@
 
 **Files:**
 
-- Create: `docs/superpowers/specs/2026-07-23-build-baseline.md`
+- Create: `docs/archive/working-specs/specs/2026-07-23-build-baseline.md`
 
 **Interfaces:**
 
@@ -76,12 +76,12 @@ Expected: workspace + two backend sizes printed; record the two backend image si
 
 - [ ] **Step 5: Write the baseline doc**
 
-Create `docs/superpowers/specs/2026-07-23-build-baseline.md` with a table: columns `image | build time warm-workspace (s) | image size`, the two backend rows measured, an `environment` line (CPUs/mem/versions from Step 1), and a one-paragraph note stating that with the workspace layer warm the measured time is dominated by the per-image `nx` shared-lib compile — the quantity Option A collapses to a single compile. Real measured numbers only — no placeholders.
+Create `docs/archive/working-specs/specs/2026-07-23-build-baseline.md` with a table: columns `image | build time warm-workspace (s) | image size`, the two backend rows measured, an `environment` line (CPUs/mem/versions from Step 1), and a one-paragraph note stating that with the workspace layer warm the measured time is dominated by the per-image `nx` shared-lib compile — the quantity Option A collapses to a single compile. Real measured numbers only — no placeholders.
 
 - [ ] **Step 6: Commit**
 
 ```bash
-git add docs/superpowers/specs/2026-07-23-build-baseline.md
+git add docs/archive/working-specs/specs/2026-07-23-build-baseline.md
 git commit -m "docs: capture pre-Option-A image build baseline"
 ```
 
@@ -315,7 +315,7 @@ git commit -m "refactor(docker): build the workspace once in the shared builder 
 
 **Files:**
 
-- Modify: `docs/superpowers/specs/2026-07-23-build-baseline.md` (append the "after" section)
+- Modify: `docs/archive/working-specs/specs/2026-07-23-build-baseline.md` (append the "after" section)
 
 **Interfaces:**
 
@@ -346,12 +346,12 @@ If `docker buildx bake` rejects either `--set` flag on this buildx version, fall
 
 - [ ] **Step 2: Append the after-numbers to the baseline doc**
 
-In `docs/superpowers/specs/2026-07-23-build-baseline.md`, add an "After Option A" section: the measured `elapsed=` for building `auth-app-api`+`user-app-api` together via bake with a single shared compile, next to Task 1's "before" sum (auth 75s + user 45s = 120s built separately, two compiles). State the delta and the `grep` count proving one compile. Note any fallback used. Real numbers only.
+In `docs/archive/working-specs/specs/2026-07-23-build-baseline.md`, add an "After Option A" section: the measured `elapsed=` for building `auth-app-api`+`user-app-api` together via bake with a single shared compile, next to Task 1's "before" sum (auth 75s + user 45s = 120s built separately, two compiles). State the delta and the `grep` count proving one compile. Note any fallback used. Real numbers only.
 
 - [ ] **Step 3: Commit**
 
 ```bash
-git add docs/superpowers/specs/2026-07-23-build-baseline.md
+git add docs/archive/working-specs/specs/2026-07-23-build-baseline.md
 git commit -m "docs: record Option A after-numbers (single shared compile)"
 ```
 
@@ -594,7 +594,7 @@ git commit -m "fix(validate): sync deployment validators to build-once bake pipe
 **Files:**
 
 - Modify: `docs/deployment.md` or the nearest build doc (grep for the current image-build description) — document the bake path and the single-source `releaseImages` → `docker-bake.json` flow.
-- Modify: `docs/superpowers/specs/2026-07-23-build-optimization-all-shapes-design.md` (tick finding #7 as implemented).
+- Modify: `docs/archive/working-specs/specs/2026-07-23-build-optimization-all-shapes-design.md` (tick finding #7 as implemented).
 
 - [ ] **Step 1: Update the build doc**
 

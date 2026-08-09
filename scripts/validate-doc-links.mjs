@@ -17,11 +17,10 @@ const ignoredDirectories = new Set([
   'test-results',
   'tmp',
 ]);
-// Superpowers writes brainstorming/design specs under docs/superpowers/** as a
-// working-tool artifact, not canonical repository documentation. Exempt that
-// subtree from link and index-reachability validation so tool specs never break
-// the documentation gate.
-const workingSpecPrefixes = ['docs/superpowers/'];
+// Archived implementation records are not canonical repository documentation.
+// Exempt that subtree from link and index-reachability validation while keeping
+// all other documentation checks active.
+const workingSpecPrefixes = ['docs/archive/working-specs/'];
 
 function isWorkingSpecDoc(filePath, workspaceRoot) {
   const workspacePath = relative(workspaceRoot, filePath).replaceAll('\\', '/');

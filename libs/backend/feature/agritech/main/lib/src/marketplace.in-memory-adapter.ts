@@ -231,10 +231,6 @@ class InMemoryMarketplaceRepository implements MarketplaceRepository {
     );
   }
 
-  isVerified(owner: AgriTechOwner): Promise<boolean> {
-    return Promise.resolve(this.verifications.get(actorKey(owner))?.status === 'verified');
-  }
-
   isApprovedOrganization(owner: AgriTechOwner, kind: 'buyer' | 'supplier'): Promise<boolean> {
     return Promise.resolve(this.approvedOrganizations.has(organizationKey(owner, kind)));
   }

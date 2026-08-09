@@ -95,6 +95,12 @@ requirements:
         lanes:
           - main
           - nightly
+      - kind: component
+        file: libs/backend/postgres/main/notification/lib/src/repositories/notification-concurrency.component-spec.ts
+        target: '@app/backend-postgres-main-notification:component-test'
+        lanes:
+          - main
+          - nightly
   - id: REQ-NOTIFY-AUDIENCE-004
     projects:
       - '@app/backend-feature-notification-admin'

@@ -12,7 +12,6 @@ function fixture() {
     getVerification: vi.fn(),
     reviewVerification: vi.fn(),
     listVerifications: vi.fn(),
-    isVerified: vi.fn(),
     isApprovedOrganization: vi.fn().mockResolvedValue(true),
     getCart: vi.fn(),
     listCarts: vi.fn(),
@@ -250,11 +249,5 @@ describe('MarketplaceService', () => {
     repository.signContract.mockResolvedValue(ok({ id: 'c-1', status: 'signed' }));
     const result = await service.signContract(owner, 'c-1');
     expect(result.status).toBe('signed');
-  });
-
-  it('returns the user role from the repository', async () => {
-    const { repository, service } = fixture();
-    repository.roleOf.mockResolvedValue('farmer');
-    expect(await service.roleOf(owner)).toBe('farmer');
   });
 });

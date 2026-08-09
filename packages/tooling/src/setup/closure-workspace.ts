@@ -150,8 +150,12 @@ function capabilityRequires(
   required: DurableDatabaseProviderId,
   visited = new Set<keyof typeof capabilityCatalog>(),
 ): boolean {
-  if (capability === required) return true;
-  if (visited.has(capability)) return false;
+  if (capability === required) {
+    return true;
+  }
+  if (visited.has(capability)) {
+    return false;
+  }
   visited.add(capability);
   return capabilityCatalog[capability].requiresCapabilities.some((dependency) =>
     capabilityRequires(dependency, required, visited),
@@ -179,8 +183,12 @@ function referenceProviderGraph(graph: ProjectGraphLike, provider: DurableDataba
   for (const [capability, entry] of Object.entries(capabilityCatalog) as Array<
     [keyof typeof capabilityCatalog, (typeof capabilityCatalog)[keyof typeof capabilityCatalog]]
   >) {
-    if (!capabilityRequires(capability, oppositeProvider)) continue;
-    for (const project of entry.ownedProjects) oppositeProviderProjects.add(project);
+    if (!capabilityRequires(capability, oppositeProvider)) {
+      continue;
+    }
+    for (const project of entry.ownedProjects) {
+      oppositeProviderProjects.add(project);
+    }
     for (const project of entry.providerOwnedProjects?.[oppositeProvider] ?? []) {
       oppositeProviderProjects.add(project);
     }

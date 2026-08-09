@@ -71,47 +71,61 @@ export function MarketplaceCart({
       (total, item) => total + (productById.get(item.productId)?.priceUzs ?? 0) * item.quantity,
       0,
     ) ?? 0;
+  const heading = (
+    <div className="dh-page-heading">
+      <div>
+        <p className="dh-eyebrow">{t('agritech.marketplace.account')}</p>
+        <h1>{t('agritech.marketplace.cart.title')}</h1>
+        <p>{t('agritech.marketplace.cart.separateSellers')}</p>
+      </div>
+    </div>
+  );
 
   if (carts.status === 'loading' || carts.status === 'idle') {
-    return <MarketplaceSkeleton count={3} />;
+    return (
+      <div className="dh-page-stack">
+        {heading}
+        <MarketplaceSkeleton count={3} />
+      </div>
+    );
   }
   if (carts.status === 'error') {
     return (
-      <MarketplaceEmpty
-        actionLabel={t('ui.runtime.retry')}
-        icon="produce"
-        message={t('agritech.marketplace.cart.unavailableDescription')}
-        onAction={() => {
-          globalThis.location.reload();
-        }}
-        title={t('agritech.marketplace.cart.unavailable')}
-      />
+      <div className="dh-page-stack">
+        {heading}
+        <MarketplaceEmpty
+          actionLabel={t('ui.runtime.retry')}
+          icon="produce"
+          message={t('agritech.marketplace.cart.unavailableDescription')}
+          onAction={() => {
+            globalThis.location.reload();
+          }}
+          title={t('agritech.marketplace.cart.unavailable')}
+        />
+      </div>
     );
   }
   if (!selected) {
     return (
-      <MarketplaceEmpty
-        actionLabel={t('agritech.marketplace.hero.cta')}
-        icon="produce"
-        message={t('agritech.marketplace.cart.emptyDescription')}
-        onAction={() => {
-          navigate('/catalog');
-        }}
-        title={t('agritech.marketplace.cart.empty')}
-      />
+      <div className="dh-page-stack">
+        {heading}
+        <MarketplaceEmpty
+          actionLabel={t('agritech.marketplace.hero.cta')}
+          icon="produce"
+          message={t('agritech.marketplace.cart.emptyDescription')}
+          onAction={() => {
+            navigate('/catalog');
+          }}
+          title={t('agritech.marketplace.cart.empty')}
+        />
+      </div>
     );
   }
 
   const selectedDelivery = delivery[selected.id] ?? 'by_agreement';
   return (
     <div className="dh-page-stack">
-      <div className="dh-page-heading">
-        <div>
-          <p className="dh-eyebrow">{t('agritech.marketplace.account')}</p>
-          <h1>{t('agritech.marketplace.cart.title')}</h1>
-          <p>{t('agritech.marketplace.cart.separateSellers')}</p>
-        </div>
-      </div>
+      {heading}
       <div aria-label={t('agritech.marketplace.cart.sellerCarts')} className="dh-cart-tabs" role="tablist">
         {carts.data.map((cart) => (
           <button
@@ -275,7 +289,11 @@ export function MarketplaceRequests({
       navigate('/verification');
       return;
     }
-    onCreate(requestInput);
+    const formDeadline = new FormData(event.currentTarget).get('deadline');
+    onCreate({
+      ...requestInput,
+      deadline: typeof formDeadline === 'string' && formDeadline.length > 0 ? formDeadline : undefined,
+    });
   };
   const submitOffer = (event: SyntheticEvent<HTMLFormElement>, request: BuyerRequestViewDto) => {
     event.preventDefault();
@@ -619,6 +637,7 @@ export function MarketplaceRequests({
             <label>
               <span>{t('agritech.marketplace.orders.deadline')}</span>
               <input
+                name="deadline"
                 onChange={(event) => {
                   setRequestInput((value) => ({ ...value, deadline: event.target.value || undefined }));
                 }}

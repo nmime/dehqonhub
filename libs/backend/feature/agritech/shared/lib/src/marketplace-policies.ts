@@ -26,9 +26,6 @@ export const canBuyInMarketplace = (role: VerificationRole | undefined): boolean
 export const canOfferInMarketplace = (role: VerificationRole | undefined): boolean =>
   role !== undefined && marketplaceSellerRoles.includes(role);
 
-export const sampleCountUsedThisMonth = (requestsInMonth: number): number =>
-  Math.min(requestsInMonth, monthlySampleLimit);
-
 export const samplesRemainingThisMonth = (requestsInMonth: number): number =>
   Math.max(0, monthlySampleLimit - requestsInMonth);
 
@@ -56,8 +53,6 @@ export const isVerificationReviewReasonValid = (
   decision === 'rejected'
     ? typeof reason === 'string' && verificationRejectionReasons.includes(reason as VerificationRejectionReason)
     : reason === undefined;
-
-export const canPurchaseWithoutVerification = false;
 
 export const isContractTransitionAllowed = (current: ContractStatus, next: ContractStatus): boolean =>
   current === next ||

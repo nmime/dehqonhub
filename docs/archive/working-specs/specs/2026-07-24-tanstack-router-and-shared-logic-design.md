@@ -1,5 +1,7 @@
 # TanStack Router migration + shared data/logic across app & mobile
 
+> Archived working specification.
+
 Date: 2026-07-24
 Status: Approved — implementing
 Scope: `apps/frontend/app`, `apps/frontend/admin`, `apps/frontend/mobile`, `libs/frontend/feature/user/*`

@@ -590,6 +590,7 @@ describe('PostgresMarketplaceRepository — requests and offers', () => {
     if (result.status === 'ok') {
       expect(result.value.status).toBe('open');
       expect(result.value.region).toBe('Samarkand');
+      expect(result.value.deadline).toBe('2026-08-20');
     }
   });
 

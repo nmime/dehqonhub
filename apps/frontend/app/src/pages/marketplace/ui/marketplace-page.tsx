@@ -147,6 +147,17 @@ export const MarketplacePage = observer(function MarketplacePage({
   const selectedContract = data.contracts.data.find((contract) => contract.id === contractId);
   const currentUserId = data.verification.data?.userId;
   const isVerified = data.verification.data?.status === 'verified';
+  const canReviewSelectedProduct = Boolean(
+    selectedProduct &&
+    currentUserId &&
+    !reviews.data.some((review) => review.userId === currentUserId) &&
+    data.contracts.data.some(
+      (contract) =>
+        contract.buyerUserId === currentUserId &&
+        (contract.status === 'active' || contract.status === 'completed') &&
+        contract.lines.some((line) => line.productId === selectedProduct.id),
+    ),
+  );
 
   const mutationError = useCallback(
     (error: unknown) => {
@@ -175,18 +186,20 @@ export const MarketplacePage = observer(function MarketplacePage({
       action: () => Promise<T>,
       success: string,
       after?: (result: T) => void,
-    ): Promise<void> {
+    ): Promise<boolean> {
       setPendingAction(key);
       try {
         const result = await action();
         flash(success);
         after?.(result);
         data.refresh();
+        return true;
       } catch (error) {
         if (isApiClientError(error) && (error.status === 404 || error.status === 409)) {
           data.refresh();
         }
         flash(mutationError(error), 'error');
+        return false;
       } finally {
         setPendingAction(undefined);
       }
@@ -225,6 +238,27 @@ export const MarketplacePage = observer(function MarketplacePage({
     );
   };
 
+  const addReview = (product: ProductViewDto, rating: number, comment?: string) => {
+    return runMutation(
+      `review:${product.id}`,
+      () =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerAddReview(
+            product.id,
+            {
+              ...(comment ? { comment } : {}),
+              rating,
+            },
+            requestOptions,
+          ),
+        ),
+      translate('agritech.marketplace.reviews.submitted'),
+      (result) => {
+        setReviews((resource) => ({ data: [result, ...resource.data], status: 'ready' }));
+      },
+    );
+  };
+
   const updateCart = (cart: CartViewDto, productIdToUpdate: string, quantity: number) => {
     void runMutation(
       `cart-update:${productIdToUpdate}`,
@@ -247,13 +281,14 @@ export const MarketplacePage = observer(function MarketplacePage({
     setConfirmation({
       confirmLabel: translate('agritech.marketplace.samples.confirm'),
       description: translate('agritech.marketplace.samples.confirmDescription', { product: product.name }),
-      onConfirm: async () =>
-        runMutation(
+      onConfirm: async () => {
+        await runMutation(
           `sample:${product.id}`,
           () =>
             throwOnOpenApiErrorData(api.marketplaceControllerRequestSample({ productId: product.id }, requestOptions)),
           translate('agritech.marketplace.samples.requested'),
-        ),
+        );
+      },
       title: translate('agritech.marketplace.product.sample'),
     });
   };
@@ -271,8 +306,8 @@ export const MarketplacePage = observer(function MarketplacePage({
     setConfirmation({
       confirmLabel: translate('agritech.marketplace.cart.reviewContract'),
       description: translate('agritech.marketplace.cart.checkoutConfirmation', { seller: sellerName }),
-      onConfirm: async () =>
-        runMutation(
+      onConfirm: async () => {
+        await runMutation(
           `checkout:${cart.id}`,
           () =>
             throwOnOpenApiErrorData(api.marketplaceControllerCheckoutCart(cart.id, { deliveryTerms }, requestOptions)),
@@ -280,7 +315,8 @@ export const MarketplacePage = observer(function MarketplacePage({
           (result) => {
             navigate(`/contracts/${result.contractId}`);
           },
-        ),
+        );
+      },
       title: translate('agritech.marketplace.cart.checkout'),
     });
   };
@@ -305,15 +341,16 @@ export const MarketplacePage = observer(function MarketplacePage({
     setConfirmation({
       confirmLabel: translate('agritech.marketplace.orders.confirmOffer'),
       description: translate('agritech.marketplace.orders.confirmOfferDescription'),
-      onConfirm: async () =>
-        runMutation(
+      onConfirm: async () => {
+        await runMutation(
           `choose:${offer.id}`,
           () => throwOnOpenApiErrorData(api.marketplaceControllerChooseOffer(request.id, offer.id, requestOptions)),
           translate('agritech.marketplace.contract.draftCreated'),
           (result) => {
             navigate(`/contracts/${result.contractId}`);
           },
-        ),
+        );
+      },
       title: translate('agritech.marketplace.orders.choose'),
     });
   };
@@ -322,12 +359,13 @@ export const MarketplacePage = observer(function MarketplacePage({
     setConfirmation({
       confirmLabel: translate('agritech.marketplace.contract.signOwnParty'),
       description: translate('agritech.marketplace.contract.signConfirmation'),
-      onConfirm: async () =>
-        runMutation(
+      onConfirm: async () => {
+        await runMutation(
           `sign:${contract.id}`,
           () => throwOnOpenApiErrorData(api.marketplaceControllerSignContract(contract.id, requestOptions)),
           translate('agritech.marketplace.contract.signatureRecorded'),
-        ),
+        );
+      },
       title: translate('agritech.marketplace.contract.sign'),
     });
   };
@@ -372,6 +410,7 @@ export const MarketplacePage = observer(function MarketplacePage({
     content = (
       <MarketplaceEmpty
         actionLabel={translate('ui.runtime.retry')}
+        headingLevel={1}
         icon="produce"
         message={translate('agritech.marketplace.catalog.unavailableDescription')}
         onAction={data.refresh}
@@ -389,6 +428,8 @@ export const MarketplacePage = observer(function MarketplacePage({
         content = (
           <MarketplaceProductDetail
             {...productActions}
+            canReview={canReviewSelectedProduct}
+            onReview={addReview}
             onRetry={data.refresh}
             onSample={requestSample}
             product={selectedProduct}
@@ -524,6 +565,10 @@ export const MarketplacePage = observer(function MarketplacePage({
       <main className="dh-main" id="dh-main">
         {content}
       </main>
+      <div className="dh-mobile-preferences">
+        <LanguageSwitcher variant="menu" />
+        <ThemeSwitcher variant="menu" />
+      </div>
       <MarketplaceFooter navigate={navigate} t={translate} />
       {data.auth === 'signed-in' && (
         <MarketplaceAi
@@ -856,6 +901,7 @@ function MarketplaceFooter({ navigate, t }: Readonly<{ navigate: MarketplaceNavi
           {t('agritech.marketplace.catalog')}
         </button>
         <button
+          aria-label={`${t('agritech.marketplace.footer.forBuyers')}: ${t('agritech.marketplace.orders')}`}
           onClick={() => {
             navigate('/requests');
           }}

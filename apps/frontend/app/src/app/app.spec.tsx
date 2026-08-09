@@ -300,7 +300,7 @@ describe('User app shell', () => {
     );
 
     const failed = render(<App />);
-    expect(await screen.findByRole('heading', { name: 'Catalog unavailable' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Catalog unavailable' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
     expect(failed.container.innerHTML).not.toContain('xr-mini-app-bottom-bar');
   });

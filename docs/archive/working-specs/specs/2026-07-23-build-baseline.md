@@ -50,7 +50,7 @@ Dockerfile .`) to warm the dependency-install layer that CI already shares
      reported **`Cache: 0/30 hit (0%)`** (auth-app-api) and **`Cache: 0/29 hit
 (0%)`** (user-app-api) — every shared-lib task actually recompiled, not
      replayed from Nx's own cache. This mirrors real CI: per finding #7 in
-     `docs/superpowers/specs/2026-07-23-build-optimization-all-shapes-design.md`,
+     `docs/archive/working-specs/specs/2026-07-23-build-optimization-all-shapes-design.md`,
      the Nx cache lives in a BuildKit cache _mount_ that the project's
      `cache-to: type=gha` strategy does not export, so each image build's
      runner starts with that mount cold — exactly the state this measurement

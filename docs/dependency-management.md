@@ -92,13 +92,17 @@ commands such as `bun install`, `bun add`, `bun update`, or `bunx`. `bun run
   publishes `esbuild` as an optional wildcard peer; the scoped
   `peerDependencyRules.allowedVersions` entry records the tested 0.28.1 edge
   after the vulnerable-esbuild override rewrites the lockfile peer snapshot.
-- `brace-expansion`: vulnerable 1.x/2.x/4.x/5.x resolutions are pinned to **5.0.8**
-  for CVE-2026-14257.
-- `js-yaml`: vulnerable 5.0.0–5.2.1 resolutions are pinned to **5.2.2** for
-  GHSA-pm4m-ph32-ghv5; the existing 3.x/4.x pins remain separate.
+- `brace-expansion`: vulnerable 1.x/2.x/4.x/5.x resolutions are pinned to **5.0.9**
+  for the current regular-expression denial-of-service advisories.
+- `js-yaml`: vulnerable 3.x, 4.x, and 5.0.0–5.2.1 resolutions are pinned to
+  **3.15.1**, **4.3.1**, and **5.2.2** respectively.
+- `postcss`, `fast-uri`, `ip-address`, `undici`, `hono`, `dompurify`, and
+  `nanoid` are pinned to their current security-patched floors. `image-size` has
+  no patched release; its two build-tool-only DoS advisories are tracked in
+  GitHub issue #4 and are the only audit exceptions.
 - `rxjs`, `tslib`, NestJS core/platform packages, `lodash`, `picomatch`,
   `path-to-regexp`, `serialize-javascript`, `postcss`, `follow-redirects`,
-  `axios`, `fast-uri`, `svgo`, `yaml`, `ajv`, `ws`, `tmp`, `uuid`, `qs`,
+  `axios`, `fast-uri`, `ip-address`, `svgo`, `yaml`, `ajv`, `ws`, `tmp`, `uuid`, `qs`,
   `undici`, `happy-dom`, `esbuild`, `form-data`, `http-proxy-middleware`,
   `@opentelemetry/core`, `multer`: all security-pinned per advisory.
 

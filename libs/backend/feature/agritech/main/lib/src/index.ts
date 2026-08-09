@@ -5,7 +5,6 @@ export * from './agritech.service';
 export * from './agritech.view-dto';
 export * from './marketplace.controller';
 export * from './marketplace.domain-service';
-export * from './marketplace.in-memory-adapter';
 export * from './marketplace.service';
 export * from './marketplace.view-dto';
 export * from '@app/backend-feature-agritech-shared';

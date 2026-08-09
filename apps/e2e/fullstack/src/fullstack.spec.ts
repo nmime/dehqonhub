@@ -342,6 +342,22 @@ test('@critical user login honors safe return navigation, survives reload, and l
 
   await gotoWithRetry(page, urls.userApp);
   await expect(page.getByRole('heading', { level: 1, name: 'Everything for your farm in one place' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Language' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Theme' })).toBeVisible();
+
+  const aiLauncher = page.getByRole('button', { name: 'Open AI assistant' });
+  await aiLauncher.click();
+  const aiDialog = page.getByRole('dialog', { name: 'AI assistant' });
+  await expect(aiDialog).toBeVisible();
+  await aiDialog.getByRole('button', { name: 'Close' }).click();
+  await expect(aiLauncher).toBeFocused();
+
+  await page.getByRole('button', { name: 'Cart', exact: true }).last().click();
+  await expect(page).toHaveURL(`${urls.userApp}/cart`);
+  await expect(page.getByRole('heading', { level: 1, name: 'Cart' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeVisible();
+
+  await gotoWithRetry(page, urls.userApp);
   await page.getByRole('button', { name: 'Catalog', exact: true }).first().click();
   await expect(page).toHaveURL(`${urls.userApp}/catalog`);
   await expect(page.getByRole('heading', { level: 1, name: 'Catalog' })).toBeVisible();

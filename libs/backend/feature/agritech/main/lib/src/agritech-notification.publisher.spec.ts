@@ -1,6 +1,6 @@
 // @requirements REQ-AGRITECH-TELEGRAM-005
 import { describe, expect, it, vi } from 'vitest';
-import { NotificationDeliveryProvider, NotificationTargetType } from '@app/common-notifications';
+import { NotificationChannel, NotificationDeliveryProvider, NotificationTargetType } from '@app/common-notifications';
 import type { NotificationService } from '@app/backend-feature-notification-shared';
 import { AgriTechNotificationPublisher } from './agritech-notification.publisher';
 
@@ -31,6 +31,13 @@ describe('AgriTech notification publisher', () => {
         code: 'agritech.partner-status',
         channels: [
           expect.objectContaining({
+            channel: NotificationChannel.Bot,
+            content: expect.objectContaining({
+              body: expect.objectContaining({ en: expect.any(String), ru: expect.any(String), uz: expect.any(String) }),
+            }),
+          }),
+          expect.objectContaining({
+            channel: NotificationChannel.InApp,
             content: expect.objectContaining({
               body: expect.objectContaining({ en: expect.any(String), ru: expect.any(String), uz: expect.any(String) }),
             }),
@@ -43,6 +50,7 @@ describe('AgriTech notification publisher', () => {
         targetType: NotificationTargetType.User,
         targetId: 'user-1',
         deliveries: [expect.objectContaining({ provider: NotificationDeliveryProvider.TelegramBot })],
+        inAppVisible: true,
       }),
     );
   });

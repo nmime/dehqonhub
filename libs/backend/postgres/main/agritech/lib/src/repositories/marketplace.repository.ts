@@ -391,14 +391,6 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
       .then((rows) => rows.map(toVerification));
   }
 
-  async isVerified(owner: AgriTechOwner): Promise<boolean> {
-    const entity = await this.em.findOne(VerificationEntity, {
-      tenantId: owner.tenantId,
-      userId: owner.userId,
-    });
-    return entity?.status === 'verified';
-  }
-
   isApprovedOrganization(owner: AgriTechOwner, kind: 'buyer' | 'supplier'): Promise<boolean> {
     return hasApprovedOrganization(this.em, owner, kind);
   }

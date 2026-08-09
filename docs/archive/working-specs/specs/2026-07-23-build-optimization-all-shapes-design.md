@@ -95,7 +95,7 @@ Capture a baseline table and confirm green:
   cold (cleared Nx cache) and warm.
 - Frontend production bundle sizes per SPA + the Vike/site server build.
 
-**Deliverable:** `docs/superpowers/specs/2026-07-23-build-baseline.md` (or an
+**Deliverable:** `docs/archive/working-specs/specs/2026-07-23-build-baseline.md` (or an
 appendix to this doc) with the numbers, plus fixes for anything found broken.
 
 ### Phase 1 — Config unification (goal #3)

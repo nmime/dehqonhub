@@ -247,8 +247,4 @@ export class MarketplaceDomainService {
   async listAiConsultations(owner: AgriTechOwner) {
     return this.repository.listAiConsultations(owner);
   }
-
-  async roleOf(owner: AgriTechOwner): Promise<VerificationRole | undefined> {
-    return this.repository.roleOf(owner);
-  }
 }

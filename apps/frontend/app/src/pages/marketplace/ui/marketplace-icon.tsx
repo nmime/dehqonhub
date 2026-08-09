@@ -5,7 +5,6 @@ export type MarketplaceIconName =
   | 'arrow'
   | 'cart'
   | 'check'
-  | 'chevron'
   | 'close'
   | 'contract'
   | 'equipment'
@@ -37,7 +36,6 @@ const paths: Record<MarketplaceIconName, ReactNode> = {
     </>
   ),
   check: <path d="m5 12 4 4L19 6" />,
-  chevron: <path d="m8 10 4 4 4-4" />,
   close: <path d="m6 6 12 12M18 6 6 18" />,
   contract: (
     <>
@@ -99,7 +97,7 @@ const paths: Record<MarketplaceIconName, ReactNode> = {
   ),
 };
 
-export interface MarketplaceIconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
+interface MarketplaceIconProps extends Omit<SVGProps<SVGSVGElement>, 'name'> {
   name: MarketplaceIconName;
 }
 

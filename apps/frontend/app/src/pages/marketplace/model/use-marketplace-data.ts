@@ -15,7 +15,7 @@ import {
 } from '@app/frontend-api-client';
 
 export type ResourceStatus = 'idle' | 'loading' | 'ready' | 'empty' | 'error';
-export type SessionState = 'checking' | 'signed-in' | 'signed-out' | 'error';
+type SessionState = 'checking' | 'signed-in' | 'signed-out' | 'error';
 
 export interface Resource<T> {
   data: T;

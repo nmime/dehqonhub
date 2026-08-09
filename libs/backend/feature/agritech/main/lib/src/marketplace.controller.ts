@@ -366,7 +366,7 @@ export class MarketplaceController {
   }
 }
 
-export const marketplaceOwner = (principal: AuthenticatedPrincipal): AgriTechOwner => ({
+const marketplaceOwner = (principal: AuthenticatedPrincipal): AgriTechOwner => ({
   tenantId: principal.tenantId,
   userId: principal.subject,
 });

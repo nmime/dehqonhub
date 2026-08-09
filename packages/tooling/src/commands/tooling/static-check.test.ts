@@ -1035,7 +1035,7 @@ describe("static-check repository scan boundaries", () => {
       const retiredNode = ["Node", "22"].join(" ");
       writeText(
         workspaceRoot,
-        "docs/superpowers/specs/historical-design.md",
+        "docs/archive/working-specs/specs/historical-design.md",
         `${retiredNode}\nHistorical path: libs/backend/example/lib/src/lib/record.ts\n`,
       );
 
@@ -1044,7 +1044,7 @@ describe("static-check repository scan boundaries", () => {
       assert.equal(structuralFailures.length, 1);
       assert.equal(
         structuralFailures[0]?.file,
-        "docs/superpowers/specs/historical-design.md:2",
+        "docs/archive/working-specs/specs/historical-design.md:2",
       );
     } finally {
       removeWorkspace(workspaceRoot);

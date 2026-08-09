@@ -37,7 +37,6 @@ function createRepositoryFixture() {
     getVerification: vi.fn(),
     reviewVerification: vi.fn(),
     listVerifications: vi.fn(),
-    isVerified: vi.fn(),
     isApprovedOrganization: vi.fn(),
     getCart: vi.fn(),
     listCarts: vi.fn(),
@@ -399,6 +398,7 @@ describe('marketplace HTTP contract', () => {
         buyerUserId,
         title: 'Corn seed',
         region: 'Samarkand',
+        deadline: '2026-09-01',
         budgetUzs: maximumUzsAmount,
         status: 'open',
         createdAt: now,
@@ -413,6 +413,7 @@ describe('marketplace HTTP contract', () => {
       payload: {
         title: 'Corn seed',
         region: 'Samarkand',
+        deadline: '2026-09-01',
         budgetUzs: maximumUzsAmount,
         requirements: 'Certified seed',
       },
@@ -424,6 +425,7 @@ describe('marketplace HTTP contract', () => {
         id: requestId,
         tenantId: tenantOne,
         buyerUserId,
+        deadline: '2026-09-01',
         budgetUzs: maximumUzsAmount,
       },
     });
@@ -432,6 +434,7 @@ describe('marketplace HTTP contract', () => {
       {
         title: 'Corn seed',
         region: 'Samarkand',
+        deadline: '2026-09-01',
         budgetUzs: maximumUzsAmount,
         requirements: 'Certified seed',
       },

@@ -471,21 +471,25 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
 }
 
 interface ProductDetailProps extends Omit<SharedDiscoveryProps, 'products'> {
+  canReview: boolean;
   product?: ProductViewDto;
   reviews: Resource<ReviewViewDto[]>;
   sampleUsage: Resource<SampleUsageViewDto>;
   similar: ProductViewDto[];
+  onReview: (product: ProductViewDto, rating: number, comment?: string) => Promise<boolean>;
   onRetry: () => void;
   onSample: (product: ProductViewDto) => void;
 }
 
 export function MarketplaceProductDetail({
+  canReview,
   favoriteIds,
   locale,
   navigate,
   onAdd,
   onFavorite,
   onOpen,
+  onReview,
   onRetry,
   onSample,
   pendingAction,
@@ -496,6 +500,8 @@ export function MarketplaceProductDetail({
   t,
 }: Readonly<ProductDetailProps>) {
   const [quantity, setQuantity] = useState(1);
+  const [reviewComment, setReviewComment] = useState('');
+  const [reviewRating, setReviewRating] = useState(5);
   if (!product) {
     return (
       <MarketplaceEmpty
@@ -666,6 +672,55 @@ export function MarketplaceProductDetail({
         <div className="dh-section__head">
           <h2 id="dh-reviews-title">{t('agritech.marketplace.product.reviewsTab')}</h2>
         </div>
+        {canReview && (
+          <form
+            className="dh-review-form"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void onReview(product, reviewRating, reviewComment.trim() || undefined).then((submitted) => {
+                if (submitted) {
+                  setReviewComment('');
+                }
+              });
+            }}
+          >
+            <h3>{t('agritech.marketplace.reviews.write')}</h3>
+            <label>
+              <span>{t('agritech.marketplace.reviews.rating')}</span>
+              <select
+                onChange={(event) => {
+                  setReviewRating(Number(event.target.value));
+                }}
+                value={reviewRating}
+              >
+                {[5, 4, 3, 2, 1].map((rating) => (
+                  <option key={rating} value={rating}>
+                    {rating}/5
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>{t('agritech.marketplace.reviews.comment')}</span>
+              <textarea
+                maxLength={2000}
+                onChange={(event) => {
+                  setReviewComment(event.target.value);
+                }}
+                placeholder={t('agritech.marketplace.reviews.commentPlaceholder')}
+                rows={3}
+                value={reviewComment}
+              />
+            </label>
+            <button
+              className="dh-button dh-button--primary"
+              disabled={pendingAction === `review:${product.id}`}
+              type="submit"
+            >
+              {t('agritech.marketplace.reviews.submit')}
+            </button>
+          </form>
+        )}
         {reviewsContent}
       </section>
       {similar.length > 0 && (
@@ -772,12 +827,14 @@ export function MarketplaceSkeleton({ count = 4 }: Readonly<{ count?: number }>)
 
 export function MarketplaceEmpty({
   actionLabel,
+  headingLevel = 2,
   icon,
   message,
   onAction,
   title,
 }: Readonly<{
   actionLabel?: string;
+  headingLevel?: 1 | 2;
   icon: 'heart' | 'produce' | 'search';
   message: string;
   onAction?: () => void;
@@ -788,7 +845,7 @@ export function MarketplaceEmpty({
       <span>
         <MarketplaceIcon name={icon} />
       </span>
-      <h2>{title}</h2>
+      {headingLevel === 1 ? <h1>{title}</h1> : <h2>{title}</h2>}
       <p>{message}</p>
       {actionLabel && onAction && (
         <button className="dh-button dh-button--secondary" onClick={onAction} type="button">

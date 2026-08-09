@@ -98,7 +98,7 @@ Measured locally: building `auth-app-api` and `user-app-api` as two separate
 image builds compiled the shared library graph twice (120s total); building
 the same pair together via `docker buildx bake` compiles it once (99s total,
 one `nx run-many` invocation) — see
-[2026-07-23-build-baseline.md](superpowers/specs/2026-07-23-build-baseline.md)
+[2026-07-23-build-baseline.md](archive/working-specs/specs/2026-07-23-build-baseline.md)
 for the full measurement. The release-workflow rewrite that drives this from
 CI is static-validated (`--print`, `deploy:validate:docker`) pending a real CI
 run.

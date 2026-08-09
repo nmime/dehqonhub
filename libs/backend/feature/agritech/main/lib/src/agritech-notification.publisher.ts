@@ -109,7 +109,10 @@ export class AgriTechNotificationPublisher {
     await this.notifications.upsertTemplate({
       code: templateCode,
       description: `AgriTech event notification: ${templateCode}.`,
-      channels: [{ channel: NotificationChannel.Bot, content: templates[templateCode] }],
+      channels: [
+        { channel: NotificationChannel.Bot, content: templates[templateCode] },
+        { channel: NotificationChannel.InApp, content: templates[templateCode] },
+      ],
     });
     await this.notifications.createTemplateNotification({
       targetType: NotificationTargetType.User,

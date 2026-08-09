@@ -24,29 +24,33 @@ overrides:
   '@nestjs/platform-express': '11.1.28'
   '@nestjs/testing': '11.1.28'
   'lodash': '4.18.1'
-  'brace-expansion@<2.0.0': '5.0.8'
-  'brace-expansion@>=2.0.0 <3.0.0': '5.0.8'
+  'brace-expansion@<2.0.0': '5.0.9'
+  'brace-expansion@>=2.0.0 <3.0.0': '5.0.9'
   'picomatch@<3.0.0': '2.3.2'
   'picomatch@>=4.0.0 <5.0.0': '4.0.4'
   'path-to-regexp@>=8.0.0 <9.0.0': '8.4.2'
   'serialize-javascript': '7.0.5'
-  'postcss': '8.5.21'
+  'postcss': '8.5.23'
   'follow-redirects': '1.16.0'
   'axios': '1.18.0'
-  'fast-uri': '3.1.4'
+  'fast-uri': '3.1.5'
+  'ip-address@<=10.3.0': '10.3.1'
   'svgo@>=3.0.0 <4.0.0': '3.3.4'
-  'js-yaml@<4.0.0': '3.15.0'
-  'js-yaml@>=4.0.0 <5.0.0': '4.3.0'
+  'js-yaml@<4.0.0': '3.15.1'
+  'js-yaml@>=4.0.0 <5.0.0': '4.3.1'
   'js-yaml@>=5.0.0 <5.2.2': '5.2.2'
-  'brace-expansion@>=4.0.0 <6.0.0': '5.0.8'
+  'brace-expansion@>=4.0.0 <6.0.0': '5.0.9'
   'yaml': '2.9.0'
   'ajv@>=7.0.0 <9.0.0': '8.20.0'
   'ws': '8.21.0'
   'tmp@<0.2.7': '0.2.7'
   'uuid@<11.1.1': '11.1.1'
   'qs@>=6.11.1 <=6.15.1': '6.15.2'
-  'undici@<7.28.0': '7.28.0'
-  'undici@>=8.0.0 <8.5.0': '8.5.0'
+  'undici@<7.29.0': '7.29.0'
+  'undici@>=8.0.0 <8.9.0': '8.9.0'
+  'hono@<4.12.34': '4.12.34'
+  'dompurify@<3.4.13': '3.4.13'
+  'nanoid@<3.3.17': '3.3.17'
   'happy-dom@>=15.10.0 <20.10.6': '20.10.6'
   'esbuild@<=0.24.2': '0.25.0'
   'form-data@<4.0.6': '4.0.6'
@@ -102,9 +106,13 @@ packageExtensions:
       'react-dom': '19.2.3'
 
 # Escape hatch for the hard audit:ci gate: when an advisory has no upstream
-# fix, list the CVE id here with a tracking issue instead of unblocking ad hoc.
+# fix, list the GHSA id here with a tracking issue instead of unblocking ad hoc.
 auditConfig:
-  ignoreCves: []
+  # image-size has no patched release as of 2026-08-10. It is transitive
+  # build/mobile asset tooling only; track removal in GitHub issue #4.
+  ignoreGhsas:
+    - GHSA-5p2g-fcmc-qvqq # CVE-2025-71329
+    - GHSA-w3rx-r6r6-pgpr # CVE-2025-71330
 
 # Supply-chain quarantine: reject versions published less than a day ago.
 # Raise toward 10080 (7 days) once the dependency set stops churning weekly;

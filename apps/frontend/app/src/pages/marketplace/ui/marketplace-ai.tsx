@@ -20,12 +20,9 @@ const resultKeys: Record<AiKind, string> = {
   season_advice: 'agritech.marketplace.ai.result.seasonAdvice',
 };
 
-interface ChatMessage {
-  answer?: AiConsultationViewDto;
-  id: string;
-  role: 'assistant' | 'user';
-  text: string;
-}
+type ChatMessage =
+  | { id: string; role: 'user'; text: string }
+  | { answer?: AiConsultationViewDto; id: string; role: 'assistant'; translationKey: string };
 
 interface MarketplaceAiProps {
   locale: Locale;
@@ -74,12 +71,17 @@ export function MarketplaceAi({ locale, onAsk, onOpenProduct, products, t }: Rea
     setPending(true);
     try {
       const answer = await onAsk(normalized, kind);
-      const text = answer.productIds.length === 0 ? t('agritech.marketplace.ai.noMatch') : t(resultKeys[answer.kind]);
-      setMessages((value) => [...value, { answer, id: answer.id, role: 'assistant', text }]);
+      const translationKey =
+        answer.productIds.length === 0 ? 'agritech.marketplace.ai.noMatch' : resultKeys[answer.kind];
+      setMessages((value) => [...value, { answer, id: answer.id, role: 'assistant', translationKey }]);
     } catch {
       setMessages((value) => [
         ...value,
-        { id: `error-${Date.now()}`, role: 'assistant', text: t('agritech.marketplace.ai.unavailable') },
+        {
+          id: `error-${Date.now()}`,
+          role: 'assistant',
+          translationKey: 'agritech.marketplace.ai.unavailable',
+        },
       ]);
     } finally {
       setPending(false);
@@ -145,12 +147,12 @@ export function MarketplaceAi({ locale, onAsk, onOpenProduct, products, t }: Rea
             </div>
             {messages.map((message) => {
               const referenced =
-                message.answer?.productIds
-                  .map((id) => products.find((product) => product.id === id))
+                (message.role === 'assistant' ? message.answer?.productIds : undefined)
+                  ?.map((id) => products.find((product) => product.id === id))
                   .filter((product): product is ProductViewDto => Boolean(product)) ?? [];
               return (
                 <div className={`dh-ai-message dh-ai-message--${message.role}`} key={message.id}>
-                  <p>{message.text}</p>
+                  <p>{message.role === 'assistant' ? t(message.translationKey) : message.text}</p>
                   {referenced.length > 0 && (
                     <div className="dh-ai-products">
                       {referenced.map((product) => (

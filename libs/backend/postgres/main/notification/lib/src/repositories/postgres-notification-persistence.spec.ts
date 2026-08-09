@@ -53,9 +53,23 @@ describe('PostgresNotificationPersistence', () => {
       description: 'Account link confirmation',
     });
     expect(Object.keys(template.channels)).toEqual([NotificationChannel.Bot, NotificationChannel.InApp]);
-    // Template identity and immutable version/channel rows are persisted in one transaction.
-    expect(transaction.persist).toHaveBeenCalledTimes(2);
-    expect(transaction.flush).toHaveBeenCalledOnce();
+    // Template identity and immutable version/channel rows are persisted in one
+    // transaction, with the FK parent flushed before its channel children.
+    expect(transaction.persist).toHaveBeenNthCalledWith(1, expect.any(NotificationTemplateEntity));
+    expect(transaction.persist).toHaveBeenNthCalledWith(2, expect.any(NotificationTemplateVersionEntity));
+    expect(transaction.persist).toHaveBeenNthCalledWith(3, [
+      expect.any(NotificationTemplateVersionChannelEntity),
+      expect.any(NotificationTemplateVersionChannelEntity),
+    ]);
+    expect(transaction.flush).toHaveBeenCalledTimes(3);
+    const versionPersistOrder = transaction.persist.mock.invocationCallOrder[1];
+    const versionFlushOrder = transaction.flush.mock.invocationCallOrder[1];
+    const channelPersistOrder = transaction.persist.mock.invocationCallOrder[2];
+    if (versionPersistOrder === undefined || versionFlushOrder === undefined || channelPersistOrder === undefined) {
+      throw new Error('Expected the template version flush boundary to be recorded.');
+    }
+    expect(versionPersistOrder).toBeLessThan(versionFlushOrder);
+    expect(versionFlushOrder).toBeLessThan(channelPersistOrder);
   });
 
   it('creates a new immutable version when code-owned channel content changes', async () => {
