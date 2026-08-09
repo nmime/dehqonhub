@@ -22,10 +22,14 @@ import {
   FarmerStatusViewDto,
   FarmerAssignmentViewDto,
   IntegrationReadinessListDto,
+  MarketplaceService,
   PartnerListDto,
   PartnerViewDto,
   PilotListDto,
   PilotViewDto,
+  ContractListDto,
+  VerificationListDto,
+  VerificationViewDto,
   ownerFrom,
 } from '@app/backend-feature-agritech-main';
 
@@ -74,13 +78,49 @@ class PilotStatusDto {
   status!: 'planned' | 'active' | 'completed' | 'cancelled';
 }
 
+class ReviewVerificationDto {
+  @ApiProperty({ enum: ['verified', 'rejected'] }) @IsIn(['verified', 'rejected'])
+  decision!: 'verified' | 'rejected';
+  @ApiPropertyOptional() @IsOptional() @IsString() reason?: string;
+}
+
 @ApiTags('admin-agritech')
 @ApiExceptions(400, 401, 403, 404, 409, 500)
 @ApiSessionCookieAuth()
 @UseGuards(new AdminRbacGuard())
 @Controller('admin')
 export class AgriTechAdminController {
-  constructor(private readonly service: AgriTechOperationsService) {}
+  constructor(
+    private readonly service: AgriTechOperationsService,
+    private readonly marketplace: MarketplaceService,
+  ) {}
+
+  @Get('verifications')
+  @ApiOkDataResponse(VerificationListDto)
+  @RequirePermissions(AdminAgriTechReadPermission)
+  async listVerifications(@CurrentUser() principal: AuthenticatedPrincipal) {
+    return createOkResponse({ items: await this.marketplace.listVerifications(principal.tenantId) });
+  }
+
+  @Patch('verifications/:id')
+  @ApiOkDataResponse(VerificationViewDto)
+  @RequirePermissions(AdminAgriTechApprovePermission)
+  async reviewVerification(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Param('id') id: string,
+    @Body() input: ReviewVerificationDto,
+  ) {
+    return createOkResponse(
+      await this.marketplace.reviewVerification(principal.tenantId, id, input.decision, principal.subject, input.reason),
+    );
+  }
+
+  @Get('contracts')
+  @ApiOkDataResponse(ContractListDto)
+  @RequirePermissions(AdminAgriTechReadPermission)
+  async listContracts(@CurrentUser() principal: AuthenticatedPrincipal) {
+    return createOkResponse({ items: await this.marketplace.listTenantContracts(principal.tenantId) });
+  }
 
   @Get('partners')
   @ApiOkDataResponse(PartnerListDto)

@@ -4,6 +4,7 @@ import { FarmerRepositoryInjectToken } from '@app/backend-feature-farmer-shared'
 import { ProductRepositoryInjectToken } from '@app/backend-feature-product-shared';
 import { OrderRepositoryInjectToken } from '@app/backend-feature-order-shared';
 import { AgriTechOperationsRepositoryInjectToken } from '@app/backend-feature-agritech-shared';
+import { MarketplaceRepositoryInjectToken } from '@app/backend-feature-agritech-shared';
 import { PaymentRepositoryInjectToken } from '@app/backend-feature-payment-shared';
 import {
   AdvisoryEntitySchema,
@@ -17,10 +18,20 @@ import {
   PilotCohortEntitySchema,
   ProduceListingEntitySchema,
   ProductEntitySchema,
+  AiConsultationEntitySchema,
+  BuyerRequestEntitySchema,
+  CartEntitySchema,
+  ContractEntitySchema,
+  FavoriteEntitySchema,
+  RequestOfferEntitySchema,
+  ReviewEntitySchema,
+  SampleRequestEntitySchema,
+  VerificationEntitySchema,
 } from './entities';
 import {
   PostgresAgriTechOperationsRepository,
   PostgresFarmerRepository,
+  PostgresMarketplaceRepository,
   PostgresPaymentRepository,
   PostgresOrderRepository,
   PostgresProductRepository,
@@ -31,11 +42,13 @@ const repositoryProviders = [
   PostgresProductRepository,
   PostgresOrderRepository,
   PostgresAgriTechOperationsRepository,
+  PostgresMarketplaceRepository,
   PostgresPaymentRepository,
   { provide: FarmerRepositoryInjectToken, useExisting: PostgresFarmerRepository },
   { provide: ProductRepositoryInjectToken, useExisting: PostgresProductRepository },
   { provide: OrderRepositoryInjectToken, useExisting: PostgresOrderRepository },
   { provide: AgriTechOperationsRepositoryInjectToken, useExisting: PostgresAgriTechOperationsRepository },
+  { provide: MarketplaceRepositoryInjectToken, useExisting: PostgresMarketplaceRepository },
   { provide: PaymentRepositoryInjectToken, useExisting: PostgresPaymentRepository },
 ];
 
@@ -54,6 +67,15 @@ const repositoryProviders = [
       PilotCohortEntitySchema,
       IntegrationStateEntitySchema,
       PaymentTransactionEntitySchema,
+      VerificationEntitySchema,
+      CartEntitySchema,
+      SampleRequestEntitySchema,
+      FavoriteEntitySchema,
+      ReviewEntitySchema,
+      BuyerRequestEntitySchema,
+      RequestOfferEntitySchema,
+      ContractEntitySchema,
+      AiConsultationEntitySchema,
     ]),
   ],
   providers: repositoryProviders,

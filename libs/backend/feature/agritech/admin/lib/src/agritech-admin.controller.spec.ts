@@ -1,7 +1,7 @@
 // @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-ROUTING-015
 import { describe, expect, it, vi } from 'vitest';
 import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
-import type { AgriTechOperationsService } from '@app/backend-feature-agritech-main';
+import type { AgriTechOperationsService, MarketplaceService } from '@app/backend-feature-agritech-main';
 import { AgriTechAdminController } from './agritech-admin.controller';
 
 const principal = {
@@ -51,9 +51,18 @@ function fixture() {
     setPilotStatus: vi.fn().mockResolvedValue({ id: 'pilot-1', status: 'active' }),
     integrationReadiness: vi.fn().mockResolvedValue([{ provider: 'click', ready: true }]),
   };
+  const marketplace = {
+    listVerifications: vi.fn().mockResolvedValue([]),
+    reviewVerification: vi.fn().mockResolvedValue({ id: 'v-1', status: 'verified' }),
+    listTenantContracts: vi.fn().mockResolvedValue([]),
+  };
   return {
     service,
-    controller: new AgriTechAdminController(service as unknown as AgriTechOperationsService),
+    marketplace,
+    controller: new AgriTechAdminController(
+      service as unknown as AgriTechOperationsService,
+      marketplace as unknown as MarketplaceService,
+    ),
   };
 }
 

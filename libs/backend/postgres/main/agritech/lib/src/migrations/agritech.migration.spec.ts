@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import { Migration20260802120000CreateAgriTechMarketplace } from './Migration20260802120000CreateAgriTechMarketplace';
 import { Migration20260802160000CompleteAgriTechPlatform } from './Migration20260802160000CompleteAgriTechPlatform';
+import { Migration20260809000000CreateMarketplace } from './Migration20260809000000CreateMarketplace';
 
 function collect(run: (migration: Migration20260802120000CreateAgriTechMarketplace) => void): string {
   const migration = new Migration20260802120000CreateAgriTechMarketplace(undefined as never, undefined as never);
@@ -13,6 +14,14 @@ function collect(run: (migration: Migration20260802120000CreateAgriTechMarketpla
 
 function collectComplete(run: (migration: Migration20260802160000CompleteAgriTechPlatform) => void): string {
   const migration = new Migration20260802160000CompleteAgriTechPlatform(undefined as never, undefined as never);
+  const statements: string[] = [];
+  migration.addSql = (sql: string) => statements.push(sql);
+  run(migration);
+  return statements.join('\n');
+}
+
+function collectMarketplace(run: (migration: Migration20260809000000CreateMarketplace) => void): string {
+  const migration = new Migration20260809000000CreateMarketplace(undefined as never, undefined as never);
   const statements: string[] = [];
   migration.addSql = (sql: string) => statements.push(sql);
   run(migration);
@@ -72,5 +81,41 @@ describe('complete AgriTech platform migration', () => {
     expect(sql.indexOf('"agritech_payment_transactions"')).toBeLessThan(sql.indexOf('"produce_listings"'));
     expect(sql.indexOf('"agritech_deliveries"')).toBeLessThan(sql.indexOf('"produce_listings"'));
     expect(sql.indexOf('"produce_listings"')).toBeLessThan(sql.indexOf('"agritech_partners"'));
+  });
+
+  it('creates all marketplace tables with ownership and state constraints', () => {
+    const sql = collectMarketplace((migration) => {
+      migration.up();
+    });
+
+    for (const table of [
+      'marketplace_verifications',
+      'marketplace_carts',
+      'marketplace_sample_requests',
+      'marketplace_favorites',
+      'marketplace_reviews',
+      'marketplace_requests',
+      'marketplace_request_offers',
+      'marketplace_contracts',
+      'marketplace_ai_consultations',
+    ]) {
+      expect(sql).toContain(`create table "${table}"`);
+    }
+    expect(sql).toContain('"ux__marketplace_verifications__tenant_user"');
+    expect(sql).toContain('"ux__marketplace_favorites__tenant_user_product"');
+    expect(sql).toContain('"ck__marketplace_reviews__rating"');
+    expect(sql).toContain('"ck__marketplace_requests__status"');
+    expect(sql).toContain('"ck__marketplace_contracts__status"');
+    expect(sql).toContain('"ck__marketplace_contracts__delivery_terms"');
+  });
+
+  it('drops marketplace tables in reverse dependency order', () => {
+    const sql = collectMarketplace((migration) => {
+      migration.down();
+    });
+
+    expect(sql.indexOf('"marketplace_contracts"')).toBeLessThan(sql.indexOf('"marketplace_requests"'));
+    expect(sql.indexOf('"marketplace_request_offers"')).toBeLessThan(sql.indexOf('"marketplace_requests"'));
+    expect(sql.indexOf('"marketplace_carts"')).toBeLessThan(sql.indexOf('"marketplace_verifications"'));
   });
 });

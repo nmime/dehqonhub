@@ -3,4 +3,7 @@ export * from './agritech-notification.publisher';
 export * from './agritech.controller';
 export * from './agritech.service';
 export * from './agritech.view-dto';
+export * from './marketplace.controller';
+export * from './marketplace.service';
+export * from './marketplace.view-dto';
 export * from '@app/backend-feature-agritech-shared';
