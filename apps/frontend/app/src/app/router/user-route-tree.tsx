@@ -4,6 +4,7 @@ import {
   createRoute,
   createRouter,
   type RouterHistory,
+  useRouterState,
 } from '@tanstack/react-router';
 import { AuthPage } from '../../pages/auth';
 import { AuthDiscordCallbackPage } from '../../pages/auth-discord-callback';
@@ -13,9 +14,8 @@ import { SettingsPage } from '../../pages/settings';
 import { TmaPage } from '../../pages/tma';
 import { FarmerRegisterPage } from '../../pages/farmer-register';
 import { FarmerDashboardPage } from '../../pages/farmer-dashboard';
-import { ProductCatalogPage } from '../../pages/product-catalog';
 import { AgriTechOperationsPage } from '../../pages/agritech-operations';
-import { MarketplacePage } from '../../pages/marketplace';
+import { MarketplacePage, type MarketplacePageProps } from '../../pages/marketplace';
 import { NotFoundPage } from '../../pages/not-found';
 import { UserShell } from './user-shell';
 import { useUserNavigate } from './user-navigation';
@@ -29,8 +29,37 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: MarketplacePage,
+  component: createMarketplaceRouteComponent('home'),
 });
+
+type MarketplaceRouteView = NonNullable<MarketplacePageProps['view']>;
+
+function createMarketplaceRouteComponent(view: MarketplaceRouteView) {
+  return function MarketplaceRouteComponent() {
+    const navigate = useUserNavigate();
+    const locationSearch = useRouterState({ select: (state) => state.location.searchStr });
+
+    return <MarketplacePage locationSearch={locationSearch} navigate={navigate} view={view} />;
+  };
+}
+
+function MarketplaceProductRouteComponent() {
+  const navigate = useUserNavigate();
+  const productId = useRouterState({
+    select: (state) => decodeURIComponent(state.location.pathname.slice('/products/'.length)),
+  });
+
+  return <MarketplacePage navigate={navigate} productId={productId} view="product" />;
+}
+
+function MarketplaceContractRouteComponent() {
+  const navigate = useUserNavigate();
+  const contractId = useRouterState({
+    select: (state) => decodeURIComponent(state.location.pathname.slice('/contracts/'.length)),
+  });
+
+  return <MarketplacePage contractId={contractId} navigate={navigate} view="contract" />;
+}
 
 const operationsRoute = createRoute({
   getParentRoute: () => rootRoute,
@@ -137,10 +166,52 @@ const farmerDashboardRoute = createRoute({
   component: FarmerDashboardPage,
 });
 
-const productCatalogRoute = createRoute({
+const marketplaceCatalogRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/catalog',
-  component: ProductCatalogPage,
+  component: createMarketplaceRouteComponent('catalog'),
+});
+
+const productRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/products/$productId',
+  component: MarketplaceProductRouteComponent,
+});
+
+const favoritesRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/favorites',
+  component: createMarketplaceRouteComponent('favorites'),
+});
+
+const cartRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/cart',
+  component: createMarketplaceRouteComponent('cart'),
+});
+
+const requestsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/requests',
+  component: createMarketplaceRouteComponent('requests'),
+});
+
+const verificationRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/verification',
+  component: createMarketplaceRouteComponent('verification'),
+});
+
+const accountRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/account',
+  component: createMarketplaceRouteComponent('account'),
+});
+
+const contractRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/contracts/$contractId',
+  component: MarketplaceContractRouteComponent,
 });
 
 const routeTree = rootRoute.addChildren([
@@ -157,7 +228,14 @@ const routeTree = rootRoute.addChildren([
   linkDiscordRoute,
   farmerRegisterRoute,
   farmerDashboardRoute,
-  productCatalogRoute,
+  marketplaceCatalogRoute,
+  productRoute,
+  favoritesRoute,
+  cartRoute,
+  requestsRoute,
+  verificationRoute,
+  accountRoute,
+  contractRoute,
   operationsRoute,
 ]);
 

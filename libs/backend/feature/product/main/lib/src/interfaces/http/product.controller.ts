@@ -21,7 +21,7 @@ class CatalogQueryDto {
 @ApiTags('agritech-catalog')
 @ApiExceptions(400, 401, 404, 500)
 @ApiSessionCookieAuth()
-@Controller('catalog')
+@Controller('marketplace/catalog')
 export class ProductController {
   constructor(
     private readonly getProduct: GetProductUseCase,

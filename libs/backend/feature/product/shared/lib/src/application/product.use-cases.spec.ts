@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-CATALOG-002
+// @requirements REQ-AGRITECH-CATALOG-002 REQ-AGRITECH-MARKETPLACE-016
 import { describe, expect, it, vi } from 'vitest';
 import { ResourceNotFoundException } from '@app/backend-common-exception';
 import { ProductCategories, type Product, type ProductRepository } from '../domain';
@@ -9,6 +9,7 @@ const product: Product = {
   name: 'Cotton seed',
   category: 'seed',
   description: 'Certified seed',
+  supplierId: 'supplier-1',
   supplierName: 'Agro Supply',
   priceUzs: 25_000,
   unit: 'kg',

@@ -2,6 +2,8 @@ import { IsString, IsNumber, IsArray, IsOptional, IsIn, Min } from 'class-valida
 import { ApiProperty } from '@nestjs/swagger';
 import type { ProductCategory } from '@app/backend-feature-product-shared';
 
+const maximumProductPriceUzs = 9_999_999_999_999;
+
 export class ProductViewDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() name!: string;
@@ -10,10 +12,11 @@ export class ProductViewDto {
   @ApiProperty({ enum: ['fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation', 'other'] })
   category!: ProductCategory;
   @ApiProperty() description!: string;
+  @ApiProperty() supplierId!: string;
   @ApiProperty() supplierName!: string;
-  @ApiProperty() priceUzs!: number;
+  @ApiProperty({ type: 'integer', minimum: 1, maximum: maximumProductPriceUzs }) priceUzs!: number;
   @ApiProperty() unit!: string;
-  @ApiProperty() stockQuantity!: number;
+  @ApiProperty({ type: 'integer', minimum: 0, maximum: 2_147_483_647 }) stockQuantity!: number;
   @ApiProperty() region!: string;
   @ApiProperty({ enum: ['active', 'inactive', 'out_of_stock'] }) status!: string;
   @ApiProperty({ type: [String] }) images!: string[];

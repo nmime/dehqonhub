@@ -6,6 +6,7 @@ const productCategories = ['fertilizer', 'seed', 'pesticide', 'equipment', 'irri
 const produceGrades = ['A', 'B', 'C'] as const;
 const produceStatuses = ['active', 'reserved', 'sold', 'cancelled'] as const;
 const deliveryStatuses = ['scheduled', 'assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'] as const;
+const maximumSupplierPriceUzs = 9_999_999_999_999;
 
 export class PartnerViewDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
@@ -35,9 +36,9 @@ export class SupplierProductViewDto {
   @ApiPropertyOptional() nameUz?: string;
   @ApiProperty({ enum: productCategories }) category!: string;
   @ApiProperty() description!: string;
-  @ApiProperty() priceUzs!: number;
+  @ApiProperty({ type: 'integer', minimum: 1, maximum: maximumSupplierPriceUzs }) priceUzs!: number;
   @ApiProperty() unit!: string;
-  @ApiProperty() stockQuantity!: number;
+  @ApiProperty({ type: 'integer', minimum: 0, maximum: 2_147_483_647 }) stockQuantity!: number;
   @ApiProperty() region!: string;
   @ApiProperty({ enum: ['active', 'inactive', 'out_of_stock'] }) status!: string;
 }

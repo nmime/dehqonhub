@@ -1,0 +1,8 @@
+{
+  "agritech.marketplace.contract.status.draft": "Qoralama",
+  "agritech.marketplace.contract.status.signed": "Imzolangan",
+  "agritech.marketplace.contract.status.active": "Faol",
+  "agritech.marketplace.contract.status.completed": "Yakunlangan",
+  "agritech.marketplace.contract.status.cancelled": "Bekor qilingan",
+  "agritech.marketplace.contract.status.legacy_review_required": "Eski shartnomani tekshirish kerak"
+}

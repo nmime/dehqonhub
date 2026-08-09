@@ -13,8 +13,8 @@
 ## Actors and Outcomes
 
 - Farmers, suppliers, buyers, and field agents open the AgriTech product at
-  `/` and use product resources such as `/catalog`, `/orders`, and `/produce`
-  without a redundant brand segment.
+  `/` and use browser resources such as `/catalog` plus general API resources
+  such as `/orders` and `/produce` without a redundant `agritech` segment.
 - Administrators open the AgriTech operating surface at `/admin`; secondary
   generic admin capabilities remain on explicit subroutes such as
   `/admin/dashboard`, `/admin/users`, and `/admin/audit`.
@@ -32,10 +32,14 @@
 - The canonical AgriTech admin page SHALL be `/admin`; the generic dashboard
   remains available at `/admin/dashboard`, and `/admin/agritech` SHALL NOT be
   registered.
-- User API routes SHALL be rooted at the resource name: `/farmer`, `/catalog`,
+- General user API routes SHALL be rooted at the resource name: `/farmer`,
   `/orders`, `/partners`, `/supplier/products`, `/produce`,
   `/field-agent/farmers`, `/deliveries`, `/field-visits`, `/advisories`, and
   `/payments`.
+- DehqonHub commerce API routes SHALL use `/marketplace/*`, including
+  `/marketplace/catalog`, `/marketplace/cart`, `/marketplace/requests`, and
+  `/marketplace/contracts/{id}`, while the corresponding browser journeys stay
+  at SPA routes such as `/catalog` and `/cart`.
 - Privileged AgriTech API routes SHALL retain the `/admin` boundary but SHALL
   use direct resources such as `/admin/partners`, `/admin/farmers`,
   `/admin/orders`, `/admin/deliveries`, `/admin/advisories`,
@@ -52,8 +56,9 @@
 
 - A farmer loading `/` sees the real AgriTech operations workflow; loading
   `/catalog` reaches the governed input catalog.
-- `GET /catalog` is present in the user OpenAPI document and generated user
-  client, while `GET /agritech/catalog` is absent.
+- `GET /marketplace/catalog` is present in the user OpenAPI document and
+  generated user client, while `GET /catalog` and `GET /agritech/catalog` are
+  absent from the API contract because `/catalog` is SPA-owned.
 - An authorized operator loading `/admin` sees the AgriTech admin workflow;
   the same operator can load the generic dashboard at `/admin/dashboard`.
 - `GET /admin/analytics` remains protected by the existing AgriTech read
@@ -63,8 +68,9 @@
 
 ## Counterexamples and Boundaries
 
-- `/agritech/catalog`, `/admin/agritech/partners`, `/admin/agritech`, and
-  `/marketplace` are removed paths, not silent aliases to the new routes.
+- `/agritech/catalog`, `/admin/agritech/partners`, `/admin/agritech`, and the
+  bare `/marketplace` browser alias are removed paths, not silent aliases to
+  the new routes; documented `/marketplace/*` commerce APIs remain valid.
 - `/admin` is not collapsed to `/`; it is the stable privilege and reverse
   proxy boundary for the separate admin application and API.
 - `/profile`, `/auth/*`, `/settings`, `/health`, `/live`, and `/ready` are
@@ -102,6 +108,8 @@
   with the providers; any external consumer must use the regenerated OpenAPI
   contract before rollout.
 - Existing reverse-proxy ownership of `/admin` remains valid.
+- Supported same-origin reverse proxies route `/marketplace/*` to
+  `user-app-api` before SPA fallback.
 
 ## Unresolved Questions
 

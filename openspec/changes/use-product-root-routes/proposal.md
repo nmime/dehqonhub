@@ -8,13 +8,18 @@ ambiguous, and leaks boilerplate-era routing into generated contracts.
 ## What Changes
 
 - **BREAKING** Remove the leading `/agritech` segment from every user API
-  endpoint; for example, `/agritech/catalog` becomes `/catalog`.
+  endpoint. General resources become direct paths, while DehqonHub commerce
+  resources use the collision-free `/marketplace/*` API namespace; for example,
+  `/agritech/catalog` becomes `/marketplace/catalog` while the `/catalog`
+  browser route remains SPA-owned.
 - **BREAKING** Remove the nested `agritech` segment from every privileged API
   endpoint while retaining the authorization boundary; for example,
   `/admin/agritech/partners` becomes `/admin/partners`.
 - **BREAKING** Make `/` the canonical AgriTech user workflow and `/admin` the
-  canonical AgriTech operator workflow. Remove the duplicate `/marketplace`
-  and `/admin/agritech` page routes rather than preserving aliases.
+  canonical AgriTech operator workflow. Remove the duplicate bare
+  `/marketplace` and `/admin/agritech` page routes rather than preserving
+  aliases; this does not remove the documented `/marketplace/*` commerce API
+  namespace.
 - Keep domain/package names, OpenAPI tags, requirement names, and the Telegram
   `/agritech` command unchanged because they identify the domain or bot action,
   not a redundant HTTP page/API namespace.
@@ -60,10 +65,11 @@ None.
 
 The change affects Nest controller prefixes in the AgriTech, farmer, catalog,
 order, payment, and AgriTech-admin owners; the user/admin SPA route trees and
-navigation; frontend API wrappers; payment return URLs; generated OpenAPI and
-TypeScript clients; API presentation output; route/contract tests; and the
-canonical AgriTech platform guide. Existing external consumers of the removed
-paths must migrate atomically to the regenerated contract.
+navigation; same-origin reverse proxies; frontend API wrappers; payment return
+URLs; generated OpenAPI and TypeScript clients; API presentation output;
+route/contract tests; and the canonical AgriTech platform guide. Existing
+external consumers of the removed paths must migrate atomically to the
+regenerated contract.
 
 ## Risk, Rollout, and Rollback
 

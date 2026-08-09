@@ -15,6 +15,23 @@ export const normalizePath = (path: string): string => {
   return normalized.endsWith('/') && normalized !== '/' ? normalized.slice(0, -1) : normalized;
 };
 
+const marketplaceRoutes = new Set(['/', '/account', '/cart', '/catalog', '/favorites', '/requests', '/verification']);
+
+/**
+ * Marketplace routes own their complete DehqonHub chrome. Keeping the matcher
+ * next to the router navigation adapter gives the shell and auth bridge one
+ * canonical boundary for static and identifier-bearing deep links.
+ */
+export const isMarketplaceRoute = (path: string): boolean => {
+  const normalized = normalizePath(path);
+
+  return (
+    marketplaceRoutes.has(normalized) ||
+    /^\/contracts\/[^/]+$/u.test(normalized) ||
+    /^\/products\/[^/]+$/u.test(normalized)
+  );
+};
+
 export const getLinkRoute = (path: string): '/link/telegram' | '/link/discord' | null => {
   const normalized = normalizePath(path);
   if (normalized === '/link/telegram' || normalized === '/link/discord') {

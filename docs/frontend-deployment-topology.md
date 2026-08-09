@@ -79,21 +79,25 @@ roots empty and proxy the API prefixes server-side:
 - `/api/auth/*` -> Better Auth endpoints on the auth API.
 - `/auth/*` -> tenant/RBAC auth API, with `/auth/docs` kept as an API/docs route.
 - `/profile/*` -> user API.
+- `/marketplace/*` -> DehqonHub commerce resources on the user API; browser
+  routes such as `/catalog` and `/cart` remain SPA-owned.
 - `/admin/*` -> admin API, with `/admin/docs` kept as an API/docs route.
 
 Static frontend navigations are detected as `GET`/`HEAD` requests with
 `Accept: text/html`. Those requests fall back to `index.html`, so reloads work
 for landing `/`, current user SPA routes such as `/auth`,
 `/auth/telegram/callback`, `/auth/discord/callback`, `/profile`, `/settings`, `/tma`,
-`/telegram-mini-app`, `/link/telegram`, and `/app`, plus admin routes such as
-`/admin`, `/admin/dashboard`, `/admin/users`, `/admin/users/:id`,
-`/admin/roles`, `/admin/audit`, `/admin/profile`, `/admin/tenants`, and unknown
-admin SPA routes. The Expo mobile web export is served by the same nginx
-frontend target. `site-app` is not an nginx SPA fallback; it is a Node/Vike SSR
-service that serves `dist/apps/frontend/site/client` assets, exposes `/live` and
-`/ready`, and renders document HTML through `apps/frontend/site/server`.
-Non-HTML API requests continue to proxy to the backend, which prevents frontend
-fallbacks from stealing generated-client API calls.
+`/telegram-mini-app`, `/link/telegram`, `/app`, `/catalog`, `/products/:id`,
+`/favorites`, `/cart`, `/requests`, `/verification`, `/account`, and
+`/contracts/:id`, plus admin routes such as `/admin`, `/admin/dashboard`,
+`/admin/users`, `/admin/users/:id`, `/admin/roles`, `/admin/audit`,
+`/admin/profile`, `/admin/tenants`, and unknown admin SPA routes. The Expo
+mobile web export is served by the same nginx frontend target. `site-app` is not
+an nginx SPA fallback; it is a Node/Vike SSR service that serves
+`dist/apps/frontend/site/client` assets, exposes `/live` and `/ready`, and
+renders document HTML through `apps/frontend/site/server`. Non-HTML API
+requests continue to proxy to the backend, which prevents frontend fallbacks
+from stealing generated-client API calls.
 
 For Helm path-based frontend routing, keep the frontend service paths explicit
 and longest-prefix first in the ingress controller behavior. Split-host remains
@@ -131,12 +135,14 @@ handled by the Vike/Fastify server.
 Direct production frontend app build targets default to same-origin mode only
 when the build environment has no API mode and no explicit API origins. That
 out-of-the-box default is safe only for deployments that provide the documented
-same-origin nginx/ingress proxy for `/auth/*`, `/profile/*`, and `/admin/*`.
+same-origin nginx/ingress proxy for `/auth/*`, `/profile/*`, `/marketplace/*`,
+and `/admin/*`.
 
 Production frontend builds still fail closed for ambiguous configured states:
 
 - Same-origin mode: set `VITE_API_BASE_URL_MODE=same-origin` and deploy an nginx
-  or ingress API proxy for `/api/auth/*`, `/auth/*`, `/profile/*`, and `/admin/*`.
+  or ingress API proxy for `/api/auth/*`, `/auth/*`, `/profile/*`,
+  `/marketplace/*`, and `/admin/*`.
 - Explicit-origin mode: set all of `VITE_AUTH_API_BASE_URL`,
   `VITE_USER_API_BASE_URL`, and `VITE_ADMIN_API_BASE_URL` to browser-reachable
   origins.

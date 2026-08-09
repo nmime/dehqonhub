@@ -1,0 +1,8 @@
+{
+  "agritech.marketplace.contract.status.draft": "Draft",
+  "agritech.marketplace.contract.status.signed": "Signed",
+  "agritech.marketplace.contract.status.active": "Active",
+  "agritech.marketplace.contract.status.completed": "Completed",
+  "agritech.marketplace.contract.status.cancelled": "Cancelled",
+  "agritech.marketplace.contract.status.legacy_review_required": "Legacy review required"
+}

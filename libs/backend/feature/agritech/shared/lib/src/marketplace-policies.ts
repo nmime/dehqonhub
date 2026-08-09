@@ -3,38 +3,59 @@ import type {
   RequestStatus,
   SampleStatus,
   VerificationLevel,
+  VerificationRejectionReason,
   VerificationRole,
   VerificationStatus,
 } from './marketplace.types';
 
-const MONTHLY_SAMPLE_LIMIT = 5;
+const monthlySampleLimit = 5;
 
-export const MAX_MONTHLY_SAMPLES = MONTHLY_SAMPLE_LIMIT;
+export const maxMonthlySamples = monthlySampleLimit;
 
-export const VERIFICATION_ROLES: readonly VerificationRole[] = ['farmer', 'seller', 'buyer'];
+export const verificationRoles: readonly VerificationRole[] = ['farmer', 'seller', 'buyer'];
 
-export const VERIFICATION_LEVELS: readonly VerificationLevel[] = ['basic', 'verified', 'trusted'];
+export const verificationLevels: readonly VerificationLevel[] = ['basic', 'verified', 'trusted'];
 
-export const sampleCountUsedThisMonth = (requestsInMonth: number): number => Math.min(requestsInMonth, MONTHLY_SAMPLE_LIMIT);
+export const marketplaceBuyerRoles: readonly VerificationRole[] = ['farmer', 'buyer'];
+
+export const marketplaceSellerRoles: readonly VerificationRole[] = ['farmer', 'seller'];
+
+export const canBuyInMarketplace = (role: VerificationRole | undefined): boolean =>
+  role !== undefined && marketplaceBuyerRoles.includes(role);
+
+export const canOfferInMarketplace = (role: VerificationRole | undefined): boolean =>
+  role !== undefined && marketplaceSellerRoles.includes(role);
+
+export const sampleCountUsedThisMonth = (requestsInMonth: number): number =>
+  Math.min(requestsInMonth, monthlySampleLimit);
 
 export const samplesRemainingThisMonth = (requestsInMonth: number): number =>
-  Math.max(0, MONTHLY_SAMPLE_LIMIT - requestsInMonth);
+  Math.max(0, monthlySampleLimit - requestsInMonth);
 
 export const isSampleRequestAllowed = ({
   verified,
   requestsThisMonth,
-  now,
 }: {
   verified: boolean;
   requestsThisMonth: number;
-  now?: Date;
-}): boolean => {
-  void now;
-  return verified && requestsThisMonth < MONTHLY_SAMPLE_LIMIT;
-};
+}): boolean => verified && requestsThisMonth < monthlySampleLimit;
 
 export const isVerificationAllowed = (status: VerificationStatus): boolean =>
   status === 'none' || status === 'rejected';
+
+const verificationRejectionReasons: readonly VerificationRejectionReason[] = [
+  'criteria_not_met',
+  'documents_unreadable',
+  'identity_mismatch',
+];
+
+export const isVerificationReviewReasonValid = (
+  decision: 'verified' | 'rejected',
+  reason: unknown,
+): reason is VerificationRejectionReason | undefined =>
+  decision === 'rejected'
+    ? typeof reason === 'string' && verificationRejectionReasons.includes(reason as VerificationRejectionReason)
+    : reason === undefined;
 
 export const canPurchaseWithoutVerification = false;
 

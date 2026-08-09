@@ -1,8 +1,15 @@
-// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-ROUTING-015
+// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016
+import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
+import { Test } from '@nestjs/testing';
 import { describe, expect, it, vi } from 'vitest';
-import type { AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
-import type { AgriTechOperationsService, MarketplaceService } from '@app/backend-feature-agritech-main';
-import { AgriTechAdminController } from './agritech-admin.controller';
+import { validate } from 'class-validator';
+import { ExceptionsFilter } from '@app/backend-common-response';
+import { createValidationPipe } from '@app/backend-common-validation';
+import { AdminAgriTechApprovePermission, AdminAgriTechWritePermission } from '@app/common-authz';
+import type { AuthenticatedPrincipal, AuthenticatedRequest } from '@app/backend-feature-auth-shared';
+import { createAdminAbility, type AdminAuthorizedRequest } from '@app/backend-feature-admin-shared';
+import { AgriTechOperationsService, MarketplaceService } from '@app/backend-feature-agritech-main';
+import { AgriTechAdminController, ReviewVerificationDto } from './agritech-admin.controller';
 
 const principal = {
   tenantId: 'tenant-1',
@@ -67,6 +74,120 @@ function fixture() {
 }
 
 describe('AgriTechAdminController', () => {
+  it.each([
+    [{ decision: 'rejected' }, false],
+    [{ decision: 'verified', reason: 'criteria_not_met' }, false],
+    [{ decision: 'rejected', reason: 'identity_mismatch' }, true],
+    [{ decision: 'verified' }, true],
+  ] as const)('validates verification decision provenance for %j', async (input, valid) => {
+    const dto = Object.assign(new ReviewVerificationDto(), input);
+    expect((await validate(dto)).length === 0).toBe(valid);
+  });
+
+  it('derives verification review tenant and reviewer identity from the authenticated principal', async () => {
+    const { marketplace, controller } = fixture();
+    marketplace.reviewVerification.mockResolvedValueOnce({
+      id: 'verification-1',
+      rejectionReason: 'identity_mismatch',
+      status: 'rejected',
+    });
+
+    const result = await controller.reviewVerification(principal, 'verification-1', {
+      decision: 'rejected',
+      reason: 'identity_mismatch',
+    });
+
+    expect(marketplace.reviewVerification).toHaveBeenCalledWith(
+      'tenant-1',
+      'verification-1',
+      'rejected',
+      'operator-1',
+      'identity_mismatch',
+    );
+    expect(result).toEqual({
+      data: {
+        id: 'verification-1',
+        rejectionReason: 'identity_mismatch',
+        status: 'rejected',
+      },
+    });
+  });
+
+  it.each([
+    {
+      caseName: 'verification review',
+      payload: { decision: 'verified' },
+      url: '/admin/verifications/not-a-uuid',
+    },
+    {
+      caseName: 'partner status',
+      payload: { status: 'approved' },
+      url: '/admin/partners/not-a-uuid/status',
+    },
+    {
+      caseName: 'farmer assignment',
+      payload: { agentUserId: 'agent-1' },
+      url: '/admin/farmers/not-a-uuid/assignment',
+    },
+    {
+      caseName: 'farmer status',
+      payload: { status: 'active' },
+      url: '/admin/farmers/not-a-uuid/status',
+    },
+    {
+      caseName: 'pilot status',
+      payload: { status: 'active' },
+      url: '/admin/pilots/not-a-uuid/status',
+    },
+  ])('rejects a malformed id on the production $caseName route before invoking a service', async (testCase) => {
+    const { marketplace, service } = fixture();
+    const moduleRef = await Test.createTestingModule({
+      controllers: [AgriTechAdminController],
+      providers: [
+        { provide: AgriTechOperationsService, useValue: service },
+        { provide: MarketplaceService, useValue: marketplace },
+      ],
+    }).compile();
+    const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());
+    const wirePrincipal: AuthenticatedPrincipal = {
+      permissions: [AdminAgriTechApprovePermission, AdminAgriTechWritePermission],
+      roles: [],
+      subject: 'operator-1',
+      tenantId: 'tenant-1',
+    };
+    app.useGlobalFilters(new ExceptionsFilter());
+    app.useGlobalPipes(createValidationPipe());
+    app
+      .getHttpAdapter()
+      .getInstance()
+      .addHook('onRequest', (request, _reply, done) => {
+        const authorizedRequest = request as unknown as AdminAuthorizedRequest & AuthenticatedRequest;
+        authorizedRequest.user = wirePrincipal;
+        authorizedRequest.adminAbility = createAdminAbility(wirePrincipal);
+        done();
+      });
+    await app.init();
+
+    try {
+      const response = await app.inject({
+        method: 'PATCH',
+        payload: testCase.payload,
+        url: testCase.url,
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.headers['content-type']).toContain('application/problem+json');
+      expect(response.json()).toMatchObject({ status: 400 });
+      expect(marketplace.reviewVerification).not.toHaveBeenCalled();
+      expect(service.assignFarmer).not.toHaveBeenCalled();
+      expect(service.setFarmerStatus).not.toHaveBeenCalled();
+      expect(service.setPartnerStatus).not.toHaveBeenCalled();
+      expect(service.setPilotStatus).not.toHaveBeenCalled();
+    } finally {
+      await app.close();
+    }
+  });
+
   it('lists partners for the authenticated tenant and wraps in ok response', async () => {
     const { service, controller } = fixture();
     const result = await controller.listPartners(principal);
@@ -126,10 +247,7 @@ describe('AgriTechAdminController', () => {
     const scheduledAt = new Date('2026-08-05T08:00:00Z');
     const input = { orderId: 'order-1', agentUserId: 'agent-1', scheduledAt };
     const result = await controller.scheduleDelivery(principal, input);
-    expect(service.scheduleDelivery).toHaveBeenCalledWith(
-      { tenantId: 'tenant-1', userId: 'operator-1' },
-      input,
-    );
+    expect(service.scheduleDelivery).toHaveBeenCalledWith({ tenantId: 'tenant-1', userId: 'operator-1' }, input);
     expect(result).toEqual({ data: { id: 'delivery-1', status: 'scheduled' } });
   });
 
@@ -144,10 +262,7 @@ describe('AgriTechAdminController', () => {
       expiresAt: new Date('2026-08-09T00:00:00Z'),
     };
     const result = await controller.publishAdvisory(principal, input);
-    expect(service.publishAdvisory).toHaveBeenCalledWith(
-      { tenantId: 'tenant-1', userId: 'operator-1' },
-      input,
-    );
+    expect(service.publishAdvisory).toHaveBeenCalledWith({ tenantId: 'tenant-1', userId: 'operator-1' }, input);
     expect(result).toEqual({ data: { id: 'advisory-1', kind: 'weather' } });
   });
 

@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "configHash": "92165a6c6a271252648f12c42077ce16ae3bc81950b0c332414219edd1125e48",
+  "configHash": "df5655e4a6e2157ea0bcaddc3f8ae0f3ed0b3692d14fda5c3b195ee806b19627",
   "files": {
-    "nrb.config.json": "7c4bdb6695dfdf889e88ac440aa507ac8e4e4978fa57534202192f5867b8153a",
-    ".nrb/summary.md": "e69c43c24f21f011efd2d7c0c7d8f2009556093736afcddc1e6071cf1a853837",
-    ".nrb/workspace.json": "280dab292ea0ea0cb15d0342be7a9e77f4da7b44651bdafd75a74a56c394170d",
-    ".nrb/capabilities.json": "ded042d44eb1ebe80fbecbb01a273e3b5f5b4e184be13af9caed3f66d695ec42",
-    ".nrb/capabilities.env": "e51407f78c3077fd2aa8f110f9e7fb4b62999fa815881988c7f764513a15403a",
+    "nrb.config.json": "282966901aee83c41a295eb4df63c2aafbffc28a2544052a388d78c134e36a70",
+    ".nrb/summary.md": "049dd2f4379f7612b1d802e8b1e968d97c642c7a9906654e972f42bf90c3ec61",
+    ".nrb/workspace.json": "3e6fdb998ef2345e227cff89271019bcc00bd22cbea9a85beaf11c0564bb74a3",
+    ".nrb/capabilities.json": "71d673f16d3dafe478333e10c8e7507e959b60d26ba9260a9aa1b73476ad93df",
+    ".nrb/capabilities.env": "e83fb0febd1f504c012a3edf7ed2b6106a4e2f8ba421eb9cd2056d5975e7bb17",
     "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "af15b77bb5c3b0515cfc649217d723063178c78f9fb9cfba80abf59d7f4a6062",
     "apps/backend/user/user-app-api/src/capabilities.generated.ts": "a433ccb9390e479bc65c20c0e5271bf628ad0616fc042bada568e4c8cd5fee2c",
     "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "ffaf9f1c1e61c57ecfc1937deaee73e35046a2d4ffbed36ef1178adf26618730",
@@ -22,5 +22,5 @@
     "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0"
   },
-  "digest": "57fef3187f3cbe891d20444a8903f129124f4408f38763bcfdee9f59cc24d1ab"
+  "digest": "a2e9e0add2bec1fdb6a5f9843c566f8a246ac8ac46604bfeca5a041b4d756f5d"
 }

@@ -1,4 +1,17 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Matches,
+  Max,
+  MaxLength,
+  Min,
+  registerDecorator,
+  type ValidationArguments,
+  type ValidationOptions,
+} from 'class-validator';
 
 const verificationRoles = ['farmer', 'seller', 'buyer'] as const;
 const verificationLevels = ['basic', 'verified', 'trusted'] as const;
@@ -7,9 +20,35 @@ const cartStatuses = ['open', 'ordered', 'abandoned'] as const;
 const sampleStatuses = ['pending', 'shipped', 'delivered', 'cancelled'] as const;
 const requestStatuses = ['open', 'offering', 'selected', 'closed', 'expired'] as const;
 const offerStatuses = ['pending', 'accepted', 'declined'] as const;
-const contractStatuses = ['draft', 'signed', 'active', 'completed', 'cancelled'] as const;
+const contractStatuses = ['draft', 'signed', 'active', 'completed', 'cancelled', 'legacy_review_required'] as const;
 const deliveryTerms = ['pickup', 'seller_delivery', 'by_agreement'] as const;
 const aiKinds = ['recommendation', 'find_cheaper', 'season_advice', 'generic'] as const;
+const aiAnswers = ['catalog_match', 'no_catalog_match'] as const;
+const maximumDeliveryDays = 365;
+const maximumUzsAmount = 9_999_999_999_999;
+
+function IsSellerDeliveryPrice(validationOptions?: ValidationOptions): PropertyDecorator {
+  return (target, propertyName) => {
+    registerDecorator({
+      name: 'isSellerDeliveryPrice',
+      target: target.constructor,
+      propertyName: propertyName.toString(),
+      options: validationOptions,
+      validator: {
+        validate(value: unknown, validationArguments: ValidationArguments): boolean {
+          const input = validationArguments.object as Partial<RequestOfferDto>;
+          if (input.deliveryTerms !== 'seller_delivery') {
+            return value === undefined;
+          }
+          return typeof value === 'number' && Number.isInteger(value) && value >= 1 && value <= maximumUzsAmount;
+        },
+        defaultMessage(): string {
+          return 'deliveryPriceUzs is required for seller_delivery and must be omitted otherwise';
+        },
+      },
+    });
+  };
+}
 
 export class VerificationDocumentDto {
   @ApiProperty() kind!: string;
@@ -29,13 +68,18 @@ export class VerificationViewDto {
   @ApiProperty({ type: [VerificationDocumentDto] }) documents!: VerificationDocumentDto[];
   @ApiPropertyOptional() reviewedBy?: string;
   @ApiPropertyOptional({ format: 'date-time' }) reviewedAt?: Date;
-  @ApiPropertyOptional() rejectionReason?: string;
+  @ApiPropertyOptional({ enum: ['criteria_not_met', 'documents_unreadable', 'identity_mismatch'] })
+  rejectionReason?: string;
   @ApiProperty({ format: 'date-time' }) createdAt!: Date;
   @ApiProperty({ format: 'date-time' }) updatedAt!: Date;
 }
 
 export class VerificationListDto {
   @ApiProperty({ type: [VerificationViewDto] }) items!: VerificationViewDto[];
+}
+
+export class NullableVerificationResponseDto {
+  @ApiProperty({ type: () => VerificationViewDto, nullable: true }) data!: VerificationViewDto | null;
 }
 
 export class CartItemDto {
@@ -56,6 +100,11 @@ export class CartViewDto {
 
 export class CartListDto {
   @ApiProperty({ type: [CartViewDto] }) items!: CartViewDto[];
+}
+
+export class CheckoutCartResultDto {
+  @ApiProperty({ format: 'uuid' }) cartId!: string;
+  @ApiProperty({ format: 'uuid' }) contractId!: string;
 }
 
 export class SampleViewDto {
@@ -89,6 +138,10 @@ export class FavoriteListDto {
   @ApiProperty({ type: [FavoriteViewDto] }) items!: FavoriteViewDto[];
 }
 
+export class FavoriteMutationResultDto {
+  @ApiProperty() productId!: string;
+}
+
 export class ReviewViewDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() tenantId!: string;
@@ -112,7 +165,7 @@ export class BuyerRequestViewDto {
   @ApiPropertyOptional() volume?: string;
   @ApiProperty() region!: string;
   @ApiPropertyOptional() deadline?: string;
-  @ApiPropertyOptional() budgetUzs?: number;
+  @ApiPropertyOptional({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) budgetUzs?: number;
   @ApiPropertyOptional() requirements?: string;
   @ApiProperty({ enum: requestStatuses }) status!: string;
   @ApiProperty({ format: 'date-time' }) createdAt!: Date;
@@ -128,9 +181,17 @@ export class OfferViewDto {
   @ApiProperty({ format: 'uuid' }) requestId!: string;
   @ApiProperty() tenantId!: string;
   @ApiProperty() sellerUserId!: string;
-  @ApiProperty() priceUzs!: number;
-  @ApiPropertyOptional() deliveryNote?: string;
-  @ApiPropertyOptional() deliveryDays?: number;
+  @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) priceUzs!: number;
+  @ApiProperty({ enum: deliveryTerms }) deliveryTerms!: string;
+  @ApiPropertyOptional({
+    description: 'Zero for pickup, positive for seller_delivery, and absent for by_agreement.',
+    maximum: maximumUzsAmount,
+    minimum: 0,
+    type: 'integer',
+  })
+  deliveryPriceUzs?: number;
+  @ApiPropertyOptional({ maxLength: 500, minLength: 1 }) deliveryNote?: string;
+  @ApiPropertyOptional({ maximum: maximumDeliveryDays, minimum: 1, type: 'integer' }) deliveryDays?: number;
   @ApiProperty({ enum: offerStatuses }) status!: string;
   @ApiProperty({ format: 'date-time' }) createdAt!: Date;
 }
@@ -140,9 +201,68 @@ export class OfferListDto {
 }
 
 export class RequestOfferDto {
-  @ApiProperty() priceUzs!: number;
-  @ApiPropertyOptional() deliveryNote?: string;
-  @ApiPropertyOptional() deliveryDays?: number;
+  @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' })
+  @IsInt()
+  @Min(1)
+  @Max(maximumUzsAmount)
+  priceUzs!: number;
+  @ApiProperty({ enum: deliveryTerms }) @IsIn(deliveryTerms) deliveryTerms!: (typeof deliveryTerms)[number];
+  @ApiPropertyOptional({
+    description: 'Required when deliveryTerms is seller_delivery; must be omitted for pickup and by_agreement.',
+    maximum: maximumUzsAmount,
+    minimum: 1,
+    type: 'integer',
+  })
+  @IsSellerDeliveryPrice()
+  deliveryPriceUzs?: number;
+  @ApiPropertyOptional({ maxLength: 500, minLength: 1 })
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/u)
+  @MaxLength(500)
+  deliveryNote?: string;
+  @ApiPropertyOptional({ maximum: maximumDeliveryDays, minimum: 1, type: 'integer' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(maximumDeliveryDays)
+  deliveryDays?: number;
+}
+
+export class ContractDeliveryQuoteDto {
+  @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' })
+  @IsInt()
+  @Min(1)
+  @Max(maximumUzsAmount)
+  deliveryPriceUzs!: number;
+  @ApiPropertyOptional({ maxLength: 500, minLength: 1 })
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/u)
+  @MaxLength(500)
+  deliveryNote?: string;
+  @ApiPropertyOptional({ maximum: maximumDeliveryDays, minimum: 1, type: 'integer' })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(maximumDeliveryDays)
+  deliveryDays?: number;
+}
+
+export class OfferSelectionResultDto {
+  @ApiProperty({ format: 'uuid' }) requestId!: string;
+  @ApiProperty({ format: 'uuid' }) offerId!: string;
+  @ApiProperty() sellerUserId!: string;
+  @ApiProperty({ format: 'uuid' }) contractId!: string;
+}
+
+export class ContractLineDto {
+  @ApiProperty() productId!: string;
+  @ApiProperty() name!: string;
+  @ApiProperty() unit!: string;
+  @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) unitPriceUzs!: number;
+  @ApiProperty() quantity!: number;
+  @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) lineTotalUzs!: number;
 }
 
 export class ContractViewDto {
@@ -150,12 +270,19 @@ export class ContractViewDto {
   @ApiProperty() tenantId!: string;
   @ApiProperty() buyerUserId!: string;
   @ApiProperty() sellerUserId!: string;
+  @ApiPropertyOptional({ enum: ['cart_checkout', 'offer_selection'] }) sourceType?: string;
+  @ApiPropertyOptional() sourceId?: string;
   @ApiProperty() subject!: string;
-  @ApiProperty() amountUzs!: number;
+  @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) amountUzs!: number;
+  @ApiProperty({ type: [ContractLineDto] }) lines!: ContractLineDto[];
   @ApiProperty({ enum: deliveryTerms }) deliveryTerms!: string;
-  @ApiPropertyOptional() deliveryPriceUzs?: number;
+  @ApiPropertyOptional({ maximum: maximumUzsAmount, minimum: 0, type: 'integer' }) deliveryPriceUzs?: number;
+  @ApiPropertyOptional({ maxLength: 500, minLength: 1 }) deliveryNote?: string;
+  @ApiPropertyOptional({ maximum: maximumDeliveryDays, minimum: 1, type: 'integer' }) deliveryDays?: number;
   @ApiProperty() factoringEnabled!: boolean;
   @ApiProperty({ enum: contractStatuses }) status!: string;
+  @ApiPropertyOptional({ format: 'date-time' }) buyerSignedAt?: Date;
+  @ApiPropertyOptional({ format: 'date-time' }) sellerSignedAt?: Date;
   @ApiPropertyOptional({ format: 'date-time' }) signedAt?: Date;
   @ApiProperty({ format: 'date-time' }) createdAt!: Date;
   @ApiProperty({ format: 'date-time' }) updatedAt!: Date;
@@ -171,7 +298,11 @@ export class AiConsultationViewDto {
   @ApiProperty() userId!: string;
   @ApiProperty({ enum: aiKinds }) kind!: string;
   @ApiProperty() question!: string;
-  @ApiProperty() answer!: string;
+  @ApiProperty({
+    description: 'Semantic result code; clients localize user-facing consultation copy.',
+    enum: aiAnswers,
+  })
+  answer!: (typeof aiAnswers)[number];
   @ApiProperty({ type: [String] }) productIds!: string[];
   @ApiProperty({ format: 'date-time' }) createdAt!: Date;
 }

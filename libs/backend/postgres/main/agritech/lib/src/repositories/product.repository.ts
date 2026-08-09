@@ -11,6 +11,7 @@ export function toProduct(entity: ProductEntity): Product {
     nameUz: entity.nameUz ?? undefined,
     category: entity.category,
     description: entity.description,
+    supplierId: entity.supplierId,
     supplierName: entity.supplierName,
     priceUzs: Number(entity.priceUzs),
     unit: entity.unit,

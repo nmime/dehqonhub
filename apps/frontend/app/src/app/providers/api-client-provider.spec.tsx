@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-SHELL-004
+// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-MARKETPLACE-016
 import { useEffect } from 'react';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -32,12 +32,12 @@ const Probe = () => {
   );
 };
 
-const AuthRequiredProbe = () => {
+const AuthRequiredProbe = ({ endpoint = '/profile/me' }: Readonly<{ endpoint?: string }>) => {
   const userClient = useUserApiClient();
 
   useEffect(() => {
-    void userClient.requestOptions.fetchImpl?.('https://api.example.test/profile/me', {});
-  }, [userClient.requestOptions]);
+    void userClient.requestOptions.fetchImpl?.(`https://api.example.test${endpoint}`, {});
+  }, [endpoint, userClient.requestOptions]);
 
   return null;
 };
@@ -71,7 +71,8 @@ describe('user app API client provider wiring', () => {
     });
   });
 
-  it('redirects auth-required API failures to auth with a return URL', async () => {
+  it('redirects auth-required failures from protected routes with a return URL', async () => {
+    window.history.replaceState({}, '', '/profile?tab=security');
     vi.stubGlobal(
       'fetch',
       vi.fn(() =>
@@ -93,8 +94,32 @@ describe('user app API client provider wiring', () => {
     await waitFor(() => {
       expect(window.location.pathname).toBe('/auth');
     });
-    expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/');
+    expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/profile?tab=security');
     expect(screen.queryByText('Authentication required')).toBeNull();
+  });
+
+  it('keeps an initial marketplace catalog 401 on the signed-out entry route', async () => {
+    const fetchMock = vi.fn(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ message: 'session required' }), {
+          headers: { 'content-type': 'application/json' },
+          status: 401,
+        }),
+      ),
+    );
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(
+      <AppProviders>
+        <AuthRequiredProbe endpoint="/marketplace/catalog" />
+      </AppProviders>,
+    );
+
+    await waitFor(() => {
+      expect(fetchMock).toHaveBeenCalledOnce();
+      expect(apiRuntimeEvents.getState().authRequired).toBe(false);
+    });
+    expect(window.location.pathname).toBe('/');
   });
 
   it('keeps auth-required failures in Telegram Mini App routes', async () => {

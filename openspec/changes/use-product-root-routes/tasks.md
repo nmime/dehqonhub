@@ -11,7 +11,7 @@
 
 ## 3. Product Clients
 
-- [x] 3.1 Mount the AgriTech user workflow at `/`, remove `/marketplace`, update payment returns/navigation, and add an explicit localized not-found state.
+- [x] 3.1 Mount the AgriTech user workflow at `/`, remove the bare `/marketplace` page alias, update payment returns/navigation, and add an explicit localized not-found state while retaining the documented `/marketplace/*` commerce API namespace.
 - [x] 3.2 Mount the AgriTech operator workflow at `/admin`, retain the generic dashboard at `/admin/dashboard`, and remove `/admin/agritech` from routing/navigation.
 - [x] 3.3 Update user/admin frontend API wrappers and route tests for the canonical resource paths.
 

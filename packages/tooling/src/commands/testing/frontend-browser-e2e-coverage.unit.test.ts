@@ -170,12 +170,33 @@ describe("frontend-browser-e2e-coverage: path confinement", () => {
 describe("frontend-browser-e2e-coverage: argument parsing", () => {
   it("parses --key value pairs correctly", () => {
     const args = new Map<string, string>();
-    const argv = ["--dist", "build", "--app-name", "myapp", "--contains", "Hello", "--coverage-dir", "cov"];
+    const journeyClicks: string[] = [];
+    const journeyPaths: string[] = [];
+    const argv = [
+      "--dist",
+      "build",
+      "--app-name",
+      "myapp",
+      "--contains",
+      "Hello",
+      "--coverage-dir",
+      "cov",
+      "--journey-click",
+      "Catalog",
+      "--journey-path",
+      "/catalog",
+      "--journey-click",
+      "Seeds",
+      "--journey-path",
+      "/catalog?section=seeds",
+    ];
     for (let i = 0; i < argv.length; i += 1) {
       const key = argv[i];
       const value = argv[i + 1];
       if (key.startsWith("--") && value && !value.startsWith("--")) {
         args.set(key.slice(2), value);
+        if (key === "--journey-click") journeyClicks.push(value);
+        if (key === "--journey-path") journeyPaths.push(value);
         i += 1;
       }
     }
@@ -183,6 +204,8 @@ describe("frontend-browser-e2e-coverage: argument parsing", () => {
     assert.equal(args.get("app-name"), "myapp");
     assert.equal(args.get("contains"), "Hello");
     assert.equal(args.get("coverage-dir"), "cov");
+    assert.deepEqual(journeyClicks, ["Catalog", "Seeds"]);
+    assert.deepEqual(journeyPaths, ["/catalog", "/catalog?section=seeds"]);
   });
 
   it("throws when required arguments are missing", () => {
@@ -202,8 +225,36 @@ describe("frontend-browser-e2e-coverage: argument parsing", () => {
       const contains = args.get("contains");
       const coverageDir = args.get("coverage-dir");
       if (!dist || !appName || !contains || !coverageDir) {
-        throw new Error("Usage: frontend-browser-e2e-coverage --dist <dir> --app-name <name> --contains <text> --coverage-dir <dir>");
+        throw new Error(
+          "Usage: frontend-browser-e2e-coverage --dist <dir> --app-name <name> --contains <text> --coverage-dir <dir> [--journey-click <accessible-name> --journey-path <same-origin-path>]...",
+        );
       }
     }, /Usage/);
+  });
+
+  it("rejects an incomplete journey argument pair", () => {
+    for (const [journeyClicks, journeyPaths] of [
+      [["Catalog"], []],
+      [[], ["/catalog"]],
+      [["Catalog", "Seeds"], ["/catalog"]],
+    ]) {
+      assert.throws(() => {
+        if (journeyClicks.length !== journeyPaths.length) {
+          throw new Error("Each --journey-click must have a matching --journey-path");
+        }
+      }, /must have a matching/);
+    }
+  });
+
+  it("rejects a cross-origin journey destination", () => {
+    const baseUrl = "http://127.0.0.1:4173";
+    for (const journeyPath of ["https://example.com/catalog", "//example.com/catalog"]) {
+      assert.throws(() => {
+        const journeyUrl = new URL(journeyPath, baseUrl);
+        if (!journeyPath.startsWith("/") || journeyUrl.origin !== baseUrl) {
+          throw new Error("--journey-path must be an absolute same-origin path");
+        }
+      }, /absolute same-origin path/);
+    }
   });
 });

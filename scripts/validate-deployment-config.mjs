@@ -843,6 +843,11 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
   has(text, 'location ^~ /auth/', 'auth API prefix route cannot be shadowed by regex static assets');
   has(text, 'location ^~ /api/auth/', 'Better Auth API prefix must be proxied to auth-app-api');
   has(text, 'location ^~ /profile/', 'profile/user API prefix route cannot be shadowed by regex static assets');
+  has(
+    text,
+    'location ^~ /marketplace/',
+    'marketplace API prefix route cannot be shadowed by SPA or regex static assets',
+  );
   has(text, 'location ^~ /admin/', 'admin API prefix route cannot be shadowed by regex static assets');
   for (const service of ['auth-app-api', 'user-app-api', 'admin-app-api']) {
     has(text, helm ? `-${service}:` : `${service}:80`, `${service} upstream`);

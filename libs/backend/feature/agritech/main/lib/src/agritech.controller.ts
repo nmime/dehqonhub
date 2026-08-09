@@ -1,8 +1,8 @@
 // @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ROUTING-015
-import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
-import { ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { ApiParam, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsIn, IsInt, IsNumber, IsOptional, IsString, Min } from 'class-validator';
+import { IsDate, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse } from '@app/backend-common-response';
 import { CurrentUser, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
@@ -29,6 +29,8 @@ const partnerKinds = ['supplier', 'buyer'] as const;
 const produceGrades = ['A', 'B', 'C'] as const;
 const productCategories = ['fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation', 'other'] as const;
 const deliveryStatuses = ['assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'] as const;
+const maximumIntegerQuantity = 2_147_483_647;
+const maximumSupplierPriceUzs = 9_999_999_999_999;
 
 class CreatePartnerDto {
   @ApiProperty({ enum: partnerKinds }) @IsIn(partnerKinds) kind!: 'supplier' | 'buyer';
@@ -39,21 +41,37 @@ class CreatePartnerDto {
 }
 
 class CreateSupplierProductDto {
-  @ApiProperty({ format: 'uuid' }) @IsString() partnerId!: string;
+  @ApiProperty({ format: 'uuid' }) @IsUUID() partnerId!: string;
   @ApiProperty() @IsString() name!: string;
   @ApiPropertyOptional() @IsOptional() @IsString() nameRu?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() nameUz?: string;
   @ApiProperty({ enum: productCategories }) @IsIn(productCategories) category!: (typeof productCategories)[number];
   @ApiProperty() @IsString() description!: string;
-  @ApiProperty({ minimum: 0 }) @IsNumber() @Min(0) priceUzs!: number;
+  @ApiProperty({ maximum: maximumSupplierPriceUzs, minimum: 1, type: 'integer' })
+  @IsInt()
+  @Min(1)
+  @Max(maximumSupplierPriceUzs)
+  priceUzs!: number;
   @ApiProperty() @IsString() unit!: string;
-  @ApiProperty({ minimum: 0 }) @IsInt() @Min(0) stockQuantity!: number;
+  @ApiProperty({ maximum: maximumIntegerQuantity, minimum: 0, type: 'integer' })
+  @IsInt()
+  @Min(0)
+  @Max(maximumIntegerQuantity)
+  stockQuantity!: number;
   @ApiProperty() @IsString() region!: string;
 }
 
 class UpdateSupplierProductDto {
-  @ApiProperty({ minimum: 0 }) @IsNumber() @Min(0) priceUzs!: number;
-  @ApiProperty({ minimum: 0 }) @IsInt() @Min(0) stockQuantity!: number;
+  @ApiProperty({ maximum: maximumSupplierPriceUzs, minimum: 1, type: 'integer' })
+  @IsInt()
+  @Min(1)
+  @Max(maximumSupplierPriceUzs)
+  priceUzs!: number;
+  @ApiProperty({ maximum: maximumIntegerQuantity, minimum: 0, type: 'integer' })
+  @IsInt()
+  @Min(0)
+  @Max(maximumIntegerQuantity)
+  stockQuantity!: number;
   @ApiProperty({ enum: ['active', 'inactive', 'out_of_stock'] })
   @IsIn(['active', 'inactive', 'out_of_stock'])
   status!: 'active' | 'inactive' | 'out_of_stock';
@@ -82,7 +100,7 @@ class PriceQueryDto {
 }
 
 class ReserveProduceDto {
-  @ApiProperty({ format: 'uuid' }) @IsString() partnerId!: string;
+  @ApiProperty({ format: 'uuid' }) @IsUUID() partnerId!: string;
   @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) quantityKg!: number;
   @ApiProperty() @IsString() deliveryAddress!: string;
 }
@@ -93,7 +111,7 @@ class TransitionDeliveryDto {
 }
 
 class CreateFieldVisitDto {
-  @ApiProperty({ format: 'uuid' }) @IsString() farmerId!: string;
+  @ApiProperty({ format: 'uuid' }) @IsUUID() farmerId!: string;
   @ApiProperty() @IsString() notes!: string;
   @ApiPropertyOptional({ enum: produceGrades }) @IsOptional() @IsIn(produceGrades) observedGrade?: ProduceGrade;
   @ApiProperty({ format: 'date-time' }) @Type(() => Date) @IsDate() observedAt!: Date;
@@ -134,10 +152,11 @@ export class AgriTechOperationsController {
   }
 
   @Patch('supplier/products/:id')
+  @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(SupplierProductViewDto)
   async updateSupplierProduct(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() input: UpdateSupplierProductDto,
   ) {
     return createOkResponse(await this.service.updateSupplierProduct(ownerFrom(principal), id, input));
@@ -162,18 +181,20 @@ export class AgriTechOperationsController {
   }
 
   @Post('produce/:id/reservations')
+  @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(ProduceReservationViewDto)
   async reserveProduce(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() input: ReserveProduceDto,
   ) {
     return createOkResponse(await this.service.reserveProduce(ownerFrom(principal), id, input));
   }
 
   @Patch('produce/:id/cancel')
+  @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(ProduceListingViewDto)
-  async cancelProduce(@CurrentUser() principal: AuthenticatedPrincipal, @Param('id') id: string) {
+  async cancelProduce(@CurrentUser() principal: AuthenticatedPrincipal, @Param('id', ParseUUIDPipe) id: string) {
     return createOkResponse(await this.service.cancelProduceListing(ownerFrom(principal), id));
   }
 
@@ -190,10 +211,11 @@ export class AgriTechOperationsController {
   }
 
   @Patch('deliveries/:id')
+  @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(DeliveryViewDto)
   async transitionDelivery(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() input: TransitionDeliveryDto,
   ) {
     return createOkResponse(await this.service.transitionDelivery(ownerFrom(principal), id, input));

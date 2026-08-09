@@ -114,6 +114,9 @@
       "@app/backend-postgres-main-agritech": ["libs/backend/postgres/main/agritech/lib/src/index.ts"],
       "@app/backend-feature-payment-main": ["libs/backend/feature/payment/main/lib/src/index.ts"],
       "@app/backend-feature-agritech-main": ["libs/backend/feature/agritech/main/lib/src/index.ts"],
+      "@app/backend-feature-agritech-main-marketplace-in-memory-adapter": [
+        "libs/backend/feature/agritech/main/lib/src/marketplace.in-memory-adapter.ts"
+      ],
       "@app/backend-feature-agritech-admin": ["libs/backend/feature/agritech/admin/lib/src/index.ts"],
       "@app/backend-feature-agritech-shared": ["libs/backend/feature/agritech/shared/lib/src/index.ts"],
       "@app/backend-feature-payment-shared": ["libs/backend/feature/payment/shared/lib/src/index.ts"]

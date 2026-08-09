@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-PROFILE-001 REQ-AGRITECH-CATALOG-002 REQ-AGRITECH-ORDER-003
+// @requirements REQ-AGRITECH-PROFILE-001 REQ-AGRITECH-CATALOG-002 REQ-AGRITECH-ORDER-003 REQ-AGRITECH-MARKETPLACE-016
 import type { EntityManager } from '@mikro-orm/core';
 import { LockMode } from '@mikro-orm/core';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -93,12 +93,10 @@ function emMock() {
     persist: vi.fn(),
     flush: vi.fn().mockResolvedValue(undefined),
     assign: vi.fn((target: Record<string, unknown>, input: Record<string, unknown>) => Object.assign(target, input)),
-    transactional: vi.fn(
-      async (callback: (em: ReturnType<typeof emMock>) => Promise<unknown>) => {
-        const txEm = emMock();
-        return callback(txEm);
-      },
-    ),
+    transactional: vi.fn(async (callback: (em: ReturnType<typeof emMock>) => Promise<unknown>) => {
+      const txEm = emMock();
+      return callback(txEm);
+    }),
   };
 }
 
@@ -199,9 +197,7 @@ describe('PostgresFarmerRepository', () => {
     it('returns undefined when the phone is not registered in the tenant (conflict check path)', async () => {
       em.findOne.mockResolvedValue(null);
 
-      await expect(
-        repository.findByPhone(owner.tenantId, '+998909999999'),
-      ).resolves.toBeUndefined();
+      await expect(repository.findByPhone(owner.tenantId, '+998909999999')).resolves.toBeUndefined();
     });
   });
 
@@ -283,6 +279,7 @@ describe('PostgresProductRepository', () => {
         nameUz: undefined,
         category: 'seed',
         description: 'Certified seed',
+        supplierId: 'supplier-1',
         supplierName: 'Agro Supply',
         priceUzs: 10_000,
         unit: 'kg',
@@ -314,17 +311,13 @@ describe('PostgresProductRepository', () => {
     it('returns undefined for inactive or unknown products (not_found path)', async () => {
       em.findOne.mockResolvedValue(null);
 
-      await expect(
-        repository.findActiveById(owner.tenantId, 'missing-product'),
-      ).resolves.toBeUndefined();
+      await expect(repository.findActiveById(owner.tenantId, 'missing-product')).resolves.toBeUndefined();
     });
 
     it('enforces tenant isolation by scoping the lookup to the tenant', async () => {
       em.findOne.mockResolvedValue(null);
 
-      await expect(
-        repository.findActiveById('tenant-2', 'product-1'),
-      ).resolves.toBeUndefined();
+      await expect(repository.findActiveById('tenant-2', 'product-1')).resolves.toBeUndefined();
       expect(em.findOne).toHaveBeenCalledWith(ProductEntity, {
         tenantId: 'tenant-2',
         id: 'product-1',
@@ -419,9 +412,7 @@ describe('PostgresOrderRepository', () => {
 
     function transactionalRepository() {
       const txEm = emMock();
-      em.transactional.mockImplementation(
-        async (callback: (em: EmMock) => Promise<unknown>) => callback(txEm),
-      );
+      em.transactional.mockImplementation(async (callback: (em: EmMock) => Promise<unknown>) => callback(txEm));
       return txEm;
     }
 
@@ -439,9 +430,7 @@ describe('PostgresOrderRepository', () => {
 
     it('returns invalid_product when a requested product is missing, inactive, or in another tenant', async () => {
       const txEm = transactionalRepository();
-      txEm.findOne
-        .mockResolvedValueOnce(farmerEntity())
-        .mockResolvedValueOnce(null);
+      txEm.findOne.mockResolvedValueOnce(farmerEntity()).mockResolvedValueOnce(null);
 
       const result = await repository.createOwned(owner, input);
 
@@ -458,9 +447,7 @@ describe('PostgresOrderRepository', () => {
     it('returns insufficient_stock without decrementing stock when the quantity exceeds availability', async () => {
       const txEm = transactionalRepository();
       const product = productEntity({ stockQuantity: 1 });
-      txEm.findOne
-        .mockResolvedValueOnce(farmerEntity())
-        .mockResolvedValueOnce(product);
+      txEm.findOne.mockResolvedValueOnce(farmerEntity()).mockResolvedValueOnce(product);
 
       const result = await repository.createOwned(owner, {
         ...input,
@@ -476,9 +463,7 @@ describe('PostgresOrderRepository', () => {
     it('locks products, decrements stock, and persists the order with computed totals', async () => {
       const txEm = transactionalRepository();
       const product = productEntity({ stockQuantity: 5, priceUzs: 10_000 });
-      txEm.findOne
-        .mockResolvedValueOnce(farmerEntity())
-        .mockResolvedValueOnce(product);
+      txEm.findOne.mockResolvedValueOnce(farmerEntity()).mockResolvedValueOnce(product);
 
       const result = await repository.createOwned(owner, input);
 
@@ -516,9 +501,7 @@ describe('PostgresOrderRepository', () => {
     it('stores null notes when the input omits notes', async () => {
       const txEm = transactionalRepository();
       const product = productEntity({ stockQuantity: 5 });
-      txEm.findOne
-        .mockResolvedValueOnce(farmerEntity())
-        .mockResolvedValueOnce(product);
+      txEm.findOne.mockResolvedValueOnce(farmerEntity()).mockResolvedValueOnce(product);
 
       const result = await repository.createOwned(owner, {
         ...input,
@@ -537,10 +520,7 @@ describe('PostgresOrderRepository', () => {
       const txEm = transactionalRepository();
       const first = productEntity({ id: 'product-1', stockQuantity: 10, priceUzs: 10_000 });
       const second = productEntity({ id: 'product-2', name: 'Urea', stockQuantity: 1, priceUzs: 5_000 });
-      txEm.findOne
-        .mockResolvedValueOnce(farmerEntity())
-        .mockResolvedValueOnce(first)
-        .mockResolvedValueOnce(second);
+      txEm.findOne.mockResolvedValueOnce(farmerEntity()).mockResolvedValueOnce(first).mockResolvedValueOnce(second);
 
       const result = await repository.createOwned(owner, {
         ...input,
@@ -607,9 +587,7 @@ describe('PostgresOrderRepository', () => {
   it('runs order creation inside a transaction', async () => {
     const txEm = emMock();
     txEm.findOne.mockResolvedValue(null);
-    em.transactional.mockImplementation(
-      async (callback: (em: EmMock) => Promise<unknown>) => callback(txEm),
-    );
+    em.transactional.mockImplementation(async (callback: (em: EmMock) => Promise<unknown>) => callback(txEm));
 
     await repository.createOwned(owner, {
       items: [{ productId: 'product-1', quantity: 1 }],

@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { apiRuntimeEvents, clearApiAuthRequired } from '@app/frontend-api-support';
 import { isTmaApp, type TmaEnvironment } from '@app/frontend-runtime';
+import { isMarketplaceRoute } from '../router/user-navigation';
 
 const defaultAuthRoute = '/auth';
 
@@ -67,6 +68,19 @@ export const AuthRedirectBridge = () => {
         const pathname = globalThis.location.pathname;
         const authRoute = safeInternalPath(event.redirectTo) ?? defaultAuthRoute;
         if (isAuthRoute(pathname, authRoute)) {
+          clearApiAuthRequired();
+          return;
+        }
+
+        // Marketplace entry routes intentionally render their own signed-out
+        // state when the initial tenant catalog rejects an absent session.
+        // Other 401s (for example, an expired session during a mutation) keep
+        // the normal protected-route redirect behavior.
+        if (
+          isMarketplaceRoute(pathname) &&
+          event.reason === 'unauthenticated' &&
+          event.error?.endpoint === '/marketplace/catalog'
+        ) {
           clearApiAuthRequired();
           return;
         }

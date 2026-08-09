@@ -1,0 +1,8 @@
+{
+  "agritech.marketplace.contract.status.draft": "Черновик",
+  "agritech.marketplace.contract.status.signed": "Подписан",
+  "agritech.marketplace.contract.status.active": "Активен",
+  "agritech.marketplace.contract.status.completed": "Завершён",
+  "agritech.marketplace.contract.status.cancelled": "Отменён",
+  "agritech.marketplace.contract.status.legacy_review_required": "Требуется проверка прежнего договора"
+}

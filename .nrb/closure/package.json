@@ -58,6 +58,7 @@
     "@opentelemetry/sdk-metrics": "2.9.0",
     "@opentelemetry/sdk-node": "0.220.0",
     "@opentelemetry/semantic-conventions": "1.43.0",
+    "@playwright/test": "1.61.1",
     "@radix-ui/react-alert-dialog": "1.1.20",
     "@radix-ui/react-checkbox": "1.3.8",
     "@radix-ui/react-dialog": "1.1.20",
@@ -148,7 +149,6 @@
     "@nx/react": "23.1.0",
     "@nx/vite": "23.1.0",
     "@opentelemetry/instrumentation-mongodb": "0.73.0",
-    "@playwright/test": "1.61.1",
     "@stryker-mutator/core": "9.6.1",
     "@swc-node/register": "1.12.1",
     "@swc/core": "1.15.46",
@@ -182,7 +182,7 @@
     "yaml": "2.9.0"
   },
   "nrb": {
-    "configHash": "92165a6c6a271252648f12c42077ce16ae3bc81950b0c332414219edd1125e48",
-    "graphDigest": "da750754d2618b8588e32b387787235ff86e19ffefeb823ce30cb1b604b1ed06"
+    "configHash": "df5655e4a6e2157ea0bcaddc3f8ae0f3ed0b3692d14fda5c3b195ee806b19627",
+    "graphDigest": "d6b1ec88158952edd1160b2e7ede55a6840052f27ac11a458ff0266a3447592b"
   }
 }
