@@ -1,0 +1,23 @@
+---
+import { LandingReactIsland } from "../../app/landing-react-island";
+import "../../app/styles/global.css";
+
+const title = "Nest React Boilerplate";
+const description = "A focused foundation for your next product.";
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>{title}</title>
+    <base href="/" />
+    <meta name="description" content={description} />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <script is:inline src="/runtime-config.js"></script>
+  </head>
+  <body>
+    <LandingReactIsland client:load />
+  </body>
+</html>
