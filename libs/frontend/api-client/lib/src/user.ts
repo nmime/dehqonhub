@@ -1,4 +1,4 @@
-// REQ-AGRITECH-WEB-006 REQ-AGRITECH-ROUTING-015: AgriTech pages consume generated OpenAPI path and schema types through this boundary.
+// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016
 import { useQuery, type UseQueryOptions } from '@tanstack/react-query';
 import createClient from 'openapi-fetch';
 import createQueryClient from 'openapi-react-query';
@@ -51,16 +51,18 @@ export type AdvisoryListDto = components['schemas']['AdvisoryListDto'];
 export type CreatePaymentDto = components['schemas']['CreatePaymentDto'];
 export type PaymentHandoffViewDto = components['schemas']['PaymentHandoffViewDto'];
 export type VerificationViewDto = components['schemas']['VerificationViewDto'];
-export type SubmitVerificationDto = components['schemas']['SubmitVerificationDto'];
 export type VerificationDocumentDto = components['schemas']['VerificationDocumentDto'];
 export type CartViewDto = components['schemas']['CartViewDto'];
 export type CartListDto = components['schemas']['CartListDto'];
 export type CartItemDto = components['schemas']['CartItemDto'];
 export type AddToCartDto = components['schemas']['AddToCartDto'];
 export type UpdateCartItemDto = components['schemas']['UpdateCartItemDto'];
+export type CheckoutCartDto = components['schemas']['CheckoutCartDto'];
+export type CheckoutCartResultDto = components['schemas']['CheckoutCartResultDto'];
 export type SampleViewDto = components['schemas']['SampleViewDto'];
 export type SampleListDto = components['schemas']['SampleListDto'];
 export type SampleUsageViewDto = components['schemas']['SampleUsageViewDto'];
+export type RequestSampleDto = components['schemas']['RequestSampleDto'];
 export type FavoriteViewDto = components['schemas']['FavoriteViewDto'];
 export type FavoriteListDto = components['schemas']['FavoriteListDto'];
 export type ReviewViewDto = components['schemas']['ReviewViewDto'];
@@ -72,15 +74,17 @@ export type CreateRequestDto = components['schemas']['CreateRequestDto'];
 export type OfferViewDto = components['schemas']['OfferViewDto'];
 export type OfferListDto = components['schemas']['OfferListDto'];
 export type RequestOfferDto = components['schemas']['RequestOfferDto'];
+export type OfferSelectionResultDto = components['schemas']['OfferSelectionResultDto'];
+export type ContractLineDto = components['schemas']['ContractLineDto'];
+export type ContractDeliveryQuoteDto = components['schemas']['ContractDeliveryQuoteDto'];
 export type ContractViewDto = components['schemas']['ContractViewDto'];
 export type ContractListDto = components['schemas']['ContractListDto'];
-export type CreateContractDto = components['schemas']['CreateContractDto'];
 export type AiConsultationViewDto = components['schemas']['AiConsultationViewDto'];
 export type AiConsultationListDto = components['schemas']['AiConsultationListDto'];
 export type AskAiDto = components['schemas']['AskAiDto'];
 
 const farmerPath = '/farmer';
-const catalogPath = '/catalog';
+const catalogPath = '/marketplace/catalog';
 const ordersPath = '/orders';
 const agritechPartnersPath = '/partners';
 const agritechSupplierProductsPath = '/supplier/products';
@@ -95,23 +99,25 @@ const agritechDeliveryPath = '/deliveries/{id}';
 const agritechFieldVisitsPath = '/field-visits';
 const agritechAdvisoriesPath = '/advisories';
 const agritechPaymentsPath = '/payments';
-const verificationPath = '/verification';
-const cartPath = '/cart';
-const cartItemPath = '/cart/{id}/items/{productId}';
-const cartCheckoutPath = '/cart/{id}/checkout';
-const samplesPath = '/samples';
-const samplesUsagePath = '/samples/usage';
-const favoritesPath = '/favorites';
-const favoritePath = '/favorites/{productId}';
-const reviewsPath = '/reviews';
-const reviewsProductPath = '/reviews/{productId}';
-const requestsPath = '/requests';
-const myRequestsPath = '/requests/mine';
-const offersPath = '/requests/{id}/offers';
-const chooseOfferPath = '/requests/{id}/offers/{offerId}/choose';
-const contractsPath = '/contracts';
-const contractSignPath = '/contracts/{id}/sign';
-const aiPath = '/ai';
+const verificationPath = '/marketplace/verification';
+const cartPath = '/marketplace/cart';
+const cartByIdPath = '/marketplace/cart/{id}';
+const cartItemsPath = '/marketplace/cart/items';
+const cartItemPath = '/marketplace/cart/{id}/items/{productId}';
+const cartCheckoutPath = '/marketplace/cart/{id}/checkout';
+const samplesPath = '/marketplace/samples';
+const samplesUsagePath = '/marketplace/samples/usage';
+const favoritesPath = '/marketplace/favorites';
+const favoritePath = '/marketplace/favorites/{productId}';
+const reviewsProductPath = '/marketplace/reviews/{productId}';
+const requestsPath = '/marketplace/requests';
+const myRequestsPath = '/marketplace/requests/mine';
+const offersPath = '/marketplace/requests/{id}/offers';
+const chooseOfferPath = '/marketplace/requests/{id}/offers/{offerId}/choose';
+const contractsPath = '/marketplace/contracts';
+const contractDeliveryQuotePath = '/marketplace/contracts/{id}/delivery-quote';
+const contractSignPath = '/marketplace/contracts/{id}/sign';
+const aiPath = '/marketplace/ai';
 
 export const agriTechOperationsControllerListPartners = (options?: ApiClientRequestOptions) =>
   client.GET(agritechPartnersPath, toOpenApiFetchOptions(options));
@@ -163,33 +169,29 @@ export const agriTechOperationsControllerListAdvisories = (options?: ApiClientRe
 
 export const marketplaceControllerGetVerification = (options?: ApiClientRequestOptions) =>
   client.GET(verificationPath, toOpenApiFetchOptions(options));
-export const marketplaceControllerSubmitVerification = (body: SubmitVerificationDto, options?: ApiClientRequestOptions) =>
-  client.POST(verificationPath, { ...toOpenApiFetchOptions(options), body });
 export const marketplaceControllerListCarts = (options?: ApiClientRequestOptions) =>
   client.GET(cartPath, toOpenApiFetchOptions(options));
 export const marketplaceControllerGetCart = (id: string, options?: ApiClientRequestOptions) =>
-  client.GET('/cart/{id}', { ...toOpenApiFetchOptions(options), params: { path: { id } } });
+  client.GET(cartByIdPath, { ...toOpenApiFetchOptions(options), params: { path: { id } } });
 export const marketplaceControllerAddToCart = (body: AddToCartDto, options?: ApiClientRequestOptions) =>
-  client.POST('/cart/items', { ...toOpenApiFetchOptions(options), body });
-export const marketplaceControllerRemoveCartItem = (
-  id: string,
-  productId: string,
-  options?: ApiClientRequestOptions,
-) => client.DELETE(cartItemPath, { ...toOpenApiFetchOptions(options), params: { path: { id, productId } } });
+  client.POST(cartItemsPath, { ...toOpenApiFetchOptions(options), body });
+export const marketplaceControllerRemoveCartItem = (id: string, productId: string, options?: ApiClientRequestOptions) =>
+  client.DELETE(cartItemPath, { ...toOpenApiFetchOptions(options), params: { path: { id, productId } } });
 export const marketplaceControllerUpdateCartItem = (
   id: string,
   productId: string,
   body: UpdateCartItemDto,
   options?: ApiClientRequestOptions,
 ) => client.PATCH(cartItemPath, { ...toOpenApiFetchOptions(options), params: { path: { id, productId } }, body });
-export const marketplaceControllerCheckoutCart = (id: string, options?: ApiClientRequestOptions) =>
-  client.POST(cartCheckoutPath, { ...toOpenApiFetchOptions(options), params: { path: { id } } });
+export const marketplaceControllerCheckoutCart = (
+  id: string,
+  body: CheckoutCartDto,
+  options?: ApiClientRequestOptions,
+) => client.POST(cartCheckoutPath, { ...toOpenApiFetchOptions(options), params: { path: { id } }, body });
 export const marketplaceControllerListSamples = (options?: ApiClientRequestOptions) =>
   client.GET(samplesPath, toOpenApiFetchOptions(options));
-export const marketplaceControllerRequestSample = (
-  body: { productId: string; sellerId: string },
-  options?: ApiClientRequestOptions,
-) => client.POST(samplesPath, { ...toOpenApiFetchOptions(options), body });
+export const marketplaceControllerRequestSample = (body: RequestSampleDto, options?: ApiClientRequestOptions) =>
+  client.POST(samplesPath, { ...toOpenApiFetchOptions(options), body });
 export const marketplaceControllerSampleUsage = (options?: ApiClientRequestOptions) =>
   client.GET(samplesUsagePath, toOpenApiFetchOptions(options));
 export const marketplaceControllerListFavorites = (options?: ApiClientRequestOptions) =>
@@ -204,7 +206,7 @@ export const marketplaceControllerAddReview = (
   productId: string,
   body: AddReviewDto,
   options?: ApiClientRequestOptions,
-) => client.POST('/reviews/{productId}', { ...toOpenApiFetchOptions(options), params: { path: { productId } }, body });
+) => client.POST(reviewsProductPath, { ...toOpenApiFetchOptions(options), params: { path: { productId } }, body });
 export const marketplaceControllerListRequests = (options?: ApiClientRequestOptions) =>
   client.GET(requestsPath, toOpenApiFetchOptions(options));
 export const marketplaceControllerCreateRequest = (body: CreateRequestDto, options?: ApiClientRequestOptions) =>
@@ -213,22 +215,24 @@ export const marketplaceControllerListMyRequests = (options?: ApiClientRequestOp
   client.GET(myRequestsPath, toOpenApiFetchOptions(options));
 export const marketplaceControllerListOffers = (id: string, options?: ApiClientRequestOptions) =>
   client.GET(offersPath, { ...toOpenApiFetchOptions(options), params: { path: { id } } });
-export const marketplaceControllerMakeOffer = (
-  id: string,
-  body: RequestOfferDto,
-  options?: ApiClientRequestOptions,
-) => client.POST(offersPath, { ...toOpenApiFetchOptions(options), params: { path: { id } }, body });
-export const marketplaceControllerChooseOffer = (
-  id: string,
-  offerId: string,
-  options?: ApiClientRequestOptions,
-) => client.POST(chooseOfferPath, { ...toOpenApiFetchOptions(options), params: { path: { id, offerId } } });
+export const marketplaceControllerMakeOffer = (id: string, body: RequestOfferDto, options?: ApiClientRequestOptions) =>
+  client.POST(offersPath, { ...toOpenApiFetchOptions(options), params: { path: { id } }, body });
+export const marketplaceControllerChooseOffer = (id: string, offerId: string, options?: ApiClientRequestOptions) =>
+  client.POST(chooseOfferPath, { ...toOpenApiFetchOptions(options), params: { path: { id, offerId } } });
 export const marketplaceControllerListContracts = (options?: ApiClientRequestOptions) =>
   client.GET(contractsPath, toOpenApiFetchOptions(options));
-export const marketplaceControllerCreateContract = (body: CreateContractDto, options?: ApiClientRequestOptions) =>
-  client.POST(contractsPath, { ...toOpenApiFetchOptions(options), body });
+export const marketplaceControllerUpdateContractDeliveryQuote = (
+  id: string,
+  body: ContractDeliveryQuoteDto,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(contractDeliveryQuotePath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { id } },
+    body,
+  });
 export const marketplaceControllerSignContract = (id: string, options?: ApiClientRequestOptions) =>
-  client.POST('/contracts/{id}/sign', { ...toOpenApiFetchOptions(options), params: { path: { id } } });
+  client.POST(contractSignPath, { ...toOpenApiFetchOptions(options), params: { path: { id } } });
 export const marketplaceControllerListAi = (options?: ApiClientRequestOptions) =>
   client.GET(aiPath, toOpenApiFetchOptions(options));
 export const marketplaceControllerAskAi = (body: AskAiDto, options?: ApiClientRequestOptions) =>

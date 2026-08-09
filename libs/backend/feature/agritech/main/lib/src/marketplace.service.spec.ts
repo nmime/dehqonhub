@@ -1,22 +1,19 @@
-// @requirements REQ-AGRITECH-PROFILE-001 REQ-AGRITECH-CATALOG-002 REQ-AGRITECH-ORDER-003
+// @requirements REQ-AGRITECH-ORDER-003 REQ-AGRITECH-MARKETPLACE-016
 import { describe, expect, it, vi } from 'vitest';
-import { BadRequestException } from '@nestjs/common';
-import { ConflictException, ForbiddenException } from '@app/backend-common-exception';
+import { BadRequestException, ConflictException, ForbiddenException } from '@app/backend-common-exception';
 import type { MarketplaceRepository } from '@app/backend-feature-agritech-shared';
 import { MarketplaceService } from './marketplace.service';
 
 const owner = { tenantId: 'tenant-1', userId: 'user-1' };
 const now = new Date('2026-08-09T00:00:00Z');
 const ok = <T>(value: T) => ({ status: 'ok' as const, value });
-const fail = (status: string) => ({ status });
-
 function fixture() {
   const repository = {
     getVerification: vi.fn(),
-    submitVerification: vi.fn(),
     reviewVerification: vi.fn(),
     listVerifications: vi.fn(),
     isVerified: vi.fn(),
+    isApprovedOrganization: vi.fn().mockResolvedValue(true),
     getCart: vi.fn(),
     listCarts: vi.fn(),
     addToCart: vi.fn(),
@@ -37,7 +34,7 @@ function fixture() {
     makeOffer: vi.fn(),
     listOffers: vi.fn(),
     chooseOffer: vi.fn(),
-    createContract: vi.fn(),
+    updateContractDeliveryQuote: vi.fn(),
     signContract: vi.fn(),
     listContracts: vi.fn(),
     listTenantContracts: vi.fn(),
@@ -49,81 +46,65 @@ function fixture() {
   return { repository, service };
 }
 
-const verification = {
-  id: 'v-1',
-  tenantId: owner.tenantId,
-  userId: owner.userId,
-  role: 'farmer' as const,
-  level: 'verified' as const,
-  status: 'verified' as const,
-  oneIdLinked: true,
-  documents: [{ kind: 'id' as const, fileName: 'passport.jpg', storageKey: 'k1', optional: false }],
-  createdAt: now,
-  updatedAt: now,
-};
-
 describe('MarketplaceService', () => {
-  it('submits a verification for a fresh profile', async () => {
+  it('represents a missing verification submission as explicit null', async () => {
     const { repository, service } = fixture();
     repository.getVerification.mockResolvedValue(undefined);
-    repository.submitVerification.mockResolvedValue(ok(verification));
-    const result = await service.submitVerification(owner, {
-      role: 'farmer',
-      level: 'verified',
-      oneIdLinked: true,
-      documents: [{ kind: 'id', fileName: 'passport.jpg', storageKey: 'k1' }],
-    });
-    expect(result.status).toBe('verified');
-    expect(repository.submitVerification).toHaveBeenCalled();
+    await expect(service.getVerification(owner)).resolves.toBeNull();
   });
 
-  it('rejects a verification submit with no documents', async () => {
+  it('maps a stale verification review to a canonical conflict', async () => {
     const { repository, service } = fixture();
-    repository.getVerification.mockResolvedValue(undefined);
-    await expect(
-      service.submitVerification(owner, {
-        role: 'farmer',
-        level: 'basic',
-        oneIdLinked: false,
-        documents: [],
-      }),
-    ).rejects.toThrow(BadRequestException);
-  });
+    repository.reviewVerification.mockResolvedValue({ status: 'conflict', field: 'status' });
 
-  it('rejects a re-submit when already verified', async () => {
-    const { repository, service } = fixture();
-    repository.getVerification.mockResolvedValue(verification);
     await expect(
-      service.submitVerification(owner, {
-        role: 'farmer',
-        level: 'verified',
-        oneIdLinked: true,
-        documents: [{ kind: 'id', fileName: 'p.jpg', storageKey: 'k' }],
-      }),
+      service.reviewVerification(owner.tenantId, 'verification-1', 'verified', 'reviewer-1'),
     ).rejects.toThrow(ConflictException);
+  });
+
+  it.each([
+    ['rejected', undefined],
+    ['verified', 'criteria_not_met'],
+  ] as const)('rejects invalid verification reason provenance for %s', async (decision, reason) => {
+    const { repository, service } = fixture();
+
+    await expect(
+      service.reviewVerification(owner.tenantId, 'verification-1', decision, 'reviewer-1', reason),
+    ).rejects.toThrow(BadRequestException);
+    expect(repository.reviewVerification).not.toHaveBeenCalled();
   });
 
   it('blocks sample requests when the user is not verified', async () => {
     const { repository, service } = fixture();
-    repository.isVerified.mockResolvedValue(false);
-    repository.sampleUsageThisMonth.mockResolvedValue(0);
-    await expect(service.requestSample(owner, 'p-1', 's-1')).rejects.toThrow(BadRequestException);
+    repository.roleOf.mockResolvedValue(undefined);
+    await expect(service.requestSample(owner, 'p-1')).rejects.toThrow(ForbiddenException);
+    expect(repository.requestSample).not.toHaveBeenCalled();
   });
 
   it('blocks sample requests over the monthly limit', async () => {
     const { repository, service } = fixture();
-    repository.isVerified.mockResolvedValue(true);
-    repository.sampleUsageThisMonth.mockResolvedValue(5);
-    await expect(service.requestSample(owner, 'p-1', 's-1')).rejects.toThrow(BadRequestException);
+    repository.roleOf.mockResolvedValue('farmer');
+    repository.requestSample.mockResolvedValue({ status: 'invalid_state', field: 'samples' });
+    await expect(service.requestSample(owner, 'p-1')).rejects.toThrow(BadRequestException);
   });
 
   it('allows a sample request within the limit for a verified user', async () => {
     const { repository, service } = fixture();
-    repository.isVerified.mockResolvedValue(true);
-    repository.sampleUsageThisMonth.mockResolvedValue(1);
-    repository.requestSample.mockResolvedValue(ok({ id: 's-1', tenantId: owner.tenantId, userId: owner.userId, productId: 'p-1', sellerId: 's-1', status: 'pending', createdAt: now }));
-    const result = await service.requestSample(owner, 'p-1', 's-1');
+    repository.roleOf.mockResolvedValue('farmer');
+    repository.requestSample.mockResolvedValue(
+      ok({
+        id: 's-1',
+        tenantId: owner.tenantId,
+        userId: owner.userId,
+        productId: 'p-1',
+        sellerId: 's-1',
+        status: 'pending',
+        createdAt: now,
+      }),
+    );
+    const result = await service.requestSample(owner, 'p-1');
     expect(result.id).toBe('s-1');
+    expect(repository.requestSample).toHaveBeenCalledWith(owner, 'p-1');
   });
 
   it('returns sample usage summary', async () => {
@@ -135,35 +116,137 @@ describe('MarketplaceService', () => {
 
   it('requires verification before checkout', async () => {
     const { repository, service } = fixture();
-    repository.isVerified.mockResolvedValue(false);
-    await expect(service.checkoutCart(owner, 'c-1')).rejects.toThrow(ForbiddenException);
+    repository.roleOf.mockResolvedValue(undefined);
+    await expect(service.checkoutCart(owner, 'c-1', { deliveryTerms: 'pickup' })).rejects.toThrow(ForbiddenException);
+  });
+
+  it('rejects checkout for a verified seller-only role', async () => {
+    const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue('seller');
+    await expect(service.checkoutCart(owner, 'c-1', { deliveryTerms: 'pickup' })).rejects.toThrow(ForbiddenException);
+    expect(repository.checkoutCart).not.toHaveBeenCalled();
+  });
+
+  it('checks out only for a verified buyer role and returns a persisted contract reference', async () => {
+    const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue('buyer');
+    repository.checkoutCart.mockResolvedValue(ok({ cartId: 'c-1', contractId: 'contract-1' }));
+
+    await expect(service.checkoutCart(owner, 'c-1', { deliveryTerms: 'seller_delivery' })).resolves.toEqual({
+      cartId: 'c-1',
+      contractId: 'contract-1',
+    });
+    expect(repository.checkoutCart).toHaveBeenCalledWith(owner, 'c-1', {
+      deliveryTerms: 'seller_delivery',
+    });
+  });
+
+  it('accepts reviews only from a verified marketplace buyer with repository purchase evidence', async () => {
+    const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue('buyer');
+    repository.addReview.mockResolvedValue(
+      ok({
+        comment: 'Good quality',
+        createdAt: new Date('2026-08-09T00:00:00.000Z'),
+        id: 'review-1',
+        productId: 'product-1',
+        rating: 5,
+        tenantId: owner.tenantId,
+        userId: owner.userId,
+      }),
+    );
+
+    await expect(service.addReview(owner, 'product-1', 5, 'Good quality')).resolves.toMatchObject({
+      id: 'review-1',
+    });
+    expect(repository.addReview).toHaveBeenCalledWith(owner, 'product-1', 5, 'Good quality');
+  });
+
+  it('rejects a review from an unverified account before repository access', async () => {
+    const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue(undefined);
+
+    await expect(service.addReview(owner, 'product-1', 5)).rejects.toThrow(ForbiddenException);
+    expect(repository.addReview).not.toHaveBeenCalled();
   });
 
   it('requires verification before creating a request', async () => {
     const { repository, service } = fixture();
-    repository.isVerified.mockResolvedValue(false);
-    await expect(
-      service.createRequest(owner, { title: 'Corn', region: 'Samarkand' }),
-    ).rejects.toThrow(ForbiddenException);
+    repository.roleOf.mockResolvedValue(undefined);
+    await expect(service.createRequest(owner, { title: 'Corn', region: 'Samarkand' })).rejects.toThrow(
+      ForbiddenException,
+    );
   });
 
-  it('requires verification before creating a contract', async () => {
+  it('denies a verified buyer without an approved buyer organization', async () => {
     const { repository, service } = fixture();
-    repository.isVerified.mockResolvedValue(false);
-    await expect(
-      service.createContract(owner, {
-        buyerUserId: 'b-1',
-        sellerUserId: 's-1',
-        subject: 'Corn 10t',
-        amountUzs: 5000000,
-        deliveryTerms: 'pickup',
-        factoringEnabled: false,
-      }),
-    ).rejects.toThrow(ForbiddenException);
+    repository.roleOf.mockResolvedValue('buyer');
+    repository.isApprovedOrganization.mockResolvedValue(false);
+
+    await expect(service.createRequest(owner, { title: 'Corn', region: 'Samarkand' })).rejects.toThrow(
+      ForbiddenException,
+    );
+    expect(repository.createRequest).not.toHaveBeenCalled();
   });
 
-  it('signs a contract via the repository', async () => {
+  it('allows offers only from verified seller or farmer roles', async () => {
     const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue('buyer');
+    await expect(service.makeOffer(owner, 'request-1', 5_000_000, 'pickup')).rejects.toThrow(ForbiddenException);
+    expect(repository.makeOffer).not.toHaveBeenCalled();
+
+    repository.roleOf.mockResolvedValue('seller');
+    repository.makeOffer.mockResolvedValue(ok({ id: 'offer-1' }));
+    await expect(service.makeOffer(owner, 'request-1', 5_000_000, 'pickup')).resolves.toMatchObject({ id: 'offer-1' });
+  });
+
+  it('returns the persisted contract reference from owner offer selection', async () => {
+    const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue('buyer');
+    repository.chooseOffer.mockResolvedValue(
+      ok({ requestId: 'request-1', offerId: 'offer-1', sellerUserId: 'seller-1', contractId: 'contract-1' }),
+    );
+
+    await expect(service.chooseOffer(owner, 'request-1', 'offer-1')).resolves.toMatchObject({
+      contractId: 'contract-1',
+    });
+  });
+
+  it('maps an already-decided offer selection to a canonical conflict', async () => {
+    const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue('buyer');
+    repository.chooseOffer.mockResolvedValue({ status: 'conflict', field: 'status' });
+
+    await expect(service.chooseOffer(owner, 'request-1', 'offer-1')).rejects.toThrow(ConflictException);
+  });
+
+  it('allows only a verified seller role to quote seller delivery', async () => {
+    const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue('buyer');
+    await expect(
+      service.updateContractDeliveryQuote(owner, 'contract-1', { deliveryPriceUzs: 250_000 }),
+    ).rejects.toThrow(ForbiddenException);
+    expect(repository.updateContractDeliveryQuote).not.toHaveBeenCalled();
+
+    repository.roleOf.mockResolvedValue('seller');
+    repository.updateContractDeliveryQuote.mockResolvedValue(
+      ok({ id: 'contract-1', deliveryTerms: 'seller_delivery', deliveryPriceUzs: 250_000 }),
+    );
+    await expect(
+      service.updateContractDeliveryQuote(owner, 'contract-1', { deliveryPriceUzs: 250_000 }),
+    ).resolves.toMatchObject({ deliveryPriceUzs: 250_000 });
+  });
+
+  it('requires verified marketplace identity before signing', async () => {
+    const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue(undefined);
+    await expect(service.signContract(owner, 'c-1')).rejects.toThrow(ForbiddenException);
+    expect(repository.signContract).not.toHaveBeenCalled();
+  });
+
+  it('signs a contract via the repository for a verified party', async () => {
+    const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue('farmer');
     repository.signContract.mockResolvedValue(ok({ id: 'c-1', status: 'signed' }));
     const result = await service.signContract(owner, 'c-1');
     expect(result.status).toBe('signed');

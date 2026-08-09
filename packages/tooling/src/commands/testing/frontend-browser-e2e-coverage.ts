@@ -22,11 +22,15 @@ declare global {
 }
 
 const args = new Map<string, string>();
+const journeyClicks: string[] = [];
+const journeyPaths: string[] = [];
 for (let index = 2; index < process.argv.length; index += 1) {
   const key = process.argv[index];
   const value = process.argv[index + 1];
   if (key.startsWith("--") && value && !value.startsWith("--")) {
     args.set(key.slice(2), value);
+    if (key === "--journey-click") journeyClicks.push(value);
+    if (key === "--journey-path") journeyPaths.push(value);
     index += 1;
   }
 }
@@ -37,8 +41,11 @@ const contains = args.get("contains");
 const coverageDir = args.get("coverage-dir");
 if (!dist || !appName || !contains || !coverageDir) {
   throw new Error(
-    "Usage: frontend-browser-e2e-coverage --dist <dir> --app-name <name> --contains <text> --coverage-dir <dir>",
+    "Usage: frontend-browser-e2e-coverage --dist <dir> --app-name <name> --contains <text> --coverage-dir <dir> [--journey-click <accessible-name> --journey-path <same-origin-path>]...",
   );
+}
+if (journeyClicks.length !== journeyPaths.length) {
+  throw new Error("Each --journey-click must have a matching --journey-path");
 }
 
 const workspaceRoot = realpathSync(process.cwd());
@@ -93,6 +100,19 @@ try {
   const bodyText = await page.locator("body").innerText();
   if (!bodyText.includes(contains)) {
     throw new Error(`Expected ${appName} page text to contain: ${contains}`);
+  }
+
+  for (const [index, journeyClick] of journeyClicks.entries()) {
+    const journeyPath = journeyPaths[index];
+    const journeyUrl = new URL(journeyPath, baseUrl);
+    if (!journeyPath.startsWith("/") || journeyUrl.origin !== baseUrl) {
+      throw new Error("--journey-path must be an absolute same-origin path");
+    }
+    const navigation = page.waitForURL(journeyUrl.href);
+    await page.getByRole("button", { name: journeyClick, exact: true }).first().click();
+    await navigation;
+    // Let the SPA commit the destination route before capturing its Istanbul counters.
+    await page.locator("body").innerText();
   }
 
   const coverage = await page.evaluate(() => globalThis.__coverage__);

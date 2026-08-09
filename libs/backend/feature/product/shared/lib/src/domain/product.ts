@@ -9,6 +9,7 @@ export interface Product {
   nameUz?: string;
   category: ProductCategory;
   description: string;
+  supplierId: string;
   supplierName: string;
   priceUzs: number;
   unit: string;

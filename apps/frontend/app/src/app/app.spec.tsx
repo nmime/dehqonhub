@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015
+// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiRuntimeEvents } from '@app/frontend-api-support';
@@ -77,16 +77,13 @@ const setFetch = (...responses: FetchReply[]) => {
   return fetchMock;
 };
 
-const installAgriTechRootFetch = () => {
+const installSignedOutMarketplaceFetch = () => {
   vi.stubGlobal(
     'fetch',
     vi.fn((input: RequestInfo | URL) => {
       const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
-      if (pathname === '/auth/me') {
+      if (pathname === '/auth/me' || pathname === '/marketplace/catalog') {
         return Promise.resolve(jsonResponse({}, false, 401));
-      }
-      if (['/partners', '/supplier/products', '/produce', '/deliveries', '/advisories'].includes(pathname)) {
-        return Promise.resolve(jsonResponse({ data: { items: [] } }));
       }
       return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
     }),
@@ -229,6 +226,7 @@ const submitLogin = async (email = 'user@example.com') => {
 describe('User app shell', () => {
   beforeEach(() => {
     installStorage();
+    vi.stubGlobal('scrollTo', vi.fn());
     window.localStorage.clear();
     document.cookie = 'locale=; path=/; max-age=0';
     document.cookie = 'lang=; path=/; max-age=0';
@@ -242,21 +240,77 @@ describe('User app shell', () => {
     vi.unstubAllEnvs();
   });
 
-  it('renders the AgriTech product at the repository root', async () => {
-    installAgriTechRootFetch();
+  it('renders the signed-out DehqonHub entry at the repository root without duplicate product chrome', async () => {
+    installSignedOutMarketplaceFetch();
     const { container } = render(<App />);
-    await screen.findByRole('heading', { name: 'AgriTech Operations' });
+    await screen.findByRole('heading', { name: 'Sign in to DehqonHub' });
     const html = container.innerHTML;
 
-    expect(html).toContain('AgriTech');
-    expect(html).toContain('Agriculture, coordinated from one place.');
-    expect(html).toContain('AgriTech Operations');
+    expect(container.querySelectorAll('.dh-marketplace')).toHaveLength(1);
+    expect(html).toContain('Dehqon');
+    expect(html).not.toContain('xr-mini-app-bottom-bar');
     expect(html).not.toContain('design v3');
     expect(html).not.toContain('route readiness');
     expect(html).not.toContain('3003');
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/auth');
+    });
+    expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/');
+  });
+
+  it('keeps marketplace loading and catalog failure states inside DehqonHub chrome', async () => {
+    let resolveCatalog: ((response: Response) => void) | undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+        if (pathname === '/auth/me') {
+          return Promise.resolve(jsonResponse({}, false, 401));
+        }
+        if (pathname === '/marketplace/catalog') {
+          return new Promise<Response>((resolve) => {
+            resolveCatalog = resolve;
+          });
+        }
+        return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
+      }),
+    );
+
+    const loading = render(<App />);
+    expect(await screen.findByLabelText('Loading…')).toBeTruthy();
+    expect(loading.container.innerHTML).not.toContain('xr-mini-app-bottom-bar');
+    loading.unmount();
+    resolveCatalog?.(jsonResponse({}, false, 503));
+
+    window.history.replaceState({}, '', '/');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+        if (pathname === '/auth/me') {
+          return Promise.resolve(jsonResponse({}, false, 401));
+        }
+        if (pathname === '/marketplace/catalog') {
+          return Promise.resolve(jsonResponse({}, false, 503));
+        }
+        return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
+      }),
+    );
+
+    const failed = render(<App />);
+    expect(await screen.findByRole('heading', { name: 'Catalog unavailable' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
+    expect(failed.container.innerHTML).not.toContain('xr-mini-app-bottom-bar');
   });
 
   it('returns through browser history for routes opened by the app', async () => {
+    window.history.replaceState({}, '', '/auth');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(jsonResponse({}, false, 401))),
+    );
     render(<App />);
     await awaitShell();
     fireEvent.click(screen.getAllByRole('link', { name: 'Settings' })[0]!);
@@ -270,7 +324,7 @@ describe('User app shell', () => {
   });
 
   it('falls back to home when there is no in-app history to pop', async () => {
-    installAgriTechRootFetch();
+    installSignedOutMarketplaceFetch();
     window.history.pushState({}, '', '/settings');
     const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
 
@@ -278,7 +332,7 @@ describe('User app shell', () => {
     await awaitShell();
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
-    expect(await screen.findByRole('heading', { name: 'AgriTech Operations' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Sign in to DehqonHub' })).toBeTruthy();
     expect(back).not.toHaveBeenCalled();
     back.mockRestore();
   });
@@ -343,7 +397,6 @@ describe('User app shell', () => {
 
   it('renders every preserved user route without scaffold diagnostics', async () => {
     const routes = [
-      '/',
       '/auth',
       '/auth/discord/callback',
       '/profile',
@@ -372,7 +425,7 @@ describe('User app shell', () => {
   });
 
   it('renders the home shell even when local storage access throws', async () => {
-    installAgriTechRootFetch();
+    installSignedOutMarketplaceFetch();
     installStorage();
     Object.defineProperty(window, 'localStorage', {
       configurable: true,
@@ -382,8 +435,8 @@ describe('User app shell', () => {
     });
 
     const { container } = render(<App />);
-    await screen.findByRole('heading', { name: 'AgriTech Operations' });
-    expect(container.innerHTML).toContain('AgriTech');
+    await screen.findByRole('heading', { name: 'Sign in to DehqonHub' });
+    expect(container.innerHTML).toContain('Dehqon');
   });
 
   it('loads a profile after login establishes a cookie session', async () => {

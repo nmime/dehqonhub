@@ -1,8 +1,18 @@
-// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-ROUTING-015
-import { Body, Controller, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
+// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016
+import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import { ApiParam, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsDate, IsIn, IsInt, IsOptional, IsString, Min } from 'class-validator';
+import {
+  IsDate,
+  IsIn,
+  IsInt,
+  IsOptional,
+  IsString,
+  Min,
+  registerDecorator,
+  type ValidationArguments,
+  type ValidationOptions,
+} from 'class-validator';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse } from '@app/backend-common-response';
 import {
@@ -78,10 +88,41 @@ class PilotStatusDto {
   status!: 'planned' | 'active' | 'completed' | 'cancelled';
 }
 
-class ReviewVerificationDto {
-  @ApiProperty({ enum: ['verified', 'rejected'] }) @IsIn(['verified', 'rejected'])
+const verificationRejectionReasons = ['criteria_not_met', 'documents_unreadable', 'identity_mismatch'] as const;
+
+function IsDecisionRejectionReason(validationOptions?: ValidationOptions): PropertyDecorator {
+  return (target, propertyName) => {
+    registerDecorator({
+      name: 'isDecisionRejectionReason',
+      target: target.constructor,
+      propertyName: propertyName.toString(),
+      options: validationOptions,
+      validator: {
+        validate(value: unknown, validationArguments: ValidationArguments): boolean {
+          const input = validationArguments.object as Partial<ReviewVerificationDto>;
+          if (input.decision === 'verified') {
+            return value === undefined;
+          }
+          return verificationRejectionReasons.includes(value as (typeof verificationRejectionReasons)[number]);
+        },
+        defaultMessage(): string {
+          return 'reason is required for rejected decisions and must be omitted for verified decisions';
+        },
+      },
+    });
+  };
+}
+
+export class ReviewVerificationDto {
+  @ApiProperty({ enum: ['verified', 'rejected'] })
+  @IsIn(['verified', 'rejected'])
   decision!: 'verified' | 'rejected';
-  @ApiPropertyOptional() @IsOptional() @IsString() reason?: string;
+  @ApiPropertyOptional({
+    description: 'Required for rejected decisions and forbidden for verified decisions.',
+    enum: verificationRejectionReasons,
+  })
+  @IsDecisionRejectionReason()
+  reason?: 'criteria_not_met' | 'documents_unreadable' | 'identity_mismatch';
 }
 
 @ApiTags('admin-agritech')
@@ -103,15 +144,22 @@ export class AgriTechAdminController {
   }
 
   @Patch('verifications/:id')
+  @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(VerificationViewDto)
   @RequirePermissions(AdminAgriTechApprovePermission)
   async reviewVerification(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() input: ReviewVerificationDto,
   ) {
     return createOkResponse(
-      await this.marketplace.reviewVerification(principal.tenantId, id, input.decision, principal.subject, input.reason),
+      await this.marketplace.reviewVerification(
+        principal.tenantId,
+        id,
+        input.decision,
+        principal.subject,
+        input.reason,
+      ),
     );
   }
 
@@ -130,22 +178,24 @@ export class AgriTechAdminController {
   }
 
   @Patch('partners/:id/status')
+  @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(PartnerViewDto)
   @RequirePermissions(AdminAgriTechApprovePermission)
   async setPartnerStatus(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() input: PartnerStatusDto,
   ) {
     return createOkResponse(await this.service.setPartnerStatus(ownerFrom(principal), id, input.status));
   }
 
   @Patch('farmers/:id/assignment')
+  @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(FarmerAssignmentViewDto)
   @RequirePermissions(AdminAgriTechWritePermission)
   async assignFarmer(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() input: AssignFarmerDto,
   ) {
     return createOkResponse(await this.service.assignFarmer(ownerFrom(principal), id, input.agentUserId));
@@ -159,11 +209,12 @@ export class AgriTechAdminController {
   }
 
   @Patch('farmers/:id/status')
+  @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(FarmerStatusViewDto)
   @RequirePermissions(AdminAgriTechApprovePermission)
   async setFarmerStatus(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() input: FarmerStatusDto,
   ) {
     return createOkResponse(await this.service.setFarmerStatus(ownerFrom(principal), id, input.status));
@@ -212,11 +263,12 @@ export class AgriTechAdminController {
   }
 
   @Patch('pilots/:id/status')
+  @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(PilotViewDto)
   @RequirePermissions(AdminAgriTechWritePermission)
   async setPilotStatus(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id') id: string,
+    @Param('id', ParseUUIDPipe) id: string,
     @Body() input: PilotStatusDto,
   ) {
     return createOkResponse(await this.service.setPilotStatus(ownerFrom(principal), id, input.status));

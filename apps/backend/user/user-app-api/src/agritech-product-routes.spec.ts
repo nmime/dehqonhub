@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-ROUTING-015
+// @requirements REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016
 import { MODULE_METADATA, PATH_METADATA } from '@nestjs/common/constants';
 import { describe, expect, it } from 'vitest';
 import { AgriTechOperationsController } from '@app/backend-feature-agritech-main';
@@ -22,7 +22,7 @@ describe('AgriTech user product routes', () => {
       Reflect.getMetadata(PATH_METADATA, ProductController),
     ];
 
-    expect(prefixes).toEqual(['/', 'farmer', 'orders', 'payments', 'catalog']);
+    expect(prefixes).toEqual(['/', 'farmer', 'orders', 'payments', 'marketplace/catalog']);
     expect(prefixes).not.toContain(expect.stringContaining('agritech'));
   });
 });

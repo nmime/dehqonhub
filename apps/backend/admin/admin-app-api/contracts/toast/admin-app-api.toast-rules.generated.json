@@ -2031,6 +2031,303 @@
       "enabled": true
     },
     {
+      "id": "admin-app-api:GET:/admin/contracts:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/contracts",
+        "operationId": "AgriTechAdminController_listContracts",
+        "tags": ["admin-agritech"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listcontracts.get.200",
+          "default": "Agri Tech Admin list Contracts completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/admin/contracts:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/contracts",
+        "operationId": "AgriTechAdminController_listContracts",
+        "tags": ["admin-agritech"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listcontracts.get.400",
+          "default": "Agri Tech Admin list Contracts failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/contracts:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/contracts",
+        "operationId": "AgriTechAdminController_listContracts",
+        "tags": ["admin-agritech"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listcontracts.get.401",
+          "default": "Agri Tech Admin list Contracts failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/contracts:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/contracts",
+        "operationId": "AgriTechAdminController_listContracts",
+        "tags": ["admin-agritech"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_403",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listcontracts.get.403",
+          "default": "Agri Tech Admin list Contracts failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/contracts:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/contracts",
+        "operationId": "AgriTechAdminController_listContracts",
+        "tags": ["admin-agritech"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listcontracts.get.404",
+          "default": "Agri Tech Admin list Contracts failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/contracts:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/contracts",
+        "operationId": "AgriTechAdminController_listContracts",
+        "tags": ["admin-agritech"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_409",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listcontracts.get.409",
+          "default": "Agri Tech Admin list Contracts failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/contracts:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/contracts",
+        "operationId": "AgriTechAdminController_listContracts",
+        "tags": ["admin-agritech"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listcontracts.get.500",
+          "default": "Agri Tech Admin list Contracts failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/contracts:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/contracts",
+        "operationId": "AgriTechAdminController_listContracts",
+        "tags": ["admin-agritech"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listcontracts.get.err",
+          "default": "Agri Tech Admin list Contracts failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/contracts:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/contracts",
+        "operationId": "AgriTechAdminController_listContracts",
+        "tags": ["admin-agritech"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listcontracts.get.net",
+          "default": "Agri Tech Admin list Contracts could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:GET:/admin/dashboard/summary:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -19971,6 +20268,600 @@
         "text": {
           "key": "api.toast.admin-app-api.adminuserscontroller-updateuserstatus.patch.net",
           "default": "Admin Users update User Status could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/verifications:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/verifications",
+        "operationId": "AgriTechAdminController_listVerifications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listverifications.get.200",
+          "default": "Agri Tech Admin list Verifications completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/admin/verifications:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/verifications",
+        "operationId": "AgriTechAdminController_listVerifications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listverifications.get.400",
+          "default": "Agri Tech Admin list Verifications failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/verifications:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/verifications",
+        "operationId": "AgriTechAdminController_listVerifications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listverifications.get.401",
+          "default": "Agri Tech Admin list Verifications failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/verifications:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/verifications",
+        "operationId": "AgriTechAdminController_listVerifications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_403",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listverifications.get.403",
+          "default": "Agri Tech Admin list Verifications failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/verifications:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/verifications",
+        "operationId": "AgriTechAdminController_listVerifications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listverifications.get.404",
+          "default": "Agri Tech Admin list Verifications failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/verifications:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/verifications",
+        "operationId": "AgriTechAdminController_listVerifications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_409",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listverifications.get.409",
+          "default": "Agri Tech Admin list Verifications failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/verifications:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/verifications",
+        "operationId": "AgriTechAdminController_listVerifications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listverifications.get.500",
+          "default": "Agri Tech Admin list Verifications failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/verifications:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/verifications",
+        "operationId": "AgriTechAdminController_listVerifications",
+        "tags": ["admin-agritech"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listverifications.get.err",
+          "default": "Agri Tech Admin list Verifications failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/verifications:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/verifications",
+        "operationId": "AgriTechAdminController_listVerifications",
+        "tags": ["admin-agritech"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listverifications.get.net",
+          "default": "Agri Tech Admin list Verifications could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/verifications/{id}:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/verifications/{id}",
+        "operationId": "AgriTechAdminController_reviewVerification",
+        "tags": ["admin-agritech"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_200",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewverification.patch.200",
+          "default": "Agri Tech Admin review Verification completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/verifications/{id}:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/verifications/{id}",
+        "operationId": "AgriTechAdminController_reviewVerification",
+        "tags": ["admin-agritech"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_400",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewverification.patch.400",
+          "default": "Agri Tech Admin review Verification failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/verifications/{id}:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/verifications/{id}",
+        "operationId": "AgriTechAdminController_reviewVerification",
+        "tags": ["admin-agritech"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_401",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewverification.patch.401",
+          "default": "Agri Tech Admin review Verification failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/verifications/{id}:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/verifications/{id}",
+        "operationId": "AgriTechAdminController_reviewVerification",
+        "tags": ["admin-agritech"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_403",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewverification.patch.403",
+          "default": "Agri Tech Admin review Verification failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/verifications/{id}:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/verifications/{id}",
+        "operationId": "AgriTechAdminController_reviewVerification",
+        "tags": ["admin-agritech"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_404",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewverification.patch.404",
+          "default": "Agri Tech Admin review Verification failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/verifications/{id}:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/verifications/{id}",
+        "operationId": "AgriTechAdminController_reviewVerification",
+        "tags": ["admin-agritech"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_409",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewverification.patch.409",
+          "default": "Agri Tech Admin review Verification failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/verifications/{id}:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/verifications/{id}",
+        "operationId": "AgriTechAdminController_reviewVerification",
+        "tags": ["admin-agritech"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_500",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewverification.patch.500",
+          "default": "Agri Tech Admin review Verification failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/verifications/{id}:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/verifications/{id}",
+        "operationId": "AgriTechAdminController_reviewVerification",
+        "tags": ["admin-agritech"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewverification.patch.err",
+          "default": "Agri Tech Admin review Verification failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/verifications/{id}:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/verifications/{id}",
+        "operationId": "AgriTechAdminController_reviewVerification",
+        "tags": ["admin-agritech"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewverification.patch.net",
+          "default": "Agri Tech Admin review Verification could not reach the service."
         },
         "icon": "alert-triangle",
         "color": "amber",

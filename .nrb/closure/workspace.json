@@ -1,11 +1,12 @@
 {
   "schemaVersion": 1,
-  "configHash": "92165a6c6a271252648f12c42077ce16ae3bc81950b0c332414219edd1125e48",
+  "configHash": "df5655e4a6e2157ea0bcaddc3f8ae0f3ed0b3692d14fda5c3b195ee806b19627",
   "preset": null,
   "apps": [
     "admin-app",
     "admin-app-api",
     "auth-app-api",
+    "fullstack-e2e",
     "landing-app",
     "mobile-app",
     "notification-consumer",
@@ -55,7 +56,9 @@
       "telegram-bot-api",
       "user-app-api"
     ],
-    "e2e": [],
+    "e2e": [
+      "fullstack-e2e"
+    ],
     "frontend": [
       "admin-app",
       "landing-app",

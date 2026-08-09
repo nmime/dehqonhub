@@ -606,6 +606,7 @@ describe('social auth and TMA UI', () => {
   });
 
   it('navigates route links without a full page reload', async () => {
+    resetPath('/auth');
     render(<App />);
 
     fireEvent.click((await screen.findAllByRole('link', { name: 'Settings' }))[0]!);

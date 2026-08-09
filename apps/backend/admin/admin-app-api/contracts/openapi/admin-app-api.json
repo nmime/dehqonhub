@@ -17062,6 +17062,7 @@
             "required": true,
             "in": "path",
             "schema": {
+              "format": "uuid",
               "type": "string"
             }
           }
@@ -17954,6 +17955,7 @@
             "required": true,
             "in": "path",
             "schema": {
+              "format": "uuid",
               "type": "string"
             }
           }
@@ -18264,6 +18266,7 @@
             "required": true,
             "in": "path",
             "schema": {
+              "format": "uuid",
               "type": "string"
             }
           }
@@ -18865,6 +18868,7 @@
             "required": true,
             "in": "path",
             "schema": {
+              "format": "uuid",
               "type": "string"
             }
           }
@@ -20949,6 +20953,7 @@
             "required": true,
             "in": "path",
             "schema": {
+              "format": "uuid",
               "type": "string"
             }
           }
@@ -23147,7 +23152,8 @@
             "type": "string"
           },
           "rejectionReason": {
-            "type": "string"
+            "type": "string",
+            "enum": ["criteria_not_met", "documents_unreadable", "identity_mismatch"]
           },
           "createdAt": {
             "format": "date-time",
@@ -23191,10 +23197,40 @@
             "enum": ["verified", "rejected"]
           },
           "reason": {
-            "type": "string"
+            "type": "string",
+            "description": "Required for rejected decisions and forbidden for verified decisions.",
+            "enum": ["criteria_not_met", "documents_unreadable", "identity_mismatch"]
           }
         },
         "required": ["decision"]
+      },
+      "ContractLineDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "unit": {
+            "type": "string"
+          },
+          "unitPriceUzs": {
+            "type": "integer",
+            "maximum": 9999999999999,
+            "minimum": 1
+          },
+          "quantity": {
+            "type": "number"
+          },
+          "lineTotalUzs": {
+            "type": "integer",
+            "maximum": 9999999999999,
+            "minimum": 1
+          }
+        },
+        "required": ["productId", "name", "unit", "unitPriceUzs", "quantity", "lineTotalUzs"]
       },
       "ContractViewDto": {
         "type": "object",
@@ -23212,25 +23248,60 @@
           "sellerUserId": {
             "type": "string"
           },
+          "sourceType": {
+            "type": "string",
+            "enum": ["cart_checkout", "offer_selection"]
+          },
+          "sourceId": {
+            "type": "string"
+          },
           "subject": {
             "type": "string"
           },
           "amountUzs": {
-            "type": "number"
+            "type": "integer",
+            "maximum": 9999999999999,
+            "minimum": 1
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ContractLineDto"
+            }
           },
           "deliveryTerms": {
             "type": "string",
             "enum": ["pickup", "seller_delivery", "by_agreement"]
           },
           "deliveryPriceUzs": {
-            "type": "number"
+            "type": "integer",
+            "maximum": 9999999999999,
+            "minimum": 0
+          },
+          "deliveryNote": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1
+          },
+          "deliveryDays": {
+            "type": "integer",
+            "maximum": 365,
+            "minimum": 1
           },
           "factoringEnabled": {
             "type": "boolean"
           },
           "status": {
             "type": "string",
-            "enum": ["draft", "signed", "active", "completed", "cancelled"]
+            "enum": ["draft", "signed", "active", "completed", "cancelled", "legacy_review_required"]
+          },
+          "buyerSignedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "sellerSignedAt": {
+            "format": "date-time",
+            "type": "string"
           },
           "signedAt": {
             "format": "date-time",
@@ -23252,6 +23323,7 @@
           "sellerUserId",
           "subject",
           "amountUzs",
+          "lines",
           "deliveryTerms",
           "factoringEnabled",
           "status",

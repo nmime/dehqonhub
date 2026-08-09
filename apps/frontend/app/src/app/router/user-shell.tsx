@@ -2,12 +2,13 @@ import { useCallback, useEffect } from 'react';
 import { Outlet, useRouter, useRouterState } from '@tanstack/react-router';
 import { observer, useI18n } from '@app/frontend-runtime';
 import { MiniAppShell } from '../../shared/ui';
-import { getLinkRoute, normalizePath, useUserNavigate } from './user-navigation';
+import { getLinkRoute, isMarketplaceRoute, normalizePath, useUserNavigate } from './user-navigation';
 
 /**
- * Layout route rendered for every user route: the persistent chrome
- * (`MiniAppShell` nav + Back control) with the matched route in `<Outlet/>`.
- * Also delegates in-app anchor clicks to the router so they route client-side.
+ * Layout route rendered for every user route. DehqonHub marketplace routes own
+ * their complete product chrome; preserved account/auth/TMA routes retain the
+ * generic `MiniAppShell` navigation and Back control. In-app anchors are still
+ * delegated to the router in both shells so they route client-side.
  */
 export const UserShell = observer(function UserShell() {
   const { t } = useI18n();
@@ -62,6 +63,10 @@ export const UserShell = observer(function UserShell() {
       globalThis.document.removeEventListener('click', clickHandler);
     };
   }, [navigate]);
+
+  if (isMarketplaceRoute(route)) {
+    return <Outlet />;
+  }
 
   const actions = [
     { href: '/', isCurrent: route === '/', label: t('user.nav.home') },

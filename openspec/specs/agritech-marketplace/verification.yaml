@@ -178,6 +178,11 @@ requirements:
         scenario: SCN-AGRITECH-PARTNER-02
         target: acceptance-e2e:acceptance
         lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-MARKETPLACE-05
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
       - kind: vitest
         file: libs/backend/feature/agritech/admin/lib/src/index.spec.ts
         target: '@app/backend-feature-agritech-admin:test'
@@ -185,6 +190,14 @@ requirements:
       - kind: vitest
         file: libs/backend/feature/agritech/shared/lib/src/index.spec.ts
         target: '@app/backend-feature-agritech-shared:test'
+        lanes: [pr, main]
+      - kind: security
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace.repository.spec.ts
+        target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
+      - kind: component
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-concurrency.component-spec.ts
+        target: '@app/backend-postgres-main-agritech:component-test'
         lanes: [pr, main]
       - kind: contract
         file: libs/backend/feature/agritech/admin/lib/src/agritech-admin.controller.ts
@@ -390,6 +403,10 @@ requirements:
         file: scripts/compose-production.spec.mjs
         script: test:deploy
         lanes: [pr, main]
+      - kind: operations
+        file: .helm/templates/configmap.yaml
+        script: deploy:validate:helm
+        lanes: [pr, main]
   - id: REQ-AGRITECH-ROUTING-015
     projects:
       [
@@ -459,4 +476,127 @@ requirements:
       - kind: static
         file: libs/frontend/api-client/lib/src/user.ts
         script: api:openapi:lint
+        lanes: [pr, main]
+      - kind: static
+        file: .helm/templates/configmap.yaml
+        script: deploy:validate:helm
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-MARKETPLACE-016
+    projects:
+      [
+        user-app,
+        user-app-api,
+        admin-app-api,
+        acceptance-e2e,
+        fullstack-e2e,
+        '@app/frontend-api-client',
+        '@app/frontend-feature-user-i18n',
+        '@app/backend-feature-product-main',
+        '@app/backend-feature-product-shared',
+        '@app/backend-feature-agritech-main',
+        '@app/backend-feature-agritech-admin',
+        '@app/backend-feature-agritech-shared',
+        '@app/backend-postgres-main-agritech',
+      ]
+    risk: critical
+    profiles: [acceptance, api, domain, journey, persistence, security]
+    cucumber:
+      disposition: acceptance
+    evidence:
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-MARKETPLACE-01
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-MARKETPLACE-02
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-MARKETPLACE-03
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-MARKETPLACE-04
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-MARKETPLACE-05
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/shared/lib/src/marketplace-policies.spec.ts
+        target: '@app/backend-feature-agritech-shared:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/main/lib/src/marketplace.service.spec.ts
+        target: '@app/backend-feature-agritech-main:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: apps/backend/user/user-app-api/src/marketplace.e2e-spec.ts
+        target: user-app-api:e2e
+        lanes: [pr, main]
+      - kind: security
+        file: apps/backend/user/user-app-api/src/marketplace.e2e-spec.ts
+        target: user-app-api:e2e
+        lanes: [pr, main]
+      - kind: contract
+        file: apps/backend/admin/admin-app-api/src/agritech-marketplace.e2e-spec.ts
+        target: admin-app-api:e2e
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/admin/lib/src/agritech-admin.controller.spec.ts
+        target: '@app/backend-feature-agritech-admin:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace.repository.spec.ts
+        target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
+      - kind: security
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace.repository.spec.ts
+        target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
+      - kind: component
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-concurrency.component-spec.ts
+        target: '@app/backend-postgres-main-agritech:component-test'
+        lanes: [pr, main]
+      - kind: static
+        file: libs/backend/postgres/main/agritech/lib/src/migrations/agritech.migration.spec.ts
+        target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/product/shared/lib/src/application/product.use-cases.spec.ts
+        target: '@app/backend-feature-product-shared:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/app/router/user-routing.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-components.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/app/project.json
+        target: user-app:e2e
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/e2e/fullstack/src/fullstack.spec.ts
+        target: fullstack-e2e:e2e
+        lanes: [main, nightly]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/user.ts
+        script: api:contracts:check
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/user.ts
+        script: api:clients:check
+        lanes: [pr, main]
+      - kind: static
+        file: libs/frontend/feature/user/i18n/lib/src/translations.ts
+        target: '@app/frontend-feature-user-i18n:build'
         lanes: [pr, main]

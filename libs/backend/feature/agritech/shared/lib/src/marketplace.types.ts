@@ -1,6 +1,7 @@
 export type VerificationRole = 'farmer' | 'seller' | 'buyer';
 export type VerificationLevel = 'basic' | 'verified' | 'trusted';
 export type VerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
+export type VerificationRejectionReason = 'criteria_not_met' | 'documents_unreadable' | 'identity_mismatch';
 
 export interface VerificationDocument {
   kind: 'id' | 'land' | 'lease' | 'cadastre' | 'farm' | 'machinery' | 'warehouse' | 'business';
@@ -20,16 +21,9 @@ export interface Verification {
   documents: VerificationDocument[];
   reviewedBy?: string;
   reviewedAt?: Date;
-  rejectionReason?: string;
+  rejectionReason?: VerificationRejectionReason;
   createdAt: Date;
   updatedAt: Date;
-}
-
-export interface SubmitVerificationInput {
-  role: VerificationRole;
-  level: VerificationLevel;
-  oneIdLinked: boolean;
-  documents: VerificationDocument[];
 }
 
 export interface CartItem {
@@ -86,29 +80,70 @@ export interface RequestOffer {
   tenantId: string;
   sellerUserId: string;
   priceUzs: number;
+  deliveryTerms: DeliveryTerms;
+  deliveryPriceUzs?: number;
   deliveryNote?: string;
   deliveryDays?: number;
   status: OfferStatus;
   createdAt: Date;
 }
 
-export type ContractStatus = 'draft' | 'signed' | 'active' | 'completed' | 'cancelled';
+export type ContractStatus = 'draft' | 'signed' | 'active' | 'completed' | 'cancelled' | 'legacy_review_required';
 export type DeliveryTerms = 'pickup' | 'seller_delivery' | 'by_agreement';
+export type ContractSourceType = 'cart_checkout' | 'offer_selection';
+
+export interface ContractLine {
+  productId: string;
+  name: string;
+  unit: string;
+  unitPriceUzs: number;
+  quantity: number;
+  lineTotalUzs: number;
+}
 
 export interface Contract {
   id: string;
   tenantId: string;
   buyerUserId: string;
   sellerUserId: string;
+  sourceType?: ContractSourceType;
+  sourceId?: string;
   subject: string;
   amountUzs: number;
+  lines: ContractLine[];
   deliveryTerms: DeliveryTerms;
   deliveryPriceUzs?: number;
+  deliveryNote?: string;
+  deliveryDays?: number;
   factoringEnabled: boolean;
   status: ContractStatus;
+  buyerSignedAt?: Date;
+  sellerSignedAt?: Date;
   signedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface CheckoutCartInput {
+  deliveryTerms: DeliveryTerms;
+}
+
+export interface CheckoutCartResult {
+  cartId: string;
+  contractId: string;
+}
+
+export interface ContractDeliveryQuoteInput {
+  deliveryPriceUzs: number;
+  deliveryNote?: string;
+  deliveryDays?: number;
+}
+
+export interface OfferSelectionResult {
+  requestId: string;
+  offerId: string;
+  sellerUserId: string;
+  contractId: string;
 }
 
 export interface Favorite {
@@ -129,6 +164,7 @@ export interface Review {
 }
 
 export type AiConsultationKind = 'recommendation' | 'find_cheaper' | 'season_advice' | 'generic';
+export type AiConsultationAnswer = 'catalog_match' | 'no_catalog_match';
 
 export interface AiConsultation {
   id: string;
@@ -136,7 +172,7 @@ export interface AiConsultation {
   userId: string;
   kind: AiConsultationKind;
   question: string;
-  answer: string;
+  answer: AiConsultationAnswer;
   productIds: string[];
   createdAt: Date;
 }

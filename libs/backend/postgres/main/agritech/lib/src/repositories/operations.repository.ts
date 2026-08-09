@@ -164,27 +164,37 @@ export class PostgresAgriTechOperationsRepository implements AgriTechOperationsR
     productId: string,
     input: UpdateSupplierProductInput,
   ): Promise<OperationResult<SupplierProduct>> {
-    const product = await this.em.findOne(ProductEntity, { tenantId: owner.tenantId, id: productId });
-    if (!product) {
-      return { status: 'not_found' };
-    }
-    const partner = await this.em.findOne(AgriTechPartnerEntity, {
-      tenantId: owner.tenantId,
-      id: product.supplierId,
-      ownerUserId: owner.userId,
-      kind: 'supplier',
+    return this.em.transactional(async (em) => {
+      const product = await em.findOne(
+        ProductEntity,
+        { tenantId: owner.tenantId, id: productId },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!product) {
+        return { status: 'not_found' };
+      }
+      const partner = await em.findOne(
+        AgriTechPartnerEntity,
+        {
+          tenantId: owner.tenantId,
+          id: product.supplierId,
+          ownerUserId: owner.userId,
+          kind: 'supplier',
+        },
+        { lockMode: LockMode.PESSIMISTIC_READ },
+      );
+      if (!partner) {
+        return { status: 'forbidden' };
+      }
+      if (!isPartnerApproved(partner.status)) {
+        return { status: 'partner_unapproved' };
+      }
+      product.priceUzs = input.priceUzs;
+      product.stockQuantity = input.stockQuantity;
+      product.status = input.stockQuantity === 0 ? 'out_of_stock' : input.status;
+      await em.flush();
+      return { status: 'ok', value: toSupplierProduct(product) };
     });
-    if (!partner) {
-      return { status: 'forbidden' };
-    }
-    if (!isPartnerApproved(partner.status)) {
-      return { status: 'partner_unapproved' };
-    }
-    product.priceUzs = input.priceUzs;
-    product.stockQuantity = input.stockQuantity;
-    product.status = input.stockQuantity === 0 ? 'out_of_stock' : input.status;
-    await this.em.flush();
-    return { status: 'ok', value: toSupplierProduct(product) };
   }
 
   async createProduceListing(

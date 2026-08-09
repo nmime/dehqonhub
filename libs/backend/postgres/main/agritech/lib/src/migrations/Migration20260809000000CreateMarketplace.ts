@@ -25,7 +25,7 @@ export class Migration20260809000000CreateMarketplace extends Migration {
       );
     `);
     this.addSql(
-      `create index "ix__marketplace_verifications__tenant_status" on "marketplace_verifications" ("tenant_id", "status");`,
+      `create index "ix__marketplace_verifications__tenant_id_status" on "marketplace_verifications" ("tenant_id", "status");`,
     );
 
     this.addSql(`
@@ -43,10 +43,10 @@ export class Migration20260809000000CreateMarketplace extends Migration {
       );
     `);
     this.addSql(
-      `create index "ix__marketplace_carts__tenant_user_status" on "marketplace_carts" ("tenant_id", "user_id", "status");`,
+      `create index "ix__marketplace_carts__tenant_id_user_id_status" on "marketplace_carts" ("tenant_id", "user_id", "status");`,
     );
     this.addSql(
-      `create index "ix__marketplace_carts__tenant_seller" on "marketplace_carts" ("tenant_id", "seller_id");`,
+      `create index "ix__marketplace_carts__tenant_id_seller_id" on "marketplace_carts" ("tenant_id", "seller_id");`,
     );
 
     this.addSql(`
@@ -63,10 +63,10 @@ export class Migration20260809000000CreateMarketplace extends Migration {
       );
     `);
     this.addSql(
-      `create index "ix__marketplace_samples__tenant_user" on "marketplace_sample_requests" ("tenant_id", "user_id");`,
+      `create index "ix__marketplace_sample_requests__tenant_id_user_id" on "marketplace_sample_requests" ("tenant_id", "user_id");`,
     );
     this.addSql(
-      `create index "ix__marketplace_samples__tenant_seller" on "marketplace_sample_requests" ("tenant_id", "seller_id");`,
+      `create index "ix__marketplace_sample_requests__tenant_id_seller_id" on "marketplace_sample_requests" ("tenant_id", "seller_id");`,
     );
 
     this.addSql(`
@@ -80,7 +80,7 @@ export class Migration20260809000000CreateMarketplace extends Migration {
       );
     `);
     this.addSql(
-      `create index "ix__marketplace_favorites__tenant_user" on "marketplace_favorites" ("tenant_id", "user_id");`,
+      `create index "ix__marketplace_favorites__tenant_id_user_id" on "marketplace_favorites" ("tenant_id", "user_id");`,
     );
 
     this.addSql(`
@@ -97,7 +97,7 @@ export class Migration20260809000000CreateMarketplace extends Migration {
       );
     `);
     this.addSql(
-      `create index "ix__marketplace_reviews__tenant_product" on "marketplace_reviews" ("tenant_id", "product_id");`,
+      `create index "ix__marketplace_reviews__tenant_id_product_id" on "marketplace_reviews" ("tenant_id", "product_id");`,
     );
 
     this.addSql(`
@@ -120,10 +120,10 @@ export class Migration20260809000000CreateMarketplace extends Migration {
       );
     `);
     this.addSql(
-      `create index "ix__marketplace_requests__tenant_status" on "marketplace_requests" ("tenant_id", "status");`,
+      `create index "ix__marketplace_requests__tenant_id_status" on "marketplace_requests" ("tenant_id", "status");`,
     );
     this.addSql(
-      `create index "ix__marketplace_requests__tenant_buyer" on "marketplace_requests" ("tenant_id", "buyer_user_id");`,
+      `create index "ix__marketplace_requests__tenant_id_buyer_user_id" on "marketplace_requests" ("tenant_id", "buyer_user_id");`,
     );
 
     this.addSql(`
@@ -144,10 +144,10 @@ export class Migration20260809000000CreateMarketplace extends Migration {
       );
     `);
     this.addSql(
-      `create index "ix__marketplace_offers__tenant_request" on "marketplace_request_offers" ("tenant_id", "request_id");`,
+      `create index "ix__marketplace_request_offers__tenant_id_request_id" on "marketplace_request_offers" ("tenant_id", "request_id");`,
     );
     this.addSql(
-      `create index "ix__marketplace_offers__tenant_seller" on "marketplace_request_offers" ("tenant_id", "seller_user_id");`,
+      `create index "ix__marketplace_request_offers__tenant_id_seller_user_id" on "marketplace_request_offers" ("tenant_id", "seller_user_id");`,
     );
 
     this.addSql(`
@@ -172,10 +172,10 @@ export class Migration20260809000000CreateMarketplace extends Migration {
       );
     `);
     this.addSql(
-      `create index "ix__marketplace_contracts__tenant_buyer" on "marketplace_contracts" ("tenant_id", "buyer_user_id");`,
+      `create index "ix__marketplace_contracts__tenant_id_buyer_user_id" on "marketplace_contracts" ("tenant_id", "buyer_user_id");`,
     );
     this.addSql(
-      `create index "ix__marketplace_contracts__tenant_seller" on "marketplace_contracts" ("tenant_id", "seller_user_id");`,
+      `create index "ix__marketplace_contracts__tenant_id_seller_user_id" on "marketplace_contracts" ("tenant_id", "seller_user_id");`,
     );
 
     this.addSql(`
@@ -193,7 +193,7 @@ export class Migration20260809000000CreateMarketplace extends Migration {
       );
     `);
     this.addSql(
-      `create index "ix__marketplace_ai__tenant_user" on "marketplace_ai_consultations" ("tenant_id", "user_id");`,
+      `create index "ix__marketplace_ai_consultations__tenant_id_user_id" on "marketplace_ai_consultations" ("tenant_id", "user_id");`,
     );
   }
 

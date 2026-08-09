@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-ROUTING-015 REQ-FRONTEND-JOURNEY-001
+// @requirements REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016 REQ-FRONTEND-JOURNEY-001
 // Evidence for: REQ-AGRITECH-ROUTING-015 REQ-AUTH-FRONTEND-009 REQ-AUTH-IDENTITY-005 REQ-AUTH-SESSION-002 REQ-FRONTEND-ACCESSIBILITY-003 REQ-FRONTEND-ERROR-005 REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-SHELL-004 REQ-FRONTEND-SSR-007 REQ-NOTIFY-PREFERENCE-006
 import { randomUUID } from 'node:crypto';
 import { expect, test, type Locator, type Page } from '@playwright/test';
@@ -338,6 +338,18 @@ test('@critical user login honors safe return navigation, survives reload, and l
   await expect(page.getByText(`Ready: ${email}`)).toBeVisible();
   await expect(page).not.toHaveURL(/token=/u);
   await page.reload();
+  await expect(page.getByText(`Ready: ${email}`)).toBeVisible();
+
+  await gotoWithRetry(page, urls.userApp);
+  await expect(page.getByRole('heading', { level: 1, name: 'Everything for your farm in one place' })).toBeVisible();
+  await page.getByRole('button', { name: 'Catalog', exact: true }).first().click();
+  await expect(page).toHaveURL(`${urls.userApp}/catalog`);
+  await expect(page.getByRole('heading', { level: 1, name: 'Catalog' })).toBeVisible();
+  await page.getByRole('button', { name: 'Verification', exact: true }).click();
+  await expect(page).toHaveURL(`${urls.userApp}/verification`);
+  await expect(page.getByRole('heading', { name: 'Verification provider unavailable' })).toBeVisible();
+
+  await gotoWithRetry(page, `${urls.userApp}/profile`);
   await expect(page.getByText(`Ready: ${email}`)).toBeVisible();
 
   await page.getByRole('link', { name: 'Settings' }).first().click();

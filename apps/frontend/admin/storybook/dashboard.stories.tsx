@@ -16,7 +16,7 @@ const access = createAdminAccess({
 const AdminDashboardComposition = () => (
   <FrontendStateProvider>
     <FrontendI18nProvider initialLocale="en" translations={adminFrontendTranslations}>
-      <AdminLayout access={access} currentPath="/admin">
+      <AdminLayout access={access} currentPath="/admin/dashboard">
         <DashboardPage access={access} />
       </AdminLayout>
     </FrontendI18nProvider>

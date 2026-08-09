@@ -1638,7 +1638,8 @@ export interface components {
       reviewedBy?: string;
       /** Format: date-time */
       reviewedAt?: string;
-      rejectionReason?: string;
+      /** @enum {string} */
+      rejectionReason?: 'criteria_not_met' | 'documents_unreadable' | 'identity_mismatch';
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
@@ -1650,7 +1651,19 @@ export interface components {
     ReviewVerificationDto: {
       /** @enum {string} */
       decision: 'verified' | 'rejected';
-      reason?: string;
+      /**
+       * @description Required for rejected decisions and forbidden for verified decisions.
+       * @enum {string}
+       */
+      reason?: 'criteria_not_met' | 'documents_unreadable' | 'identity_mismatch';
+    };
+    ContractLineDto: {
+      productId: string;
+      name: string;
+      unit: string;
+      unitPriceUzs: number;
+      quantity: number;
+      lineTotalUzs: number;
     };
     ContractViewDto: {
       /** Format: uuid */
@@ -1658,14 +1671,24 @@ export interface components {
       tenantId: string;
       buyerUserId: string;
       sellerUserId: string;
+      /** @enum {string} */
+      sourceType?: 'cart_checkout' | 'offer_selection';
+      sourceId?: string;
       subject: string;
       amountUzs: number;
+      lines: components['schemas']['ContractLineDto'][];
       /** @enum {string} */
       deliveryTerms: 'pickup' | 'seller_delivery' | 'by_agreement';
       deliveryPriceUzs?: number;
+      deliveryNote?: string;
+      deliveryDays?: number;
       factoringEnabled: boolean;
       /** @enum {string} */
-      status: 'draft' | 'signed' | 'active' | 'completed' | 'cancelled';
+      status: 'draft' | 'signed' | 'active' | 'completed' | 'cancelled' | 'legacy_review_required';
+      /** Format: date-time */
+      buyerSignedAt?: string;
+      /** Format: date-time */
+      sellerSignedAt?: string;
       /** Format: date-time */
       signedAt?: string;
       /** Format: date-time */
@@ -1960,6 +1983,7 @@ export type VerificationDocumentDto = components['schemas']['VerificationDocumen
 export type VerificationViewDto = components['schemas']['VerificationViewDto'];
 export type VerificationListDto = components['schemas']['VerificationListDto'];
 export type ReviewVerificationDto = components['schemas']['ReviewVerificationDto'];
+export type ContractLineDto = components['schemas']['ContractLineDto'];
 export type ContractViewDto = components['schemas']['ContractViewDto'];
 export type ContractListDto = components['schemas']['ContractListDto'];
 export type PartnerViewDto = components['schemas']['PartnerViewDto'];

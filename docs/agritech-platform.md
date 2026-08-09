@@ -47,20 +47,26 @@ not add a second `agritech` namespace:
 
 - the user product starts at `/`, with direct workflows such as `/catalog`,
   `/dashboard`, and `/farmer/register`;
-- user API resources are direct paths such as `/farmer`, `/catalog`, `/orders`,
+- general user API resources are direct paths such as `/farmer`, `/orders`,
   `/partners`, `/produce`, `/deliveries`, `/advisories`, and `/payments`;
+- DehqonHub commerce APIs use the dedicated `/marketplace/*` namespace, such as
+  `/marketplace/catalog`, `/marketplace/cart`, and `/marketplace/contracts/{id}`,
+  so same-origin JSON requests cannot collide with the `/catalog`, `/cart`, or
+  other SPA deep links;
 - the privileged product starts at `/admin`, while the generic operational
   dashboard remains available at `/admin/dashboard`;
 - privileged AgriTech APIs retain the authorization boundary but use direct
   resources such as `/admin/partners`, `/admin/farmers`, `/admin/orders`,
   `/admin/analytics`, and `/admin/integrations`.
 
-The old `/marketplace`, `/admin/agritech`, `/agritech/*`, and
-`/admin/agritech/*` HTTP routes are breaking removals. They have no redirects or
-compatibility aliases: deploy the matching API and first-party clients as one
-revision, and roll them back together if needed. No database rollback is
-required. AgriTech domain names and the Telegram `/agritech` command remain
-intentional because they are not HTTP namespace ownership.
+The old bare `/marketplace` browser alias, `/admin/agritech`, `/agritech/*`, and
+`/admin/agritech/*` HTTP routes are breaking removals. The documented
+`/marketplace/*` paths are commerce API resources, not a second product route.
+Removed paths have no redirects or compatibility aliases: deploy the matching
+API and first-party clients as one revision, and roll them back together if
+needed. No database rollback is required. AgriTech domain names and the
+Telegram `/agritech` command remain intentional because they are not HTTP
+namespace ownership.
 
 ## State and isolation guarantees
 

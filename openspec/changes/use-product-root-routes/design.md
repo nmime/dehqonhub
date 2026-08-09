@@ -37,18 +37,22 @@ There is no database or payload migration.
 ### 1. Remove the namespace at the controller source
 
 Nest controllers remain the contract source. The broad user controller uses an
-empty prefix while its method resource paths remain unchanged; farmer, catalog,
-orders, and payments use direct resource prefixes. The privileged controller
-uses `admin`, preserving all class guards and method permissions.
+empty prefix while its method resource paths remain unchanged; farmer, orders,
+and payments use direct resource prefixes. DehqonHub catalog and commerce
+controllers use `/marketplace/*` so same-origin JSON resources cannot collide
+with SPA routes such as `/catalog` and `/cart`. The privileged controller uses
+`admin`, preserving all class guards and method permissions.
 
 Changing generated JSON or clients directly was rejected because it would
 leave runtime routing stale and violate repository contract ownership.
 
 ### 2. Use product roots, not aliases, in both SPAs
 
-The user index route renders the AgriTech operations page. The duplicate
-`/marketplace` route and navigation item are removed, and payment handoff
-returns to `/`. Unknown paths render an explicit localized not-found state.
+The user index route renders the AgriTech operations page. The duplicate bare
+`/marketplace` page route and navigation item are removed, and payment handoff
+returns to `/`. The `/marketplace/*` API namespace is routed to `user-app-api`
+before SPA fallback. Unknown paths render an explicit localized not-found
+state.
 
 The admin `/` route renders the AgriTech admin page behind
 `canReadAgriTech`; the generic dashboard remains at `/dashboard`. Navigation
