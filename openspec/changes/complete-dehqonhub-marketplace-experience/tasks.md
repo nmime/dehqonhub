@@ -137,11 +137,11 @@
 
 ## 8. Assurance and Delivery
 
-- [ ] 8.1 Run strict `spec:validate`, requirement impact from the exact remote
+- [x] 8.1 Run strict `spec:validate`, requirement impact from the exact remote
       base, and the selected exact-revision `spec:verify` PR lane.
-- [ ] 8.2 Run independent `review-specification-assurance`; resolve every finding
+- [x] 8.2 Run independent `review-specification-assurance`; resolve every finding
       or record a precise external/runtime residual risk.
-- [ ] 8.3 Verify migration rollback text, provider fail-closed copy, clean status,
+- [x] 8.3 Verify migration rollback text, provider fail-closed copy, clean status,
       `git diff --check`, authored commit identity, and no secret/generated drift.
-- [ ] 8.4 Commit with repository authorship, push the focused feature branch,
+- [x] 8.4 Commit with repository authorship, push the focused feature branch,
       open a pull request, and prove branch/remote parity without deploying.
