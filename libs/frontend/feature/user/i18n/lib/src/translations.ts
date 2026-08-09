@@ -9,6 +9,7 @@ import enMobileCatalog from '@app/i18n-en-user/mobile.json';
 import enTmaCatalog from '@app/i18n-en-user/tma.json';
 import enAgriTechCatalog from '@app/i18n-en-user/agritech.json';
 import enAgriTechOperationsCatalog from '@app/i18n-en-user/agritech-operations.json';
+import enAgriTechMarketplaceCatalog from '@app/i18n-en-user/agritech-marketplace.json';
 import ruErrorsCatalog from '@app/i18n-ru-common/errors.json';
 import ruCommonCatalog from '@app/i18n-ru-common/shared.json';
 import ruAuthCatalog from '@app/i18n-ru-user/auth.json';
@@ -19,6 +20,7 @@ import ruMobileCatalog from '@app/i18n-ru-user/mobile.json';
 import ruTmaCatalog from '@app/i18n-ru-user/tma.json';
 import ruAgriTechCatalog from '@app/i18n-ru-user/agritech.json';
 import ruAgriTechOperationsCatalog from '@app/i18n-ru-user/agritech-operations.json';
+import ruAgriTechMarketplaceCatalog from '@app/i18n-ru-user/agritech-marketplace.json';
 import uzErrorsCatalog from '@app/i18n-uz-common/errors.json';
 import uzCommonCatalog from '@app/i18n-uz-common/shared.json';
 import uzAuthCatalog from '@app/i18n-uz-user/auth.json';
@@ -29,6 +31,7 @@ import uzMobileCatalog from '@app/i18n-uz-user/mobile.json';
 import uzTmaCatalog from '@app/i18n-uz-user/tma.json';
 import uzAgriTechCatalog from '@app/i18n-uz-user/agritech.json';
 import uzAgriTechOperationsCatalog from '@app/i18n-uz-user/agritech-operations.json';
+import uzAgriTechMarketplaceCatalog from '@app/i18n-uz-user/agritech-marketplace.json';
 import { mergeLocaleCatalogFiles } from '@app/common-i18n-runtime';
 import type { FrontendLocaleCatalogFileEntry, FrontendTranslations } from '@app/frontend-i18n-shared';
 
@@ -43,6 +46,7 @@ export const userFrontendCatalogFileNames = [
   'user/tma.json',
   'user/agritech.json',
   'user/agritech-operations.json',
+  'user/agritech-marketplace.json',
 ] as const;
 
 const enFiles = [
@@ -56,6 +60,7 @@ const enFiles = [
   ['user/tma.json', enTmaCatalog],
   ['user/agritech.json', enAgriTechCatalog],
   ['user/agritech-operations.json', enAgriTechOperationsCatalog],
+  ['user/agritech-marketplace.json', enAgriTechMarketplaceCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const ruFiles = [
@@ -69,6 +74,7 @@ const ruFiles = [
   ['user/tma.json', ruTmaCatalog],
   ['user/agritech.json', ruAgriTechCatalog],
   ['user/agritech-operations.json', ruAgriTechOperationsCatalog],
+  ['user/agritech-marketplace.json', ruAgriTechMarketplaceCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const uzFiles = [
@@ -82,6 +88,7 @@ const uzFiles = [
   ['user/tma.json', uzTmaCatalog],
   ['user/agritech.json', uzAgriTechCatalog],
   ['user/agritech-operations.json', uzAgriTechOperationsCatalog],
+  ['user/agritech-marketplace.json', uzAgriTechMarketplaceCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 export const userFrontendTranslations = {

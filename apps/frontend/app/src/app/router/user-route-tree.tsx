@@ -15,6 +15,7 @@ import { FarmerRegisterPage } from '../../pages/farmer-register';
 import { FarmerDashboardPage } from '../../pages/farmer-dashboard';
 import { ProductCatalogPage } from '../../pages/product-catalog';
 import { AgriTechOperationsPage } from '../../pages/agritech-operations';
+import { MarketplacePage } from '../../pages/marketplace';
 import { NotFoundPage } from '../../pages/not-found';
 import { UserShell } from './user-shell';
 import { useUserNavigate } from './user-navigation';
@@ -28,6 +29,12 @@ const rootRoute = createRootRoute({
 const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
+  component: MarketplacePage,
+});
+
+const operationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/operations',
   component: AgriTechOperationsPage,
 });
 
@@ -151,6 +158,7 @@ const routeTree = rootRoute.addChildren([
   farmerRegisterRoute,
   farmerDashboardRoute,
   productCatalogRoute,
+  operationsRoute,
 ]);
 
 export const createUserRouter = (history: RouterHistory = createBrowserHistory()) =>
