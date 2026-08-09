@@ -2175,3 +2175,340 @@ a {
     animation-iteration-count: 1 !important;
   }
 }
+
+/* ============================================================
+   AgriTech / AgroUz design system (CLAUDE.md mandatory layer)
+   Cream + green, pill shapes, scalloped badges, Poppins.
+   ============================================================ */
+:root {
+  --bg-cream:        #FAF0DE;
+  --bg-cream-card:   #FDF6E9;
+  --surface-white:   #FFFFFF;
+  --green-primary:   #1CA24C;
+  --green-primary-2: #17924B;
+  --green-accent:    #7ED957;
+  --green-tint:      #E4F6E3;
+  --green-deep:      #0E7A3C;
+  --ink:             #2B2B2B;
+  --ink-soft:        #6B6B63;
+  --ink-on-green:    #FFFFFF;
+  --line:            #E9DFC9;
+  --line-on-white:   #EFEFEA;
+  --danger:          #E5484D;
+  --warning:         #E8A33D;
+  --star:            #FFB800;
+  --grad-green: linear-gradient(120deg, #17924B 0%, #35C264 55%, #7ED957 100%);
+  --r-pill:  999px;
+  --r-card:  24px;
+  --r-panel: 32px;
+  --r-img:   16px;
+  --shadow-card:  0 1px 0 rgba(43,43,43,.04);
+  --shadow-hover: 0 8px 24px rgba(28,162,76,.14);
+  --shadow-pop:   0 16px 48px rgba(43,43,43,.16);
+  --font-display: 'Poppins', 'Montserrat', ui-sans-serif, sans-serif;
+  --font-body:    'Poppins', 'Manrope', ui-sans-serif, sans-serif;
+}
+
+.xr-agritech {
+  background: var(--bg-cream);
+  color: var(--ink);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+.xr-agritech * { box-sizing: border-box; }
+
+.xr-agritech h1, .xr-agritech h2, .xr-agritech h3 {
+  font-family: var(--font-display);
+  color: var(--ink);
+  margin: 0;
+}
+.xr-agritech h1 { font-size: clamp(2rem, 5vw, 3.4rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
+.xr-agritech h2 { font-size: clamp(1.3rem, 3vw, 2rem); font-weight: 700; }
+.xr-agritech h3 { font-size: 1.1rem; font-weight: 600; }
+
+/* Pill buttons */
+.xr-agritech .ag-pill, .xr-agritech button.ag-btn {
+  border-radius: var(--r-pill);
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: 0.95rem;
+  border: 1.5px solid transparent;
+  cursor: pointer;
+  transition: background .15s ease, box-shadow .15s ease, transform .1s ease;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: .5rem;
+  padding: .65rem 1.4rem;
+  line-height: 1.2;
+  min-height: 44px;
+  color: var(--ink);
+  background: var(--surface-white);
+}
+.xr-agritech button.ag-btn:disabled { background: var(--line); color: var(--ink-soft); cursor: not-allowed; }
+.xr-agritech .ag-btn--primary {
+  background: var(--green-primary);
+  color: var(--ink-on-green);
+}
+.xr-agritech .ag-btn--primary:hover:not(:disabled) { background: var(--green-primary-2); box-shadow: var(--shadow-hover); }
+.xr-agritech .ag-btn--accent {
+  background: var(--green-accent);
+  color: var(--ink);
+}
+.xr-agritech .ag-btn--outline {
+  background: var(--surface-white);
+  border-color: var(--ink);
+  color: var(--ink);
+}
+.xr-agritech .ag-btn--ghost {
+  background: transparent;
+  color: var(--green-deep);
+}
+.xr-agritech .ag-btn--block { width: 100%; }
+
+/* Inputs / selects: pill */
+.xr-agritech input[type="text"], .xr-agritech input[type="number"],
+.xr-agritech input[type="email"], .xr-agritech input[type="tel"],
+.xr-agritech input[type="date"], .xr-agritech input[type="search"],
+.xr-agritech select, .xr-agritech textarea {
+  border-radius: var(--r-pill);
+  border: 1.5px solid var(--line);
+  background: var(--surface-white);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  padding: .7rem 1.1rem;
+  outline: none;
+  width: 100%;
+}
+.xr-agritech input:focus, .xr-agritech select:focus, .xr-agritech textarea:focus {
+  border-color: var(--green-primary);
+  box-shadow: 0 0 0 3px var(--green-tint);
+}
+.xr-agritech textarea { border-radius: var(--r-card); min-height: 90px; }
+.xr-agritech label.ag-label { display: block; font-size: 13px; font-weight: 600; margin: .25rem 0 .35rem; color: var(--ink); }
+
+/* Cards */
+.xr-agritech .ag-card {
+  background: var(--surface-white);
+  border-radius: var(--r-card);
+  box-shadow: var(--shadow-card);
+  padding: 1.25rem;
+}
+.xr-agritech .ag-card--panel { border-radius: var(--r-panel); }
+.xr-agritech .ag-card--hover:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+.xr-agritech .ag-card--cream { background: var(--bg-cream-card); }
+
+/* Chips */
+.xr-agritech .ag-chip {
+  display: inline-flex; align-items: center; gap: .35rem;
+  border-radius: var(--r-pill);
+  padding: .35rem .85rem;
+  font-size: 13px; font-weight: 600;
+  background: var(--surface-white);
+  border: 1.5px solid var(--line);
+  color: var(--ink);
+  white-space: nowrap;
+}
+.xr-agritech .ag-chip--primary { background: var(--green-primary); color: var(--ink-on-green); border-color: var(--green-primary); }
+.xr-agritech .ag-chip--accent  { background: var(--green-accent); color: var(--ink); border-color: var(--green-accent); }
+.xr-agritech .ag-chip--tint    { background: var(--green-tint); color: var(--green-deep); border-color: transparent; }
+.xr-agritech .ag-chip--active  { background: var(--green-primary); color: var(--ink-on-green); border-color: var(--green-primary); }
+.xr-agritech .ag-chip--warning { background: var(--warning); color: var(--ink); border-color: transparent; }
+.xr-agritech .ag-chip--danger  { color: var(--danger); background: transparent; border-color: transparent; }
+.xr-agritech .ag-chip--outline { background: transparent; color: var(--green-deep); border-color: var(--ink); }
+
+/* Status tag = paired pill chips */
+.xr-agritech .ag-status { display: inline-flex; gap: .4rem; align-items: center; }
+.xr-agritech .ag-status__dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.xr-agritech .ag-status--active .ag-status__dot { background: var(--green-primary); }
+.xr-agritech .ag-status--pending .ag-status__dot { background: var(--warning); }
+.xr-agritech .ag-status--done .ag-status__dot { background: var(--line); }
+.xr-agritech .ag-status--rejected .ag-status__dot { background: var(--danger); }
+
+/* Rating */
+.xr-agritech .ag-star { color: var(--star); }
+.xr-agritech .ag-rating { display: inline-flex; align-items: center; gap: .3rem; font-size: 13px; font-weight: 600; color: var(--ink); }
+
+/* Price */
+.xr-agritech .ag-price { font-size: 1.15rem; font-weight: 700; color: var(--green-deep); }
+.xr-agritech .ag-price--strike { text-decoration: line-through; color: var(--ink-soft); font-weight: 500; font-size: .9rem; }
+
+/* Scalloped badge (SVG mask, brand signature) */
+.xr-agritech .ag-seal {
+  position: relative;
+  width: 64px; height: 64px;
+  flex: 0 0 auto;
+  -webkit-mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 4 L56 8 L63 6 L68 12 L76 12 L79 20 L87 22 L88 31 L95 36 L93 45 L99 50 L93 55 L95 64 L88 69 L87 78 L79 80 L76 88 L68 86 L63 92 L56 90 L50 96 L44 90 L37 92 L32 86 L24 88 L21 80 L13 78 L12 69 L5 64 L7 55 L1 50 L7 45 L5 36 L12 31 L13 22 L21 20 L24 12 L32 14 L37 8 L44 10 Z'/%3E%3C/svg%3E");
+  -webkit-mask-size: contain; -webkit-mask-repeat: no-repeat; -webkit-mask-position: center;
+  mask-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 4 L56 8 L63 6 L68 12 L76 12 L79 20 L87 22 L88 31 L95 36 L93 45 L99 50 L93 55 L95 64 L88 69 L87 78 L79 80 L76 88 L68 86 L63 92 L56 90 L50 96 L44 90 L37 92 L32 86 L24 88 L21 80 L13 78 L12 69 L5 64 L7 55 L1 50 L7 45 L5 36 L12 31 L13 22 L21 20 L24 12 L32 14 L37 8 L44 10 Z'/%3E%3C/svg%3E");
+  mask-size: contain; mask-repeat: no-repeat; mask-position: center;
+  display: grid; place-items: center;
+  background: var(--green-primary);
+  color: var(--ink-on-green);
+}
+.xr-agritech .ag-seal--small { width: 40px; height: 40px; }
+.xr-agritech .ag-seal--accent { background: var(--green-accent); color: var(--ink); }
+.xr-agritech .ag-seal--line { background: transparent; border: 1.5px solid var(--green-primary); color: var(--green-deep); }
+
+/* Gradient panel */
+.xr-agritech .ag-grad {
+  background: var(--grad-green);
+  color: var(--ink-on-green);
+  border-radius: var(--r-panel);
+  padding: 2rem;
+  position: relative;
+  overflow: hidden;
+}
+.xr-agritech .ag-grad h1, .xr-agritech .ag-grad h2, .xr-agritech .ag-grad h3 { color: var(--ink-on-green); }
+
+/* Layout */
+.xr-agritech .ag-container { max-width: 1320px; margin: 0 auto; padding: 24px; }
+.xr-agritech .ag-grid { display: grid; gap: 1rem; }
+.xr-agritech .ag-grid--products { grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 20px; }
+.xr-agritech .ag-grid--2 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.xr-agritech .ag-grid--3 { grid-template-columns: repeat(3, minmax(0,1fr)); }
+.xr-agritech .ag-grid--4 { grid-template-columns: repeat(4, minmax(0,1fr)); }
+.xr-agritech .ag-muted { color: var(--ink-soft); font-size: 13px; }
+.xr-agritech .ag-caption { color: var(--ink-soft); font-size: 12px; font-weight: 500; }
+.xr-agritech .ag-mt { margin-top: 1rem; }
+.xr-agritech .ag-mb { margin-bottom: 1rem; }
+
+/* Header */
+.xr-agritech .ag-header {
+  position: sticky; top: 0; z-index: 40;
+  background: var(--bg-cream);
+  border-bottom: 1px solid var(--line);
+  padding: .7rem 24px;
+}
+.xr-agritech .ag-header__row { display: flex; align-items: center; gap: 1rem; max-width: 1320px; margin: 0 auto; }
+.xr-agritech .ag-logo { font-family: var(--font-display); font-weight: 800; font-size: 1.3rem; color: var(--green-deep); white-space: nowrap; }
+.xr-agritech .ag-search { flex: 1; position: relative; }
+.xr-agritech .ag-search input { padding-right: 3rem; }
+.xr-agritech .ag-search__icon {
+  position: absolute; right: .4rem; top: 50%; transform: translateY(-50%);
+  width: 40px; height: 40px; border-radius: 50%;
+  background: var(--green-primary); color: var(--ink-on-green);
+  display: grid; place-items: center; cursor: pointer; border: 0;
+}
+.xr-agritech .ag-nav { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+
+/* Product card */
+.xr-agritech .ag-product {
+  background: var(--surface-white); border-radius: var(--r-card);
+  box-shadow: var(--shadow-card); overflow: hidden;
+  display: flex; flex-direction: column;
+  transition: box-shadow .15s ease, transform .15s ease;
+  position: relative;
+}
+.xr-agritech .ag-product:hover { box-shadow: var(--shadow-hover); transform: translateY(-2px); }
+.xr-agritech .ag-product__img {
+  aspect-ratio: 4/3; background: var(--bg-cream-card);
+  border-radius: var(--r-img); margin: .75rem; overflow: hidden;
+  display: grid; place-items: center; color: var(--green-deep);
+}
+.xr-agritech .ag-product__body { padding: 0 .9rem .9rem; display: flex; flex-direction: column; gap: .4rem; flex: 1; }
+.xr-agritech .ag-product__tags { display: flex; gap: .3rem; flex-wrap: wrap; }
+.xr-agritech .ag-product__title { font-size: .92rem; font-weight: 600; line-height: 1.3; color: var(--ink); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.xr-agritech .ag-product__footer { margin-top: auto; display: flex; flex-direction: column; gap: .5rem; }
+.xr-agritech .ag-product__fav { position: absolute; top: 1.1rem; right: 1.1rem; z-index: 2; }
+
+/* Tabs */
+.xr-agritech .ag-tabs { display: flex; gap: .5rem; flex-wrap: wrap; }
+.xr-agritech .ag-tab {
+  border-radius: var(--r-pill); padding: .5rem 1.1rem; font-size: .9rem; font-weight: 600;
+  background: var(--surface-white); border: 1.5px solid var(--line); color: var(--ink); cursor: pointer;
+}
+.xr-agritech .ag-tab--on { background: var(--green-primary); color: var(--ink-on-green); border-color: var(--green-primary); }
+
+/* Filter sidebar */
+.xr-agritech .ag-filters { display: flex; flex-direction: column; gap: 1rem; }
+.xr-agritech .ag-filter { display: flex; flex-direction: column; gap: .5rem; }
+.xr-agritech .ag-filter__label { font-size: 13px; font-weight: 600; color: var(--ink); }
+.xr-agritech .ag-check { display: flex; align-items: center; gap: .5rem; font-size: .9rem; color: var(--ink); }
+
+/* Cart */
+.xr-agritech .ag-cart-tabs { display: flex; gap: .5rem; overflow-x: auto; padding-bottom: .25rem; }
+.xr-agritech .ag-cart-item { display: flex; align-items: center; gap: 1rem; padding: .75rem 0; border-bottom: 1px solid var(--line-on-white); }
+.xr-agritech .ag-qty { display: inline-flex; align-items: center; gap: .25rem; }
+.xr-agritech .ag-qty button {
+  width: 32px; height: 32px; border-radius: 50%; border: 1.5px solid var(--line);
+  background: var(--surface-white); cursor: pointer; font-weight: 700; color: var(--ink);
+}
+
+/* Modals */
+.xr-agritech .ag-modal {
+  position: fixed; inset: 0; z-index: 60;
+  background: rgba(43,43,43,.4);
+  display: grid; place-items: center; padding: 16px;
+}
+.xr-agritech .ag-modal__box {
+  background: var(--surface-white); border-radius: var(--r-panel);
+  max-width: 520px; width: 100%; max-height: 90vh; overflow: auto; padding: 1.75rem;
+  box-shadow: var(--shadow-pop);
+}
+.xr-agritech .ag-modal__close { float: right; border: 0; background: transparent; font-size: 1.4rem; color: var(--ink-soft); cursor: pointer; }
+
+/* Stepper (verification / order creation) */
+.xr-agritech .ag-steps { display: flex; align-items: center; gap: .4rem; }
+.xr-agritech .ag-step { width: 12px; height: 12px; border-radius: 50%; background: var(--line); }
+.xr-agritech .ag-step--on { background: var(--green-primary); }
+.xr-agritech .ag-step--done { background: var(--green-accent); }
+
+/* AI consultant */
+.xr-agritech .ag-fab {
+  position: fixed; right: 22px; bottom: 22px; z-index: 50;
+  width: 60px; height: 60px; border-radius: 50%;
+  background: var(--green-primary); color: var(--ink-on-green);
+  border: 0; cursor: pointer; box-shadow: var(--shadow-pop);
+  display: grid; place-items: center;
+}
+.xr-agritech .ag-chat {
+  position: fixed; right: 22px; bottom: 94px; z-index: 55;
+  width: min(400px, calc(100vw - 32px)); height: min(560px, 70vh);
+  background: var(--surface-white); border-radius: var(--r-panel);
+  box-shadow: var(--shadow-pop); display: flex; flex-direction: column; overflow: hidden;
+}
+.xr-agritech .ag-chat__head { background: var(--green-primary); color: var(--ink-on-green); padding: 1rem 1.25rem; font-weight: 600; }
+.xr-agritech .ag-chat__body { flex: 1; overflow: auto; padding: 1rem; display: flex; flex-direction: column; gap: .6rem; }
+.xr-agritech .ag-chat__bubble { max-width: 85%; border-radius: var(--r-pill); padding: .6rem .9rem; font-size: .9rem; line-height: 1.45; }
+.xr-agritech .ag-chat__bubble--bot { background: var(--bg-cream-card); color: var(--ink); border-bottom-left-radius: 6px; }
+.xr-agritech .ag-chat__bubble--user { background: var(--green-primary); color: var(--ink-on-green); align-self: flex-end; border-bottom-right-radius: 6px; }
+.xr-agritech .ag-chat__foot { padding: .75rem; border-top: 1px solid var(--line-on-white); display: flex; gap: .4rem; }
+
+/* Skeleton shimmer */
+.xr-agritech .ag-skeleton { background: linear-gradient(90deg, var(--green-tint) 25%, var(--bg-cream-card) 50%, var(--green-tint) 75%); background-size: 200% 100%; animation: ag-shimmer 1.4s infinite; border-radius: var(--r-card); }
+@keyframes ag-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+/* Empty state */
+.xr-agritech .ag-empty { text-align: center; padding: 3rem 1rem; color: var(--ink-soft); display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+.xr-agritech .ag-empty__seal { width: 80px; height: 80px; }
+
+/* Dashed uploader */
+.xr-agritech .ag-upload {
+  border: 1.5px dashed var(--line); border-radius: var(--r-card);
+  padding: 1.25rem; text-align: center; color: var(--ink-soft); font-size: .9rem; cursor: pointer;
+}
+.xr-agritech .ag-upload:hover { border-color: var(--green-primary); background: var(--green-tint); }
+
+/* Stats cards */
+.xr-agritech .ag-stat { background: var(--surface-white); border-radius: var(--r-card); box-shadow: var(--shadow-card); padding: 1.25rem; }
+.xr-agritech .ag-stat__num { font-family: var(--font-display); font-weight: 800; font-size: 1.9rem; color: var(--green-deep); }
+.xr-agritech .ag-stat__label { font-size: 13px; color: var(--ink-soft); }
+
+/* Footer */
+.xr-agritech .ag-footer {
+  background: var(--green-primary); color: var(--bg-cream-card);
+  border-radius: var(--r-panel) var(--r-panel) 0 0; margin-top: 3rem; padding: 2.5rem 24px 2rem;
+}
+.xr-agritech .ag-footer a { color: var(--bg-cream-card); text-decoration: none; }
+.xr-agritech .ag-footer__cols { display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(160px,1fr)); max-width: 1320px; margin: 0 auto; }
+.xr-agritech .ag-footer__legal { max-width: 1320px; margin: 2rem auto 0; border-top: 1px solid rgba(255,255,255,.2); padding-top: 1rem; font-size: 12px; }
+
+@media (max-width: 720px) {
+  .xr-agritech .ag-grid--2, .xr-agritech .ag-grid--3, .xr-agritech .ag-grid--4 { grid-template-columns: repeat(2, minmax(0,1fr)); }
+  .xr-agritech .ag-header__row { flex-wrap: wrap; gap: .5rem; }
+  .xr-agritech .ag-container { padding: 16px; }
+}

@@ -1052,6 +1052,10 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    RequestSampleDto: {
+      productId: string;
+      sellerId: string;
+    };
     SampleListDto: {
       items: components['schemas']['SampleViewDto'][];
     };
@@ -1059,6 +1063,9 @@ export interface components {
       used: number;
       limit: number;
       remaining: number;
+    };
+    AddFavoriteDto: {
+      productId: string;
     };
     FavoriteViewDto: {
       tenantId: string;
@@ -7600,7 +7607,11 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RequestSampleDto'];
+      };
+    };
     responses: {
       /** @description OK */
       200: {
@@ -8332,7 +8343,11 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddFavoriteDto'];
+      };
+    };
     responses: {
       /** @description OK */
       200: {

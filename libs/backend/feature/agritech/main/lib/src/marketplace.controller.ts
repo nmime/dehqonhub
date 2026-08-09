@@ -81,6 +81,15 @@ class AddReviewDto {
   @ApiPropertyOptional() @IsOptional() @IsString() comment?: string;
 }
 
+class RequestSampleDto {
+  @ApiProperty() @IsString() productId!: string;
+  @ApiProperty() @IsString() sellerId!: string;
+}
+
+class AddFavoriteDto {
+  @ApiProperty() @IsString() productId!: string;
+}
+
 class CreateRequestDto {
   @ApiProperty() @IsString() title!: string;
   @ApiPropertyOptional() @IsOptional() @IsString() product?: string;
@@ -186,7 +195,7 @@ export class MarketplaceController {
   @ApiOkDataResponse(SampleViewDto)
   async requestSample(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Body() input: { productId: string; sellerId: string },
+    @Body() input: RequestSampleDto,
   ) {
     return createOkResponse(await this.service.requestSample(marketplaceOwner(principal), input.productId, input.sellerId));
   }
@@ -208,7 +217,7 @@ export class MarketplaceController {
   @ApiOkDataResponse(CartViewDto)
   async addFavorite(
     @CurrentUser() principal: AuthenticatedPrincipal,
-    @Body() input: { productId: string },
+    @Body() input: AddFavoriteDto,
   ) {
     return createOkResponse(await this.service.addFavorite(marketplaceOwner(principal), input.productId));
   }

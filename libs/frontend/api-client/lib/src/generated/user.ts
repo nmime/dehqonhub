@@ -1052,6 +1052,10 @@ export interface components {
       /** Format: date-time */
       createdAt: string;
     };
+    RequestSampleDto: {
+      productId: string;
+      sellerId: string;
+    };
     SampleListDto: {
       items: components['schemas']['SampleViewDto'][];
     };
@@ -1059,6 +1063,9 @@ export interface components {
       used: number;
       limit: number;
       remaining: number;
+    };
+    AddFavoriteDto: {
+      productId: string;
     };
     FavoriteViewDto: {
       tenantId: string;
@@ -1430,8 +1437,10 @@ export type CartListDto = components['schemas']['CartListDto'];
 export type AddToCartDto = components['schemas']['AddToCartDto'];
 export type UpdateCartItemDto = components['schemas']['UpdateCartItemDto'];
 export type SampleViewDto = components['schemas']['SampleViewDto'];
+export type RequestSampleDto = components['schemas']['RequestSampleDto'];
 export type SampleListDto = components['schemas']['SampleListDto'];
 export type SampleUsageViewDto = components['schemas']['SampleUsageViewDto'];
+export type AddFavoriteDto = components['schemas']['AddFavoriteDto'];
 export type FavoriteViewDto = components['schemas']['FavoriteViewDto'];
 export type FavoriteListDto = components['schemas']['FavoriteListDto'];
 export type ReviewViewDto = components['schemas']['ReviewViewDto'];
@@ -7667,7 +7676,11 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RequestSampleDto'];
+      };
+    };
     responses: {
       /** @description OK */
       200: {
@@ -8399,7 +8412,11 @@ export interface operations {
       path?: never;
       cookie?: never;
     };
-    requestBody?: never;
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddFavoriteDto'];
+      };
+    };
     responses: {
       /** @description OK */
       200: {

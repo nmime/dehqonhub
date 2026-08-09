@@ -7224,6 +7224,16 @@
       "post": {
         "operationId": "MarketplaceController_requestSample",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestSampleDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -8095,6 +8105,16 @@
       "post": {
         "operationId": "MarketplaceController_addFavorite",
         "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddFavoriteDto"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -16158,6 +16178,18 @@
         },
         "required": ["id", "tenantId", "userId", "productId", "sellerId", "status", "createdAt"]
       },
+      "RequestSampleDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string"
+          },
+          "sellerId": {
+            "type": "string"
+          }
+        },
+        "required": ["productId", "sellerId"]
+      },
       "SampleListDto": {
         "type": "object",
         "properties": {
@@ -16184,6 +16216,15 @@
           }
         },
         "required": ["used", "limit", "remaining"]
+      },
+      "AddFavoriteDto": {
+        "type": "object",
+        "properties": {
+          "productId": {
+            "type": "string"
+          }
+        },
+        "required": ["productId"]
       },
       "FavoriteViewDto": {
         "type": "object",
