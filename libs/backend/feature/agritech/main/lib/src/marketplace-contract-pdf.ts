@@ -1,6 +1,9 @@
 // @requirements REQ-AGRITECH-STAGE2-017
 import { createHash } from 'node:crypto';
 import { createRequire } from 'node:module';
+// Keep this runtime asset package visible to Nx's generated deployment manifest.
+// The font paths themselves must still be resolved without loading WOFF files as modules.
+import type {} from '@fontsource/noto-sans';
 import PDFDocument from 'pdfkit';
 import {
   marketplaceMockContractWatermark,
