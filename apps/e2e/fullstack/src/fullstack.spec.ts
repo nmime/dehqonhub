@@ -388,7 +388,7 @@ test('@critical user login honors safe return navigation, survives reload, and l
   await expectPageQuality(page, 'DehqonHub at the 375px Russian-content floor');
 
   await page.getByRole('button', { name: 'Язык' }).click();
-  await page.getByRole('menuitem', { name: 'Узбекский' }).click();
+  await page.getByRole('menuitem', { name: 'Узбекский (латиница)', exact: true }).click();
   await expect(page.getByRole('heading', { level: 1, name: "Xo'jaligingiz uchun hammasi bir joyda" })).toBeVisible();
   await expect(page.locator('html')).toHaveAttribute('lang', 'uz');
 
@@ -468,7 +468,10 @@ test('@critical user login honors safe return navigation, survives reload, and l
   await filterDialog.getByRole('button', { name: 'Close' }).click();
   await page.getByRole('button', { name: 'For sellers: Verification', exact: true }).click();
   await expect(page).toHaveURL(`${urls.userApp}/verification`);
-  await expect(page.getByRole('heading', { name: 'Verification provider unavailable' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Get verified' })).toBeVisible();
+  await expect(page.getByText('Identity linking · Disabled')).toBeVisible();
+  await expect(page.getByText('Document storage · Disabled')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start verification' })).toBeVisible();
 
   await gotoWithRetry(page, `${urls.userApp}/profile`);
   await expect(page.getByText(`Ready: ${email}`)).toBeVisible();

@@ -80,6 +80,35 @@ const initialUsage: MarketplaceSampleUsageDto = {
   used: 0,
 };
 
+interface VerificationResourceAccess {
+  dashboard: boolean;
+  sampleUsage: boolean;
+}
+
+const resourceAccessForVerification = (verification: VerificationViewDto | null): VerificationResourceAccess => {
+  if (verification?.status !== 'verified') {
+    return { dashboard: false, sampleUsage: false };
+  }
+  return { dashboard: true, sampleUsage: verification.role === 'buyer' };
+};
+
+const beginOptionalResourceLoad = <T>(resource: Resource<T>, enabled: boolean, disabled: Resource<T>): Resource<T> =>
+  enabled ? { ...resource, status: 'loading' } : disabled;
+
+const loadVerificationResources = async (
+  access: VerificationResourceAccess,
+  loaders: { dashboard: () => Promise<void>; sampleUsage: () => Promise<void> },
+): Promise<void> => {
+  const requests: Promise<void>[] = [];
+  if (access.dashboard) {
+    requests.push(loaders.dashboard());
+  }
+  if (access.sampleUsage) {
+    requests.push(loaders.sampleUsage());
+  }
+  await Promise.all(requests);
+};
+
 export interface MarketplaceData {
   aiConsultations: Resource<MarketplaceAiConsultationDto[]>;
   auth: SessionState;
@@ -247,6 +276,7 @@ export function useMarketplaceData(listingPublicationId?: string, sellerPublicId
     if (!current()) {
       return;
     }
+    const verificationResourceAccess = resourceAccessForVerification(verificationData);
     setAuth('signed-in');
     setVerification({ data: verificationData, status: 'ready' });
     setCarts((resource) => ({ ...resource, status: 'loading' }));
@@ -255,8 +285,15 @@ export function useMarketplaceData(listingPublicationId?: string, sellerPublicId
     setContracts((resource) => ({ ...resource, status: 'loading' }));
     setSamples((resource) => ({ ...resource, status: 'loading' }));
     setPartners((resource) => ({ ...resource, status: 'loading' }));
-    setDashboard((resource) => ({ ...resource, status: 'loading' }));
-    setSampleUsage((resource) => ({ ...resource, status: 'loading' }));
+    setDashboard((resource) =>
+      beginOptionalResourceLoad(resource, verificationResourceAccess.dashboard, { data: null, status: 'empty' }),
+    );
+    setSampleUsage((resource) =>
+      beginOptionalResourceLoad(resource, verificationResourceAccess.sampleUsage, {
+        data: initialUsage,
+        status: 'idle',
+      }),
+    );
     setOffersByRequest((resource) => ({ ...resource, status: 'loading' }));
     setProviderReadiness((resource) => ({ ...resource, status: 'loading' }));
     setPromotions((resource) => ({ ...resource, status: 'loading' }));
@@ -390,8 +427,10 @@ export function useMarketplaceData(listingPublicationId?: string, sellerPublicId
       loadList(throwOnOpenApiErrorData(api.marketplaceControllerListContracts(requestOptions)), setContracts),
       loadList(throwOnOpenApiErrorData(api.marketplaceControllerListSamples(requestOptions)), setSamples),
       loadList(throwOnOpenApiErrorData(api.agriTechOperationsControllerListPartners(requestOptions)), setPartners),
-      loadUsage(),
-      loadDashboard(),
+      loadVerificationResources(verificationResourceAccess, {
+        dashboard: loadDashboard,
+        sampleUsage: loadUsage,
+      }),
       loadReadiness(),
       loadList(throwOnOpenApiErrorData(api.marketplacePromotionControllerList(requestOptions)), setPromotions),
       loadList(throwOnOpenApiErrorData(api.marketplacePromotionControllerListPlans(requestOptions)), setPromotionPlans),
