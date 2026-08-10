@@ -289,6 +289,9 @@ describe('payment state machine', () => {
     expect(click.authenticateClick({ ...base, serviceId: 'wrong' })).toBe(false);
     expect(click.authenticateClick({ ...base, action: 1 })).toBe(false);
     expect(click.authenticateClick(base)).toBe(false);
+    for (const signString of ['0'.repeat(31), '0'.repeat(33), 'g'.repeat(32)]) {
+      expect(click.authenticateClick({ ...base, signString })).toBe(false);
+    }
 
     const completePayload = 'click-1service-1secretorder-1payment-1500012026-08-02 12:00:00';
     expect(
