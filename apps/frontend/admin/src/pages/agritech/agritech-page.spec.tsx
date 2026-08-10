@@ -172,7 +172,7 @@ describe('AgriTech admin page', () => {
     renderPage();
 
     expect(await screen.findByRole('heading', { name: 'AgriTech control center' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Schedule delivery' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Schedule delivery' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Publish advisory' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Create pilot' })).toBeTruthy();
   });
