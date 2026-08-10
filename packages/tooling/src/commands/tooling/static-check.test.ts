@@ -1342,6 +1342,32 @@ describe("static-check thin locale catalog guard", () => {
     }
   });
 
+  it("removes nested reviewed placeholders to a fixed point before inspecting Latin residue", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      for (const [locale, value] of [
+        ["en", "Nested {{outer{inner}tail}} value"],
+        ["uz", "Ichki {{outer{inner}tail}} qiymat"],
+        ["uz-cyrl", "Ички {{outer{inner}tail}} қиймат"],
+      ] as const) {
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/common/shared.json`,
+          JSON.stringify({ nested: value }, null, 2),
+        );
+      }
+
+      const stderr = checkThinLocaleCatalogs(workspaceRoot)
+        .map((failure) => failure.stderr)
+        .join("\n");
+      assert.doesNotMatch(stderr, /nested contains unreviewed Latin fragment/u);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
   it("rejects overfull files, duplicate raw keys, merged duplicates, and locale key drift", () => {
     const workspaceRoot = createWorkspace();
 

@@ -1757,14 +1757,22 @@ function checkUzbekTranslationQuality(
 }
 
 function removeReviewedTechnicalLatin(value: string): string {
-  return value
-    .replace(/\{\{[^{}]+\}\}|\{[^{}]+\}/gu, '')
-    .replace(/https?:\/\/[^\s]+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|`[^`]+`|\/[a-z][\w-]*/giu, '')
-    .replace(/\b[A-Z][A-Z0-9_.+-]{1,}\b/gu, '')
-    .replace(
-      /\b(?:AgriTech|AgroUz|DehqonHub|Discord|Fastify|GitHub|Google|MailPace|MikroORM|Nest React Boilerplate|NestJS|OneID|OpenID|Payme|PostgreSQL|Redis|Telegram|WebAuthn)\b/gu,
-      '',
-    );
+  let remaining = value;
+  let previous: string;
+
+  do {
+    previous = remaining;
+    remaining = remaining
+      .replace(/\{\{[^{}]+\}\}|\{[^{}]+\}/gu, '')
+      .replace(/https?:\/\/[^\s]+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|`[^`]+`|\/[a-z][\w-]*/giu, '')
+      .replace(/\b[A-Z][A-Z0-9_.+-]{1,}\b/gu, '')
+      .replace(
+        /\b(?:AgriTech|AgroUz|DehqonHub|Discord|Fastify|GitHub|Google|MailPace|MikroORM|Nest React Boilerplate|NestJS|OneID|OpenID|Payme|PostgreSQL|Redis|Telegram|WebAuthn)\b/gu,
+        '',
+      );
+  } while (remaining !== previous);
+
+  return remaining;
 }
 
 function extractTranslationPlaceholders(value: string): string[] {
