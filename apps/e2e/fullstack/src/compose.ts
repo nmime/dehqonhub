@@ -216,6 +216,14 @@ export async function upStack(): Promise<void> {
       }
       return;
     }
+    if (databaseProvider === 'postgres') {
+      await run('docker', [...composeArgs, 'run', '--rm', 'migrate']);
+      const remainingServices = stackServices.filter((service) => !['migrate', 'postgres'].includes(service));
+      if (remainingServices.length > 0) {
+        await run('docker', [...composeArgs, 'up', '--no-build', '-d', ...remainingServices]);
+      }
+      return;
+    }
     await run('docker', stackUpArgs);
   };
 
