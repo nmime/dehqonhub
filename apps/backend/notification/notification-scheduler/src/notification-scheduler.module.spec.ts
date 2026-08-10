@@ -10,7 +10,7 @@ import {
 } from '@app/backend-feature-agritech-main';
 
 describe('NotificationSchedulerModule', () => {
-  it('owns the cron runtime and imports notification delivery capabilities', () => {
+  it('owns the cron runtime and composes only selected notification capabilities', () => {
     expect(NotificationSchedulerModule).toBeDefined();
     const imports = Reflect.getMetadata('imports', NotificationSchedulerModule) as Array<{
       module?: unknown;
@@ -21,8 +21,9 @@ describe('NotificationSchedulerModule', () => {
     const capabilities = Reflect.getMetadata('imports', NotificationSchedulerCapabilitiesModule) as Array<{
       name?: string;
     }>;
-    expect(capabilities).toContain(MarketplaceContractNotificationDeliveryModule);
-    expect(capabilities.map((module) => module.name)).toContain('AgriTechPostgresModule');
+    const capabilityNames = capabilities.map((module) => module.name);
+    const hasAgriTechPersistence = capabilityNames.includes('AgriTechPostgresModule');
+    expect(capabilityNames.includes(MarketplaceContractNotificationDeliveryModule.name)).toBe(hasAgriTechPersistence);
   });
 
   it('fails scheduler startup configuration before a production mock can be constructed', () => {
