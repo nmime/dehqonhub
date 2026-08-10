@@ -127,9 +127,15 @@ export class PaymentConfigurationService {
       String(input.action),
       input.signTime,
     ].join('');
-    // Click mandates MD5 for callback interoperability; the comparison remains constant-time.
-    // eslint-disable-next-line sonarjs/hashing
-    return constantEqual(createHash('md5').update(payload).digest('hex'), input.signString.toLowerCase());
+    const suppliedSignature = input.signString.toLowerCase();
+    if (!/^[a-f0-9]{32}$/u.test(suppliedSignature)) {
+      return false;
+    }
+    // CLICK mandates this exact legacy digest for callback interoperability. The callback is also bound to the
+    // configured service, action, order, amount, prepare identifier, and idempotent persisted state transition.
+    // codeql[js/weak-cryptographic-algorithm]
+    const expectedSignature = createHash('md5').update(payload).digest('hex'); // eslint-disable-line sonarjs/hashing
+    return constantEqual(expectedSignature, suppliedSignature);
   }
 }
 
