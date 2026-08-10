@@ -1,4 +1,4 @@
-title = "DehqonHub Gitleaks configuration"
+title = "Nest React Boilerplate Gitleaks configuration"
 
 [extend]
 useDefault = true
@@ -65,7 +65,6 @@ paths = [
 ]
 regexes = [
   '''document-evidence-key-[234]''',
-  '''farm-correction-[234]\.pdf''',
 ]
 
 # Prose false positive: the default rule reads "…user/admin API,\nDiscord/Telegram selections"

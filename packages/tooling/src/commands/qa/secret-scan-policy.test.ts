@@ -26,6 +26,22 @@ describe("native secret scan policy", () => {
     assert.equal(isAllowedSecretScanValue(variant, "src/runtime-config.json"), false);
   });
 
+  // The allowance used to be a filename-suffix match, so anything anywhere named
+  // like a generated toast file inherited it — including a path that climbs out
+  // of the generated directory. It is anchored to the two real locations now.
+  it("allows generated toast variants only at the anchored generated paths", () => {
+    const variant = ["DELETE", "409", "last-auth-method-unlink-forbidden"].join("_");
+
+    assert.equal(isAllowedSecretScanValue(variant, "vendor/auth-app-api.toast-rules.generated.json"), false);
+    assert.equal(
+      isAllowedSecretScanValue(
+        variant,
+        "apps/backend/auth/auth-app-api/contracts/toast/../../../../secrets/auth-app-api.toast-rules.generated.json",
+      ),
+      false,
+    );
+  });
+
   it("does not allow token-shaped values in generated toast rules", () => {
     assert.equal(
       isAllowedSecretScanValue(
