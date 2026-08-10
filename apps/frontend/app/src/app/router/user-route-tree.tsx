@@ -61,6 +61,15 @@ function MarketplaceContractRouteComponent() {
   return <MarketplacePage contractId={contractId} navigate={navigate} view="contract" />;
 }
 
+function MarketplaceSellerRouteComponent() {
+  const navigate = useUserNavigate();
+  const sellerId = useRouterState({
+    select: (state) => decodeURIComponent(state.location.pathname.slice('/sellers/'.length)),
+  });
+
+  return <MarketplacePage navigate={navigate} sellerId={sellerId} view="seller" />;
+}
+
 const operationsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/operations',
@@ -178,6 +187,12 @@ const productRoute = createRoute({
   component: MarketplaceProductRouteComponent,
 });
 
+const sellerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/sellers/$sellerId',
+  component: MarketplaceSellerRouteComponent,
+});
+
 const favoritesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/favorites',
@@ -230,6 +245,7 @@ const routeTree = rootRoute.addChildren([
   farmerDashboardRoute,
   marketplaceCatalogRoute,
   productRoute,
+  sellerRoute,
   favoritesRoute,
   cartRoute,
   requestsRoute,

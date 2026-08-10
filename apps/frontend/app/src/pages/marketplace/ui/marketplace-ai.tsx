@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import type { Locale } from '@app/frontend-runtime';
-import type { AiConsultationViewDto, ProductViewDto } from '@app/frontend-api-client';
+import type { MarketplaceAiConsultationDto } from '@app/frontend-api-client';
 import { MarketplaceIcon } from './marketplace-icon';
 import { ProductMedia } from './marketplace-product-card';
-import { localizedProductName, type MarketplaceTranslate } from './marketplace-ui';
+import { localizedProductName, type MarketplaceListing, type MarketplaceTranslate } from './marketplace-ui';
 
 type AiKind = 'find_cheaper' | 'generic' | 'recommendation' | 'season_advice';
 
@@ -20,23 +20,36 @@ const resultKeys: Record<AiKind, string> = {
   season_advice: 'agritech.marketplace.ai.result.seasonAdvice',
 };
 
+const ignoreStarterCartConfirmation = () => Promise.resolve(false);
+
 type ChatMessage =
   | { id: string; role: 'user'; text: string }
-  | { answer?: AiConsultationViewDto; id: string; role: 'assistant'; translationKey: string };
+  | { answer?: MarketplaceAiConsultationDto; id: string; role: 'assistant'; translationKey: string };
 
 interface MarketplaceAiProps {
+  canConfirmStarterCart?: boolean;
   locale: Locale;
-  onAsk: (question: string, kind: AiKind) => Promise<AiConsultationViewDto>;
-  onOpenProduct: (product: ProductViewDto) => void;
-  products: ProductViewDto[];
+  onAsk: (question: string, kind: AiKind) => Promise<MarketplaceAiConsultationDto>;
+  onConfirmStarterCart?: (consultation: MarketplaceAiConsultationDto) => Promise<boolean>;
+  onOpenProduct: (product: MarketplaceListing) => void;
+  products: MarketplaceListing[];
   t: MarketplaceTranslate;
 }
 
-export function MarketplaceAi({ locale, onAsk, onOpenProduct, products, t }: Readonly<MarketplaceAiProps>) {
+export function MarketplaceAi({
+  canConfirmStarterCart = true,
+  locale,
+  onAsk,
+  onConfirmStarterCart = ignoreStarterCartConfirmation,
+  onOpenProduct,
+  products,
+  t,
+}: Readonly<MarketplaceAiProps>) {
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [confirmedConsultations, setConfirmedConsultations] = useState<ReadonlySet<string>>(new Set());
   const [mobileModal, setMobileModal] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -111,7 +124,7 @@ export function MarketplaceAi({ locale, onAsk, onOpenProduct, products, t }: Rea
     try {
       const answer = await onAsk(normalized, kind);
       const translationKey =
-        answer.productIds.length === 0 ? 'agritech.marketplace.ai.noMatch' : resultKeys[answer.kind];
+        answer.response.recommendations.length === 0 ? 'agritech.marketplace.ai.noMatch' : resultKeys[answer.kind];
       setMessages((value) => [...value, { answer, id: answer.id, role: 'assistant', translationKey }]);
     } catch {
       setMessages((value) => [
@@ -131,6 +144,18 @@ export function MarketplaceAi({ locale, onAsk, onOpenProduct, products, t }: Rea
     event.preventDefault();
     void ask(question, 'generic');
   };
+
+  const confirmStarterCart = useCallback(
+    async (answer: MarketplaceAiConsultationDto) => {
+      setPending(true);
+      const confirmed = await onConfirmStarterCart(answer);
+      if (confirmed) {
+        setConfirmedConsultations((value) => new Set([...value, answer.id]));
+      }
+      setPending(false);
+    },
+    [onConfirmStarterCart],
+  );
 
   return (
     <>
@@ -201,10 +226,16 @@ export function MarketplaceAi({ locale, onAsk, onOpenProduct, products, t }: Rea
                 ))}
               </div>
               {messages.map((message) => {
+                const answer = message.role === 'assistant' ? message.answer : undefined;
                 const referenced =
-                  (message.role === 'assistant' ? message.answer?.productIds : undefined)
-                    ?.map((id) => products.find((product) => product.id === id))
-                    .filter((product): product is ProductViewDto => Boolean(product)) ?? [];
+                  answer?.listingPublicationIds
+                    .map((id) => products.find((product) => product.id === id))
+                    .filter((product): product is MarketplaceListing => Boolean(product)) ?? [];
+                const showStarterCartConfirmation =
+                  canConfirmStarterCart &&
+                  answer?.response.starterCartPreview.status === 'requires_confirmation' &&
+                  !answer.confirmedAt;
+                const starterCartConfirmed = answer !== undefined && confirmedConsultations.has(answer.id);
                 return (
                   <div className={`dh-ai-message dh-ai-message--${message.role}`} key={message.id}>
                     <p>{message.role === 'assistant' ? t(message.translationKey) : message.text}</p>
@@ -227,6 +258,21 @@ export function MarketplaceAi({ locale, onAsk, onOpenProduct, products, t }: Rea
                           </button>
                         ))}
                       </div>
+                    )}
+                    {showStarterCartConfirmation && (
+                      <button
+                        className="dh-button dh-button--secondary dh-button--block"
+                        disabled={pending || starterCartConfirmed}
+                        onClick={() => {
+                          void confirmStarterCart(answer);
+                        }}
+                        type="button"
+                      >
+                        <MarketplaceIcon name="cart" />
+                        {starterCartConfirmed
+                          ? t('agritech.marketplace.ai.starterCart.confirmed')
+                          : t('agritech.marketplace.ai.starterCart.confirm')}
+                      </button>
                     )}
                   </div>
                 );

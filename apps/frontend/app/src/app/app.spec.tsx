@@ -82,7 +82,10 @@ const installSignedOutMarketplaceFetch = () => {
     'fetch',
     vi.fn((input: RequestInfo | URL) => {
       const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
-      if (pathname === '/auth/me' || pathname === '/marketplace/catalog') {
+      if (pathname === '/marketplace/public/catalog' || pathname === '/marketplace/public/requests') {
+        return Promise.resolve(jsonResponse({ data: { items: [] } }));
+      }
+      if (pathname === '/auth/me' || pathname === '/marketplace/catalog' || pathname === '/marketplace/verification') {
         return Promise.resolve(jsonResponse({}, false, 401));
       }
       return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
@@ -240,10 +243,10 @@ describe('User app shell', () => {
     vi.unstubAllEnvs();
   });
 
-  it('renders the signed-out DehqonHub entry at the repository root without duplicate product chrome', async () => {
+  it('renders the anonymous DehqonHub entry at the repository root without duplicate product chrome', async () => {
     installSignedOutMarketplaceFetch();
     const { container } = render(<App />);
-    await screen.findByRole('heading', { name: 'Sign in to DehqonHub' });
+    await screen.findByRole('heading', { name: 'Everything for your farm in one place' });
     const html = container.innerHTML;
 
     expect(container.querySelectorAll('.dh-marketplace')).toHaveLength(1);
@@ -261,11 +264,13 @@ describe('User app shell', () => {
     expect(html).not.toContain('route readiness');
     expect(html).not.toContain('3003');
 
+    fireEvent.click(screen.getAllByRole('button', { name: 'Verification' })[0]!);
+    await screen.findByRole('heading', { name: 'Sign in to DehqonHub' });
     fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
     await waitFor(() => {
       expect(window.location.pathname).toBe('/auth');
     });
-    expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/');
+    expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/verification');
   });
 
   it('keeps marketplace loading and catalog failure states inside DehqonHub chrome', async () => {
@@ -340,7 +345,7 @@ describe('User app shell', () => {
     await awaitShell();
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
-    expect(await screen.findByRole('heading', { name: 'Sign in to DehqonHub' })).toBeTruthy();
+    expect(await screen.findByRole('heading', { name: 'Everything for your farm in one place' })).toBeTruthy();
     expect(back).not.toHaveBeenCalled();
     back.mockRestore();
   });
@@ -443,7 +448,7 @@ describe('User app shell', () => {
     });
 
     const { container } = render(<App />);
-    await screen.findByRole('heading', { name: 'Sign in to DehqonHub' });
+    await screen.findByRole('heading', { name: 'Everything for your farm in one place' });
     expect(container.innerHTML).toContain('Dehqon');
   });
 

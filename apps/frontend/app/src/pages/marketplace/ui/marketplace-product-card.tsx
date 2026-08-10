@@ -1,22 +1,26 @@
 import { useEffect, useState } from 'react';
 import type { Locale } from '@app/frontend-runtime';
-import type { ProductViewDto } from '@app/frontend-api-client';
 import { MarketplaceIcon, type MarketplaceIconName } from './marketplace-icon';
-import { formatMoney, localizedProductName, type MarketplaceTranslate } from './marketplace-ui';
+import {
+  formatMoney,
+  localizedProductName,
+  type MarketplaceListing,
+  type MarketplaceTranslate,
+} from './marketplace-ui';
 
 interface ProductMediaProps {
   compact?: boolean;
   locale: Locale;
-  product: ProductViewDto;
+  product: MarketplaceListing;
   t: MarketplaceTranslate;
 }
 
-const productCategoryIcons: Record<ProductViewDto['category'], MarketplaceIconName> = {
+const productCategoryIcons: Record<MarketplaceListing['category'], MarketplaceIconName> = {
   equipment: 'equipment',
-  fertilizer: 'produce',
+  fertilizer: 'fertilizer',
   irrigation: 'equipment',
-  other: 'produce',
-  pesticide: 'produce',
+  other: 'input',
+  pesticide: 'pesticide',
   seed: 'seeds',
 };
 
@@ -54,17 +58,19 @@ export function ProductMedia({ compact = false, locale, product, t }: Readonly<P
 }
 
 interface ProductCardProps {
+  canTransact?: boolean;
   favorite: boolean;
   locale: Locale;
-  onAdd: (product: ProductViewDto) => void;
-  onFavorite: (product: ProductViewDto) => void;
-  onOpen: (product: ProductViewDto) => void;
+  onAdd: (product: MarketplaceListing) => void;
+  onFavorite: (product: MarketplaceListing) => void;
+  onOpen: (product: MarketplaceListing) => void;
   pendingAction?: string;
-  product: ProductViewDto;
+  product: MarketplaceListing;
   t: MarketplaceTranslate;
 }
 
 export function MarketplaceProductCard({
+  canTransact = true,
   favorite,
   locale,
   onAdd,
@@ -126,17 +132,19 @@ export function MarketplaceProductCard({
           <strong>{formatMoney(product.priceUzs, locale)}</strong>
           <span>/ {product.unit}</span>
         </div>
-        <button
-          className="dh-button dh-button--primary dh-button--block"
-          disabled={outOfStock || cartPending}
-          onClick={() => {
-            onAdd(product);
-          }}
-          type="button"
-        >
-          <MarketplaceIcon name={cartPending ? 'check' : 'cart'} />
-          {cartPending ? t('agritech.marketplace.loading') : t('agritech.marketplace.product.addToCart')}
-        </button>
+        {canTransact ? (
+          <button
+            className="dh-button dh-button--primary dh-button--block"
+            disabled={outOfStock || cartPending}
+            onClick={() => {
+              onAdd(product);
+            }}
+            type="button"
+          >
+            <MarketplaceIcon name={cartPending ? 'check' : 'cart'} />
+            {cartPending ? t('agritech.marketplace.loading') : t('agritech.marketplace.product.addToCart')}
+          </button>
+        ) : null}
       </div>
     </article>
   );

@@ -1,6 +1,10 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Locale } from '@app/frontend-runtime';
-import type { ProductViewDto, ReviewViewDto, SampleUsageViewDto } from '@app/frontend-api-client';
+import type {
+  MarketplacePublicSellerDto,
+  MarketplaceReviewDto,
+  MarketplaceSampleUsageDto,
+} from '@app/frontend-api-client';
 import type { Resource, ResourceStatus } from '../model/use-marketplace-data';
 import { MarketplaceIcon, type MarketplaceIconName } from './marketplace-icon';
 import { MarketplaceProductCard, ProductMedia } from './marketplace-product-card';
@@ -12,22 +16,24 @@ import {
   querySection,
   sectionForProduct,
   type MarketplaceNavigate,
+  type MarketplaceListing,
   type MarketplaceSection,
   type MarketplaceTranslate,
 } from './marketplace-ui';
 
 interface ProductActions {
+  canTransact?: boolean;
   favoriteIds: ReadonlySet<string>;
-  onAdd: (product: ProductViewDto, quantity?: number) => void;
-  onFavorite: (product: ProductViewDto) => void;
-  onOpen: (product: ProductViewDto) => void;
+  onAdd: (product: MarketplaceListing, quantity?: number) => void;
+  onFavorite: (product: MarketplaceListing) => void;
+  onOpen: (product: MarketplaceListing) => void;
   pendingAction?: string;
 }
 
 interface SharedDiscoveryProps extends ProductActions {
   locale: Locale;
   navigate: MarketplaceNavigate;
-  products: ProductViewDto[];
+  products: MarketplaceListing[];
   t: MarketplaceTranslate;
 }
 
@@ -50,6 +56,11 @@ const sectionIcons: Record<Exclude<MarketplaceSection, 'all'>, MarketplaceIconNa
   seeds: 'seeds',
 };
 
+const formText = (form: FormData, field: string): string => {
+  const value = form.get(field);
+  return typeof value === 'string' ? value.trim() : '';
+};
+
 function Shelf({
   actions,
   locale,
@@ -61,7 +72,7 @@ function Shelf({
   actions: ProductActions;
   locale: Locale;
   navigate: MarketplaceNavigate;
-  products: ProductViewDto[];
+  products: MarketplaceListing[];
   section: Exclude<MarketplaceSection, 'all'>;
   t: MarketplaceTranslate;
 }>) {
@@ -88,6 +99,7 @@ function Shelf({
         <div className="dh-product-grid">
           {sectionProducts.map((product) => (
             <MarketplaceProductCard
+              canTransact={actions.canTransact}
               favorite={actions.favoriteIds.has(product.id)}
               key={product.id}
               locale={locale}
@@ -506,6 +518,7 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
             <div className="dh-product-grid">
               {filtered.map((product) => (
                 <MarketplaceProductCard
+                  canTransact={actions.canTransact}
                   favorite={actions.favoriteIds.has(product.id)}
                   key={product.id}
                   locale={locale}
@@ -535,17 +548,74 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
 
 interface ProductDetailProps extends Omit<SharedDiscoveryProps, 'products'> {
   canReview: boolean;
-  product?: ProductViewDto;
-  reviews: Resource<ReviewViewDto[]>;
-  sampleUsage: Resource<SampleUsageViewDto>;
-  similar: ProductViewDto[];
-  onReview: (product: ProductViewDto, rating: number, comment?: string) => Promise<boolean>;
+  canReplyToReviews: boolean;
+  canReportReviews: boolean;
+  product?: MarketplaceListing;
+  reviews: Resource<MarketplaceReviewDto[]>;
+  sampleUsage: Resource<MarketplaceSampleUsageDto>;
+  similar: MarketplaceListing[];
+  onReview: (product: MarketplaceListing, rating: number, comment?: string) => Promise<boolean>;
+  onReplyToReview: (review: MarketplaceReviewDto, comment: string) => Promise<boolean>;
+  onReportReview: (
+    review: MarketplaceReviewDto,
+    reason: 'abuse' | 'off_topic' | 'privacy' | 'spam',
+    comment?: string,
+  ) => Promise<boolean>;
   onRetry: () => void;
-  onSample: (product: ProductViewDto) => void;
+  onSample: (product: MarketplaceListing) => void;
+}
+
+function ProductSampleAction({
+  canTransact,
+  onRetry,
+  onSample,
+  pendingAction,
+  product,
+  sampleAvailable,
+  sampleUsageStatus,
+  t,
+}: Readonly<{
+  canTransact: boolean;
+  onRetry: () => void;
+  onSample: (product: MarketplaceListing) => void;
+  pendingAction?: string;
+  product: MarketplaceListing;
+  sampleAvailable: boolean;
+  sampleUsageStatus: ResourceStatus;
+  t: MarketplaceTranslate;
+}>) {
+  if (!canTransact) {
+    return null;
+  }
+  if (sampleUsageStatus === 'error') {
+    return (
+      <div>
+        <p className="dh-state-inline dh-state-inline--error">{t('agritech.marketplace.samples.usageUnavailable')}</p>
+        <button className="dh-button dh-button--secondary" onClick={onRetry} type="button">
+          {t('agritech.marketplace.samples.retry')}
+        </button>
+      </div>
+    );
+  }
+  return (
+    <button
+      className="dh-button dh-button--secondary"
+      disabled={!sampleAvailable || pendingAction === `sample:${product.id}`}
+      onClick={() => {
+        onSample(product);
+      }}
+      type="button"
+    >
+      {sampleAvailable ? t('agritech.marketplace.product.sample') : t('agritech.marketplace.samples.unavailable')}
+    </button>
+  );
 }
 
 export function MarketplaceProductDetail({
+  canTransact = true,
   canReview,
+  canReplyToReviews,
+  canReportReviews,
   favoriteIds,
   locale,
   navigate,
@@ -553,6 +623,8 @@ export function MarketplaceProductDetail({
   onFavorite,
   onOpen,
   onReview,
+  onReplyToReview,
+  onReportReview,
   onRetry,
   onSample,
   pendingAction,
@@ -565,6 +637,8 @@ export function MarketplaceProductDetail({
   const [quantity, setQuantity] = useState(1);
   const [reviewComment, setReviewComment] = useState('');
   const [reviewRating, setReviewRating] = useState(5);
+  const [replyingReviewId, setReplyingReviewId] = useState<string>();
+  const [reportingReviewId, setReportingReviewId] = useState<string>();
   if (!product) {
     return (
       <MarketplaceEmpty
@@ -595,6 +669,105 @@ export function MarketplaceProductDetail({
               <span>{formatDate(review.createdAt, locale)}</span>
             </div>
             {review.comment && <p>{review.comment}</p>}
+            {review.reply ? (
+              <blockquote className="dh-review-reply">
+                <strong>{t('agritech.marketplace.reviews.sellerReply')}</strong>
+                <p>{review.reply.comment}</p>
+              </blockquote>
+            ) : null}
+            <div className="dh-review-actions">
+              {canReplyToReviews && !review.reply ? (
+                <button
+                  className="dh-text-button"
+                  onClick={() => {
+                    setReplyingReviewId((value) => (value === review.id ? undefined : review.id));
+                    setReportingReviewId(undefined);
+                  }}
+                  type="button"
+                >
+                  {t('agritech.marketplace.reviews.reply')}
+                </button>
+              ) : null}
+              {canReportReviews ? (
+                <button
+                  className="dh-text-button"
+                  onClick={() => {
+                    setReportingReviewId((value) => (value === review.id ? undefined : review.id));
+                    setReplyingReviewId(undefined);
+                  }}
+                  type="button"
+                >
+                  {t('agritech.marketplace.reviews.report')}
+                </button>
+              ) : null}
+            </div>
+            {replyingReviewId === review.id ? (
+              <form
+                className="dh-inline-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const form = new FormData(event.currentTarget);
+                  const comment = formText(form, 'comment');
+                  if (comment) {
+                    void onReplyToReview(review, comment).then((submitted) => {
+                      if (submitted) {
+                        setReplyingReviewId(undefined);
+                      }
+                    });
+                  }
+                }}
+              >
+                <label>
+                  <span>{t('agritech.marketplace.reviews.reply')}</span>
+                  <textarea maxLength={2000} name="comment" required rows={3} />
+                </label>
+                <button
+                  className="dh-button dh-button--secondary"
+                  disabled={pendingAction === `review-reply:${review.id}`}
+                  type="submit"
+                >
+                  {t('agritech.marketplace.reviews.replySubmit')}
+                </button>
+              </form>
+            ) : null}
+            {reportingReviewId === review.id ? (
+              <form
+                className="dh-inline-form"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  const form = new FormData(event.currentTarget);
+                  const reason = formText(form, 'reason') as 'abuse' | 'off_topic' | 'privacy' | 'spam';
+                  const comment = formText(form, 'comment');
+                  void onReportReview(review, reason, comment || undefined).then((submitted) => {
+                    if (submitted) {
+                      setReportingReviewId(undefined);
+                    }
+                  });
+                }}
+              >
+                <label>
+                  <span>{t('agritech.marketplace.reviews.reportReason')}</span>
+                  <select name="reason">
+                    {(['abuse', 'off_topic', 'privacy', 'spam'] as const).map((reason) => (
+                      <option key={reason} value={reason}>
+                        {t(`agritech.marketplace.reviews.reportReason.${reason}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>{t('agritech.marketplace.reviews.reportComment')}</span>
+                  <textarea maxLength={1000} name="comment" rows={2} />
+                </label>
+                <button
+                  className="dh-button dh-button--secondary"
+                  disabled={pendingAction === `review-report:${review.id}`}
+                  type="submit"
+                >
+                  {t('agritech.marketplace.reviews.reportSubmit')}
+                </button>
+              </form>
+            ) : null}
           </article>
         ))}
       </div>
@@ -658,7 +831,17 @@ export function MarketplaceProductDetail({
           <dl className="dh-facts">
             <div>
               <dt>{t('agritech.marketplace.product.seller')}</dt>
-              <dd>{product.supplierName}</dd>
+              <dd>
+                <button
+                  className="dh-text-button"
+                  onClick={() => {
+                    navigate(`/sellers/${encodeURIComponent(product.supplierId)}`);
+                  }}
+                  type="button"
+                >
+                  {product.supplierName}
+                </button>
+              </dd>
             </div>
             <div>
               <dt>{t('agritech.marketplace.filter.region')}</dt>
@@ -675,59 +858,48 @@ export function MarketplaceProductDetail({
               <dd>{product.id}</dd>
             </div>
           </dl>
-          <div className="dh-buy-row">
-            <label className="dh-quantity">
-              <span>{t('agritech.marketplace.product.quantity')}</span>
-              <input
-                min="1"
-                onChange={(event) => {
-                  setQuantity(Math.max(1, Number(event.target.value) || 1));
+          {canTransact ? (
+            <div className="dh-buy-row">
+              <label className="dh-quantity">
+                <span>{t('agritech.marketplace.product.quantity')}</span>
+                <input
+                  min="1"
+                  onChange={(event) => {
+                    setQuantity(Math.max(1, Number(event.target.value) || 1));
+                  }}
+                  type="number"
+                  value={quantity}
+                />
+              </label>
+              <button
+                className="dh-button dh-button--primary"
+                disabled={outOfStock || pendingAction === `cart:${product.id}`}
+                onClick={() => {
+                  onAdd(product, quantity);
                 }}
-                type="number"
-                value={quantity}
-              />
-            </label>
-            <button
-              className="dh-button dh-button--primary"
-              disabled={outOfStock || pendingAction === `cart:${product.id}`}
-              onClick={() => {
-                onAdd(product, quantity);
-              }}
-              type="button"
-            >
-              <MarketplaceIcon name="cart" />
-              {t('agritech.marketplace.product.addToCart')}
-            </button>
-          </div>
+                type="button"
+              >
+                <MarketplaceIcon name="cart" />
+                {t('agritech.marketplace.product.addToCart')}
+              </button>
+            </div>
+          ) : null}
           <div className="dh-sample-callout">
             <MarketplaceIcon name="seeds" />
             <div>
               <strong>{t('agritech.marketplace.product.sample')}</strong>
               <p>{t('agritech.marketplace.samples.deliveryDisclaimer')}</p>
             </div>
-            {sampleUsage.status === 'error' ? (
-              <div>
-                <p className="dh-state-inline dh-state-inline--error">
-                  {t('agritech.marketplace.samples.usageUnavailable')}
-                </p>
-                <button className="dh-button dh-button--secondary" onClick={onRetry} type="button">
-                  {t('agritech.marketplace.samples.retry')}
-                </button>
-              </div>
-            ) : (
-              <button
-                className="dh-button dh-button--secondary"
-                disabled={!sampleAvailable || pendingAction === `sample:${product.id}`}
-                onClick={() => {
-                  onSample(product);
-                }}
-                type="button"
-              >
-                {sampleAvailable
-                  ? t('agritech.marketplace.product.sample')
-                  : t('agritech.marketplace.samples.unavailable')}
-              </button>
-            )}
+            <ProductSampleAction
+              canTransact={canTransact}
+              onRetry={onRetry}
+              onSample={onSample}
+              pendingAction={pendingAction}
+              product={product}
+              sampleAvailable={sampleAvailable}
+              sampleUsageStatus={sampleUsage.status}
+              t={t}
+            />
           </div>
         </section>
       </div>
@@ -794,6 +966,7 @@ export function MarketplaceProductDetail({
           <div className="dh-product-grid">
             {similar.slice(0, 4).map((item) => (
               <MarketplaceProductCard
+                canTransact={canTransact}
                 favorite={favoriteIds.has(item.id)}
                 key={item.id}
                 locale={locale}
@@ -808,6 +981,109 @@ export function MarketplaceProductDetail({
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+interface SellerProfileProps extends ProductActions {
+  catalog: Resource<MarketplaceListing[]>;
+  locale: Locale;
+  navigate: MarketplaceNavigate;
+  seller: Resource<MarketplacePublicSellerDto | null>;
+  t: MarketplaceTranslate;
+}
+
+export function MarketplaceSellerProfile({
+  canTransact = true,
+  catalog,
+  favoriteIds,
+  locale,
+  navigate,
+  onAdd,
+  onFavorite,
+  onOpen,
+  pendingAction,
+  seller,
+  t,
+}: Readonly<SellerProfileProps>) {
+  if (seller.status === 'loading' || seller.status === 'idle') {
+    return <MarketplaceSkeleton count={5} />;
+  }
+  if (seller.status === 'error' || !seller.data) {
+    return (
+      <MarketplaceEmpty
+        actionLabel={t('agritech.marketplace.back')}
+        headingLevel={1}
+        icon="produce"
+        message={t('agritech.marketplace.seller.notFoundDescription')}
+        onAction={() => {
+          navigate('/catalog');
+        }}
+        title={t('agritech.marketplace.seller.notFound')}
+      />
+    );
+  }
+
+  return (
+    <div className="dh-page-stack">
+      <button
+        className="dh-text-button dh-back"
+        onClick={() => {
+          navigate('/catalog');
+        }}
+        type="button"
+      >
+        <MarketplaceIcon name="arrow" />
+        {t('agritech.marketplace.back')}
+      </button>
+      <div className="dh-account-hero">
+        <div>
+          <p className="dh-eyebrow">{t('agritech.marketplace.seller.title')}</p>
+          <h1>{seller.data.displayName}</h1>
+          <p>{seller.data.description ?? t('agritech.marketplace.seller.noDescription')}</p>
+          <small>{seller.data.region}</small>
+        </div>
+        <div className="dh-verification-chip dh-verification-chip--verified">
+          <MarketplaceIcon name="shield" />
+          <span>{t('agritech.marketplace.seller.verified')}</span>
+        </div>
+      </div>
+      <section aria-labelledby="dh-seller-catalog" className="dh-detail-section">
+        <div className="dh-section__head">
+          <h2 id="dh-seller-catalog">{t('agritech.marketplace.seller.catalog')}</h2>
+        </div>
+        {catalog.status === 'loading' || catalog.status === 'idle' ? <MarketplaceSkeleton count={4} /> : null}
+        {catalog.status === 'error' ? (
+          <p className="dh-state-inline dh-state-inline--error">
+            {t('agritech.marketplace.catalog.unavailableDescription')}
+          </p>
+        ) : null}
+        {catalog.status === 'empty' ? (
+          <MarketplaceEmpty
+            icon="produce"
+            message={t('agritech.marketplace.seller.emptyDescription')}
+            title={t('agritech.marketplace.seller.empty')}
+          />
+        ) : null}
+        {catalog.data.length > 0 ? (
+          <div className="dh-product-grid">
+            {catalog.data.map((product) => (
+              <MarketplaceProductCard
+                canTransact={canTransact}
+                favorite={favoriteIds.has(product.id)}
+                key={product.id}
+                locale={locale}
+                onAdd={onAdd}
+                onFavorite={onFavorite}
+                onOpen={onOpen}
+                pendingAction={pendingAction}
+                product={product}
+                t={t}
+              />
+            ))}
+          </div>
+        ) : null}
+      </section>
     </div>
   );
 }
@@ -838,6 +1114,7 @@ export function MarketplaceFavorites({ status, ...props }: Readonly<FavoritesPro
       <div className="dh-product-grid">
         {favorites.map((product) => (
           <MarketplaceProductCard
+            canTransact={props.canTransact}
             favorite
             key={product.id}
             locale={props.locale}

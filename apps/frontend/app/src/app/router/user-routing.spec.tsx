@@ -7,13 +7,14 @@ import { UserRouter } from './user-router';
 const marketplaceRender = vi.hoisted(() => vi.fn());
 
 vi.mock('../../pages/marketplace', () => ({
-  MarketplacePage: (props: { contractId?: string; productId?: string; view?: string }) => {
+  MarketplacePage: (props: { contractId?: string; productId?: string; sellerId?: string; view?: string }) => {
     marketplaceRender(props);
 
     return (
       <div
         data-contract-id={props.contractId}
         data-product-id={props.productId}
+        data-seller-id={props.sellerId}
         data-testid="marketplace-route"
         data-view={props.view}
       />
@@ -75,11 +76,18 @@ describe('DehqonHub marketplace routes', () => {
     expect(screen.queryByTestId('generic-user-shell')).toBeNull();
   });
 
-  it('passes decoded product and contract identifiers into their marketplace states', async () => {
+  it('passes decoded product, seller and contract identifiers into marketplace states', async () => {
     let route = await renderRoute('/products/seed%2042');
 
     expect(route.dataset['view']).toBe('product');
     expect(route.dataset['productId']).toBe('seed 42');
+    expect(screen.queryByTestId('generic-user-shell')).toBeNull();
+
+    cleanup();
+    route = await renderRoute('/sellers/seller%2042');
+
+    expect(route.dataset['view']).toBe('seller');
+    expect(route.dataset['sellerId']).toBe('seller 42');
     expect(screen.queryByTestId('generic-user-shell')).toBeNull();
 
     cleanup();

@@ -8,10 +8,13 @@ export type MarketplaceIconName =
   | 'close'
   | 'contract'
   | 'equipment'
+  | 'fertilizer'
   | 'heart'
   | 'home'
+  | 'input'
   | 'minus'
   | 'orders'
+  | 'pesticide'
   | 'plus'
   | 'produce'
   | 'search'
@@ -50,6 +53,13 @@ const paths: Record<MarketplaceIconName, ReactNode> = {
       <path d="M4 14V9h7l3 5h6M11 9V5h4l2 5" />
     </>
   ),
+  fertilizer: (
+    <>
+      <path d="M8 3h8l-1.5 4h-5L8 3Z" />
+      <path d="M8.5 7h7c2.2 3.5 3.5 7.4 3.5 11a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3c0-3.6 1.3-7.5 3.5-11Z" />
+      <path d="M9 14h6m-3-3v6" />
+    </>
+  ),
   heart: (
     <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8Z" />
   ),
@@ -59,11 +69,24 @@ const paths: Record<MarketplaceIconName, ReactNode> = {
       <path d="M5 10v11h14V10M9 21v-7h6v7" />
     </>
   ),
+  input: (
+    <>
+      <path d="m4 7 8-4 8 4-8 4-8-4Z" />
+      <path d="M4 7v10l8 4 8-4V7M12 11v10" />
+    </>
+  ),
   minus: <path d="M5 12h14" />,
   orders: (
     <>
       <path d="M6 3h12v18H6z" />
       <path d="M9 8h6M9 12h6M9 16h4" />
+    </>
+  ),
+  pesticide: (
+    <>
+      <path d="M9 7h7l2 3v10H7V10l2-3Z" />
+      <path d="M10 7V4h5v3M13 4V2h5M18 2v3" />
+      <path d="M10 14c2.5 0 4 1.2 5 3-2.5 0-4-1.2-5-3Z" />
     </>
   ),
   plus: <path d="M12 5v14M5 12h14" />,
@@ -105,6 +128,7 @@ export function MarketplaceIcon({ name, ...props }: Readonly<MarketplaceIconProp
   return (
     <svg
       aria-hidden="true"
+      data-marketplace-icon={name}
       fill="none"
       focusable="false"
       stroke="currentColor"

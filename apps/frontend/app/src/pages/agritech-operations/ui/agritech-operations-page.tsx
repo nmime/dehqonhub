@@ -112,6 +112,7 @@ export const AgriTechOperationsPage = observer(function AgriTechOperationsPage()
               'fertilizer' | 'seed' | 'pesticide' | 'equipment' | 'irrigation' | 'other',
             description: formText(form, 'description'),
             priceUzs: Number(form.get('priceUzs')),
+            sampleAvailable: false,
             unit: formText(form, 'unit'),
             stockQuantity: Number(form.get('stockQuantity')),
             region: formText(form, 'region'),
@@ -143,6 +144,11 @@ export const AgriTechOperationsPage = observer(function AgriTechOperationsPage()
   const submitProduce = (event: SubmitEvent<HTMLFormElement>) => {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
+    const supplier = partners.find((partner) => partner.kind === 'supplier' && partner.status === 'approved');
+    if (!supplier) {
+      setNotice(t('agritech.portal.approvalRequired'));
+      return;
+    }
     void complete(() =>
       throwOnOpenApiErrorData(
         api.agriTechOperationsControllerCreateProduce(
@@ -150,8 +156,10 @@ export const AgriTechOperationsPage = observer(function AgriTechOperationsPage()
             crop: formText(form, 'crop'),
             grade: formText(form, 'grade') as 'A' | 'B' | 'C',
             quantityKg: Number(form.get('quantityKg')),
+            sampleAvailable: false,
             pricePerKgUzs: Number(form.get('pricePerKgUzs')),
             region: formText(form, 'region'),
+            supplierPartnerId: supplier.id,
             availableFrom: new Date().toISOString(),
             availableUntil: formText(form, 'availableUntil'),
           },
@@ -208,7 +216,7 @@ export const AgriTechOperationsPage = observer(function AgriTechOperationsPage()
             provider,
             returnUrl: `${globalThis.location.origin}/`,
             idempotencyKey: `${provider}:${orderId}`,
-            locale,
+            locale: locale === 'uz-cyrl' ? 'uz' : locale,
           },
           requestOptions,
         ),
