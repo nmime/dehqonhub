@@ -117,6 +117,9 @@ const defaultNavigate: MarketplaceNavigate = (to) => {
 const canMutateContractForRole = (contract: ContractViewDto, canBuy: boolean, canOffer: boolean): boolean =>
   contract.actorParty === 'buyer' ? canBuy : canOffer;
 
+const isDefinitiveClientError = (error: unknown): boolean =>
+  isApiClientError(error) && Math.floor(error.status / 100) === 4;
+
 const verificationStatusForContract = (verification: Resource<VerificationViewDto | null>, canMutate: boolean) => {
   if (verification.status !== 'ready') {
     return verification.status;
@@ -355,7 +358,7 @@ export const MarketplacePage = observer(function MarketplacePage({
         data.refresh();
         return true;
       } catch (error) {
-        if (isApiClientError(error) && error.status >= 400 && error.status < 500) {
+        if (isDefinitiveClientError(error)) {
           commandKeysRef.current.delete(commandIdentity);
         }
         if (isApiClientError(error) && (error.status === 404 || error.status === 409)) {
@@ -823,7 +826,7 @@ export const MarketplacePage = observer(function MarketplacePage({
       commandKeysRef.current.delete(commandIdentity);
       return consultation;
     } catch (error) {
-      if (isApiClientError(error) && error.status >= 400 && error.status < 500) {
+      if (isDefinitiveClientError(error)) {
         commandKeysRef.current.delete(commandIdentity);
       }
       throw error;
