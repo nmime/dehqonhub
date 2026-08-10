@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "configHash": "df5655e4a6e2157ea0bcaddc3f8ae0f3ed0b3692d14fda5c3b195ee806b19627",
-  "graphDigest": "381378871788b4c2ce26ec78ff8c25d943066e3f775fc5a82bf09445483c2ec1",
+  "graphDigest": "e7b2e888004ea91115a58d5b608fe677b93ac663be476e35c8b67241ffa23701",
   "provider": "postgres",
   "roots": [
     "admin-app",
@@ -162,6 +162,12 @@
       "site-app",
       "user-app",
       "user-app-api"
+    ],
+    "e2e-authenticated": [
+      "user-app"
+    ],
+    "e2e-typecheck": [
+      "user-app"
     ],
     "export": [
       "mobile-app"
