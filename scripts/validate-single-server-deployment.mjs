@@ -18,6 +18,39 @@ const docs = read('docs/single-server-deployment.md');
 const externalProxyModeContract = ['EXTERNAL_PROXY_PUBLIC_MODE', 'per-app-domains'].join('=');
 
 const value = (content, key) => content.match(new RegExp(`^${key}=(.+)$`, 'mu'))?.[1];
+for (const [label, content] of [
+  ['host production example', productionExample],
+  ['full production example', fullProductionExample],
+]) {
+  for (const key of [
+    'MARKETPLACE_ONEID_PROVIDER_MODE',
+    'MARKETPLACE_DOCUMENT_PROVIDER_MODE',
+    'MARKETPLACE_CONTRACT_ARTIFACT_STORAGE_PROVIDER_MODE',
+    'MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_MODE',
+    'MARKETPLACE_QUALIFIED_SIGNATURE_PROVIDER_MODE',
+    'MARKETPLACE_PROMOTION_BILLING_PROVIDER_MODE',
+    'MARKETPLACE_DIRECT_PAYMENT_PROVIDER_MODE',
+    'MARKETPLACE_FACTORING_PROVIDER_MODE',
+    'MARKETPLACE_NOTIFICATION_PROVIDER_MODE',
+  ]) {
+    const providerMode = value(content, key)?.trim().toLowerCase();
+    assert.ok(providerMode, `${label} missing ${key}`);
+    assert.notEqual(providerMode, 'mock', `${label} must reject ${key}=mock`);
+  }
+  for (const key of [
+    'MARKETPLACE_ONEID_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_DOCUMENT_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_CONTRACT_ARTIFACT_STORAGE_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_QUALIFIED_SIGNATURE_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_PROMOTION_BILLING_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_DIRECT_PAYMENT_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_FACTORING_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_NOTIFICATION_PROVIDER_TIMEOUT_MS',
+  ]) {
+    assert.equal(value(content, key), '10000', `${label} must declare bounded ${key}`);
+  }
+}
 const run = (command, args) => {
   const result = spawnSync(command, args, { cwd: rootDir, encoding: 'utf8' });
   assert.equal(result.status, 0, `${command} ${args.join(' ')} failed:\n${result.stderr || result.stdout}`);

@@ -141,7 +141,10 @@ export function buildSelectedClosure(graph: ProjectGraphLike, input: ClosureInpu
     ...(!provider ? providerProjects('mongodb') : []),
   ]);
   const projects = traverseProjects(graph, seedProjects, selectedApps, forbiddenProjects);
-  const productExternalPackages = collectProductExternalPackages(graph, projects, provider);
+  const capabilityRuntimePackages = input.capabilities.flatMap(
+    (capabilityId) => capabilityCatalog[capabilityId].runtimeExternalPackages ?? [],
+  );
+  const productExternalPackages = collectProductExternalPackages(graph, projects, provider, capabilityRuntimePackages);
   const toolingExternalPackages = collectToolingExternalPackages(graph, projects);
   for (const packageName of Object.keys(productExternalPackages)) {
     delete toolingExternalPackages[packageName];
@@ -312,6 +315,7 @@ function collectProductExternalPackages(
   graph: ProjectGraphLike,
   projects: readonly string[],
   provider: DurableDatabaseProviderId | undefined,
+  capabilityRuntimePackages: readonly string[] = [],
 ): Record<string, string> {
   const selected = new Map<string, string>();
   const forbidden =
@@ -329,6 +333,17 @@ function collectProductExternalPackages(
       }
       addExternalPackage(selected, external, forbidden);
     }
+  }
+
+  // Some server-side assets and provider SDKs are intentionally resolved by
+  // string at runtime, so Nx cannot infer their package edges from imports.
+  // Capabilities declare only those indirect runtime dependencies explicitly.
+  for (const packageName of capabilityRuntimePackages) {
+    const external = findExternalNode(graph, packageName);
+    if (!external) {
+      throw new Error(`Nx graph does not expose capability runtime package "${packageName}".`);
+    }
+    addExternalPackage(selected, external, forbidden);
   }
 
   // TypeScript can inject tslib imports into compiled backend output even when

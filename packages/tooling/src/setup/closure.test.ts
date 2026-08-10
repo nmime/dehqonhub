@@ -8,6 +8,8 @@ import {
   renderSelectedClosure,
   type ProjectGraphLike,
 } from './closure.js';
+import { capabilityCatalog } from './catalog.js';
+import type { CapabilityId } from './schema.js';
 
 const digest = 'a'.repeat(64);
 
@@ -155,6 +157,35 @@ describe('selected closure', () => {
 
     assert.equal(selected.productExternalPackages?.['string-format'], '1.0.0');
     assert.equal(selected.productExternalPackages?.['@types/string-format'], '1.0.0');
+  });
+
+  it('includes runtime packages declared by selected capabilities without an inferred source edge', () => {
+    const capabilities: CapabilityId[] = ['agritech', 'authz', 'i18n', 'notifications', 'postgres'];
+    const capabilityProjects = capabilities.flatMap((capabilityId) => {
+      const capability = capabilityCatalog[capabilityId];
+      return [...capability.ownedProjects, ...(capability.providerOwnedProjects?.postgres ?? [])];
+    });
+    const projects = Object.fromEntries(
+      [...new Set(['admin-app-api', 'user-app-api', ...capabilityProjects])].map((project) => [project, ['build']]),
+    );
+    const input = {
+      apps: ['admin-app-api', 'user-app-api'] as const,
+      capabilities,
+      configHash: digest,
+    };
+    const selected = buildSelectedClosure(
+      graph({
+        externalPackages: ['@fontsource/noto-sans'],
+        projects,
+      }),
+      input,
+    );
+
+    assert.equal(selected.productExternalPackages?.['@fontsource/noto-sans'], '1.0.0');
+    assert.throws(
+      () => buildSelectedClosure(graph({ projects }), input),
+      /does not expose capability runtime package "@fontsource\/noto-sans"/,
+    );
   });
 
   it('does not expose non-Compose e2e roots as services', () => {

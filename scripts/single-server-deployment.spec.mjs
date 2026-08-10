@@ -1,4 +1,4 @@
-// @requirements REQ-RUNTIME-DELIVERY-009
+// @requirements REQ-RUNTIME-DELIVERY-009 REQ-AGRITECH-DEPLOYMENT-014 REQ-AGRITECH-NOTIFICATION-022
 import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -20,6 +20,7 @@ const fixture = ({
   publicMode = 'per-app-domains',
   frontendMode,
   runtimeMode,
+  marketplaceProviderMode,
   distRoot = '/srv/nrb/dist/apps/frontend',
 } = {}) => {
   const directory = mkdtempSync(join(tmpdir(), 'nrb-single-server-'));
@@ -59,14 +60,20 @@ const fixture = ({
       'SITE_APP_PORT=4103',
       'MOBILE_APP_PORT=4104',
       `FRONTEND_DIST_ROOT=${distRoot}`,
+      ...(marketplaceProviderMode ? [`${marketplaceProviderMode.key}=${marketplaceProviderMode.value}`] : []),
       ...(frontendMode ? [`EXTERNAL_PROXY_FRONTEND_MODE=${frontendMode}`] : []),
     ].join('\n'),
   );
-  const configuration = loadSingleServerConfiguration({ productionEnv, serverEnv });
-  return {
-    configuration,
-    cleanup: () => rmSync(directory, { force: true, recursive: true }),
-  };
+  try {
+    const configuration = loadSingleServerConfiguration({ productionEnv, serverEnv });
+    return {
+      configuration,
+      cleanup: () => rmSync(directory, { force: true, recursive: true }),
+    };
+  } catch (error) {
+    rmSync(directory, { force: true, recursive: true });
+    throw error;
+  }
 };
 
 const astroIndexWithHashedCsp =
@@ -87,6 +94,25 @@ test('accepts all database engine and ownership combinations independently', (co
       assert.equal(current.configuration.databaseEngine, databaseEngine);
       assert.equal(current.configuration.databaseMode, databaseMode);
     }
+  }
+});
+
+test('rejects mock marketplace providers in single-server production configuration', () => {
+  for (const key of [
+    'MARKETPLACE_ONEID_PROVIDER_MODE',
+    'MARKETPLACE_DOCUMENT_PROVIDER_MODE',
+    'MARKETPLACE_CONTRACT_ARTIFACT_STORAGE_PROVIDER_MODE',
+    'MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_MODE',
+    'MARKETPLACE_QUALIFIED_SIGNATURE_PROVIDER_MODE',
+    'MARKETPLACE_PROMOTION_BILLING_PROVIDER_MODE',
+    'MARKETPLACE_DIRECT_PAYMENT_PROVIDER_MODE',
+    'MARKETPLACE_FACTORING_PROVIDER_MODE',
+    'MARKETPLACE_NOTIFICATION_PROVIDER_MODE',
+  ]) {
+    assert.throws(
+      () => fixture({ marketplaceProviderMode: { key, value: 'mock' } }),
+      new RegExp(`${key}=mock is forbidden in production deployment configuration\\.`, 'u'),
+    );
   }
 });
 

@@ -5,14 +5,14 @@
     "nrb.config.json": "282966901aee83c41a295eb4df63c2aafbffc28a2544052a388d78c134e36a70",
     ".nrb/summary.md": "049dd2f4379f7612b1d802e8b1e968d97c642c7a9906654e972f42bf90c3ec61",
     ".nrb/workspace.json": "3e6fdb998ef2345e227cff89271019bcc00bd22cbea9a85beaf11c0564bb74a3",
-    ".nrb/capabilities.json": "71d673f16d3dafe478333e10c8e7507e959b60d26ba9260a9aa1b73476ad93df",
+    ".nrb/capabilities.json": "318d67e026ead72fd9a0b740e61acf5d3395325e02b97196269dd1b8543cfce1",
     ".nrb/capabilities.env": "e83fb0febd1f504c012a3edf7ed2b6106a4e2f8ba421eb9cd2056d5975e7bb17",
     "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "af15b77bb5c3b0515cfc649217d723063178c78f9fb9cfba80abf59d7f4a6062",
     "apps/backend/user/user-app-api/src/capabilities.generated.ts": "a433ccb9390e479bc65c20c0e5271bf628ad0616fc042bada568e4c8cd5fee2c",
     "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "ffaf9f1c1e61c57ecfc1937deaee73e35046a2d4ffbed36ef1178adf26618730",
     "apps/backend/discord/discord-app-api/src/capabilities.generated.ts": "56fb95dc139bed5062f4f3676ebbee91daaaa1efa67a2ed3fe30aed508258358",
     "apps/backend/telegram/telegram-bot-api/src/capabilities.generated.ts": "292e3f804541ff487f1567fd08c7f867d17b9de280c56634b490efed501ac970",
-    "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts": "9bc02dd9fe97fbf19eb14f78ecbfef002496a6f255151e9cabbf5f0c8997518b",
+    "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts": "1a0b146b9d5c889792617969e301007fd13a48335f651e0cf1c6eb3f568f7bf7",
     "apps/backend/notification/notification-consumer/src/capabilities.generated.ts": "1407ef9fcb527fa576c5de41fc10afd699b2ecedc0c73c104b22c0313a05600f",
     "apps/backend/admin/admin-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/user/user-app-api/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
@@ -22,5 +22,5 @@
     "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0"
   },
-  "digest": "a2e9e0add2bec1fdb6a5f9843c566f8a246ac8ac46604bfeca5a041b4d756f5d"
+  "digest": "e61d6c80c904900b783b90378863e4c954ae631f3738d65e1dc3740eb790f4dc"
 }

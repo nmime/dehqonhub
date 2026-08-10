@@ -83,6 +83,33 @@ Production Compose mounts `SESSION_SECRET_FILE` and `BETTER_AUTH_SECRET_FILE`;
 canonical runtime variables before Node starts. The single-server bootstrap
 generates these secrets on first initialization and preserves them on reruns.
 
+## DehqonHub external providers
+
+Marketplace provider workflows keep authorization, tenant isolation,
+idempotency, attempt fencing, and safe receipts in the real domain and database.
+Mode and timeout are selected independently for every external capability:
+
+| Capability                | Mode variable                                         | Timeout variable                                            |
+| ------------------------- | ----------------------------------------------------- | ----------------------------------------------------------- |
+| OneID                     | `MARKETPLACE_ONEID_PROVIDER_MODE`                     | `MARKETPLACE_ONEID_PROVIDER_TIMEOUT_MS`                     |
+| Verification documents    | `MARKETPLACE_DOCUMENT_PROVIDER_MODE`                  | `MARKETPLACE_DOCUMENT_PROVIDER_TIMEOUT_MS`                  |
+| Contract artifact storage | `MARKETPLACE_CONTRACT_ARTIFACT_STORAGE_PROVIDER_MODE` | `MARKETPLACE_CONTRACT_ARTIFACT_STORAGE_PROVIDER_TIMEOUT_MS` |
+| Qualified signature       | `MARKETPLACE_QUALIFIED_SIGNATURE_PROVIDER_MODE`       | `MARKETPLACE_QUALIFIED_SIGNATURE_PROVIDER_TIMEOUT_MS`       |
+| Promotion billing         | `MARKETPLACE_PROMOTION_BILLING_PROVIDER_MODE`         | `MARKETPLACE_PROMOTION_BILLING_PROVIDER_TIMEOUT_MS`         |
+| Direct payment            | `MARKETPLACE_DIRECT_PAYMENT_PROVIDER_MODE`            | `MARKETPLACE_DIRECT_PAYMENT_PROVIDER_TIMEOUT_MS`            |
+| Factoring                 | `MARKETPLACE_FACTORING_PROVIDER_MODE`                 | `MARKETPLACE_FACTORING_PROVIDER_TIMEOUT_MS`                 |
+
+Every mode accepts `disabled`, `mock`, or `live`; every timeout accepts an
+integer from `100` through `30000` milliseconds. `disabled` has no fallback,
+and `live` fails startup until an approved live adapter is configured for that
+exact capability. The retired shared signature and bank switches are rejected.
+
+Mock providers are accepted only when `NODE_ENV` is `development`, `test`, or
+`staging`. Production, an unset environment, and unknown environment names reject
+mock during application composition. A mock result always reports
+`providerMode=mock`; it is not a real identity, signature, payment, or factoring
+claim.
+
 ## Telegram and Discord
 
 Telegram auth and bot execution are separate switches:

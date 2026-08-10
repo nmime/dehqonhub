@@ -303,6 +303,8 @@ export interface CapabilityEntry {
   conflictsWith: CapabilityId[];
   requiresDurableDatabase?: boolean;
   ownedProjects: string[];
+  /** Runtime packages resolved indirectly (for example, assets loaded through createRequire). */
+  runtimeExternalPackages?: string[];
   providerOwnedProjects?: Partial<Record<DurableDatabaseProviderId, string[]>>;
   telemetryWiring?: BackendTelemetryWiring;
   providerTelemetryInstrumentation?: BackendModuleImport;
@@ -404,6 +406,11 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
       '@app/i18n-uz-common',
       '@app/i18n-uz-landing',
       '@app/i18n-uz-user',
+      '@app/i18n-uz-cyrl-admin',
+      '@app/i18n-uz-cyrl-bots',
+      '@app/i18n-uz-cyrl-common',
+      '@app/i18n-uz-cyrl-landing',
+      '@app/i18n-uz-cyrl-user',
     ],
     dockerServices: [],
     environmentVariables: ['APP_LOCALE', 'APP_FALLBACK_LOCALE'],
@@ -603,6 +610,7 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
       '@app/backend-feature-product-shared',
       '@app/backend-postgres-main-agritech',
     ],
+    runtimeExternalPackages: ['@fontsource/noto-sans'],
     dockerServices: [],
     environmentVariables: [
       'PAYMENT_TENANT_ID',
@@ -618,13 +626,23 @@ export const capabilityCatalog: Readonly<Record<CapabilityId, Readonly<Capabilit
       'CLICK_SECRET_KEY_FILE',
       'CLICK_CHECKOUT_URL',
       'BNPL_CHECKOUT_URL',
+      'MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_MODE',
+      'MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_TIMEOUT_MS',
+      'MARKETPLACE_NOTIFICATION_PROVIDER_MODE',
+      'MARKETPLACE_NOTIFICATION_PROVIDER_TIMEOUT_MS',
     ],
     backendWiring: [
       {
-        hosts: ['user-app-api', 'admin-app-api'],
+        hosts: ['user-app-api', 'admin-app-api', 'notification-scheduler'],
         importName: 'AgriTechPostgresModule',
         importPath: '@app/backend-postgres-main-agritech',
         moduleExpression: 'AgriTechPostgresModule',
+      },
+      {
+        hosts: ['notification-scheduler'],
+        importName: 'MarketplaceContractNotificationDeliveryModule',
+        importPath: '@app/backend-feature-agritech-main',
+        moduleExpression: 'MarketplaceContractNotificationDeliveryModule',
       },
       {
         hosts: ['user-app-api'],

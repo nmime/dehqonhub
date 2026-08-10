@@ -19,6 +19,9 @@
         "@app/backend-feature-product-shared",
         "@app/backend-postgres-main-agritech"
       ],
+      "runtimeExternalPackages": [
+        "@fontsource/noto-sans"
+      ],
       "dockerServices": [],
       "environmentVariables": [
         "AGRITECH_COMMISSION_BASIS_POINTS",
@@ -28,6 +31,10 @@
         "CLICK_SECRET_KEY",
         "CLICK_SECRET_KEY_FILE",
         "CLICK_SERVICE_ID",
+        "MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_MODE",
+        "MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_TIMEOUT_MS",
+        "MARKETPLACE_NOTIFICATION_PROVIDER_MODE",
+        "MARKETPLACE_NOTIFICATION_PROVIDER_TIMEOUT_MS",
         "PAYMENT_RETURN_URL_ORIGINS",
         "PAYMENT_TENANT_ID",
         "PAYME_CHECKOUT_URL",
@@ -37,19 +44,33 @@
       ],
       "generatedFiles": [
         "apps/backend/admin/admin-app-api/src/capabilities.generated.ts",
+        "apps/backend/notification/notification-scheduler/src/capabilities.generated.ts",
         "apps/backend/user/user-app-api/src/capabilities.generated.ts"
       ],
       "backendWiring": [
         {
           "hosts": [
             "user-app-api",
-            "admin-app-api"
+            "admin-app-api",
+            "notification-scheduler"
           ],
           "moduleExpression": "AgriTechPostgresModule",
           "imports": [
             {
               "importName": "AgriTechPostgresModule",
               "importPath": "@app/backend-postgres-main-agritech"
+            }
+          ]
+        },
+        {
+          "hosts": [
+            "notification-scheduler"
+          ],
+          "moduleExpression": "MarketplaceContractNotificationDeliveryModule",
+          "imports": [
+            {
+              "importName": "MarketplaceContractNotificationDeliveryModule",
+              "importPath": "@app/backend-feature-agritech-main"
             }
           ]
         },
@@ -136,6 +157,7 @@
       "projects": [
         "@app/common-authz"
       ],
+      "runtimeExternalPackages": [],
       "dockerServices": [],
       "environmentVariables": [],
       "generatedFiles": [],
@@ -150,6 +172,7 @@
       "projects": [
         "@app/common-design-tokens"
       ],
+      "runtimeExternalPackages": [],
       "dockerServices": [],
       "environmentVariables": [],
       "generatedFiles": [],
@@ -165,6 +188,7 @@
         "@app/backend-postgres-main-feature-flags",
         "@app/common-feature-flags"
       ],
+      "runtimeExternalPackages": [],
       "dockerServices": [],
       "environmentVariables": [],
       "generatedFiles": [
@@ -205,9 +229,15 @@
         "@app/i18n-uz-admin",
         "@app/i18n-uz-bots",
         "@app/i18n-uz-common",
+        "@app/i18n-uz-cyrl-admin",
+        "@app/i18n-uz-cyrl-bots",
+        "@app/i18n-uz-cyrl-common",
+        "@app/i18n-uz-cyrl-landing",
+        "@app/i18n-uz-cyrl-user",
         "@app/i18n-uz-landing",
         "@app/i18n-uz-user"
       ],
+      "runtimeExternalPackages": [],
       "dockerServices": [],
       "environmentVariables": [
         "APP_FALLBACK_LOCALE",
@@ -228,6 +258,7 @@
         "@app/backend-postgres-main-notification",
         "@app/common-notifications"
       ],
+      "runtimeExternalPackages": [],
       "dockerServices": [
         "notification-consumer",
         "notification-scheduler"
@@ -328,6 +359,7 @@
         "@app/backend-postgres-main",
         "@app/backend-postgres-main-auth"
       ],
+      "runtimeExternalPackages": [],
       "dockerServices": [
         "migrate",
         "postgres"
@@ -378,6 +410,7 @@
       "projects": [
         "@app/backend-common-redis"
       ],
+      "runtimeExternalPackages": [],
       "dockerServices": [
         "redis"
       ],
@@ -419,6 +452,7 @@
       "projects": [
         "@app/backend-common-s3"
       ],
+      "runtimeExternalPackages": [],
       "dockerServices": [
         "minio"
       ],
@@ -461,6 +495,7 @@
         "@app/backend-feature-telegram-bot",
         "@app/backend-feature-telegram-shared"
       ],
+      "runtimeExternalPackages": [],
       "dockerServices": [
         "telegram-bot-api"
       ],
