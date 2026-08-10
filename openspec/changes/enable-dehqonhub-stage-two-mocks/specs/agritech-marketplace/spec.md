@@ -1,97 +1,4 @@
-# agritech-marketplace Specification
-
-## Purpose
-
-Defines the complete, tenant-isolated AgriTech operating platform for farmers, suppliers, buyers, field agents, administrators, payments, fulfillment, advisory, analytics, localization, integrations, and deployment readiness.
-
-## Requirements
-
-### Requirement: [REQ-AGRITECH-PROFILE-001] Farmer profiles are authenticated and operationally owned
-
-The user API SHALL let an authenticated principal create, read, and update at
-most one tenant-owned farmer profile, SHALL validate Uzbekistan profile fields,
-SHALL NOT allow user-controlled role, verification, pilot, or field-agent state,
-and SHALL expose assignments only to the assigned agent or an authorized
-administrator.
-
-#### Scenario: Owned farmer enrollment
-
-- **WHEN** an authenticated member submits a valid farmer profile
-- **THEN** the API persists one profile bound to that principal and returns only safe public fields
-
-#### Scenario: Assignment denial
-
-- **WHEN** an unassigned field agent or foreign tenant addresses the farmer
-- **THEN** the API returns a safe denial or not-found response without disclosing the profile
-
-### Requirement: [REQ-AGRITECH-CATALOG-002] The catalog supports governed inputs and produce
-
-The platform SHALL expose active tenant catalog items, SHALL distinguish
-supplier-owned inputs from farmer-owned produce, SHALL validate category,
-region, availability, unit, grade, and inventory, and SHALL limit mutation to
-the owning approved actor or an authorized administrator.
-
-#### Scenario: Supplier input publication
-
-- **WHEN** an approved supplier publishes a valid stocked input
-- **THEN** farmers can discover it and only that supplier or an administrator can mutate it
-
-#### Scenario: Produce listing publication
-
-- **WHEN** an active farmer publishes graded produce with an availability window
-- **THEN** approved buyers can discover the available quantity without seeing private farmer data
-
-### Requirement: [REQ-AGRITECH-ORDER-003] Orders and reservations are atomic and trackable
-
-The platform SHALL server-price owned input orders and produce reservations,
-SHALL atomically lock and consume the appropriate inventory, SHALL expose only
-authorized records, SHALL enforce legal cancellation and fulfillment
-transitions, and SHALL keep a durable state history.
-
-#### Scenario: Input order creation
-
-- **WHEN** an active farmer orders available supplier inputs
-- **THEN** server-derived lines, totals, stock mutation, history, and notification intent commit once
-
-#### Scenario: Produce reservation conflict
-
-- **WHEN** concurrent buyers reserve more than a listing's remaining quantity
-- **THEN** at most the available quantity is reserved and losing requests fail without partial writes
-
-### Requirement: [REQ-AGRITECH-PAYMENT-004] Payments are persistent and idempotent
-
-The platform SHALL create exact-amount Click, Payme, or BNPL payment intents for
-authorized orders, SHALL persist provider and idempotency identities, SHALL
-authenticate callbacks before mutation, SHALL reject amount/order mismatches,
-SHALL enforce legal transitions and idempotent replay, and SHALL expose explicit
-disabled/degraded readiness when configuration or provider evidence is absent.
-
-#### Scenario: Idempotent provider settlement
-
-- **WHEN** an authenticated provider repeats a settlement callback with the same identity
-- **THEN** the stored successful result is returned without duplicate payment or order mutation
-
-#### Scenario: Invalid callback
-
-- **WHEN** authentication, amount, order identity, state, or configuration is invalid
-- **THEN** the callback fails safely and no payment or order state changes
-
-### Requirement: [REQ-AGRITECH-TELEGRAM-005] Telegram messages are linked and event driven
-
-The selected Telegram bot SHALL link an authenticated farmer identity, expose
-source-backed marketplace navigation and status, and deliver typed localized
-order, payment, delivery, and advisory notification intents through the
-existing notification scheduler and consumer without fabricated data.
-
-#### Scenario: Linked order notification
-
-- **WHEN** a linked farmer's order advances state
-- **THEN** one localized deduplicated Telegram notification intent is scheduled
-
-#### Scenario: Unlinked identity
-
-- **WHEN** a Telegram user requests private AgriTech data without a valid link
-- **THEN** the bot returns a safe linking path and no tenant data
+## MODIFIED Requirements
 
 ### Requirement: [REQ-AGRITECH-WEB-006] Responsive user web exposes complete real workflows
 
@@ -101,16 +8,16 @@ loading, offline, empty, validation, denied, conflict, provider-unavailable,
 reconciliation, recovery, and success states without fabricated product,
 authority, legal, financial, or operational records. Guest marketplace
 discovery SHALL use the dedicated public API projection; authenticated commerce
-SHALL use the same persisted domain APIs as every other client. External
-mock-provider results MUST come from the real API/domain boundary and remain
-visibly simulated. Administrator SPA and native Expo/Android/iOS marketplace
-presentation are outside this requirement and MUST NOT be claimed by its
-evidence.
+SHALL use the same persisted domain APIs as every other client. Administrator
+SPA and native Expo/Android/iOS marketplace presentation are outside this
+requirement and MUST NOT be claimed by its evidence.
 
 **Invariants:**
 
 - No browser fixture, local store, caller-selected persona, or hidden bypass may
   create an authenticated marketplace outcome.
+- External mock-provider results are returned by generated APIs, carry explicit
+  `providerMode: mock` and `simulation: true`, and remain visibly labelled.
 - Desktop and responsive browser layouts down to 320 px, in English, Russian,
   Uzbek Latin, and Uzbek Cyrillic, expose equivalent state and recovery
   semantics.
@@ -126,8 +33,8 @@ evidence.
 
 - Failed public or authenticated requests render the owning recovery state and
   MUST NOT silently fall back to fixture data or relax authorization.
-- A disabled or failed provider preserves the last authoritative persisted state
-  and exposes a typed retry path.
+- A disabled or failed provider preserves the last authoritative persisted
+  state and exposes a typed retry path.
 
 #### Scenario: Complete user-web workflow
 
@@ -137,228 +44,104 @@ evidence.
 #### Scenario: Explicit external simulation
 
 - **WHEN** a non-production deployment uses an approved mock external provider
-- **THEN** the user web app displays its simulation status while all internal records, guards, idempotency, and state transitions remain authoritative
-
-### Requirement: [REQ-AGRITECH-PARTNER-007] Suppliers and buyers are approved organizations
-
-The platform SHALL let authenticated users submit one or more tenant-owned
-supplier or buyer organizations, SHALL require administrator approval before
-commercial mutation, and SHALL enforce organization membership on every owned
-catalog, reservation, and fulfillment action.
-
-#### Scenario: Pending supplier cannot publish
-
-- **WHEN** a pending supplier attempts to create or update an input item
-- **THEN** the request is denied and no catalog record is written
-
-### Requirement: [REQ-AGRITECH-OUTPUT-008] Output aggregation has explainable price and grade controls
-
-The platform SHALL aggregate available produce listings, SHALL use normalized
-quality grades and units, SHALL calculate an explainable tenant-and-region price
-range from eligible active listings, and SHALL never represent the range as a
-guaranteed exchange or export quote.
-
-#### Scenario: Price discovery result
-
-- **WHEN** an approved buyer requests price discovery for a crop and region
-- **THEN** the response includes minimum, median, maximum, sample size, currency, unit, and observation time
-
-### Requirement: [REQ-AGRITECH-ADVISORY-009] Advisory and weather states are source attributable
-
-The platform SHALL store source-attributed weather observations and agronomy
-recommendations, SHALL scope them to authorized farms, SHALL mark staleness and
-provider availability, and SHALL not fabricate measurements or advice when a
-configured upstream is absent or fails.
-
-#### Scenario: Stale weather evidence
-
-- **WHEN** the newest observation exceeds its freshness window
-- **THEN** the farmer sees a stale state and recommendations that require fresh weather are withheld
-
-### Requirement: [REQ-AGRITECH-FULFILLMENT-010] Field operations and delivery are controlled
-
-The platform SHALL allow administrators to assign field agents and deliveries,
-SHALL let agents update only assigned work, SHALL enforce ordered delivery
-transitions, and SHALL record visits, grading, proof references, timestamps,
-and an auditable actor identity.
-
-#### Scenario: Assigned delivery completion
-
-- **WHEN** the assigned agent records pickup, transit, and delivery with required proof
-- **THEN** each legal state is appended once and the related order becomes delivered
-
-### Requirement: [REQ-AGRITECH-ANALYTICS-011] Analytics and pilot cohorts are evidence bounded
-
-The admin platform SHALL provide tenant-scoped funnel, GMV, commission,
-inventory, fulfillment, retention, and pilot cohort metrics derived from stored
-records, SHALL distinguish configured targets from achieved values, and SHALL
-not count fixtures or source presence as real-world activity.
-
-#### Scenario: Pilot progress
-
-- **WHEN** an administrator views a pilot cohort
-- **THEN** targets and actual verified farmer, supplier, order, payment, and delivery counts are reported separately
+- **THEN** the client displays its simulation status while all internal records, guards, idempotency, and state transitions remain authoritative
 
 ### Requirement: [REQ-AGRITECH-I18N-012] Uzbek Latin, Uzbek Cyrillic, Russian, and English have catalog parity
 
 The platform SHALL support Uzbek Latin, Uzbek Cyrillic, Russian, and English
 locale negotiation, preferences, product clients, bot messages, notifications,
-problem details, provider-locale mapping, and stored recipient language with
-identical semantic keys and placeholder contracts. `uz` SHALL remain Uzbek
-Latin and `uz-cyrl` SHALL be the canonical Uzbek Cyrillic locale.
+problem details, and stored recipient language with identical semantic keys and
+placeholder contracts. The stable locale `uz` SHALL continue to mean Uzbek
+Latin, and the additive locale `uz-cyrl` SHALL mean Uzbek Cyrillic.
+
+**Invariants:**
+
+- Every scoped locale catalog contains exactly the default catalog's key and
+  placeholder sets.
+- Locale parsing is case-insensitive and resolves full tag, then
+  language-script, then language; `uz-Cyrl-UZ` resolves to `uz-cyrl` before the
+  `uz` base fallback.
+- Stored values are canonical lowercase `en`, `ru`, `uz`, and `uz-cyrl`.
+- The switcher presents Uzbek Latin and Cyrillic as separate choices in every
+  locale. Existing `uz` users remain on Latin after migration.
+- Provider metadata maps `uz-cyrl` to the provider's supported safe fallback
+  instead of sending an unsupported locale code. Runtime response copy may still
+  use the user's exact locale.
+
+**Failure behavior:**
+
+- Unsupported locale input follows the existing fallback and is not persisted.
+- Missing catalogs, keys, placeholders, switcher labels, database constraints,
+  or provider mappings fail static, type, migration, or browser validation.
 
 #### Scenario: Uzbek Latin journey
 
 - **WHEN** a user selects `O'zbekcha (Lotin)`
-- **THEN** supported AgriTech navigation, forms, states, errors, and notifications render in Uzbek Latin and persist as `uz`
+- **THEN** navigation, forms, errors, provider disclosures, notifications, and deal states render in Uzbek Latin and persist as `uz`
 
 #### Scenario: Uzbek Cyrillic journey
 
-- **WHEN** a user selects `Ўзбекча (Кирилл)` or negotiates `uz-Cyrl-UZ`
-- **THEN** supported AgriTech navigation, forms, states, errors, and notifications render in Uzbek Cyrillic and persist as `uz-cyrl` before any `uz` base fallback
+- **WHEN** a user selects `Ўзбекча (Кирилл)`
+- **THEN** navigation, forms, errors, provider disclosures, notifications, and deal states render in Uzbek Cyrillic and persist as `uz-cyrl`
 
 ### Requirement: [REQ-AGRITECH-INTEGRATION-013] External connectors fail closed and explicit mock providers remain isolated
 
 Weather, agronomy, export, government, identity, document, signing, payment,
 factoring, notification, and commercial provider adapters SHALL have explicit
-configuration, bounded timeouts, source identity, idempotent cursor, command, or
-callback semantics, reconciliation status, readiness, and redacted telemetry.
-An absent live contract or credential SHALL disable the connector. Development,
-test, and staging runtimes MAY explicitly select a deterministic mock adapter to
-supply external-provider facts while all domain authorization and persistence
-remain real; production SHALL reject mock mode during startup.
-
-#### Scenario: Disabled government connector
-
-- **WHEN** no approved Agroportal or Digital Agriculture API contract is configured
-- **THEN** readiness reports disabled and no request, synchronization claim, or synthetic record is produced
-
-#### Scenario: Mock provider does not grant authority
-
-- **WHEN** a non-production user completes a mock identity, storage, signing, payment, or factoring provider operation
-- **THEN** the idempotent result persists `mock` provenance and remains subject to the same administrator, party, tenant, and state-machine authorization as a live result
-
-### Requirement: [REQ-AGRITECH-DEPLOYMENT-014] Selected deployment is operationally prepared
-
-The selected Docker topology SHALL include every AgriTech runtime dependency,
-migration, immutable build input, secret reference, public/internal route,
-health/readiness probe, resource boundary, telemetry signal, backup/restore
-contract, and rollback instruction required for staging and production
-validation without embedding credentials or applying infrastructure.
-
-#### Scenario: Deployment validation
-
-- **WHEN** operators render and validate the selected deployment without secrets
-- **THEN** all AgriTech services, migrations, routes, probes, and required secret references are internally consistent and no live change occurs
-
-### Requirement: [REQ-AGRITECH-ROUTING-015] Product routes use the repository root ownership boundary
-
-The platform SHALL expose the canonical user AgriTech workflow at `/`, SHALL
-expose general AgriTech user API resources without an `agritech` prefix, SHALL
-expose DehqonHub commerce APIs below `/marketplace/*`, SHALL expose the canonical
-operator workflow at `/admin`, and SHALL expose privileged AgriTech API
-resources directly below `/admin`. The `/marketplace/*` API namespace MUST keep
-same-origin JSON resources distinct from SPA deep links such as `/catalog` and
-`/cart`; `/marketplace` itself MUST NOT become a second product route.
-First-party web routes, API controllers, reverse proxies, OpenAPI contracts,
-generated clients, navigation, and payment return URLs MUST agree on those
-canonical paths and MUST NOT register redirects or compatibility aliases for
-`/admin/agritech`, `/agritech/*`, or `/admin/agritech/*`.
-
-The `/admin` boundary, session authentication, tenant derivation, endpoint
-permissions, request and response shapes, RFC 9457 failures, provider callback
-authentication, concurrency, and idempotency behavior SHALL remain unchanged.
-Domain identifiers and the Telegram `/agritech` command are outside the HTTP
-path prohibition and SHALL retain their existing semantics.
-
-**Evidence profile:** api
+configuration, bounded timeouts, source identity, request idempotency,
+reconciliation status, readiness, and redacted telemetry. An absent live
+contract or credential SHALL disable the connector. Development, test, and
+staging runtimes MAY explicitly select a deterministic mock adapter while
+preserving the real domain authorization and persistence boundary; production
+SHALL reject mock mode during startup.
 
 **Invariants:**
 
-- Every canonical first-party HTTP path has one owner and no old-path alias.
-- No user/admin OpenAPI path or generated client path contains `/agritech` or
-  `/admin/agritech`.
-- Every DehqonHub commerce operation uses `/marketplace/*`, while DehqonHub
-  browser deep links remain SPA-owned without that prefix.
-- `/admin` remains the privileged application and API boundary; collapsing the
-  product namespace MUST NOT weaken RBAC or tenant isolation.
-- Route migration MUST NOT alter write idempotency, callback replay handling,
-  or concurrent inventory and order behavior.
-- User/admin providers and their generated consumers are versioned and rolled
-  out as one compatible revision.
+- `disabled`, `mock`, and `live` are distinct typed provider modes.
+- Mock mode consumes no live credential, makes no external request, and is a
+  production-startup error.
+- Every mock result persists provider capability, mode, request fingerprint,
+  safe receipt/reference, actor, tenant, status, and UTC timestamps.
+- Idempotency is scoped to tenant, actor, capability, resource, and key.
+  Same-key/same-input retries replay the first result; same-key/different-input
+  attempts conflict.
+- A provider result never grants marketplace authority by itself. Real guards,
+  administrator decisions, party checks, and domain state machines consume only
+  the provider facts they explicitly own.
 
 **Failure behavior:**
 
-- A removed web or API path receives the owning runtime's normal not-found
-  outcome and is not redirected or rewritten.
-- A stale generated artifact or client path fails contract freshness or
-  product-route verification before release.
-- A stale independently deployed consumer may receive a not-found response and
-  must migrate to the regenerated contract; the server does not conceal that
-  incompatibility.
-- Rollback redeploys the prior immutable API and client revisions together;
-  mixed-revision rollback is unsupported.
+- Missing live configuration remains disabled and MUST NOT auto-select mock.
+- Invalid callbacks, changed-input replays, stale revisions, and reordered
+  events fail without partial domain or provider-operation writes.
+- Provider unavailability preserves the prior authoritative state and exposes
+  reconciliation rather than inventing success.
 
-#### Scenario: User product and resources are rooted directly
+#### Scenario: Disabled government connector
 
-- **WHEN** a user opens the product or a generated client addresses an
-  authorized AgriTech resource
-- **THEN** the product uses `/`, general APIs use direct resource paths such as
-  `/orders`, `/produce`, or `/payments`, and DehqonHub commerce APIs use paths
-  such as `/marketplace/catalog`, `/marketplace/cart`, or
-  `/marketplace/contracts/{id}`
+- **WHEN** no approved government identity contract is configured
+- **THEN** readiness reports disabled and no request or synthetic production identity is produced
 
-#### Scenario: Same-origin marketplace APIs do not collide with browser routes
+#### Scenario: Mock identity evidence still needs moderation
 
-- **WHEN** a same-origin deployment serves the `/catalog` or `/cart` browser
-  deep link and the client requests the corresponding marketplace data
-- **THEN** the browser route resolves to the SPA, the generated client uses
-  `/marketplace/*`, and every supported frontend reverse proxy sends that API
-  namespace to `user-app-api` rather than returning `index.html`
+- **WHEN** a non-production user completes the mock OneID and document-storage steps
+- **THEN** the real verification case records mock provenance and remains pending until an authorized administrator decides it
 
-#### Scenario: Operator product retains its privilege boundary
+#### Scenario: Duplicate mock provider command
 
-- **WHEN** an authorized operator opens the product or a generated admin client
-  addresses an AgriTech resource
-- **THEN** the product uses `/admin` and the API uses a direct privileged path
-  such as `/admin/partners`, `/admin/analytics`, or `/admin/integrations` with
-  the existing guard and endpoint permission
-
-#### Scenario: Removed namespaces do not survive as aliases
-
-- **WHEN** a caller addresses `/marketplace` as a product-route alias,
-  `/admin/agritech`, an `/agritech/*` API path, or an `/admin/agritech/*` API
-  path
-- **THEN** no product route, redirect, or compatibility shim recognizes that
-  old path, while only the documented `/marketplace/*` API resources remain
-  valid
-
-#### Scenario: Payment returns to the canonical product
-
-- **WHEN** an authorized user initiates a configured payment handoff
-- **THEN** the client supplies a return URL whose pathname is `/` while all
-  payment amount, provider, authentication, idempotency, and replay rules remain
-  unchanged
-
-#### Scenario: Stale consumer is observable
-
-- **WHEN** post-rollout telemetry records a request for a removed HTTP path
-- **THEN** operators can identify it as a stale consumer from the normal
-  not-found request telemetry without a redirect masking the mismatch
+- **WHEN** the same actor retries an external-provider command with the same idempotency key and canonical input
+- **THEN** the original persisted result is returned without repeating the transition or audit event
 
 ### Requirement: [REQ-AGRITECH-MARKETPLACE-016] DehqonHub marketplace transactions are real, isolated, and recoverable
 
-The platform SHALL provide persisted, transactional catalog, cart,
-purchase-request, offer, sample, review, contract-review, verification, and
-catalog-grounded AI behavior through generated API contracts. Anonymous
-publication and discovery SHALL be governed exclusively by
-REQ-AGRITECH-PUBLIC-018. Browser routing and rendering SHALL be governed by
-REQ-AGRITECH-WEB-006, and locale parity SHALL be governed by
-REQ-AGRITECH-I18N-012. Commercial mutations SHALL be authenticated,
-organization-authorized, tenant-safe, transactional, and fail closed when
-verification or an external provider is unavailable. Commands whose HTTP
-contract declares an `Idempotency-Key` SHALL return the original result for an
-exact replay, reject changed-input key reuse, and avoid duplicate outcomes under
+The DehqonHub marketplace SHALL provide real tenant-isolated, persisted,
+transactional catalog, cart, purchase-request, offer, sample, review, contract,
+verification, and AI behavior. Anonymous publication and discovery SHALL be
+governed exclusively by REQ-AGRITECH-PUBLIC-018. Every commercial write SHALL
+derive authority, parties, organizations, prices, stock, and provider provenance
+on the server and SHALL commit transactionally. Commands whose HTTP contract
+declares an `Idempotency-Key` SHALL return the original result for an exact
+replay, reject changed-input key reuse, and avoid duplicate outcomes under
 concurrency. This contract applies explicitly to
 `POST /marketplace/verification`,
 `POST /marketplace/verification/submit`,
@@ -368,115 +151,63 @@ concurrency. This contract applies explicitly to
 creation treats an absent aggregate as revision zero; rejected-case resume and
 all later commands compare-and-set the current aggregate revision.
 
-**Ownership:** `user-app`, `user-app-api`, `admin-app-api`,
-`@app/frontend-api-client`, `@app/frontend-feature-user-i18n`,
-`@app/backend-feature-product-main`, `@app/backend-feature-product-shared`,
-`@app/backend-feature-agritech-main`,
-`@app/backend-feature-agritech-admin`, `@app/backend-feature-agritech-shared`,
-`@app/backend-postgres-main-agritech`, and `acceptance-e2e`.
-
-**Evidence profile:** acceptance, API, domain, persistence, and security
-evidence.
-
 **Invariants:**
 
-- Private marketplace records from one tenant MUST NOT be read, linked, mutated,
-  or recommended through another tenant. Visibility of one publication governed
-  by REQ-AGRITECH-PUBLIC-018 does not grant access to its source tenant.
+- Private reads remain tenant/party scoped. Visibility of one publication
+  governed by REQ-AGRITECH-PUBLIC-018 does not grant access to its source tenant.
 - `CartViewDto`, `BuyerRequestViewDto`, `OfferViewDto`, and `ContractViewDto`
   expose opaque marketplace identifiers and safe commerce fields only. Where
   counterparty identity is needed, they use the caller's actor relationship and
   allowlisted party display snapshots. Internal tenant, user, partner, source-row,
   and provider-operation identifiers remain absent from user responses.
-- Product seller identity, request ownership, offer authorship, verification,
-  approved buyer/supplier organization membership, contract parties, and
-  signing actor MUST be derived from authenticated and persisted state, never a
-  display label or caller-selected authority field.
-- An open cart MUST contain products from exactly one server-derived seller;
-  adding a different seller's product creates or updates another cart.
-- Catalog checkout and selected offers MUST resolve to persisted, reviewable
-  commercial terms; the platform MUST NOT return a fabricated order or contract
-  identifier.
-- A purchase-request creator MUST NOT bid on their own request, and only the
-  request owner can select a pending offer.
+- Every deal mutation requires an authenticated approved role and approved
+  organization membership. Cross-organization writes reference only public
+  opaque listing/request IDs and resolve authoritative rows server-side.
+- Carts are buyer-owned and partitioned one per seller. Checkout freezes the
+  seller organization, buyer organization, product lines, integer UZS unit
+  prices and total, stock revision, delivery, payment terms, and source.
+- Offer selection accepts exactly one offer, declines alternatives, and creates
+  exactly one frozen contract in one transaction.
 - Contract creation freezes the reviewable commercial terms owned here. Artifact
   generation, qualified party signing, signature-triggered activation and
   inventory commit, settlement, fulfillment, dispute, commission, and review
   eligibility are governed exclusively by REQ-AGRITECH-LIFECYCLE-020.
-- A review MUST come from the authenticated buyer of a completed contract
-  containing the product, and a buyer MUST have at most one review per product.
-- Legacy artifact/signature provenance and lifecycle migration behavior are
-  governed exclusively by REQ-AGRITECH-LIFECYCLE-020.
-- The sample allowance MUST come from persisted monthly usage and remain five
-  per verified user per month. “Free sample” MUST NOT imply free delivery.
-- Provider claims MUST NOT be inferred from local UI state, a legacy boolean, or
-  reference copy. Provider-mode and provenance behavior is governed by
-  REQ-AGRITECH-INTEGRATION-013, while contract lifecycle effects are governed by
-  REQ-AGRITECH-LIFECYCLE-020.
-- AI recommendations MUST be limited to current published in-stock products
-  visible to the requester. Starter-cart mutation requires a separate confirmed,
-  idempotent server command that revalidates stock and partitions by seller.
-- English, Russian, Uzbek Latin, and Uzbek Cyrillic semantic parity is governed
-  by REQ-AGRITECH-I18N-012. Responsive, keyboard, reduced-motion, theme, and
-  contrast behavior is governed by REQ-AGRITECH-WEB-006 and is not credited as
-  evidence for this transaction requirement.
+- Reviews require a `completed` contract containing the product and are unique
+  per buyer/product. `active` alone is no longer sufficient.
+- AI consultation creation is an idempotent persisted command. It queries only
+  current approved public publications and freezes an allowlisted response with
+  opaque publication/seller IDs, reviewed English/Russian/Uzbek Latin/Uzbek
+  Cyrillic titles, public price, stock-at-consultation availability, semantic
+  reason/explanation codes, and a seller-partitioned starter-cart preview. Exact
+  retries return the same snapshot and changed-input key reuse conflicts.
+- Seasonal advice without a verified calendar returns the deterministic
+  `seasonal_calendar_unavailable` no-data explanation instead of an invented
+  agronomic claim. Promotion weight and external-provider/network data are not
+  AI grounding inputs.
+- Starter-cart creation is a separate confirmed idempotent command that locks
+  and revalidates the consultation, publication, seller authority, source, and
+  stock, then atomically creates or updates one cart per seller. Cancel writes
+  nothing; an unpublished or otherwise stale publication returns a safe refresh
+  conflict without exposing a private source or tenant identifier.
 
 **Failure behavior:**
 
-- Missing, unpublished, cross-tenant, stale, unauthorized, unverified,
-  self-authored, changed-idempotency-input, or invalid-state mutations return
-  safe RFC 9457 problem responses and preserve existing records.
+- Missing, unpublished, suspended, wrong-party, wrong-tenant, unverified,
+  stale, insufficient-stock, invalid-state, or changed-idempotency input fails
+  closed with RFC 9457 and no partial write.
 - Missing or malformed idempotency/revision input fails validation. Exact
   same-actor/resource/key/body replay returns the original persisted snapshot;
   same-key changed input and different-key stale revision return RFC 9457 409,
   and only one concurrent compare-and-set wins.
-- An unavailable subresource or provider renders a localized explanatory state
-  and recovery path without fabricated fallback records, claims, or identifiers.
-- Concurrent cart or offer conflicts reload authoritative state and do not
-  duplicate or partially create the transaction. Post-freeze concurrency and
-  inventory effects are governed by REQ-AGRITECH-LIFECYCLE-020.
+- A public projection outage or zero result does not query private records or
+  fabricate products.
+- A typed 404/409 refreshes the affected client resource without discarding safe
+  user input.
 
-#### Scenario: Canonical deep links and public discovery
+#### Scenario: Verified buyer purchases across organizations
 
-- **WHEN** a signed-out visitor or authenticated user opens `/`, `/catalog`, a
-  product deep link, favorites, carts, purchase requests, verification, account,
-  or a contract deep link
-- **THEN** the canonical DehqonHub shell renders once without the generic
-  mini-app shell or duplicated hero, the signed-out state renders only the safe
-  public projection plus a clear authentication path, and private actions/data
-  remain gated by real verification and organization authorization
-
-#### Scenario: Distinct catalog branches and real records
-
-- **WHEN** a user chooses Seeds, Equipment, or Agricultural produce and applies
-  query, price, region, stock, or sort controls
-- **THEN** the user app deterministically filters explicitly sectioned published
-  records for that branch, reflects active controls, opens supported product
-  detail, never guesses Produce from an unrelated category, and renders a
-  localized empty state when the branch has no records
-
-#### Scenario: Published stable seller identity
-
-- **WHEN** the catalog returns a product and the user favorites it, requests a
-  sample, reviews it, or adds it to a cart
-- **THEN** the generated contract includes the stable published seller
-  organization and the server resolves the authoritative seller tenant, owner,
-  price, publication, and stock from persistence instead of caller fields
-
-#### Scenario: Cross-tenant private access is denied
-
-- **WHEN** a caller attempts to use an unpublished foreign product or query the
-  seller tenant's private catalog, documents, dashboard, cart, or contract data
-- **THEN** the API returns a safe not-found or denied problem and persists or
-  discloses no unauthorized cross-tenant marketplace record
-
-#### Scenario: Verified buyer purchases a published cross-organization listing
-
-- **WHEN** an approved buyer adds another approved organization's published
-  listing and checks out
-- **THEN** the server stores one buyer-owned seller cart and one frozen contract
-  with explicit buyer/seller organization and tenant references without granting
-  either party general access to the other's tenant
+- **WHEN** an approved buyer adds another approved organization's published product and checks out
+- **THEN** one buyer-owned seller cart becomes one frozen cross-organization contract without granting either party access to the other's tenant data
 
 #### Scenario: Party responses minimize internal identity
 
@@ -488,129 +219,18 @@ evidence.
 - **WHEN** an actor retries verification create/submit, delivery-quote update, or administrator verification decision with the same key and canonical input, changes the input under that key, or races a different key at the same expected revision
 - **THEN** exact replay returns the original snapshot, changed-input and stale attempts conflict, one concurrent compare-and-set wins, and no duplicate case, quote, decision, audit, or notification outcome persists
 
-#### Scenario: Seller-partitioned carts
+#### Scenario: Completed deal permits one review
 
-- **WHEN** a user adds one product from seller A and another product from seller
-  B, then changes quantities or removes a line
-- **THEN** the API and UI expose two independently reviewable carts, preserve
-  each seller boundary, show authoritative totals, and mutate only the selected
-  cart line
+- **WHEN** the buyer submits a review for a product on a completed contract
+- **THEN** one review is persisted and active, unsigned, cancelled, unrelated, or duplicate reviews are rejected
 
-#### Scenario: Verified catalog checkout reaches contract review
+#### Scenario: Confirmed grounded starter cart
 
-- **WHEN** a verified buyer or farmer confirms delivery terms and checks out a
-  non-empty seller cart
-- **THEN** the server atomically closes the cart and returns a persisted draft
-  contract reference whose tenant, buyer, seller, lines, amount, and delivery
-  terms can be reviewed before lifecycle actions; pickup freezes a zero charge, while
-  seller delivery remains visibly pending until the verified seller records a
-  positive quote and lifecycle progression is blocked until that quote exists
+- **WHEN** a user creates a grounded consultation with an idempotency key and a verified buyer with active buyer membership confirms its opaque publication preview
+- **THEN** an exact consultation retry returns the same immutable four-title/public-fact snapshot, changed-input key reuse conflicts, and confirmation revalidates current eligibility before atomically creating or updating one cart per seller exactly once
+- **AND** cancellation creates nothing, deterministic seasonal no-data invents no advice, and a publication withdrawn after consultation returns a safe refresh conflict
 
-#### Scenario: Unverified commercial action is denied
-
-- **WHEN** a user without persisted verified status attempts a cart addition or
-  cart-line mutation, checkout, sample request, purchase-request creation, offer
-  submission, offer selection, or contract creation
-- **THEN** the server denies the mutation, the user app preserves entered safe
-  form data where applicable, and the verification surface explains the next
-  available step
-
-#### Scenario: Verified identity without organization approval is denied
-
-- **WHEN** a verified actor without current membership in an approved buyer or
-  supplier organization attempts a commercial mutation for that party
-- **THEN** the server denies the mutation without changing carts, requests,
-  offers, delivery quotes, or contracts
-
-#### Scenario: Provider-backed verification remains administratively approved
-
-- **WHEN** OneID and document storage are disabled or explicitly mocked in a
-  non-production deployment
-- **THEN** the verification surface renders real persisted steps and typed
-  provider provenance, and only an authorized administrator can approve or
-  reject the submitted case
-
-#### Scenario: Monthly sample boundary
-
-- **WHEN** a verified user with fewer than five persisted requests this month
-  confirms a sample request
-- **THEN** the real product and server-derived seller are recorded and the UI
-  reports the remaining allowance plus the separate delivery-cost boundary
-
-#### Scenario: Sample limit or unavailable product
-
-- **WHEN** the persisted allowance is exhausted or the tenant product is absent
-- **THEN** the server rejects the request without consuming allowance and the UI
-  renders the localized limit or unavailable state
-
-#### Scenario: Verified seller submits a valid offer
-
-- **WHEN** a verified seller or farmer who does not own an open purchase request
-  submits a positive product price, a delivery choice, a positive seller-
-  delivery quote when that choice applies, and optional delivery note/duration
-- **THEN** the offer is attributed to the authenticated user, persisted in the
-  request tenant with those seller-authored delivery terms, visible to the
-  request owner, and remains pending until an owner decision
-
-#### Scenario: Self-offer and ineligible role are denied
-
-- **WHEN** the request owner or a verified buyer-only role submits an offer
-- **THEN** the server denies the offer and leaves the request and existing offers
-  unchanged
-
-#### Scenario: Offer selection creates explicit contract review
-
-- **WHEN** the verified request owner selects one pending offer while the
-  request is open for offers
-- **THEN** the server atomically marks it accepted, declines alternatives,
-  selects the request, creates one persisted draft contract from the accepted
-  product price and delivery terms, and returns that contract reference for
-  explicit review without adding the offer to a cart
-
-#### Scenario: Stale or foreign offer selection is rejected
-
-- **WHEN** a non-owner, a stale client, or the owner of another tenant selects an
-  absent, non-pending, or already-decided offer
-- **THEN** no offer or request state changes, no contract is created, and the UI
-  reloads authoritative state from the safe problem response
-
-#### Scenario: One completed-deal review per buyer and product
-
-- **WHEN** an authenticated buyer reviews a product from one of their completed
-  contracts
-- **THEN** the server persists one tenant-scoped review, rejects a second review
-  for the same buyer and product, and denies active-only or unrelated contracts
-
-#### Scenario: Verification decisions preserve bounded reason provenance
-
-- **WHEN** an administrator approves or rejects a verification submission
-- **THEN** a rejection requires exactly one supported semantic reason, an approval
-  forbids a rejection reason, invalid combinations fail before persistence, and
-  English, Russian, and Uzbek clients render equivalent localized explanations
-  without persisting display-language prose
-
-#### Scenario: Grounded AI consultation and confirmed starter cart
-
-- **WHEN** a user asks for a recommendation or cheaper option
-- **THEN** the API queries only current published in-stock products visible to
-  the requester, returns product IDs with a semantic result code, and mutates no
-  cart until a separate explicit confirmed idempotent command revalidates and
-  partitions the products by seller
-
-#### Scenario: Catalog has no grounded AI result
-
-- **WHEN** no active tenant product supports the AI request
-- **THEN** the response returns `no_catalog_match` with no product ID, the UI
-  states that no matching catalog record is available, and neither boundary
-  invents agronomic certainty or a seller
-
-#### Scenario: Partial API failure remains honest and recoverable
-
-- **WHEN** catalog discovery succeeds but an authenticated cart, request,
-  verification, contract, favorites, sample, or AI subresource is unavailable
-- **THEN** catalog discovery remains usable, each failed section identifies its
-  localized unavailable state and retry action, and no empty response is
-  misrepresented as successful authoritative data
+## ADDED Requirements
 
 ### Requirement: [REQ-AGRITECH-STAGE2-017] DehqonHub completes the persisted Stage 1+2 deal lifecycle
 
@@ -626,15 +246,16 @@ provider, and release-assurance requirements named below.
 `@app/backend-feature-agritech-main`, `@app/backend-feature-agritech-admin`,
 and `@app/backend-postgres-main-agritech`.
 
-**Evidence profile:** acceptance, API, domain, persistence, and security evidence.
+**Evidence profile:** acceptance, API, domain, persistence, and security.
 
 **Invariants:**
 
-- Verification is a persisted four-step case. Mock identity/document providers
-  may provide synthetic evidence, but only an authorized administrator decides
-  approval. Duplicate subject/legal-identity fingerprints are rejected without
-  exposing raw identifiers. Its retry, privacy, and expected-revision/CAS
-  contract is governed exclusively by REQ-AGRITECH-MARKETPLACE-016.
+- Verification is a persisted four-step case. Mock OneID/document providers may
+  supply synthetic evidence, but only an authorized administrator can approve
+  or reject the case. Duplicate provider subjects and legal identifiers are
+  rejected without exposing raw identifiers. Its retry, privacy, and
+  expected-revision/CAS contract is governed exclusively by
+  REQ-AGRITECH-MARKETPLACE-016.
 - Cart, request, offer, and contract-freeze semantics are governed by
   REQ-AGRITECH-MARKETPLACE-016. Publication and anonymous discovery are governed
   by REQ-AGRITECH-PUBLIC-018. Neither state machine is redefined here.
@@ -645,18 +266,29 @@ and `@app/backend-postgres-main-agritech`.
   by REQ-AGRITECH-LIFECYCLE-020.
 - Transactional notification intents, external delivery, retry, reconciliation,
   and fallback are governed exclusively by REQ-AGRITECH-NOTIFICATION-022.
-- Promotions have bounded plans/periods and visible `Ad` disclosure and affect
-  catalog/shelf ordering only.
-- Supplier, farmer, and buyer dashboards derive authorized metrics from real
-  current records; fixtures and source presence are not activity.
-- Notification intents are persisted transactionally with their triggering
-  transition and remain available as tenant/party-authorized in-app records.
-  Post-commit delivery persists the recipient locale, uses Telegram first, and
-  may fall back once to SMS for the explicit critical contract/factoring/dispute
-  allowlist only after a definitely-not-accepted terminal result. Mock delivery
-  makes no network request and reports simulation, not live delivery.
-- AI starter-cart confirmation revalidates published stock and atomically creates
-  or updates one cart per seller. Cancel sends no mutation.
+- Promotions have a bounded plan/period, real persisted purchase/activation
+  state, and visible `Ad` disclosure. They affect only catalog/shelf rank.
+- Supplier, farmer, and buyer dashboards derive metrics from authorized current
+  records. No precomputed fixture may claim revenue, deals, conversion, or
+  completion.
+- Notifications are created transactionally as durable in-app intents and stay
+  queryable even when external delivery fails. The scheduler persists the
+  recipient's canonical locale, uses Telegram as the primary external channel,
+  and may transition a critical contract/factoring/dispute event once to SMS
+  only after a definitely-not-accepted terminal Telegram result. Retry keys are
+  stable per intent and channel; an ambiguous result enters reconciliation and
+  never triggers fallback. Mock Telegram/SMS providers make no network request,
+  may mark only a simulated attempt, and do not claim live delivery.
+- AI consultation creation requires an idempotency key and persists an immutable
+  allowlisted snapshot of current approved public facts: opaque publication and
+  seller IDs, all four reviewed title variants, price, stock-at-consultation
+  warning, semantic fit/ordering/seasonal codes, and seller partitions. Exact
+  replay is stable; changed-input key reuse conflicts; no provider or promotion
+  weight may invent or influence the answer.
+- The user can explicitly confirm an AI starter-cart preview. Cancel performs no
+  write; confirmation requires verified buyer authority, revalidates and locks
+  current publication/source/stock, and is idempotent and seller-partitioned.
+  Stale or unpublished publications return a safe refresh conflict.
 - Product-client rendering is governed by REQ-AGRITECH-WEB-006, locale semantics
   by REQ-AGRITECH-I18N-012, provider modes by REQ-AGRITECH-INTEGRATION-013, and
   clean exact-revision release proof by REQ-ASSURANCE-RELEASE-003.
@@ -674,23 +306,23 @@ and `@app/backend-postgres-main-agritech`.
 
 #### Scenario: Persisted verification unlocks commerce
 
-- **WHEN** a user completes mock-provider identity/document evidence and an authorized administrator approves the case
-- **THEN** the persisted role and approved organization membership unlock matching writes while raw provider identity remains private
+- **WHEN** a user completes mock-provider identity and document evidence and an authorized administrator approves the real case
+- **THEN** the persisted approved role and organization membership unlock matching commercial writes while raw provider identity remains private
 
 #### Scenario: Promotion is catalog-only
 
 - **WHEN** an approved seller activates a promoted listing
-- **THEN** the product receives a localized `Ad` label and catalog placement while matching, offers, and AI ignore promotion weight
-
-#### Scenario: Confirmed AI starter cart is exactly once
-
-- **WHEN** an approved user confirms a grounded starter-cart preview and retries the same command
-- **THEN** current stock is revalidated and one seller-partitioned cart result is returned without duplicate lines or invented products
+- **THEN** the product receives a localized `Ad` label and catalog placement while request matching, offer ordering, and AI grounding ignore the promotion weight
 
 #### Scenario: Role dashboards derive authorized records
 
 - **WHEN** a supplier, farmer, or buyer reads the matching role dashboard
 - **THEN** every metric is derived from that actor's authorized persisted records and no fixture or source presence is presented as revenue, conversion, or completion
+
+#### Scenario: Confirmed AI starter cart is exactly once
+
+- **WHEN** a verified buyer cancels, then confirms and exactly retries a grounded seller-partitioned preview
+- **THEN** cancellation writes nothing, confirmation revalidates current publication and stock, and the exact retry returns the original cart result while changed input conflicts
 
 ### Requirement: [REQ-AGRITECH-PUBLIC-018] Public marketplace discovery is explicit, moderated, and privacy bounded
 
