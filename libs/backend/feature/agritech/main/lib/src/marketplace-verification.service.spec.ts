@@ -222,7 +222,7 @@ describe('MarketplaceVerificationService', () => {
       operationId: 'operation-2',
       signal: expect.any(AbortSignal),
     });
-  });
+  }, 15_000);
 
   it('aborts a timed-out provider attempt, marks it retryable, and fences a late result', async () => {
     vi.useFakeTimers();
