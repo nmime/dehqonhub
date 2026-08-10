@@ -415,9 +415,9 @@ browser journey evidence.
 
 #### Scenario: Unverified commercial action is denied
 
-- **WHEN** a user without persisted verified status attempts checkout, sample
-  request, purchase-request creation, offer submission, offer selection,
-  contract creation, or signing
+- **WHEN** a user without persisted verified status attempts a cart addition or
+  cart-line mutation, checkout, sample request, purchase-request creation, offer
+  submission, offer selection, contract creation, or signing
 - **THEN** the server denies the mutation, the user app preserves entered safe
   form data where applicable, and the verification surface explains the next
   available step

@@ -1,8 +1,8 @@
-# user-app
+# DehqonHub user app (`user-app`)
 
 ## Ownership
 
-This app owns the current authenticated user SPA shell. Keep reusable user
+This app owns the DehqonHub marketplace and authenticated user SPA shell. Keep reusable user
 features, API wrappers, runtime helpers, and shared UI in `libs/frontend/**`.
 `site-app` is the Vike SSR surface; do not retire or replace `user-app` without
 explicit parity work.

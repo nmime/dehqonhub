@@ -61,6 +61,8 @@ interface Confirmation {
 type AiKind = 'find_cheaper' | 'generic' | 'recommendation' | 'season_advice';
 type DeliveryTerms = 'by_agreement' | 'pickup' | 'seller_delivery';
 
+const dehqonHubLogoUrl = new URL('../../../assets/dehqonhub-logo.webp', import.meta.url).href;
+
 const defaultNavigate: MarketplaceNavigate = (to) => {
   globalThis.location.assign(to);
 };
@@ -529,9 +531,6 @@ export const MarketplacePage = observer(function MarketplacePage({
 
   return (
     <div className="dh-marketplace">
-      <a className="dh-skip-link" href="#dh-main">
-        {translate('agritech.marketplace.accessibility.skipToContent')}
-      </a>
       <MarketplaceHeader
         cartCount={data.carts.data.reduce((count, cart) => count + cart.items.length, 0)}
         favoriteCount={favoriteIds.size}
@@ -565,10 +564,6 @@ export const MarketplacePage = observer(function MarketplacePage({
       <main className="dh-main" id="dh-main">
         {content}
       </main>
-      <div className="dh-mobile-preferences">
-        <LanguageSwitcher variant="menu" />
-        <ThemeSwitcher variant="menu" />
-      </div>
       <MarketplaceFooter navigate={navigate} t={translate} />
       {data.auth === 'signed-in' && (
         <MarketplaceAi
@@ -609,14 +604,19 @@ interface HeaderProps {
   view: MarketplaceView;
 }
 
-function MarketplaceBrandLabel({ t }: Readonly<{ t: MarketplaceTranslate }>) {
+function MarketplaceBrand({ t }: Readonly<{ t: MarketplaceTranslate }>) {
   const brand = t('agritech.marketplace.brand');
   const accentStart = Math.max(0, brand.length - 3);
 
   return (
     <>
-      <span>{brand.slice(0, accentStart)}</span>
-      <strong>{brand.slice(accentStart)}</strong>
+      <span aria-hidden="true" className="dh-brand__mark">
+        <img alt="" decoding="async" height="512" src={dehqonHubLogoUrl} width="512" />
+      </span>
+      <span className="dh-brand__wordmark">
+        <span>{brand.slice(0, accentStart)}</span>
+        <strong>{brand.slice(accentStart)}</strong>
+      </span>
     </>
   );
 }
@@ -634,6 +634,9 @@ function MarketplaceHeader({
 }: Readonly<HeaderProps>) {
   return (
     <header className="dh-header">
+      <a className="dh-skip-link" href="#dh-main">
+        {t('agritech.marketplace.accessibility.skipToContent')}
+      </a>
       <div className="dh-header__main">
         <button
           aria-label={t('agritech.marketplace.brand')}
@@ -643,7 +646,7 @@ function MarketplaceHeader({
           }}
           type="button"
         >
-          <MarketplaceBrandLabel t={t} />
+          <MarketplaceBrand t={t} />
         </button>
         <button
           className={`dh-button dh-button--catalog${view === 'catalog' ? ' is-active' : ''}`}
@@ -730,6 +733,10 @@ function MarketplaceHeader({
           </button>
         ))}
       </nav>
+      <div className="dh-header__mobile-preferences">
+        <LanguageSwitcher variant="menu" />
+        <ThemeSwitcher variant="menu" />
+      </div>
     </header>
   );
 }
@@ -885,7 +892,7 @@ function MarketplaceFooter({ navigate, t }: Readonly<{ navigate: MarketplaceNavi
           }}
           type="button"
         >
-          <MarketplaceBrandLabel t={t} />
+          <MarketplaceBrand t={t} />
         </button>
         <p>{t('agritech.marketplace.footer.description')}</p>
       </div>
@@ -922,6 +929,7 @@ function MarketplaceFooter({ navigate, t }: Readonly<{ navigate: MarketplaceNavi
           {t('agritech.marketplace.orders.feed')}
         </button>
         <button
+          aria-label={`${t('agritech.marketplace.footer.forSellers')}: ${t('agritech.marketplace.verification')}`}
           onClick={() => {
             navigate('/verification');
           }}

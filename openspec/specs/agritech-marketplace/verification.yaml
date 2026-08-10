@@ -528,6 +528,11 @@ requirements:
         scenario: SCN-AGRITECH-MARKETPLACE-05
         target: acceptance-e2e:acceptance
         lanes: [pr, main]
+      - kind: cucumber
+        file: apps/e2e/acceptance/features/agritech-marketplace.feature
+        scenario: SCN-AGRITECH-MARKETPLACE-06
+        target: acceptance-e2e:acceptance
+        lanes: [pr, main]
       - kind: vitest
         file: libs/backend/feature/agritech/shared/lib/src/marketplace-policies.spec.ts
         target: '@app/backend-feature-agritech-shared:test'

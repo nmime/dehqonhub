@@ -247,6 +247,14 @@ describe('User app shell', () => {
     const html = container.innerHTML;
 
     expect(container.querySelectorAll('.dh-marketplace')).toHaveLength(1);
+    const brandMarks = container.querySelectorAll<HTMLImageElement>('.dh-brand__mark img');
+    expect(brandMarks).toHaveLength(2);
+    for (const brandMark of brandMarks) {
+      expect(brandMark.getAttribute('alt')).toBe('');
+      expect(brandMark.getAttribute('src')).toContain('dehqonhub-logo');
+      expect(brandMark.getAttribute('width')).toBe('512');
+      expect(brandMark.getAttribute('height')).toBe('512');
+    }
     expect(html).toContain('Dehqon');
     expect(html).not.toContain('xr-mini-app-bottom-bar');
     expect(html).not.toContain('design v3');

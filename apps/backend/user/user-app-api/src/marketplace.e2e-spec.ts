@@ -343,6 +343,21 @@ describe('marketplace HTTP contract', () => {
     expect(repository.createRequest).not.toHaveBeenCalled();
   });
 
+  it('returns a safe 403 before an unverified cart mutation reaches persistence', async () => {
+    repository.roleOf.mockResolvedValue(undefined);
+
+    const response = await app.inject({
+      method: 'POST',
+      url: '/marketplace/cart/items',
+      headers: authenticatedHeaders(),
+      payload: { productId: offerId, quantity: 1 },
+    });
+
+    expectProblem(response, 403);
+    expect(repository.isApprovedOrganization).not.toHaveBeenCalled();
+    expect(repository.addToCart).not.toHaveBeenCalled();
+  });
+
   it('returns 409 and no contract reference for a stale offer selection', async () => {
     repository.chooseOffer.mockResolvedValue({ status: 'conflict', field: 'status' });
 

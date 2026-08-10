@@ -148,6 +148,13 @@ Outline elements (inactive chip, secondary button): transparent/white background
 6. **Brand capsule "nameplate"** (logo inside a pill outline + "Since …" on the right) —
    the pattern for the seller mini-card in the product page header.
 
+The canonical DehqonHub emblem is the user-supplied gold-and-green tree mark stored at
+`apps/frontend/app/src/assets/dehqonhub-logo.webp`. It is an optimized, margin-trimmed derivative
+of the supplied artwork—not a recreated logo. Present it inside a deliberate white circular
+medallion so its opaque white background remains intentional in cream and dark themes. The emblem
+is decorative inside the already labelled DehqonHub home control; keep an empty `alt` value and
+retain the adjacent text wordmark wherever space allows.
+
 Product photos are real photographs inside an `--r-img` container, no filters.
 
 ---

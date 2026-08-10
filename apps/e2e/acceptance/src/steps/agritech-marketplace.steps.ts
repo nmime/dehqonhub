@@ -321,36 +321,56 @@ Then('both party consents persist and the contract becomes active', async functi
 });
 
 Given(
-  'a verified DehqonHub buyer without an approved buyer organization has an open seller cart',
-  async function (this: AcceptanceWorld) {
+  'a verified DehqonHub buyer without an approved buyer organization can discover an active product',
+  function (this: AcceptanceWorld) {
     const adapter = new MarketplaceInMemoryAdapter();
     const buyer = { tenantId: marketplaceTenantId, userId: 'unapproved-buyer-user' };
     adapter.registerVerifiedActor(buyer, 'buyer');
     this.agriTechMarketplace = adapter;
     this.agriTechMarketplaceBuyer = buyer;
     this.agriTechMarketplaceSeller = registerSellerProduct(adapter, 'approved-seller', 'approval-product');
-    const cart = await adapter.addToCart(buyer, 'approval-product', 1);
-    this.agriTechMarketplaceCartId = cart.id;
   },
 );
 
-When('the unapproved buyer attempts to check out the cart', async function (this: AcceptanceWorld) {
+When('the unapproved buyer attempts to add the product to a cart', async function (this: AcceptanceWorld) {
   const adapter = requireMarketplace(this);
   const buyer = requireBuyer(this);
-  assert.ok(this.agriTechMarketplaceCartId, 'approval cart was not initialized');
   try {
-    await adapter.checkoutCart(buyer, this.agriTechMarketplaceCartId, { deliveryTerms: 'pickup' });
-    assert.fail('checkout unexpectedly succeeded for an unapproved buyer organization');
+    await adapter.addToCart(buyer, 'approval-product', 1);
   } catch (error) {
     this.agriTechMarketplaceError = error;
   }
 });
 
-Then('checkout is denied and the cart remains open without a contract', async function (this: AcceptanceWorld) {
+Then('the cart addition is denied without a cart or contract', async function (this: AcceptanceWorld) {
   const adapter = requireMarketplace(this);
   const buyer = requireBuyer(this);
-  assert.ok(this.agriTechMarketplaceError instanceof Error, 'checkout denial was not returned');
-  assert.ok(this.agriTechMarketplaceCartId, 'approval cart was not initialized');
-  assert.equal((await adapter.getCart(buyer, this.agriTechMarketplaceCartId)).status, 'open');
+  assert.ok(this.agriTechMarketplaceError instanceof Error, 'cart denial was not returned');
+  assert.equal((await adapter.listCarts(buyer)).length, 0);
   assert.equal((await adapter.listContracts(buyer)).length, 0);
+});
+
+Given('an unverified DehqonHub user can discover an active product', function (this: AcceptanceWorld) {
+  const adapter = new MarketplaceInMemoryAdapter();
+  const buyer = { tenantId: marketplaceTenantId, userId: 'unverified-buyer-user' };
+  this.agriTechMarketplace = adapter;
+  this.agriTechMarketplaceBuyer = buyer;
+  this.agriTechMarketplaceSeller = registerSellerProduct(adapter, 'verified-seller', 'visible-product');
+});
+
+When('the unverified user attempts to add the product to a cart', async function (this: AcceptanceWorld) {
+  const adapter = requireMarketplace(this);
+  const buyer = requireBuyer(this);
+  try {
+    await adapter.addToCart(buyer, 'visible-product', 1);
+  } catch (error) {
+    this.agriTechMarketplaceError = error;
+  }
+});
+
+Then('the cart mutation is denied and no seller cart is persisted', async function (this: AcceptanceWorld) {
+  const adapter = requireMarketplace(this);
+  const buyer = requireBuyer(this);
+  assert.ok(this.agriTechMarketplaceError instanceof Error, 'cart mutation denial was not returned');
+  assert.equal((await adapter.listCarts(buyer)).length, 0);
 });

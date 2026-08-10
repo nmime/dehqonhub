@@ -118,14 +118,17 @@ export class MarketplaceDomainService {
     if (item.quantity <= 0) {
       throw new BadRequestException({ meta: { field: 'quantity' } });
     }
+    await this.requireBuyerRole(owner);
     return unwrap(await this.repository.addToCart(owner, item), 'cart');
   }
 
   async updateCartItem(owner: AgriTechOwner, cartId: string, productId: string, quantity: number): Promise<Cart> {
+    await this.requireBuyerRole(owner);
     return unwrap(await this.repository.updateCartItem(owner, cartId, productId, quantity), 'cart');
   }
 
   async removeCartItem(owner: AgriTechOwner, cartId: string, productId: string): Promise<Cart> {
+    await this.requireBuyerRole(owner);
     return unwrap(await this.repository.removeCartItem(owner, cartId, productId), 'cart');
   }
 

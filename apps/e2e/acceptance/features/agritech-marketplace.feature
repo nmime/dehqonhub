@@ -76,6 +76,12 @@ Feature: AgriTech marketplace operations protect every actor
 
     @REQ-AGRITECH-PARTNER-007 @SCN-AGRITECH-MARKETPLACE-05
     Scenario: Verification does not replace organization approval
-      Given a verified DehqonHub buyer without an approved buyer organization has an open seller cart
-      When the unapproved buyer attempts to check out the cart
-      Then checkout is denied and the cart remains open without a contract
+      Given a verified DehqonHub buyer without an approved buyer organization can discover an active product
+      When the unapproved buyer attempts to add the product to a cart
+      Then the cart addition is denied without a cart or contract
+
+    @SCN-AGRITECH-MARKETPLACE-06
+    Scenario: An unverified user cannot create a seller cart
+      Given an unverified DehqonHub user can discover an active product
+      When the unverified user attempts to add the product to a cart
+      Then the cart mutation is denied and no seller cart is persisted

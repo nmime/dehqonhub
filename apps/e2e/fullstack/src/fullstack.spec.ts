@@ -342,8 +342,40 @@ test('@critical user login honors safe return navigation, survives reload, and l
 
   await gotoWithRetry(page, urls.userApp);
   await expect(page.getByRole('heading', { level: 1, name: 'Everything for your farm in one place' })).toBeVisible();
+  await expect(page).toHaveTitle('DehqonHub');
+  const brandMarks = page.locator('.dh-brand__mark img');
+  await expect(brandMarks).toHaveCount(2);
+  expect(
+    await brandMarks.evaluateAll((marks) =>
+      marks.every((mark) => mark instanceof HTMLImageElement && mark.complete && mark.naturalWidth === 512),
+    ),
+  ).toBe(true);
   await expect(page.getByRole('button', { name: 'Language' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Theme' })).toBeVisible();
+  await page.getByRole('button', { name: 'Language' }).click();
+  await page.getByRole('menuitem', { name: 'Russian' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Всё для вашего хозяйства в одном месте' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  await expectPageQuality(page, 'DehqonHub at the 375px Russian-content floor');
+
+  await page.getByRole('button', { name: 'Язык' }).click();
+  await page.getByRole('menuitem', { name: 'Узбекский' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: "Xo'jaligingiz uchun hammasi bir joyda" })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'uz');
+
+  await page.getByRole('button', { name: 'Til' }).click();
+  await page.getByRole('menuitem', { name: 'Inglizcha' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Everything for your farm in one place' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+
+  await page.setViewportSize({ width: 320, height: 720 });
+  const compactBrand = page.locator('.dh-header .dh-brand__mark');
+  await expect(compactBrand).toBeVisible();
+  const compactBrandBox = await compactBrand.boundingBox();
+  expect(compactBrandBox?.width).toBeGreaterThanOrEqual(44);
+  expect(compactBrandBox?.height).toBeGreaterThanOrEqual(44);
+  await expect(page.locator('.dh-header .dh-brand__wordmark')).toBeHidden();
+  await expectPageQuality(page, 'DehqonHub at the 320px viewport floor');
 
   const aiLauncher = page.getByRole('button', { name: 'Open AI assistant' });
   await aiLauncher.click();
@@ -361,7 +393,7 @@ test('@critical user login honors safe return navigation, survives reload, and l
   await page.getByRole('button', { name: 'Catalog', exact: true }).first().click();
   await expect(page).toHaveURL(`${urls.userApp}/catalog`);
   await expect(page.getByRole('heading', { level: 1, name: 'Catalog' })).toBeVisible();
-  await page.getByRole('button', { name: 'Verification', exact: true }).click();
+  await page.getByRole('button', { name: 'For sellers: Verification', exact: true }).click();
   await expect(page).toHaveURL(`${urls.userApp}/verification`);
   await expect(page.getByRole('heading', { name: 'Verification provider unavailable' })).toBeVisible();
 

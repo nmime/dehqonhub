@@ -1,5 +1,5 @@
 // @requirements REQ-AGRITECH-MARKETPLACE-016
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { BuyerRequestViewDto, CartViewDto, ContractViewDto, ProductViewDto } from '@app/frontend-api-client';
 import { MarketplaceAi } from './marketplace-ai';
@@ -39,6 +39,43 @@ const product = (
 const seed = product('seed-1', 'seller-a', 'seed', 'Certified corn seed');
 const tractor = product('equipment-1', 'seller-b', 'equipment', 'Compact tractor');
 const otherInput = product('input-1', 'seller-c', 'other', 'Specialty soil input');
+
+function installMatchMedia(initialMatches: boolean) {
+  const original = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+  let matches = initialMatches;
+  const listeners = new Set<() => void>();
+  const query = {
+    addEventListener: (_type: string, listener: () => void) => listeners.add(listener),
+    addListener: (listener: () => void) => listeners.add(listener),
+    dispatchEvent: () => true,
+    get matches() {
+      return matches;
+    },
+    media: '',
+    onchange: null,
+    removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener),
+    removeListener: (listener: () => void) => listeners.delete(listener),
+  } as unknown as MediaQueryList;
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: vi.fn(() => query),
+  });
+  return {
+    restore: () => {
+      if (original) {
+        Object.defineProperty(window, 'matchMedia', original);
+      } else {
+        Reflect.deleteProperty(window, 'matchMedia');
+      }
+    },
+    setMatches: (value: boolean) => {
+      matches = value;
+      for (const listener of listeners) {
+        listener();
+      }
+    },
+  };
+}
 
 afterEach(() => {
   cleanup();
@@ -114,6 +151,45 @@ describe('DehqonHub marketplace components', () => {
     );
     expect(screen.getByText(seed.name)).toBeTruthy();
     expect(screen.queryByText(tractor.name)).toBeNull();
+  });
+
+  it('closes mobile catalog filters explicitly and when the viewport becomes desktop', () => {
+    const viewport = installMatchMedia(false);
+    try {
+      render(
+        <MarketplaceCatalog
+          favoriteIds={new Set()}
+          locale="en"
+          locationSearch="?section=seeds"
+          navigate={vi.fn()}
+          onAdd={vi.fn()}
+          onFavorite={vi.fn()}
+          onOpen={vi.fn()}
+          products={[seed]}
+          t={t}
+        />,
+      );
+
+      const trigger = screen.getByRole('button', { name: 'agritech.marketplace.filter.open' });
+      fireEvent.click(trigger);
+      const dialog = screen.getByRole('dialog', { name: 'agritech.marketplace.filter.title' });
+      expect(dialog.getAttribute('open')).not.toBeNull();
+
+      fireEvent(dialog, new Event('cancel', { cancelable: true }));
+      expect(dialog.getAttribute('open')).toBeNull();
+
+      fireEvent.click(trigger);
+      fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.close' }));
+      expect(dialog.getAttribute('open')).toBeNull();
+
+      fireEvent.click(trigger);
+      act(() => {
+        viewport.setMatches(true);
+      });
+      expect(dialog.getAttribute('open')).toBeNull();
+    } finally {
+      viewport.restore();
+    }
   });
 
   it('defers PDP delivery selection to checkout and distinguishes unavailable sample allowance', () => {
@@ -618,6 +694,27 @@ describe('DehqonHub marketplace components', () => {
       expect(screen.queryByRole('dialog')).toBeNull();
       expect(document.activeElement).toBe(launcher);
     });
+  });
+
+  it('contains focus and exposes modal semantics in the full-screen mobile AI view', () => {
+    const viewport = installMatchMedia(true);
+    try {
+      render(<MarketplaceAi locale="en" onAsk={vi.fn()} onOpenProduct={vi.fn()} products={[seed]} t={t} />);
+
+      fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.open' }));
+      const dialog = screen.getByRole('dialog', { name: 'agritech.marketplace.ai.title' });
+      const input = within(dialog).getByRole('textbox', { name: 'agritech.marketplace.ai.placeholder' });
+      const closeButton = within(dialog).getByRole('button', { name: 'agritech.marketplace.ai.close' });
+      expect(dialog.getAttribute('aria-modal')).toBe('true');
+      expect(document.activeElement).toBe(input);
+
+      fireEvent.keyDown(globalThis, { key: 'Tab' });
+      expect(document.activeElement).toBe(closeButton);
+      fireEvent.keyDown(globalThis, { key: 'Tab', shiftKey: true });
+      expect(document.activeElement).toBe(input);
+    } finally {
+      viewport.restore();
+    }
   });
 
   it('renders grounded AI results through the current locale translator', async () => {

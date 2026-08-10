@@ -542,10 +542,10 @@ test('keeps the complete repository disposition inventory synchronized', () => {
     projects: 111,
     behaviorTests: 546,
     features: 6,
-    scenarios: 19,
+    scenarios: 20,
     requirements: 74,
     acceptanceRequirements: 9,
-    evidence: 241,
+    evidence: 242,
   };
   assert.deepEqual(report.totals, {
     ...expectedInventory,

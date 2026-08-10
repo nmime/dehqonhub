@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Locale } from '@app/frontend-runtime';
 import type { ProductViewDto, ReviewViewDto, SampleUsageViewDto } from '@app/frontend-api-client';
 import type { Resource, ResourceStatus } from '../model/use-marketplace-data';
@@ -255,6 +255,31 @@ const initialFilters = (locationSearch?: string): CatalogFilters => ({
 export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { locationSearch: string }>) {
   const { locale, locationSearch, products, t, ...actions } = props;
   const [filters, setFilters] = useState<CatalogFilters>(() => initialFilters(locationSearch));
+  const mobileFiltersDialog = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    if (typeof globalThis.matchMedia !== 'function') {
+      return undefined;
+    }
+    const desktopViewport = globalThis.matchMedia('(min-width: 56.001rem)');
+    const closeOnDesktop = () => {
+      const dialog = mobileFiltersDialog.current;
+      if (!desktopViewport.matches || !dialog?.open) {
+        return;
+      }
+      if (typeof dialog.close === 'function') {
+        dialog.close();
+        return;
+      }
+      dialog.removeAttribute('open');
+    };
+    closeOnDesktop();
+    desktopViewport.addEventListener('change', closeOnDesktop);
+    return () => {
+      desktopViewport.removeEventListener('change', closeOnDesktop);
+    };
+  }, []);
+
   useEffect(() => {
     setFilters((current) => ({
       ...current,
@@ -310,6 +335,28 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
 
   const reset = () => {
     setFilters({ ...initialFilters(locationSearch), query: '', section: 'all' });
+  };
+  const closeMobileFilters = () => {
+    const dialog = mobileFiltersDialog.current;
+    if (!dialog) {
+      return;
+    }
+    if (typeof dialog.close === 'function') {
+      dialog.close();
+      return;
+    }
+    dialog.removeAttribute('open');
+  };
+  const openMobileFilters = () => {
+    const dialog = mobileFiltersDialog.current;
+    if (!dialog || dialog.open) {
+      return;
+    }
+    if (typeof dialog.showModal === 'function') {
+      dialog.showModal();
+      return;
+    }
+    dialog.setAttribute('open', '');
   };
   const filterControls = (
     <div className="dh-filter-fields">
@@ -423,13 +470,29 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
           </button>
         ))}
       </div>
-      <details className="dh-mobile-filters">
-        <summary>
-          <MarketplaceIcon name="search" />
-          {t('agritech.marketplace.filter.open')}
-        </summary>
-        {filterControls}
-      </details>
+      <button className="dh-mobile-filter-trigger" onClick={openMobileFilters} type="button">
+        <MarketplaceIcon name="search" />
+        {t('agritech.marketplace.filter.open')}
+      </button>
+      <dialog
+        aria-labelledby="dh-mobile-filter-title"
+        className="dh-mobile-filter-dialog"
+        onCancel={(event) => {
+          event.preventDefault();
+          closeMobileFilters();
+        }}
+        ref={mobileFiltersDialog}
+      >
+        <section className="dh-mobile-filter-sheet">
+          <header>
+            <h2 id="dh-mobile-filter-title">{t('agritech.marketplace.filter.title')}</h2>
+            <button aria-label={t('agritech.marketplace.close')} onClick={closeMobileFilters} type="button">
+              <MarketplaceIcon name="close" />
+            </button>
+          </header>
+          {filterControls}
+        </section>
+      </dialog>
       <div className="dh-catalog-layout">
         <aside aria-label={t('agritech.marketplace.filter.title')} className="dh-filter-panel">
           {filterControls}

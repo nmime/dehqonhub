@@ -113,6 +113,44 @@ describe('MarketplaceService', () => {
     expect(usage).toEqual({ used: 2, limit: 5, remaining: 3 });
   });
 
+  it.each([
+    ['add', (service: MarketplaceService) => service.addToCart(owner, { productId: 'p-1', quantity: 1 })],
+    ['update', (service: MarketplaceService) => service.updateCartItem(owner, 'c-1', 'p-1', 2)],
+    ['remove', (service: MarketplaceService) => service.removeCartItem(owner, 'c-1', 'p-1')],
+  ])('blocks an unverified buyer before the %s cart mutation reaches persistence', async (_action, mutate) => {
+    const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue(undefined);
+
+    await expect(mutate(service)).rejects.toThrow(ForbiddenException);
+    expect(repository.isApprovedOrganization).not.toHaveBeenCalled();
+    expect(repository.addToCart).not.toHaveBeenCalled();
+    expect(repository.updateCartItem).not.toHaveBeenCalled();
+    expect(repository.removeCartItem).not.toHaveBeenCalled();
+  });
+
+  it('adds a cart item only for a verified buyer in an approved organization', async () => {
+    const { repository, service } = fixture();
+    repository.roleOf.mockResolvedValue('buyer');
+    repository.addToCart.mockResolvedValue(
+      ok({
+        id: 'c-1',
+        tenantId: owner.tenantId,
+        userId: owner.userId,
+        sellerId: 'seller-1',
+        items: [{ productId: 'p-1', quantity: 1 }],
+        status: 'open',
+        createdAt: now,
+        updatedAt: now,
+      }),
+    );
+
+    await expect(service.addToCart(owner, { productId: 'p-1', quantity: 1 })).resolves.toMatchObject({
+      id: 'c-1',
+    });
+    expect(repository.isApprovedOrganization).toHaveBeenCalledWith(owner, 'buyer');
+    expect(repository.addToCart).toHaveBeenCalledWith(owner, { productId: 'p-1', quantity: 1 });
+  });
+
   it('requires verification before checkout', async () => {
     const { repository, service } = fixture();
     repository.roleOf.mockResolvedValue(undefined);
