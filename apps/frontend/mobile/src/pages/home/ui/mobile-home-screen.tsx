@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-FULFILLMENT-010
+// @requirements REQ-AGRITECH-FULFILLMENT-010
 import { useCallback, useEffect, useState } from 'react';
 import { Pressable, ScrollView, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';

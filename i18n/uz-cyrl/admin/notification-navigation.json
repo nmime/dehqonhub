@@ -1,0 +1,11 @@
+{
+  "admin.action.notificationTemplates": "Хабар шаблонлари",
+  "admin.action.notificationSegments": "Аудиториялар",
+  "admin.action.notificationBroadcasts": "Тарқатмалар",
+  "admin.notification.description": "Маҳаллийлаштирилган хабарларни яратинг, қайта фойдаланиладиган аудиторияларни танланг ва электрон почта, ботлар ҳамда пуш-билдиришномалар орқали барқарор тарқатмаларни бошқаринг.",
+  "admin.notification.common.success": "Билдиришнома амали бажарилди.",
+  "admin.notification.common.failed": "Билдиришнома амали бажарилмади.",
+  "admin.permission.notificationTemplatesMissing": "Хабар шаблонларини кўриш рухсати йўқ.",
+  "admin.permission.notificationSegmentsMissing": "Аудитория сегментларини кўриш рухсати йўқ.",
+  "admin.permission.notificationBroadcastsMissing": "Билдиришнома тарқатмаларини кўриш рухсати йўқ."
+}

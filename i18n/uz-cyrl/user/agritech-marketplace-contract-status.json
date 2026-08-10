@@ -1,0 +1,8 @@
+{
+  "agritech.marketplace.contract.status.draft": "Қоралама",
+  "agritech.marketplace.contract.status.signed": "Имзоланган",
+  "agritech.marketplace.contract.status.active": "Фаол",
+  "agritech.marketplace.contract.status.completed": "Якунланган",
+  "agritech.marketplace.contract.status.cancelled": "Бекор қилинган",
+  "agritech.marketplace.contract.status.legacy_review_required": "Эски шартномани текшириш керак"
+}

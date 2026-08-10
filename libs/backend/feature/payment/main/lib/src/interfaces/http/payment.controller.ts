@@ -13,13 +13,14 @@ import {
   type ClickSignedCallbackInput,
 } from '../../application/payment.use-cases';
 import { PaymentProviders, type PaymentProvider } from '@app/backend-feature-payment-shared';
+import { supportedLocales, type Locale } from '@app/common-i18n-runtime';
 
 class CreatePaymentDto {
   @ApiProperty({ format: 'uuid' }) @IsString() orderId!: string;
   @ApiProperty({ enum: PaymentProviders }) @IsIn(PaymentProviders) provider!: PaymentProvider;
   @ApiProperty({ format: 'uri' }) @IsUrl({ protocols: ['https'], require_protocol: true }) returnUrl!: string;
   @ApiProperty() @IsString() @Matches(/^[A-Za-z0-9:_-]{8,100}$/) idempotencyKey!: string;
-  @ApiProperty({ enum: ['en', 'ru', 'uz'] }) @IsIn(['en', 'ru', 'uz']) locale!: 'en' | 'ru' | 'uz';
+  @ApiProperty({ enum: supportedLocales }) @IsIn(supportedLocales) locale!: Locale;
 }
 
 class PaymentHandoffViewDto {

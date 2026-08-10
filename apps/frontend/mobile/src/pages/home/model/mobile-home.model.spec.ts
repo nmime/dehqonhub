@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-NATIVE-006
+// @requirements REQ-FRONTEND-NATIVE-006 REQ-AGRITECH-I18N-012
 import { describe, expect, it } from 'vitest';
 
 import { mobileCapabilityCards, mobileLocaleOptions } from './mobile-home.model';
@@ -13,7 +13,12 @@ describe('mobile home model', () => {
   });
 
   it('offers every shared product locale switch option', () => {
-    expect(mobileLocaleOptions.map((option) => option.locale)).toEqual(['en', 'ru', 'uz']);
-    expect(mobileLocaleOptions.map((option) => option.label)).toEqual(['EN', 'RU', 'UZ']);
+    expect(mobileLocaleOptions.map((option) => option.locale)).toEqual(['en', 'ru', 'uz', 'uz-cyrl']);
+    expect(mobileLocaleOptions.map((option) => option.label)).toEqual([
+      'English',
+      'Русский',
+      'O‘zbekcha (lotin)',
+      'Ўзбекча (кирилл)',
+    ]);
   });
 });

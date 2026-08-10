@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-NATIVE-006 REQ-AGRITECH-FULFILLMENT-010
+// @requirements REQ-FRONTEND-NATIVE-006 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-I18N-012
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
@@ -92,10 +92,10 @@ describe('mobile home screen', () => {
   it('switches locale through the shared preference model', async () => {
     await renderScreen();
 
-    fireEvent.click(screen.getByText('RU'));
+    fireEvent.click(screen.getByText('Ўзбекча (кирилл)'));
 
-    expect(applyUserLocale).toHaveBeenCalledWith('ru');
-    expect(persistUserLocale).toHaveBeenCalledWith('ru');
+    expect(applyUserLocale).toHaveBeenCalledWith('uz-cyrl');
+    expect(persistUserLocale).toHaveBeenCalledWith('uz-cyrl');
   });
 
   it('records a visit with the selected farmer and normalized grade', async () => {

@@ -1,17 +1,19 @@
-// @requirements REQ-SOCIAL-COMMANDS-003 REQ-AGRITECH-TELEGRAM-005
+// @requirements REQ-SOCIAL-COMMANDS-003 REQ-AGRITECH-TELEGRAM-005 REQ-AGRITECH-I18N-012
 import { describe, expect, it, vi } from 'vitest';
 import { createTelegramBot, handleLink, handleStart, telegramBotCommands } from './bot';
 import { goBack, goHome, navigateTo, replaceCurrentRoute } from '../navigation';
-import { defaultLocale, supportedLocales, translate, type Locale } from '../i18n';
+import { defaultLocale, translate, type Locale } from '../i18n';
 import { initialTelegramBotSession } from './session';
 import type { TelegramBotAuthPort, TelegramBotConfig, TelegramBotSession } from '../type';
 
-const telegramUiRegistrations: ReadonlyArray<{ locale: Locale; languageCode?: Locale }> = [
+const telegramUiRegistrations: ReadonlyArray<{ locale: Locale; languageCode?: 'en' | 'ru' | 'uz' }> = [
   { locale: defaultLocale },
-  ...supportedLocales.map((locale) => ({ locale, languageCode: locale })),
+  { locale: 'en', languageCode: 'en' },
+  { locale: 'ru', languageCode: 'ru' },
+  { locale: 'uz', languageCode: 'uz' },
 ];
 
-const telegramUiRegistrationLabels = ['default', ...supportedLocales] as const;
+const telegramUiRegistrationLabels = ['default', 'en', 'ru', 'uz'] as const;
 
 const botInfo = {
   id: 42,
@@ -443,6 +445,9 @@ describe('createTelegramBot', () => {
     );
     expect(telegramBotCommands('en', false).map(({ command }) => command)).not.toContain('app');
     expect(telegramBotCommands('en', false).map(({ command }) => command)).toContain('agritech');
+    expect(telegramBotCommands('uz-cyrl', true).find(({ command }) => command === 'language')?.description).toMatch(
+      /[А-Яа-яЎўҚқҒғҲҳ]/u,
+    );
   });
 
   it('returns an explicit unavailable state instead of fabricated AgriTech data', async () => {
@@ -1041,7 +1046,8 @@ describe('createTelegramBot', () => {
     expect(flattenButtons(latestPayload(calls, 'editMessageText')).map((button) => button.text)).toEqual([
       '✓ English',
       'Russian',
-      'Uzbek',
+      'Uzbek (Latin)',
+      'Uzbek (Cyrillic)',
       '‹ Back',
     ]);
 

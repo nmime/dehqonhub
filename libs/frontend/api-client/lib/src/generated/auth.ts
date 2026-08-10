@@ -384,7 +384,7 @@ export interface components {
       email: string | null;
       displayName?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru' | 'uz';
+      locale?: 'en' | 'ru' | 'uz' | 'uz-cyrl';
       /** @enum {string} */
       theme: 'system' | 'light' | 'dark';
       roles: string[];
@@ -417,7 +417,7 @@ export interface components {
       /** @example Ada Lovelace */
       displayName?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru' | 'uz';
+      locale?: 'en' | 'ru' | 'uz' | 'uz-cyrl';
     };
     LoginDto: {
       /** Format: uuid */
@@ -555,7 +555,7 @@ export interface components {
       email?: string;
       displayName?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru' | 'uz';
+      locale?: 'en' | 'ru' | 'uz' | 'uz-cyrl';
       /** @enum {string} */
       theme?: 'system' | 'light' | 'dark';
       roles: string[];
@@ -567,16 +567,16 @@ export interface components {
     };
     UpdateLocaleDto: {
       /** @enum {string} */
-      locale: 'en' | 'ru' | 'uz';
+      locale: 'en' | 'ru' | 'uz' | 'uz-cyrl';
     };
     UpdatePreferencesDto: {
       /** @enum {string} */
-      locale?: 'en' | 'ru' | 'uz';
+      locale?: 'en' | 'ru' | 'uz' | 'uz-cyrl';
       /** @enum {string} */
       theme?: 'system' | 'light' | 'dark';
     };
     SupportedLocalesPayloadDto: {
-      supportedLocales: ('en' | 'ru' | 'uz')[];
+      supportedLocales: ('en' | 'ru' | 'uz' | 'uz-cyrl')[];
     };
     LogoutPayloadDto: {
       /** @enum {boolean} */

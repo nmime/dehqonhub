@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-PAYMENT-004
+// @requirements REQ-AGRITECH-PAYMENT-004 REQ-AGRITECH-I18N-012
 import { Buffer } from 'node:buffer';
 import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
@@ -81,7 +81,7 @@ describe('payment state machine', () => {
         provider: 'payme',
         returnUrl: 'https://app.test/orders',
         idempotencyKey: 'request-1234',
-        locale: 'uz',
+        locale: 'uz-cyrl',
       },
     );
     expect(result.checkoutUrl).toMatch(/^https:\/\/checkout\.paycom\.uz\//u);
@@ -89,6 +89,7 @@ describe('payment state machine', () => {
     expect(payload).toContain('ac.order_id=order-1');
     expect(payload).toContain('a=500000');
     expect(payload).toContain('l=uz');
+    expect(payload).not.toContain('l=uz-cyrl');
   });
 
   it('authenticates Payme and returns an idempotent transaction result', async () => {

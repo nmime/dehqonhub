@@ -1,0 +1,14 @@
+{
+  "agritech.marketplace.orders.makeOffer": "Таклиф бериш",
+  "agritech.marketplace.orders.offering": "Таклифлар",
+  "agritech.marketplace.orders.offerSent": "Таклиф юборилди",
+  "agritech.marketplace.orders.bestOffer": "Жорий энг паст таклиф",
+  "agritech.marketplace.orders.confirmOffer": "Шу таклифни танлаш",
+  "agritech.marketplace.orders.confirmOfferDescription": "Танлаш таклифдан шартнома қораламасини яратади. Бирор томон розилик билдиришидан олдин уни кўриб чиқинг.",
+  "agritech.marketplace.orders.noOffers": "Ҳозирча сотувчи таклифи йўқ",
+  "agritech.marketplace.orders.offerCount": "{{count}} та таклиф",
+  "agritech.marketplace.orders.offerStatus.accepted": "Қабул қилинган",
+  "agritech.marketplace.orders.offerStatus.declined": "Рад этилган",
+  "agritech.marketplace.orders.offerStatus.pending": "Кутилмоқда",
+  "agritech.marketplace.orders.submitOffer": "Сотувчи таклифини юбориш"
+}

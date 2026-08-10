@@ -4,6 +4,8 @@ import ruCommonCatalog from '@app/i18n-ru-common/shared.json';
 import ruErrorsCatalog from '@app/i18n-ru-common/errors.json';
 import uzCommonCatalog from '@app/i18n-uz-common/shared.json';
 import uzErrorsCatalog from '@app/i18n-uz-common/errors.json';
+import uzCyrlCommonCatalog from '@app/i18n-uz-cyrl-common/shared.json';
+import uzCyrlErrorsCatalog from '@app/i18n-uz-cyrl-common/errors.json';
 import { mergeLocaleCatalogFiles, type Locale, type RuntimeLocaleCatalog } from '@app/common-i18n-runtime';
 
 export const backendCatalogFileNames = ['common/shared.json', 'common/errors.json'] as const;
@@ -22,5 +24,9 @@ export const translations = {
   uz: mergeLocaleCatalogFiles('uz', [
     ['common/shared.json', uzCommonCatalog],
     ['common/errors.json', uzErrorsCatalog],
+  ]),
+  'uz-cyrl': mergeLocaleCatalogFiles('uz-cyrl', [
+    ['common/shared.json', uzCyrlCommonCatalog],
+    ['common/errors.json', uzCyrlErrorsCatalog],
   ]),
 } as const satisfies Record<Locale, LocaleCatalog>;

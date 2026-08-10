@@ -1,4 +1,4 @@
-// @requirements REQ-SOCIAL-COMMANDS-003
+// @requirements REQ-SOCIAL-COMMANDS-003 REQ-AGRITECH-I18N-012
 import { InteractionType } from 'discord-api-types/v10';
 import { describe, expect, it } from 'vitest';
 import {
@@ -28,26 +28,20 @@ describe('Discord i18n helpers', () => {
     expect(t('bot.error.expired', 'ru')).toBe('Действие бота истекло. Начните заново.');
     expect(localizationsFor('discord.commands.help.label')).toEqual({
       ru: 'помощь',
-      uz: 'help',
     });
+    expect(t('bot.error.expired', 'uz-Cyrl-UZ')).toMatch(/[А-Яа-яЎўҚқҒғҲҳ]/u);
   });
 
   it('omits supported locales that have no value for the key', () => {
     const key = 'discord.commands.help.label';
     const ruCatalog = discordTranslations.ru;
-    const uzCatalog = discordTranslations.uz;
     const originalRu = ruCatalog[key];
-    const originalUz = uzCatalog[key];
     delete ruCatalog[key];
-    delete uzCatalog[key];
     try {
       expect(localizationsFor(key)).toEqual({});
     } finally {
       if (originalRu !== undefined) {
         ruCatalog[key] = originalRu;
-      }
-      if (originalUz !== undefined) {
-        uzCatalog[key] = originalUz;
       }
     }
   });

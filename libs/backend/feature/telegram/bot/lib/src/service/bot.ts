@@ -7,7 +7,7 @@ import { limit } from '@grammyjs/ratelimiter';
 import { Router } from '@grammyjs/router';
 import { autoRetry } from '@grammyjs/auto-retry';
 import { apiThrottler } from '@grammyjs/transformer-throttler';
-import { defaultLocale, supportedLocales, translate, type Locale, type TranslationKey } from '../i18n';
+import { defaultLocale, translate, type Locale, type TranslationKey } from '../i18n';
 import { createTelegramApplication, resolveTelegramApplication, type TelegramBotApplicationPort } from './application';
 import { isSafeTelegramAppUrl, resolveTelegramBotConfig } from './config';
 import { resolveTelegramIdentity } from '../identity';
@@ -41,7 +41,9 @@ const telegramCommandDefinitions: readonly {
 
 const telegramBotUiLocales: ReadonlyArray<{ locale: Locale; languageCode?: LanguageCode }> = [
   { locale: defaultLocale },
-  ...supportedLocales.map((locale) => ({ locale, languageCode: locale })),
+  { locale: 'en', languageCode: 'en' },
+  { locale: 'ru', languageCode: 'ru' },
+  { locale: 'uz', languageCode: 'uz' },
 ];
 
 export function createTelegramBot(

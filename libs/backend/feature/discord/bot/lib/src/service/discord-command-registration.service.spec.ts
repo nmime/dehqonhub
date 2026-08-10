@@ -1,4 +1,4 @@
-// @requirements REQ-SOCIAL-COMMANDS-003
+// @requirements REQ-SOCIAL-COMMANDS-003 REQ-AGRITECH-I18N-012
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { DiscordCommandRegistrationService } from './discord-command-registration.service';
 import { DiscordBotConfig } from './discord-config';
@@ -30,16 +30,14 @@ describe('Discord command registration', () => {
       guildId: '234567890123456789',
     });
     expect(snapshot.commands.map((command) => command.name)).toEqual(['account', 'help']);
-    expect(snapshot.commands[0]?.name_localizations).toEqual({ ru: 'аккаунт', uz: 'account' });
+    expect(snapshot.commands[0]?.name_localizations).toEqual({ ru: 'аккаунт' });
     expect(snapshot.commands[0]?.description_localizations).toEqual({
       ru: 'Управление привязкой аккаунта.',
-      uz: 'Manage account linking.',
     });
     expect(snapshot.commands[0]?.options?.map((option) => option.name)).toEqual(['link', 'status']);
-    expect(snapshot.commands[0]?.options?.[0]?.name_localizations).toEqual({ ru: 'привязать', uz: 'link' });
+    expect(snapshot.commands[0]?.options?.[0]?.name_localizations).toEqual({ ru: 'привязать' });
     expect(snapshot.commands[0]?.options?.[0]?.description_localizations).toEqual({
       ru: 'Привязать Discord к учетной записи на сайте.',
-      uz: 'Link your Discord account to the web account.',
     });
   });
 
