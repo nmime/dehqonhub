@@ -41,6 +41,11 @@ export interface AgriTechOperationsRepository {
     owner: AgriTechOwner,
     input: CreateProduceListingInput,
   ): Promise<OperationResult<ProduceListing>>;
+  updateProduceSampleAvailability(
+    owner: AgriTechOwner,
+    listingId: string,
+    sampleAvailable: boolean,
+  ): Promise<OperationResult<ProduceListing>>;
   listProduce(
     tenantId: string,
     filter: { crop?: string; region?: string; grade?: ProduceGrade },

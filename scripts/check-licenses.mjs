@@ -27,6 +27,7 @@ export const allowedLicenses = new Set([
   'LGPL-3.0-or-later',
   'MIT',
   'MIT AND Apache-2.0',
+  '(MIT AND Zlib)',
   'MIT-0',
   '(MIT OR Apache-2.0)',
   '(MIT OR CC0-1.0)',
@@ -38,6 +39,9 @@ export const allowedLicenses = new Set([
   'Unlicense',
   'WTFPL OR MIT',
 ]);
+
+/** Licences approved only for the named production packages. */
+export const acknowledgedPackageLicenses = new Map([['OFL-1.1', new Set(['@fontsource/noto-sans'])]]);
 
 /**
  * Packages whose manifest omits a licence field. Each is MIT upstream; they are listed
@@ -73,7 +77,13 @@ export function collectLicenseViolations(inventory) {
     }
 
     if (!allowedLicenses.has(license)) {
-      violations.push(`${license}: not allow-listed (${names.slice(0, 5).join(', ')}${names.length > 5 ? ', …' : ''})`);
+      const acknowledgedPackages = acknowledgedPackageLicenses.get(license);
+      const unapprovedNames = acknowledgedPackages ? names.filter((name) => !acknowledgedPackages.has(name)) : names;
+      if (unapprovedNames.length > 0) {
+        violations.push(
+          `${license}: not allow-listed (${unapprovedNames.slice(0, 5).join(', ')}${unapprovedNames.length > 5 ? ', …' : ''})`,
+        );
+      }
     }
   }
 

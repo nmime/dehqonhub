@@ -1,57 +1,183 @@
-// @requirements REQ-AGRITECH-ORDER-003
-import { EntityManager, LockMode, type FilterQuery } from '@mikro-orm/core';
+// @requirements REQ-AGRITECH-ORDER-003 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-STAGE2-017
+import { LockMode } from '@mikro-orm/core';
+import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import type {
-  AiConsultation,
-  AiConsultationAnswer,
-  AiConsultationKind,
+  AddCartItemInput,
   BuyerRequest,
   Cart,
-  CartItem,
   CheckoutCartInput,
   CheckoutCartResult,
   Contract,
+  ContractDeliveryQuoteInput,
   ContractLine,
-  Favorite,
+  CreateBuyerRequestInput,
+  CreateRequestOfferInput,
+  MarketplaceDocumentProviderResult,
+  MarketplaceIdentityProviderResult,
+  MarketplacePartySnapshot,
+  MarketplaceProviderActorType,
+  MarketplaceProviderOperationCompletion,
+  MarketplaceProviderOperationPreparation,
+  MarketplaceProviderOperationReplay,
+  MarketplaceProviderOperationRepository,
+  MarketplaceProviderRequestDescriptor,
+  MarketplaceProviderSafeReceipt,
+  PreparedMarketplaceProviderOperation,
   MarketplaceRepository,
+  MarketplaceVerificationRepository,
   OperationResult,
   OfferSelectionResult,
   RequestOffer,
-  Review,
-  SampleRequest,
   Verification,
+  VerificationDocument,
   VerificationRole,
   VerificationRejectionReason,
 } from '@app/backend-feature-agritech-shared';
 import {
+  hasRequiredVerificationDocuments,
   isVerificationReviewReasonValid,
-  maxMonthlySamples,
+  marketplaceProviderFingerprint,
+  marketplaceProviderOperationScopes,
   type AgriTechOwner,
 } from '@app/backend-feature-agritech-shared';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import {
-  AiConsultationEntity,
   BuyerRequestEntity,
   CartEntity,
   ContractEntity,
-  FavoriteEntity,
+  MarketplaceProviderOperationEntity,
   RequestOfferEntity,
-  ReviewEntity,
-  SampleRequestEntity,
   VerificationEntity,
+  VerificationEvidenceEntity,
 } from '../entities/marketplace.entity';
-import { AgriTechPartnerEntity } from '../entities/operations.entity';
+import {
+  MarketplaceListingPublicationEntity,
+  MarketplacePublicSellerEntity,
+  MarketplacePublicSellerRevisionEntity,
+  MarketplaceRequestPublicationEntity,
+} from '../entities/marketplace-public.entity';
+import {
+  MarketplaceProduceOrganizationBindingEntity,
+  MarketplaceRequestOrganizationBindingEntity,
+} from '../entities/marketplace-source-binding.entity';
+import {
+  MarketplaceCommerceOperationEntity,
+  MarketplacePartnerMembershipEntity,
+  type MarketplaceCommerceOperationKind,
+  type MarketplaceMembershipCapability,
+} from '../entities/marketplace-commerce.entity';
+import { AgriTechPartnerEntity, ProduceListingEntity } from '../entities/operations.entity';
 import { ProductEntity } from '../entities/product.entity';
 
 const ok = <T>(value: T): OperationResult<T> => ({ status: 'ok', value });
 const maximumMarketplaceUzs = 9_999_999_999_999;
 const maximumDeliveryDays = 365;
+const maximumVerificationEvidenceRevisionsPerKind = 3;
+const providerOperationLeaseMilliseconds = 60_000;
+const providerClockSkewMilliseconds = 5 * 60_000;
+const providerResultMaximumAgeMilliseconds = 30 * 24 * 60 * 60_000;
+const safeProviderReference = /^[\x21-\x7e]{1,200}$/;
+const safeOpaqueSubject = /^[a-zA-Z0-9][a-zA-Z0-9._:-]{15,127}$/;
+const safeProviderOutcome = /^[a-z][a-z0-9_-]{0,79}$/u;
+const safeProviderErrorCode = /^[a-z][a-z0-9_-]{0,99}$/u;
+const forbiddenProviderReceiptKeyFragments = [
+  'accesstoken',
+  'authorization',
+  'cookie',
+  'credential',
+  'documentbytes',
+  'payload',
+  'pinfl',
+  'privatekey',
+  'raw',
+  'refreshtoken',
+  'secret',
+  'tin',
+] as const;
 
-const currentMonthStart = (): Date => {
-  const start = new Date();
-  start.setDate(1);
-  start.setHours(0, 0, 0, 0);
-  return start;
+function providerOperationLockKey(owner: AgriTechOwner, input: MarketplaceProviderOperationPreparation): string {
+  const resourceScope = `${input.capability}:${input.resourceType}:${input.resourceId}:${input.resourceRevision}`;
+  if (['contract_artifact_storage', 'direct_payment', 'factoring'].includes(input.capability)) {
+    return `marketplace-provider-operation:${resourceScope}`;
+  }
+  const actorScope = `${owner.tenantId}:${owner.userId}:${input.actorType}:${resourceScope}`;
+  if (input.capability === 'qualified_signature') {
+    return `marketplace-provider-operation:${actorScope}`;
+  }
+  if (['verification_documents', 'dispute_evidence_storage'].includes(input.capability)) {
+    return `marketplace-provider-operation:${actorScope}:${input.requestFingerprint}`;
+  }
+  return `marketplace-provider-operation:${actorScope}:${input.idempotencyKey}`;
+}
+
+const isForbiddenProviderReceiptKey = (key: string): boolean => {
+  const normalized = key.toLowerCase().replaceAll('-', '').replaceAll('_', '');
+  return forbiddenProviderReceiptKeyFragments.some((fragment) => normalized.includes(fragment));
+};
+
+const hasControlCharacter = (value: string): boolean =>
+  [...value].some((character) => {
+    const codePoint = character.codePointAt(0);
+    return codePoint !== undefined && (codePoint <= 0x1f || codePoint === 0x7f);
+  });
+
+const isProviderDescriptorValid = (input: MarketplaceProviderOperationPreparation): boolean => {
+  const { requestDescriptor: descriptor } = input;
+  const scope = marketplaceProviderOperationScopes[input.capability];
+  return (
+    scope.action === descriptor.action &&
+    scope.resourceType === input.resourceType &&
+    scope.actorTypes.some((actorType) => actorType === input.actorType) &&
+    descriptor.resourceId === input.resourceId &&
+    descriptor.resourceRevision === input.resourceRevision &&
+    descriptor.resourceType === input.resourceType &&
+    marketplaceProviderFingerprint(descriptor) === input.requestFingerprint &&
+    JSON.stringify(descriptor).length <= 4096 &&
+    ((input.capability === 'oneid_link' && descriptor.action === 'link-oneid' && descriptor.document === undefined) ||
+      (input.capability === 'verification_documents' &&
+        descriptor.action === 'store-verification-document' &&
+        descriptor.document !== undefined) ||
+      ('parametersFingerprint' in descriptor && /^[a-f0-9]{64}$/u.test(descriptor.parametersFingerprint)))
+  );
+};
+
+const isPlausibleProviderDate = (value: Date, now: Date): boolean =>
+  value instanceof Date &&
+  Number.isFinite(value.getTime()) &&
+  value.getTime() <= now.getTime() + providerClockSkewMilliseconds &&
+  value.getTime() >= now.getTime() - providerResultMaximumAgeMilliseconds;
+
+const isIdentityProviderResultValid = (
+  operation: MarketplaceProviderOperationEntity,
+  result: MarketplaceIdentityProviderResult,
+  now: Date,
+): boolean =>
+  result.providerMode === operation.providerMode &&
+  result.providerName === operation.providerName &&
+  safeProviderReference.test(result.receiptId) &&
+  safeOpaqueSubject.test(result.subjectKey) &&
+  (result.providerMode === 'mock'
+    ? result.identityAssurance === 'mock'
+    : result.identityAssurance === 'provider_verified') &&
+  (result.providerMode !== 'mock' || /^[a-f0-9]{64}$/.test(result.subjectKey)) &&
+  isPlausibleProviderDate(result.linkedAt, now);
+
+const isDocumentProviderResultValid = (
+  operation: MarketplaceProviderOperationEntity,
+  result: MarketplaceDocumentProviderResult,
+  now: Date,
+): boolean =>
+  result.providerMode === operation.providerMode &&
+  result.providerName === operation.providerName &&
+  safeProviderReference.test(result.receiptId) &&
+  isPlausibleProviderDate(result.storedAt, now);
+
+const isOptionalVerificationDocument = (role: VerificationRole, kind: VerificationDocument['kind']): boolean => {
+  if (role === 'farmer') {
+    return kind !== 'farm' && kind !== 'land' && kind !== 'lease';
+  }
+  return kind !== 'business';
 };
 
 const hasApprovedOrganization = async (
@@ -81,6 +207,14 @@ const toVerification = (e: VerificationEntity): Verification => ({
   level: e.level,
   status: e.status,
   oneIdLinked: e.oneIdLinked,
+  providerMode: e.providerMode,
+  identityAssurance: e.identityAssurance,
+  providerName: e.providerName ?? undefined,
+  providerSubjectKey: e.providerSubjectKey ?? undefined,
+  providerReceiptId: e.providerReceiptId ?? undefined,
+  oneIdLinkedAt: e.oneIdLinkedAt ?? undefined,
+  version: e.version,
+  caseRevision: e.caseRevision,
   documents: e.documents,
   reviewedBy: e.reviewedBy ?? undefined,
   reviewedAt: e.reviewedAt ?? undefined,
@@ -89,48 +223,227 @@ const toVerification = (e: VerificationEntity): Verification => ({
   updatedAt: e.updatedAt,
 });
 
-const toCart = (e: CartEntity): Cart => ({
+type VerificationSnapshot = Omit<Verification, 'createdAt' | 'oneIdLinkedAt' | 'reviewedAt' | 'updatedAt'> & {
+  createdAt: string;
+  oneIdLinkedAt?: string;
+  reviewedAt?: string;
+  updatedAt: string;
+};
+
+const toVerificationSnapshot = (verification: Verification): VerificationSnapshot => {
+  const { createdAt, oneIdLinkedAt, reviewedAt, updatedAt, ...rest } = verification;
+  return {
+    ...rest,
+    createdAt: createdAt.toISOString(),
+    ...(oneIdLinkedAt ? { oneIdLinkedAt: oneIdLinkedAt.toISOString() } : {}),
+    ...(reviewedAt ? { reviewedAt: reviewedAt.toISOString() } : {}),
+    updatedAt: updatedAt.toISOString(),
+  };
+};
+
+const fromVerificationSnapshot = (snapshot: Record<string, unknown> | null): Verification | undefined => {
+  if (!snapshot || typeof snapshot.id !== 'string' || typeof snapshot.createdAt !== 'string') {
+    return undefined;
+  }
+  const value = snapshot as unknown as VerificationSnapshot;
+  const { createdAt, oneIdLinkedAt, reviewedAt, updatedAt, ...rest } = value;
+  return {
+    ...rest,
+    createdAt: new Date(createdAt),
+    ...(oneIdLinkedAt ? { oneIdLinkedAt: new Date(oneIdLinkedAt) } : {}),
+    ...(reviewedAt ? { reviewedAt: new Date(reviewedAt) } : {}),
+    updatedAt: new Date(updatedAt),
+  };
+};
+
+const isSafeProviderReceipt = (receipt: MarketplaceProviderSafeReceipt): boolean => {
+  const entries = Object.entries(receipt);
+  return (
+    entries.length > 0 &&
+    entries.length <= 24 &&
+    JSON.stringify(receipt).length <= 4096 &&
+    entries.every(
+      ([key, value]) =>
+        /^[a-z]\w{0,63}$/u.test(key) &&
+        !isForbiddenProviderReceiptKey(key) &&
+        (value === null ||
+          typeof value === 'boolean' ||
+          (typeof value === 'number' && Number.isSafeInteger(value)) ||
+          (typeof value === 'string' && value.length <= 500 && !hasControlCharacter(value))),
+    )
+  );
+};
+
+const toProviderOperationReplay = (
+  operation: MarketplaceProviderOperationEntity,
+): MarketplaceProviderOperationReplay | undefined => {
+  const descriptor = operation.resultSnapshot;
+  if (
+    operation.status !== 'succeeded' ||
+    !operation.providerReference ||
+    !operation.receipt ||
+    !operation.resultFingerprint ||
+    !descriptor ||
+    typeof descriptor.completedAt !== 'string' ||
+    typeof descriptor.outcome !== 'string' ||
+    typeof descriptor.resourceId !== 'string' ||
+    typeof descriptor.resourceRevision !== 'number' ||
+    typeof descriptor.resourceType !== 'string'
+  ) {
+    return undefined;
+  }
+  return {
+    attempt: operation.attempt,
+    operationId: operation.id,
+    ...(operation.providerEventId ? { providerEventId: operation.providerEventId } : {}),
+    providerMode: operation.providerMode,
+    providerName: operation.providerName,
+    providerReference: operation.providerReference,
+    reconciliationRequired: operation.reconciliationRequired,
+    resultDescriptor: descriptor as unknown as MarketplaceProviderOperationReplay['resultDescriptor'],
+    resultFingerprint: operation.resultFingerprint,
+    safeReceipt: operation.receipt,
+  };
+};
+
+const isProviderCompletionValid = (
+  operation: MarketplaceProviderOperationEntity,
+  result: MarketplaceProviderOperationCompletion,
+  now: Date,
+): boolean => {
+  const completedAt = new Date(result.resultDescriptor.completedAt);
+  const requiresEvent = operation.capability === 'direct_payment' || operation.capability === 'factoring';
+  return (
+    result.providerMode === operation.providerMode &&
+    result.providerName === operation.providerName &&
+    safeProviderReference.test(result.providerReference) &&
+    (!result.providerEventId || safeProviderReference.test(result.providerEventId)) &&
+    (!requiresEvent || Boolean(result.providerEventId)) &&
+    isSafeProviderReceipt(result.safeReceipt) &&
+    result.resultDescriptor.resourceId === operation.resourceId &&
+    result.resultDescriptor.resourceRevision === operation.resourceRevision &&
+    result.resultDescriptor.resourceType === operation.resourceType &&
+    safeProviderOutcome.test(result.resultDescriptor.outcome) &&
+    isPlausibleProviderDate(completedAt, now) &&
+    completedAt.toISOString() === result.resultDescriptor.completedAt &&
+    (!result.reconciliationReason || safeProviderErrorCode.test(result.reconciliationReason))
+  );
+};
+
+interface ProviderResourceAnchor {
+  verification?: VerificationEntity;
+}
+
+const lockVerificationProviderResource = async (
+  em: EntityManager,
+  owner: AgriTechOwner,
+  actorType: MarketplaceProviderActorType,
+  resourceId: string,
+): Promise<ProviderResourceAnchor | undefined> => {
+  if (actorType !== 'verification_subject') {
+    return undefined;
+  }
+  const verification = await em.findOne(
+    VerificationEntity,
+    { id: resourceId, tenantId: owner.tenantId, userId: owner.userId },
+    { lockMode: LockMode.PESSIMISTIC_WRITE },
+  );
+  return verification?.id === resourceId ? { verification } : undefined;
+};
+
+const lockContractProviderResource = async (
+  em: EntityManager,
+  owner: AgriTechOwner,
+  actorType: MarketplaceProviderActorType,
+  resourceId: string,
+): Promise<ProviderResourceAnchor | undefined> => {
+  if (actorType !== 'contract_buyer' && actorType !== 'contract_seller') {
+    return undefined;
+  }
+  const tenantColumn = actorType === 'contract_buyer' ? 'tenant_id' : 'seller_tenant_id';
+  const userColumn = actorType === 'contract_buyer' ? 'buyer_user_id' : 'seller_user_id';
+  const rows = await em.execute<Array<{ id: string }>>(
+    `select id
+       from marketplace_contracts
+      where id = ? and binding_status = 'resolved'
+        and ${tenantColumn} = ? and ${userColumn} = ?
+      for update`,
+    [resourceId, owner.tenantId, owner.userId],
+  );
+  return rows.length === 1 ? {} : undefined;
+};
+
+const lockPromotionProviderResource = async (
+  em: EntityManager,
+  owner: AgriTechOwner,
+  actorType: MarketplaceProviderActorType,
+  resourceId: string,
+): Promise<ProviderResourceAnchor | undefined> => {
+  if (actorType !== 'promotion_owner') {
+    return undefined;
+  }
+  const rows = await em.execute<Array<{ id: string }>>(
+    `select id
+       from marketplace_listing_promotions
+      where id = ? and tenant_id = ? and actor_user_id = ?
+      for update`,
+    [resourceId, owner.tenantId, owner.userId],
+  );
+  return rows.length === 1 ? {} : undefined;
+};
+
+const lockProviderResource = (
+  em: EntityManager,
+  owner: AgriTechOwner,
+  actorType: MarketplaceProviderActorType,
+  resourceType: MarketplaceProviderOperationPreparation['resourceType'],
+  resourceId: string,
+): Promise<ProviderResourceAnchor | undefined> => {
+  if (resourceType === 'verification') {
+    return lockVerificationProviderResource(em, owner, actorType, resourceId);
+  }
+  if (resourceType === 'contract') {
+    return lockContractProviderResource(em, owner, actorType, resourceId);
+  }
+  return lockPromotionProviderResource(em, owner, actorType, resourceId);
+};
+
+const sellerSummary = (seller: Pick<AgriTechPartnerEntity, 'legalName' | 'region'>) => ({
+  displayName: seller.legalName,
+  region: seller.region,
+});
+
+const findSellerOrganization = (
+  em: EntityManager,
+  tenantId: string | null | undefined,
+  partnerId: string | null | undefined,
+): Promise<AgriTechPartnerEntity | null> => {
+  if (!tenantId || !partnerId) {
+    return Promise.resolve(null);
+  }
+  return em.findOne(AgriTechPartnerEntity, { id: partnerId, kind: 'supplier', tenantId });
+};
+
+const toCart = (e: CartEntity, seller: Pick<AgriTechPartnerEntity, 'legalName' | 'region'>): Cart => ({
+  buyerPartnerId: e.buyerPartnerId as string,
+  buyerTenantId: e.tenantId,
+  buyerUserId: e.userId,
   id: e.id,
-  tenantId: e.tenantId,
-  userId: e.userId,
-  sellerId: e.sellerId,
   items: e.items,
+  seller: sellerSummary(seller),
+  sellerPartnerId: e.sellerPartnerId as string,
+  sellerTenantId: e.sellerTenantId as string,
+  sellerUserId: e.sellerUserId as string,
   status: e.status,
   createdAt: e.createdAt,
   updatedAt: e.updatedAt,
-});
-
-const toSample = (e: SampleRequestEntity): SampleRequest => ({
-  id: e.id,
-  tenantId: e.tenantId,
-  userId: e.userId,
-  productId: e.productId,
-  sellerId: e.sellerId,
-  status: e.status,
-  createdAt: e.createdAt,
-});
-
-const toFavorite = (e: FavoriteEntity): Favorite => ({
-  tenantId: e.tenantId,
-  userId: e.userId,
-  productId: e.productId,
-  createdAt: e.createdAt,
-});
-
-const toReview = (e: ReviewEntity): Review => ({
-  id: e.id,
-  tenantId: e.tenantId,
-  productId: e.productId,
-  userId: e.userId,
-  rating: e.rating,
-  comment: e.comment ?? undefined,
-  createdAt: e.createdAt,
 });
 
 const toRequest = (e: BuyerRequestEntity): BuyerRequest => ({
   id: e.id,
   tenantId: e.tenantId,
   buyerUserId: e.buyerUserId,
+  buyerPartnerId: e.buyerPartnerId as string,
   title: e.title,
   product: e.product ?? undefined,
   volume: e.volume ?? undefined,
@@ -143,10 +456,15 @@ const toRequest = (e: BuyerRequestEntity): BuyerRequest => ({
   updatedAt: e.updatedAt,
 });
 
-const toOffer = (e: RequestOfferEntity): RequestOffer => ({
+const toOffer = (e: RequestOfferEntity, seller: Pick<AgriTechPartnerEntity, 'legalName' | 'region'>): RequestOffer => ({
+  buyerPartnerId: e.buyerPartnerId as string,
+  buyerTenantId: e.tenantId,
+  buyerUserId: e.buyerUserId as string,
   id: e.id,
-  requestId: e.requestId,
-  tenantId: e.tenantId,
+  requestPublicId: e.requestPublicId as string,
+  seller: sellerSummary(seller),
+  sellerPartnerId: e.sellerPartnerId as string,
+  sellerTenantId: e.sellerTenantId as string,
   sellerUserId: e.sellerUserId,
   priceUzs: Number(e.priceUzs),
   deliveryTerms: e.deliveryTerms,
@@ -158,9 +476,15 @@ const toOffer = (e: RequestOfferEntity): RequestOffer => ({
 });
 
 const toContract = (e: ContractEntity): Contract => ({
-  id: e.id,
-  tenantId: e.tenantId,
+  revision: e.version,
+  buyerPartnerId: e.buyerPartnerId as string,
+  buyerPartySnapshot: e.buyerPartySnapshot as unknown as MarketplacePartySnapshot,
+  buyerTenantId: e.tenantId,
   buyerUserId: e.buyerUserId,
+  id: e.id,
+  sellerPartnerId: e.sellerPartnerId as string,
+  sellerPartySnapshot: e.sellerPartySnapshot as unknown as MarketplacePartySnapshot,
+  sellerTenantId: e.sellerTenantId as string,
   sellerUserId: e.sellerUserId,
   sourceType: e.sourceType ?? undefined,
   sourceId: e.sourceId ?? undefined,
@@ -180,21 +504,15 @@ const toContract = (e: ContractEntity): Contract => ({
   updatedAt: e.updatedAt,
 });
 
-const toAi = (e: AiConsultationEntity): AiConsultation => ({
-  id: e.id,
-  tenantId: e.tenantId,
-  userId: e.userId,
-  kind: e.kind,
-  question: e.question,
-  answer: e.answer,
-  productIds: e.productIds,
-  createdAt: e.createdAt,
-});
-
 interface ContractDraftInput {
-  tenantId: string;
+  buyerTenantId: string;
   buyerUserId: string;
+  buyerPartnerId: string;
+  buyerPartySnapshot: MarketplacePartySnapshot;
+  sellerTenantId: string;
   sellerUserId: string;
+  sellerPartnerId: string;
+  sellerPartySnapshot: MarketplacePartySnapshot;
   sourceType: 'cart_checkout' | 'offer_selection';
   sourceId: string;
   subject: string;
@@ -209,9 +527,15 @@ interface ContractDraftInput {
 const createDraftContract = (input: ContractDraftInput): ContractEntity => {
   const entity = new ContractEntity();
   entity.id = randomUUID();
-  entity.tenantId = input.tenantId;
+  entity.tenantId = input.buyerTenantId;
   entity.buyerUserId = input.buyerUserId;
+  entity.buyerPartnerId = input.buyerPartnerId;
+  entity.buyerPartySnapshot = { ...input.buyerPartySnapshot };
+  entity.sellerTenantId = input.sellerTenantId;
   entity.sellerUserId = input.sellerUserId;
+  entity.sellerPartnerId = input.sellerPartnerId;
+  entity.sellerPartySnapshot = { ...input.sellerPartySnapshot };
+  entity.bindingStatus = 'resolved';
   entity.sourceType = input.sourceType;
   entity.sourceId = input.sourceId;
   entity.subject = input.subject;
@@ -226,119 +550,323 @@ const createDraftContract = (input: ContractDraftInput): ContractEntity => {
   return entity;
 };
 
-type ContractParty = 'buyer' | 'seller' | 'self';
+interface AuthorizedMarketplaceParty {
+  membership: MarketplacePartnerMembershipEntity;
+  partner: AgriTechPartnerEntity;
+  verification: VerificationEntity;
+}
 
-const contractPartyFor = (entity: ContractEntity, userId: string): ContractParty | undefined => {
-  const isBuyer = entity.buyerUserId === userId;
-  const isSeller = entity.sellerUserId === userId;
-  if (isBuyer && isSeller) {
-    return 'self';
+interface ResolvedCommerceListing {
+  listing: MarketplaceListingPublicationEntity;
+  seller: AuthorizedMarketplaceParty;
+  sellerPublic: MarketplacePublicSellerEntity;
+  source: ProductEntity | ProduceListingEntity;
+}
+
+const commerceIdempotencyKeyPattern = /^[A-Za-z0-9:_-]{8,100}$/u;
+
+const canonicalCommerceValue = (value: unknown): unknown => {
+  if (value instanceof Date) {
+    return value.toISOString();
   }
-  if (isBuyer) {
-    return 'buyer';
+  if (Array.isArray(value)) {
+    return value.map(canonicalCommerceValue);
   }
-  return isSeller ? 'seller' : undefined;
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .sort(([left], [right]) => left.localeCompare(right))
+        .map(([key, nested]) => [key, canonicalCommerceValue(nested)]),
+    );
+  }
+  return value;
 };
 
-const hasPartySigned = (entity: ContractEntity, party: Exclude<ContractParty, 'self'>): boolean =>
-  Boolean(party === 'buyer' ? entity.buyerSignedAt : entity.sellerSignedAt);
+const commerceFingerprint = (value: unknown): string =>
+  createHash('sha256')
+    .update(JSON.stringify(canonicalCommerceValue(value)))
+    .digest('hex');
 
-type ContractSigningDecision = { party: Exclude<ContractParty, 'self'> } | { result: OperationResult<Contract> };
+const commerceDateKeys = new Set([
+  'buyerSignedAt',
+  'createdAt',
+  'oneIdLinkedAt',
+  'reviewedAt',
+  'sellerSignedAt',
+  'signedAt',
+  'updatedAt',
+]);
 
-const contractSigningDecision = (entity: ContractEntity, userId: string): ContractSigningDecision => {
-  const party = contractPartyFor(entity, userId);
-  if (!party) {
-    return { result: { status: 'forbidden' } };
+const reviveCommerceValue = (value: unknown, key?: string): unknown => {
+  if (Array.isArray(value)) {
+    return value.map((nested) => reviveCommerceValue(nested));
   }
-  if (party === 'self') {
-    return { result: { status: 'invalid_state', field: 'parties' } };
+  if (value && typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>).map(([nestedKey, nested]) => [
+        nestedKey,
+        reviveCommerceValue(nested, nestedKey),
+      ]),
+    );
   }
-  if (['cancelled', 'completed', 'legacy_review_required'].includes(entity.status)) {
-    return { result: { status: 'invalid_state' } };
+  if (typeof value === 'string' && key && commerceDateKeys.has(key) && /^\d{4}-\d{2}-\d{2}T/u.test(value)) {
+    return new Date(value);
   }
-  if (entity.status === 'active' || hasPartySigned(entity, party)) {
-    return { result: ok(toContract(entity)) };
-  }
-  if (entity.deliveryTerms === 'seller_delivery' && Number(entity.deliveryPriceUzs) <= 0) {
-    return { result: { status: 'invalid_state', field: 'deliveryPriceUzs' } };
-  }
-  return { party };
+  return value;
 };
 
-const recordPartySignature = (entity: ContractEntity, party: Exclude<ContractParty, 'self'>, signedAt: Date): void => {
-  if (party === 'buyer') {
-    entity.buyerSignedAt = signedAt;
-  } else {
-    entity.sellerSignedAt = signedAt;
-  }
-};
-
-const commitCartContractInventory = async (
+const executeCommerceOperation = async <T>(
   em: EntityManager,
-  entity: ContractEntity,
-): Promise<OperationResult<void>> => {
-  if (entity.sourceType !== 'cart_checkout') {
-    return ok(undefined);
+  owner: AgriTechOwner,
+  operation: MarketplaceCommerceOperationKind,
+  resourceKey: string,
+  idempotencyKey: string,
+  input: unknown,
+  mutate: () => Promise<OperationResult<T>>,
+): Promise<OperationResult<T>> => {
+  if (!commerceIdempotencyKeyPattern.test(idempotencyKey) || resourceKey.length > 100) {
+    return { status: 'invalid_state', field: 'idempotencyKey' };
   }
-
-  const requiredByProduct = new Map<string, number>();
-  for (const line of entity.lines) {
-    if (!Number.isInteger(line.quantity) || line.quantity <= 0) {
-      return { status: 'invalid_state', field: 'lines' };
+  await em.execute('select pg_advisory_xact_lock(hashtext(?))', [
+    `marketplace-commerce:${owner.tenantId}:${owner.userId}:${operation}:${resourceKey}:${idempotencyKey}`,
+  ]);
+  const fingerprint = commerceFingerprint(input);
+  const existing = await em.findOne(MarketplaceCommerceOperationEntity, {
+    actorTenantId: owner.tenantId,
+    actorUserId: owner.userId,
+    idempotencyKey,
+    operation,
+    resourceKey,
+  });
+  if (existing) {
+    if (existing.requestFingerprint !== fingerprint) {
+      return { status: 'conflict', field: 'idempotencyKey' };
     }
-    requiredByProduct.set(line.productId, (requiredByProduct.get(line.productId) ?? 0) + line.quantity);
-  }
-  if (requiredByProduct.size === 0) {
-    return { status: 'invalid_state', field: 'lines' };
+    return ok(reviveCommerceValue(existing.resultSnapshot.value) as T);
   }
 
-  const sellerPartners = await em.find(
-    AgriTechPartnerEntity,
+  const result = await mutate();
+  if (result.status !== 'ok') {
+    return result;
+  }
+  const receipt = new MarketplaceCommerceOperationEntity();
+  Object.assign(receipt, {
+    actorTenantId: owner.tenantId,
+    actorUserId: owner.userId,
+    idempotencyKey,
+    operation,
+    requestFingerprint: fingerprint,
+    resourceKey,
+    resultSnapshot: { value: canonicalCommerceValue(result.value) },
+  });
+  em.persist(receipt);
+  await em.flush();
+  return result;
+};
+
+const lockAuthorizedMarketplaceParty = async (
+  em: EntityManager,
+  owner: AgriTechOwner,
+  partnerId: string,
+  capability: MarketplaceMembershipCapability,
+): Promise<AuthorizedMarketplaceParty | undefined> => {
+  const membership = await em.findOne(
+    MarketplacePartnerMembershipEntity,
     {
-      tenantId: entity.tenantId,
-      ownerUserId: entity.sellerUserId,
-      kind: 'supplier',
-      status: 'approved',
+      capability,
+      partnerId,
+      status: 'active',
+      tenantId: owner.tenantId,
+      userId: owner.userId,
     },
     { lockMode: LockMode.PESSIMISTIC_READ },
   );
-  if (sellerPartners.length === 0) {
-    return { status: 'forbidden', field: 'sellerUserId' };
+  if (!membership) {
+    return undefined;
   }
-
-  const products = await em.find(
-    ProductEntity,
+  const partner = await em.findOne(
+    AgriTechPartnerEntity,
     {
-      tenantId: entity.tenantId,
-      id: { $in: [...requiredByProduct.keys()] },
-      supplierId: { $in: sellerPartners.map(({ id }) => id) },
+      id: partnerId,
+      kind: capability === 'buyer' ? 'buyer' : 'supplier',
+      status: 'approved',
+      tenantId: owner.tenantId,
     },
-    { lockMode: LockMode.PESSIMISTIC_WRITE },
+    { lockMode: LockMode.PESSIMISTIC_READ },
   );
-  const productsById = new Map(products.map((product) => [product.id, product]));
-  for (const [productId, quantity] of requiredByProduct) {
-    const product = productsById.get(productId);
-    if (!product || product.status !== 'active' || quantity > product.stockQuantity) {
-      return { status: 'conflict', field: 'stockQuantity' };
-    }
+  if (!partner) {
+    return undefined;
+  }
+  const verification = await em.findOne(
+    VerificationEntity,
+    {
+      role: capability === 'buyer' ? 'buyer' : { $in: ['farmer', 'seller'] },
+      status: 'verified',
+      tenantId: owner.tenantId,
+      userId: owner.userId,
+    },
+    { lockMode: LockMode.PESSIMISTIC_READ },
+  );
+  return verification ? { membership, partner, verification } : undefined;
+};
+
+const marketplacePartySnapshot = (
+  party: Pick<AuthorizedMarketplaceParty, 'partner'>,
+  userId: string,
+): MarketplacePartySnapshot => ({
+  legalName: party.partner.legalName,
+  partnerId: party.partner.id,
+  region: party.partner.region,
+  tenantId: party.partner.tenantId,
+  userId,
+});
+
+const lockResolvedCommerceListing = async (
+  em: EntityManager,
+  listingPublicationId: string,
+): Promise<ResolvedCommerceListing | undefined> => {
+  const listing = await em.findOne(
+    MarketplaceListingPublicationEntity,
+    { id: listingPublicationId, moderationStatus: 'approved', status: 'published' },
+    { lockMode: LockMode.PESSIMISTIC_READ },
+  );
+  if (!listing) {
+    return undefined;
+  }
+  const sellerPublic = await em.findOne(
+    MarketplacePublicSellerEntity,
+    {
+      id: listing.sellerPublicId,
+      ownerUserId: listing.ownerUserId,
+      status: 'published',
+      tenantId: listing.tenantId,
+    },
+    { lockMode: LockMode.PESSIMISTIC_READ },
+  );
+  if (!sellerPublic) {
+    return undefined;
+  }
+  const sellerRevision = await em.findOne(
+    MarketplacePublicSellerRevisionEntity,
+    {
+      contentRevision: listing.sellerContentRevision,
+      id: listing.sellerRevisionId,
+      moderationStatus: 'approved',
+      sellerPublicId: sellerPublic.id,
+      tenantId: listing.tenantId,
+    },
+    { lockMode: LockMode.PESSIMISTIC_READ },
+  );
+  if (!sellerRevision) {
+    return undefined;
+  }
+  const sellerOwner = { tenantId: listing.tenantId, userId: sellerPublic.ownerUserId };
+  const seller = await lockAuthorizedMarketplaceParty(em, sellerOwner, sellerPublic.partnerId, 'seller');
+  if (!seller) {
+    return undefined;
   }
 
-  for (const [productId, quantity] of requiredByProduct) {
-    const product = productsById.get(productId);
-    if (!product) {
+  if (listing.sourceKind === 'product' && listing.productId) {
+    const product = await em.findOne(
+      ProductEntity,
+      {
+        id: listing.productId,
+        status: 'active',
+        supplierId: sellerPublic.partnerId,
+        tenantId: listing.tenantId,
+      },
+      { lockMode: LockMode.PESSIMISTIC_READ },
+    );
+    return product ? { listing, seller, sellerPublic, source: product } : undefined;
+  }
+  if (listing.sourceKind !== 'produce' || !listing.produceListingId) {
+    return undefined;
+  }
+  const binding = await em.findOne(MarketplaceProduceOrganizationBindingEntity, {
+    ownerUserId: sellerPublic.ownerUserId,
+    produceListingId: listing.produceListingId,
+    supplierPartnerId: sellerPublic.partnerId,
+    tenantId: listing.tenantId,
+  });
+  if (!binding) {
+    return undefined;
+  }
+  const produce = await em.findOne(
+    ProduceListingEntity,
+    { id: listing.produceListingId, status: 'active', tenantId: listing.tenantId },
+    { lockMode: LockMode.PESSIMISTIC_READ },
+  );
+  return produce ? { listing, seller, sellerPublic, source: produce } : undefined;
+};
+
+const commerceListingTerms = (
+  resolved: ResolvedCommerceListing,
+): { availableQuantity: number; line: Omit<ContractLine, 'lineTotalUzs' | 'quantity'> } | undefined => {
+  const { listing, source } = resolved;
+  const unitPriceUzs = Number(source instanceof ProductEntity ? source.priceUzs : source.pricePerKgUzs);
+  const availableQuantity = source instanceof ProductEntity ? source.stockQuantity : source.availableQuantityKg;
+  if (
+    !Number.isSafeInteger(unitPriceUzs) ||
+    unitPriceUzs <= 0 ||
+    unitPriceUzs > maximumMarketplaceUzs ||
+    !Number.isInteger(availableQuantity) ||
+    availableQuantity < 0
+  ) {
+    return undefined;
+  }
+  return {
+    availableQuantity,
+    line: {
+      name: source instanceof ProductEntity ? source.name : source.crop,
+      sourceId: source.id,
+      sourceKind: listing.sourceKind,
+      sourcePublicationId: listing.id,
+      sourceRevision: listing.contentRevision,
+      unit: source instanceof ProductEntity ? source.unit : 'kg',
+      unitPriceUzs,
+    },
+  };
+};
+
+const resolveCartContractLines = async (
+  em: EntityManager,
+  cart: CartEntity,
+): Promise<OperationResult<ContractLine[]>> => {
+  const resolutions = await Promise.all(
+    cart.items.map(async (item) => {
+      const resolved = await lockResolvedCommerceListing(em, item.listingPublicationId);
+      return { item, resolved, terms: resolved ? commerceListingTerms(resolved) : undefined };
+    }),
+  );
+  const lines: ContractLine[] = [];
+  for (const { item, resolved, terms } of resolutions) {
+    if (
+      !resolved ||
+      !terms ||
+      resolved.seller.partner.id !== cart.sellerPartnerId ||
+      resolved.seller.partner.tenantId !== cart.sellerTenantId ||
+      resolved.sellerPublic.ownerUserId !== cart.sellerUserId ||
+      resolved.source.id !== item.sourceId ||
+      resolved.listing.sourceKind !== item.sourceKind
+    ) {
+      return { status: 'not_found', field: 'listingPublicationId' };
+    }
+    if (item.quantity <= 0 || item.quantity > terms.availableQuantity) {
       return { status: 'conflict', field: 'stockQuantity' };
     }
-    product.stockQuantity -= quantity;
-    if (product.stockQuantity === 0) {
-      product.status = 'out_of_stock';
-    }
-    product.updatedAt = new Date();
+    lines.push({
+      ...terms.line,
+      lineTotalUzs: terms.line.unitPriceUzs * item.quantity,
+      quantity: item.quantity,
+    });
   }
-  return ok(undefined);
+  return ok(lines);
 };
 
 @Injectable()
-export class PostgresMarketplaceRepository implements MarketplaceRepository {
+export class PostgresMarketplaceRepository
+  implements MarketplaceRepository, MarketplaceVerificationRepository, MarketplaceProviderOperationRepository
+{
   constructor(@Inject(EntityManager) private readonly em: EntityManager) {}
 
   // ---- Verification ----
@@ -350,39 +878,738 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
     return entity ? toVerification(entity) : undefined;
   }
 
+  createVerification(
+    owner: AgriTechOwner,
+    role: VerificationRole,
+    expectedRevision: number,
+    idempotencyKey: string,
+  ): Promise<OperationResult<Verification>> {
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 0) {
+      return Promise.resolve({ status: 'invalid_state', field: 'expectedRevision' });
+    }
+    return this.em.transactional((em) =>
+      executeCommerceOperation(
+        em,
+        owner,
+        'verification_create',
+        'self',
+        idempotencyKey,
+        { expectedRevision, role },
+        async () => {
+          await em.execute('select pg_advisory_xact_lock(hashtext(?))', [
+            `marketplace-verification:${owner.tenantId}:${owner.userId}`,
+          ]);
+          const entity = await em.findOne(
+            VerificationEntity,
+            { tenantId: owner.tenantId, userId: owner.userId },
+            { lockMode: LockMode.PESSIMISTIC_WRITE },
+          );
+          if (!entity) {
+            if (expectedRevision !== 0) {
+              return { status: 'conflict', field: 'expectedRevision' };
+            }
+            const created = new VerificationEntity();
+            created.tenantId = owner.tenantId;
+            created.userId = owner.userId;
+            created.role = role;
+            created.level = 'basic';
+            created.status = 'none';
+            em.persist(created);
+            await em.flush();
+            await em.execute(
+              `update marketplace_verifications
+                  set version = 1
+                where id = ? and tenant_id = ? and user_id = ? and version = 0`,
+              [created.id, owner.tenantId, owner.userId],
+            );
+            await em.refresh(created);
+            return ok(toVerification(created));
+          }
+          if (entity.version !== expectedRevision) {
+            return { status: 'conflict', field: 'expectedRevision' };
+          }
+          if ((entity.status === 'pending' || entity.status === 'verified') && entity.role !== role) {
+            return { status: 'conflict', field: 'role' };
+          }
+          if (entity.status === 'rejected') {
+            entity.caseRevision += 1;
+            if (entity.rejectionReason === 'identity_mismatch' || entity.providerMode === 'legacy') {
+              entity.oneIdLinked = false;
+              entity.providerMode = 'none';
+              entity.identityAssurance = 'none';
+              entity.providerName = null;
+              entity.providerSubjectKey = null;
+              entity.providerReceiptId = null;
+              entity.oneIdLinkedAt = null;
+            }
+            entity.documents = [];
+            entity.status = 'none';
+            entity.level = 'basic';
+            entity.reviewedBy = null;
+            entity.reviewedAt = null;
+            entity.rejectionReason = null;
+          }
+          entity.role = role;
+          entity.updatedAt = new Date();
+          await em.flush();
+          return ok(toVerification(entity));
+        },
+      ),
+    );
+  }
+
+  prepareProviderOperation(
+    owner: AgriTechOwner,
+    input: MarketplaceProviderOperationPreparation,
+  ): Promise<OperationResult<PreparedMarketplaceProviderOperation>> {
+    if (!isProviderDescriptorValid(input)) {
+      return Promise.resolve({ status: 'invalid_state', field: 'requestDescriptor' });
+    }
+    // eslint-disable-next-line sonarjs/cognitive-complexity -- lock, replay, lease takeover, and insert-race decisions share one atomic transaction
+    return this.em.transactional(async (em) => {
+      const now = new Date();
+      const contractGlobalClaim = ['contract_artifact_storage', 'direct_payment', 'factoring'].includes(
+        input.capability,
+      );
+      const contractPartyClaim = input.capability === 'qualified_signature';
+      const fingerprintClaim = ['verification_documents', 'dispute_evidence_storage'].includes(input.capability);
+      const semanticClaim = contractGlobalClaim || contractPartyClaim || fingerprintClaim;
+      await em.execute('select pg_advisory_xact_lock(hashtext(?))', [providerOperationLockKey(owner, input)]);
+      const anchor = await lockProviderResource(em, owner, input.actorType, input.resourceType, input.resourceId);
+      if (!anchor) {
+        return { status: 'not_found', field: 'resource' };
+      }
+      if (input.capability === 'dispute_evidence_storage') {
+        const disputes = await em.execute<Array<{ revision: number; status: string }>>(
+          `select revision, status
+             from marketplace_contract_disputes
+            where contract_id = ?
+            for update`,
+          [input.resourceId],
+        );
+        const dispute = disputes[0];
+        if (!dispute) {
+          return { status: 'not_found', field: 'dispute' };
+        }
+        if (dispute.status !== 'open') {
+          return { status: 'conflict', field: 'dispute' };
+        }
+        if (dispute.revision !== input.resourceRevision) {
+          return { status: 'conflict', field: 'resourceRevision' };
+        }
+      }
+      const verification = anchor.verification;
+      if (verification && input.resourceRevision !== verification.caseRevision) {
+        return { status: 'conflict', field: 'resourceRevision' };
+      }
+      const existing = await em.findOne(
+        MarketplaceProviderOperationEntity,
+        {
+          actorType: input.actorType,
+          capability: input.capability,
+          resourceId: input.resourceId,
+          resourceType: input.resourceType,
+          idempotencyKey: input.idempotencyKey,
+          tenantId: owner.tenantId,
+          userId: owner.userId,
+        },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (existing) {
+        if (
+          existing.requestFingerprint !== input.requestFingerprint ||
+          existing.providerMode !== input.providerMode ||
+          existing.providerName !== input.providerName ||
+          existing.actorType !== input.actorType ||
+          existing.resourceId !== input.resourceId ||
+          existing.resourceType !== input.resourceType ||
+          existing.resourceRevision !== input.resourceRevision
+        ) {
+          return { status: 'conflict', field: 'idempotencyKey' };
+        }
+        if (existing.status === 'succeeded') {
+          const replay = fromVerificationSnapshot(existing.resultSnapshot);
+          const providerReplay = toProviderOperationReplay(existing);
+          if (!replay && !providerReplay) {
+            return { status: 'invalid_state', field: 'resultSnapshot' };
+          }
+          return ok({
+            attempt: existing.attempt,
+            execute: false,
+            operationId: existing.id,
+            ...(providerReplay ? { providerReplay } : {}),
+            ...(replay ? { replay } : {}),
+          });
+        }
+        if (existing.status === 'started') {
+          if (existing.leaseExpiresAt && existing.leaseExpiresAt > now) {
+            return { status: 'conflict', field: 'operationInProgress' };
+          }
+        }
+        if (existing.status === 'failed' && existing.reconciliationRequired) {
+          return { status: 'conflict', field: 'reconciliationRequired' };
+        }
+      }
+      const claimedByAnotherKey = semanticClaim
+        ? await em.findOne(
+            MarketplaceProviderOperationEntity,
+            {
+              ...(contractGlobalClaim
+                ? {}
+                : { actorType: input.actorType, tenantId: owner.tenantId, userId: owner.userId }),
+              capability: input.capability,
+              ...(fingerprintClaim ? { requestFingerprint: input.requestFingerprint } : {}),
+              resourceId: input.resourceId,
+              resourceRevision: input.resourceRevision,
+              resourceType: input.resourceType,
+              ...(existing ? { id: { $ne: existing.id } } : {}),
+              $or: [{ status: { $in: ['started', 'succeeded'] } }, { reconciliationRequired: true, status: 'failed' }],
+            },
+            { lockMode: LockMode.PESSIMISTIC_WRITE },
+          )
+        : null;
+      if (claimedByAnotherKey) {
+        return {
+          status: 'conflict',
+          field: claimedByAnotherKey.reconciliationRequired ? 'reconciliationRequired' : 'operationInProgress',
+        };
+      }
+      if (verification && verification.status !== 'none') {
+        return { status: 'conflict', field: 'status' };
+      }
+      if (verification && input.capability === 'oneid_link' && verification.oneIdLinked) {
+        return { status: 'conflict', field: 'identity' };
+      }
+      if (existing) {
+        existing.status = 'started';
+        existing.attempt += 1;
+        existing.leaseExpiresAt = new Date(now.getTime() + providerOperationLeaseMilliseconds);
+        existing.errorCode = null;
+        existing.providerEventId = null;
+        existing.receipt = null;
+        existing.resultSnapshot = null;
+        existing.resultFingerprint = null;
+        existing.reconciliationRequired = false;
+        existing.reconciliationReason = null;
+        existing.updatedAt = new Date();
+        await em.flush();
+        return ok({ attempt: existing.attempt, execute: true, operationId: existing.id });
+      }
+      const operationId = randomUUID();
+      const leaseExpiresAt = new Date(now.getTime() + providerOperationLeaseMilliseconds);
+      const inserted = await em.execute<Array<{ id: string }>>(
+        `insert into marketplace_provider_operations (
+           id, tenant_id, user_id, actor_type, capability, resource_type, resource_id, resource_revision,
+           idempotency_key, request_fingerprint, request_descriptor, provider_mode, provider_name,
+           status, attempt, lease_expires_at, created_at, updated_at
+         ) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?::jsonb, ?, ?, 'started', 1, ?, ?, ?)
+         on conflict (tenant_id, user_id, actor_type, capability, resource_type, resource_id, idempotency_key)
+         do nothing
+         returning id`,
+        [
+          operationId,
+          owner.tenantId,
+          owner.userId,
+          input.actorType,
+          input.capability,
+          input.resourceType,
+          input.resourceId,
+          input.resourceRevision,
+          input.idempotencyKey,
+          input.requestFingerprint,
+          JSON.stringify(input.requestDescriptor),
+          input.providerMode,
+          input.providerName,
+          leaseExpiresAt,
+          now,
+          now,
+        ],
+      );
+      if (inserted.length > 0) {
+        return ok({ attempt: 1, execute: true, operationId });
+      }
+      const raced = await em.findOne(
+        MarketplaceProviderOperationEntity,
+        {
+          tenantId: owner.tenantId,
+          userId: owner.userId,
+          actorType: input.actorType,
+          capability: input.capability,
+          resourceId: input.resourceId,
+          resourceType: input.resourceType,
+          idempotencyKey: input.idempotencyKey,
+        },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!raced) {
+        return { status: 'invalid_state', field: 'providerOperation' };
+      }
+      if (
+        raced.requestFingerprint !== input.requestFingerprint ||
+        raced.providerMode !== input.providerMode ||
+        raced.providerName !== input.providerName ||
+        raced.actorType !== input.actorType ||
+        raced.resourceType !== input.resourceType ||
+        raced.resourceRevision !== input.resourceRevision
+      ) {
+        return { status: 'conflict', field: 'idempotencyKey' };
+      }
+      if (raced.status === 'succeeded') {
+        const replay = fromVerificationSnapshot(raced.resultSnapshot);
+        const providerReplay = toProviderOperationReplay(raced);
+        if (!replay && !providerReplay) {
+          return { status: 'invalid_state', field: 'resultSnapshot' };
+        }
+        return ok({
+          attempt: raced.attempt,
+          execute: false,
+          operationId: raced.id,
+          ...(providerReplay ? { providerReplay } : {}),
+          ...(replay ? { replay } : {}),
+        });
+      }
+      return { status: 'conflict', field: 'operationInProgress' };
+    });
+  }
+
+  completeIdentityLink(
+    owner: AgriTechOwner,
+    operationId: string,
+    operationAttempt: number,
+    result: MarketplaceIdentityProviderResult,
+  ): Promise<OperationResult<Verification>> {
+    return this.em.transactional(async (em) => {
+      const now = new Date();
+      const operation = await em.findOne(
+        MarketplaceProviderOperationEntity,
+        {
+          actorType: 'verification_subject',
+          capability: 'oneid_link',
+          id: operationId,
+          tenantId: owner.tenantId,
+          userId: owner.userId,
+        },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!operation) {
+        return { status: 'not_found', field: 'operationId' };
+      }
+      const verification = await em.findOne(
+        VerificationEntity,
+        { tenantId: owner.tenantId, userId: owner.userId },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!verification) {
+        return { status: 'not_found', field: 'verification' };
+      }
+      if (operation.attempt !== operationAttempt) {
+        return { status: 'conflict', field: 'operationAttempt' };
+      }
+      if (operation.status === 'succeeded') {
+        const replay = fromVerificationSnapshot(operation.resultSnapshot);
+        return replay ? ok(replay) : { status: 'invalid_state', field: 'resultSnapshot' };
+      }
+      if (
+        operation.status !== 'started' ||
+        !operation.leaseExpiresAt ||
+        operation.requestDescriptor.action !== 'link-oneid' ||
+        operation.resourceId !== verification.id ||
+        operation.resourceRevision !== verification.caseRevision ||
+        verification.status !== 'none' ||
+        verification.oneIdLinked ||
+        !isIdentityProviderResultValid(operation, result, now)
+      ) {
+        return { status: 'conflict', field: 'status' };
+      }
+      await em.execute('select pg_advisory_xact_lock(hashtext(?))', [
+        `marketplace-verification-subject:${result.providerMode}:${result.subjectKey}`,
+      ]);
+      const duplicate = await em.findOne(VerificationEntity, {
+        id: { $ne: verification.id },
+        tenantId: owner.tenantId,
+        providerMode: result.providerMode,
+        providerSubjectKey: result.subjectKey,
+      });
+      if (duplicate) {
+        return { status: 'conflict', field: 'identity' };
+      }
+      Object.assign(verification, {
+        identityAssurance: result.identityAssurance,
+        oneIdLinked: true,
+        oneIdLinkedAt: result.linkedAt,
+        providerMode: result.providerMode,
+        providerName: result.providerName,
+        providerReceiptId: result.receiptId,
+        providerSubjectKey: result.subjectKey,
+        updatedAt: now,
+      });
+      const mapped = toVerification(verification);
+      const resultSnapshot = toVerificationSnapshot(mapped);
+      Object.assign(operation, {
+        errorCode: null,
+        providerReference: result.receiptId,
+        receipt: {
+          identityAssurance: result.identityAssurance,
+          linkedAt: result.linkedAt.toISOString(),
+        },
+        resultFingerprint: marketplaceProviderFingerprint(resultSnapshot),
+        resultSnapshot,
+        status: 'succeeded',
+        leaseExpiresAt: null,
+        updatedAt: now,
+      });
+      await em.flush();
+      return ok(mapped);
+    });
+  }
+
+  completeVerificationDocuments(
+    owner: AgriTechOwner,
+    operationId: string,
+    operationAttempt: number,
+    result: MarketplaceDocumentProviderResult,
+  ): Promise<OperationResult<Verification>> {
+    return this.em.transactional(async (em) => {
+      const now = new Date();
+      const operation = await em.findOne(
+        MarketplaceProviderOperationEntity,
+        {
+          capability: 'verification_documents',
+          actorType: 'verification_subject',
+          id: operationId,
+          tenantId: owner.tenantId,
+          userId: owner.userId,
+        },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!operation) {
+        return { status: 'not_found', field: 'operationId' };
+      }
+      const verification = await em.findOne(
+        VerificationEntity,
+        { tenantId: owner.tenantId, userId: owner.userId },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!verification) {
+        return { status: 'not_found', field: 'verification' };
+      }
+      if (operation.attempt !== operationAttempt) {
+        return { status: 'conflict', field: 'operationAttempt' };
+      }
+      if (operation.status === 'succeeded') {
+        const replay = fromVerificationSnapshot(operation.resultSnapshot);
+        return replay ? ok(replay) : { status: 'invalid_state', field: 'resultSnapshot' };
+      }
+      if (
+        operation.status !== 'started' ||
+        !operation.leaseExpiresAt ||
+        operation.resourceId !== verification.id ||
+        operation.resourceRevision !== verification.caseRevision ||
+        verification.status !== 'none' ||
+        !verification.oneIdLinked ||
+        !isDocumentProviderResultValid(operation, result, now)
+      ) {
+        return { status: 'conflict', field: 'status' };
+      }
+      if (result.evidence.length !== 1) {
+        return { status: 'invalid_state', field: 'documents' };
+      }
+      const descriptor: MarketplaceProviderRequestDescriptor = operation.requestDescriptor;
+      if (descriptor.action !== 'store-verification-document' || !descriptor.document) {
+        return { status: 'invalid_state', field: 'requestDescriptor' };
+      }
+      const expectedDocument = descriptor.document;
+      const evidenceUsage = await em.execute<Array<{ count: number }>>(
+        `select count(*)::int as count
+           from marketplace_verification_evidence
+          where verification_id = ? and case_revision = ? and kind = ?`,
+        [verification.id, verification.caseRevision, expectedDocument.kind],
+      );
+      const documentRevision = Number(evidenceUsage[0]?.count ?? 0) + 1;
+      if (documentRevision > maximumVerificationEvidenceRevisionsPerKind) {
+        return { status: 'conflict', field: 'evidenceQuota' };
+      }
+      const nextDocuments = new Map(verification.documents.map((document) => [document.kind, document]));
+      const checksums: string[] = [];
+      for (const item of result.evidence) {
+        if (
+          item.document.fileName !== expectedDocument.fileName ||
+          item.document.kind !== expectedDocument.kind ||
+          item.document.mimeType !== expectedDocument.mimeType ||
+          item.document.sha256 !== expectedDocument.sha256 ||
+          item.document.sizeBytes !== expectedDocument.sizeBytes ||
+          item.document.providerMode !== result.providerMode ||
+          item.document.providerName !== result.providerName ||
+          item.document.providerReceiptId !== result.receiptId
+        ) {
+          return { status: 'invalid_state', field: 'documents' };
+        }
+        const evidence = new VerificationEvidenceEntity();
+        Object.assign(evidence, {
+          caseRevision: verification.caseRevision,
+          documentRevision,
+          fileName: item.document.fileName,
+          kind: item.document.kind,
+          mimeType: item.document.mimeType,
+          providerMode: result.providerMode,
+          providerName: result.providerName,
+          providerReceiptId: result.receiptId,
+          sha256: expectedDocument.sha256,
+          sizeBytes: expectedDocument.sizeBytes,
+          tenantId: owner.tenantId,
+          userId: owner.userId,
+          verificationId: verification.id,
+        });
+        em.persist(evidence);
+        checksums.push(expectedDocument.sha256);
+        nextDocuments.set(item.document.kind, {
+          ...item.document,
+          caseRevision: verification.caseRevision,
+          evidenceId: evidence.id,
+          evidenceRevision: documentRevision,
+          optional: isOptionalVerificationDocument(verification.role, item.document.kind),
+        });
+      }
+      verification.documents = [...nextDocuments.values()];
+      verification.updatedAt = now;
+      const mapped = toVerification(verification);
+      const resultSnapshot = toVerificationSnapshot(mapped);
+      Object.assign(operation, {
+        errorCode: null,
+        providerReference: result.receiptId,
+        receipt: {
+          checksumFingerprint: marketplaceProviderFingerprint(checksums),
+          documentCount: result.evidence.length,
+          storedAt: result.storedAt.toISOString(),
+        },
+        resultFingerprint: marketplaceProviderFingerprint(resultSnapshot),
+        resultSnapshot,
+        status: 'succeeded',
+        leaseExpiresAt: null,
+        updatedAt: now,
+      });
+      await em.flush();
+      return ok(mapped);
+    });
+  }
+
+  completeProviderOperation(
+    owner: AgriTechOwner,
+    operationId: string,
+    operationAttempt: number,
+    result: MarketplaceProviderOperationCompletion,
+  ): Promise<OperationResult<MarketplaceProviderOperationReplay>> {
+    return this.em.transactional(async (em) => {
+      const now = new Date();
+      const operation = await em.findOne(
+        MarketplaceProviderOperationEntity,
+        { id: operationId, tenantId: owner.tenantId, userId: owner.userId },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!operation) {
+        return { status: 'not_found', field: 'operationId' };
+      }
+      if (operation.attempt !== operationAttempt) {
+        return { status: 'conflict', field: 'operationAttempt' };
+      }
+      if (operation.status === 'succeeded') {
+        const replay = toProviderOperationReplay(operation);
+        return replay ? ok(replay) : { status: 'invalid_state', field: 'resultSnapshot' };
+      }
+      if (operation.capability === 'oneid_link' || operation.capability === 'verification_documents') {
+        return { status: 'invalid_state', field: 'capability' };
+      }
+      if (
+        operation.status !== 'started' ||
+        !operation.leaseExpiresAt ||
+        !isProviderCompletionValid(operation, result, now)
+      ) {
+        return { status: 'conflict', field: 'status' };
+      }
+      const anchor = await lockProviderResource(
+        em,
+        owner,
+        operation.actorType,
+        operation.resourceType,
+        operation.resourceId,
+      );
+      if (!anchor) {
+        return { status: 'not_found', field: 'resource' };
+      }
+      if (result.providerEventId) {
+        await em.execute('select pg_advisory_xact_lock(hashtext(?))', [
+          `marketplace-provider-event:${result.providerMode}:${result.providerName}:${operation.capability}:${result.providerEventId}`,
+        ]);
+        const duplicateEvent = await em.findOne(MarketplaceProviderOperationEntity, {
+          capability: operation.capability,
+          id: { $ne: operation.id },
+          providerEventId: result.providerEventId,
+          providerMode: result.providerMode,
+          providerName: result.providerName,
+        });
+        if (duplicateEvent) {
+          return { status: 'conflict', field: 'providerEventId' };
+        }
+      }
+      const resultFingerprint = marketplaceProviderFingerprint(result.resultDescriptor);
+      Object.assign(operation, {
+        errorCode: null,
+        leaseExpiresAt: null,
+        providerEventId: result.providerEventId ?? null,
+        providerReference: result.providerReference,
+        receipt: result.safeReceipt,
+        reconciliationReason: result.reconciliationReason ?? null,
+        reconciliationRequired: Boolean(result.reconciliationReason),
+        resultFingerprint,
+        resultSnapshot: result.resultDescriptor,
+        status: 'succeeded',
+        updatedAt: now,
+      });
+      await em.flush();
+      const replay = toProviderOperationReplay(operation);
+      return replay ? ok(replay) : { status: 'invalid_state', field: 'resultSnapshot' };
+    });
+  }
+
+  failProviderOperation(
+    owner: AgriTechOwner,
+    operationId: string,
+    operationAttempt: number,
+    errorCode: string,
+    reconciliationReason?: string,
+  ): Promise<void> {
+    if (
+      !safeProviderErrorCode.test(errorCode) ||
+      (reconciliationReason && !safeProviderErrorCode.test(reconciliationReason))
+    ) {
+      return Promise.resolve();
+    }
+    return this.em.transactional(async (em) => {
+      const operation = await em.findOne(
+        MarketplaceProviderOperationEntity,
+        { id: operationId, tenantId: owner.tenantId, userId: owner.userId },
+        { lockMode: LockMode.PESSIMISTIC_WRITE },
+      );
+      if (!operation || operation.status !== 'started' || operation.attempt !== operationAttempt) {
+        return;
+      }
+      operation.status = 'failed';
+      operation.errorCode = errorCode;
+      operation.leaseExpiresAt = null;
+      operation.receipt = null;
+      operation.resultSnapshot = null;
+      operation.resultFingerprint = null;
+      operation.providerReference = null;
+      operation.providerEventId = null;
+      operation.reconciliationRequired = Boolean(reconciliationReason);
+      operation.reconciliationReason = reconciliationReason ?? null;
+      operation.updatedAt = new Date();
+      await em.flush();
+    });
+  }
+
+  submitVerification(
+    owner: AgriTechOwner,
+    expectedRevision: number,
+    idempotencyKey: string,
+  ): Promise<OperationResult<Verification>> {
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 0) {
+      return Promise.resolve({ status: 'invalid_state', field: 'expectedRevision' });
+    }
+    return this.em.transactional((em) =>
+      executeCommerceOperation(
+        em,
+        owner,
+        'verification_submit',
+        'self',
+        idempotencyKey,
+        { expectedRevision },
+        async () => {
+          const verification = await em.findOne(
+            VerificationEntity,
+            { tenantId: owner.tenantId, userId: owner.userId },
+            { lockMode: LockMode.PESSIMISTIC_WRITE },
+          );
+          if (!verification) {
+            return { status: 'not_found' };
+          }
+          if (verification.version !== expectedRevision) {
+            return { status: 'conflict', field: 'expectedRevision' };
+          }
+          if (verification.status !== 'none') {
+            return { status: 'conflict', field: 'status' };
+          }
+          if (
+            !verification.oneIdLinked ||
+            (verification.providerMode !== 'mock' && verification.providerMode !== 'live') ||
+            !hasRequiredVerificationDocuments(verification.role, verification.documents) ||
+            verification.documents.some((document) => !document.evidenceId || !document.sha256) ||
+            verification.documents.some((document) => document.caseRevision !== verification.caseRevision)
+          ) {
+            return { status: 'invalid_state', field: 'evidence' };
+          }
+          verification.status = 'pending';
+          verification.updatedAt = new Date();
+          await em.flush();
+          return ok(toVerification(verification));
+        },
+      ),
+    );
+  }
+
   async reviewVerification(
     tenantId: string,
     verificationId: string,
     decision: 'verified' | 'rejected',
     reviewedBy: string,
+    expectedRevision: number,
+    idempotencyKey: string,
     reason?: VerificationRejectionReason,
   ): Promise<OperationResult<Verification>> {
     if (!isVerificationReviewReasonValid(decision, reason)) {
       return { status: 'invalid_state', field: 'reason' };
     }
-    return this.em.transactional(async (em) => {
-      const entity = await em.findOne(
-        VerificationEntity,
-        {
-          tenantId,
-          id: verificationId,
+    if (!Number.isInteger(expectedRevision) || expectedRevision < 0) {
+      return { status: 'invalid_state', field: 'expectedRevision' };
+    }
+    const actor = { tenantId, userId: reviewedBy };
+    return this.em.transactional((em) =>
+      executeCommerceOperation(
+        em,
+        actor,
+        'verification_review',
+        verificationId,
+        idempotencyKey,
+        { decision, expectedRevision, ...(reason ? { reason } : {}) },
+        async () => {
+          const entity = await em.findOne(
+            VerificationEntity,
+            {
+              tenantId,
+              id: verificationId,
+            },
+            { lockMode: LockMode.PESSIMISTIC_WRITE },
+          );
+          if (!entity) {
+            return { status: 'not_found' };
+          }
+          if (entity.version !== expectedRevision) {
+            return { status: 'conflict', field: 'expectedRevision' };
+          }
+          if (entity.status !== 'pending') {
+            return { status: 'conflict', field: 'status' };
+          }
+          entity.status = decision === 'verified' ? 'verified' : 'rejected';
+          entity.level = decision === 'verified' ? 'verified' : 'basic';
+          entity.reviewedBy = reviewedBy;
+          entity.reviewedAt = new Date();
+          entity.rejectionReason = decision === 'rejected' ? (reason as VerificationRejectionReason) : null;
+          entity.updatedAt = new Date();
+          await em.flush();
+          return ok(toVerification(entity));
         },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
-      if (!entity) {
-        return { status: 'not_found' };
-      }
-      if (entity.status !== 'pending') {
-        return { status: 'conflict', field: 'status' };
-      }
-      entity.status = decision === 'verified' ? 'verified' : 'rejected';
-      entity.reviewedBy = reviewedBy;
-      entity.reviewedAt = new Date();
-      entity.rejectionReason = decision === 'rejected' ? (reason as VerificationRejectionReason) : null;
-      entity.updatedAt = new Date();
-      await em.flush();
-      return ok(toVerification(entity));
-    });
+      ),
+    );
   }
 
   listVerifications(tenantId: string): Promise<Verification[]> {
@@ -398,412 +1625,305 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
   // ---- Cart ----
   async getCart(owner: AgriTechOwner, cartId: string): Promise<Cart | undefined> {
     const entity = await this.em.findOne(CartEntity, {
+      bindingStatus: 'resolved',
       tenantId: owner.tenantId,
       id: cartId,
       userId: owner.userId,
     });
-    return entity ? toCart(entity) : undefined;
+    const seller = entity ? await findSellerOrganization(this.em, entity.sellerTenantId, entity.sellerPartnerId) : null;
+    return entity && seller ? toCart(entity, seller) : undefined;
   }
 
-  listCarts(owner: AgriTechOwner): Promise<Cart[]> {
-    return this.em
-      .find(
-        CartEntity,
-        { tenantId: owner.tenantId, userId: owner.userId, status: 'open' },
-        { orderBy: { updatedAt: 'DESC' } },
-      )
-      .then((rows) => rows.map(toCart));
+  async listCarts(owner: AgriTechOwner): Promise<Cart[]> {
+    const rows = await this.em.find(
+      CartEntity,
+      { bindingStatus: 'resolved', tenantId: owner.tenantId, userId: owner.userId, status: 'open' },
+      { orderBy: { updatedAt: 'DESC' } },
+    );
+    const views = await Promise.all(
+      rows.map(async (row) => {
+        const seller = await findSellerOrganization(this.em, row.sellerTenantId, row.sellerPartnerId);
+        return seller ? toCart(row, seller) : undefined;
+      }),
+    );
+    return views.filter((view): view is Cart => view !== undefined);
   }
 
-  async addToCart(owner: AgriTechOwner, item: CartItem): Promise<OperationResult<Cart>> {
+  async addToCart(
+    owner: AgriTechOwner,
+    item: AddCartItemInput,
+    idempotencyKey: string,
+  ): Promise<OperationResult<Cart>> {
     if (item.quantity <= 0) {
       return { status: 'invalid_state', field: 'quantity' };
     }
-    return this.em.transactional(async (em) => {
-      const product = await em.findOne(ProductEntity, {
-        tenantId: owner.tenantId,
-        id: item.productId,
-        status: 'active',
-      });
-      if (!product) {
-        return { status: 'not_found', field: 'productId' };
-      }
-      const sellerId = product.supplierId;
-      await em
-        .getConnection()
-        .execute('select pg_advisory_xact_lock(hashtext(?))', [
-          `marketplace-cart:${owner.tenantId}:${owner.userId}:${sellerId}`,
+    return this.em.transactional((em) =>
+      executeCommerceOperation(em, owner, 'cart_add', item.listingPublicationId, idempotencyKey, item, async () => {
+        const buyer = await lockAuthorizedMarketplaceParty(em, owner, item.actingPartnerId, 'buyer');
+        if (!buyer) {
+          return { status: 'forbidden', field: 'organization' };
+        }
+        const resolved = await lockResolvedCommerceListing(em, item.listingPublicationId);
+        const terms = resolved ? commerceListingTerms(resolved) : undefined;
+        if (!resolved || !terms) {
+          return { status: 'not_found', field: 'listingPublicationId' };
+        }
+        if (
+          resolved.seller.partner.tenantId === owner.tenantId &&
+          resolved.seller.partner.id === item.actingPartnerId
+        ) {
+          return { status: 'forbidden', field: 'organization' };
+        }
+        await em.execute('select pg_advisory_xact_lock(hashtext(?))', [
+          `marketplace-cart:${owner.tenantId}:${owner.userId}:${item.actingPartnerId}:${resolved.seller.partner.tenantId}:${resolved.seller.partner.id}`,
         ]);
-      let cart = await em.findOne(
-        CartEntity,
-        {
-          tenantId: owner.tenantId,
-          userId: owner.userId,
-          sellerId,
-          status: 'open',
-        },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
-      const existing = cart?.items.find((cartItem) => cartItem.productId === item.productId);
-      const nextQuantity = (existing?.quantity ?? 0) + item.quantity;
-      if (nextQuantity > product.stockQuantity) {
-        return { status: 'conflict', field: 'stockQuantity' };
-      }
-      if (!cart) {
-        cart = new CartEntity();
-        cart.id = randomUUID();
-        cart.tenantId = owner.tenantId;
-        cart.userId = owner.userId;
-        cart.sellerId = sellerId;
-        cart.items = [];
-        em.persist(cart);
-      }
-      if (existing) {
-        existing.quantity = nextQuantity;
-      } else {
-        cart.items.push(item);
-      }
-      cart.updatedAt = new Date();
-      await em.flush();
-      return ok(toCart(cart));
-    });
+        let cart = await em.findOne(
+          CartEntity,
+          {
+            bindingStatus: 'resolved',
+            buyerPartnerId: item.actingPartnerId,
+            sellerPartnerId: resolved.seller.partner.id,
+            sellerTenantId: resolved.seller.partner.tenantId,
+            status: 'open',
+            tenantId: owner.tenantId,
+            userId: owner.userId,
+          },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
+        const existing = cart?.items.find((cartItem) => cartItem.listingPublicationId === item.listingPublicationId);
+        const nextQuantity = (existing?.quantity ?? 0) + item.quantity;
+        if (nextQuantity > terms.availableQuantity) {
+          return { status: 'conflict', field: 'stockQuantity' };
+        }
+        if (!cart) {
+          cart = new CartEntity();
+          Object.assign(cart, {
+            bindingStatus: 'resolved',
+            buyerPartnerId: buyer.partner.id,
+            id: randomUUID(),
+            items: [],
+            sellerId: resolved.seller.partner.id,
+            sellerPartnerId: resolved.seller.partner.id,
+            sellerTenantId: resolved.seller.partner.tenantId,
+            sellerUserId: resolved.sellerPublic.ownerUserId,
+            tenantId: owner.tenantId,
+            userId: owner.userId,
+          });
+          em.persist(cart);
+        }
+        if (existing) {
+          existing.quantity = nextQuantity;
+        } else {
+          cart.items.push({
+            listingPublicationId: item.listingPublicationId,
+            quantity: item.quantity,
+            sourceId: resolved.source.id,
+            sourceKind: resolved.listing.sourceKind,
+          });
+        }
+        cart.updatedAt = new Date();
+        return ok(toCart(cart, resolved.seller.partner));
+      }),
+    );
   }
 
   async updateCartItem(
     owner: AgriTechOwner,
     cartId: string,
-    productId: string,
+    listingPublicationId: string,
     quantity: number,
+    idempotencyKey: string,
   ): Promise<OperationResult<Cart>> {
-    return this.em.transactional(async (em) => {
-      const cart = await em.findOne(
-        CartEntity,
-        {
-          tenantId: owner.tenantId,
-          userId: owner.userId,
-          id: cartId,
-          status: 'open',
+    return this.em.transactional((em) =>
+      executeCommerceOperation(
+        em,
+        owner,
+        'cart_update',
+        `${cartId}:${listingPublicationId}`,
+        idempotencyKey,
+        { quantity },
+        async () => {
+          const cart = await em.findOne(
+            CartEntity,
+            {
+              bindingStatus: 'resolved',
+              id: cartId,
+              status: 'open',
+              tenantId: owner.tenantId,
+              userId: owner.userId,
+            },
+            { lockMode: LockMode.PESSIMISTIC_WRITE },
+          );
+          if (!cart || !cart.buyerPartnerId) {
+            return { status: 'not_found' };
+          }
+          if (!(await lockAuthorizedMarketplaceParty(em, owner, cart.buyerPartnerId, 'buyer'))) {
+            return { status: 'forbidden', field: 'organization' };
+          }
+          const existing = cart.items.find((cartItem) => cartItem.listingPublicationId === listingPublicationId);
+          if (!existing) {
+            return { status: 'not_found', field: 'listingPublicationId' };
+          }
+          if (quantity <= 0) {
+            cart.items = cart.items.filter((cartItem) => cartItem.listingPublicationId !== listingPublicationId);
+          } else {
+            const resolved = await lockResolvedCommerceListing(em, listingPublicationId);
+            const terms = resolved ? commerceListingTerms(resolved) : undefined;
+            if (
+              !resolved ||
+              !terms ||
+              resolved.seller.partner.id !== cart.sellerPartnerId ||
+              resolved.seller.partner.tenantId !== cart.sellerTenantId ||
+              resolved.source.id !== existing.sourceId ||
+              resolved.listing.sourceKind !== existing.sourceKind
+            ) {
+              return { status: 'not_found', field: 'listingPublicationId' };
+            }
+            if (quantity > terms.availableQuantity) {
+              return { status: 'conflict', field: 'stockQuantity' };
+            }
+            existing.quantity = quantity;
+          }
+          const seller = await findSellerOrganization(em, cart.sellerTenantId, cart.sellerPartnerId);
+          if (!seller) {
+            return { status: 'not_found', field: 'organization' };
+          }
+          cart.updatedAt = new Date();
+          return ok(toCart(cart, seller));
         },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
-      if (!cart) {
-        return { status: 'not_found' };
-      }
-      const existing = cart.items.find((cartItem) => cartItem.productId === productId);
-      if (!existing) {
-        return { status: 'not_found', field: 'productId' };
-      }
-      if (quantity <= 0) {
-        cart.items = cart.items.filter((cartItem) => cartItem.productId !== productId);
-      } else {
-        const product = await em.findOne(ProductEntity, {
-          tenantId: owner.tenantId,
-          id: productId,
-          supplierId: cart.sellerId,
-          status: 'active',
-        });
-        if (!product) {
-          return { status: 'not_found', field: 'productId' };
-        }
-        if (quantity > product.stockQuantity) {
-          return { status: 'conflict', field: 'stockQuantity' };
-        }
-        existing.quantity = quantity;
-      }
-      cart.updatedAt = new Date();
-      await em.flush();
-      return ok(toCart(cart));
-    });
+      ),
+    );
   }
 
-  async removeCartItem(owner: AgriTechOwner, cartId: string, productId: string): Promise<OperationResult<Cart>> {
-    return this.updateCartItem(owner, cartId, productId, 0);
+  async removeCartItem(
+    owner: AgriTechOwner,
+    cartId: string,
+    listingPublicationId: string,
+    idempotencyKey: string,
+  ): Promise<OperationResult<Cart>> {
+    return this.em.transactional((em) =>
+      executeCommerceOperation(
+        em,
+        owner,
+        'cart_remove',
+        `${cartId}:${listingPublicationId}`,
+        idempotencyKey,
+        {},
+        async () => {
+          const cart = await em.findOne(
+            CartEntity,
+            {
+              bindingStatus: 'resolved',
+              id: cartId,
+              status: 'open',
+              tenantId: owner.tenantId,
+              userId: owner.userId,
+            },
+            { lockMode: LockMode.PESSIMISTIC_WRITE },
+          );
+          if (!cart || !cart.buyerPartnerId) {
+            return { status: 'not_found' };
+          }
+          if (!(await lockAuthorizedMarketplaceParty(em, owner, cart.buyerPartnerId, 'buyer'))) {
+            return { status: 'forbidden', field: 'organization' };
+          }
+          const countBefore = cart.items.length;
+          cart.items = cart.items.filter((cartItem) => cartItem.listingPublicationId !== listingPublicationId);
+          if (cart.items.length === countBefore) {
+            return { status: 'not_found', field: 'listingPublicationId' };
+          }
+          const seller = await findSellerOrganization(em, cart.sellerTenantId, cart.sellerPartnerId);
+          if (!seller) {
+            return { status: 'not_found', field: 'organization' };
+          }
+          cart.updatedAt = new Date();
+          return ok(toCart(cart, seller));
+        },
+      ),
+    );
   }
 
   async checkoutCart(
     owner: AgriTechOwner,
     cartId: string,
     input: CheckoutCartInput,
+    idempotencyKey: string,
   ): Promise<OperationResult<CheckoutCartResult>> {
-    return this.em.transactional(async (em) => {
-      const cart = await em.findOne(
-        CartEntity,
-        {
-          tenantId: owner.tenantId,
-          userId: owner.userId,
-          id: cartId,
-          status: 'open',
-        },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
-      if (!cart) {
-        return { status: 'not_found' };
-      }
-      if (cart.items.length === 0) {
-        return { status: 'invalid_state', field: 'items' };
-      }
-
-      if (!(await hasApprovedOrganization(em, owner, 'buyer', true))) {
-        return { status: 'forbidden', field: 'organization' };
-      }
-
-      const sellerPartner = await em.findOne(AgriTechPartnerEntity, {
-        tenantId: owner.tenantId,
-        id: cart.sellerId,
-        kind: 'supplier',
-        status: 'approved',
-      });
-      if (!sellerPartner || sellerPartner.ownerUserId === owner.userId) {
-        return { status: 'forbidden', field: 'sellerId' };
-      }
-
-      const sellerVerification = await em.findOne(VerificationEntity, {
-        tenantId: owner.tenantId,
-        userId: sellerPartner.ownerUserId,
-        status: 'verified',
-        role: { $in: ['farmer', 'seller'] },
-      });
-      if (!sellerVerification) {
-        return { status: 'forbidden', field: 'sellerId' };
-      }
-
-      const products = await em.find(
-        ProductEntity,
-        {
-          tenantId: owner.tenantId,
-          id: { $in: cart.items.map(({ productId }) => productId) },
-          supplierId: cart.sellerId,
-          status: 'active',
-        },
-        { lockMode: LockMode.PESSIMISTIC_READ },
-      );
-      const productsById = new Map(products.map((product) => [product.id, product]));
-      const lines: ContractLine[] = [];
-      for (const item of cart.items) {
-        const product = productsById.get(item.productId);
-        if (!product) {
-          return { status: 'not_found', field: 'productId' };
+    return this.em.transactional((em) =>
+      executeCommerceOperation(em, owner, 'cart_checkout', cartId, idempotencyKey, input, async () => {
+        const cart = await em.findOne(
+          CartEntity,
+          {
+            bindingStatus: 'resolved',
+            id: cartId,
+            status: 'open',
+            tenantId: owner.tenantId,
+            userId: owner.userId,
+          },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
+        if (!cart || !cart.buyerPartnerId || !cart.sellerTenantId || !cart.sellerPartnerId || !cart.sellerUserId) {
+          return { status: 'not_found' };
         }
-        if (item.quantity <= 0 || item.quantity > product.stockQuantity) {
-          return { status: 'conflict', field: 'stockQuantity' };
+        if (cart.items.length === 0) {
+          return { status: 'invalid_state', field: 'items' };
         }
-        const unitPriceUzs = Number(product.priceUzs);
-        if (!Number.isSafeInteger(unitPriceUzs) || unitPriceUzs <= 0 || unitPriceUzs > maximumMarketplaceUzs) {
-          return { status: 'invalid_state', field: 'priceUzs' };
+        const buyer = await lockAuthorizedMarketplaceParty(em, owner, cart.buyerPartnerId, 'buyer');
+        const seller = await lockAuthorizedMarketplaceParty(
+          em,
+          { tenantId: cart.sellerTenantId, userId: cart.sellerUserId },
+          cart.sellerPartnerId,
+          'seller',
+        );
+        if (!buyer || !seller) {
+          return { status: 'forbidden', field: 'organization' };
         }
-        lines.push({
-          productId: product.id,
-          name: product.name,
-          unit: product.unit,
-          unitPriceUzs,
-          quantity: item.quantity,
-          lineTotalUzs: unitPriceUzs * item.quantity,
+        if (buyer.partner.tenantId === seller.partner.tenantId && buyer.partner.id === seller.partner.id) {
+          return { status: 'forbidden', field: 'organization' };
+        }
+
+        const linesResult = await resolveCartContractLines(em, cart);
+        if (linesResult.status !== 'ok') {
+          return linesResult;
+        }
+        const lines = linesResult.value;
+        const amountUzs = lines.reduce((sum, line) => sum + line.lineTotalUzs, 0);
+        if (!Number.isSafeInteger(amountUzs) || amountUzs <= 0 || amountUzs > maximumMarketplaceUzs) {
+          return { status: 'invalid_state', field: 'amountUzs' };
+        }
+        const contract = createDraftContract({
+          amountUzs,
+          buyerPartnerId: buyer.partner.id,
+          buyerPartySnapshot: marketplacePartySnapshot(buyer, owner.userId),
+          buyerTenantId: owner.tenantId,
+          buyerUserId: owner.userId,
+          deliveryPriceUzs: input.deliveryTerms === 'pickup' ? 0 : undefined,
+          deliveryTerms: input.deliveryTerms,
+          lines,
+          sellerPartnerId: seller.partner.id,
+          sellerPartySnapshot: marketplacePartySnapshot(seller, cart.sellerUserId),
+          sellerTenantId: cart.sellerTenantId,
+          sellerUserId: cart.sellerUserId,
+          sourceId: cart.id,
+          sourceType: 'cart_checkout',
+          subject: lines
+            .map((line) => line.name)
+            .join(', ')
+            .slice(0, 300),
         });
-      }
-
-      const amountUzs = lines.reduce((sum, line) => sum + line.lineTotalUzs, 0);
-      if (!Number.isSafeInteger(amountUzs) || amountUzs <= 0 || amountUzs > maximumMarketplaceUzs) {
-        return { status: 'invalid_state', field: 'amountUzs' };
-      }
-
-      const contract = createDraftContract({
-        tenantId: owner.tenantId,
-        buyerUserId: owner.userId,
-        sellerUserId: sellerPartner.ownerUserId,
-        sourceType: 'cart_checkout',
-        sourceId: cart.id,
-        subject: lines
-          .map((line) => line.name)
-          .join(', ')
-          .slice(0, 300),
-        amountUzs,
-        lines,
-        deliveryTerms: input.deliveryTerms,
-        deliveryPriceUzs: input.deliveryTerms === 'pickup' ? 0 : undefined,
-      });
-      cart.status = 'ordered';
-      cart.updatedAt = new Date();
-      em.persist(contract);
-      await em.flush();
-      return ok({ cartId: cart.id, contractId: contract.id });
-    });
-  }
-
-  // ---- Samples ----
-  async requestSample(owner: AgriTechOwner, productId: string): Promise<OperationResult<SampleRequest>> {
-    return this.em.transactional(async (em) => {
-      if (!(await hasApprovedOrganization(em, owner, 'buyer', true))) {
-        return { status: 'forbidden', field: 'organization' };
-      }
-      const verification = await em.findOne(
-        VerificationEntity,
-        { tenantId: owner.tenantId, userId: owner.userId, status: 'verified' },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
-      if (!verification) {
-        return { status: 'forbidden', field: 'verification' };
-      }
-      const used = await em.count(SampleRequestEntity, {
-        tenantId: owner.tenantId,
-        userId: owner.userId,
-        createdAt: { $gte: currentMonthStart() },
-      });
-      if (used >= maxMonthlySamples) {
-        return { status: 'invalid_state', field: 'samples' };
-      }
-      const product = await em.findOne(ProductEntity, {
-        tenantId: owner.tenantId,
-        id: productId,
-        status: 'active',
-      });
-      if (!product) {
-        return { status: 'not_found', field: 'productId' };
-      }
-      const sellerPartner = await em.findOne(AgriTechPartnerEntity, {
-        tenantId: owner.tenantId,
-        id: product.supplierId,
-        kind: 'supplier',
-        status: 'approved',
-      });
-      if (!sellerPartner || sellerPartner.ownerUserId === owner.userId) {
-        return { status: 'forbidden', field: 'sellerId' };
-      }
-      const entity = new SampleRequestEntity();
-      entity.id = randomUUID();
-      entity.tenantId = owner.tenantId;
-      entity.userId = owner.userId;
-      entity.productId = productId;
-      entity.sellerId = product.supplierId;
-      entity.status = 'pending';
-      em.persist(entity);
-      await em.flush();
-      return ok(toSample(entity));
-    });
-  }
-
-  listSamples(owner: AgriTechOwner): Promise<SampleRequest[]> {
-    return this.em
-      .find(SampleRequestEntity, { tenantId: owner.tenantId, userId: owner.userId }, { orderBy: { createdAt: 'DESC' } })
-      .then((rows) => rows.map(toSample));
-  }
-
-  async sampleUsageThisMonth(owner: AgriTechOwner): Promise<number> {
-    const count = await this.em.count(SampleRequestEntity, {
-      tenantId: owner.tenantId,
-      userId: owner.userId,
-      createdAt: { $gte: currentMonthStart() },
-    });
-    return count;
-  }
-
-  // ---- Favorites ----
-  async addFavorite(owner: AgriTechOwner, productId: string): Promise<OperationResult<{ productId: string }>> {
-    return this.em.transactional(async (em) => {
-      const product = await em.findOne(ProductEntity, {
-        tenantId: owner.tenantId,
-        id: productId,
-        status: 'active',
-      });
-      if (!product) {
-        return { status: 'not_found', field: 'productId' };
-      }
-      await em.getConnection().execute(
-        `insert into marketplace_favorites (tenant_id, user_id, product_id, created_at)
-         values (?, ?, ?, now())
-         on conflict (tenant_id, user_id, product_id) do nothing`,
-        [owner.tenantId, owner.userId, productId],
-      );
-      return ok({ productId });
-    });
-  }
-
-  async removeFavorite(owner: AgriTechOwner, productId: string): Promise<OperationResult<{ productId: string }>> {
-    const product = await this.em.findOne(ProductEntity, {
-      tenantId: owner.tenantId,
-      id: productId,
-    });
-    if (!product) {
-      return { status: 'not_found', field: 'productId' };
-    }
-    await this.em.nativeDelete(FavoriteEntity, {
-      tenantId: owner.tenantId,
-      userId: owner.userId,
-      productId,
-    });
-    return ok({ productId });
-  }
-
-  listFavorites(owner: AgriTechOwner): Promise<Favorite[]> {
-    return this.em
-      .find(FavoriteEntity, { tenantId: owner.tenantId, userId: owner.userId }, { orderBy: { createdAt: 'DESC' } })
-      .then((rows) => rows.map(toFavorite));
-  }
-
-  // ---- Reviews ----
-  async addReview(
-    owner: AgriTechOwner,
-    productId: string,
-    rating: number,
-    comment?: string,
-  ): Promise<OperationResult<Review>> {
-    if (rating < 1 || rating > 5) {
-      return { status: 'invalid_state', field: 'rating' };
-    }
-    return this.em.transactional(async (em) => {
-      if (!(await hasApprovedOrganization(em, owner, 'buyer', true))) {
-        return { status: 'forbidden', field: 'organization' };
-      }
-      await em
-        .getConnection()
-        .execute('select pg_advisory_xact_lock(hashtext(?))', [
-          `marketplace-review:${owner.tenantId}:${owner.userId}:${productId}`,
-        ]);
-      const product = await em.findOne(ProductEntity, {
-        tenantId: owner.tenantId,
-        id: productId,
-      });
-      if (!product) {
-        return { status: 'not_found', field: 'productId' };
-      }
-      const eligibleContracts = await em.find(ContractEntity, {
-        tenantId: owner.tenantId,
-        buyerUserId: owner.userId,
-        status: { $in: ['active', 'completed'] },
-      });
-      if (!eligibleContracts.some(({ lines }) => lines.some((line) => line.productId === productId))) {
-        return { status: 'forbidden', field: 'purchase' };
-      }
-      const existing = await em.findOne(ReviewEntity, {
-        tenantId: owner.tenantId,
-        productId,
-        userId: owner.userId,
-      });
-      if (existing) {
-        return { status: 'conflict', field: 'review' };
-      }
-      const entity = new ReviewEntity();
-      entity.id = randomUUID();
-      entity.tenantId = owner.tenantId;
-      entity.productId = productId;
-      entity.userId = owner.userId;
-      entity.rating = rating;
-      entity.comment = comment ?? null;
-      em.persist(entity);
-      await em.flush();
-      return ok(toReview(entity));
-    });
-  }
-
-  listProductReviews(tenantId: string, productId: string): Promise<Review[]> {
-    return this.em
-      .find(ReviewEntity, { tenantId, productId }, { orderBy: { createdAt: 'DESC' } })
-      .then((rows) => rows.map(toReview));
+        cart.status = 'ordered';
+        cart.updatedAt = new Date();
+        em.persist(contract);
+        return ok({ cartId: cart.id, contractId: contract.id });
+      }),
+    );
   }
 
   // ---- Requests (reverse auction) ----
   async createRequest(
     owner: AgriTechOwner,
-    input: Omit<BuyerRequest, 'id' | 'tenantId' | 'buyerUserId' | 'status' | 'createdAt' | 'updatedAt'>,
+    input: CreateBuyerRequestInput,
+    idempotencyKey: string,
   ): Promise<OperationResult<BuyerRequest>> {
     if (
       input.budgetUzs !== undefined &&
@@ -811,30 +1931,43 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
     ) {
       return { status: 'invalid_state', field: 'budgetUzs' };
     }
-    return this.em.transactional(async (em) => {
-      if (!(await hasApprovedOrganization(em, owner, 'buyer', true))) {
-        return { status: 'forbidden', field: 'organization' };
-      }
-      const entity = new BuyerRequestEntity();
-      entity.id = randomUUID();
-      entity.tenantId = owner.tenantId;
-      entity.buyerUserId = owner.userId;
-      entity.title = input.title;
-      entity.product = input.product ?? null;
-      entity.volume = input.volume ?? null;
-      entity.region = input.region;
-      entity.deadline = input.deadline ?? null;
-      entity.budgetUzs = input.budgetUzs ?? null;
-      entity.requirements = input.requirements ?? null;
-      entity.status = 'open';
-      em.persist(entity);
-      await em.flush();
-      return ok(toRequest(entity));
-    });
+    return this.em.transactional((em) =>
+      executeCommerceOperation(em, owner, 'request_create', 'new', idempotencyKey, input, async () => {
+        const buyer = await lockAuthorizedMarketplaceParty(em, owner, input.actingPartnerId, 'buyer');
+        if (!buyer) {
+          return { status: 'forbidden', field: 'organization' };
+        }
+        const entity = new BuyerRequestEntity();
+        Object.assign(entity, {
+          bindingStatus: 'review_required',
+          budgetUzs: input.budgetUzs ?? null,
+          buyerPartnerId: buyer.partner.id,
+          buyerUserId: owner.userId,
+          deadline: input.deadline ?? null,
+          id: randomUUID(),
+          product: input.product ?? null,
+          region: input.region,
+          requirements: input.requirements ?? null,
+          status: 'open',
+          tenantId: owner.tenantId,
+          title: input.title,
+          volume: input.volume ?? null,
+        });
+        const binding = new MarketplaceRequestOrganizationBindingEntity();
+        Object.assign(binding, {
+          buyerPartnerId: buyer.partner.id,
+          buyerUserId: owner.userId,
+          requestId: entity.id,
+          tenantId: owner.tenantId,
+        });
+        em.persist([entity, binding]);
+        return ok(toRequest(entity));
+      }),
+    );
   }
 
   listRequests(tenantId: string, status?: string): Promise<BuyerRequest[]> {
-    const where: Record<string, unknown> = { tenantId };
+    const where: Record<string, unknown> = { bindingStatus: 'resolved', tenantId };
     if (status && status !== 'all') {
       where.status = status;
     }
@@ -847,7 +1980,7 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
     return this.em
       .find(
         BuyerRequestEntity,
-        { tenantId: owner.tenantId, buyerUserId: owner.userId },
+        { bindingStatus: 'resolved', tenantId: owner.tenantId, buyerUserId: owner.userId },
         { orderBy: { createdAt: 'DESC' } },
       )
       .then((rows) => rows.map(toRequest));
@@ -855,278 +1988,358 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
 
   async makeOffer(
     owner: AgriTechOwner,
-    requestId: string,
-    priceUzs: number,
-    deliveryTerms: 'pickup' | 'seller_delivery' | 'by_agreement',
-    deliveryPriceUzs?: number,
-    deliveryNote?: string,
-    deliveryDays?: number,
+    requestPublicId: string,
+    input: CreateRequestOfferInput,
+    idempotencyKey: string,
   ): Promise<OperationResult<RequestOffer>> {
-    return this.em.transactional(async (em) => {
-      if (!(await hasApprovedOrganization(em, owner, 'supplier', true))) {
-        return { status: 'forbidden', field: 'organization' };
-      }
-      const request = await em.findOne(
-        BuyerRequestEntity,
-        {
-          tenantId: owner.tenantId,
-          id: requestId,
-        },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
-      if (!request) {
-        return { status: 'not_found' };
-      }
-      if (request.status !== 'open' && request.status !== 'offering') {
-        return { status: 'invalid_state' };
-      }
-      if (request.buyerUserId === owner.userId) {
-        return { status: 'forbidden', field: 'buyerUserId' };
-      }
-      if (!Number.isSafeInteger(priceUzs) || priceUzs <= 0 || priceUzs > maximumMarketplaceUzs) {
-        return { status: 'invalid_state', field: 'priceUzs' };
-      }
-      const validDeliveryPrice =
-        (deliveryTerms === 'pickup' && deliveryPriceUzs === undefined) ||
-        (deliveryTerms === 'seller_delivery' &&
-          deliveryPriceUzs !== undefined &&
-          Number.isSafeInteger(deliveryPriceUzs) &&
-          deliveryPriceUzs > 0 &&
-          deliveryPriceUzs <= maximumMarketplaceUzs) ||
-        (deliveryTerms === 'by_agreement' && deliveryPriceUzs === undefined);
-      if (!validDeliveryPrice) {
-        return { status: 'invalid_state', field: 'deliveryPriceUzs' };
-      }
-      if (
-        deliveryDays !== undefined &&
-        (!Number.isInteger(deliveryDays) || deliveryDays <= 0 || deliveryDays > maximumDeliveryDays)
-      ) {
-        return { status: 'invalid_state', field: 'deliveryDays' };
-      }
-      const entity = new RequestOfferEntity();
-      entity.id = randomUUID();
-      entity.requestId = requestId;
-      entity.tenantId = owner.tenantId;
-      entity.sellerUserId = owner.userId;
-      entity.priceUzs = priceUzs;
-      entity.deliveryTerms = deliveryTerms;
-      entity.deliveryPriceUzs = deliveryTerms === 'pickup' ? 0 : (deliveryPriceUzs ?? null);
-      entity.deliveryNote = deliveryNote ?? null;
-      entity.deliveryDays = deliveryDays ?? null;
-      entity.status = 'pending';
-      if (request.status === 'open') {
-        request.status = 'offering';
-        request.updatedAt = new Date();
-      }
-      em.persist(entity);
-      await em.flush();
-      return ok(toOffer(entity));
-    });
+    if (!Number.isSafeInteger(input.priceUzs) || input.priceUzs <= 0 || input.priceUzs > maximumMarketplaceUzs) {
+      return { status: 'invalid_state', field: 'priceUzs' };
+    }
+    const validDeliveryPrice =
+      (input.deliveryTerms === 'pickup' && input.deliveryPriceUzs === undefined) ||
+      (input.deliveryTerms === 'seller_delivery' &&
+        input.deliveryPriceUzs !== undefined &&
+        Number.isSafeInteger(input.deliveryPriceUzs) &&
+        input.deliveryPriceUzs > 0 &&
+        input.deliveryPriceUzs <= maximumMarketplaceUzs) ||
+      (input.deliveryTerms === 'by_agreement' && input.deliveryPriceUzs === undefined);
+    if (!validDeliveryPrice) {
+      return { status: 'invalid_state', field: 'deliveryPriceUzs' };
+    }
+    if (
+      input.deliveryDays !== undefined &&
+      (!Number.isInteger(input.deliveryDays) || input.deliveryDays <= 0 || input.deliveryDays > maximumDeliveryDays)
+    ) {
+      return { status: 'invalid_state', field: 'deliveryDays' };
+    }
+    return this.em.transactional((em) =>
+      executeCommerceOperation(em, owner, 'offer_create', requestPublicId, idempotencyKey, input, async () => {
+        const seller = await lockAuthorizedMarketplaceParty(em, owner, input.actingPartnerId, 'seller');
+        if (!seller) {
+          return { status: 'forbidden', field: 'organization' };
+        }
+        const publication = await em.findOne(
+          MarketplaceRequestPublicationEntity,
+          { id: requestPublicId, moderationStatus: 'approved', status: 'published' },
+          { lockMode: LockMode.PESSIMISTIC_READ },
+        );
+        if (!publication) {
+          return { status: 'not_found' };
+        }
+        const request = await em.findOne(
+          BuyerRequestEntity,
+          {
+            bindingStatus: 'resolved',
+            buyerPartnerId: publication.buyerPartnerId,
+            buyerUserId: publication.buyerUserId,
+            id: publication.requestId,
+            tenantId: publication.tenantId,
+          },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
+        const binding = request
+          ? await em.findOne(MarketplaceRequestOrganizationBindingEntity, {
+              buyerPartnerId: publication.buyerPartnerId,
+              buyerUserId: publication.buyerUserId,
+              requestId: request.id,
+              tenantId: publication.tenantId,
+            })
+          : undefined;
+        const buyer = request
+          ? await lockAuthorizedMarketplaceParty(
+              em,
+              { tenantId: publication.tenantId, userId: publication.buyerUserId },
+              publication.buyerPartnerId,
+              'buyer',
+            )
+          : undefined;
+        if (!request || !binding || !buyer) {
+          return { status: 'not_found' };
+        }
+        if (request.status !== 'open' && request.status !== 'offering') {
+          return { status: 'invalid_state' };
+        }
+        if (
+          (publication.tenantId === owner.tenantId && publication.buyerUserId === owner.userId) ||
+          (publication.tenantId === owner.tenantId && publication.buyerPartnerId === seller.partner.id)
+        ) {
+          return { status: 'forbidden', field: 'organization' };
+        }
+        const entity = new RequestOfferEntity();
+        Object.assign(entity, {
+          bindingStatus: 'resolved',
+          buyerPartnerId: publication.buyerPartnerId,
+          buyerUserId: publication.buyerUserId,
+          deliveryDays: input.deliveryDays ?? null,
+          deliveryNote: input.deliveryNote ?? null,
+          deliveryPriceUzs: input.deliveryTerms === 'pickup' ? 0 : (input.deliveryPriceUzs ?? null),
+          deliveryTerms: input.deliveryTerms,
+          id: randomUUID(),
+          priceUzs: input.priceUzs,
+          requestId: request.id,
+          requestPublicId,
+          sellerPartnerId: seller.partner.id,
+          sellerTenantId: owner.tenantId,
+          sellerUserId: owner.userId,
+          status: 'pending',
+          tenantId: publication.tenantId,
+        });
+        if (request.status === 'open') {
+          request.status = 'offering';
+          request.updatedAt = new Date();
+        }
+        em.persist(entity);
+        return ok(toOffer(entity, seller.partner));
+      }),
+    );
   }
 
-  async listOffers(owner: AgriTechOwner, requestId: string): Promise<OperationResult<RequestOffer[]>> {
-    const request = await this.em.findOne(BuyerRequestEntity, {
-      tenantId: owner.tenantId,
-      id: requestId,
-      buyerUserId: owner.userId,
+  listOffers(owner: AgriTechOwner, requestPublicId: string): Promise<OperationResult<RequestOffer[]>> {
+    return this.em.transactional(async (em) => {
+      const publication = await em.findOne(MarketplaceRequestPublicationEntity, {
+        buyerUserId: owner.userId,
+        id: requestPublicId,
+        moderationStatus: 'approved',
+        status: 'published',
+        tenantId: owner.tenantId,
+      });
+      if (!publication) {
+        return { status: 'not_found' };
+      }
+      const request = await em.findOne(BuyerRequestEntity, {
+        bindingStatus: 'resolved',
+        buyerPartnerId: publication.buyerPartnerId,
+        buyerUserId: owner.userId,
+        id: publication.requestId,
+        tenantId: owner.tenantId,
+      });
+      if (
+        !request ||
+        !request.buyerPartnerId ||
+        !(await lockAuthorizedMarketplaceParty(em, owner, request.buyerPartnerId, 'buyer'))
+      ) {
+        return { status: 'not_found' };
+      }
+      const rows = await em.find(
+        RequestOfferEntity,
+        {
+          bindingStatus: 'resolved',
+          requestId: request.id,
+          requestPublicId,
+          tenantId: owner.tenantId,
+        },
+        { orderBy: { createdAt: 'ASC' } },
+      );
+      const offers = await Promise.all(
+        rows.map(async (row) => {
+          const seller = await findSellerOrganization(em, row.sellerTenantId, row.sellerPartnerId);
+          return seller ? toOffer(row, seller) : undefined;
+        }),
+      );
+      return ok(offers.filter((offer): offer is RequestOffer => offer !== undefined));
     });
-    if (!request) {
-      return { status: 'not_found' };
-    }
-    const rows = await this.em.find(
-      RequestOfferEntity,
-      { tenantId: owner.tenantId, requestId },
-      { orderBy: { createdAt: 'ASC' } },
-    );
-    return ok(rows.map(toOffer));
   }
 
   async chooseOffer(
     owner: AgriTechOwner,
-    requestId: string,
+    requestPublicId: string,
     offerId: string,
+    idempotencyKey: string,
   ): Promise<OperationResult<OfferSelectionResult>> {
-    return this.em.transactional(async (em) => {
-      if (!(await hasApprovedOrganization(em, owner, 'buyer', true))) {
-        return { status: 'forbidden', field: 'organization' };
-      }
-      const request = await em.findOne(
-        BuyerRequestEntity,
-        {
-          tenantId: owner.tenantId,
-          id: requestId,
+    return this.em.transactional((em) =>
+      executeCommerceOperation(em, owner, 'offer_choose', requestPublicId, idempotencyKey, { offerId }, async () => {
+        const publication = await em.findOne(
+          MarketplaceRequestPublicationEntity,
+          {
+            buyerUserId: owner.userId,
+            id: requestPublicId,
+            moderationStatus: 'approved',
+            status: 'published',
+            tenantId: owner.tenantId,
+          },
+          { lockMode: LockMode.PESSIMISTIC_READ },
+        );
+        if (!publication) {
+          return { status: 'not_found' };
+        }
+        const buyer = await lockAuthorizedMarketplaceParty(em, owner, publication.buyerPartnerId, 'buyer');
+        if (!buyer) {
+          return { status: 'forbidden', field: 'organization' };
+        }
+        const request = await em.findOne(
+          BuyerRequestEntity,
+          {
+            bindingStatus: 'resolved',
+            buyerPartnerId: publication.buyerPartnerId,
+            buyerUserId: owner.userId,
+            id: publication.requestId,
+            tenantId: owner.tenantId,
+          },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
+        if (!request) {
+          return { status: 'not_found' };
+        }
+        if (request.status !== 'offering' && request.status !== 'open') {
+          return { status: 'conflict', field: 'status' };
+        }
+        const offer = await em.findOne(
+          RequestOfferEntity,
+          {
+            bindingStatus: 'resolved',
+            id: offerId,
+            requestId: request.id,
+            requestPublicId,
+            tenantId: owner.tenantId,
+          },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
+        if (!offer || !offer.sellerTenantId || !offer.sellerPartnerId) {
+          return { status: 'not_found', field: 'offerId' };
+        }
+        if (offer.status !== 'pending') {
+          return { status: 'conflict', field: 'status' };
+        }
+        const seller = await lockAuthorizedMarketplaceParty(
+          em,
+          { tenantId: offer.sellerTenantId, userId: offer.sellerUserId },
+          offer.sellerPartnerId,
+          'seller',
+        );
+        if (!seller) {
+          return { status: 'forbidden', field: 'organization' };
+        }
+        if (seller.partner.tenantId === buyer.partner.tenantId && seller.partner.id === buyer.partner.id) {
+          return { status: 'forbidden', field: 'organization' };
+        }
+        const amountUzs = Number(offer.priceUzs);
+        if (!Number.isSafeInteger(amountUzs) || amountUzs <= 0 || amountUzs > maximumMarketplaceUzs) {
+          return { status: 'invalid_state', field: 'priceUzs' };
+        }
+
+        const pendingOffers = await em.find(
+          RequestOfferEntity,
+          { bindingStatus: 'resolved', requestId: request.id, status: 'pending', tenantId: owner.tenantId },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
+        for (const pendingOffer of pendingOffers) {
+          pendingOffer.status = pendingOffer.id === offer.id ? 'accepted' : 'declined';
+        }
+        request.status = 'selected';
+        request.updatedAt = new Date();
+
+        const contract = createDraftContract({
+          amountUzs,
+          buyerPartnerId: buyer.partner.id,
+          buyerPartySnapshot: marketplacePartySnapshot(buyer, owner.userId),
+          buyerTenantId: owner.tenantId,
           buyerUserId: owner.userId,
-        },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
-      if (!request) {
-        return { status: 'not_found' };
-      }
-      if (request.status !== 'offering' && request.status !== 'open') {
-        return { status: 'conflict', field: 'status' };
-      }
-      const offer = await em.findOne(
-        RequestOfferEntity,
-        {
-          tenantId: owner.tenantId,
-          id: offerId,
-          requestId,
-        },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
-      if (!offer) {
-        return { status: 'not_found', field: 'offerId' };
-      }
-      if (offer.status !== 'pending') {
-        return { status: 'conflict', field: 'status' };
-      }
-      if (offer.sellerUserId === owner.userId) {
-        return { status: 'forbidden', field: 'sellerUserId' };
-      }
-      const sellerVerification = await em.findOne(VerificationEntity, {
-        tenantId: owner.tenantId,
-        userId: offer.sellerUserId,
-        status: 'verified',
-        role: { $in: ['farmer', 'seller'] },
-      });
-      if (!sellerVerification) {
-        return { status: 'forbidden', field: 'sellerUserId' };
-      }
-      if (
-        !(await hasApprovedOrganization(em, { tenantId: owner.tenantId, userId: offer.sellerUserId }, 'supplier', true))
-      ) {
-        return { status: 'forbidden', field: 'sellerUserId' };
-      }
-
-      const pendingOffers = await em.find(
-        RequestOfferEntity,
-        {
-          tenantId: owner.tenantId,
-          requestId,
-          status: 'pending',
-        },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
-      for (const pendingOffer of pendingOffers) {
-        pendingOffer.status = pendingOffer.id === offer.id ? 'accepted' : 'declined';
-      }
-      offer.status = 'accepted';
-      request.status = 'selected';
-      request.updatedAt = new Date();
-
-      const contract = createDraftContract({
-        tenantId: owner.tenantId,
-        buyerUserId: owner.userId,
-        sellerUserId: offer.sellerUserId,
-        sourceType: 'offer_selection',
-        sourceId: offer.id,
-        subject: [request.title, request.volume].filter(Boolean).join(' — ').slice(0, 300),
-        amountUzs: Number(offer.priceUzs),
-        deliveryTerms: offer.deliveryTerms,
-        deliveryPriceUzs: offer.deliveryPriceUzs ?? undefined,
-        deliveryNote: offer.deliveryNote ?? undefined,
-        deliveryDays: offer.deliveryDays ?? undefined,
-      });
-      em.persist(contract);
-      await em.flush();
-      return ok({
-        requestId,
-        offerId,
-        sellerUserId: offer.sellerUserId,
-        contractId: contract.id,
-      });
-    });
+          deliveryDays: offer.deliveryDays ?? undefined,
+          deliveryNote: offer.deliveryNote ?? undefined,
+          deliveryPriceUzs: offer.deliveryPriceUzs ?? undefined,
+          deliveryTerms: offer.deliveryTerms,
+          lines: [
+            {
+              lineTotalUzs: amountUzs,
+              name: request.title,
+              quantity: 1,
+              sourceId: request.id,
+              sourceKind: 'request',
+              sourcePublicationId: requestPublicId,
+              sourceRevision: publication.contentRevision,
+              unit: request.volume ?? 'request',
+              unitPriceUzs: amountUzs,
+            },
+          ],
+          sellerPartnerId: seller.partner.id,
+          sellerPartySnapshot: marketplacePartySnapshot(seller, offer.sellerUserId),
+          sellerTenantId: offer.sellerTenantId,
+          sellerUserId: offer.sellerUserId,
+          sourceId: offer.id,
+          sourceType: 'offer_selection',
+          subject: [request.title, request.volume].filter(Boolean).join(' — ').slice(0, 300),
+        });
+        em.persist(contract);
+        return ok({
+          contractId: contract.id,
+          offerId,
+          requestPublicId,
+          sellerUserId: offer.sellerUserId,
+        });
+      }),
+    );
   }
 
   // ---- Contracts ----
   async updateContractDeliveryQuote(
     owner: AgriTechOwner,
     contractId: string,
-    input: { deliveryPriceUzs: number; deliveryNote?: string; deliveryDays?: number },
+    input: ContractDeliveryQuoteInput,
+    idempotencyKey: string,
   ): Promise<OperationResult<Contract>> {
-    return this.em.transactional(async (em) => {
-      const entity = await em.findOne(
-        ContractEntity,
-        { id: contractId, tenantId: owner.tenantId },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
-      if (!entity) {
-        return { status: 'not_found' };
-      }
-      if (entity.sellerUserId !== owner.userId) {
-        return { status: 'forbidden', field: 'sellerUserId' };
-      }
-      if (!(await hasApprovedOrganization(em, owner, 'supplier', true))) {
-        return { status: 'forbidden', field: 'organization' };
-      }
-      if (
-        entity.deliveryTerms !== 'seller_delivery' ||
-        entity.sourceType !== 'cart_checkout' ||
-        entity.deliveryPriceUzs !== null ||
-        entity.status !== 'draft' ||
-        entity.buyerSignedAt !== null ||
-        entity.sellerSignedAt !== null ||
-        !Number.isSafeInteger(input.deliveryPriceUzs) ||
-        input.deliveryPriceUzs <= 0 ||
-        input.deliveryPriceUzs > maximumMarketplaceUzs ||
-        (input.deliveryDays !== undefined &&
-          (!Number.isInteger(input.deliveryDays) ||
-            input.deliveryDays <= 0 ||
-            input.deliveryDays > maximumDeliveryDays))
-      ) {
-        return { status: 'invalid_state', field: 'deliveryPriceUzs' };
-      }
-      entity.deliveryPriceUzs = input.deliveryPriceUzs;
-      entity.deliveryNote = input.deliveryNote ?? null;
-      entity.deliveryDays = input.deliveryDays ?? null;
-      entity.updatedAt = new Date();
-      await em.flush();
-      return ok(toContract(entity));
-    });
-  }
-
-  async signContract(owner: AgriTechOwner, contractId: string): Promise<OperationResult<Contract>> {
-    return this.em.transactional(async (em) => {
-      const entity = await em.findOne(
-        ContractEntity,
-        {
-          tenantId: owner.tenantId,
-          id: contractId,
-        },
-        { lockMode: LockMode.PESSIMISTIC_WRITE },
-      );
-      if (!entity) {
-        return { status: 'not_found' };
-      }
-
-      const signing = contractSigningDecision(entity, owner.userId);
-      if ('result' in signing) {
-        return signing.result;
-      }
-      const { party } = signing;
-
-      if (!(await hasApprovedOrganization(em, owner, party === 'buyer' ? 'buyer' : 'supplier', true))) {
-        return { status: 'forbidden', field: 'organization' };
-      }
-
-      const now = new Date();
-      const willActivate = Boolean(party === 'buyer' ? entity.sellerSignedAt : entity.buyerSignedAt);
-      if (willActivate) {
-        const inventory = await commitCartContractInventory(em, entity);
-        if (inventory.status !== 'ok') {
-          return inventory;
+    if (!Number.isInteger(input.expectedRevision) || input.expectedRevision < 0) {
+      return { status: 'invalid_state', field: 'expectedRevision' };
+    }
+    return this.em.transactional((em) =>
+      executeCommerceOperation(em, owner, 'contract_delivery_quote', contractId, idempotencyKey, input, async () => {
+        const entity = await em.findOne(
+          ContractEntity,
+          {
+            bindingStatus: 'resolved',
+            id: contractId,
+            sellerTenantId: owner.tenantId,
+            sellerUserId: owner.userId,
+          },
+          { lockMode: LockMode.PESSIMISTIC_WRITE },
+        );
+        if (!entity) {
+          return { status: 'not_found' };
         }
-      }
-      recordPartySignature(entity, party, now);
-      const fullySigned = Boolean(entity.buyerSignedAt && entity.sellerSignedAt);
-      entity.status = fullySigned ? 'active' : 'signed';
-      if (fullySigned && !entity.signedAt) {
-        entity.signedAt = now;
-      }
-      entity.updatedAt = now;
-      await em.flush();
-      return ok(toContract(entity));
-    });
+        if (entity.version !== input.expectedRevision) {
+          return { status: 'conflict', field: 'expectedRevision' };
+        }
+        if (
+          !entity.sellerPartnerId ||
+          !(await lockAuthorizedMarketplaceParty(em, owner, entity.sellerPartnerId, 'seller'))
+        ) {
+          return { status: 'forbidden', field: 'organization' };
+        }
+        if (
+          !entity.buyerPartnerId ||
+          !(await lockAuthorizedMarketplaceParty(
+            em,
+            { tenantId: entity.tenantId, userId: entity.buyerUserId },
+            entity.buyerPartnerId,
+            'buyer',
+          ))
+        ) {
+          return { status: 'forbidden', field: 'organization' };
+        }
+        if (
+          entity.deliveryTerms !== 'seller_delivery' ||
+          entity.sourceType !== 'cart_checkout' ||
+          entity.deliveryPriceUzs !== null ||
+          entity.status !== 'draft' ||
+          entity.buyerSignedAt !== null ||
+          entity.sellerSignedAt !== null ||
+          !Number.isSafeInteger(input.deliveryPriceUzs) ||
+          input.deliveryPriceUzs <= 0 ||
+          input.deliveryPriceUzs > maximumMarketplaceUzs ||
+          (input.deliveryDays !== undefined &&
+            (!Number.isInteger(input.deliveryDays) ||
+              input.deliveryDays <= 0 ||
+              input.deliveryDays > maximumDeliveryDays))
+        ) {
+          return { status: 'invalid_state', field: 'deliveryPriceUzs' };
+        }
+        entity.deliveryPriceUzs = input.deliveryPriceUzs;
+        entity.deliveryNote = input.deliveryNote ?? null;
+        entity.deliveryDays = input.deliveryDays ?? null;
+        entity.updatedAt = new Date();
+        await em.flush();
+        return ok(toContract(entity));
+      }),
+    );
   }
 
   listContracts(owner: AgriTechOwner): Promise<Contract[]> {
@@ -1134,8 +2347,11 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
       .find(
         ContractEntity,
         {
-          tenantId: owner.tenantId,
-          $or: [{ buyerUserId: owner.userId }, { sellerUserId: owner.userId }],
+          bindingStatus: 'resolved',
+          $or: [
+            { buyerUserId: owner.userId, tenantId: owner.tenantId },
+            { sellerTenantId: owner.tenantId, sellerUserId: owner.userId },
+          ],
         },
         { orderBy: { updatedAt: 'DESC' } },
       )
@@ -1144,45 +2360,12 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
 
   listTenantContracts(tenantId: string): Promise<Contract[]> {
     return this.em
-      .find(ContractEntity, { tenantId }, { orderBy: { updatedAt: 'DESC' } })
-      .then((rows) => rows.map(toContract));
-  }
-
-  // ---- AI consultant ----
-  async askAi(
-    owner: AgriTechOwner,
-    kind: AiConsultationKind,
-    question: string,
-  ): Promise<OperationResult<AiConsultation>> {
-    const search = kind === 'season_advice' ? undefined : catalogSearch(owner.tenantId, question);
-    const catalog = search
-      ? await this.em.find(ProductEntity, search, {
-          limit: 50,
-          orderBy: { priceUzs: 'ASC', id: 'ASC' },
-        })
-      : [];
-    const answer = buildAiAnswer(kind, question, catalog);
-    const entity = new AiConsultationEntity();
-    entity.id = randomUUID();
-    entity.tenantId = owner.tenantId;
-    entity.userId = owner.userId;
-    entity.kind = kind;
-    entity.question = question;
-    entity.answer = answer.answer;
-    entity.productIds = answer.productIds;
-    this.em.persist(entity);
-    await this.em.flush();
-    return ok(toAi(entity));
-  }
-
-  listAiConsultations(owner: AgriTechOwner): Promise<AiConsultation[]> {
-    return this.em
       .find(
-        AiConsultationEntity,
-        { tenantId: owner.tenantId, userId: owner.userId },
-        { orderBy: { createdAt: 'DESC' } },
+        ContractEntity,
+        { bindingStatus: 'resolved', $or: [{ tenantId }, { sellerTenantId: tenantId }] },
+        { orderBy: { updatedAt: 'DESC' } },
       )
-      .then((rows) => rows.map(toAi));
+      .then((rows) => rows.map(toContract));
   }
 
   async roleOf(owner: AgriTechOwner): Promise<VerificationRole | undefined> {
@@ -1192,73 +2375,4 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
     });
     return entity?.status === 'verified' ? entity.role : undefined;
   }
-}
-
-function buildAiAnswer(
-  kind: AiConsultationKind,
-  question: string,
-  catalog: ProductEntity[],
-): { answer: AiConsultationAnswer; productIds: string[] } {
-  const matches = kind === 'season_advice' ? [] : catalog.slice(0, 3);
-  return {
-    answer: matches.length > 0 ? 'catalog_match' : 'no_catalog_match',
-    productIds: matches.map((product) => product.id),
-  };
-}
-
-const ignoredCatalogSearchTerms = new Set([
-  'arzon',
-  'arzonroq',
-  'cheaper',
-  'cheapest',
-  'find',
-  'kerak',
-  'looking',
-  'mahsulot',
-  'menga',
-  'narx',
-  'need',
-  'please',
-  'price',
-  'product',
-  'recommend',
-  'recommendation',
-  'tavsiya',
-  'товар',
-  'дешевле',
-  'дешёвый',
-  'дешевый',
-  'найди',
-  'нужен',
-  'пожалуйста',
-  'порекомендуй',
-  'цена',
-]);
-
-function catalogSearch(tenantId: string, question: string): FilterQuery<ProductEntity> | undefined {
-  const tokens = [
-    ...new Set(
-      question
-        .toLocaleLowerCase()
-        .split(/[^\p{L}\p{N}]+/u)
-        .filter((token) => token.length >= 3 && !ignoredCatalogSearchTerms.has(token)),
-    ),
-  ].slice(0, 6);
-  if (tokens.length === 0) {
-    return undefined;
-  }
-
-  return {
-    tenantId,
-    status: 'active',
-    $and: tokens.map((token): FilterQuery<ProductEntity> => ({
-      $or: [
-        { name: { $ilike: `%${token}%` } },
-        { nameRu: { $ilike: `%${token}%` } },
-        { nameUz: { $ilike: `%${token}%` } },
-        { description: { $ilike: `%${token}%` } },
-        { category: { $ilike: `%${token}%` } },
-      ],
-    })),
-  };
 }

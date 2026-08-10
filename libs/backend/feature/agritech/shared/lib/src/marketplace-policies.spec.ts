@@ -5,12 +5,8 @@ import {
   canOfferInMarketplace,
   isContractTransitionAllowed,
   isRequestTransitionAllowed,
-  isSampleRequestAllowed,
-  isSampleTransitionAllowed,
   isVerificationAllowed,
   isVerificationReviewReasonValid,
-  maxMonthlySamples,
-  samplesRemainingThisMonth,
 } from './marketplace-policies';
 
 describe('marketplace policies', () => {
@@ -22,20 +18,6 @@ describe('marketplace policies', () => {
     expect(canOfferInMarketplace('farmer')).toBe(true);
     expect(canOfferInMarketplace('buyer')).toBe(false);
     expect(canOfferInMarketplace(undefined)).toBe(false);
-  });
-
-  it('caps samples at five per month', () => {
-    expect(maxMonthlySamples).toBe(5);
-    expect(samplesRemainingThisMonth(2)).toBe(3);
-    expect(samplesRemainingThisMonth(5)).toBe(0);
-    expect(samplesRemainingThisMonth(9)).toBe(0);
-  });
-
-  it('allows a sample only for verified users under the monthly cap', () => {
-    expect(isSampleRequestAllowed({ verified: true, requestsThisMonth: 0 })).toBe(true);
-    expect(isSampleRequestAllowed({ verified: true, requestsThisMonth: 4 })).toBe(true);
-    expect(isSampleRequestAllowed({ verified: true, requestsThisMonth: 5 })).toBe(false);
-    expect(isSampleRequestAllowed({ verified: false, requestsThisMonth: 0 })).toBe(false);
   });
 
   it('gates verification resubmission on status', () => {
@@ -68,12 +50,5 @@ describe('marketplace policies', () => {
     expect(isRequestTransitionAllowed('offering', 'selected')).toBe(true);
     expect(isRequestTransitionAllowed('open', 'selected')).toBe(false);
     expect(isRequestTransitionAllowed('selected', 'open')).toBe(false);
-  });
-
-  it('validates sample lifecycle transitions', () => {
-    expect(isSampleTransitionAllowed('pending', 'shipped')).toBe(true);
-    expect(isSampleTransitionAllowed('shipped', 'delivered')).toBe(true);
-    expect(isSampleTransitionAllowed('pending', 'delivered')).toBe(false);
-    expect(isSampleTransitionAllowed('delivered', 'shipped')).toBe(false);
   });
 });

@@ -7,6 +7,7 @@ async function bootstrap(): Promise<void> {
     import('./user-app-api.module'),
   ]);
   await bootstrapModule.bootstrapNestApi(appModule.UserAppApiModule, {
+    enableMultipart: true,
     appName: 'user-app-api',
     corsOrigins: bootstrapModule.resolveDefaultDevelopmentCorsOrigins(),
     openApi: { authSchemes: ['session-cookie'] },

@@ -55,6 +55,13 @@ export class AgriTechOperationsService {
     return unwrap(await this.repository.createProduceListing(owner, input), 'produce-listing');
   }
 
+  async updateProduceSampleAvailability(owner: AgriTechOwner, listingId: string, sampleAvailable: boolean) {
+    return unwrap(
+      await this.repository.updateProduceSampleAvailability(owner, listingId, sampleAvailable),
+      'produce-listing',
+    );
+  }
+
   listProduce(owner: AgriTechOwner, filter: { crop?: string; region?: string; grade?: ProduceGrade }) {
     return this.repository.listProduce(owner.tenantId, filter);
   }

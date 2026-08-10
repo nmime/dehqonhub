@@ -1,4 +1,5 @@
 import fastifyCookie from '@fastify/cookie';
+import fastifyMultipart from '@fastify/multipart';
 import fastifySession from '@fastify/session';
 import type { DynamicModule, Type } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
@@ -42,11 +43,52 @@ export interface BootstrapNestApiOptions {
   /** Explicit port this service listens on. */
   port: number;
   enableCors?: boolean;
+  enableMultipart?: boolean;
   corsOrigins?: string[];
   openApi?: BootstrapOpenApiOptions;
   rateLimit?: BootstrapRateLimitOptions;
   cookieSecret?: string;
   trustProxy?: boolean | number | string;
+}
+
+export const maximumConfiguredRouteBodyLimit = 14_100_000;
+export const maximumMultipartFileBytes = 10 * 1024 * 1024;
+
+const marketplaceMultipartLimits = {
+  fieldNameSize: 64,
+  fieldSize: 1024,
+  fields: 0,
+  files: 1,
+  headerPairs: 64,
+  parts: 1,
+  fileSize: maximumMultipartFileBytes,
+} as const;
+
+interface ConfigurableFastifyRouteOptions {
+  bodyLimit?: number;
+  config?: { bodyLimit?: unknown };
+}
+
+/** Promotes a bounded Nest RouteConfig bodyLimit into Fastify's top-level route option. */
+export function registerFastifyRouteBodyLimits(app: NestFastifyApplication): void {
+  const fastify = app.getHttpAdapter().getInstance() as {
+    addHook(name: 'onRoute', hook: (options: ConfigurableFastifyRouteOptions) => void): void;
+  };
+  fastify.addHook('onRoute', (options) => {
+    const configuredLimit = options.config?.bodyLimit;
+    if (configuredLimit === undefined) {
+      return;
+    }
+    if (
+      typeof configuredLimit !== 'number' ||
+      !Number.isInteger(configuredLimit) ||
+      configuredLimit < 1 ||
+      configuredLimit > maximumConfiguredRouteBodyLimit
+    ) {
+      throw new Error(`Route bodyLimit must be an integer between 1 and ${maximumConfiguredRouteBodyLimit}.`);
+    }
+    options.bodyLimit = configuredLimit;
+  });
 }
 
 export interface BootstrapOpenApiOptions {
@@ -397,6 +439,15 @@ async function registerFastifySession(app: NestFastifyApplication, config: Backe
   const registerFastifyPlugin = fastify.register.bind(fastify) as FastifyPluginRegister;
   await registerFastifyPlugin(fastifyCookie);
   await registerFastifyPlugin(fastifySession, sessionOptions);
+}
+
+async function registerFastifyMultipart(app: NestFastifyApplication): Promise<void> {
+  const fastify = app.getHttpAdapter().getInstance();
+  const registerFastifyPlugin = fastify.register.bind(fastify) as FastifyPluginRegister;
+  await registerFastifyPlugin(fastifyMultipart, {
+    limits: marketplaceMultipartLimits,
+    throwFileSizeLimit: true,
+  });
 }
 
 function resolveDurableDatabaseRuntime(app: NestFastifyApplication): DurableDatabaseRuntime | undefined {
@@ -793,6 +844,10 @@ async function createAndStartNestApi(
       rawBody: true,
     },
   );
+  registerFastifyRouteBodyLimits(app);
+  if (options.enableMultipart) {
+    await registerFastifyMultipart(app);
+  }
 
   // Install the redacting structured logger before buffered logs flush, so every
   // application log passes through StructuredConsoleLogger's redaction instead of

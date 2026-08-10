@@ -97,6 +97,35 @@ export const ProblemTypeDefinitions = [
     ],
   },
   {
+    code: 'marketplace-provider-unavailable',
+    title: 'Marketplace Provider Unavailable',
+    status: 503,
+    detail: 'The requested marketplace provider capability is temporarily unavailable or disabled.',
+    resolution: 'Check the disclosed capability state and retry only when retryable is true.',
+    extensions: [
+      {
+        name: 'code',
+        description: 'Stable short alias for the problem type URI.',
+      },
+      {
+        name: 'capability',
+        description: 'Marketplace provider capability that could not execute.',
+      },
+      {
+        name: 'providerMode',
+        description: 'Configured provider mode at the failure boundary.',
+      },
+      {
+        name: 'retryable',
+        description: 'Whether the caller may retry the same idempotent command.',
+      },
+      {
+        name: 'retryAfterSeconds',
+        description: 'Suggested minimum delay before a retry, when available.',
+      },
+    ],
+  },
+  {
     code: 'step-up-required',
     title: 'Step-up Authentication Required',
     status: 403,

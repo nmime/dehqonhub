@@ -1,9 +1,12 @@
-// @requirements REQ-AGRITECH-PROFILE-001 REQ-AGRITECH-CATALOG-002 REQ-AGRITECH-ORDER-003 REQ-AGRITECH-PAYMENT-004 REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-MARKETPLACE-016
+// @requirements REQ-AGRITECH-PROFILE-001 REQ-AGRITECH-CATALOG-002 REQ-AGRITECH-ORDER-003 REQ-AGRITECH-PAYMENT-004 REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-I18N-012
 import { describe, expect, it } from 'vitest';
 import { Migration20260802120000CreateAgriTechMarketplace } from './Migration20260802120000CreateAgriTechMarketplace';
 import { Migration20260802160000CompleteAgriTechPlatform } from './Migration20260802160000CompleteAgriTechPlatform';
 import { Migration20260809000000CreateMarketplace } from './Migration20260809000000CreateMarketplace';
 import { Migration20260809120000SecureMarketplaceContracts } from './Migration20260809120000SecureMarketplaceContracts';
+import { Migration20260810123000AddUzbekCyrillicProductNames } from './Migration20260810123000AddUzbekCyrillicProductNames';
+import { Migration20260810124500AddMarketplaceVerificationProviders } from './Migration20260810124500AddMarketplaceVerificationProviders';
+import { agritechMigrations } from './index';
 
 function collect(run: (migration: Migration20260802120000CreateAgriTechMarketplace) => void): string {
   const migration = new Migration20260802120000CreateAgriTechMarketplace(undefined as never, undefined as never);
@@ -31,6 +34,29 @@ function collectMarketplace(run: (migration: Migration20260809000000CreateMarket
 
 function collectSecureContracts(run: (migration: Migration20260809120000SecureMarketplaceContracts) => void): string {
   const migration = new Migration20260809120000SecureMarketplaceContracts(undefined as never, undefined as never);
+  const statements: string[] = [];
+  migration.addSql = (sql: string) => statements.push(sql);
+  run(migration);
+  return statements.join('\n');
+}
+
+function collectUzbekCyrillicNames(
+  run: (migration: Migration20260810123000AddUzbekCyrillicProductNames) => void,
+): string {
+  const migration = new Migration20260810123000AddUzbekCyrillicProductNames(undefined as never, undefined as never);
+  const statements: string[] = [];
+  migration.addSql = (sql: string) => statements.push(sql);
+  run(migration);
+  return statements.join('\n');
+}
+
+function collectVerificationProviders(
+  run: (migration: Migration20260810124500AddMarketplaceVerificationProviders) => void,
+): string {
+  const migration = new Migration20260810124500AddMarketplaceVerificationProviders(
+    undefined as never,
+    undefined as never,
+  );
   const statements: string[] = [];
   migration.addSql = (sql: string) => statements.push(sql);
   run(migration);
@@ -196,5 +222,57 @@ describe('secure marketplace contract migration', () => {
     expect(sql).toContain(
       'alter index if exists "ix__marketplace_request_offers__tenant_id_request_id" rename to "ix__marketplace_offers__tenant_request"',
     );
+  });
+});
+
+describe('Uzbek Cyrillic product-name migration', () => {
+  it('adds and removes the independent Cyrillic authored-name column after marketplace hardening', () => {
+    const upSql = collectUzbekCyrillicNames((migration) => {
+      migration.up();
+    });
+    const downSql = collectUzbekCyrillicNames((migration) => {
+      migration.down();
+    });
+
+    expect(upSql).toContain('add column if not exists "name_uz_cyrl" varchar(200) not null default');
+    expect(upSql).toContain('alter column "name_uz_cyrl" drop not null');
+    expect(upSql).toContain('set "name_uz_cyrl" = null');
+    expect(downSql).toContain('drop column if exists "name_uz_cyrl"');
+    expect(agritechMigrations).toContain(Migration20260810123000AddUzbekCyrillicProductNames);
+  });
+});
+
+describe('marketplace verification-provider migration', () => {
+  it('adds provider provenance, fenced idempotency receipts, and immutable safe evidence metadata', () => {
+    const sql = collectVerificationProviders((migration) => {
+      migration.up();
+    });
+
+    expect(sql).toContain('"provider_mode" varchar(20) not null default \'none\'');
+    expect(sql).toContain('"uq__marketplace_verifications__tenant_id_provider_mode_8abb5356"');
+    expect(sql).toContain('create table "marketplace_provider_operations"');
+    expect(sql).toContain('"request_descriptor" jsonb not null');
+    expect(sql).toContain('"lease_expires_at" timestamptz null');
+    expect(sql).toContain('"attempt" int not null default 1');
+    expect(sql).toContain('"fk__marketplace_provider_operations__verification_actor"');
+    expect(sql).toContain('"result_snapshot" jsonb null');
+    expect(sql).toContain('create table "marketplace_verification_evidence"');
+    expect(sql).toContain('"document_revision" int not null');
+    expect(sql).toContain('"uq__marketplace_verification_evidence__case_kind_revision"');
+    expect(sql).toContain('"sha256" varchar(64) not null');
+    expect(sql).not.toContain('"content" bytea');
+    expect(sql).toContain('"trg__marketplace_verification_evidence__immutable"');
+    expect(agritechMigrations).toContain(Migration20260810124500AddMarketplaceVerificationProviders);
+  });
+
+  it('drops immutable evidence before verification provenance columns', () => {
+    const sql = collectVerificationProviders((migration) => {
+      migration.down();
+    });
+
+    expect(sql.indexOf('drop table if exists "marketplace_verification_evidence"')).toBeLessThan(
+      sql.indexOf('drop column if exists "provider_mode"'),
+    );
+    expect(sql).toContain('drop function if exists "prevent_marketplace_verification_evidence_mutation"');
   });
 });

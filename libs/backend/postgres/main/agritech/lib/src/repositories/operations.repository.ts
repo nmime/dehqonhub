@@ -45,8 +45,10 @@ import {
   ProduceListingEntity,
 } from '../entities/operations.entity';
 import { ProductEntity } from '../entities/product.entity';
+import { MarketplaceProduceOrganizationBindingEntity } from '../entities/marketplace-source-binding.entity';
 
 const providers = ['click', 'payme', 'bnpl', 'weather', 'agronomy', 'agroportal', 'digital-agriculture'] as const;
+const maximumMarketplaceUzs = 9_999_999_999_999;
 
 @Injectable()
 export class PostgresAgriTechOperationsRepository implements AgriTechOperationsRepository {
@@ -126,6 +128,7 @@ export class PostgresAgriTechOperationsRepository implements AgriTechOperationsR
       name: input.name,
       nameRu: input.nameRu ?? null,
       nameUz: input.nameUz ?? null,
+      nameUzCyrl: input.nameUzCyrl ?? null,
       category: input.category,
       description: input.description,
       supplierId: partner.id,
@@ -133,6 +136,7 @@ export class PostgresAgriTechOperationsRepository implements AgriTechOperationsR
       priceUzs: input.priceUzs,
       unit: input.unit,
       stockQuantity: input.stockQuantity,
+      sampleAvailable: input.sampleAvailable ?? false,
       region: input.region,
       status: input.stockQuantity === 0 ? 'out_of_stock' : 'active',
     });
@@ -189,8 +193,23 @@ export class PostgresAgriTechOperationsRepository implements AgriTechOperationsR
       if (!isPartnerApproved(partner.status)) {
         return { status: 'partner_unapproved' };
       }
+      if (input.name !== undefined) {
+        product.name = input.name;
+      }
+      if (input.nameRu !== undefined) {
+        product.nameRu = input.nameRu;
+      }
+      if (input.nameUz !== undefined) {
+        product.nameUz = input.nameUz;
+      }
+      if (input.nameUzCyrl !== undefined) {
+        product.nameUzCyrl = input.nameUzCyrl;
+      }
       product.priceUzs = input.priceUzs;
       product.stockQuantity = input.stockQuantity;
+      if (input.sampleAvailable !== undefined) {
+        product.sampleAvailable = input.sampleAvailable;
+      }
       product.status = input.stockQuantity === 0 ? 'out_of_stock' : input.status;
       await em.flush();
       return { status: 'ok', value: toSupplierProduct(product) };
@@ -204,22 +223,65 @@ export class PostgresAgriTechOperationsRepository implements AgriTechOperationsR
     if (input.availableUntil <= input.availableFrom) {
       return { status: 'invalid_state' };
     }
-    const farmer = await this.em.findOne(FarmerEntity, owner);
-    if (!farmer) {
-      return { status: 'not_found' };
+    if (
+      !Number.isSafeInteger(input.pricePerKgUzs) ||
+      input.pricePerKgUzs < 1 ||
+      input.pricePerKgUzs > maximumMarketplaceUzs
+    ) {
+      return { status: 'invalid_state', field: 'pricePerKgUzs' };
     }
-    if (farmer.status !== 'active') {
-      return { status: 'farmer_inactive' };
-    }
-    const entity = new ProduceListingEntity();
-    Object.assign(entity, input, {
-      tenantId: owner.tenantId,
-      farmerId: farmer.id,
-      availableQuantityKg: input.quantityKg,
+    return this.em.transactional(async (em) => {
+      const farmer = await em.findOne(
+        FarmerEntity,
+        { tenantId: owner.tenantId, userId: owner.userId },
+        { lockMode: LockMode.PESSIMISTIC_READ },
+      );
+      if (!farmer) {
+        return { status: 'not_found' };
+      }
+      if (farmer.status !== 'active') {
+        return { status: 'farmer_inactive' };
+      }
+      const partner = await em.findOne(
+        AgriTechPartnerEntity,
+        {
+          id: input.supplierPartnerId,
+          kind: 'supplier',
+          ownerUserId: owner.userId,
+          status: 'approved',
+          tenantId: owner.tenantId,
+        },
+        { lockMode: LockMode.PESSIMISTIC_READ },
+      );
+      if (!partner) {
+        return { status: 'partner_unapproved' };
+      }
+      const entity = new ProduceListingEntity();
+      Object.assign(entity, {
+        availableFrom: input.availableFrom,
+        availableQuantityKg: input.quantityKg,
+        availableUntil: input.availableUntil,
+        crop: input.crop,
+        farmerId: farmer.id,
+        grade: input.grade,
+        pricePerKgUzs: input.pricePerKgUzs,
+        sampleAvailable: input.sampleAvailable ?? false,
+        quantityKg: input.quantityKg,
+        region: input.region,
+        tenantId: owner.tenantId,
+      });
+      const binding = new MarketplaceProduceOrganizationBindingEntity();
+      Object.assign(binding, {
+        farmerId: farmer.id,
+        ownerUserId: owner.userId,
+        produceListingId: entity.id,
+        supplierPartnerId: partner.id,
+        tenantId: owner.tenantId,
+      });
+      em.persist([entity, binding]);
+      await em.flush();
+      return { status: 'ok', value: toProduce(entity) };
     });
-    this.em.persist(entity);
-    await this.em.flush();
-    return { status: 'ok', value: toProduce(entity) };
   }
 
   async listProduce(
@@ -363,6 +425,28 @@ export class PostgresAgriTechOperationsRepository implements AgriTechOperationsR
       return { status: 'invalid_state' };
     }
     listing.status = 'cancelled';
+    await this.em.flush();
+    return { status: 'ok', value: toProduce(listing) };
+  }
+
+  async updateProduceSampleAvailability(
+    owner: AgriTechOwner,
+    listingId: string,
+    sampleAvailable: boolean,
+  ): Promise<OperationResult<ProduceListing>> {
+    const farmer = await this.em.findOne(FarmerEntity, owner);
+    if (!farmer) {
+      return { status: 'not_found' };
+    }
+    const listing = await this.em.findOne(ProduceListingEntity, {
+      farmerId: farmer.id,
+      id: listingId,
+      tenantId: owner.tenantId,
+    });
+    if (!listing) {
+      return { status: 'not_found' };
+    }
+    listing.sampleAvailable = sampleAvailable;
     await this.em.flush();
     return { status: 'ok', value: toProduce(listing) };
   }
@@ -712,6 +796,7 @@ const toProduce = (entity: ProduceListingEntity): ProduceListing => ({
   grade: entity.grade,
   quantityKg: entity.quantityKg,
   availableQuantityKg: entity.availableQuantityKg,
+  sampleAvailable: entity.sampleAvailable,
   pricePerKgUzs: Number(entity.pricePerKgUzs),
   region: entity.region,
   availableFrom: entity.availableFrom,
@@ -764,11 +849,13 @@ const toSupplierProduct = (entity: ProductEntity): SupplierProduct => ({
   name: entity.name,
   ...(entity.nameRu ? { nameRu: entity.nameRu } : {}),
   ...(entity.nameUz ? { nameUz: entity.nameUz } : {}),
+  ...(entity.nameUzCyrl ? { nameUzCyrl: entity.nameUzCyrl } : {}),
   category: entity.category,
   description: entity.description,
   priceUzs: Number(entity.priceUzs),
   unit: entity.unit,
   stockQuantity: entity.stockQuantity,
+  sampleAvailable: entity.sampleAvailable,
   region: entity.region,
   status: entity.status,
 });

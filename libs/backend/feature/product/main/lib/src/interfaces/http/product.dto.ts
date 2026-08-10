@@ -1,4 +1,5 @@
-import { IsString, IsNumber, IsArray, IsOptional, IsIn, Min } from 'class-validator';
+// @requirements REQ-AGRITECH-I18N-012
+import { IsArray, IsBoolean, IsIn, IsNumber, IsOptional, IsString, Matches, MaxLength, Min } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import type { ProductCategory } from '@app/backend-feature-product-shared';
 
@@ -9,6 +10,7 @@ export class ProductViewDto {
   @ApiProperty() name!: string;
   @ApiProperty({ required: false }) nameRu?: string;
   @ApiProperty({ required: false }) nameUz?: string;
+  @ApiProperty({ required: false }) nameUzCyrl?: string;
   @ApiProperty({ enum: ['fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation', 'other'] })
   category!: ProductCategory;
   @ApiProperty() description!: string;
@@ -17,6 +19,7 @@ export class ProductViewDto {
   @ApiProperty({ type: 'integer', minimum: 1, maximum: maximumProductPriceUzs }) priceUzs!: number;
   @ApiProperty() unit!: string;
   @ApiProperty({ type: 'integer', minimum: 0, maximum: 2_147_483_647 }) stockQuantity!: number;
+  @ApiProperty() sampleAvailable!: boolean;
   @ApiProperty() region!: string;
   @ApiProperty({ enum: ['active', 'inactive', 'out_of_stock'] }) status!: string;
   @ApiProperty({ type: [String] }) images!: string[];
@@ -29,14 +32,32 @@ export class ProductListDto {
 }
 
 export class CreateProductDto {
-  @ApiProperty({ example: 'NitroAmmonka 46%' })
+  @ApiProperty({ example: 'NitroAmmonka 46%', maxLength: 200, minLength: 1 })
   @IsString()
+  @Matches(/\S/u)
+  @MaxLength(200)
   name!: string;
 
-  @ApiProperty({ required: false })
+  @ApiProperty({ maxLength: 200, minLength: 1, required: false })
   @IsOptional()
   @IsString()
+  @Matches(/\S/u)
+  @MaxLength(200)
   nameRu?: string;
+
+  @ApiProperty({ maxLength: 200, minLength: 1, required: false })
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/u)
+  @MaxLength(200)
+  nameUz?: string;
+
+  @ApiProperty({ maxLength: 200, minLength: 1, required: false })
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/u)
+  @MaxLength(200)
+  nameUzCyrl?: string;
 
   @ApiProperty({ enum: ['fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation', 'other'] })
   @IsIn(['fertilizer', 'seed', 'pesticide', 'equipment', 'irrigation', 'other'])
@@ -68,6 +89,11 @@ export class CreateProductDto {
   @Min(0)
   stockQuantity!: number;
 
+  @ApiProperty({ default: false, description: 'Whether the owner offers zero-price samples.', required: false })
+  @IsOptional()
+  @IsBoolean()
+  sampleAvailable?: boolean;
+
   @ApiProperty({ example: 'Toshkent viloyati' })
   @IsString()
   region!: string;
@@ -79,10 +105,33 @@ export class CreateProductDto {
 }
 
 export class UpdateProductDto {
-  @ApiProperty({ required: false })
+  @ApiProperty({ maxLength: 200, minLength: 1, required: false })
   @IsOptional()
   @IsString()
+  @Matches(/\S/u)
+  @MaxLength(200)
   name?: string;
+
+  @ApiProperty({ maxLength: 200, minLength: 1, required: false })
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/u)
+  @MaxLength(200)
+  nameRu?: string;
+
+  @ApiProperty({ maxLength: 200, minLength: 1, required: false })
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/u)
+  @MaxLength(200)
+  nameUz?: string;
+
+  @ApiProperty({ maxLength: 200, minLength: 1, required: false })
+  @IsOptional()
+  @IsString()
+  @Matches(/\S/u)
+  @MaxLength(200)
+  nameUzCyrl?: string;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -95,6 +144,11 @@ export class UpdateProductDto {
   @IsNumber()
   @Min(0)
   stockQuantity?: number;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsBoolean()
+  sampleAvailable?: boolean;
 
   @ApiProperty({ required: false })
   @IsOptional()

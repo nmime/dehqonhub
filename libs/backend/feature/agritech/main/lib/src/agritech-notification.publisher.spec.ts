@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-TELEGRAM-005
+// @requirements REQ-AGRITECH-TELEGRAM-005 REQ-AGRITECH-I18N-012
 import { describe, expect, it, vi } from 'vitest';
 import { NotificationChannel, NotificationDeliveryProvider, NotificationTargetType } from '@app/common-notifications';
 import type { NotificationService } from '@app/backend-feature-notification-shared';
@@ -33,13 +33,23 @@ describe('AgriTech notification publisher', () => {
           expect.objectContaining({
             channel: NotificationChannel.Bot,
             content: expect.objectContaining({
-              body: expect.objectContaining({ en: expect.any(String), ru: expect.any(String), uz: expect.any(String) }),
+              body: expect.objectContaining({
+                en: expect.any(String),
+                ru: expect.any(String),
+                uz: expect.any(String),
+                'uz-cyrl': expect.any(String),
+              }),
             }),
           }),
           expect.objectContaining({
             channel: NotificationChannel.InApp,
             content: expect.objectContaining({
-              body: expect.objectContaining({ en: expect.any(String), ru: expect.any(String), uz: expect.any(String) }),
+              body: expect.objectContaining({
+                en: expect.any(String),
+                ru: expect.any(String),
+                uz: expect.any(String),
+                'uz-cyrl': expect.any(String),
+              }),
             }),
           }),
         ],

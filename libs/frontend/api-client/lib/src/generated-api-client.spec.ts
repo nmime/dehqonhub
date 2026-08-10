@@ -79,7 +79,17 @@ import {
   toOpenApiFetchOptions,
   unwrapEnvelopeData,
 } from './service-options';
-import { profileControllerMe } from './user';
+import {
+  marketplaceControllerAddFavorite,
+  marketplaceControllerAddReview,
+  marketplaceControllerAddToCart,
+  marketplaceControllerCreateContractArtifact,
+  marketplaceControllerRecordSettlementEvent,
+  marketplacePublicControllerGetListing,
+  marketplacePublicControllerListCatalog,
+  marketplacePublicControllerListRequests,
+  profileControllerMe,
+} from './user';
 
 const jsonResponse = (body: unknown, status = 200): Response =>
   new Response(JSON.stringify(body), {
@@ -195,6 +205,95 @@ describe('generated api clients', () => {
     expect(adminRequest.url).toBe('https://admin.example.test/admin/profile/me');
     expect(adminRequest.headers.get('authorization')).toBeNull();
     expect(adminRequest.headers.get('accept-language')).toBe('ru');
+  });
+
+  it('uses public marketplace publication routes and idempotent private mutation contracts', async () => {
+    const catalogFetch = mockFetch({ data: { items: [] } });
+    await marketplacePublicControllerListCatalog(
+      { q: 'corn seed', section: 'seeds' },
+      { baseUrl: '/user-api', fetchImpl: catalogFetch },
+    );
+    const catalogUrl = new URL(firstRequest(catalogFetch).url);
+    expect(catalogUrl.pathname).toBe('/user-api/marketplace/public/catalog');
+    expect(catalogUrl.searchParams.get('q')).toBe('corn seed');
+    expect(catalogUrl.searchParams.get('section')).toBe('seeds');
+
+    const detailFetch = mockFetch({ data: { id: 'publication-1' } });
+    await marketplacePublicControllerGetListing('publication-1', {
+      baseUrl: '/user-api',
+      fetchImpl: detailFetch,
+    });
+    expect(firstRequest(detailFetch).url).toBe(
+      `${globalThis.location.origin}/user-api/marketplace/public/catalog/publication-1`,
+    );
+
+    const requestFeedFetch = mockFetch({ data: { items: [] } });
+    await marketplacePublicControllerListRequests({}, { baseUrl: '/user-api', fetchImpl: requestFeedFetch });
+    expect(firstRequest(requestFeedFetch).url).toBe(
+      `${globalThis.location.origin}/user-api/marketplace/public/requests`,
+    );
+
+    const cartFetch = mockFetch({ data: { id: 'cart-1' } });
+    await marketplaceControllerAddToCart(
+      { actingPartnerId: 'buyer-partner-1', listingPublicationId: 'publication-1', quantity: 2 },
+      'cart-command-1',
+      { baseUrl: '/user-api', fetchImpl: cartFetch },
+    );
+    const cartRequest = firstRequest(cartFetch);
+    expect(cartRequest.url).toBe(`${globalThis.location.origin}/user-api/marketplace/cart/items`);
+    expect(cartRequest.headers.get('idempotency-key')).toBe('cart-command-1');
+    await expect(cartRequest.json()).resolves.toEqual({
+      actingPartnerId: 'buyer-partner-1',
+      listingPublicationId: 'publication-1',
+      quantity: 2,
+    });
+
+    const favoriteFetch = mockFetch({ data: { favorited: true, listingPublicationId: 'publication-1' } });
+    await marketplaceControllerAddFavorite('publication-1', 'favorite-command-1', {
+      baseUrl: '/user-api',
+      fetchImpl: favoriteFetch,
+    });
+    const favoriteRequest = firstRequest(favoriteFetch);
+    expect(favoriteRequest.url).toBe(`${globalThis.location.origin}/user-api/marketplace/favorites/publication-1`);
+    expect(favoriteRequest.headers.get('idempotency-key')).toBe('favorite-command-1');
+
+    const reviewFetch = mockFetch({ data: { id: 'review-1' } });
+    await marketplaceControllerAddReview(
+      { assetReferences: [], listingPublicationId: 'publication-1', rating: 5 },
+      'review-command-1',
+      { baseUrl: '/user-api', fetchImpl: reviewFetch },
+    );
+    const reviewRequest = firstRequest(reviewFetch);
+    expect(reviewRequest.url).toBe(`${globalThis.location.origin}/user-api/marketplace/reviews`);
+    expect(reviewRequest.headers.get('idempotency-key')).toBe('review-command-1');
+
+    const artifactFetch = mockFetch({ data: { id: 'artifact-1' } });
+    await marketplaceControllerCreateContractArtifact(
+      'contract-1',
+      { settlementKind: 'direct_payment' },
+      'artifact-command-1',
+      { baseUrl: '/user-api', fetchImpl: artifactFetch },
+    );
+    const artifactRequest = firstRequest(artifactFetch);
+    expect(artifactRequest.url).toBe(
+      `${globalThis.location.origin}/user-api/marketplace/contracts/contract-1/artifact`,
+    );
+    expect(artifactRequest.headers.get('idempotency-key')).toBe('artifact-command-1');
+    await expect(artifactRequest.json()).resolves.toEqual({ settlementKind: 'direct_payment' });
+
+    const settlementFetch = mockFetch({ data: { contractId: 'contract-1' } });
+    await marketplaceControllerRecordSettlementEvent(
+      'contract-1',
+      { command: 'confirm_buyer_payment' },
+      'settlement-command-1',
+      { baseUrl: '/user-api', fetchImpl: settlementFetch },
+    );
+    const settlementRequest = firstRequest(settlementFetch);
+    expect(settlementRequest.url).toBe(
+      `${globalThis.location.origin}/user-api/marketplace/contracts/contract-1/settlement/events`,
+    );
+    expect(settlementRequest.headers.get('idempotency-key')).toBe('settlement-command-1');
+    await expect(settlementRequest.json()).resolves.toEqual({ command: 'confirm_buyer_payment' });
   });
 
   it('normalizes OpenAPI options and unwraps non-envelope data', () => {

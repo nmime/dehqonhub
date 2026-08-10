@@ -1,9 +1,11 @@
+// @requirements REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-LIFECYCLE-020 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsIn,
   IsInt,
   IsOptional,
   IsString,
+  IsUUID,
   Matches,
   Max,
   MaxLength,
@@ -12,18 +14,26 @@ import {
   type ValidationArguments,
   type ValidationOptions,
 } from 'class-validator';
+import type {
+  AgriTechOwner,
+  BuyerRequest,
+  Cart,
+  Contract,
+  ContractSourceType,
+  OfferSelectionResult,
+  RequestOffer,
+  Verification,
+  VerificationDocument,
+} from '@app/backend-feature-agritech-shared';
 
 const verificationRoles = ['farmer', 'seller', 'buyer'] as const;
 const verificationLevels = ['basic', 'verified', 'trusted'] as const;
 const verificationStatuses = ['none', 'pending', 'verified', 'rejected'] as const;
 const cartStatuses = ['open', 'ordered', 'abandoned'] as const;
-const sampleStatuses = ['pending', 'shipped', 'delivered', 'cancelled'] as const;
 const requestStatuses = ['open', 'offering', 'selected', 'closed', 'expired'] as const;
 const offerStatuses = ['pending', 'accepted', 'declined'] as const;
 const contractStatuses = ['draft', 'signed', 'active', 'completed', 'cancelled', 'legacy_review_required'] as const;
 const deliveryTerms = ['pickup', 'seller_delivery', 'by_agreement'] as const;
-const aiKinds = ['recommendation', 'find_cheaper', 'season_advice', 'generic'] as const;
-const aiAnswers = ['catalog_match', 'no_catalog_match'] as const;
 const maximumDeliveryDays = 365;
 const maximumUzsAmount = 9_999_999_999_999;
 
@@ -53,20 +63,28 @@ function IsSellerDeliveryPrice(validationOptions?: ValidationOptions): PropertyD
 export class VerificationDocumentDto {
   @ApiProperty() kind!: string;
   @ApiProperty() fileName!: string;
-  @ApiProperty() storageKey!: string;
+  @ApiPropertyOptional() mimeType?: string;
+  @ApiPropertyOptional() sizeBytes?: number;
+  @ApiPropertyOptional({ enum: ['legacy', 'mock', 'live'] }) providerMode?: string;
+  @ApiPropertyOptional() providerName?: string;
+  @ApiPropertyOptional({ format: 'date-time' }) storedAt?: string;
   @ApiPropertyOptional() optional?: boolean;
+  @ApiProperty() simulation!: boolean;
 }
 
 export class VerificationViewDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
-  @ApiProperty() tenantId!: string;
-  @ApiProperty() userId!: string;
+  @ApiProperty({ minimum: 0, type: 'integer' }) revision!: number;
   @ApiProperty({ enum: verificationRoles }) role!: string;
   @ApiProperty({ enum: verificationLevels }) level!: string;
   @ApiProperty({ enum: verificationStatuses }) status!: string;
+  @ApiProperty({ enum: ['identity', 'documents', 'review', 'complete'] }) step!: string;
   @ApiProperty() oneIdLinked!: boolean;
+  @ApiProperty({ enum: ['none', 'legacy', 'mock', 'live'] }) providerMode!: string;
+  @ApiProperty() simulation!: boolean;
+  @ApiProperty({ enum: ['none', 'legacy_unknown', 'mock', 'provider_verified'] }) identityAssurance!: string;
+  @ApiPropertyOptional() providerName?: string;
   @ApiProperty({ type: [VerificationDocumentDto] }) documents!: VerificationDocumentDto[];
-  @ApiPropertyOptional() reviewedBy?: string;
   @ApiPropertyOptional({ format: 'date-time' }) reviewedAt?: Date;
   @ApiPropertyOptional({ enum: ['criteria_not_met', 'documents_unreadable', 'identity_mismatch'] })
   rejectionReason?: string;
@@ -74,24 +92,83 @@ export class VerificationViewDto {
   @ApiProperty({ format: 'date-time' }) updatedAt!: Date;
 }
 
-export class VerificationListDto {
-  @ApiProperty({ type: [VerificationViewDto] }) items!: VerificationViewDto[];
+export class AdminVerificationViewDto extends VerificationViewDto {
+  @ApiProperty() tenantId!: string;
+  @ApiProperty() userId!: string;
+  @ApiPropertyOptional() reviewedBy?: string;
+}
+
+export class AdminVerificationListDto {
+  @ApiProperty({ type: [AdminVerificationViewDto] }) items!: AdminVerificationViewDto[];
 }
 
 export class NullableVerificationResponseDto {
   @ApiProperty({ type: () => VerificationViewDto, nullable: true }) data!: VerificationViewDto | null;
 }
 
+const toVerificationDocumentView = (document: VerificationDocument): VerificationDocumentDto => ({
+  fileName: document.fileName,
+  kind: document.kind,
+  ...(document.mimeType ? { mimeType: document.mimeType } : {}),
+  ...(document.sizeBytes !== undefined ? { sizeBytes: document.sizeBytes } : {}),
+  ...(document.providerMode ? { providerMode: document.providerMode } : {}),
+  ...(document.providerName ? { providerName: document.providerName } : {}),
+  ...(document.storedAt ? { storedAt: document.storedAt } : {}),
+  ...(document.optional !== undefined ? { optional: document.optional } : {}),
+  simulation: document.providerMode === 'mock',
+});
+
+const verificationStep = (verification: Verification): VerificationViewDto['step'] => {
+  if (verification.status === 'verified') {
+    return 'complete';
+  }
+  if (verification.status === 'pending' || verification.status === 'rejected') {
+    return 'review';
+  }
+  return verification.oneIdLinked ? 'documents' : 'identity';
+};
+
+export const toVerificationSelfView = (verification: Verification): VerificationViewDto => ({
+  createdAt: verification.createdAt,
+  documents: verification.documents.map(toVerificationDocumentView),
+  id: verification.id,
+  revision: verification.version,
+  identityAssurance: verification.identityAssurance,
+  level: verification.level,
+  oneIdLinked: verification.oneIdLinked,
+  providerMode: verification.providerMode,
+  ...(verification.providerName ? { providerName: verification.providerName } : {}),
+  ...(verification.rejectionReason ? { rejectionReason: verification.rejectionReason } : {}),
+  ...(verification.reviewedAt ? { reviewedAt: verification.reviewedAt } : {}),
+  role: verification.role,
+  simulation:
+    verification.providerMode === 'mock' || verification.documents.some((document) => document.providerMode === 'mock'),
+  status: verification.status,
+  step: verificationStep(verification),
+  updatedAt: verification.updatedAt,
+});
+
+export const toVerificationAdminView = (verification: Verification): AdminVerificationViewDto => ({
+  ...toVerificationSelfView(verification),
+  tenantId: verification.tenantId,
+  userId: verification.userId,
+  ...(verification.reviewedBy ? { reviewedBy: verification.reviewedBy } : {}),
+});
+
 export class CartItemDto {
-  @ApiProperty() productId!: string;
+  @ApiProperty({ format: 'uuid' }) listingPublicationId!: string;
+  @ApiProperty({ enum: ['product', 'produce'] }) sourceKind!: string;
   @ApiProperty() quantity!: number;
+}
+
+export class MarketplaceSafePartyDto {
+  @ApiProperty() displayName!: string;
+  @ApiProperty() region!: string;
 }
 
 export class CartViewDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
-  @ApiProperty() tenantId!: string;
-  @ApiProperty() userId!: string;
-  @ApiProperty() sellerId!: string;
+  @ApiProperty({ type: MarketplaceSafePartyDto }) seller!: MarketplaceSafePartyDto;
   @ApiProperty({ type: [CartItemDto] }) items!: CartItemDto[];
   @ApiProperty({ enum: cartStatuses }) status!: string;
   @ApiProperty({ format: 'date-time' }) createdAt!: Date;
@@ -107,59 +184,8 @@ export class CheckoutCartResultDto {
   @ApiProperty({ format: 'uuid' }) contractId!: string;
 }
 
-export class SampleViewDto {
-  @ApiProperty({ format: 'uuid' }) id!: string;
-  @ApiProperty() tenantId!: string;
-  @ApiProperty() userId!: string;
-  @ApiProperty() productId!: string;
-  @ApiProperty() sellerId!: string;
-  @ApiProperty({ enum: sampleStatuses }) status!: string;
-  @ApiProperty({ format: 'date-time' }) createdAt!: Date;
-}
-
-export class SampleListDto {
-  @ApiProperty({ type: [SampleViewDto] }) items!: SampleViewDto[];
-}
-
-export class SampleUsageViewDto {
-  @ApiProperty() used!: number;
-  @ApiProperty() limit!: number;
-  @ApiProperty() remaining!: number;
-}
-
-export class FavoriteViewDto {
-  @ApiProperty() tenantId!: string;
-  @ApiProperty() userId!: string;
-  @ApiProperty() productId!: string;
-  @ApiProperty({ format: 'date-time' }) createdAt!: Date;
-}
-
-export class FavoriteListDto {
-  @ApiProperty({ type: [FavoriteViewDto] }) items!: FavoriteViewDto[];
-}
-
-export class FavoriteMutationResultDto {
-  @ApiProperty() productId!: string;
-}
-
-export class ReviewViewDto {
-  @ApiProperty({ format: 'uuid' }) id!: string;
-  @ApiProperty() tenantId!: string;
-  @ApiProperty() productId!: string;
-  @ApiProperty() userId!: string;
-  @ApiProperty() rating!: number;
-  @ApiPropertyOptional() comment?: string;
-  @ApiProperty({ format: 'date-time' }) createdAt!: Date;
-}
-
-export class ReviewListDto {
-  @ApiProperty({ type: [ReviewViewDto] }) items!: ReviewViewDto[];
-}
-
 export class BuyerRequestViewDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
-  @ApiProperty() tenantId!: string;
-  @ApiProperty() buyerUserId!: string;
   @ApiProperty() title!: string;
   @ApiPropertyOptional() product?: string;
   @ApiPropertyOptional() volume?: string;
@@ -178,9 +204,8 @@ export class BuyerRequestListDto {
 
 export class OfferViewDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
-  @ApiProperty({ format: 'uuid' }) requestId!: string;
-  @ApiProperty() tenantId!: string;
-  @ApiProperty() sellerUserId!: string;
+  @ApiProperty({ format: 'uuid' }) requestPublicId!: string;
+  @ApiProperty({ type: MarketplaceSafePartyDto }) seller!: MarketplaceSafePartyDto;
   @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) priceUzs!: number;
   @ApiProperty({ enum: deliveryTerms }) deliveryTerms!: string;
   @ApiPropertyOptional({
@@ -201,6 +226,7 @@ export class OfferListDto {
 }
 
 export class RequestOfferDto {
+  @ApiProperty({ format: 'uuid' }) @IsUUID() actingPartnerId!: string;
   @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' })
   @IsInt()
   @Min(1)
@@ -230,6 +256,10 @@ export class RequestOfferDto {
 }
 
 export class ContractDeliveryQuoteDto {
+  @ApiProperty({ minimum: 0, type: 'integer' })
+  @IsInt()
+  @Min(0)
+  expectedRevision!: number;
   @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' })
   @IsInt()
   @Min(1)
@@ -250,14 +280,15 @@ export class ContractDeliveryQuoteDto {
 }
 
 export class OfferSelectionResultDto {
-  @ApiProperty({ format: 'uuid' }) requestId!: string;
+  @ApiProperty({ format: 'uuid' }) requestPublicId!: string;
   @ApiProperty({ format: 'uuid' }) offerId!: string;
-  @ApiProperty() sellerUserId!: string;
   @ApiProperty({ format: 'uuid' }) contractId!: string;
 }
 
 export class ContractLineDto {
-  @ApiProperty() productId!: string;
+  @ApiProperty({ format: 'uuid' }) sourcePublicationId!: string;
+  @ApiProperty({ enum: ['product', 'produce', 'request'] }) sourceKind!: string;
+  @ApiProperty() sourceRevision!: number;
   @ApiProperty() name!: string;
   @ApiProperty() unit!: string;
   @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) unitPriceUzs!: number;
@@ -265,13 +296,18 @@ export class ContractLineDto {
   @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) lineTotalUzs!: number;
 }
 
+export class MarketplacePartySnapshotDto {
+  @ApiProperty() legalName!: string;
+  @ApiProperty() region!: string;
+}
+
 export class ContractViewDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
-  @ApiProperty() tenantId!: string;
-  @ApiProperty() buyerUserId!: string;
-  @ApiProperty() sellerUserId!: string;
-  @ApiPropertyOptional({ enum: ['cart_checkout', 'offer_selection'] }) sourceType?: string;
-  @ApiPropertyOptional() sourceId?: string;
+  @ApiProperty({ minimum: 0, type: 'integer' }) revision!: number;
+  @ApiProperty({ enum: ['buyer', 'seller'] }) actorParty!: 'buyer' | 'seller';
+  @ApiProperty({ type: MarketplacePartySnapshotDto }) buyerPartySnapshot!: MarketplacePartySnapshotDto;
+  @ApiProperty({ type: MarketplacePartySnapshotDto }) sellerPartySnapshot!: MarketplacePartySnapshotDto;
+  @ApiPropertyOptional({ enum: ['cart_checkout', 'offer_selection'] }) sourceType?: ContractSourceType;
   @ApiProperty() subject!: string;
   @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) amountUzs!: number;
   @ApiProperty({ type: [ContractLineDto] }) lines!: ContractLineDto[];
@@ -292,21 +328,99 @@ export class ContractListDto {
   @ApiProperty({ type: [ContractViewDto] }) items!: ContractViewDto[];
 }
 
-export class AiConsultationViewDto {
-  @ApiProperty({ format: 'uuid' }) id!: string;
-  @ApiProperty() tenantId!: string;
-  @ApiProperty() userId!: string;
-  @ApiProperty({ enum: aiKinds }) kind!: string;
-  @ApiProperty() question!: string;
-  @ApiProperty({
-    description: 'Semantic result code; clients localize user-facing consultation copy.',
-    enum: aiAnswers,
-  })
-  answer!: (typeof aiAnswers)[number];
-  @ApiProperty({ type: [String] }) productIds!: string[];
-  @ApiProperty({ format: 'date-time' }) createdAt!: Date;
+export function toContractSelfView(contract: Contract, owner: AgriTechOwner): ContractViewDto {
+  const buyerMatch = contract.buyerTenantId === owner.tenantId && contract.buyerUserId === owner.userId;
+  const sellerMatch = contract.sellerTenantId === owner.tenantId && contract.sellerUserId === owner.userId;
+  let actorParty: 'buyer' | 'seller';
+  if (buyerMatch) {
+    actorParty = 'buyer';
+  } else if (sellerMatch) {
+    actorParty = 'seller';
+  } else {
+    throw new Error('Contract self view requires an authorized contract party');
+  }
+
+  return {
+    id: contract.id,
+    revision: contract.revision,
+    actorParty,
+    buyerPartySnapshot: {
+      legalName: contract.buyerPartySnapshot.legalName,
+      region: contract.buyerPartySnapshot.region,
+    },
+    sellerPartySnapshot: {
+      legalName: contract.sellerPartySnapshot.legalName,
+      region: contract.sellerPartySnapshot.region,
+    },
+    ...(contract.sourceType === undefined ? {} : { sourceType: contract.sourceType }),
+    subject: contract.subject,
+    amountUzs: contract.amountUzs,
+    lines: contract.lines.map((line) => ({
+      sourcePublicationId: line.sourcePublicationId,
+      sourceKind: line.sourceKind,
+      sourceRevision: line.sourceRevision,
+      name: line.name,
+      unit: line.unit,
+      unitPriceUzs: line.unitPriceUzs,
+      quantity: line.quantity,
+      lineTotalUzs: line.lineTotalUzs,
+    })),
+    deliveryTerms: contract.deliveryTerms,
+    ...(contract.deliveryPriceUzs === undefined ? {} : { deliveryPriceUzs: contract.deliveryPriceUzs }),
+    ...(contract.deliveryNote === undefined ? {} : { deliveryNote: contract.deliveryNote }),
+    ...(contract.deliveryDays === undefined ? {} : { deliveryDays: contract.deliveryDays }),
+    factoringEnabled: contract.factoringEnabled,
+    status: contract.status,
+    ...(contract.buyerSignedAt === undefined ? {} : { buyerSignedAt: contract.buyerSignedAt }),
+    ...(contract.sellerSignedAt === undefined ? {} : { sellerSignedAt: contract.sellerSignedAt }),
+    ...(contract.signedAt === undefined ? {} : { signedAt: contract.signedAt }),
+    createdAt: contract.createdAt,
+    updatedAt: contract.updatedAt,
+  };
 }
 
-export class AiConsultationListDto {
-  @ApiProperty({ type: [AiConsultationViewDto] }) items!: AiConsultationViewDto[];
-}
+export const toCartSelfView = (cart: Cart): CartViewDto => ({
+  createdAt: cart.createdAt,
+  id: cart.id,
+  items: cart.items.map((item) => ({
+    listingPublicationId: item.listingPublicationId,
+    quantity: item.quantity,
+    sourceKind: item.sourceKind,
+  })),
+  seller: { displayName: cart.seller.displayName, region: cart.seller.region },
+  status: cart.status,
+  updatedAt: cart.updatedAt,
+});
+
+export const toBuyerRequestView = (request: BuyerRequest): BuyerRequestViewDto => ({
+  ...(request.budgetUzs === undefined ? {} : { budgetUzs: request.budgetUzs }),
+  createdAt: request.createdAt,
+  ...(request.deadline === undefined ? {} : { deadline: request.deadline }),
+  id: request.id,
+  ...(request.product === undefined ? {} : { product: request.product }),
+  region: request.region,
+  ...(request.requirements === undefined ? {} : { requirements: request.requirements }),
+  status: request.status,
+  title: request.title,
+  updatedAt: request.updatedAt,
+  ...(request.volume === undefined ? {} : { volume: request.volume }),
+});
+
+export const toOfferPartyView = (offer: RequestOffer): OfferViewDto => ({
+  createdAt: offer.createdAt,
+  ...(offer.deliveryDays === undefined ? {} : { deliveryDays: offer.deliveryDays }),
+  ...(offer.deliveryNote === undefined ? {} : { deliveryNote: offer.deliveryNote }),
+  ...(offer.deliveryPriceUzs === undefined ? {} : { deliveryPriceUzs: offer.deliveryPriceUzs }),
+  deliveryTerms: offer.deliveryTerms,
+  id: offer.id,
+  priceUzs: offer.priceUzs,
+  requestPublicId: offer.requestPublicId,
+  seller: { displayName: offer.seller.displayName, region: offer.seller.region },
+  status: offer.status,
+});
+
+export const toOfferSelectionView = (result: OfferSelectionResult): OfferSelectionResultDto => ({
+  contractId: result.contractId,
+  offerId: result.offerId,
+  requestPublicId: result.requestPublicId,
+});

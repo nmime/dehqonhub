@@ -10,6 +10,7 @@ export class ProductEntity {
   name!: string;
   nameRu: string | null = null;
   nameUz: string | null = null;
+  nameUzCyrl: string | null = null;
   category!: ProductCategory;
   description!: string;
   supplierId!: string;
@@ -17,6 +18,7 @@ export class ProductEntity {
   priceUzs!: number;
   unit!: string;
   stockQuantity!: number;
+  sampleAvailable = false;
   region!: string;
   status: ProductStatus = 'active';
   images: string[] = [];
@@ -33,6 +35,7 @@ export const ProductEntitySchema = new EntitySchema<ProductEntity>({
     name: { type: 'varchar', length: 200 },
     nameRu: { type: 'varchar', length: 200, nullable: true, fieldName: 'name_ru' },
     nameUz: { type: 'varchar', length: 200, nullable: true, fieldName: 'name_uz' },
+    nameUzCyrl: { type: 'varchar', length: 200, nullable: true, fieldName: 'name_uz_cyrl' },
     category: { type: 'varchar', length: 30 },
     description: { type: 'text' },
     supplierId: { type: 'varchar', length: 100, fieldName: 'supplier_id' },
@@ -40,6 +43,7 @@ export const ProductEntitySchema = new EntitySchema<ProductEntity>({
     priceUzs: { type: 'decimal', precision: 15, scale: 2, fieldName: 'price_uzs' },
     unit: { type: 'varchar', length: 50 },
     stockQuantity: { type: 'int', fieldName: 'stock_quantity' },
+    sampleAvailable: { type: 'boolean', fieldName: 'sample_available', default: false },
     region: { type: 'varchar', length: 100 },
     status: { type: 'varchar', length: 20, default: 'active' },
     images: { type: 'json', defaultRaw: "'[]'::jsonb" },

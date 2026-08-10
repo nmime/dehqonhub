@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011
+// @requirements REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-I18N-012
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { LockMode, type EntityManager } from '@mikro-orm/core';
 import { PostgresAgriTechOperationsRepository } from './operations.repository';
@@ -185,6 +185,7 @@ describe('PostgresAgriTechOperationsRepository — supplier products', () => {
         name: 'Seed',
         nameRu: null,
         nameUz: null,
+        nameUzCyrl: null,
         category: 'seed',
         description: 'd',
         priceUzs: 1000,
@@ -206,7 +207,7 @@ describe('PostgresAgriTechOperationsRepository — supplier products', () => {
     expect(result).toEqual([]);
   });
 
-  it('updates price and stock of an owned product', async () => {
+  it('updates price, stock, and localized names of an owned product', async () => {
     const product = {
       id: 'prod-1',
       tenantId: 'tenant-1',
@@ -214,6 +215,7 @@ describe('PostgresAgriTechOperationsRepository — supplier products', () => {
       name: 'Seed',
       nameRu: null,
       nameUz: null,
+      nameUzCyrl: null,
       category: 'seed',
       description: 'd',
       priceUzs: 1000,
@@ -224,6 +226,10 @@ describe('PostgresAgriTechOperationsRepository — supplier products', () => {
     };
     em.findOne.mockResolvedValueOnce(product).mockResolvedValueOnce(partnerEntity({ status: 'approved' }));
     const result = await repo.updateSupplierProduct(owner, 'prod-1', {
+      name: 'Corn seed',
+      nameRu: 'Семена кукурузы',
+      nameUz: 'Makkajo\u02bbxori urug\u02bbi',
+      nameUzCyrl: 'Маккажўхори уруғи',
       priceUzs: 2000,
       stockQuantity: 10,
       status: 'active',
@@ -231,6 +237,12 @@ describe('PostgresAgriTechOperationsRepository — supplier products', () => {
     expect(result.status).toBe('ok');
     expect(product.priceUzs).toBe(2000);
     expect(product.stockQuantity).toBe(10);
+    expect(product).toMatchObject({
+      name: 'Corn seed',
+      nameRu: 'Семена кукурузы',
+      nameUz: 'Makkajo\u02bbxori urug\u02bbi',
+      nameUzCyrl: 'Маккажўхори уруғи',
+    });
     expect(em.transactional).toHaveBeenCalledOnce();
     expect(em.findOne).toHaveBeenNthCalledWith(
       1,
@@ -303,12 +315,13 @@ describe('PostgresAgriTechOperationsRepository — produce listings', () => {
     quantityKg: 100,
     pricePerKgUzs: 5000,
     region: 'Fergana',
+    supplierPartnerId: 'partner-1',
     availableFrom: now,
     availableUntil: later,
   };
 
   it('creates a listing for an active farmer', async () => {
-    em.findOne.mockResolvedValue(farmerEntity({ status: 'active' }));
+    em.findOne.mockResolvedValueOnce(farmerEntity({ status: 'active' })).mockResolvedValueOnce(partnerEntity());
     const result = await repo.createProduceListing(owner, listingInput);
     expect(result.status).toBe('ok');
     expect(em.persist).toHaveBeenCalled();
@@ -329,6 +342,13 @@ describe('PostgresAgriTechOperationsRepository — produce listings', () => {
     em.findOne.mockResolvedValue(farmerEntity({ status: 'pending_verification' }));
     const result = await repo.createProduceListing(owner, listingInput);
     expect(result).toEqual({ status: 'farmer_inactive' });
+  });
+
+  it('rejects when the selected supplier organization is not approved for the owner', async () => {
+    em.findOne.mockResolvedValueOnce(farmerEntity({ status: 'active' })).mockResolvedValueOnce(null);
+
+    await expect(repo.createProduceListing(owner, listingInput)).resolves.toEqual({ status: 'partner_unapproved' });
+    expect(em.persist).not.toHaveBeenCalled();
   });
 
   it('discovers median price across active listings', async () => {

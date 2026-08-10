@@ -44,6 +44,7 @@ function productEntity(overrides: Partial<ProductEntity> = {}): ProductEntity {
     name: 'Cotton seed',
     nameRu: 'Семена хлопка',
     nameUz: 'Paxta urugʻi',
+    nameUzCyrl: 'Пахта уруғи',
     category: 'seed',
     description: 'Certified seed',
     supplierId: 'supplier-1',
@@ -271,12 +272,13 @@ describe('PostgresProductRepository', () => {
 
   describe('toProduct', () => {
     it('maps entity fields, coerces the price to a number and drops null localized names', () => {
-      const product = toProduct(productEntity({ nameRu: null, nameUz: null }));
+      const product = toProduct(productEntity({ nameRu: null, nameUz: null, nameUzCyrl: null }));
       expect(product).toEqual({
         id: 'product-1',
         name: 'Cotton seed',
         nameRu: undefined,
         nameUz: undefined,
+        nameUzCyrl: undefined,
         category: 'seed',
         description: 'Certified seed',
         supplierId: 'supplier-1',
@@ -284,6 +286,7 @@ describe('PostgresProductRepository', () => {
         priceUzs: 10_000,
         unit: 'kg',
         stockQuantity: 100,
+        sampleAvailable: false,
         region: "Farg'ona viloyati",
         status: 'active',
         images: ['seed.jpg'],

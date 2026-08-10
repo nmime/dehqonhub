@@ -2,6 +2,11 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
+import {
+  expectedMigrationIndexName,
+  isMigrationIndexNameAccepted,
+} from "./migration-index-name.ts";
+
 const repoRoot = process.cwd();
 const errors: string[] = [];
 const skippedDirectories = new Set([
@@ -56,6 +61,11 @@ function fail(file: string, message: string) {
 }
 function validate(file: string, sql: string) {
   const normalized = normalizeSql(sql).toLowerCase();
+  const migrationTimestamp = /Migration(\d+)/u.exec(file)?.[1];
+  if (!migrationTimestamp) {
+    fail(file, "migration filename must contain a numeric timestamp");
+    return;
+  }
   if (
     /\bcreate\s+type\b[\s\S]*\bas\s+enum\b/.test(normalized) ||
     /\benum\s*\(/.test(normalized)
@@ -78,8 +88,13 @@ function validate(file: string, sql: string) {
   for (const match of sql.matchAll(
     /create\s+(unique\s+)?index\s+(?:if\s+not\s+exists\s+)?"?([a-zA-Z0-9_]+)"?\s+on\s+"?([a-zA-Z0-9_]+)"?\s*\(([^)]+)\)/gi,
   )) {
-    const expected = `${match[1] ? "uq" : "ix"}__${match[3]}__${columnsFromName(match[4])}`;
-    if (match[2] !== expected) {
+    const input = {
+      columns: columnsFromName(match[4]),
+      table: match[3],
+      unique: Boolean(match[1]),
+    };
+    const expected = expectedMigrationIndexName(input);
+    if (!isMigrationIndexNameAccepted(match[2], input, migrationTimestamp)) {
       fail(file, `index must be named ${expected}, got ${match[2]}`);
     }
   }

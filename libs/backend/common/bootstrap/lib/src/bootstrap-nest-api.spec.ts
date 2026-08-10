@@ -63,6 +63,7 @@ const mocks = vi.hoisted(() => {
       return { options };
     }),
     fastifyCookie: vi.fn(),
+    fastifyMultipart: vi.fn(),
     fastifyInstance,
     fastifyRegister: fastifyInstance.register,
     fastifySession: vi.fn(),
@@ -108,6 +109,10 @@ vi.mock('@fastify/cookie', () => ({
 
 vi.mock('@fastify/session', () => ({
   default: mocks.fastifySession,
+}));
+
+vi.mock('@fastify/multipart', () => ({
+  default: mocks.fastifyMultipart,
 }));
 
 vi.mock('helmet', () => ({
@@ -168,7 +173,10 @@ vi.mock('./util/port.util', async (importOriginal) => {
 import {
   bootstrapNestApi,
   DurableDatabaseRuntimeInjectToken,
+  maximumConfiguredRouteBodyLimit,
+  maximumMultipartFileBytes,
   RedisRateLimitStore,
+  registerFastifyRouteBodyLimits,
   resolveBackendEnvironmentConfig,
 } from './index';
 
@@ -335,6 +343,23 @@ describe('bootstrapNestApi', () => {
     process.env.TRUST_PROXY = originalEnvironment.trustProxy ?? '';
   });
 
+  it('promotes only bounded RouteConfig body limits to Fastify route options', () => {
+    registerFastifyRouteBodyLimits(mocks.app as never);
+    const hook = mocks.fastifyInstance.addHook.mock.calls.find((call) => call[0] === 'onRoute')?.[1] as
+      ((options: { bodyLimit?: number; config?: { bodyLimit?: unknown } }) => void) | undefined;
+    expect(hook).toBeTypeOf('function');
+
+    const configured = { config: { bodyLimit: maximumConfiguredRouteBodyLimit } };
+    hook?.(configured);
+    expect(configured).toMatchObject({ bodyLimit: maximumConfiguredRouteBodyLimit });
+
+    expect(() => hook?.({ config: { bodyLimit: maximumConfiguredRouteBodyLimit + 1 } })).toThrow(
+      'Route bodyLimit must be an integer',
+    );
+    expect(() => hook?.({ config: { bodyLimit: 1.5 } })).toThrow('Route bodyLimit must be an integer');
+    expect(() => hook?.({ config: { bodyLimit: 'unbounded' } })).toThrow('Route bodyLimit must be an integer');
+  });
+
   it('creates a Fastify app with trust proxy disabled by default', async () => {
     await bootstrapNestApi(TestModule, {
       appName: 'test-api',
@@ -352,6 +377,33 @@ describe('bootstrapNestApi', () => {
     );
     expect(mocks.fastifyRegister).toHaveBeenCalledTimes(2);
     expect(mocks.app.listen).toHaveBeenCalledWith(3010);
+  });
+
+  it('registers bounded multipart parsing only when explicitly enabled and before session plugins', async () => {
+    await bootstrapNestApi(TestModule, {
+      appName: 'test-api',
+      enableMultipart: true,
+      port: 3010,
+    });
+
+    expect(mocks.fastifyRegister).toHaveBeenCalledTimes(3);
+    expect(mocks.fastifyRegister.mock.calls[0]).toEqual([
+      mocks.fastifyMultipart,
+      {
+        limits: {
+          fieldNameSize: 64,
+          fieldSize: 1024,
+          fields: 0,
+          fileSize: maximumMultipartFileBytes,
+          files: 1,
+          headerPairs: 64,
+          parts: 1,
+        },
+        throwFileSizeLimit: true,
+      },
+    ]);
+    expect(mocks.fastifyRegister.mock.calls[1]?.[0]).toBe(mocks.fastifyCookie);
+    expect(mocks.fastifyRegister.mock.calls[2]?.[0]).toBe(mocks.fastifySession);
   });
 
   it('initializes OpenTelemetry before creating the Nest application', async () => {

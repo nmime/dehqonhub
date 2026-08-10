@@ -156,6 +156,17 @@ describe('normalizeApiError', () => {
     expect(normalizeApiError({ body, response: { status: 403, statusText: '' } }).message).toBe(
       'Войдите снова перед выполнением этого действия, связанного с безопасностью.',
     );
+
+    configureApiLocale({ locale: 'uz-cyrl' });
+    expect(
+      normalizeApiError({
+        body: {
+          detail: 'Untrusted provider text',
+          type: 'https://example.com/problems#marketplace-provider-unavailable',
+        },
+        response: { status: 503, statusText: '' },
+      }).message,
+    ).toBe('Сўралган маркетплейс провайдери имконияти вақтинча ишламаяпти ёки ўчириб қўйилган.');
   });
 
   it('uses localized body text and localized safe fallbacks', () => {
