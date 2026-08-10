@@ -16,6 +16,13 @@ describe("native secret scan policy", () => {
       isAllowedSecretScanValue(variant, "apps/backend/auth/auth-app-api/contracts/toast/auth-app-api.toast-rules.generated.json"),
       true,
     );
+    assert.equal(
+      isAllowedSecretScanValue(
+        variant,
+        "libs/frontend/api-client/lib/src/generated/toast/auth-app-api.toast-rules.frontend.generated.json",
+      ),
+      true,
+    );
     assert.equal(isAllowedSecretScanValue(variant, "src/runtime-config.json"), false);
   });
 
@@ -29,7 +36,7 @@ describe("native secret scan policy", () => {
     );
   });
 
-  it("allows generated Nest operation identifiers only in generated API artifacts", () => {
+  it("allows generated Nest operation identifiers only in generated API and toast artifacts", () => {
     const operationId = ["AgriTechAdminController", "reviewMarketplaceRequestPublication"].join("_");
 
     assert.equal(
@@ -38,6 +45,20 @@ describe("native secret scan policy", () => {
     );
     assert.equal(
       isAllowedSecretScanValue(operationId, "libs/common/api-contracts/lib/src/generated/admin-app-api.ts"),
+      true,
+    );
+    assert.equal(
+      isAllowedSecretScanValue(
+        operationId,
+        "apps/backend/admin/admin-app-api/contracts/toast/admin-app-api.toast-rules.generated.json",
+      ),
+      true,
+    );
+    assert.equal(
+      isAllowedSecretScanValue(
+        operationId,
+        "libs/frontend/api-client/lib/src/generated/toast/admin-app-api.toast-rules.frontend.generated.json",
+      ),
       true,
     );
     assert.equal(isAllowedSecretScanValue(operationId, "src/runtime-config.ts"), false);

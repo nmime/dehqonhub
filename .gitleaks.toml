@@ -37,6 +37,36 @@ regexes = [
   '''test-secret-placeholder-min-32-chars-long''',
 ]
 
+[[rules.allowlists]]
+description = "Marketplace dispute evidence idempotency test fixtures"
+condition = "AND"
+paths = [
+  '''^apps/backend/user/user-app-api/src/marketplace-contract-lifecycle\.e2e-spec\.ts$''',
+]
+regexes = [
+  '''dispute-evidence-key-000[123]''',
+]
+
+[[rules.allowlists]]
+description = "Marketplace verification idempotency test fixture"
+condition = "AND"
+paths = [
+  '''^libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-provider-operations\.component-spec\.ts$''',
+]
+regexes = [
+  '''verification-id-key-0002''',
+]
+
+[[rules.allowlists]]
+description = "Marketplace document evidence idempotency test fixtures"
+condition = "AND"
+paths = [
+  '''^libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-concurrency\.component-spec\.ts$''',
+]
+regexes = [
+  '''document-evidence-key-[234]''',
+]
+
 # Prose false positive: the default rule reads "…user/admin API,\nDiscord/Telegram selections"
 # as a key assignment and reports "Discord/Telegram" as the secret. No credential is present.
 [[rules.allowlists]]
