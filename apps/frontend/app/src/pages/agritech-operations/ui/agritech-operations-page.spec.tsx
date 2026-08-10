@@ -113,7 +113,7 @@ describe('AgriTech operations page', () => {
     renderPage();
 
     expect(await screen.findByRole('heading', { name: 'AgriTech Operations' })).toBeTruthy();
-    expect(screen.getAllByText('No records are available.').length).toBeGreaterThanOrEqual(3);
+    expect((await screen.findAllByText('No records are available.')).length).toBeGreaterThanOrEqual(3);
   });
 
   it('submits a tenant-owned supplier registration through the generated client', async () => {
