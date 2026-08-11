@@ -104,5 +104,28 @@ describe('DehqonHub marketplace routes', () => {
 
     expect(await screen.findByTestId('generic-user-shell')).toBeTruthy();
     expect(screen.queryByTestId('marketplace-route')).toBeNull();
+
+    const dispatchAnchorClick = (configure?: (anchor: HTMLAnchorElement) => void, init?: MouseEventInit) => {
+      const anchor = document.createElement('a');
+      anchor.href = '/auth';
+      configure?.(anchor);
+      document.body.append(anchor);
+      const event = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0, ...init });
+      anchor.dispatchEvent(event);
+      anchor.remove();
+      return event;
+    };
+
+    expect(dispatchAnchorClick(undefined, { ctrlKey: true }).defaultPrevented).toBe(false);
+    const text = document.createTextNode('not-an-element');
+    document.body.append(text);
+    const textClick = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
+    text.dispatchEvent(textClick);
+    text.remove();
+    expect(textClick.defaultPrevented).toBe(false);
+    expect(dispatchAnchorClick((anchor) => (anchor.target = '_blank')).defaultPrevented).toBe(false);
+    expect(dispatchAnchorClick((anchor) => anchor.setAttribute('download', '')).defaultPrevented).toBe(false);
+    expect(dispatchAnchorClick((anchor) => (anchor.href = 'https://example.test')).defaultPrevented).toBe(false);
+    expect(dispatchAnchorClick((anchor) => (anchor.target = '_self')).defaultPrevented).toBe(true);
   });
 });

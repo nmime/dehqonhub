@@ -48,10 +48,7 @@ Then('repository-owned GitHub execution remains absent', function (this: Accepta
 
 Then('release evidence binds a clean exact source revision', function (this: AcceptanceWorld) {
   assert.match(this.releaseAssuranceSources ?? '', /The worktree is dirty/u);
-  assert.match(
-    this.releaseAssuranceSources ?? '',
-    /run\('git', \['rev-parse', '--verify'/u,
-  );
+  assert.match(this.releaseAssuranceSources ?? '', /run\('git', \['rev-parse', '--verify'/u);
   assert.match(this.releaseAssuranceSources ?? '', /checked-out source/u);
   assert.match(this.releaseAssuranceSources ?? '', /specificationHash/u);
 });
