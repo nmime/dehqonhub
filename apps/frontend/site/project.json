@@ -66,9 +66,15 @@
       "dependsOn": ["build"],
       "options": {
         "cwd": "apps/frontend/site",
-        "command": "node scripts/smoke-vike-build.mjs"
+        "command": "node scripts/smoke-vike-build.mjs && playwright test --config playwright.config.mjs"
       },
-      "outputs": ["{workspaceRoot}/dist/apps/frontend/site"]
+      "inputs": [
+        "production",
+        {
+          "externalDependencies": ["@playwright/test", "vike"]
+        }
+      ],
+      "outputs": ["{workspaceRoot}/dist/apps/frontend/site", "{projectRoot}/test-results/site-browser"]
     },
     "typecheck": {
       "executor": "nx:run-commands",

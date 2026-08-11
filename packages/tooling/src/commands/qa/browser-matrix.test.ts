@@ -17,7 +17,7 @@ describe('cross-browser matrix policy', () => {
     assert.equal(installedBrowserForProject('chromium-320'), 'chromium');
   });
 
-  it('derives every external fullstack URL from the configured service ports', () => {
+  it('derives only the selected user/admin app and API URLs from the configured service ports', () => {
     const env: NodeJS.ProcessEnv = {
       ...process.env,
       PLAYWRIGHT_BASE_URL: 'http://127.0.0.1:8082',
@@ -29,22 +29,16 @@ describe('cross-browser matrix policy', () => {
       'AUTH_APP_API_PORT',
       'ADMIN_APP_PORT',
       'USER_APP_PORT',
-      'LANDING_APP_PORT',
-      'SITE_APP_PORT',
       'FULLSTACK_ADMIN_API_URL',
       'FULLSTACK_USER_API_URL',
       'FULLSTACK_AUTH_API_URL',
       'FULLSTACK_ADMIN_APP_URL',
       'FULLSTACK_USER_APP_URL',
-      'FULLSTACK_LANDING_APP_URL',
-      'FULLSTACK_SITE_APP_URL',
       'ADMIN_APP_API_URL',
       'USER_APP_API_URL',
       'AUTH_APP_API_URL',
       'ADMIN_APP_URL',
       'USER_APP_URL',
-      'LANDING_APP_URL',
-      'SITE_APP_URL',
     ]) {
       delete env[name];
     }
@@ -70,27 +64,21 @@ describe('cross-browser matrix policy', () => {
       AUTH_APP_API_PORT: '3003',
       ADMIN_APP_PORT: '8081',
       USER_APP_PORT: '8082',
-      LANDING_APP_PORT: '8083',
-      SITE_APP_PORT: '8084',
       FULLSTACK_ADMIN_API_URL: 'http://127.0.0.1:3001',
       FULLSTACK_USER_API_URL: 'http://127.0.0.1:3002',
       FULLSTACK_AUTH_API_URL: 'http://127.0.0.1:3003',
       FULLSTACK_ADMIN_APP_URL: 'http://127.0.0.1:8081',
       FULLSTACK_USER_APP_URL: 'http://127.0.0.1:8082',
-      FULLSTACK_LANDING_APP_URL: 'http://127.0.0.1:8083',
-      FULLSTACK_SITE_APP_URL: 'http://127.0.0.1:8084',
     });
   });
 
-  it('accepts a complete explicit URL set without the legacy base URL and rejects partial sets', () => {
+  it('requires only the selected user/admin app and admin/user/auth API URL set', () => {
     const explicitUrls = {
       FULLSTACK_ADMIN_API_URL: 'https://admin-api.example.test',
       FULLSTACK_USER_API_URL: 'https://user-api.example.test',
       FULLSTACK_AUTH_API_URL: 'https://auth-api.example.test',
       FULLSTACK_ADMIN_APP_URL: 'https://admin.example.test',
       FULLSTACK_USER_APP_URL: 'https://app.example.test',
-      FULLSTACK_LANDING_APP_URL: 'https://example.test',
-      FULLSTACK_SITE_APP_URL: 'https://site.example.test',
     };
     const runMatrix = (env: NodeJS.ProcessEnv) =>
       spawnSync(
@@ -111,20 +99,27 @@ describe('cross-browser matrix policy', () => {
     };
     delete completeEnv.PLAYWRIGHT_BASE_URL;
     delete completeEnv.PLAYWRIGHT_MANAGE_STACK;
+    delete completeEnv.FULLSTACK_LANDING_APP_URL;
+    delete completeEnv.FULLSTACK_SITE_APP_URL;
+    delete completeEnv.LANDING_APP_URL;
+    delete completeEnv.SITE_APP_URL;
     const complete = runMatrix(completeEnv);
     assert.equal(complete.status, 0, complete.stderr);
 
-    const { FULLSTACK_SITE_APP_URL: _missingSite, ...partialUrls } = explicitUrls;
+    const { FULLSTACK_AUTH_API_URL: _missingAuthApi, ...partialUrls } = explicitUrls;
     const partialEnv: NodeJS.ProcessEnv = {
       ...process.env,
       ...partialUrls,
     };
     delete partialEnv.PLAYWRIGHT_BASE_URL;
     delete partialEnv.PLAYWRIGHT_MANAGE_STACK;
-    delete partialEnv.FULLSTACK_SITE_APP_URL;
-    delete partialEnv.SITE_APP_URL;
+    delete partialEnv.FULLSTACK_AUTH_API_URL;
+    delete partialEnv.AUTH_APP_API_URL;
     const partial = runMatrix(partialEnv);
     assert.equal(partial.status, 2);
-    assert.match(partial.stderr, /requires either PLAYWRIGHT_BASE_URL or every FULLSTACK_\*_URL/u);
+    assert.match(
+      partial.stderr,
+      /requires either PLAYWRIGHT_BASE_URL or the complete selected user\/admin app and admin\/user\/auth API URL set/u,
+    );
   });
 });

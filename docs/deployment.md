@@ -252,5 +252,7 @@ See [GITOPS.md](../GITOPS.md).
 - Use `/live` for liveness, `/ready` for dependency/migration readiness, and
   `/nginx-health` for static frontend containers.
 - Verify backups before schema changes and document whether rollback is safe.
-- Keep the selected apex (`landing-app` or `site-app`) on the base domain and
-  every other public app/API on its exact `<app-id>.<base-domain>` host.
+- Keep the selected primary frontend on the base domain and every other
+  selected public app/API on its exact `<app-id>.<base-domain>` host. For
+  DehqonHub, `user-app` owns the base domain and no user-app, landing, or site
+  subdomain is published.

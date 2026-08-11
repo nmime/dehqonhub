@@ -15,10 +15,12 @@ other.
 
 ## Public domain contract
 
-The Helm defaults and Compose `per-app-domains` mode assign one unique host to
-every production frontend and enabled public API. Replace `example.com` in
-environment-owned values, preserve the one-host-per-app mapping, and include
-every browser origin in CORS, Better Auth trusted origins, and TLS:
+The Helm defaults and Compose `per-app-domains` mode assign hosts only to the
+selected production frontends and enabled public APIs. The selected primary
+frontend owns the apex; every other selected public application keeps its
+derived app-ID hostname. Replace `example.com` in environment-owned values and
+include only selected browser origins in CORS, Better Auth trusted/return
+origins, payment return origins, and TLS.
 
 The generated [Project Catalog](project-catalog.md) is the hostname registry.
 Each enabled host routes to the identically named Kubernetes/Compose service.
@@ -32,14 +34,34 @@ service, or TLS assignment is missing. DNS records and certificates remain
 environment/platform responsibilities; the app chart owns the ingress contract
 they target.
 
-Compose derives the catalog mapping from `PUBLIC_DOMAIN` and `PRIMARY_APP`; only
-`landing-app` or `site-app` may own the apex. A wildcard DNS record may point
-all subdomains to the Compose host, but Caddy still matches only these exact app
-IDs. `single-domain` is a separate reduced publishing mode: it exposes the
-selected apex frontend plus same-origin API paths and leaves the other
-frontends loopback-only. It does not pretend that five root-relative frontend
-asset trees can safely share invented URL prefixes. See
+Compose derives the selected mapping from `PUBLIC_DOMAIN`, `PRIMARY_APP`, and
+the committed `.nrb` closure. A wildcard DNS record may point all subdomains to
+the Compose host, but Caddy still matches only selected exact hosts.
+`single-domain` is a separate reduced publishing mode: it exposes the selected
+apex frontend plus same-origin API paths and leaves other frontends
+loopback-only. It does not pretend that several root-relative frontend asset
+trees can safely share invented URL prefixes. See
 [docker-compose-production.md](docker-compose-production.md).
+
+DehqonHub selects `user-app` as its only public product frontend. The Astro
+landing app, Vike site app, and full-stack reference harness are not selected,
+built, started, hosted, or certificate-covered. Its canonical single-server
+destinations are:
+
+| Destination                                              | Owner / behavior                                   |
+| -------------------------------------------------------- | -------------------------------------------------- |
+| `https://dehqonhub.uz/`                                  | Complete `user-app` marketplace at its router root |
+| `https://dehqonhub.uz/telegram-mini-app`                 | Telegram Mini App route in `user-app`              |
+| `https://dehqonhub.uz/problems`                          | User-owned RFC 9457 problem registry               |
+| `https://admin-app.dehqonhub.uz/admin`                   | `admin-app`; `/admin` remains its router base path |
+| `https://mobile-app.dehqonhub.uz/`                       | Selected mobile web export                         |
+| `https://telegram-bot-api.dehqonhub.uz/telegram/webhook` | Telegram API webhook when enabled                  |
+
+The auth, user, and admin APIs retain their exact app-ID hosts.
+`user-app.dehqonhub.uz`, `landing-app.dehqonhub.uz`, and
+`site-app.dehqonhub.uz` are not compatibility entry points: they are absent
+from generated virtual hosts, trusted origins, readiness checks, and exact-host
+certificate SANs.
 
 ## Mode 1: same-origin API proxy
 
@@ -78,18 +100,20 @@ roots empty and proxy the API prefixes server-side:
 
 - `/api/auth/*` -> Better Auth endpoints on the auth API.
 - `/auth/*` -> tenant/RBAC auth API, with `/auth/docs` kept as an API/docs route.
-- `/profile/*` -> user API.
+- `/profile/*`, `/partners/*`, `/supplier/*`, `/produce/*`, `/deliveries/*`,
+  `/advisories/*`, `/payments/*`, `/orders/*`, `/field-agent/*`,
+  `/field-visits/*`, and `/farmer` -> user API.
 - `/marketplace/*` -> DehqonHub commerce resources on the user API; browser
   routes such as `/catalog` and `/cart` remain SPA-owned.
 - `/admin/*` -> admin API, with `/admin/docs` kept as an API/docs route.
 
 Static frontend navigations are detected as `GET`/`HEAD` requests with
 `Accept: text/html`. Those requests fall back to `index.html`, so reloads work
-for landing `/`, current user SPA routes such as `/auth`,
+for landing `/`; for user-app root `/` and current user SPA routes such as `/auth`,
 `/auth/telegram/callback`, `/auth/discord/callback`, `/profile`, `/settings`, `/tma`,
-`/telegram-mini-app`, `/link/telegram`, `/app`, `/catalog`, `/products/:id`,
+`/telegram-mini-app`, `/link/telegram`, `/catalog`, `/products/:id`,
 `/favorites`, `/cart`, `/requests`, `/verification`, `/account`, and
-`/contracts/:id`, plus admin routes such as `/admin`, `/admin/dashboard`,
+`/contracts/:id`, plus the public `/problems` registry; and for admin routes such as `/admin`, `/admin/dashboard`,
 `/admin/users`, `/admin/users/:id`, `/admin/roles`, `/admin/audit`,
 `/admin/profile`, `/admin/tenants`, and unknown admin SPA routes. The Expo
 mobile web export is served by the same nginx frontend target. `site-app` is not
@@ -164,7 +188,7 @@ runs `docker/frontend-runtime-config.sh` from the nginx
 window.__APP_RUNTIME_CONFIG__ = {
   telegramAuthEnabled: true,
   userAppUrl: 'https://user-app.product.example',
-  adminAppUrl: 'https://admin-app.product.example',
+  adminAppUrl: 'https://admin-app.product.example/admin',
 };
 ```
 
@@ -181,11 +205,12 @@ a flag deliberately.
 | Local dev      | `VITE_TELEGRAM_AUTH_ENABLED` (build-time default)                     |
 
 Compose derives landing destinations from `PUBLIC_DOMAIN` and the declared
-public mode: `per-app-domains` uses the user/admin HTTPS origins, while
-`single-domain` uses same-origin `/app` and `/admin` paths. Helm derives the same
-contract from each enabled `ingress.hosts` service entry: a separate host becomes
-an HTTPS URL and a service sharing the landing host must use a non-root path.
-Neither deployment path bakes an environment hostname into the image.
+public mode: `per-app-domains` uses the user-app HTTPS origin at `/` and the
+admin-app HTTPS URL ending in `/admin`, while `single-domain` uses same-origin
+`/app` and `/admin` paths. DehqonHub uses the per-app contract. Helm derives the
+same contract from each enabled `ingress.hosts` service entry: a separate host
+becomes an HTTPS URL and a service sharing the landing host must use a non-root
+path. Neither deployment path bakes an environment hostname into the image.
 
 The startup generator and landing consumer accept same-origin paths or
 credential-free HTTPS URLs without query strings or fragments. Exact

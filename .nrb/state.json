@@ -1,12 +1,12 @@
 {
   "version": 1,
-  "configHash": "df5655e4a6e2157ea0bcaddc3f8ae0f3ed0b3692d14fda5c3b195ee806b19627",
+  "configHash": "d05e95c047339148a4f755e7ca5bd3ccfcc176887229c6a36188bb9a806cf047",
   "files": {
-    "nrb.config.json": "282966901aee83c41a295eb4df63c2aafbffc28a2544052a388d78c134e36a70",
-    ".nrb/summary.md": "049dd2f4379f7612b1d802e8b1e968d97c642c7a9906654e972f42bf90c3ec61",
-    ".nrb/workspace.json": "3e6fdb998ef2345e227cff89271019bcc00bd22cbea9a85beaf11c0564bb74a3",
-    ".nrb/capabilities.json": "318d67e026ead72fd9a0b740e61acf5d3395325e02b97196269dd1b8543cfce1",
-    ".nrb/capabilities.env": "e83fb0febd1f504c012a3edf7ed2b6106a4e2f8ba421eb9cd2056d5975e7bb17",
+    "nrb.config.json": "f884f7ce9c52fd787687885dca89d37b2c42d48c9ee15e8273c3d8adcb55c56f",
+    ".nrb/summary.md": "11281638afaf6cca24c36bfc4100974e4ced15a13fd5da729997ed3d7026fe75",
+    ".nrb/workspace.json": "efc7f0ef84994b91cb0de051f33dc80c7a0c81da994b7d7bb09e65636b0b1e11",
+    ".nrb/capabilities.json": "30beeb9504d3b5a6626a8b944d5a2c6fea026995e0f7680f81a8f64856c4a1e6",
+    ".nrb/capabilities.env": "c209ddefa4b9204addd9fcf8b55a3e3fbb39b49de631cdc869652cbf7c75ec15",
     "apps/backend/admin/admin-app-api/src/capabilities.generated.ts": "af15b77bb5c3b0515cfc649217d723063178c78f9fb9cfba80abf59d7f4a6062",
     "apps/backend/user/user-app-api/src/capabilities.generated.ts": "a433ccb9390e479bc65c20c0e5271bf628ad0616fc042bada568e4c8cd5fee2c",
     "apps/backend/auth/auth-app-api/src/capabilities.generated.ts": "ffaf9f1c1e61c57ecfc1937deaee73e35046a2d4ffbed36ef1178adf26618730",
@@ -22,5 +22,5 @@
     "apps/backend/notification/notification-scheduler/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0",
     "apps/backend/notification/notification-consumer/src/capabilities.bootstrap.generated.ts": "9b3dc5f32d9439d0e62f2428fc165e2f3ee1eabac26f33f74841e9f563086cb0"
   },
-  "digest": "e61d6c80c904900b783b90378863e4c954ae631f3738d65e1dc3740eb790f4dc"
+  "digest": "5b84e66b5db44644410b05ef674ef0b33de52c9c0ad6d259b4eb13acf8947e16"
 }

@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016
+// @requirements REQ-AGRITECH-MARKETPLACE-016, REQ-AGRITECH-ROUTING-015, REQ-API-PROBLEM-001, REQ-FRONTEND-SHELL-004
 import { cleanup, render, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -124,8 +124,21 @@ describe('DehqonHub marketplace routes', () => {
     text.remove();
     expect(textClick.defaultPrevented).toBe(false);
     expect(dispatchAnchorClick((anchor) => (anchor.target = '_blank')).defaultPrevented).toBe(false);
-    expect(dispatchAnchorClick((anchor) => anchor.setAttribute('download', '')).defaultPrevented).toBe(false);
+    expect(
+      dispatchAnchorClick((anchor) => {
+        anchor.setAttribute('download', '');
+      }).defaultPrevented,
+    ).toBe(false);
     expect(dispatchAnchorClick((anchor) => (anchor.href = 'https://example.test')).defaultPrevented).toBe(false);
     expect(dispatchAnchorClick((anchor) => (anchor.target = '_self')).defaultPrevented).toBe(true);
+  });
+
+  it('serves the RFC 9457 problem registry from the user application', async () => {
+    window.history.replaceState({}, '', '/problems');
+    render(<UserRouter applyUserLocale={vi.fn()} applyUserTheme={vi.fn()} />);
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'site.problems.title' })).toBeTruthy();
+    expect(screen.getByText('https://dehqonhub.uz/problems')).toBeTruthy();
+    expect(screen.getByRole('heading', { level: 2, name: 'about:blank' })).toBeTruthy();
   });
 });

@@ -2808,10 +2808,10 @@ export interface operations {
             /**
              * Format: uri-reference
              * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example https://example.com/problems#step-up-required
+             * @example https://dehqonhub.uz/problems#step-up-required
              * @enum {string}
              */
-            type: 'https://example.com/problems#step-up-required';
+            type: 'https://dehqonhub.uz/problems#step-up-required';
             /**
              * @description A short human-readable summary of the problem type, localized according to content negotiation.
              * @example Step-up Authentication Required
@@ -2854,10 +2854,10 @@ export interface operations {
             /**
              * Format: uri-reference
              * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example https://example.com/problems#last-auth-method-unlink-forbidden
+             * @example https://dehqonhub.uz/problems#last-auth-method-unlink-forbidden
              * @enum {string}
              */
-            type: 'https://example.com/problems#last-auth-method-unlink-forbidden';
+            type: 'https://dehqonhub.uz/problems#last-auth-method-unlink-forbidden';
             /**
              * @description A short human-readable summary of the problem type, localized according to content negotiation.
              * @example Last Authentication Method Cannot Be Unlinked

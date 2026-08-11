@@ -18,7 +18,7 @@ Telegram web sign-in uses Telegram's current OpenID Connect authorization-code f
 
 ```text
 # Default same-origin deployment
-https://user-app.example.com/api/auth/oauth2/callback/telegram
+https://example.com/api/auth/oauth2/callback/telegram
 
 # Split-origin deployment
 https://auth-app-api.example.com/api/auth/oauth2/callback/telegram
@@ -52,7 +52,7 @@ Important env values:
 - `BETTER_AUTH_TRUSTED_ORIGINS`
 - `AUTH_ALLOWED_RETURN_URLS` (absolute frontend origins; relative values are rejected)
 - `VITE_TELEGRAM_AUTH_ENABLED` (build-time user-app flag)
-- `TELEGRAM_MINI_APP_URL` (canonical Mini App/Open App URL, for example `https://user-app.example.com/telegram-mini-app`)
+- `TELEGRAM_MINI_APP_URL` (canonical Mini App/Open App URL, for example `https://example.com/telegram-mini-app` when `user-app` owns the apex)
 - `TELEGRAM_LINK_TOKEN_TTL_SECONDS`
 
 ## Telegram bots with grammY
@@ -205,8 +205,8 @@ for app content.
 BotFather still owns the bot-profile **Main Mini App** button and allowed Mini
 App domain; Telegram does not expose those two bot-profile settings through the
 Bot API. During initial provider setup, configure the Main Mini App URL as
-`https://user-app.example.com/telegram-mini-app` and the domain as
-`user-app.example.com`. Runtime startup then wires the webhook, command menu,
+`https://example.com/telegram-mini-app` and the domain as `example.com` when
+`user-app` owns the apex. Runtime startup then wires the webhook, command menu,
 persistent chat menu button, and in-message launch buttons automatically.
 
 The Mini App frontend can be built in either API URL mode:

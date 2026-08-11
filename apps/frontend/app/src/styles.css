@@ -133,6 +133,81 @@
   gap: 0.65rem;
 }
 
+.user-problem-registry {
+  margin-inline: auto;
+  max-width: 55rem;
+  width: 100%;
+}
+
+.user-problem-registry__intro {
+  font-size: clamp(1rem, 2vw, 1.12rem);
+  margin: 0;
+  max-width: 46rem;
+}
+
+.user-problem-registry__intro code,
+.user-problem-card code {
+  color: var(--xr-color-primary-strong);
+  overflow-wrap: anywhere;
+}
+
+.user-problem-card {
+  background: var(--xr-card-background);
+  border: 1px solid var(--xr-color-border);
+  border-radius: var(--xr-radius-lg);
+  box-shadow: var(--xr-shadow-sm);
+  color: var(--xr-color-text);
+  display: grid;
+  gap: 0.75rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.user-problem-card h2 {
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  margin: 0;
+}
+
+.user-problem-card p,
+.user-problem-card dl,
+.user-problem-card ul {
+  margin: 0;
+}
+
+.user-problem-card__type {
+  width: fit-content;
+}
+
+.user-problem-card dl {
+  display: grid;
+  gap: 0.6rem 1rem;
+  grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr);
+}
+
+.user-problem-card dt {
+  color: var(--xr-color-muted);
+  font-weight: 750;
+}
+
+.user-problem-card dd {
+  line-height: 1.6;
+  margin: 0;
+  min-width: 0;
+}
+
+.user-problem-card ul {
+  display: grid;
+  gap: 0.65rem;
+  list-style: none;
+  padding: 0;
+}
+
+.user-problem-card li {
+  align-items: start;
+  display: grid;
+  gap: 0.2rem 0.75rem;
+  grid-template-columns: minmax(6rem, max-content) minmax(0, 1fr);
+}
+
 @media (max-width: 48rem) {
   .user-auth__grid,
   .user-settings__grid {
@@ -151,6 +226,15 @@
 }
 
 @media (max-width: 40rem) {
+  .user-problem-card dl,
+  .user-problem-card li {
+    grid-template-columns: 1fr;
+  }
+
+  .user-problem-card dd + dt {
+    margin-top: 0.35rem;
+  }
+
   .xr-mini-app-shell .xr-header__primary-controls {
     display: none;
   }

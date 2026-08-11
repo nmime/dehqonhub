@@ -2534,9 +2534,9 @@
                     "type": {
                       "type": "string",
                       "format": "uri-reference",
-                      "example": "https://example.com/problems#step-up-required",
+                      "example": "https://dehqonhub.uz/problems#step-up-required",
                       "description": "A URI reference identifying the problem type; defaults to about:blank when omitted.",
-                      "enum": ["https://example.com/problems#step-up-required"]
+                      "enum": ["https://dehqonhub.uz/problems#step-up-required"]
                     },
                     "title": {
                       "type": "string",
@@ -2584,9 +2584,9 @@
                     "type": {
                       "type": "string",
                       "format": "uri-reference",
-                      "example": "https://example.com/problems#last-auth-method-unlink-forbidden",
+                      "example": "https://dehqonhub.uz/problems#last-auth-method-unlink-forbidden",
                       "description": "A URI reference identifying the problem type; defaults to about:blank when omitted.",
-                      "enum": ["https://example.com/problems#last-auth-method-unlink-forbidden"]
+                      "enum": ["https://dehqonhub.uz/problems#last-auth-method-unlink-forbidden"]
                     },
                     "title": {
                       "type": "string",

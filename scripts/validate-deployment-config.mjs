@@ -149,6 +149,10 @@ has(
 );
 const nginxFullstack = read('docker/nginx-fullstack.conf');
 const nginxSpa = read('docker/nginx-spa.conf');
+const caddyUserRoutes = read('docker/caddy/routes/core/user.caddy');
+const caddyUserPathLine = caddyUserRoutes.split('\n').find((line) => line.trimStart().startsWith('path '));
+assert.ok(caddyUserPathLine, 'Caddy user API matcher must declare public paths.');
+const caddyUserPaths = new Set(caddyUserPathLine.trim().split(/\s+/u).slice(1));
 const landingAstroConfig = read('apps/frontend/landing/astro.config.mjs');
 has(landingAstroConfig, 'csp: true', 'Astro landing emits a hash-based hydration CSP');
 has(
@@ -529,8 +533,8 @@ const prodRedisCompose = read('docker/docker-compose.prod.redis.yml');
 
 const assertNamedClosureBuilds = (compose, label) => {
   has(compose, 'nrb-closure: ${NRB_CLOSURE_CONTEXT:?', `${label} required named closure context`);
-  const buildCount = compose.match(/^    build:$/gmu)?.length ?? 0;
-  const namedBuildCount = compose.match(/^      <<: \*nrb-build$/gmu)?.length ?? 0;
+  const buildCount = compose.match(/^ {4}build:$/gmu)?.length ?? 0;
+  const namedBuildCount = compose.match(/^ {6}<<: \*nrb-build$/gmu)?.length ?? 0;
   assert.ok(buildCount > 0, `${label} must define Dockerfile builds.`);
   assert.equal(namedBuildCount, buildCount, `${label} has a Dockerfile build without the nrb-closure anchor.`);
 };
@@ -578,6 +582,7 @@ has(
   'production source-build overlay defaults frontend builds to same-origin API routing',
 );
 const prodBackendEnv = section(prodCompose, 'x-backend-env:', '\nx-backend-command:');
+has(prodBackendEnv, 'HOST: 0.0.0.0', 'production Compose binds backend listeners to the container interface');
 has(prodBackendEnv, 'PORT: 80', 'production Compose explicitly assigns backend container port 80');
 has(prodBackendEnv, 'NODE_ENV: production', 'production Compose fixes NODE_ENV before provider resolution');
 for (const variable of marketplaceProviderModeVariables) {
@@ -868,17 +873,81 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
   has(text, 'location ^~ /auth/', 'auth API prefix route cannot be shadowed by regex static assets');
   has(text, 'location ^~ /api/auth/', 'Better Auth API prefix must be proxied to auth-app-api');
   has(text, 'location ^~ /profile/', 'profile/user API prefix route cannot be shadowed by regex static assets');
+  assert.ok(
+    !section(text, 'location ^~ /profile/ {', 'location ^~ /marketplace/ {').includes('$frontend_spa_navigation'),
+    'Nested profile API paths must not negotiate into the SPA.',
+  );
   has(
     text,
     'location ^~ /marketplace/',
     'marketplace API prefix route cannot be shadowed by SPA or regex static assets',
   );
+  before(
+    text,
+    'location = /marketplace {',
+    'location ^~ /marketplace/ {',
+    'exact marketplace API route precedes its API prefix',
+  );
+  for (const [route, label] of [
+    [
+      'location ~ ^/(?:advisories|deliveries|field-agent|field-visits|orders|partners|payments|produce|supplier)(?:/|$)',
+      'business user API roots',
+    ],
+    ['location = /farmer {', 'exact farmer API root'],
+    ['location = /marketplace {', 'exact marketplace API root'],
+  ]) {
+    has(text, route, `${label} are proxied before the SPA fallback`);
+  }
+  for (const operationalRoute of ['/health', '/live', '/ready']) {
+    assert.ok(
+      !text.includes(`location = ${operationalRoute} {`) && !text.includes(`location ^~ ${operationalRoute}/ {`),
+      `Operational route ${operationalRoute} must remain on the dedicated user API host.`,
+    );
+  }
   has(text, 'location ^~ /admin/', 'admin API prefix route cannot be shadowed by regex static assets');
   for (const service of ['auth-app-api', 'user-app-api', 'admin-app-api']) {
     has(text, helm ? `-${service}:` : `${service}:80`, `${service} upstream`);
   }
 };
 assertNginxRoutes(read('docker/nginx-fullstack.conf'));
+
+for (const route of [
+  '/advisories',
+  '/advisories/*',
+  '/deliveries',
+  '/deliveries/*',
+  '/farmer',
+  '/field-agent',
+  '/field-agent/*',
+  '/field-visits',
+  '/field-visits/*',
+  '/marketplace',
+  '/marketplace/*',
+  '/orders',
+  '/orders/*',
+  '/partners',
+  '/partners/*',
+  '/payments',
+  '/payments/*',
+  '/produce',
+  '/produce/*',
+  '/profile/*',
+  '/supplier',
+  '/supplier/*',
+]) {
+  assert.ok(caddyUserPaths.has(route), `Caddy must proxy user API route ${route}.`);
+}
+assert.ok(
+  !caddyUserPaths.has('/farmer/*'),
+  'Caddy must keep the /farmer/register SPA route out of the user API proxy.',
+);
+for (const operationalRoute of ['/health', '/health/*', '/live', '/ready']) {
+  assert.ok(
+    !caddyUserPaths.has(operationalRoute),
+    `Caddy must keep operational route ${operationalRoute} on the dedicated user API host.`,
+  );
+}
+has(caddyUserRoutes, 'reverse_proxy user-app-api:80', 'Caddy proxies user API routes to user-app-api');
 
 if (validateHelmStatic) {
   assertNginxRoutes(read('.helm/templates/configmap.yaml'), { helm: true });

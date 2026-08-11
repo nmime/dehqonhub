@@ -4,8 +4,9 @@
 
 This app owns the DehqonHub marketplace and authenticated user SPA shell. Keep reusable user
 features, API wrappers, runtime helpers, and shared UI in `libs/frontend/**`.
-`site-app` is the Vike SSR surface; do not retire or replace `user-app` without
-explicit parity work.
+For this product, `user-app` is the only selected public web application and
+owns the apex. The repository's landing and Vike site projects remain
+unselected reference renderers.
 
 ## Commands
 
@@ -26,7 +27,7 @@ behavior, Telegram integration, and complete account flows in `user-app:e2e`.
 
 The same `user-app` bundle is the canonical Telegram Mini App and normal web
 application. Configure BotFather with
-`https://user-app.example.com/telegram-mini-app`; `/tma` and `/tma/auth` remain
+`https://example.com/telegram-mini-app`; `/tma` and `/tma/auth` remain
 supported launch aliases.
 
 - `MiniAppProvider` in `@app/frontend-runtime` detects Telegram without making

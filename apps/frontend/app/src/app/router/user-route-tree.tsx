@@ -17,6 +17,7 @@ import { FarmerDashboardPage } from '../../pages/farmer-dashboard';
 import { AgriTechOperationsPage } from '../../pages/agritech-operations';
 import { MarketplacePage, type MarketplacePageProps } from '../../pages/marketplace';
 import { NotFoundPage } from '../../pages/not-found';
+import { ProblemsPage } from '../../pages/problems';
 import { UserShell } from './user-shell';
 import { useUserNavigate } from './user-navigation';
 import { useUserRuntime } from './user-runtime-context';
@@ -74,6 +75,12 @@ const operationsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/operations',
   component: AgriTechOperationsPage,
+});
+
+const problemsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/problems',
+  component: ProblemsPage,
 });
 
 function AuthRouteComponent() {
@@ -253,6 +260,7 @@ const routeTree = rootRoute.addChildren([
   accountRoute,
   contractRoute,
   operationsRoute,
+  problemsRoute,
 ]);
 
 export const createUserRouter = (history: RouterHistory = createBrowserHistory()) =>

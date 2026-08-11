@@ -401,6 +401,8 @@ function helmPlan(answers) {
       '.helm/values.yaml',
       '-f',
       '.helm/values-production.yaml',
+      '-f',
+      '.helm/values-selection.yaml',
       '--atomic',
       '--wait',
       '--timeout',

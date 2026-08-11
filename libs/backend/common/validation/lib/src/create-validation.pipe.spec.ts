@@ -43,7 +43,7 @@ describe('createValidationPipe', () => {
         }),
       ]),
     ).toEqual({
-      type: 'https://example.com/problems#client-data-validation',
+      type: 'https://dehqonhub.uz/problems#client-data-validation',
       title: 'Client Data Validation Failed',
       status: 400,
       code: 'client-data-validation',
@@ -133,7 +133,7 @@ describe('createValidationPipe', () => {
     const response = exception.getResponse();
 
     // Static fields from RFC 9457 definition
-    expect(response.type).toBe('https://example.com/problems#client-data-validation');
+    expect(response.type).toBe('https://dehqonhub.uz/problems#client-data-validation');
     expect(response.title).toBe('Client Data Validation Failed');
     expect(response.detail).toBe('One or more request members are invalid.');
     expect(response.status).toBe(HttpStatus.BAD_REQUEST);
@@ -165,7 +165,7 @@ describe('createValidationPipe', () => {
         code: 'client-data-validation',
         status: HttpStatus.BAD_REQUEST,
         title: 'Client Data Validation Failed',
-        type: 'https://example.com/problems#client-data-validation',
+        type: 'https://dehqonhub.uz/problems#client-data-validation',
       });
       expect(response.errors).toEqual([{ detail: 'name must be a string', pointer: '#/name' }]);
     }

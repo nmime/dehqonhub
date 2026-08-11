@@ -1,4 +1,4 @@
-// @requirements REQ-NOTIFY-PREFERENCE-006
+// @requirements REQ-FRONTEND-SHELL-004
 import type { ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';

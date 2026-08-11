@@ -36,7 +36,7 @@ describe('getProblemDetailsSchema', () => {
     const schema = getRegisteredProblemDetailsSchema('step-up-required');
 
     expect(schema.required).toEqual(['type', 'title', 'status', 'detail', 'code']);
-    expect(schema.properties?.type?.enum).toEqual(['https://example.com/problems#step-up-required']);
+    expect(schema.properties?.type?.enum).toEqual(['https://dehqonhub.uz/problems#step-up-required']);
     expect(schema.properties?.title?.enum).toBeUndefined();
     expect(schema.properties?.title?.description).toContain('localized');
     expect(schema.properties?.status?.enum).toEqual([403]);

@@ -21,10 +21,7 @@ const env = {
   NRB_CLOSURE_CONTEXT: resolve(process.cwd(), ".nrb/closure"),
 };
 
-const { closure } = await loadCurrentSelectedClosure(process.cwd());
-if (!closure.roots.includes("fullstack-e2e")) {
-  throw new Error("Fullstack e2e requires fullstack-e2e in the fresh selected closure.");
-}
+await loadCurrentSelectedClosure(process.cwd());
 
 if (await skipWhenDockerUnavailable("fullstack e2e")) process.exit(0);
 console.log(

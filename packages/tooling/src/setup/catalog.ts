@@ -274,7 +274,7 @@ export const appCatalog: Readonly<Record<AppId, Readonly<AppEntry>>> = {
     runtime: 'Playwright full-stack tests',
     publicHostname: null,
     requiresCapabilities: [],
-    requiresApps: ['admin-app', 'admin-app-api', 'auth-app-api', 'landing-app', 'site-app', 'user-app', 'user-app-api'],
+    requiresApps: ['admin-app', 'admin-app-api', 'auth-app-api', 'user-app', 'user-app-api'],
     conflictsWithCapabilities: [],
   },
   'acceptance-e2e': {

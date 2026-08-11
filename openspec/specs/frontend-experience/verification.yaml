@@ -28,6 +28,22 @@ requirements:
         target: fullstack-e2e:e2e
         lanes:
           - runtime
+      - kind: playwright
+        file: apps/frontend/landing/e2e/ssr-hydration.e2e-spec.mjs
+        target: landing-app:e2e
+        lanes:
+          - runtime
+      - kind: playwright
+        file: apps/frontend/site/e2e/ssr-hydration.e2e-spec.mjs
+        target: site-app:e2e
+        lanes:
+          - runtime
+      - kind: vitest
+        file: apps/frontend/mobile/src/mobile-app-providers.spec.tsx
+        target: mobile-app:test
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: libs/frontend/ui-web/lib/src/component/design-system-contract.spec.tsx
         target: '@app/frontend-ui-web:test'
@@ -98,8 +114,8 @@ requirements:
           - pr
           - main
       - kind: playwright
-        file: apps/e2e/fullstack/src/fullstack.spec.ts
-        target: fullstack-e2e:e2e
+        file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
+        target: user-app:e2e-authenticated
         lanes:
           - runtime
   - id: REQ-FRONTEND-SHELL-004
@@ -110,6 +126,8 @@ requirements:
       - site-app
       - mobile-app
       - '@app/frontend-feature-admin-shared'
+      - '@app/frontend-feature-shared-preferences'
+      - '@app/frontend-feature-user-preferences'
       - '@app/frontend-runtime'
     risk: high
     profiles:
@@ -125,6 +143,42 @@ requirements:
       - kind: vitest
         file: apps/frontend/admin/src/app/admin-routing.spec.tsx
         target: admin-app:test
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: apps/frontend/app/src/app/router/user-routing.spec.tsx
+        target: user-app:test
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: apps/frontend/landing/src/app/app.spec.tsx
+        target: landing-app:test
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: apps/frontend/site/pages/index/+Page.spec.tsx
+        target: site-app:test
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: apps/frontend/mobile/src/mobile-app-providers.spec.tsx
+        target: mobile-app:test
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/frontend/feature/shared/preferences/lib/src/use-session-preference-controls.spec.tsx
+        target: '@app/frontend-feature-shared-preferences:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/frontend/feature/user/preferences/lib/src/use-user-preference-controls.spec.tsx
+        target: '@app/frontend-feature-user-preferences:test'
         lanes:
           - pr
           - main
@@ -211,14 +265,25 @@ requirements:
         - vitest
     evidence:
       - kind: vitest
+        file: apps/frontend/landing/src/app/app.spec.tsx
+        target: landing-app:test
+        lanes:
+          - pr
+          - main
+      - kind: vitest
         file: apps/frontend/site/pages/index/+Page.spec.tsx
         target: site-app:test
         lanes:
           - pr
           - main
       - kind: playwright
-        file: apps/e2e/fullstack/src/fullstack.spec.ts
-        target: fullstack-e2e:e2e
+        file: apps/frontend/landing/e2e/ssr-hydration.e2e-spec.mjs
+        target: landing-app:e2e
+        lanes:
+          - runtime
+      - kind: playwright
+        file: apps/frontend/site/e2e/ssr-hydration.e2e-spec.mjs
+        target: site-app:e2e
         lanes:
           - runtime
   - id: REQ-FRONTEND-DESIGN-008

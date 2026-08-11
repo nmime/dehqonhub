@@ -1,4 +1,4 @@
-// @requirements REQ-NOTIFY-PREFERENCE-006
+// @requirements REQ-FRONTEND-SHELL-004
 import { describe, expect, it } from 'vitest';
 import { getPayloadLocale, getPayloadTheme } from './session-payload';
 

@@ -33,6 +33,8 @@ const mongoProductionUsers = read('docker/mongodb/create-production-user.js');
 
 const unsafeTags = new Set(['latest', 'main', 'master', 'dev', 'prod', 'production']);
 const placeholderTag = 'sha-000000000000';
+
+has(prodCompose, 'HOST: 0.0.0.0', 'production backend container bind host');
 const externalProxyModeContract = ['EXTERNAL_PROXY_PUBLIC_MODE', 'per-app-domains'].join('=');
 const assertProductionMarketplaceProviders = (content, label) => {
   for (const key of [
@@ -216,6 +218,8 @@ has(perAppCaddyfile, 'auth-app-api:80', 'per-app auth API upstream');
 has(composeWrapper, "'auth-app-api', 'AUTH_APP_API_DOMAIN'", 'app-id domain derivation');
 has(composeWrapper, "'landing-app': 'landing-app:8080'", 'landing apex upstream');
 has(composeWrapper, "'site-app': 'site-app:80'", 'site apex upstream');
+has(composeWrapper, "'user-app': 'user-app:8080'", 'user application apex upstream');
+has(edgeCompose, 'landing-app, site-app, or user-app', 'edge apex owner validation');
 for (const expected of [
   'AUTH_TELEGRAM_ENABLED:',
   'TELEGRAM_OIDC_ENABLED:',
@@ -284,7 +288,7 @@ for (const expected of [
   'DISCORD_CUSTOM_ID_SECRET_FILE=./secrets/discord_custom_id_secret.txt',
   'IMAGE_TAG=sha-000000000000',
   'PUBLIC_DOMAIN=example.com',
-  'PRIMARY_APP=landing-app',
+  'PRIMARY_APP=user-app',
   'COMPOSE_DATABASE_MODE=bundled-db',
   'COMPOSE_DOMAIN_MODE=per-app-domains',
   externalProxyModeContract,
@@ -372,6 +376,26 @@ assert.equal(
 has(composeWrapper, "'docker/docker-compose.prod.build.yml'", 'production wrapper source-build overlay');
 has(composeWrapper, "composeArgs.push('--no-build')", 'production wrapper defaults up to no-build');
 has(composeWrapper, "composeArgs.push('--build')", 'production wrapper explicitly builds only on source-build');
+assert.match(
+  composeWrapper,
+  /const sourceBuild = options\.sourceBuild;/u,
+  'production wrapper separates local provenance from per-invocation build intent',
+);
+assert.doesNotMatch(
+  composeWrapper,
+  /const sourceBuild = options\.sourceBuild\s*\|\|/u,
+  'production wrapper must not infer build intent from image provenance',
+);
+has(
+  composeWrapper,
+  "const noBuildRequested = options.composeArguments.includes('--no-build')",
+  'production wrapper can activate prebuilt local images without discarding local provenance',
+);
+has(
+  composeWrapper,
+  'if (sourceBuild) composeArgs.push',
+  'production wrapper builds on up only through the explicit source-build contract',
+);
 has(composeWrapper, "DOCKER_BUILDKIT: '1'", 'source-build wrapper enables BuildKit');
 has(
   composeWrapper,
@@ -382,6 +406,14 @@ has(
   composeWrapper,
   "spawnSync('pnpm', ['nrb', 'closure', 'check']",
   'source-build wrapper validates selected closure freshness against setup and the live graph',
+);
+has(composeWrapper, "'rm', '--stop', '--force'", 'activation removes deselected application containers');
+has(composeWrapper, 'reconcileArgs', 'activation exposes its closure reconciliation command for verification');
+has(composeWrapper, "key.startsWith('FULLSTACK_')", 'production runtime omits the deselected fullstack harness URL');
+has(
+  composeWrapper,
+  'cannot re-enable an unselected or noncanonical application origin',
+  'extra origins cannot restore removed application hosts',
 );
 has(
   composeModeSmoke,
@@ -403,7 +435,7 @@ for (const expected of [
   'wildcard DNS',
   'docker/docker-compose.prod.telegram.yml',
   'docker/docker-compose.prod.discord.yml',
-  'user-app.example.com/api/auth/oauth2/callback/telegram',
+  'example.com/api/auth/oauth2/callback/telegram',
   'pnpm run docker:prod:config:check',
   'pnpm nrb closure install',
   '.nrb/closure/',

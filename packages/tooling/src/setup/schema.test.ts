@@ -261,13 +261,11 @@ describe('catalog — appCatalog', () => {
     assert.equal(hostnames.size, 10);
   });
 
-  it('fullstack-e2e requires the complete stack it starts', () => {
+  it('fullstack-e2e requires only the product stack it starts', () => {
     assert.deepEqual(appCatalog['fullstack-e2e'].requiresApps, [
       'admin-app',
       'admin-app-api',
       'auth-app-api',
-      'landing-app',
-      'site-app',
       'user-app',
       'user-app-api',
     ]);

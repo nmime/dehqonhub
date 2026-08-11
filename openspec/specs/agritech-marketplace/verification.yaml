@@ -561,9 +561,17 @@ requirements:
     profiles: [operations, security]
     cucumber:
       disposition: not-applicable
-      reason: Secret mounting, immutable deployment inputs, migration ordering, and readiness are deployment configuration contracts.
+      reason: Selected-app derivation, apex browser destinations, exact certificate coverage, reverse-proxy behavior, trusted origins, secret mounting, and readiness are deployment configuration contracts.
       alternativeEvidence: [operations, security]
     evidence:
+      - kind: operations
+        file: scripts/single-server-deployment.spec.mjs
+        script: test:deploy
+        lanes: [pr, main]
+      - kind: security
+        file: scripts/single-server-deployment.spec.mjs
+        script: test:deploy
+        lanes: [pr, main]
       - kind: operations
         file: scripts/compose-production.spec.mjs
         script: test:deploy
@@ -581,7 +589,6 @@ requirements:
       [
         user-app,
         admin-app,
-        fullstack-e2e,
         user-app-api,
         admin-app-api,
         '@repo/tooling',
@@ -595,11 +602,11 @@ requirements:
         '@app/backend-feature-product-main',
       ]
     risk: high
-    profiles: [api]
+    profiles: [api, journey, operations]
     cucumber:
       disposition: not-applicable
-      reason: Exact product-root provider and consumer paths are more faithfully verified through route metadata, rendered route boundaries, and generated contract freshness.
-      alternativeEvidence: [vitest, playwright, contract, static]
+      reason: Exact apex ownership, SPA and API precedence, provider and consumer paths, and deselected-host behavior require direct route, browser, contract, static, and deployment-renderer assertions.
+      alternativeEvidence: [vitest, playwright, contract, static, operations]
     evidence:
       - kind: vitest
         file: apps/frontend/app/src/app/app.spec.tsx
@@ -618,8 +625,16 @@ requirements:
         target: admin-app-api:test
         lanes: [pr, main]
       - kind: playwright
-        file: apps/e2e/fullstack/src/fullstack.spec.ts
-        target: fullstack-e2e:e2e
+        file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
+        target: user-app:e2e-authenticated
+        lanes: [pr, main]
+      - kind: operations
+        file: scripts/single-server-deployment.spec.mjs
+        script: test:deploy
+        lanes: [pr, main]
+      - kind: operations
+        file: scripts/compose-production.spec.mjs
+        script: test:deploy
         lanes: [pr, main]
       - kind: contract
         file: libs/frontend/api-client/lib/src/user.ts
@@ -1199,6 +1214,7 @@ requirements:
       - '@app/backend-feature-agritech-shared'
       - '@app/backend-postgres-main-agritech'
       - '@app/backend-postgres-main-feature-flags'
+      - '@app/common-feature-flags'
     risk: high
     profiles: [api, domain, persistence, security, journey]
     cucumber:
@@ -1213,6 +1229,14 @@ requirements:
       - kind: vitest
         file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-public.repository.spec.ts
         target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/common/feature-flags/lib/src/index.spec.ts
+        target: '@app/common-feature-flags:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/postgres/main/feature-flags/lib/src/feature-flag-postgres.service.spec.ts
+        target: '@app/backend-postgres-main-feature-flags:test'
         lanes: [pr, main]
       - kind: security
         file: apps/frontend/admin/src/pages/feature-flags/feature-flags-page.spec.tsx

@@ -186,14 +186,14 @@ describe('auth-app-api e2e', () => {
     expect(ruResponse.headers['content-language']).toBe('ru');
     expect(enBody).toMatchObject({
       detail: 'The requested resource was not found.',
-      instance: 'https://example.com/problem-instances/not-found-en',
+      instance: 'https://dehqonhub.uz/problem-instances/not-found-en',
       status: 404,
       title: 'Not Found',
       type: 'about:blank',
     });
     expect(ruBody).toMatchObject({
       detail: 'Запрашиваемый ресурс не найден.',
-      instance: 'https://example.com/problem-instances/not-found-ru',
+      instance: 'https://dehqonhub.uz/problem-instances/not-found-ru',
       status: enBody.status,
       title: 'Не найдено',
       type: enBody.type,

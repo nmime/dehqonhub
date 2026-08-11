@@ -1926,11 +1926,27 @@ function MarketplaceFooter({ navigate, t }: Readonly<{ navigate: MarketplaceNavi
         <strong>{t('agritech.marketplace.footer.help')}</strong>
         <button
           onClick={() => {
+            navigate('/auth');
+          }}
+          type="button"
+        >
+          {t('user.form.login')}
+        </button>
+        <button
+          onClick={() => {
             navigate('/account');
           }}
           type="button"
         >
           {t('agritech.marketplace.account')}
+        </button>
+        <button
+          onClick={() => {
+            navigate('/problems');
+          }}
+          type="button"
+        >
+          {t('site.problems.title')}
         </button>
         <span>{t('agritech.marketplace.footer.providerBoundary')}</span>
       </div>

@@ -4,12 +4,9 @@
     "admin-app",
     "admin-app-api",
     "auth-app-api",
-    "fullstack-e2e",
-    "landing-app",
     "mobile-app",
     "notification-consumer",
     "notification-scheduler",
-    "site-app",
     "telegram-bot-api",
     "user-app",
     "user-app-api"
@@ -37,7 +34,7 @@
     "targets": [
       "docker"
     ],
-    "publicTopology": "single-domain",
+    "publicTopology": "per-app-domains",
     "kubernetesDelivery": "direct",
     "infrastructure": {
       "redis": "bundled",

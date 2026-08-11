@@ -151,7 +151,10 @@ test('helm plan validates the chart then upgrades with production values', () =>
   const upgrade = commandLine(stepFor(plan, 'helm release'));
   assert.match(upgrade, /helm upgrade --install acme \.helm/u);
   assert.match(upgrade, /--namespace acme --create-namespace/u);
-  assert.match(upgrade, /-f \.helm\/values\.yaml -f \.helm\/values-production\.yaml/u);
+  assert.match(
+    upgrade,
+    /-f \.helm\/values\.yaml -f \.helm\/values-production\.yaml -f \.helm\/values-selection\.yaml/u,
+  );
   assert.match(upgrade, /--atomic --wait/u);
 });
 

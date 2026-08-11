@@ -18,12 +18,12 @@ import {
 } from './index';
 
 describe('RFC 9457 problem details contract', () => {
-  it('keeps problem identities on generic product-domain documentation paths', () => {
+  it('keeps problem identities on the canonical DehqonHub documentation paths', () => {
     const documentationUrl = new URL(ProblemTypeDocumentationUrl);
     const instanceBaseUrl = new URL(ProblemInstanceBaseUrl);
 
-    expect(documentationUrl).toMatchObject({ hostname: 'example.com', pathname: '/problems' });
-    expect(instanceBaseUrl).toMatchObject({ hostname: 'example.com', pathname: '/problem-instances' });
+    expect(documentationUrl).toMatchObject({ hostname: 'dehqonhub.uz', pathname: '/problems' });
+    expect(instanceBaseUrl).toMatchObject({ hostname: 'dehqonhub.uz', pathname: '/problem-instances' });
     expect(instanceBaseUrl.origin).toBe(documentationUrl.origin);
   });
 
@@ -64,8 +64,8 @@ describe('RFC 9457 problem details contract', () => {
   );
 
   it('creates absolute opaque occurrence URIs only from safe request identifiers', () => {
-    expect(problemInstanceForRequestId('request-123')).toBe('https://example.com/problem-instances/request-123');
-    expect(problemInstanceForRequestId('trace:span')).toBe('https://example.com/problem-instances/trace%3Aspan');
+    expect(problemInstanceForRequestId('request-123')).toBe('https://dehqonhub.uz/problem-instances/request-123');
+    expect(problemInstanceForRequestId('trace:span')).toBe('https://dehqonhub.uz/problem-instances/trace%3Aspan');
     expect(() => problemInstanceForRequestId('request id')).toThrow(TypeError);
     expect(() => problemInstanceForRequestId('a'.repeat(129))).toThrow(TypeError);
     expect(isRequestId('request-123')).toBe(true);
@@ -75,7 +75,7 @@ describe('RFC 9457 problem details contract', () => {
 
   it.each([
     'about:blank',
-    'https://example.com/problems#not-found',
+    'https://dehqonhub.uz/problems#not-found',
     '/problem-instances/request-123',
     '#/profile/email',
   ])('accepts URI reference %j', (value) => {
@@ -88,8 +88,8 @@ describe('RFC 9457 problem details contract', () => {
     '%',
     '%ZZ',
     'https://[',
-    'https://example.com/problems\nsecret',
-    'https://example.com/проблема',
+    'https://dehqonhub.uz/problems\nsecret',
+    'https://dehqonhub.uz/проблема',
   ])('rejects invalid URI reference %j', (value) => {
     expect(isUriReference(value)).toBe(false);
   });

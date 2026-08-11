@@ -995,7 +995,9 @@ describe('MarketplacePage route action orchestration', () => {
     expect(navigate).toHaveBeenCalledWith('/requests');
     expect(navigate).toHaveBeenCalledWith('/favorites');
     expect(navigate).toHaveBeenCalledWith('/cart');
+    expect(navigate).toHaveBeenCalledWith('/auth');
     expect(navigate).toHaveBeenCalledWith('/account');
+    expect(navigate).toHaveBeenCalledWith('/problems');
     expect(navigate).toHaveBeenCalledWith('/verification');
 
     apiMock('marketplacePublicControllerListSuggestions').mockResolvedValueOnce(

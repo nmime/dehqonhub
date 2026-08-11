@@ -1,4 +1,4 @@
-// @requirements REQ-RUNTIME-DELIVERY-009 REQ-AGRITECH-DEPLOYMENT-014 REQ-AGRITECH-NOTIFICATION-022
+// @requirements REQ-RUNTIME-DELIVERY-009 REQ-AGRITECH-DEPLOYMENT-014 REQ-AGRITECH-NOTIFICATION-022 REQ-AGRITECH-ROUTING-015
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -10,6 +10,7 @@ import {
   buildComposeInvocation as buildComposeInvocationBase,
   composeExecutionStatus,
   derivePublicDomains,
+  executeComposeInvocation,
   parseEnvFile,
   productionComposeDiagnostics,
   validateBaseDomain,
@@ -51,6 +52,28 @@ const buildComposeInvocation = (argv, environment = {}, dependencies = {}) =>
 const mongoClosureDependencies = {
   readProductionClosure: () => closure('mongodb', allApps, ['mongodb', 'mongodb-init', 'mongodb-migrate', 'redis']),
 };
+
+test('production backends bind the container interface while host publications stay loopback-only', () => {
+  const compose = readFileSync(join(root, 'docker/docker-compose.prod.yml'), 'utf8');
+  const backendEnvironment = compose.slice(compose.indexOf('x-backend-env:'), compose.indexOf('\nx-backend-command:'));
+  assert.match(backendEnvironment, /^  HOST: 0\.0\.0\.0$/mu);
+  assert.match(backendEnvironment, /^  PORT: 80$/mu);
+  for (const publishedPort of [
+    'ADMIN_APP_API_PORT',
+    'USER_APP_API_PORT',
+    'AUTH_APP_API_PORT',
+    'DISCORD_APP_API_PORT',
+    'TELEGRAM_BOT_API_PORT',
+  ]) {
+    const portIndex = compose.indexOf(`published: '\${${publishedPort}:-`);
+    assert.notEqual(portIndex, -1, `missing production publication for ${publishedPort}`);
+    assert.match(
+      compose.slice(portIndex, portIndex + 140),
+      /host_ip: 127\.0\.0\.1/u,
+      `${publishedPort} must stay private on the host`,
+    );
+  }
+});
 
 test('keeps production Compose process diagnostics fixed and secret-safe', () => {
   const serialized = JSON.stringify(productionComposeDiagnostics);
@@ -106,6 +129,45 @@ test('reports fixed execution diagnostics for Docker launch and exit failures', 
   );
 });
 
+test('stops deselected containers before activation and aborts when reconciliation fails', () => {
+  const invocation = {
+    args: ['compose', 'up', 'user-app'],
+    env: { PUBLIC_DOMAIN: 'dehqonhub.uz' },
+    reconcileArgs: ['compose', 'rm', '--stop', '--force', 'landing-app', 'site-app'],
+  };
+  const calls = [];
+  const diagnostics = [];
+  assert.equal(
+    executeComposeInvocation(invocation, {
+      reportFailure: (message) => diagnostics.push(message),
+      spawn: (command, args) => {
+        calls.push([command, args]);
+        return { status: 0 };
+      },
+    }),
+    0,
+  );
+  assert.deepEqual(calls, [
+    ['docker', invocation.reconcileArgs],
+    ['docker', invocation.args],
+  ]);
+  assert.deepEqual(diagnostics, []);
+
+  calls.length = 0;
+  assert.equal(
+    executeComposeInvocation(invocation, {
+      reportFailure: (message) => diagnostics.push(message),
+      spawn: (command, args) => {
+        calls.push([command, args]);
+        return { status: 17 };
+      },
+    }),
+    17,
+  );
+  assert.deepEqual(calls, [['docker', invocation.reconcileArgs]]);
+  assert.deepEqual(diagnostics, [productionComposeDiagnostics.executionFailure]);
+});
+
 test('stages bundled MongoDB bootstrap secrets for its non-root entrypoint', () => {
   const entrypoint = readFileSync(resolve(root, 'docker/mongodb/start-authenticated-replica-set.sh'), 'utf8');
 
@@ -138,11 +200,11 @@ test('frontend runtime config emits only same-origin, HTTPS, or loopback HTTP la
   };
 
   const valid = render({
-    LANDING_ADMIN_APP_URL: 'https://admin.product.example',
+    LANDING_ADMIN_APP_URL: 'https://admin.product.example/admin',
     LANDING_USER_APP_URL: '/app',
   });
   assert.match(valid, /"userAppUrl": "\/app"/u);
-  assert.match(valid, /"adminAppUrl": "https:\/\/admin\.product\.example"/u);
+  assert.match(valid, /"adminAppUrl": "https:\/\/admin\.product\.example\/admin"/u);
 
   const local = render({
     FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true',
@@ -236,15 +298,130 @@ test('can assign the apex to site without changing any API hostname', () => {
   assert.equal(domains.AUTH_APP_API_DOMAIN, 'auth-app-api.product.example');
 });
 
+test('can assign the apex directly to the user application', () => {
+  const domains = derivePublicDomains('dehqonhub.uz', 'user-app');
+  assert.equal(domains.USER_APP_DOMAIN, 'dehqonhub.uz');
+  assert.equal(domains.ADMIN_APP_DOMAIN, 'admin-app.dehqonhub.uz');
+  assert.equal(domains.USER_APP_API_DOMAIN, 'user-app-api.dehqonhub.uz');
+});
+
 test('rejects schemes, ports, paths, wildcards, and invalid apex owners', () => {
   for (const invalid of ['https://example.com', 'example.com:443', 'example.com/path', '*.example.com', 'localhost']) {
     assert.throws(() => validateBaseDomain(invalid), /PUBLIC_DOMAIN/u);
   }
-  assert.throws(() => derivePublicDomains('example.com', 'user-app'), /PRIMARY_APP/u);
+  assert.throws(() => derivePublicDomains('example.com', 'admin-app'), /PRIMARY_APP/u);
+});
+
+test('uses the selected user app as the only apex frontend and reconciles removed app containers', () => {
+  const selectedApps = [
+    'admin-app',
+    'admin-app-api',
+    'auth-app-api',
+    'mobile-app',
+    'notification-consumer',
+    'notification-scheduler',
+    'telegram-bot-api',
+    'user-app',
+    'user-app-api',
+  ];
+  const dependencies = {
+    readProductionClosure: () =>
+      closure('postgres', selectedApps, [
+        'admin-app',
+        'admin-app-api',
+        'auth-app-api',
+        'migrate',
+        'mobile-app',
+        'notification-consumer',
+        'notification-scheduler',
+        'postgres',
+        'redis',
+        'telegram-bot-api',
+        'user-app',
+        'user-app-api',
+      ]),
+  };
+  const invocation = buildComposeInvocation(
+    ['up', '--env-file=.env.production.example', '--domains=external-proxy', '--tls=external', '-d'],
+    {
+      EXTERNAL_PROXY_PUBLIC_MODE: 'per-app-domains',
+      FULLSTACK_BASE_URL: 'https://legacy-fullstack.dehqonhub.uz',
+      LANDING_ADMIN_APP_URL: 'https://legacy-admin.dehqonhub.uz',
+      LANDING_APP_DOMAIN: 'landing-app.dehqonhub.uz',
+      LANDING_USER_APP_URL: 'https://user-app.dehqonhub.uz',
+      PRIMARY_APP: 'user-app',
+      PUBLIC_DOMAIN: 'dehqonhub.uz',
+      SITE_APP_DOMAIN: 'site-app.dehqonhub.uz',
+    },
+    dependencies,
+  );
+
+  assert.equal(invocation.env.PRIMARY_APP_UPSTREAM, 'user-app:8080');
+  assert.equal(invocation.env.USER_APP_DOMAIN, 'dehqonhub.uz');
+  assert.equal(invocation.env.USER_APP_URL, 'https://dehqonhub.uz');
+  assert.equal(invocation.env.PAYMENT_RETURN_URL_ORIGINS, 'https://dehqonhub.uz');
+  assert.equal(invocation.env.BETTER_AUTH_URL, 'https://dehqonhub.uz');
+  assert.equal(invocation.env.TELEGRAM_MINI_APP_URL, 'https://dehqonhub.uz/telegram-mini-app');
+  assert.equal(Object.hasOwn(invocation.env, 'DISCORD_INTERACTIONS_ENDPOINT'), false);
+  assert.equal(Object.hasOwn(invocation.env, 'DISCORD_REDIRECT_URI'), false);
+  assert.equal(Object.hasOwn(invocation.env, 'DISCORD_WEB_APP_BASE_URL'), false);
+  assert.doesNotMatch(invocation.env.AUTH_ALLOWED_RETURN_URLS, /landing-app|site-app|user-app\.dehqonhub/u);
+  for (const key of [
+    'FULLSTACK_BASE_URL',
+    'FULLSTACK_HOST',
+    'LANDING_ADMIN_APP_URL',
+    'LANDING_APP_DOMAIN',
+    'LANDING_APP_PORT',
+    'LANDING_USER_APP_URL',
+    'SITE_APP_DOMAIN',
+    'SITE_APP_PORT',
+  ]) {
+    assert.equal(Object.hasOwn(invocation.env, key), false, `${key} belongs to an unselected application`);
+  }
+  assert.ok(!invocation.selectedServices.includes('landing-app'));
+  assert.ok(!invocation.selectedServices.includes('site-app'));
+  assert.ok(invocation.args.includes('user-app'));
+  assert.ok(!invocation.args.includes('landing-app'));
+  assert.ok(!invocation.args.includes('site-app'));
+  assert.ok(invocation.reconcileArgs?.includes('landing-app'));
+  assert.ok(invocation.reconcileArgs?.includes('site-app'));
+  assert.ok(!invocation.reconcileArgs?.includes('user-app'));
+  assert.deepEqual(invocation.reconcileArgs?.slice(-3), ['discord-app-api', 'landing-app', 'site-app']);
+
+  for (const [key, value] of [
+    ['CORS_EXTRA_ORIGINS', 'https://user-app.dehqonhub.uz'],
+    ['BETTER_AUTH_EXTRA_TRUSTED_ORIGINS', 'https://landing-app.dehqonhub.uz'],
+  ]) {
+    assert.throws(
+      () =>
+        buildComposeInvocation(
+          ['config', '--env-file=.env.production.example', '--domains=external-proxy', '--tls=external'],
+          {
+            EXTERNAL_PROXY_PUBLIC_MODE: 'per-app-domains',
+            PRIMARY_APP: 'user-app',
+            PUBLIC_DOMAIN: 'dehqonhub.uz',
+            [key]: value,
+          },
+          dependencies,
+        ),
+      /cannot re-enable an unselected or noncanonical application origin/u,
+    );
+  }
 });
 
 test('builds the per-app automatic HTTPS topology from the production example', () => {
-  const invocation = buildComposeInvocation(['config', '--env-file=.env.production.example'], {});
+  const invocation = buildComposeInvocation(
+    ['config', '--env-file=.env.production.example'],
+    {},
+    {
+      readProductionClosure: () =>
+        closure(
+          'postgres',
+          ['admin-app', 'admin-app-api', 'auth-app-api', 'mobile-app', 'user-app', 'user-app-api'],
+          ['migrate', 'postgres', 'redis'],
+        ),
+    },
+  );
   assert.equal(invocation.databaseMode, 'bundled-db');
   assert.equal(invocation.databaseEngine, 'postgres');
   assert.equal(invocation.domainMode, 'per-app-domains');
@@ -253,14 +430,18 @@ test('builds the per-app automatic HTTPS topology from the production example', 
   assert.ok(invocation.files.includes('docker/docker-compose.prod.edge.yml'));
   assert.ok(!invocation.files.includes('docker/docker-compose.prod.edge-provided-tls.yml'));
   assert.equal(invocation.env.AUTH_APP_API_DOMAIN, 'auth-app-api.example.com');
-  assert.equal(invocation.env.PRIMARY_APP_UPSTREAM, 'landing-app:8080');
+  assert.equal(invocation.env.PRIMARY_APP_UPSTREAM, 'user-app:8080');
   assert.equal(invocation.env.EDGE_CADDYFILE, '/nrb/Caddyfile.selected');
-  assert.equal(invocation.env.BETTER_AUTH_URL, 'https://user-app.example.com');
-  assert.equal(invocation.env.LANDING_USER_APP_URL, 'https://user-app.example.com');
-  assert.equal(invocation.env.LANDING_ADMIN_APP_URL, 'https://admin-app.example.com');
+  assert.equal(invocation.env.BETTER_AUTH_URL, 'https://example.com');
+  assert.equal(invocation.env.USER_APP_URL, 'https://example.com');
+  assert.equal(invocation.env.PAYMENT_RETURN_URL_ORIGINS, 'https://example.com');
+  assert.equal(Object.hasOwn(invocation.env, 'LANDING_USER_APP_URL'), false);
+  assert.equal(Object.hasOwn(invocation.env, 'LANDING_ADMIN_APP_URL'), false);
+  assert.equal(Object.hasOwn(invocation.env, 'LANDING_APP_DOMAIN'), false);
+  assert.equal(Object.hasOwn(invocation.env, 'SITE_APP_DOMAIN'), false);
   assert.equal(
     invocation.env.AUTH_ALLOWED_RETURN_URLS,
-    'https://example.com,https://site-app.example.com,https://user-app.example.com,https://admin-app.example.com,https://mobile-app.example.com',
+    'https://example.com,https://admin-app.example.com,https://mobile-app.example.com',
   );
   assert.match(invocation.env.CORS_ORIGINS, /https:\/\/admin-app\.example\.com/u);
 });
@@ -480,7 +661,7 @@ test('builds one-host and external-proxy variants without incompatible overlays'
   assert.ok(!external.files.includes('docker/docker-compose.prod.edge.yml'));
   assert.equal(
     external.env.CORS_ORIGINS,
-    'https://admin-app.example.com,https://user-app.example.com,https://example.com,https://site-app.example.com,https://mobile-app.example.com',
+    'https://example.com,https://admin-app.example.com,https://mobile-app.example.com',
   );
 });
 
@@ -527,16 +708,16 @@ test('derives external host-proxy runtime URLs from its declared public topology
   assert.equal(single.publicDomainMode, 'single-domain');
   assert.equal(single.env.BETTER_AUTH_URL, 'https://example.com');
   assert.equal(single.env.CORS_ORIGINS, 'https://example.com');
-  assert.equal(single.env.TELEGRAM_MINI_APP_URL, 'https://example.com/telegram-mini-app');
+  assert.equal(Object.hasOwn(single.env, 'TELEGRAM_MINI_APP_URL'), false);
 
   const perApp = buildComposeInvocation(
     ['config', '--env-file=.env.production.example', '--domains=external-proxy', '--tls=external'],
     { EXTERNAL_PROXY_PUBLIC_MODE: 'per-app-domains' },
   );
   assert.equal(perApp.publicDomainMode, 'per-app-domains');
-  assert.equal(perApp.env.BETTER_AUTH_URL, 'https://user-app.example.com');
-  assert.equal(perApp.env.LANDING_USER_APP_URL, 'https://user-app.example.com');
-  assert.equal(perApp.env.LANDING_ADMIN_APP_URL, 'https://admin-app.example.com');
+  assert.equal(perApp.env.BETTER_AUTH_URL, 'https://example.com');
+  assert.equal(perApp.env.LANDING_USER_APP_URL, 'https://example.com');
+  assert.equal(perApp.env.LANDING_ADMIN_APP_URL, 'https://admin-app.example.com/admin');
   assert.match(perApp.env.CORS_ORIGINS, /https:\/\/admin-app\.example\.com/u);
 
   assert.throws(
@@ -592,11 +773,24 @@ test('edge routes fall back to default when only non-edge profiles are set', () 
   assert.equal(invocation.env.EDGE_OPTIONAL_ROUTES, 'default');
 });
 
-test('COMPOSE_IMAGE_SOURCE=local adds the build overlay and builds on up', () => {
+test('COMPOSE_IMAGE_SOURCE=local preserves provenance while ordinary up activates prebuilt images', () => {
   const invocation = buildComposeInvocation(['up', '--env-file=.env.production.example', '--images=local'], {});
-  assert.ok(invocation.files.includes('docker/docker-compose.prod.build.yml'));
-  assert.ok(invocation.args.includes('--build'));
   assert.equal(invocation.imageSource, 'local');
+  assert.equal(invocation.sourceBuild, false);
+  assert.ok(!invocation.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.ok(invocation.args.includes('--no-build'));
+  assert.ok(!invocation.args.includes('--build'));
+});
+
+test('prebuilt local images retain local provenance and start without rebuilding', () => {
+  const invocation = buildComposeInvocation(['up', '--env-file=.env.production.example', '--no-build'], {
+    COMPOSE_IMAGE_SOURCE: 'local',
+  });
+  assert.equal(invocation.imageSource, 'local');
+  assert.equal(invocation.sourceBuild, false);
+  assert.ok(!invocation.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.equal(invocation.args.filter((argument) => argument === '--no-build').length, 1);
+  assert.ok(!invocation.args.includes('--build'));
 });
 
 test('image source defaults to registry and never becomes a required env key', () => {
@@ -618,7 +812,7 @@ test('env-provided image source is honoured without a CLI flag', () => {
     COMPOSE_IMAGE_SOURCE: 'local',
   });
   assert.equal(invocation.imageSource, 'local');
-  assert.ok(invocation.files.includes('docker/docker-compose.prod.build.yml'));
+  assert.ok(!invocation.files.includes('docker/docker-compose.prod.build.yml'));
 });
 
 test('rejects an unknown image source', () => {
@@ -700,7 +894,7 @@ test('uses immutable images by default and enables source builds only explicitly
 test('provider-free frontend selection omits databases, migrator, and backends', () => {
   const invocation = buildComposeInvocation(
     ['up', '--env-file=.env.production.example', '--domains=external-proxy', '--tls=external'],
-    { COMPOSE_DATABASE_MODE: '', DATABASE_ENGINE: '' },
+    { COMPOSE_DATABASE_MODE: '', DATABASE_ENGINE: '', PRIMARY_APP: 'landing-app' },
     { readProductionClosure: () => closure(null, ['landing-app'], []) },
   );
   assert.equal(invocation.databaseEngine, null);
@@ -715,7 +909,7 @@ test('provider-free frontend selection omits databases, migrator, and backends',
 
 test('rejects positional and option-embedded references to unselected services', () => {
   const dependencies = { readProductionClosure: () => closure(null, ['landing-app'], []) };
-  const environment = { COMPOSE_DATABASE_MODE: '', DATABASE_ENGINE: '' };
+  const environment = { COMPOSE_DATABASE_MODE: '', DATABASE_ENGINE: '', PRIMARY_APP: 'landing-app' };
   assert.throws(
     () =>
       buildComposeInvocationBase(
@@ -771,6 +965,23 @@ test('rejects an unselected apex app when Compose owns the edge', () => {
         ['config', '--env-file=.env.production.example'],
         { COMPOSE_DATABASE_MODE: '', DATABASE_ENGINE: '' },
         { readProductionClosure: () => closure(null, ['site-app'], []) },
+      ),
+    /PRIMARY_APP must be selected/u,
+  );
+});
+
+test('rejects a stale unselected apex app for a declared external-proxy public mode', () => {
+  assert.throws(
+    () =>
+      buildComposeInvocation(
+        ['config', '--env-file=.env.production.example', '--domains=external-proxy', '--tls=external'],
+        {
+          COMPOSE_DATABASE_MODE: '',
+          DATABASE_ENGINE: '',
+          EXTERNAL_PROXY_PUBLIC_MODE: 'per-app-domains',
+          PRIMARY_APP: 'landing-app',
+        },
+        { readProductionClosure: () => closure(null, ['user-app'], []) },
       ),
     /PRIMARY_APP must be selected/u,
   );

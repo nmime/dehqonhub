@@ -249,7 +249,7 @@ describe('exceptions response mapper', () => {
       expect(header).toHaveBeenCalledWith('x-request-id', 'test-req-123');
       expect(header).toHaveBeenCalledWith('vary', 'Accept-Language, X-Locale, X-Language, Cookie');
       expect(json.mock.calls[0]?.[0]).toMatchObject({
-        instance: 'https://example.com/problem-instances/test-req-123',
+        instance: 'https://dehqonhub.uz/problem-instances/test-req-123',
         status: 400,
         type: 'about:blank',
       });
