@@ -33,6 +33,9 @@ const isTelegramRoute = (path: string): boolean => {
 
 const isAnonymousPublicRoute = (path: string): boolean => normalizePath(path) === '/problems';
 
+const isOptionalProblemPresentationBootstrap = (method: string | undefined, endpoint: string | undefined): boolean =>
+  method === 'GET' && endpoint === '/auth/problem-presentations';
+
 const tmaEnvironment = (): TmaEnvironment => {
   const env = import.meta.env as Partial<Record<keyof TmaEnvironment, string | undefined>>;
   return {
@@ -74,12 +77,25 @@ export const AuthRedirectBridge = () => {
           return;
         }
 
+        // Problem-presentation overrides are optional tenant UX metadata, not
+        // an authentication guard. Anonymous deployments may reject this
+        // background GET, but that must not turn otherwise public routes into
+        // protected routes. Every other auth failure keeps the normal policy.
+        if (
+          event.reason === 'unauthenticated' &&
+          isOptionalProblemPresentationBootstrap(event.error?.method, event.error?.endpoint)
+        ) {
+          clearApiAuthRequired();
+          return;
+        }
+
         // The RFC 9457 registry is public documentation. The application-wide
         // session probe may report an anonymous visitor, but that must not turn
         // `/problems` into an authenticated route after its initial render.
         if (
           isAnonymousPublicRoute(pathname) &&
           event.reason === 'unauthenticated' &&
+          event.error?.method === 'GET' &&
           event.error?.endpoint === '/auth/me'
         ) {
           clearApiAuthRequired();

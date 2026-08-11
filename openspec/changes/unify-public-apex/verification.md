@@ -41,9 +41,11 @@
   operations checks, and Playwright.
 - Evidence:
   - existing user/admin route and API contract evidence remains authoritative.
-  - selected `user-app:e2e-authenticated` Playwright evidence proves SPA deep
-    links and exact same-origin `/marketplace/*` browser requests without
-    selecting the landing/site-dependent full-stack reference harness.
+  - selected `user-app:e2e-authenticated` Playwright evidence proves the
+    signed-out marketplace remains public when the optional presentation
+    bootstrap is unauthorized, plus SPA deep links and exact same-origin
+    `/marketplace/*` browser requests, without selecting the
+    landing/site-dependent full-stack reference harness.
   - deployment tests prove the user router is mounted at the apex and
     `/marketplace/*` remains before the SPA fallback.
   - post-deployment HTTPS/browser canaries separately prove the exact deployed
@@ -63,8 +65,10 @@
     root, and unsafe codes or request identifiers fail closed.
   - `apps/frontend/app/src/app/router/user-routing.spec.tsx` proves selected
     `user-app` serves the shared registry at apex `/problems`.
-  - `user-app:e2e-authenticated` proves an anonymous `/auth/me` response does
-    not redirect the public registry to authentication.
+  - `user-app:test` and `user-app:e2e-authenticated` reproduce the production-mode
+    anonymous `/auth/problem-presentations` response and independently assert
+    that a read-only `/auth/me` session event does not redirect the public
+    registry to authentication.
   - `apps/e2e/acceptance/features/api-problems.feature` preserves the two
     stakeholder-readable occurrence scenarios.
 

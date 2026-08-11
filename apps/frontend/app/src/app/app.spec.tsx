@@ -1,5 +1,5 @@
-// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016
-import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016 REQ-API-PROBLEM-001
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiRuntimeEvents } from '@app/frontend-api-support';
 import App from './app';
@@ -78,19 +78,28 @@ const setFetch = (...responses: FetchReply[]) => {
 };
 
 const installSignedOutMarketplaceFetch = () => {
-  vi.stubGlobal(
-    'fetch',
-    vi.fn((input: RequestInfo | URL) => {
-      const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
-      if (pathname === '/marketplace/public/catalog' || pathname === '/marketplace/public/requests') {
-        return Promise.resolve(jsonResponse({ data: { items: [] } }));
-      }
-      if (pathname === '/auth/me' || pathname === '/marketplace/catalog' || pathname === '/marketplace/verification') {
-        return Promise.resolve(jsonResponse({}, false, 401));
-      }
-      return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
-    }),
-  );
+  const fetchMock = vi.fn((input: RequestInfo | URL) => {
+    const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+    if (pathname === '/marketplace/public/catalog' || pathname === '/marketplace/public/requests') {
+      return Promise.resolve(jsonResponse({ data: { items: [] } }));
+    }
+    if (
+      pathname === '/auth/me' ||
+      pathname === '/auth/problem-presentations' ||
+      pathname === '/marketplace/catalog' ||
+      pathname === '/marketplace/verification'
+    ) {
+      return Promise.resolve(jsonResponse({}, false, 401));
+    }
+    return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
+  });
+  vi.stubGlobal('fetch', fetchMock);
+  return fetchMock;
+};
+
+const enableProductionSameOriginApi = () => {
+  vi.stubEnv('MODE', 'production');
+  vi.stubEnv('VITE_API_BASE_URL_MODE', 'same-origin');
 };
 
 type FetchInit = {
@@ -243,10 +252,22 @@ describe('User app shell', () => {
     vi.unstubAllEnvs();
   });
 
-  it('renders the anonymous DehqonHub entry at the repository root without duplicate product chrome', async () => {
-    installSignedOutMarketplaceFetch();
+  it('renders the anonymous DehqonHub entry when the production problem-presentation bootstrap returns 401', async () => {
+    enableProductionSameOriginApi();
+    const fetchMock = installSignedOutMarketplaceFetch();
     const { container } = render(<App />);
     await screen.findByRole('heading', { name: 'Everything for your farm in one place' });
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(
+          ([input]) =>
+            new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname ===
+            '/auth/problem-presentations',
+        ),
+      ).toBe(true);
+      expect(apiRuntimeEvents.getState().authRequired).toBe(false);
+      expect(window.location.pathname).toBe('/');
+    });
     const html = container.innerHTML;
 
     expect(container.querySelectorAll('.dh-marketplace')).toHaveLength(1);
@@ -273,23 +294,52 @@ describe('User app shell', () => {
     expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/verification');
   });
 
-  it('keeps the public problem registry available after the anonymous session probe', async () => {
+  it('keeps the public problem registry available after its anonymous production bootstrap and session event', async () => {
     window.history.replaceState({}, '', '/problems');
-    vi.stubGlobal(
-      'fetch',
-      vi.fn((input: RequestInfo | URL) => {
-        const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
-        if (pathname === '/auth/me') {
-          return Promise.resolve(jsonResponse({}, false, 401));
-        }
-        return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
-      }),
-    );
+    enableProductionSameOriginApi();
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+      if (pathname === '/auth/problem-presentations') {
+        return Promise.resolve(jsonResponse({}, false, 401));
+      }
+      return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
+    });
+    vi.stubGlobal('fetch', fetchMock);
 
     render(<App />);
 
     expect(await screen.findByRole('heading', { level: 1, name: 'API problem types' })).toBeTruthy();
     expect(screen.getByText('https://dehqonhub.uz/problems')).toBeTruthy();
+    await waitFor(() => {
+      expect(
+        new Set(
+          fetchMock.mock.calls.map(
+            ([input]) => new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname,
+          ),
+        ),
+      ).toEqual(new Set(['/auth/problem-presentations']));
+      expect(apiRuntimeEvents.getState().authRequired).toBe(false);
+      expect(window.location.pathname).toBe('/problems');
+    });
+
+    act(() => {
+      apiRuntimeEvents.emit({
+        type: 'auth-required',
+        error: {
+          code: 'http.401',
+          endpoint: '/auth/me',
+          id: 'GET:/auth/me:401:http.401',
+          kind: 'client',
+          message: 'Authentication is required.',
+          method: 'GET',
+          status: 401,
+        },
+        reason: 'unauthenticated',
+        redirectTo: '/auth',
+      });
+    });
+
+    expect(apiRuntimeEvents.getState().authRequired).toBe(false);
     expect(window.location.pathname).toBe('/problems');
   });
 

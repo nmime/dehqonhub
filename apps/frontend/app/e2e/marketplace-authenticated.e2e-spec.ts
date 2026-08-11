@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-RECOVERY-010 REQ-AGRITECH-WEB-006 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024 REQ-AGRITECH-ROUTING-015 REQ-API-PROBLEM-001 REQ-FRONTEND-ACCESSIBILITY-003
+// @requirements REQ-AUTH-RECOVERY-010 REQ-AGRITECH-WEB-006 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ROUTING-015 REQ-API-PROBLEM-001 REQ-FRONTEND-ACCESSIBILITY-003
 import { expect, test, type Page, type Route } from '@playwright/test';
 import type {
   ContractArtifactDto,
@@ -719,16 +719,39 @@ const viewports = [
   { height: 960, name: 'desktop', width: 1440 },
 ] as const;
 
-test('anonymous visitors can read the public RFC 9457 problem registry', async ({ page }) => {
-  await page.route('**/auth/me', async (route) => {
-    await route.fulfill({
-      body: JSON.stringify({ detail: 'Authentication is required.', status: 401, title: 'Unauthorized' }),
-      contentType: 'application/problem+json',
-      status: 401,
-    });
+const fulfillAnonymousAuthFailure = async (route: Route): Promise<void> => {
+  await route.fulfill({
+    body: JSON.stringify({ detail: 'Authentication is required.', status: 401, title: 'Unauthorized' }),
+    contentType: 'application/problem+json',
+    status: 401,
+  });
+};
+
+test('anonymous visitors keep the public marketplace when optional presentation bootstrap is unauthorized', async ({
+  page,
+}) => {
+  await page.route('**/auth/problem-presentations', fulfillAnonymousAuthFailure);
+  await page.route('**/marketplace/catalog', fulfillAnonymousAuthFailure);
+  await page.route('**/marketplace/public/catalog', async (route) => {
+    await route.fulfill({ body: JSON.stringify({ data: { items: [] } }), contentType: 'application/json' });
+  });
+  await page.route('**/marketplace/public/requests', async (route) => {
+    await route.fulfill({ body: JSON.stringify({ data: { items: [] } }), contentType: 'application/json' });
   });
 
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  await expect(page).toHaveURL(/\/$/u);
+  await expect(page.getByRole('heading', { level: 1, name: 'Everything for your farm in one place' })).toBeVisible();
+});
+
+test('anonymous visitors can read the public RFC 9457 problem registry', async ({ page }) => {
+  await page.route('**/auth/problem-presentations', fulfillAnonymousAuthFailure);
+  await page.route('**/auth/me', fulfillAnonymousAuthFailure);
+
   await page.goto('/problems');
+  await page.waitForLoadState('networkidle');
 
   await expect(page).toHaveURL(/\/problems$/u);
   await expect(page.getByRole('heading', { level: 1, name: 'API problem types' })).toBeVisible();

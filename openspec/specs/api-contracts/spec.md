@@ -26,8 +26,10 @@ use `https://dehqonhub.uz/problem-instances/<encoded-request-id>`, and selected
   host, repository, package, template, or removed application hostname.
 - The apex registry documents `about:blank` and every registered custom problem
   type from the same shared definitions used to construct response identities.
-- Anonymous visitors can read the apex registry; the global session probe never
-  redirects this public documentation to authentication.
+- An anonymous rejection from the optional problem-presentation bootstrap does
+  not establish route protection. Anonymous visitors can read the apex registry,
+  and its read-only session probe never redirects this public documentation to
+  authentication.
 
 **Failure behavior:**
 
