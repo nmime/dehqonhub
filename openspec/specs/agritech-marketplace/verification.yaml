@@ -874,6 +874,7 @@ requirements:
   - id: REQ-AGRITECH-ENGAGEMENT-019
     projects:
       [
+        admin-app,
         user-app,
         user-app-api,
         admin-app-api,
@@ -943,9 +944,18 @@ requirements:
         file: apps/frontend/app/src/pages/marketplace/ui/marketplace-page.spec.tsx
         target: user-app:test
         lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/admin/src/pages/agritech/marketplace-admin-page.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/admin/e2e/marketplace-operations.e2e-spec.ts
+        target: admin-app:e2e-marketplace
+        lanes: [pr, main]
   - id: REQ-AGRITECH-LIFECYCLE-020
     projects:
       [
+        admin-app,
         user-app-api,
         admin-app-api,
         '@app/backend-feature-agritech-main',
@@ -992,6 +1002,14 @@ requirements:
         file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-contract-lifecycle.component-spec.ts
         target: '@app/backend-postgres-main-agritech:component-test'
         lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/admin/src/pages/agritech/marketplace-admin-page.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/admin/e2e/marketplace-operations.e2e-spec.ts
+        target: admin-app:e2e-marketplace
+        lanes: [pr, main]
       - kind: static
         file: libs/backend/postgres/main/agritech/lib/src/migrations/marketplace-dispute-evidence.migration.spec.ts
         target: '@app/backend-postgres-main-agritech:test'
@@ -999,6 +1017,7 @@ requirements:
   - id: REQ-AGRITECH-NOTIFICATION-022
     projects:
       [
+        admin-app,
         '@app/backend-common-i18n',
         '@app/common-i18n-keys',
         '@app/backend-feature-agritech-main',
@@ -1055,6 +1074,14 @@ requirements:
         file: packages/tooling/src/setup/planner.test.ts
         target: '@repo/tooling:test'
         lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/admin/src/pages/agritech/marketplace-admin-page.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/admin/e2e/marketplace-operations.e2e-spec.ts
+        target: admin-app:e2e-marketplace
+        lanes: [pr, main]
       - kind: operations
         file: scripts/compose-production.spec.mjs
         script: test:deploy
@@ -1107,6 +1134,59 @@ requirements:
         file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
         target: user-app:e2e-authenticated
         lanes: [main, nightly]
+  - id: REQ-AGRITECH-ADMIN-025
+    projects:
+      - admin-app
+      - admin-app-api
+      - '@app/frontend-api-client'
+      - '@app/frontend-feature-admin-i18n'
+      - '@app/backend-feature-agritech-admin'
+      - '@app/backend-feature-agritech-main'
+      - '@app/backend-feature-agritech-shared'
+      - '@app/backend-postgres-main-agritech'
+    risk: critical
+    profiles: [api, journey, security]
+    cucumber:
+      disposition: not-applicable
+      reason: Privileged responsive queues, keyboard focus, exact generated request construction, tenant-scoped lifecycle projection, and PostgreSQL isolation are more directly challenged by component, contract, security, and browser evidence.
+      alternativeEvidence: [vitest, contract, security, component, playwright]
+    evidence:
+      - kind: vitest
+        file: apps/frontend/admin/src/pages/agritech/marketplace-admin-page.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/admin/src/app/admin-routing.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/admin/e2e/marketplace-operations.e2e-spec.ts
+        target: admin-app:e2e-marketplace
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/generated-api-client.spec.ts
+        target: '@app/frontend-api-client:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: apps/backend/admin/admin-app-api/src/agritech-marketplace.e2e-spec.ts
+        target: admin-app-api:e2e
+        lanes: [pr, main]
+      - kind: contract
+        file: apps/backend/admin/admin-app-api/src/marketplace-contract-lifecycle.e2e-spec.ts
+        target: admin-app-api:e2e
+        lanes: [pr, main]
+      - kind: security
+        file: apps/backend/admin/admin-app-api/src/marketplace-contract-lifecycle.e2e-spec.ts
+        target: admin-app-api:e2e
+        lanes: [pr, main]
+      - kind: security
+        file: libs/backend/feature/agritech/admin/lib/src/marketplace-contract-lifecycle-admin.controller.spec.ts
+        target: '@app/backend-feature-agritech-admin:test'
+        lanes: [pr, main]
+      - kind: component
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-contract-lifecycle.component-spec.ts
+        target: '@app/backend-postgres-main-agritech:component-test'
+        lanes: [pr, main]
   - id: REQ-AGRITECH-DEMO-024
     projects:
       - admin-app

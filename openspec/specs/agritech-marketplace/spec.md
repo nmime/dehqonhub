@@ -257,7 +257,8 @@ The platform SHALL expose the canonical user AgriTech workflow at `/`, SHALL
 expose general AgriTech user API resources without an `agritech` prefix, SHALL
 expose DehqonHub commerce APIs below `/marketplace/*`, SHALL expose the canonical
 operator workflow at `/admin`, and SHALL expose privileged AgriTech API
-resources directly below `/admin`. The `/marketplace/*` API namespace MUST keep
+resources directly below `/admin`, including marketplace operations below
+`/admin/marketplace/*`. The `/marketplace/*` API namespace MUST keep
 same-origin JSON resources distinct from SPA deep links such as `/catalog` and
 `/cart`; `/marketplace` itself MUST NOT become a second product route.
 First-party web routes, API controllers, reverse proxies, OpenAPI contracts,
@@ -321,8 +322,10 @@ path prohibition and SHALL retain their existing semantics.
 - **WHEN** an authorized operator opens the product or a generated admin client
   addresses an AgriTech resource
 - **THEN** the product uses `/admin` and the API uses a direct privileged path
-  such as `/admin/partners`, `/admin/analytics`, or `/admin/integrations` with
-  the existing guard and endpoint permission
+  such as `/admin/partners`, `/admin/analytics`,
+  `/admin/marketplace/commission-policies`, or
+  `/admin/marketplace/engagement/review-reports` with the existing guard and
+  endpoint permission
 
 #### Scenario: Removed namespaces do not survive as aliases
 
@@ -330,8 +333,8 @@ path prohibition and SHALL retain their existing semantics.
   `/admin/agritech`, an `/agritech/*` API path, or an `/admin/agritech/*` API
   path
 - **THEN** no product route, redirect, or compatibility shim recognizes that
-  old path, while only the documented `/marketplace/*` API resources remain
-  valid
+  old path, while only the documented `/marketplace/*` user APIs and
+  `/admin/marketplace/*` privileged APIs remain valid
 
 #### Scenario: Payment returns to the canonical product
 
@@ -860,7 +863,7 @@ opaque public identifiers and persisted idempotency, authorization, quota, and
 moderation state; they SHALL NOT accept or expose private product, produce,
 tenant, owner, partner, provider, or lifecycle identifiers.
 
-**Ownership:** `user-app`, `user-app-api`, `admin-app-api`, `acceptance-e2e`,
+**Ownership:** `user-app`, `admin-app`, `user-app-api`, `admin-app-api`, `acceptance-e2e`,
 `@app/backend-feature-agritech-main`,
 `@app/backend-feature-agritech-admin`,
 `@app/backend-feature-agritech-shared`, and
@@ -982,7 +985,7 @@ outside production; mock execution SHALL preserve every internal authorization,
 idempotency, ordering, and persistence guard and SHALL never claim legal effect
 or money movement.
 
-**Ownership:** `user-app-api`, `admin-app-api`,
+**Ownership:** `admin-app`, `user-app-api`, `admin-app-api`,
 `@app/backend-feature-agritech-main`,
 `@app/backend-feature-agritech-admin`,
 `@app/backend-feature-agritech-shared`, and
@@ -1088,7 +1091,7 @@ transaction commits and SHALL preserve a stable intent identity, tenant and
 party authorization, bounded retries, explicit provider provenance, and an
 auditable terminal or reconciliation state.
 
-**Ownership:** `@app/backend-common-i18n`, `@app/common-i18n-keys`,
+**Ownership:** `admin-app`, `@app/backend-common-i18n`, `@app/common-i18n-keys`,
 `@app/backend-feature-agritech-main`,
 `@app/backend-feature-agritech-admin`,
 `@app/backend-feature-agritech-shared`,
@@ -1254,3 +1257,82 @@ immediately without creating, changing, or deleting real marketplace records.
 
 - **WHEN** a caller without feature-flag write permission attempts to change demo visibility
 - **THEN** the backend denies the request and the admin UI exposes no writable toggle
+
+### Requirement: [REQ-AGRITECH-ADMIN-025] Administrator web completes marketplace operations
+
+The responsive administrator web application SHALL provide authorized tenant
+operators with deep-linkable overview, moderation, commerce, engagement, and
+delivery workspaces that consume the generated admin API contract for every
+supported marketplace administration workflow. The application SHALL expose
+tenant-scoped analytics, partners, farmers, verification cases, seller/listing/
+request moderation queues, contracts and dispute evidence, commission policy,
+sample policy, review reports, lifecycle notifications, orders, deliveries,
+advisories, pilots, integrations, and the governed demo toggle without browser-
+authored operational state or hidden-identifier entry.
+
+**Ownership:** `admin-app`, `admin-app-api`, `@app/frontend-api-client`,
+`@app/frontend-feature-admin-i18n`, `@app/backend-feature-agritech-admin`,
+`@app/backend-feature-agritech-main`, `@app/backend-feature-agritech-shared`,
+and `@app/backend-postgres-main-agritech`.
+
+**Evidence profile:** API, journey, and security evidence.
+
+**Invariants:**
+
+- Read-only, write, and approve controls exactly follow the existing AgriTech
+  admin permissions; absent UI controls never replace backend authorization.
+- Every mutation uses the authoritative queued revision, fingerprint, evidence
+  identity, and a safe idempotency key where the contract requires one.
+- A tenant-scoped lifecycle projection exposes only the safe contract party
+  snapshots, open dispute, evidence metadata, fulfillment state, and timeline
+  needed for moderation; provider receipts, leases, private storage references,
+  and foreign-tenant records remain absent.
+- All four supported locales provide equivalent state, action, failure, and
+  recovery semantics at desktop and the 320 px responsive floor.
+- Empty, loading, denied, conflict, provider simulation, reconciliation, and
+  failed-read states remain distinct and never fall back to fabricated records.
+- Native operator presentation and cross-tenant support tooling are excluded.
+
+**Failure behavior:**
+
+- A failed workspace read renders the owning retry state without fabricating
+  fallback records or retaining stale privileged data.
+- A stale revision/fingerprint, contradictory input, duplicate concurrent
+  decision, or changed input under an idempotency key renders conflict recovery,
+  refreshes authoritative data, and claims no optimistic success.
+- A missing permission returns the existing safe denial and reveals no
+  mutation control or foreign resource.
+
+#### Scenario: Moderator clears authoritative queues
+
+- **WHEN** an approving tenant operator opens verification and publication
+  moderation, reviews the pinned identity/content context, and decides the
+  current revisions
+- **THEN** the generated commands submit the exact revisions, fingerprints,
+  reasons, and idempotency keys, successful items leave their queues after
+  refresh, and stale or concurrent decisions recover without duplicate effects
+
+#### Scenario: Dispute moderator uses persisted evidence
+
+- **WHEN** an approving tenant operator opens a disputed contract, selects
+  persisted evidence from its current evidence revision, and records a valid
+  resolution
+- **THEN** the contract, safe parties, fulfillment state, evidence metadata,
+  and outcome remain tenant-scoped, the resolution commits once, and no hidden
+  evidence identifier must be typed
+
+#### Scenario: Policies and engagement remain compare-and-set
+
+- **WHEN** a writing operator activates commission or sample policy and an
+  approving operator decides a reported review
+- **THEN** the UI submits the displayed policy/report revision with a stable
+  command key, presents exact basis-point or quota values, and refreshes the
+  authoritative result after success or conflict
+
+#### Scenario: Read-only operator has a complete safe view
+
+- **WHEN** an operator with read but without write or approve permission opens
+  every marketplace workspace at 320 px or desktop width in any supported locale
+- **THEN** all tenant-scoped queues, contracts, notifications, analytics, and
+  operational readiness remain inspectable and recoverable while every mutation
+  control is absent
