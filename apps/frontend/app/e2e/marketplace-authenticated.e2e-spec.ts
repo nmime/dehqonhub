@@ -588,7 +588,7 @@ class MarketplaceFixtureApi {
         amountUzs: 1_250_000,
         createdAt: now,
         currency: 'UZS',
-        kind: 'DirectPaymentSettlementDto',
+        kind: 'direct_payment',
         latestProviderMode: 'mock',
         reconciliationState: 'clear',
         revision: this.settlementAdvanced ? 2 : 1,

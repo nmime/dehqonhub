@@ -19,10 +19,9 @@ import {
 } from '@app/frontend-ui-web';
 import type { AdminAccess } from '../../entities/admin-session';
 import type { Translate } from '../../shared';
+import { useResource, type ResourceState } from './marketplace-admin-resource';
 
 export type MarketplaceAdminView = 'commerce' | 'engagement' | 'moderation' | 'overview';
-
-type ResourceState<T> = { status: 'error' } | { status: 'loading' } | { data: T; status: 'ready' };
 
 type Notice = { message: string; tone: 'success' | 'warning' };
 
@@ -159,26 +158,6 @@ const ResourceFrame = ({
   }
   return <>{children}</>;
 };
-
-function useResource<T>(loader: () => Promise<T>): [ResourceState<T>, () => void] {
-  const [state, setState] = useState<ResourceState<T>>({ status: 'loading' });
-  const load = useCallback(() => {
-    setState({ status: 'loading' });
-    void loader()
-      .then((data) => {
-        setState({ data, status: 'ready' });
-      })
-      .catch(() => {
-        setState({ status: 'error' });
-      });
-  }, [loader]);
-
-  useEffect(() => {
-    load();
-  }, [load]);
-
-  return [state, load];
-}
 
 function useAdminCommand(reload: () => void, t: Translate) {
   const keys = useRef(new Map<string, string>());
