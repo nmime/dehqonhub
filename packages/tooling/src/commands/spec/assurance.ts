@@ -875,6 +875,10 @@ function validateRequirementMapping(options: {
     } else if (evidence.script) {
       if (!rootScripts.has(evidence.script)) {
         errors.push(`${prefix}: unknown root package script ${evidence.script}`);
+      } else if (evidence.script === 'spec:verify') {
+        errors.push(
+          `${prefix}: spec:verify cannot execute itself as evidence; map a non-recursive target instead`,
+        );
       }
     } else if (evidence.kind !== 'documentation') {
       errors.push(`${prefix}: ${evidence.kind} evidence requires target or script`);

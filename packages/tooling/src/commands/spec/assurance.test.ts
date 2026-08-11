@@ -216,6 +216,42 @@ test('builds a complete trace and selects only the requested evidence lane', () 
   assert.deepEqual(nightly.runs.map(({ key }) => key), ['fixture:static-check']);
 });
 
+test('rejects self-recursive specification verification evidence', () => {
+  const workspace = fixtureWorkspace();
+  writeFileSync(
+    join(workspace, 'package.json'),
+    JSON.stringify({ scripts: { 'fixture:check': 'true', 'spec:verify': 'true' } }),
+  );
+  const file = verificationFile(workspace);
+  writeFileSync(
+    file,
+    readFileSync(file, 'utf8').replace(
+      `      - kind: vitest
+        file: apps/fixture/evidence.test.ts
+        target: fixture:test
+        lanes: [pr, main]
+`,
+      `      - kind: vitest
+        file: apps/fixture/evidence.test.ts
+        target: fixture:test
+        lanes: [pr, main]
+      - kind: operations
+        file: apps/fixture/evidence.test.ts
+        script: spec:verify
+        lanes: [pr, main]
+`,
+    ),
+  );
+
+  const model = loadAssuranceModel(workspace);
+
+  assert.ok(
+    model.errors.includes(
+      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-001: spec:verify cannot execute itself as evidence; map a non-recursive target instead',
+    ),
+  );
+});
+
 test('rejects evidence collection when the requested head is not checked out', () => {
   const workspace = fixtureWorkspace();
   runGit(workspace, ['init', '--quiet']);
