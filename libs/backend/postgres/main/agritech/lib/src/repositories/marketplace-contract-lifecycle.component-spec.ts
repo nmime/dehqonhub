@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-LIFECYCLE-020
+// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-LIFECYCLE-020
 import { createHash, randomUUID } from 'node:crypto';
 import { MikroORM, type EntityManager } from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';
@@ -310,6 +310,13 @@ describe('marketplace contract lifecycle PostgreSQL authority', { sequential: tr
         '1'.repeat(64),
       ),
     ).resolves.toEqual({ status: 'not_found' });
+    expect(
+      await rows<{ revision: number; status: string }>(
+        database.em,
+        'select revision, status from marketplace_contract_fulfillments where contract_id = ?',
+        [fixture.contractId],
+      ),
+    ).toEqual([{ revision: 1, status: 'ready' }]);
     await expect(
       lifecycle.transitionFulfillment(fixture.seller, fixture.contractId, 'start', 'lifecycle-start', '2'.repeat(64)),
     ).resolves.toMatchObject({ status: 'ok', value: { fulfillment: { status: 'in_progress' } } });
@@ -411,9 +418,33 @@ describe('marketplace contract lifecycle PostgreSQL authority', { sequential: tr
       ),
     ).toEqual([{ byteSize: metadata.byteSize, providerOperationId: prepared.operationId, storageReference }]);
 
+    await expect(lifecycle.getLifecycleForAdmin('foreign-tenant', fixture.contractId)).resolves.toEqual({
+      status: 'not_found',
+    });
+    await expect(lifecycle.getLifecycleForAdmin(fixture.buyer.tenantId, fixture.contractId)).resolves.toMatchObject({
+      status: 'ok',
+      value: {
+        contractId: fixture.contractId,
+        dispute: { status: 'open' },
+        disputeEvidence: [{ id: evidence.id, revision: 1 }],
+      },
+    });
     await expect(
       lifecycle.resolveDispute(
-        { tenantId: 'platform-admin', userId: 'moderator-1' },
+        { tenantId: 'foreign-tenant', userId: 'foreign-moderator' },
+        fixture.contractId,
+        'dismissed',
+        [evidence.id],
+        1,
+        'Foreign tenant must not decide this case.',
+        'lifecycle-dispute-foreign',
+        '3'.repeat(64),
+      ),
+    ).resolves.toEqual({ status: 'not_found' });
+
+    await expect(
+      lifecycle.resolveDispute(
+        { tenantId: fixture.buyer.tenantId, userId: 'moderator-1' },
         fixture.contractId,
         'dismissed',
         [evidence.id],
@@ -432,7 +463,7 @@ describe('marketplace contract lifecycle PostgreSQL authority', { sequential: tr
     });
     await expect(
       lifecycle.resolveDispute(
-        { tenantId: 'platform-admin', userId: 'moderator-1' },
+        { tenantId: fixture.buyer.tenantId, userId: 'moderator-1' },
         fixture.contractId,
         'upheld_cancelled',
         [evidence.id],

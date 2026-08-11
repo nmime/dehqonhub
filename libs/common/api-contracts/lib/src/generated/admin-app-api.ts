@@ -1092,7 +1092,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/marketplace/commission-policies': {
+  '/admin/marketplace/commission-policies': {
     parameters: {
       query?: never;
       header?: never;
@@ -1108,7 +1108,23 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/marketplace/contracts/{id}/dispute-resolution': {
+  '/admin/marketplace/contracts/{id}/lifecycle': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MarketplaceContractLifecycleAdminController_getContractLifecycle'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/admin/marketplace/contracts/{id}/dispute-resolution': {
     parameters: {
       query?: never;
       header?: never;
@@ -1140,7 +1156,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/marketplace/engagement/sample-policy': {
+  '/admin/marketplace/engagement/sample-policy': {
     parameters: {
       query?: never;
       header?: never;
@@ -1156,7 +1172,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/marketplace/engagement/review-reports': {
+  '/admin/marketplace/engagement/review-reports': {
     parameters: {
       query?: never;
       header?: never;
@@ -1172,7 +1188,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/agritech/marketplace/engagement/review-reports/{reportId}': {
+  '/admin/marketplace/engagement/review-reports/{reportId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -2241,6 +2257,235 @@ export interface components {
     CommissionRatePolicyListDto: {
       items: components['schemas']['CommissionRatePolicyDto'][];
     };
+    DirectPaymentSettlementDto: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      kind: 'direct_payment';
+      /** @enum {string} */
+      status: 'awaiting_buyer_confirmation' | 'buyer_confirmed' | 'seller_received';
+      amountUzs: number;
+      /** @enum {string} */
+      currency: 'UZS';
+      /** @enum {string} */
+      latestProviderMode: 'none' | 'mock' | 'live';
+      /** @enum {string} */
+      reconciliationState: 'clear' | 'required';
+      reconciliationReason?: string;
+      revision: number;
+      simulation: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    FactoringSettlementDto: {
+      /**
+       * @description discriminator enum property added by openapi-typescript
+       * @enum {string}
+       */
+      kind: 'factoring';
+      /** @enum {string} */
+      status:
+        'awaiting_consents' | 'ready_to_request' | 'approved' | 'rejected' | 'seller_paid' | 'buyer_repaid' | 'closed';
+      amountUzs: number;
+      /** @enum {string} */
+      currency: 'UZS';
+      /** @enum {string} */
+      latestProviderMode: 'none' | 'mock' | 'live';
+      /** @enum {string} */
+      reconciliationState: 'clear' | 'required';
+      reconciliationReason?: string;
+      revision: number;
+      simulation: boolean;
+      /** Format: date-time */
+      buyerConsentedAt?: string;
+      /** Format: date-time */
+      sellerConsentedAt?: string;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+    };
+    ContractArtifactDto: {
+      byteSize: number;
+      checksumSha256: string;
+      /** Format: date-time */
+      createdAt: string;
+      /** @enum {string} */
+      mediaType: 'application/pdf';
+      /** @enum {string} */
+      providerMode: 'mock' | 'live';
+      providerName: string;
+      simulation: boolean;
+      snapshotFingerprint: string;
+      /** @enum {number} */
+      snapshotRevision: 1;
+      /** @enum {string} */
+      templateVersion: 'dehqonhub-contract-v1';
+      /** @enum {string|null} */
+      watermark: 'MOCK PROVIDER — NOT A LEGAL CONTRACT' | null;
+    };
+    CommissionRateSnapshotDto: {
+      produce: number;
+      product: number;
+      request: number;
+    };
+    ContractCommissionDto: {
+      amountUzs: number;
+      baseAmountUzs: number;
+      /** @enum {string} */
+      currency: 'UZS';
+      /** Format: date-time */
+      createdAt: string;
+      rateSnapshot: components['schemas']['CommissionRateSnapshotDto'];
+      rateVersion: string;
+    };
+    ContractDisputeDto: {
+      /** @enum {string} */
+      openedByParty: 'buyer' | 'seller';
+      /** @enum {string} */
+      reason: 'delivery_issue' | 'quality_issue' | 'quantity_issue' | 'other';
+      /** @enum {string} */
+      status: 'open' | 'resolved';
+      /** Format: date-time */
+      createdAt: string;
+      /** @enum {string} */
+      decision?: 'dismissed' | 'upheld_cancelled';
+      evidenceRevision?: number;
+      outcomeNote?: string;
+      /** Format: date-time */
+      resolvedAt?: string;
+    };
+    ContractDisputeEvidenceDto: {
+      byteSize: number;
+      checksumSha256: string;
+      /** Format: date-time */
+      createdAt: string;
+      fileName: string;
+      /** Format: uuid */
+      id: string;
+      /** @enum {string} */
+      mediaType: 'application/pdf' | 'image/jpeg' | 'image/png';
+      /** @enum {string} */
+      providerMode: 'mock' | 'live';
+      providerName: string;
+      revision: number;
+      simulation: boolean;
+      /** @enum {string} */
+      uploadedByParty: 'buyer' | 'seller';
+    };
+    ContractFulfillmentDto: {
+      /** @enum {string} */
+      status: 'awaiting_settlement' | 'ready' | 'in_progress' | 'delivered' | 'disputed' | 'cancelled' | 'completed';
+      revision: number;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      updatedAt: string;
+      /** Format: date-time */
+      startedAt?: string;
+      /** Format: date-time */
+      deliveredAt?: string;
+      /** Format: date-time */
+      completedAt?: string;
+    };
+    ContractNotificationIntentDto: {
+      /** @enum {string} */
+      channel: 'telegram' | 'sms';
+      /** @enum {string} */
+      recipientParty: 'buyer' | 'seller';
+      /** @enum {string} */
+      status: 'pending' | 'simulated' | 'delivered' | 'failed' | 'reconciliation_required';
+      attempts: number;
+      simulation: boolean;
+      /** Format: date-time */
+      createdAt: string;
+      /** Format: date-time */
+      lastAttemptAt?: string;
+    };
+    ContractReviewEligibilityDto: {
+      eligible: boolean;
+      sourceCount: number;
+    };
+    ContractReputationSignalDto: {
+      /** Format: date-time */
+      createdAt: string;
+      /** @enum {string} */
+      impact: 'negative';
+      /** @enum {string} */
+      outcome: 'dispute_dismissed' | 'dispute_upheld';
+      /** @enum {string} */
+      reason: 'delivery_issue' | 'quality_issue' | 'quantity_issue' | 'other';
+      /** @enum {string} */
+      subjectParty: 'buyer' | 'seller';
+    };
+    ContractSettlementEventDto: {
+      /** @enum {string} */
+      actorParty: 'buyer' | 'seller';
+      /** @enum {string} */
+      eventType:
+        | 'buyer_consented'
+        | 'seller_consented'
+        | 'buyer_payment_confirmed'
+        | 'seller_receipt_confirmed'
+        | 'factoring_requested'
+        | 'factoring_approved'
+        | 'factoring_rejected'
+        | 'seller_paid'
+        | 'buyer_repaid'
+        | 'factoring_closed';
+      /** @enum {string} */
+      providerMode: 'none' | 'mock' | 'live';
+      providerName?: string;
+      sequence: number;
+      simulation: boolean;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ContractSignatureDto: {
+      artifactChecksum: string;
+      /** @enum {string} */
+      party: 'buyer' | 'seller';
+      /** @enum {string} */
+      providerMode: 'mock' | 'live';
+      providerName: string;
+      /** Format: date-time */
+      signedAt: string;
+      simulation: boolean;
+      /** @enum {number} */
+      snapshotRevision: 1;
+    };
+    ContractTimelineEventDto: {
+      /** @enum {string} */
+      actorParty: 'buyer' | 'seller' | 'admin';
+      /** @enum {string} */
+      category: 'artifact' | 'signature' | 'settlement' | 'fulfillment' | 'dispute' | 'completion';
+      eventType: string;
+      /** @enum {string} */
+      providerMode: 'none' | 'mock' | 'live';
+      sequence: number;
+      simulation: boolean;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    ContractLifecycleDto: {
+      artifact?: components['schemas']['ContractArtifactDto'];
+      commission?: components['schemas']['ContractCommissionDto'];
+      /** Format: uuid */
+      contractId: string;
+      dispute?: components['schemas']['ContractDisputeDto'];
+      disputeEvidence: components['schemas']['ContractDisputeEvidenceDto'][];
+      fulfillment: components['schemas']['ContractFulfillmentDto'];
+      notificationIntents: components['schemas']['ContractNotificationIntentDto'][];
+      reviewEligibility: components['schemas']['ContractReviewEligibilityDto'];
+      reputationSignals: components['schemas']['ContractReputationSignalDto'][];
+      settlement: components['schemas']['DirectPaymentSettlementDto'] | components['schemas']['FactoringSettlementDto'];
+      settlementEvents: components['schemas']['ContractSettlementEventDto'][];
+      signatures: components['schemas']['ContractSignatureDto'][];
+      timeline: components['schemas']['ContractTimelineEventDto'][];
+    };
     ActivateCommissionRatePolicyDto: {
       version: string;
       rates: components['schemas']['CommissionRatesDto'];
@@ -2261,7 +2506,7 @@ export interface components {
     ResolveContractDisputeDto: {
       /** @enum {string} */
       decision: 'dismissed' | 'upheld_cancelled';
-      evidenceIds: unknown[][];
+      evidenceIds: string[];
       evidenceRevision: number;
       outcomeNote: string;
     };
@@ -21248,6 +21493,252 @@ export interface operations {
         content: {
           'application/json': {
             data: components['schemas']['CommissionRatePolicyDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplaceContractLifecycleAdminController_getContractLifecycle: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ContractLifecycleDto'];
           };
         };
       };

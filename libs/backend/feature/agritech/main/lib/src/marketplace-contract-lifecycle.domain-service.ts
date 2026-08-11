@@ -570,6 +570,12 @@ export class MarketplaceContractLifecycleDomainService {
       .then((result) => unwrap(result, 'contract-lifecycle'));
   }
 
+  getLifecycleForAdmin(tenantId: string, contractId: string): Promise<MarketplaceContractLifecycle> {
+    return this.lifecycleRepository
+      .getLifecycleForAdmin(tenantId, contractId)
+      .then((result) => unwrap(result, 'contract-lifecycle'));
+  }
+
   getArtifact(owner: AgriTechOwner, contractId: string): Promise<MarketplaceContractArtifact | undefined> {
     return this.lifecycleRepository
       .findArtifact(owner, contractId)

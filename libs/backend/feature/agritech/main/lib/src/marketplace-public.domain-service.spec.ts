@@ -361,12 +361,12 @@ describe('MarketplacePublicDomainService', () => {
     expect(listMarketplaceDemoListings({ limit: 10, sort: 'price_desc' })[0]).toMatchObject({
       title: 'Precision seed drill',
     });
-    expect(listMarketplaceDemoListings({ limit: 10, query: 'tomato' })).toEqual([
+    expect(listMarketplaceDemoListings({ limit: 10, query: 'tomato', sort: 'newest' })).toEqual([
       expect.objectContaining({ kind: 'produce' }),
     ]);
     expect(findMarketplaceDemoListing('missing')).toBeUndefined();
     expect(findMarketplaceDemoSeller('missing')).toBeUndefined();
-    expect(listMarketplaceDemoSellerListings('missing', { limit: 10 })).toEqual([]);
+    expect(listMarketplaceDemoSellerListings('missing', { limit: 10, sort: 'newest' })).toEqual([]);
     expect(listMarketplaceDemoSuggestions('demo', 1)).toEqual([expect.objectContaining({ kind: 'seller' })]);
 
     vi.mocked(repo.isDemoCatalogEnabled).mockResolvedValue(false);

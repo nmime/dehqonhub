@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-ENGAGEMENT-019
+// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ROUTING-015
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { DocumentBuilder, type OpenAPIObject, SwaggerModule } from '@nestjs/swagger';
 import { Test } from '@nestjs/testing';
@@ -120,21 +120,21 @@ describe('marketplace engagement admin HTTP contract', () => {
   it('requires an authenticated, permissioned tenant principal for policy reads', async () => {
     const anonymous = await app.inject({
       method: 'GET',
-      url: '/agritech/marketplace/engagement/sample-policy',
+      url: '/admin/marketplace/engagement/sample-policy',
     });
     expect(anonymous.statusCode).toBe(401);
 
     const denied = await app.inject({
       headers: adminHeaders([]),
       method: 'GET',
-      url: '/agritech/marketplace/engagement/sample-policy',
+      url: '/admin/marketplace/engagement/sample-policy',
     });
     expect(denied.statusCode).toBe(403);
 
     const response = await app.inject({
       headers: adminHeaders([AdminAgriTechReadPermission]),
       method: 'GET',
-      url: '/agritech/marketplace/engagement/sample-policy',
+      url: '/admin/marketplace/engagement/sample-policy',
     });
     expect(response.statusCode).toBe(200);
     expect(engagement.getSamplePolicy).toHaveBeenCalledWith(tenantId);
@@ -148,7 +148,7 @@ describe('marketplace engagement admin HTTP contract', () => {
       headers: adminHeaders([AdminAgriTechWritePermission]),
       method: 'POST',
       payload: { expectedVersion: 1, monthlyLimit: 7 },
-      url: '/agritech/marketplace/engagement/sample-policy',
+      url: '/admin/marketplace/engagement/sample-policy',
     });
 
     expect(response.statusCode).toBe(200);
@@ -164,7 +164,7 @@ describe('marketplace engagement admin HTTP contract', () => {
     const response = await app.inject({
       headers: adminHeaders([AdminAgriTechReadPermission, AdminAgriTechApprovePermission]),
       method: 'GET',
-      url: '/agritech/marketplace/engagement/review-reports',
+      url: '/admin/marketplace/engagement/review-reports',
     });
 
     expect(response.statusCode).toBe(200);
@@ -177,13 +177,13 @@ describe('marketplace engagement admin HTTP contract', () => {
 
   it('publishes the bounded admin policy and moderation contract without tenant selectors', () => {
     const paths = Object.fromEntries(
-      Object.entries(openApi.paths).filter(([path]) => path.startsWith('/agritech/marketplace/engagement')),
+      Object.entries(openApi.paths).filter(([path]) => path.startsWith('/admin/marketplace/engagement')),
     );
     expect(Object.keys(paths)).toEqual(
       expect.arrayContaining([
-        '/agritech/marketplace/engagement/review-reports',
-        '/agritech/marketplace/engagement/review-reports/{reportId}',
-        '/agritech/marketplace/engagement/sample-policy',
+        '/admin/marketplace/engagement/review-reports',
+        '/admin/marketplace/engagement/review-reports/{reportId}',
+        '/admin/marketplace/engagement/sample-policy',
       ]),
     );
     expect(JSON.stringify(paths)).not.toMatch(

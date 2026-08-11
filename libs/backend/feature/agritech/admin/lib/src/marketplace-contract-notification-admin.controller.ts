@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-STAGE2-017 REQ-AGRITECH-NOTIFICATION-022
+// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-NOTIFICATION-022 REQ-AGRITECH-STAGE2-017
 import { Controller, Get, UseGuards } from '@nestjs/common';
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import { createOkResponse } from '@app/backend-common-response';

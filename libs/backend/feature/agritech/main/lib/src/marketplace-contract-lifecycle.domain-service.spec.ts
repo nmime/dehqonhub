@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-LIFECYCLE-020 REQ-AGRITECH-STAGE2-017
+// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-LIFECYCLE-020 REQ-AGRITECH-STAGE2-017
 /* eslint-disable no-await-in-loop -- table-driven cases mutate stateful mocks and must remain ordered */
 import { describe, expect, it, vi } from 'vitest';
 import {
@@ -94,6 +94,7 @@ function fixture(
     downloadArtifact: vi.fn().mockResolvedValue(ok({ artifact, content: Uint8Array.from([1]) })),
     findArtifact: vi.fn().mockResolvedValue(ok(artifact)),
     getLifecycle: vi.fn().mockResolvedValue(ok(lifecycle)),
+    getLifecycleForAdmin: vi.fn().mockResolvedValue(ok(lifecycle)),
     listCommissionRatePolicies: vi.fn().mockResolvedValue([]),
     openDispute: vi.fn().mockResolvedValue(ok(lifecycle)),
     prepareArtifact: vi
@@ -261,6 +262,8 @@ describe('MarketplaceContractLifecycleDomainService', () => {
       ),
     ).resolves.toMatchObject({ version: 'v1' });
     await expect(base.service.getLifecycle(buyer, 'contract-1')).resolves.toEqual(lifecycle);
+    await expect(base.service.getLifecycleForAdmin(buyer.tenantId, 'contract-1')).resolves.toEqual(lifecycle);
+    expect(base.lifecycleRepository.getLifecycleForAdmin).toHaveBeenCalledWith(buyer.tenantId, 'contract-1');
     await expect(base.service.getArtifact(buyer, 'contract-1')).resolves.toEqual(artifact);
     await expect(base.service.downloadArtifact(buyer, 'contract-1')).resolves.toMatchObject({ artifact });
 
