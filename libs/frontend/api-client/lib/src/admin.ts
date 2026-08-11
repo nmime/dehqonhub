@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-ROUTING-015
+// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-ROUTING-015
 import { useMutation, useQuery, type UseMutationOptions, type UseQueryOptions } from '@tanstack/react-query';
 import createClient from 'openapi-fetch';
 import createQueryClient from 'openapi-react-query';
@@ -117,6 +117,34 @@ export type CreatePilotDto = components['schemas']['CreatePilotDto'];
 export type PilotStatusDto = components['schemas']['PilotStatusDto'];
 export type IntegrationReadinessViewDto = components['schemas']['IntegrationReadinessViewDto'];
 export type IntegrationReadinessListDto = components['schemas']['IntegrationReadinessListDto'];
+export type AdminVerificationViewDto = components['schemas']['AdminVerificationViewDto'];
+export type AdminVerificationListDto = components['schemas']['AdminVerificationListDto'];
+export type ReviewVerificationDto = components['schemas']['ReviewVerificationDto'];
+export type MarketplacePublicModerationQueueDto = components['schemas']['MarketplacePublicModerationQueueDto'];
+export type MarketplaceSellerProfileModerationItemDto =
+  components['schemas']['MarketplaceSellerProfileModerationItemDto'];
+export type MarketplaceListingModerationItemDto = components['schemas']['MarketplaceListingModerationItemDto'];
+export type MarketplaceRequestModerationItemDto = components['schemas']['MarketplaceRequestModerationItemDto'];
+export type ReviewSellerProfileDto = components['schemas']['ReviewSellerProfileDto'];
+export type ReviewListingPublicationDto = components['schemas']['ReviewListingPublicationDto'];
+export type ReviewRequestPublicationDto = components['schemas']['ReviewRequestPublicationDto'];
+export type ContractViewDto = components['schemas']['ContractViewDto'];
+export type ContractListDto = components['schemas']['ContractListDto'];
+export type ContractLifecycleDto = components['schemas']['ContractLifecycleDto'];
+export type CommissionRatePolicyDto = components['schemas']['CommissionRatePolicyDto'];
+export type CommissionRatePolicyListDto = components['schemas']['CommissionRatePolicyListDto'];
+export type ActivateCommissionRatePolicyDto = components['schemas']['ActivateCommissionRatePolicyDto'];
+export type ResolveContractDisputeDto = components['schemas']['ResolveContractDisputeDto'];
+export type ContractDisputeResolutionDto = components['schemas']['ContractDisputeResolutionDto'];
+export type MarketplaceContractNotificationAdminDto = components['schemas']['MarketplaceContractNotificationAdminDto'];
+export type MarketplaceContractNotificationAdminListDto =
+  components['schemas']['MarketplaceContractNotificationAdminListDto'];
+export type MarketplaceSamplePolicyDto = components['schemas']['MarketplaceSamplePolicyDto'];
+export type ActivateMarketplaceSamplePolicyDto = components['schemas']['ActivateMarketplaceSamplePolicyDto'];
+export type MarketplaceReviewModerationItemDto = components['schemas']['MarketplaceReviewModerationItemDto'];
+export type MarketplaceReviewModerationQueueDto = components['schemas']['MarketplaceReviewModerationQueueDto'];
+export type ModerateMarketplaceReviewDto = components['schemas']['ModerateMarketplaceReviewDto'];
+export type MarketplaceReviewModerationResultDto = components['schemas']['MarketplaceReviewModerationResultDto'];
 
 const adminAgriTechPartnersPath = '/admin/partners';
 const adminAgriTechPartnerStatusPath = '/admin/partners/{id}/status';
@@ -130,6 +158,20 @@ const adminAgriTechAnalyticsPath = '/admin/analytics';
 const adminAgriTechPilotsPath = '/admin/pilots';
 const adminAgriTechPilotStatusPath = '/admin/pilots/{id}/status';
 const adminAgriTechIntegrationsPath = '/admin/integrations';
+const adminMarketplaceVerificationsPath = '/admin/verifications';
+const adminMarketplaceVerificationPath = '/admin/verifications/{id}';
+const adminMarketplaceModerationPath = '/admin/marketplace/publications/pending';
+const adminMarketplaceSellerModerationPath = '/admin/marketplace/publications/sellers/{id}';
+const adminMarketplaceListingModerationPath = '/admin/marketplace/publications/listings/{id}';
+const adminMarketplaceRequestModerationPath = '/admin/marketplace/publications/requests/{id}';
+const adminMarketplaceContractsPath = '/admin/contracts';
+const adminMarketplaceCommissionPoliciesPath = '/admin/marketplace/commission-policies';
+const adminMarketplaceLifecyclePath = '/admin/marketplace/contracts/{id}/lifecycle';
+const adminMarketplaceDisputeResolutionPath = '/admin/marketplace/contracts/{id}/dispute-resolution';
+const adminMarketplaceNotificationsPath = '/admin/marketplace/notifications';
+const adminMarketplaceSamplePolicyPath = '/admin/marketplace/engagement/sample-policy';
+const adminMarketplaceReviewReportsPath = '/admin/marketplace/engagement/review-reports';
+const adminMarketplaceReviewReportPath = '/admin/marketplace/engagement/review-reports/{reportId}';
 
 export const agriTechAdminControllerListPartners = (options?: ApiClientRequestOptions) =>
   client.GET(adminAgriTechPartnersPath, toOpenApiFetchOptions(options));
@@ -175,6 +217,115 @@ export const agriTechAdminControllerSetPilotStatus = (
 ) => client.PATCH(adminAgriTechPilotStatusPath, { ...toOpenApiFetchOptions(options), params: { path: { id } }, body });
 export const agriTechAdminControllerIntegrations = (options?: ApiClientRequestOptions) =>
   client.GET(adminAgriTechIntegrationsPath, toOpenApiFetchOptions(options));
+
+export const agriTechAdminControllerListVerifications = (options?: ApiClientRequestOptions) =>
+  client.GET(adminMarketplaceVerificationsPath, toOpenApiFetchOptions(options));
+export const agriTechAdminControllerReviewVerification = (
+  id: string,
+  body: ReviewVerificationDto,
+  idempotencyKey: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(adminMarketplaceVerificationPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { header: { 'Idempotency-Key': idempotencyKey }, path: { id } },
+  });
+export const agriTechAdminControllerListPendingMarketplacePublications = (options?: ApiClientRequestOptions) =>
+  client.GET(adminMarketplaceModerationPath, toOpenApiFetchOptions(options));
+export const agriTechAdminControllerReviewMarketplaceSellerProfile = (
+  id: string,
+  body: ReviewSellerProfileDto,
+  idempotencyKey: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(adminMarketplaceSellerModerationPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { header: { 'Idempotency-Key': idempotencyKey }, path: { id } },
+  });
+export const agriTechAdminControllerReviewMarketplaceListingPublication = (
+  id: string,
+  body: ReviewListingPublicationDto,
+  idempotencyKey: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(adminMarketplaceListingModerationPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { header: { 'Idempotency-Key': idempotencyKey }, path: { id } },
+  });
+export const agriTechAdminControllerReviewMarketplaceRequestPublication = (
+  id: string,
+  body: ReviewRequestPublicationDto,
+  idempotencyKey: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(adminMarketplaceRequestModerationPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { header: { 'Idempotency-Key': idempotencyKey }, path: { id } },
+  });
+export const agriTechAdminControllerListContracts = (options?: ApiClientRequestOptions) =>
+  client.GET(adminMarketplaceContractsPath, toOpenApiFetchOptions(options));
+export const marketplaceContractLifecycleAdminControllerListCommissionPolicies = (options?: ApiClientRequestOptions) =>
+  client.GET(adminMarketplaceCommissionPoliciesPath, toOpenApiFetchOptions(options));
+export const marketplaceContractLifecycleAdminControllerActivateCommissionPolicy = (
+  body: ActivateCommissionRatePolicyDto,
+  idempotencyKey: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.POST(adminMarketplaceCommissionPoliciesPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { header: { 'Idempotency-Key': idempotencyKey } },
+  });
+export const marketplaceContractLifecycleAdminControllerGetContractLifecycle = (
+  id: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.GET(adminMarketplaceLifecyclePath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { id } },
+  });
+export const marketplaceContractLifecycleAdminControllerResolveDispute = (
+  id: string,
+  body: ResolveContractDisputeDto,
+  idempotencyKey: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.POST(adminMarketplaceDisputeResolutionPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { header: { 'Idempotency-Key': idempotencyKey }, path: { id } },
+  });
+export const marketplaceContractNotificationAdminControllerList = (options?: ApiClientRequestOptions) =>
+  client.GET(adminMarketplaceNotificationsPath, toOpenApiFetchOptions(options));
+export const marketplaceEngagementAdminControllerGetSamplePolicy = (options?: ApiClientRequestOptions) =>
+  client.GET(adminMarketplaceSamplePolicyPath, toOpenApiFetchOptions(options));
+export const marketplaceEngagementAdminControllerActivateSamplePolicy = (
+  body: ActivateMarketplaceSamplePolicyDto,
+  idempotencyKey: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.POST(adminMarketplaceSamplePolicyPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { header: { 'Idempotency-Key': idempotencyKey } },
+  });
+export const marketplaceEngagementAdminControllerListReviewReports = (options?: ApiClientRequestOptions) =>
+  client.GET(adminMarketplaceReviewReportsPath, toOpenApiFetchOptions(options));
+export const marketplaceEngagementAdminControllerModerateReviewReport = (
+  reportId: string,
+  body: ModerateMarketplaceReviewDto,
+  idempotencyKey: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.PATCH(adminMarketplaceReviewReportPath, {
+    ...toOpenApiFetchOptions(options),
+    body,
+    params: { header: { 'Idempotency-Key': idempotencyKey }, path: { reportId } },
+  });
 
 export const adminHealthControllerHealth = (options?: ApiClientRequestOptions) =>
   client.GET(adminHealthPath, toOpenApiFetchOptions(options));

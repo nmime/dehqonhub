@@ -1,0 +1,14 @@
+{
+  "admin.marketplace.engagement.eyebrow": "Доверие после сделки",
+  "admin.marketplace.engagement.title": "Вовлечение в маркетплейсе",
+  "admin.marketplace.engagement.description": "Управляйте лимитами образцов, жалобами на отзывы и доставкой уведомлений по контрактам.",
+  "admin.marketplace.engagement.samplePolicy": "Политика запросов образцов",
+  "admin.marketplace.engagement.version": "Версия политики",
+  "admin.marketplace.engagement.monthlyLimit": "Месячный лимит образцов",
+  "admin.marketplace.engagement.activatePolicy": "Активировать политику образцов",
+  "admin.marketplace.engagement.reviewReports": "Жалобы на отзывы",
+  "admin.marketplace.engagement.dismissReport": "Отклонить жалобу",
+  "admin.marketplace.engagement.hideReview": "Скрыть отзыв",
+  "admin.marketplace.engagement.notifications": "Доставка уведомлений по контрактам",
+  "admin.marketplace.engagement.attempts": "Попытки"
+}

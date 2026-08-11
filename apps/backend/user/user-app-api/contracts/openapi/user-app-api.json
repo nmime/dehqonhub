@@ -30600,6 +30600,10 @@
           },
           "settlement": {
             "discriminator": {
+              "mapping": {
+                "direct_payment": "#/components/schemas/DirectPaymentSettlementDto",
+                "factoring": "#/components/schemas/FactoringSettlementDto"
+              },
               "propertyName": "kind"
             },
             "oneOf": [

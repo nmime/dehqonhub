@@ -1,0 +1,14 @@
+{
+  "admin.marketplace.engagement.eyebrow": "Savdodan keyingi ishonch",
+  "admin.marketplace.engagement.title": "Marketpleys faolligi",
+  "admin.marketplace.engagement.description": "Namuna limitlari, sharh shikoyatlari va shartnoma bildirishnomalari yetkazilishini boshqaring.",
+  "admin.marketplace.engagement.samplePolicy": "Namuna so‘rovi siyosati",
+  "admin.marketplace.engagement.version": "Siyosat versiyasi",
+  "admin.marketplace.engagement.monthlyLimit": "Oylik namuna limiti",
+  "admin.marketplace.engagement.activatePolicy": "Namuna siyosatini faollashtirish",
+  "admin.marketplace.engagement.reviewReports": "Sharh shikoyatlari",
+  "admin.marketplace.engagement.dismissReport": "Shikoyatni rad etish",
+  "admin.marketplace.engagement.hideReview": "Sharhni yashirish",
+  "admin.marketplace.engagement.notifications": "Shartnoma bildirishnomalarini yetkazish",
+  "admin.marketplace.engagement.attempts": "Urinishlar"
+}

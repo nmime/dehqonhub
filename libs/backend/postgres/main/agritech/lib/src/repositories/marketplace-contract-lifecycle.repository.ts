@@ -111,6 +111,35 @@ function reputationSubjectParty(
   return openedByParty === 'buyer' ? 'seller' : 'buyer';
 }
 
+function invalidDisputeResolutionInput(evidenceIds: string[], evidenceRevision: number, outcome: string): boolean {
+  const uniqueEvidenceIds = new Set(evidenceIds);
+  return (
+    evidenceIds.length < 1 ||
+    evidenceIds.length > 20 ||
+    uniqueEvidenceIds.size !== evidenceIds.length ||
+    !Number.isSafeInteger(evidenceRevision) ||
+    evidenceRevision < 1 ||
+    !outcome ||
+    outcome.length > 1000
+  );
+}
+
+function applyDisputeResolutionDecision(
+  contract: ContractEntity,
+  fulfillment: MarketplaceContractFulfillmentEntity,
+  dispute: MarketplaceContractDisputeEntity,
+  decision: MarketplaceDisputeDecision,
+  now: Date,
+): void {
+  fulfillment.status = decision === 'dismissed' ? dispute.previousFulfillmentStatus : 'cancelled';
+  fulfillment.revision += 1;
+  fulfillment.updatedAt = now;
+  if (decision === 'upheld_cancelled') {
+    contract.status = 'cancelled';
+    contract.updatedAt = now;
+  }
+}
+
 function ownerFor(contract: ContractEntity, party: MarketplaceContractParty): AgriTechOwner {
   return party === 'buyer'
     ? { tenantId: contract.tenantId, userId: contract.buyerUserId }
@@ -1168,7 +1197,7 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
       if (!fulfillment || !allowed || contract.status !== 'active') {
         return { status: 'invalid_state', field: 'command' };
       }
-      const now = new Date();
+      const now = new Date(Math.max(Date.now(), fulfillment.updatedAt.getTime()));
       if (command === 'start') {
         fulfillment.status = 'in_progress';
         fulfillment.startedAt = now;
@@ -1461,6 +1490,9 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
       if (!contract) {
         return { status: 'not_found' };
       }
+      if (contract.tenantId !== admin.tenantId && contract.sellerTenantId !== admin.tenantId) {
+        return { status: 'not_found' };
+      }
       const dispute = await em.findOne(
         MarketplaceContractDisputeEntity,
         { contractId },
@@ -1477,7 +1509,7 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
       if (dispute.status === 'resolved') {
         return dispute.resolutionIdempotencyKey === idempotencyKey &&
           dispute.resolutionRequestFingerprint === requestFingerprint
-          ? this.lifecycleIn(em, contract, 'buyer')
+          ? this.lifecycleIn(em, contract, 'admin')
           : { status: 'conflict', field: 'idempotencyKey' };
       }
       if (fulfillment.status !== 'disputed') {
@@ -1485,15 +1517,7 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
       }
       const outcome = outcomeNote.trim();
       const selectedEvidenceIds = [...new Set(evidenceIds)].sort((left, right) => left.localeCompare(right, 'en'));
-      if (
-        selectedEvidenceIds.length < 1 ||
-        selectedEvidenceIds.length > 20 ||
-        selectedEvidenceIds.length !== evidenceIds.length ||
-        !Number.isSafeInteger(evidenceRevision) ||
-        evidenceRevision < 1 ||
-        !outcome ||
-        outcome.length > 1000
-      ) {
+      if (invalidDisputeResolutionInput(evidenceIds, evidenceRevision, outcome)) {
         return { status: 'invalid_state', field: 'resolution' };
       }
       const allEvidence = await em.find(
@@ -1542,13 +1566,7 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
       dispute.resolutionIdempotencyKey = idempotencyKey;
       dispute.resolutionRequestFingerprint = requestFingerprint;
       dispute.revision += 1;
-      fulfillment.status = decision === 'dismissed' ? dispute.previousFulfillmentStatus : 'cancelled';
-      fulfillment.revision += 1;
-      fulfillment.updatedAt = now;
-      if (decision === 'upheld_cancelled') {
-        contract.status = 'cancelled';
-        contract.updatedAt = now;
-      }
+      applyDisputeResolutionDecision(contract, fulfillment, dispute, decision, now);
       const reputationSignal = new MarketplaceContractReputationSignalEntity();
       reputationSignal.contractId = contractId;
       reputationSignal.disputeId = dispute.id;
@@ -1568,7 +1586,7 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
         requestFingerprint,
       });
       await em.flush();
-      return this.lifecycleIn(em, contract, 'buyer');
+      return this.lifecycleIn(em, contract, 'admin');
     });
   }
 
@@ -1661,6 +1679,17 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
     });
   }
 
+  getLifecycleForAdmin(tenantId: string, contractId: string): Promise<OperationResult<MarketplaceContractLifecycle>> {
+    return this.em.transactional(async (em) => {
+      const contract = await em.findOne(ContractEntity, {
+        bindingStatus: 'resolved',
+        id: contractId,
+        $or: [{ tenantId }, { sellerTenantId: tenantId }],
+      });
+      return contract ? this.lifecycleIn(em, contract, 'admin') : { status: 'not_found' };
+    });
+  }
+
   private isSettlementCommandAllowed(
     settlement: MarketplaceContractSettlementEntity,
     party: MarketplaceContractParty,
@@ -1701,8 +1730,10 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
   private async lifecycleIn(
     em: EntityManager,
     contract: ContractEntity,
-    party: MarketplaceContractParty,
+    party: MarketplaceContractParty | 'admin',
   ): Promise<OperationResult<MarketplaceContractLifecycle>> {
+    const notificationFilter =
+      party === 'admin' ? { contractId: contract.id } : { contractId: contract.id, recipientParty: party };
     const [
       artifact,
       signatures,
@@ -1724,11 +1755,7 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
       em.find(MarketplaceContractDisputeEvidenceEntity, { contractId: contract.id }, { orderBy: { revision: 'ASC' } }),
       em.findOne(MarketplaceContractCommissionEntity, { contractId: contract.id }),
       em.find(MarketplaceContractLifecycleEventEntity, { contractId: contract.id }, { orderBy: { sequence: 'ASC' } }),
-      em.find(
-        MarketplaceContractNotificationIntentEntity,
-        { contractId: contract.id, recipientParty: party },
-        { orderBy: { createdAt: 'ASC' } },
-      ),
+      em.find(MarketplaceContractNotificationIntentEntity, notificationFilter, { orderBy: { createdAt: 'ASC' } }),
       em.find(MarketplaceContractReviewEligibilityEntity, { contractId: contract.id }),
       em.find(MarketplaceContractReputationSignalEntity, { contractId: contract.id }),
     ]);

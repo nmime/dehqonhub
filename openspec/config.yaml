@@ -4,8 +4,8 @@ context: |
   Repository: nmime/dehqonhub
   Runtime: Node.js 24, pnpm 11.15.1, TypeScript, Nx
   Backend: NestJS/Fastify, PostgreSQL/MikroORM, Redis, NATS
-  Frontend: responsive React/Vite user web; Astro/Vike support surfaces;
-    complete admin and native product workflows are deferred
+  Frontend: responsive React/Vite user and administrator web; Astro/Vike
+    support surfaces; native product workflows are deferred
   Verification: Vitest, Cucumber.js, Playwright, OpenAPI contracts,
     property tests, mutation tests, Testcontainers, and runtime QA.
   Public API failures use RFC 9457 Problem Details.

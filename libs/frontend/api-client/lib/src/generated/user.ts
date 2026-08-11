@@ -2092,7 +2092,7 @@ export interface components {
        * @description discriminator enum property added by openapi-typescript
        * @enum {string}
        */
-      kind: 'DirectPaymentSettlementDto';
+      kind: 'direct_payment';
       /** @enum {string} */
       status: 'awaiting_buyer_confirmation' | 'buyer_confirmed' | 'seller_received';
       amountUzs: number;
@@ -2115,7 +2115,7 @@ export interface components {
        * @description discriminator enum property added by openapi-typescript
        * @enum {string}
        */
-      kind: 'FactoringSettlementDto';
+      kind: 'factoring';
       /** @enum {string} */
       status:
         'awaiting_consents' | 'ready_to_request' | 'approved' | 'rejected' | 'seller_paid' | 'buyer_repaid' | 'closed';

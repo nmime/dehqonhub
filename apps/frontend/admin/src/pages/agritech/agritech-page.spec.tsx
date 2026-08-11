@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-ANALYTICS-011
+// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-ANALYTICS-011
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { adminApi } from '@app/frontend-api-client';

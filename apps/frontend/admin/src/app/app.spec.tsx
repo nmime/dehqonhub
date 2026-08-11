@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015
+// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-ROUTING-015 REQ-FRONTEND-SHELL-004
 import type { ReactElement } from 'react';
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
@@ -138,34 +138,19 @@ const renderAdminMarkup = (element: ReactElement): string =>
 
 const mockAgriTechAdminLoad = () => {
   const ok = <T,>(data: T) => ({ data, error: undefined, response: new Response(null, { status: 200 }) });
-  vi.spyOn(adminApi, 'agriTechAdminControllerListPartners').mockResolvedValue(ok({ items: [] }) as never);
-  vi.spyOn(adminApi, 'agriTechAdminControllerListFarmers').mockResolvedValue(ok({ items: [] }) as never);
-  vi.spyOn(adminApi, 'agriTechAdminControllerListOrders').mockResolvedValue(ok({ items: [] }) as never);
-  vi.spyOn(adminApi, 'agriTechAdminControllerListPilots').mockResolvedValue(ok({ items: [] }) as never);
-  vi.spyOn(adminApi, 'agriTechAdminControllerIntegrations').mockResolvedValue(ok({ items: [] }) as never);
-  vi.spyOn(adminApi, 'agriTechAdminControllerAnalytics').mockResolvedValue(
-    ok({
-      activeInputProducts: 0,
-      activeProduceListings: 0,
-      activeFarmers: 0,
-      approvedBuyers: 0,
-      approvedSuppliers: 0,
-      commissionBasisPoints: 800,
-      deliveredOrders: 0,
-      farmers: 0,
-      fulfillmentRateBasisPoints: 0,
-      gmvUzs: 0,
-      inputStockUnits: 0,
-      orders: 0,
-      paidPayments: 0,
-      partnerApplications: 0,
-      pendingFarmers: 0,
-      pendingPartners: 0,
-      platformCommissionUzs: 0,
-      produceAvailableKg: 0,
-      repeatBuyerRateBasisPoints: 0,
-      repeatBuyers: 0,
-    }) as never,
+  vi.spyOn(adminApi, 'agriTechAdminControllerListVerifications').mockResolvedValue(ok({ items: [] }) as never);
+  vi.spyOn(adminApi, 'agriTechAdminControllerListPendingMarketplacePublications').mockResolvedValue(
+    ok({ listings: [], requests: [], sellerProfiles: [] }) as never,
+  );
+  vi.spyOn(adminApi, 'agriTechAdminControllerListContracts').mockResolvedValue(ok({ items: [] }) as never);
+  vi.spyOn(adminApi, 'marketplaceContractNotificationAdminControllerList').mockResolvedValue(
+    ok({ items: [] }) as never,
+  );
+  vi.spyOn(adminApi, 'marketplaceContractLifecycleAdminControllerListCommissionPolicies').mockResolvedValue(
+    ok({ items: [] }) as never,
+  );
+  vi.spyOn(adminApi, 'marketplaceEngagementAdminControllerListReviewReports').mockResolvedValue(
+    ok({ items: [] }) as never,
   );
 };
 
@@ -204,9 +189,7 @@ describe('App', () => {
 
     render(<App />);
 
-    expect((await screen.findAllByText(/AgriTech control center|Центр управления AgriTech/u)).length).toBeGreaterThan(
-      0,
-    );
+    expect((await screen.findAllByText(/Marketplace overview|Обзор маркетплейса/u)).length).toBeGreaterThan(0);
     expect(getRequest(fetchImpl).url).toBe('https://auth.example.test/auth/me');
   });
 
