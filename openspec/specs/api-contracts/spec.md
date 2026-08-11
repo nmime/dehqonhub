@@ -26,6 +26,8 @@ use `https://dehqonhub.uz/problem-instances/<encoded-request-id>`, and selected
   host, repository, package, template, or removed application hostname.
 - The apex registry documents `about:blank` and every registered custom problem
   type from the same shared definitions used to construct response identities.
+- Anonymous visitors can read the apex registry; the global session probe never
+  redirects this public documentation to authentication.
 
 **Failure behavior:**
 
@@ -46,9 +48,10 @@ use `https://dehqonhub.uz/problem-instances/<encoded-request-id>`, and selected
 
 #### Scenario: Product problem registry
 
-- **WHEN** a user opens `/problems` on the DehqonHub apex
+- **WHEN** an anonymous user opens `/problems` on the DehqonHub apex
 - **THEN** selected `user-app` renders `about:blank` and every registered custom
   problem type at its canonical `https://dehqonhub.uz/problems#...` identity
+  without redirecting to authentication
 
 ### Requirement: [REQ-API-COMPAT-002] Contract changes propagate to consumers
 

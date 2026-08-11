@@ -63,6 +63,8 @@
     root, and unsafe codes or request identifiers fail closed.
   - `apps/frontend/app/src/app/router/user-routing.spec.tsx` proves selected
     `user-app` serves the shared registry at apex `/problems`.
+  - `user-app:e2e-authenticated` proves an anonymous `/auth/me` response does
+    not redirect the public registry to authentication.
   - `apps/e2e/acceptance/features/api-problems.feature` preserves the two
     stakeholder-readable occurrence scenarios.
 

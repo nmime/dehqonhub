@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-RECOVERY-010 REQ-AGRITECH-WEB-006 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024 REQ-AGRITECH-ROUTING-015 REQ-FRONTEND-ACCESSIBILITY-003
+// @requirements REQ-AUTH-RECOVERY-010 REQ-AGRITECH-WEB-006 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024 REQ-AGRITECH-ROUTING-015 REQ-API-PROBLEM-001 REQ-FRONTEND-ACCESSIBILITY-003
 import { expect, test, type Page, type Route } from '@playwright/test';
 import type {
   ContractArtifactDto,
@@ -718,6 +718,22 @@ const viewports = [
   { height: 812, name: '375px mobile', width: 375 },
   { height: 960, name: 'desktop', width: 1440 },
 ] as const;
+
+test('anonymous visitors can read the public RFC 9457 problem registry', async ({ page }) => {
+  await page.route('**/auth/me', async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ detail: 'Authentication is required.', status: 401, title: 'Unauthorized' }),
+      contentType: 'application/problem+json',
+      status: 401,
+    });
+  });
+
+  await page.goto('/problems');
+
+  await expect(page).toHaveURL(/\/problems$/u);
+  await expect(page.getByRole('heading', { level: 1, name: 'API problem types' })).toBeVisible();
+  await expect(page.getByText('https://dehqonhub.uz/problems', { exact: true }).first()).toBeVisible();
+});
 
 for (const viewport of viewports) {
   test(`${viewport.name}: authenticated marketplace management and transaction journey`, async ({ page }) => {

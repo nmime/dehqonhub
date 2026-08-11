@@ -44,6 +44,12 @@ requirements:
         lanes:
           - pr
           - main
+      - kind: playwright
+        file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
+        target: user-app:e2e-authenticated
+        lanes:
+          - pr
+          - main
       - kind: vitest
         file: libs/backend/common/exception/lib/src/exception-contract.spec.ts
         target: '@app/backend-common-exception:test'

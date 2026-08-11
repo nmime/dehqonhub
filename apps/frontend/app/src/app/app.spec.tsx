@@ -273,6 +273,26 @@ describe('User app shell', () => {
     expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/verification');
   });
 
+  it('keeps the public problem registry available after the anonymous session probe', async () => {
+    window.history.replaceState({}, '', '/problems');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((input: RequestInfo | URL) => {
+        const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+        if (pathname === '/auth/me') {
+          return Promise.resolve(jsonResponse({}, false, 401));
+        }
+        return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
+      }),
+    );
+
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'API problem types' })).toBeTruthy();
+    expect(screen.getByText('https://dehqonhub.uz/problems')).toBeTruthy();
+    expect(window.location.pathname).toBe('/problems');
+  });
+
   it('keeps marketplace loading and catalog failure states inside DehqonHub chrome', async () => {
     let resolveCatalog: ((response: Response) => void) | undefined;
     vi.stubGlobal(

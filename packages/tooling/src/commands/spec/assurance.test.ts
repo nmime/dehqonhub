@@ -608,7 +608,7 @@ test('keeps the complete repository disposition inventory synchronized', () => {
     scenarios: 33,
     requirements: 83,
     acceptanceRequirements: 13,
-    evidence: 389,
+    evidence: 390,
   };
   assert.deepEqual(report.totals, {
     ...expectedInventory,
