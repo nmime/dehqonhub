@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019
+// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ONBOARDING-023
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -167,7 +167,7 @@ describe('Marketplace user management', () => {
     const onSampleFeedback = vi.fn();
     const onSampleTransition = vi.fn();
 
-    render(
+    const view = render(
       <MarketplaceUserManagement
         aiConsultations={{ data: [consultation], status: 'ready' }}
         canActivatePromotions
@@ -265,8 +265,12 @@ describe('Marketplace user management', () => {
   });
 
   it('fails closed when the account has no actor-authorized organization', () => {
-    render(
+    const onBuyerAccessAction = vi.fn();
+    const onSellerAccessAction = vi.fn();
+    const view = render(
       <MarketplaceUserManagement
+        buyerAccessActionLabel="agritech.marketplace.access.action.organization"
+        buyerAccessHint="agritech.marketplace.access.organization"
         aiConsultations={empty}
         canActivatePromotions={false}
         canPublishListings={false}
@@ -276,6 +280,7 @@ describe('Marketplace user management', () => {
         myRequests={empty}
         navigate={vi.fn()}
         notifications={empty}
+        onBuyerAccessAction={onBuyerAccessAction}
         onActivatePromotion={vi.fn()}
         onLoadPromotion={vi.fn()}
         onPublishListing={vi.fn()}
@@ -289,14 +294,75 @@ describe('Marketplace user management', () => {
         promotions={empty}
         requestPublications={empty}
         samples={empty}
+        sellerAccessActionLabel="agritech.marketplace.access.action.organization"
+        sellerAccessHint="agritech.marketplace.access.sellerOrganization"
+        onSellerAccessAction={onSellerAccessAction}
         supplierProducts={empty}
         t={t}
       />,
     );
 
-    expect(screen.getByText('agritech.marketplace.management.verificationRequired')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.access.organization')).toBeTruthy();
+    expect(screen.getAllByText('agritech.marketplace.access.sellerOrganization').length).toBeGreaterThan(0);
     expect(screen.queryByRole('button', { name: 'agritech.marketplace.publication.publish' })).toBeNull();
-    expect(screen.queryByRole('heading', { name: 'agritech.marketplace.promotion.title' })).toBeNull();
+    expect(screen.getByRole('heading', { name: 'agritech.marketplace.promotion.title' })).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'agritech.marketplace.promotion.activate' }).hasAttribute('disabled'),
+    ).toBe(true);
+    const accessActions = screen.getAllByRole('button', {
+      name: 'agritech.marketplace.access.action.organization',
+    });
+    fireEvent.click(accessActions[0]);
+    fireEvent.click(accessActions[1]);
+    expect(onSellerAccessAction).toHaveBeenCalledOnce();
+    expect(onBuyerAccessAction).toHaveBeenCalledOnce();
+
+    view.rerender(
+      <MarketplaceUserManagement
+        aiConsultations={empty}
+        canActivatePromotions={false}
+        canPublishListings={false}
+        canPublishRequests={false}
+        listingPublications={empty}
+        locale="en"
+        myRequests={{ data: [ownedRequest], status: 'ready' }}
+        navigate={vi.fn()}
+        notifications={empty}
+        onActivatePromotion={vi.fn()}
+        onLoadPromotion={vi.fn()}
+        onPublishListing={vi.fn()}
+        onPublishRequest={vi.fn()}
+        onRetry={vi.fn()}
+        onSampleFeedback={vi.fn()}
+        onSampleTransition={vi.fn()}
+        produceListings={{
+          data: [
+            {
+              availableFrom: now,
+              crop: 'Tomatoes',
+              grade: 'A',
+              id: 'produce-restricted',
+              partnerId: 'internal-partner-1',
+              pricePerUnitUzs: 9_000,
+              quantity: 100,
+              region: 'Samarqand',
+              status: 'available',
+              unit: 'kg',
+            },
+          ],
+          status: 'ready',
+        }}
+        promotionDetail={{ data: null, status: 'empty' }}
+        promotionPlans={empty}
+        promotions={empty}
+        requestPublications={empty}
+        samples={empty}
+        supplierProducts={{ data: [sourceProduct], status: 'ready' }}
+        t={t}
+      />,
+    );
+    expect(screen.getAllByText('agritech.marketplace.management.verificationRequired').length).toBeGreaterThan(0);
+    expect(screen.queryByRole('button', { name: 'agritech.marketplace.access.action.organization' })).toBeNull();
   });
 
   it('renders source and activity failures as recoverable errors instead of empty states', () => {

@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019
+// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ONBOARDING-023
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContractLifecycleDto, VerificationViewDto } from '@app/frontend-api-client';
@@ -92,6 +92,7 @@ const product = {
   name: 'Corn seed',
   priceUzs: 1_250_000,
   promoted: false,
+  provenance: 'live' as const,
   region: 'Samarqand',
   sampleAvailable: true,
   section: 'seeds' as const,
@@ -99,6 +100,7 @@ const product = {
   stockQuantity: 20,
   supplierId: 'seller-1',
   supplierName: 'Seed cooperative',
+  transactional: true,
   unit: 't',
 };
 
@@ -567,11 +569,19 @@ describe('MarketplacePage mutations', () => {
       };
 
       const view = render(<MarketplacePage navigate={vi.fn()} view="catalog" />);
-      expect(screen.queryByRole('button', { name: 'agritech.marketplace.product.addToCart' })).toBeNull();
+      const addToCart = screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' });
+      expect(addToCart.hasAttribute('disabled')).toBe(true);
+      expect(screen.getByText('agritech.marketplace.access.verify')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'agritech.marketplace.access.action.verify' })).toBeTruthy();
 
       view.rerender(<MarketplacePage navigate={vi.fn()} view="account" />);
-      expect(screen.queryByRole('button', { name: 'agritech.marketplace.publication.publish' })).toBeNull();
-      expect(screen.queryByRole('heading', { name: 'agritech.marketplace.promotion.title' })).toBeNull();
+      expect(
+        screen
+          .getAllByRole('button', { name: 'agritech.marketplace.publication.publish' })
+          .every((button) => button.hasAttribute('disabled')),
+      ).toBe(true);
+      expect(screen.getByRole('heading', { name: 'agritech.marketplace.promotion.title' })).toBeTruthy();
+      expect(screen.getAllByText('agritech.marketplace.access.verify').length).toBeGreaterThan(0);
     },
   );
 

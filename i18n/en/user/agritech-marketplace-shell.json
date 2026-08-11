@@ -25,5 +25,17 @@
   "agritech.marketplace.auth.required": "Sign in to continue.",
   "agritech.marketplace.auth.title": "Sign in to DehqonHub",
   "agritech.marketplace.footer.description": "DehqonHub organizes current marketplace information and transaction workflows.",
-  "agritech.marketplace.footer.providerBoundary": "Payment, financing and identity providers are unavailable unless explicitly shown as connected."
+  "agritech.marketplace.footer.providerBoundary": "Payment, financing and identity providers are unavailable unless explicitly shown as connected.",
+  "agritech.marketplace.access.demoBadge": "Demo",
+  "agritech.marketplace.access.demo": "This is synthetic preview data. Browse it freely; transactions and engagement are disabled.",
+  "agritech.marketplace.access.signIn": "Sign in to use this marketplace action.",
+  "agritech.marketplace.access.checking": "Checking your marketplace access…",
+  "agritech.marketplace.access.verify": "Complete marketplace verification to use this action.",
+  "agritech.marketplace.access.buyerRole": "Your verified role cannot buy. Verify as a buyer or farmer to continue.",
+  "agritech.marketplace.access.sellerRole": "Your verified role cannot sell. Verify as a seller or farmer to continue.",
+  "agritech.marketplace.access.organization": "An approved buyer organization is required for this action.",
+  "agritech.marketplace.access.sellerOrganization": "An approved seller organization is required for this action.",
+  "agritech.marketplace.access.action.signIn": "Sign in",
+  "agritech.marketplace.access.action.verify": "Open verification",
+  "agritech.marketplace.access.action.organization": "Open organization profile"
 }

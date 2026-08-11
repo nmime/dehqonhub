@@ -63,10 +63,13 @@ const verificationDocumentsByRole: Record<MarketplaceVerificationRole, Marketpla
 
 interface CartProps {
   canCheckout?: boolean;
+  checkoutActionLabel?: string;
+  checkoutHint?: string;
   carts: Resource<CartViewDto[]>;
   locale: Locale;
   navigate: MarketplaceNavigate;
   onCheckout: (cart: CartViewDto, deliveryTerms: DeliveryTerms) => void;
+  onCheckoutAction?: () => void;
   onUpdate: (cartId: string, listingPublicationId: string, quantity: number) => void;
   pendingAction?: string;
   products: MarketplaceListing[];
@@ -75,10 +78,13 @@ interface CartProps {
 
 export function MarketplaceCart({
   canCheckout = true,
+  checkoutActionLabel,
+  checkoutHint,
   carts,
   locale,
   navigate,
   onCheckout,
+  onCheckoutAction,
   onUpdate,
   pendingAction,
   products,
@@ -87,6 +93,7 @@ export function MarketplaceCart({
   const [activeId, setActiveId] = useState<string>();
   const [delivery, setDelivery] = useState<Record<string, DeliveryTerms>>({});
   const selected = carts.data.find((cart) => cart.id === activeId) ?? carts.data[0];
+  const checkoutHintId = 'marketplace-cart-checkout-hint';
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products]);
   const sellerNameFor = (cart: CartViewDto): string => cart.seller.displayName;
   const estimatedTotal =
@@ -244,6 +251,7 @@ export function MarketplaceCart({
             ))}
           </fieldset>
           <button
+            aria-describedby={!canCheckout && checkoutHint ? checkoutHintId : undefined}
             className="dh-button dh-button--primary dh-button--block"
             disabled={!canCheckout || pendingAction === `checkout:${selected.id}`}
             onClick={() => {
@@ -254,6 +262,16 @@ export function MarketplaceCart({
             <MarketplaceIcon name="contract" />
             {t('agritech.marketplace.cart.reviewContract')}
           </button>
+          {!canCheckout && checkoutHint ? (
+            <div className="dh-state-inline" id={checkoutHintId}>
+              <span>{checkoutHint}</span>
+              {checkoutActionLabel && onCheckoutAction ? (
+                <button className="dh-text-button" onClick={onCheckoutAction} type="button">
+                  {checkoutActionLabel}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           <p className="dh-fine-print">{t('agritech.marketplace.cart.contractBoundary')}</p>
         </aside>
       </div>
@@ -262,36 +280,49 @@ export function MarketplaceCart({
 }
 
 interface RequestProps {
+  buyerAccessActionLabel?: string;
+  buyerAccessHint?: string;
   isVerified: boolean;
   locale: Locale;
   myRequests: Resource<BuyerRequestViewDto[]>;
   navigate: MarketplaceNavigate;
   offersByRequest: Resource<Record<string, OfferViewDto[]>>;
+  onBuyerAccessAction?: () => void;
   onChoose: (request: BuyerRequestViewDto, offer: OfferViewDto) => void;
   onCreate: (input: MarketplaceCreateRequestInput) => void;
   onOffer: (request: MarketplaceRequestFeedItem, input: MarketplaceOfferInput) => void;
   onRetry: () => void;
+  onSellerAccessAction?: () => void;
   pendingAction?: string;
   requests: Resource<MarketplaceRequestFeedItem[]>;
   role?: string;
+  sellerAccessActionLabel?: string;
+  sellerAccessHint?: string;
   t: MarketplaceTranslate;
 }
 
 const emptyRequest: MarketplaceCreateRequestInput = { region: '', title: '' };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- one explicit renderer keeps buyer and seller eligibility, loading, empty, and offer states visibly aligned
 export function MarketplaceRequests({
+  buyerAccessActionLabel,
+  buyerAccessHint,
   isVerified,
   locale,
   myRequests,
   navigate,
   offersByRequest,
+  onBuyerAccessAction,
   onChoose,
   onCreate,
   onOffer,
   onRetry,
+  onSellerAccessAction,
   pendingAction,
   requests,
   role,
+  sellerAccessActionLabel,
+  sellerAccessHint,
   t,
 }: Readonly<RequestProps>) {
   const eligibleBuyer = isVerified && (role === 'buyer' || role === 'farmer');
@@ -309,6 +340,8 @@ export function MarketplaceRequests({
     priceUzs: 0,
   });
   const myIds = useMemo(() => new Set(myRequests.data.map((request) => request.id)), [myRequests.data]);
+  const buyerAccessId = 'marketplace-request-buyer-access';
+  const sellerAccessId = 'marketplace-request-seller-access';
 
   const submitRequest = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -374,117 +407,118 @@ export function MarketplaceRequests({
               </div>
             </dl>
             {request.requirements && <p>{request.requirements}</p>}
-            {eligibleSeller &&
-              (offeringId === request.id ? (
-                <form
-                  className="dh-inline-form"
-                  onSubmit={(event) => {
-                    submitOffer(event, request);
-                  }}
-                >
+            {offeringId === request.id && eligibleSeller ? (
+              <form
+                className="dh-inline-form"
+                onSubmit={(event) => {
+                  submitOffer(event, request);
+                }}
+              >
+                <label>
+                  <span>{t('agritech.marketplace.orders.price')}</span>
+                  <input
+                    min="1"
+                    onChange={(event) => {
+                      setOfferInput((value) => ({ ...value, priceUzs: Number(event.target.value) }));
+                    }}
+                    required
+                    type="number"
+                    value={offerInput.priceUzs || ''}
+                  />
+                </label>
+                <label>
+                  <span>{t('agritech.marketplace.product.delivery')}</span>
+                  <select
+                    onChange={(event) => {
+                      const deliveryTerms = event.target.value as DeliveryTerms;
+                      setOfferInput((value) => ({
+                        ...value,
+                        deliveryPriceUzs: undefined,
+                        deliveryTerms,
+                      }));
+                    }}
+                    value={offerInput.deliveryTerms}
+                  >
+                    {(Object.keys(deliveryTranslationKeys) as DeliveryTerms[]).map((term) => (
+                      <option key={term} value={term}>
+                        {t(deliveryTranslationKeys[term])}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                {offerInput.deliveryTerms === 'seller_delivery' ? (
                   <label>
-                    <span>{t('agritech.marketplace.orders.price')}</span>
+                    <span>{t('agritech.marketplace.contract.deliveryPrice')}</span>
                     <input
                       min="1"
                       onChange={(event) => {
-                        setOfferInput((value) => ({ ...value, priceUzs: Number(event.target.value) }));
+                        setOfferInput((value) => ({
+                          ...value,
+                          deliveryPriceUzs: Number(event.target.value),
+                        }));
                       }}
                       required
                       type="number"
-                      value={offerInput.priceUzs || ''}
+                      value={offerInput.deliveryPriceUzs ?? ''}
                     />
                   </label>
-                  <label>
-                    <span>{t('agritech.marketplace.product.delivery')}</span>
-                    <select
-                      onChange={(event) => {
-                        const deliveryTerms = event.target.value as DeliveryTerms;
-                        setOfferInput((value) => ({
-                          ...value,
-                          deliveryPriceUzs: undefined,
-                          deliveryTerms,
-                        }));
-                      }}
-                      value={offerInput.deliveryTerms}
-                    >
-                      {(Object.keys(deliveryTranslationKeys) as DeliveryTerms[]).map((term) => (
-                        <option key={term} value={term}>
-                          {t(deliveryTranslationKeys[term])}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  {offerInput.deliveryTerms === 'seller_delivery' ? (
-                    <label>
-                      <span>{t('agritech.marketplace.contract.deliveryPrice')}</span>
-                      <input
-                        min="1"
-                        onChange={(event) => {
-                          setOfferInput((value) => ({
-                            ...value,
-                            deliveryPriceUzs: Number(event.target.value),
-                          }));
-                        }}
-                        required
-                        type="number"
-                        value={offerInput.deliveryPriceUzs ?? ''}
-                      />
-                    </label>
-                  ) : null}
-                  <label>
-                    <span>{t('agritech.marketplace.orders.timing')}</span>
-                    <input
-                      min="1"
-                      onChange={(event) => {
-                        setOfferInput((value) => ({
-                          ...value,
-                          deliveryDays: event.target.value ? Number(event.target.value) : undefined,
-                        }));
-                      }}
-                      type="number"
-                      value={offerInput.deliveryDays ?? ''}
-                    />
-                  </label>
-                  <label>
-                    <span>{t('agritech.marketplace.orders.deliveryNote')}</span>
-                    <input
-                      onChange={(event) => {
-                        setOfferInput((value) => ({ ...value, deliveryNote: event.target.value || undefined }));
-                      }}
-                      value={offerInput.deliveryNote ?? ''}
-                    />
-                  </label>
-                  <div>
-                    <button
-                      className="dh-button dh-button--secondary"
-                      onClick={() => {
-                        setOfferingId(undefined);
-                      }}
-                      type="button"
-                    >
-                      {t('agritech.marketplace.cancel')}
-                    </button>
-                    <button
-                      className="dh-button dh-button--primary"
-                      disabled={pendingAction === `offer:${request.id}`}
-                      type="submit"
-                    >
-                      {t('agritech.marketplace.orders.submitOffer')}
-                    </button>
-                  </div>
-                </form>
-              ) : (
-                <button
-                  className="dh-button dh-button--secondary"
-                  onClick={() => {
-                    setOfferingId(request.id);
-                    setOfferInput({ deliveryTerms: 'by_agreement', priceUzs: 0 });
-                  }}
-                  type="button"
-                >
-                  {t('agritech.marketplace.orders.makeOffer')}
-                </button>
-              ))}
+                ) : null}
+                <label>
+                  <span>{t('agritech.marketplace.orders.timing')}</span>
+                  <input
+                    min="1"
+                    onChange={(event) => {
+                      setOfferInput((value) => ({
+                        ...value,
+                        deliveryDays: event.target.value ? Number(event.target.value) : undefined,
+                      }));
+                    }}
+                    type="number"
+                    value={offerInput.deliveryDays ?? ''}
+                  />
+                </label>
+                <label>
+                  <span>{t('agritech.marketplace.orders.deliveryNote')}</span>
+                  <input
+                    onChange={(event) => {
+                      setOfferInput((value) => ({ ...value, deliveryNote: event.target.value || undefined }));
+                    }}
+                    value={offerInput.deliveryNote ?? ''}
+                  />
+                </label>
+                <div>
+                  <button
+                    className="dh-button dh-button--secondary"
+                    onClick={() => {
+                      setOfferingId(undefined);
+                    }}
+                    type="button"
+                  >
+                    {t('agritech.marketplace.cancel')}
+                  </button>
+                  <button
+                    className="dh-button dh-button--primary"
+                    disabled={pendingAction === `offer:${request.id}`}
+                    type="submit"
+                  >
+                    {t('agritech.marketplace.orders.submitOffer')}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <button
+                aria-describedby={!eligibleSeller ? sellerAccessId : undefined}
+                className="dh-button dh-button--secondary"
+                disabled={!eligibleSeller}
+                onClick={() => {
+                  setOfferingId(request.id);
+                  setOfferInput({ deliveryTerms: 'by_agreement', priceUzs: 0 });
+                }}
+                type="button"
+              >
+                {t('agritech.marketplace.orders.makeOffer')}
+              </button>
+            )}
           </article>
         ))}
       </div>
@@ -544,20 +578,19 @@ export function MarketplaceRequests({
                           : ''}
                       </small>
                     </div>
-                    {eligibleBuyer ? (
-                      <button
-                        className="dh-button dh-button--secondary"
-                        disabled={offer.status !== 'pending' || pendingAction === `choose:${offer.id}`}
-                        onClick={() => {
-                          onChoose(request, offer);
-                        }}
-                        type="button"
-                      >
-                        {offer.status === 'pending'
-                          ? t('agritech.marketplace.orders.choose')
-                          : t(`agritech.marketplace.orders.offerStatus.${offer.status}`)}
-                      </button>
-                    ) : null}
+                    <button
+                      aria-describedby={!eligibleBuyer ? buyerAccessId : undefined}
+                      className="dh-button dh-button--secondary"
+                      disabled={!eligibleBuyer || offer.status !== 'pending' || pendingAction === `choose:${offer.id}`}
+                      onClick={() => {
+                        onChoose(request, offer);
+                      }}
+                      type="button"
+                    >
+                      {offer.status === 'pending'
+                        ? t('agritech.marketplace.orders.choose')
+                        : t(`agritech.marketplace.orders.offerStatus.${offer.status}`)}
+                    </button>
                   </div>
                 ))}
               </div>
@@ -583,12 +616,16 @@ export function MarketplaceRequests({
   } else {
     myRequestContent = (
       <MarketplaceEmpty
-        actionLabel={t('agritech.marketplace.orders.create')}
+        {...(eligibleBuyer ? { actionLabel: t('agritech.marketplace.orders.create') } : {})}
         icon="search"
         message={t('agritech.marketplace.orders.emptyDescription')}
-        onAction={() => {
-          setCreating(true);
-        }}
+        {...(eligibleBuyer
+          ? {
+              onAction: () => {
+                setCreating(true);
+              },
+            }
+          : {})}
         title={t('agritech.marketplace.orders.empty')}
       />
     );
@@ -602,11 +639,28 @@ export function MarketplaceRequests({
           <h1>{t('agritech.marketplace.orders.title')}</h1>
           <p>{t('agritech.marketplace.orders.description')}</p>
         </div>
-        <button className="dh-button dh-button--primary" onClick={toggleCreating} type="button">
+        <button
+          aria-describedby={!eligibleBuyer ? buyerAccessId : undefined}
+          className="dh-button dh-button--primary"
+          disabled={!eligibleBuyer}
+          onClick={toggleCreating}
+          type="button"
+        >
           <MarketplaceIcon name="plus" />
           {t('agritech.marketplace.orders.create')}
         </button>
       </div>
+
+      {!eligibleBuyer && buyerAccessHint ? (
+        <div className="dh-state-inline" id={buyerAccessId}>
+          <span>{buyerAccessHint}</span>
+          {buyerAccessActionLabel && onBuyerAccessAction ? (
+            <button className="dh-text-button" onClick={onBuyerAccessAction} type="button">
+              {buyerAccessActionLabel}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       {creating && (
         <form className="dh-panel dh-form" onSubmit={submitRequest}>
@@ -729,6 +783,16 @@ export function MarketplaceRequests({
               <h2 id="dh-request-feed">{t('agritech.marketplace.orders.feed')}</h2>
             </div>
           </div>
+          {!eligibleSeller && sellerAccessHint ? (
+            <div className="dh-state-inline" id={sellerAccessId}>
+              <span>{sellerAccessHint}</span>
+              {sellerAccessActionLabel && onSellerAccessAction ? (
+                <button className="dh-text-button" onClick={onSellerAccessAction} type="button">
+                  {sellerAccessActionLabel}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           {sellerFeed}
         </section>
 

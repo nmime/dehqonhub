@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019
+// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -19,7 +19,7 @@ import {
   MarketplaceVerification,
 } from './marketplace-commerce';
 import { MarketplaceCatalog, MarketplaceProductDetail, MarketplaceSellerProfile } from './marketplace-discovery';
-import { ProductMedia } from './marketplace-product-card';
+import { MarketplaceProductCard, ProductMedia } from './marketplace-product-card';
 import type { MarketplaceListing, MarketplaceTranslate } from './marketplace-ui';
 
 const t: MarketplaceTranslate = (key) => key;
@@ -38,6 +38,7 @@ const product = (
   name,
   priceUzs: 1_250_000,
   promoted: false,
+  provenance: 'live',
   region: 'Samarqand',
   sampleAvailable: true,
   section: category === 'equipment' || category === 'irrigation' ? 'equipment' : 'seeds',
@@ -45,6 +46,7 @@ const product = (
   stockQuantity: 20,
   supplierId,
   supplierName: `Seller ${supplierId}`,
+  transactional: true,
   unit: 't',
 });
 
@@ -53,6 +55,14 @@ const tractor = product('equipment-1', 'seller-b', 'equipment', 'Compact tractor
 const otherInput = product('input-1', 'seller-c', 'other', 'Specialty soil input');
 const fertilizer = product('fertilizer-1', 'seller-d', 'fertilizer', 'Granular fertilizer');
 const pesticide = product('pesticide-1', 'seller-e', 'pesticide', 'Crop protection concentrate');
+
+const demoSeed: MarketplaceListing = {
+  ...seed,
+  id: 'demo-seed-1',
+  provenance: 'demo',
+  supplierId: 'demo-seller',
+  transactional: false,
+};
 
 const aiAnswer = (id: string): MarketplaceAiConsultationDto => ({
   answer: 'catalog_match' as const,
@@ -250,6 +260,32 @@ afterEach(() => {
 });
 
 describe('DehqonHub marketplace components', () => {
+  it('keeps synthetic catalog content browseable while every transaction control is disabled', () => {
+    const onAdd = vi.fn();
+    const onFavorite = vi.fn();
+    render(
+      <MarketplaceProductCard
+        favorite={false}
+        locale="en"
+        onAdd={onAdd}
+        onFavorite={onFavorite}
+        onOpen={vi.fn()}
+        product={demoSeed}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('agritech.marketplace.access.demoBadge')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.access.demo')).toBeTruthy();
+    expect(
+      screen.getByRole('button', { name: 'agritech.marketplace.product.addFavorite' }).hasAttribute('disabled'),
+    ).toBe(true);
+    expect(
+      screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }).hasAttribute('disabled'),
+    ).toBe(true);
+    expect(onAdd).not.toHaveBeenCalled();
+    expect(onFavorite).not.toHaveBeenCalled();
+  });
   it('keeps catalog branches distinct and applies real record filters', () => {
     window.history.replaceState({}, '', '/catalog?section=seeds');
     const onOpen = vi.fn();
@@ -336,7 +372,7 @@ describe('DehqonHub marketplace components', () => {
   });
 
   it('renders a public seller profile with its privacy-safe catalog', () => {
-    render(
+    const view = render(
       <MarketplaceSellerProfile
         catalog={{ data: [seed], status: 'ready' }}
         favoriteIds={new Set()}
@@ -362,6 +398,30 @@ describe('DehqonHub marketplace components', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Seed cooperative' })).toBeTruthy();
     expect(screen.getByText('Regional certified seed supplier')).toBeTruthy();
     expect(screen.getByText(seed.name)).toBeTruthy();
+
+    view.rerender(
+      <MarketplaceSellerProfile
+        catalog={{ data: [demoSeed], status: 'ready' }}
+        favoriteIds={new Set()}
+        locale="en"
+        navigate={vi.fn()}
+        onAdd={vi.fn()}
+        onFavorite={vi.fn()}
+        onOpen={vi.fn()}
+        seller={{
+          data: {
+            displayName: 'DehqonHub demo cooperative',
+            id: demoSeed.supplierId,
+            provenance: 'demo',
+            region: 'Samarqand',
+            verified: false,
+          },
+          status: 'ready',
+        }}
+        t={t}
+      />,
+    );
+    expect(screen.getAllByText('agritech.marketplace.access.demoBadge').length).toBeGreaterThan(0);
   });
 
   it('closes mobile catalog filters explicitly and when the viewport becomes desktop', () => {
@@ -436,6 +496,64 @@ describe('DehqonHub marketplace components', () => {
     expect(screen.getByText('agritech.marketplace.samples.usageUnavailable')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.samples.retry' }));
     expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it('keeps live and demo product details browseable while explaining restricted transactions', () => {
+    const onTransactionAction = vi.fn();
+    const common = {
+      canReplyToReviews: false,
+      canReportReviews: false,
+      canReview: false,
+      favoriteIds: new Set<string>(),
+      locale: 'en' as const,
+      navigate: vi.fn(),
+      onAdd: vi.fn(),
+      onFavorite: vi.fn(),
+      onOpen: vi.fn(),
+      onReview: vi.fn(),
+      onReplyToReview: vi.fn(),
+      onReportReview: vi.fn(),
+      onRetry: vi.fn(),
+      onSample: vi.fn(),
+      reviews: { data: [], status: 'empty' as const },
+      sampleUsage: {
+        data: { limit: 5, period: '2026', policyVersion: 1, remaining: 5, used: 0 },
+        status: 'ready' as const,
+      },
+      similar: [],
+      t,
+    };
+    const view = render(
+      <MarketplaceProductDetail
+        {...common}
+        canTransact={false}
+        onTransactionAction={onTransactionAction}
+        product={seed}
+        transactionActionLabel="verify-now"
+        transactionHint="verification-needed"
+      />,
+    );
+
+    expect(screen.getByText('verification-needed')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'verify-now' }));
+    expect(onTransactionAction).toHaveBeenCalledOnce();
+
+    view.rerender(<MarketplaceProductDetail {...common} canTransact={false} product={seed} />);
+    expect(screen.queryByRole('button', { name: 'verify-now' })).toBeNull();
+
+    view.rerender(
+      <MarketplaceProductDetail
+        {...common}
+        canTransact
+        onTransactionAction={onTransactionAction}
+        product={demoSeed}
+        transactionActionLabel="verify-now"
+        transactionHint="ignored-live-hint"
+      />,
+    );
+    expect(screen.getAllByText('agritech.marketplace.access.demoBadge').length).toBeGreaterThan(0);
+    expect(screen.getByText('agritech.marketplace.access.demo')).toBeTruthy();
+    expect(screen.queryByText('ignored-live-hint')).toBeNull();
   });
 
   it('submits an eligible buyer review from the product page', async () => {
@@ -629,8 +747,9 @@ describe('DehqonHub marketplace components', () => {
     expect(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' })).toBeTruthy();
   });
 
-  it('does not expose request, offer, or offer-selection commands without current verification', () => {
-    const navigate = vi.fn();
+  it('keeps restricted request and offer controls visible, disabled, and explained', () => {
+    const onBuyerAccessAction = vi.fn();
+    const onSellerAccessAction = vi.fn();
     const request: BuyerRequestViewDto = {
       createdAt: '2026-08-09T10:00:00.000Z',
       id: 'request-unverified',
@@ -650,25 +769,42 @@ describe('DehqonHub marketplace components', () => {
     };
     render(
       <MarketplaceRequests
+        buyerAccessActionLabel="buyer-next"
+        buyerAccessHint="buyer-prerequisite"
         isVerified={false}
         locale="en"
         myRequests={{ data: [request], status: 'ready' }}
-        navigate={navigate}
+        navigate={vi.fn()}
         offersByRequest={{ data: { [request.id]: [offer] }, status: 'ready' }}
+        onBuyerAccessAction={onBuyerAccessAction}
         onChoose={vi.fn()}
         onCreate={vi.fn()}
         onOffer={vi.fn()}
         onRetry={vi.fn()}
-        requests={{ data: [request], status: 'ready' }}
+        onSellerAccessAction={onSellerAccessAction}
+        requests={{ data: [{ ...request, id: 'public-request-unverified' }], status: 'ready' }}
         role="seller"
+        sellerAccessActionLabel="seller-next"
+        sellerAccessHint="seller-prerequisite"
         t={t}
       />,
     );
 
-    expect(screen.queryByRole('button', { name: 'agritech.marketplace.orders.makeOffer' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'agritech.marketplace.orders.choose' })).toBeNull();
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0]);
-    expect(navigate).toHaveBeenCalledWith('/verification');
+    expect(screen.getByText('buyer-prerequisite')).toBeTruthy();
+    expect(screen.getByText('seller-prerequisite')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }).hasAttribute('disabled')).toBe(
+      true,
+    );
+    expect(screen.getByRole('button', { name: 'agritech.marketplace.orders.choose' }).hasAttribute('disabled')).toBe(
+      true,
+    );
+    expect(
+      screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0]?.hasAttribute('disabled'),
+    ).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'buyer-next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'seller-next' }));
+    expect(onBuyerAccessAction).toHaveBeenCalledOnce();
+    expect(onSellerAccessAction).toHaveBeenCalledOnce();
     expect(screen.queryByLabelText('agritech.marketplace.orders.requestTitle')).toBeNull();
   });
 
@@ -1590,6 +1726,25 @@ describe('DehqonHub marketplace components', () => {
         t={t}
       />,
     );
+    const onCheckoutAction = vi.fn();
+    cartView.rerender(
+      <MarketplaceCart
+        canCheckout={false}
+        carts={{ data: [cart], status: 'ready' }}
+        checkoutActionLabel="complete-verification"
+        checkoutHint="checkout-restricted"
+        locale="en"
+        navigate={navigate}
+        onCheckout={vi.fn()}
+        onCheckoutAction={onCheckoutAction}
+        onUpdate={onUpdate}
+        products={[seed]}
+        t={t}
+      />,
+    );
+    expect(screen.getByText('checkout-restricted')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'complete-verification' }));
+    expect(onCheckoutAction).toHaveBeenCalledOnce();
     fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.cart.decrease' })[0]!);
     fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.cart.increase' })[0]!);
     expect(onUpdate).toHaveBeenNthCalledWith(1, cart.id, seed.id, 1);
@@ -1797,6 +1952,26 @@ describe('DehqonHub marketplace components', () => {
         t={t}
       />,
     );
+    requestView.rerender(
+      <MarketplaceRequests
+        buyerAccessHint="buyer-prerequisite"
+        isVerified={false}
+        locale="en"
+        myRequests={{ data: [], status: 'empty' }}
+        navigate={navigate}
+        offersByRequest={{ data: {}, status: 'empty' }}
+        onChoose={vi.fn()}
+        onCreate={onCreate}
+        onOffer={onOffer}
+        onRetry={vi.fn()}
+        requests={{ data: [publicRequest], status: 'ready' }}
+        role="seller"
+        sellerAccessHint="seller-prerequisite"
+        t={t}
+      />,
+    );
+    expect(screen.getByText('buyer-prerequisite')).toBeTruthy();
+    expect(screen.getByText('seller-prerequisite')).toBeTruthy();
     fireEvent.submit(screen.getByLabelText('agritech.marketplace.orders.requestTitle').closest('form')!);
     expect(navigate).toHaveBeenCalledWith('/verification');
     requestView.unmount();
@@ -1858,6 +2033,37 @@ describe('DehqonHub marketplace components', () => {
       />,
     );
     expect(screen.getByText('agritech.marketplace.verify.noFixedReviewTime')).toBeTruthy();
+    verificationView.rerender(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: readyVerificationProviders, status: 'ready' }}
+        t={t}
+        verification={{
+          data: { ...verified, simulation: false, status: 'pending', step: 'review' },
+          status: 'ready',
+        }}
+      />,
+    );
+    expect(screen.queryByText('agritech.marketplace.verify.simulationDisclosure')).toBeNull();
+    verificationView.rerender(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: readyVerificationProviders, status: 'ready' }}
+        t={t}
+        verification={{ data: { ...verified, status: 'unexpected' as never }, status: 'ready' }}
+      />,
+    );
+    expect(screen.queryByRole('status')).toBeNull();
     verificationView.rerender(
       <MarketplaceVerification
         navigate={navigate}

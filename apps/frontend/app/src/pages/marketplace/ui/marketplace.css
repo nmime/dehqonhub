@@ -886,10 +886,15 @@
 .dh-product-card__title,
 .dh-product-card__seller,
 .dh-product-card__facts,
+.dh-product-card__demo,
 .dh-product-card__price,
 .dh-product-card .dh-button {
   position: relative;
   z-index: 2;
+}
+
+.dh-product-card__demo {
+  align-self: flex-start;
 }
 
 .dh-product-card__title {

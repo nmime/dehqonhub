@@ -39,6 +39,7 @@ const listing = (overrides: Partial<MarketplaceListing> = {}): MarketplaceListin
   nameUzCyrl: 'Маккажўхори уруғи',
   priceUzs: 1_250_000,
   promoted: false,
+  provenance: 'live',
   region: 'Samarqand',
   sampleAvailable: true,
   section: 'seeds',
@@ -46,6 +47,7 @@ const listing = (overrides: Partial<MarketplaceListing> = {}): MarketplaceListin
   stockQuantity: 20,
   supplierId: 'seller-one',
   supplierName: 'Seed cooperative',
+  transactional: true,
   unit: 't',
   ...overrides,
 });
@@ -77,14 +79,22 @@ describe('marketplace projections and discovery interactions', () => {
       kind: 'product',
       priceUzs: 750_000,
       promoted: true,
+      provenance: 'live',
       region: 'Buxoro',
       sampleAvailable: false,
       section: 'seeds',
-      seller: { displayName: 'Public seller', id: 'seller-public' },
+      seller: {
+        displayName: 'Public seller',
+        id: 'seller-public',
+        provenance: 'live',
+        region: 'Buxoro',
+        verified: true,
+      },
       title: 'Public seed',
       titleRu: 'Публичные семена',
       titleUz: 'Ommaviy urugʻ',
       titleUzCyrl: 'Оммавий уруғ',
+      transactional: true,
       unit: 'kg',
     };
     const projected = toMarketplaceListing(publicListing);
@@ -418,7 +428,7 @@ describe('marketplace projections and discovery interactions', () => {
         similar={[]}
       />,
     );
-    expect(screen.queryByLabelText('agritech.marketplace.product.quantity')).toBeNull();
+    expect(screen.getByLabelText('agritech.marketplace.product.quantity').hasAttribute('disabled')).toBe(true);
 
     cleanup();
     render(

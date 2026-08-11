@@ -36,6 +36,7 @@ export interface MarketplaceListing {
   nameUzCyrl?: string;
   priceUzs: number;
   promoted: boolean;
+  provenance: 'live' | 'demo';
   region: string;
   sampleAvailable: boolean;
   section: 'equipment' | 'produce' | 'seeds';
@@ -43,6 +44,7 @@ export interface MarketplaceListing {
   stockQuantity: number;
   supplierId: string;
   supplierName: string;
+  transactional: boolean;
   unit: string;
 }
 
@@ -60,6 +62,7 @@ export const toMarketplaceListing = (listing: MarketplacePublicListingDto): Mark
   ...(listing.titleUzCyrl ? { nameUzCyrl: listing.titleUzCyrl } : {}),
   priceUzs: listing.priceUzs,
   promoted: listing.promoted,
+  provenance: listing.provenance,
   region: listing.region,
   sampleAvailable: listing.sampleAvailable,
   section: listing.section,
@@ -67,6 +70,7 @@ export const toMarketplaceListing = (listing: MarketplacePublicListingDto): Mark
   stockQuantity: listing.availableQuantity,
   supplierId: listing.seller.id,
   supplierName: listing.seller.displayName,
+  transactional: listing.transactional,
   unit: listing.unit,
 });
 

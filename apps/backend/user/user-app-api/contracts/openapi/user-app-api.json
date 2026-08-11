@@ -29256,14 +29256,17 @@
             "type": "string"
           },
           "verified": {
-            "type": "boolean",
-            "enum": [true]
+            "type": "boolean"
+          },
+          "provenance": {
+            "type": "string",
+            "enum": ["live", "demo"]
           },
           "description": {
             "type": "string"
           }
         },
-        "required": ["id", "displayName", "region", "verified"]
+        "required": ["id", "displayName", "region", "verified", "provenance"]
       },
       "MarketplacePublicProductListingDto": {
         "type": "object",
@@ -29308,6 +29311,13 @@
           "promoted": {
             "type": "boolean"
           },
+          "provenance": {
+            "type": "string",
+            "enum": ["live", "demo"]
+          },
+          "transactional": {
+            "type": "boolean"
+          },
           "sampleAvailable": {
             "type": "boolean"
           },
@@ -29344,6 +29354,8 @@
           "region",
           "images",
           "promoted",
+          "provenance",
+          "transactional",
           "sampleAvailable",
           "seller",
           "publishedAt",
@@ -29396,6 +29408,13 @@
           "promoted": {
             "type": "boolean"
           },
+          "provenance": {
+            "type": "string",
+            "enum": ["live", "demo"]
+          },
+          "transactional": {
+            "type": "boolean"
+          },
           "sampleAvailable": {
             "type": "boolean"
           },
@@ -29435,6 +29454,8 @@
           "region",
           "images",
           "promoted",
+          "provenance",
+          "transactional",
           "sampleAvailable",
           "seller",
           "publishedAt",

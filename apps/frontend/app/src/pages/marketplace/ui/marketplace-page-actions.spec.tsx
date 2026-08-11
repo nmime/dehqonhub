@@ -148,6 +148,7 @@ const product: MarketplaceListing = {
   name: 'Corn seed',
   priceUzs: 1_250_000,
   promoted: false,
+  provenance: 'live',
   region: 'Samarqand',
   sampleAvailable: true,
   section: 'seeds',
@@ -155,6 +156,7 @@ const product: MarketplaceListing = {
   stockQuantity: 20,
   supplierId: 'seller-public-1',
   supplierName: 'Seed cooperative',
+  transactional: true,
   unit: 't',
 };
 
@@ -516,6 +518,7 @@ interface ProductActions {
   onAdd: (listing: MarketplaceListing, quantity?: number) => void;
   onFavorite: (listing: MarketplaceListing) => void;
   onOpen: (listing: MarketplaceListing) => void;
+  onTransactionAction?: () => void;
 }
 
 interface ProductDetailActions extends ProductActions {
@@ -533,13 +536,16 @@ interface ProductDetailActions extends ProductActions {
 
 interface CartActions {
   onCheckout: (selectedCart: CartViewDto, deliveryTerms: 'by_agreement' | 'pickup' | 'seller_delivery') => void;
+  onCheckoutAction?: () => void;
   onUpdate: (cartId: string, listingId: string, quantity: number) => void;
 }
 
 interface RequestActions {
+  onBuyerAccessAction?: () => void;
   onChoose: (selectedRequest: BuyerRequestViewDto, selectedOffer: OfferViewDto) => void;
   onCreate: (input: MarketplaceCreateRequestInput) => void;
   onOffer: (selectedRequest: MarketplaceRequestFeedItem, input: MarketplaceOfferInput) => void;
+  onSellerAccessAction?: () => void;
 }
 
 interface VerificationActions {
@@ -566,6 +572,7 @@ interface ContractActions {
 }
 
 interface ManagementActions {
+  onBuyerAccessAction?: () => void;
   onActivatePromotion: (listingId: string, plan: 'catalog_7d' | 'catalog_14d' | 'catalog_30d') => void;
   onLoadPromotion: (promotionId: string) => void;
   onPublishListing: (
@@ -580,6 +587,7 @@ interface ManagementActions {
     action: 'approve' | 'cancel' | 'decline' | 'receive' | 'ship',
     deliveryQuoteUzs?: number,
   ) => void;
+  onSellerAccessAction?: () => void;
 }
 
 interface AiActions {
@@ -1461,4 +1469,78 @@ describe('MarketplacePage route action orchestration', () => {
     render(<MarketplacePage />);
     viewProps<ProductActions>('home').onOpen(product);
   }, 20_000);
+
+  it('routes every progressive-access prerequisite and blocks synthetic mutations before the API boundary', () => {
+    const refresh = vi.fn();
+    const navigate = vi.fn();
+    testState.views = {};
+    for (const mock of testState.apiMocks.values()) {
+      mock.mockReset();
+    }
+    apiMock('marketplacePublicControllerListReviews').mockResolvedValue(apiSuccess({ items: [] }));
+
+    const mount = (data: MarketplaceData, props: MarketplacePageProps = {}) => {
+      cleanup();
+      testState.marketplaceData = data;
+      render(<MarketplacePage navigate={navigate} {...props} />);
+    };
+    const demoProduct: MarketplaceListing = {
+      ...product,
+      id: 'demo-listing',
+      provenance: 'demo',
+      transactional: false,
+    };
+    const demoData: MarketplaceData = {
+      ...buildMarketplaceData(refresh),
+      catalog: ready([demoProduct]),
+      selectedListing: ready(demoProduct),
+    };
+    mount(demoData);
+    viewProps<ProductActions>('home').onAdd(demoProduct);
+    viewProps<ProductActions>('home').onFavorite(demoProduct);
+    mount(demoData, { productId: demoProduct.id, view: 'product' });
+    viewProps<ProductDetailActions>('product').onSample(demoProduct);
+    expect(apiMock('marketplaceControllerAddToCart')).not.toHaveBeenCalled();
+    expect(apiMock('marketplaceControllerAddFavorite')).not.toHaveBeenCalled();
+    expect(apiMock('marketplaceControllerRequestSample')).not.toHaveBeenCalled();
+
+    const sellerData: MarketplaceData = {
+      ...buildMarketplaceData(refresh),
+      verification: ready({ ...verification, role: 'seller' }),
+    };
+    mount(sellerData);
+    viewProps<ProductActions>('home').onTransactionAction?.();
+    mount(sellerData, { view: 'cart' });
+    viewProps<CartActions>('cart').onCheckoutAction?.();
+    mount(sellerData, { view: 'requests' });
+    viewProps<RequestActions>('requests').onBuyerAccessAction?.();
+    mount(sellerData, { view: 'account' });
+    viewProps<ManagementActions>('management').onBuyerAccessAction?.();
+
+    const buyerData: MarketplaceData = {
+      ...buildMarketplaceData(refresh),
+      verification: ready({ ...verification, role: 'buyer' }),
+    };
+    mount(buyerData, { view: 'requests' });
+    viewProps<RequestActions>('requests').onSellerAccessAction?.();
+    mount(buyerData, { view: 'account' });
+    viewProps<ManagementActions>('management').onSellerAccessAction?.();
+
+    const organizationData: MarketplaceData = {
+      ...buildMarketplaceData(refresh),
+      partners: empty([]),
+      verification: ready({ ...verification, role: 'farmer' }),
+    };
+    mount(organizationData);
+    viewProps<ProductActions>('home').onTransactionAction?.();
+    mount(organizationData, { view: 'requests' });
+    viewProps<RequestActions>('requests').onBuyerAccessAction?.();
+    viewProps<RequestActions>('requests').onSellerAccessAction?.();
+    mount(organizationData, { view: 'account' });
+    viewProps<ManagementActions>('management').onBuyerAccessAction?.();
+    viewProps<ManagementActions>('management').onSellerAccessAction?.();
+
+    expect(navigate.mock.calls.filter(([path]) => path === '/verification')).toHaveLength(6);
+    expect(navigate.mock.calls.filter(([path]) => path === '/account')).toHaveLength(5);
+  });
 });

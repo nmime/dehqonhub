@@ -28,6 +28,9 @@ interface ProductActions {
   onFavorite: (product: MarketplaceListing) => void;
   onOpen: (product: MarketplaceListing) => void;
   pendingAction?: string;
+  onTransactionAction?: () => void;
+  transactionActionLabel?: string;
+  transactionHint?: string;
 }
 
 interface SharedDiscoveryProps extends ProductActions {
@@ -106,9 +109,12 @@ function Shelf({
               onAdd={actions.onAdd}
               onFavorite={actions.onFavorite}
               onOpen={actions.onOpen}
+              onTransactionAction={actions.onTransactionAction}
               pendingAction={actions.pendingAction}
               product={product}
               t={t}
+              transactionActionLabel={actions.transactionActionLabel}
+              transactionHint={actions.transactionHint}
             />
           ))}
         </div>
@@ -525,9 +531,12 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
                   onAdd={actions.onAdd}
                   onFavorite={actions.onFavorite}
                   onOpen={actions.onOpen}
+                  onTransactionAction={actions.onTransactionAction}
                   pendingAction={actions.pendingAction}
                   product={product}
                   t={t}
+                  transactionActionLabel={actions.transactionActionLabel}
+                  transactionHint={actions.transactionHint}
                 />
               ))}
             </div>
@@ -566,7 +575,8 @@ interface ProductDetailProps extends Omit<SharedDiscoveryProps, 'products'> {
 }
 
 function ProductSampleAction({
-  canTransact,
+  restrictionId,
+  transactionRestricted,
   onRetry,
   onSample,
   pendingAction,
@@ -575,7 +585,8 @@ function ProductSampleAction({
   sampleUsageStatus,
   t,
 }: Readonly<{
-  canTransact: boolean;
+  restrictionId: string;
+  transactionRestricted: boolean;
   onRetry: () => void;
   onSample: (product: MarketplaceListing) => void;
   pendingAction?: string;
@@ -584,8 +595,12 @@ function ProductSampleAction({
   sampleUsageStatus: ResourceStatus;
   t: MarketplaceTranslate;
 }>) {
-  if (!canTransact) {
-    return null;
+  if (transactionRestricted) {
+    return (
+      <button aria-describedby={restrictionId} className="dh-button dh-button--secondary" disabled type="button">
+        {t('agritech.marketplace.product.sample')}
+      </button>
+    );
   }
   if (sampleUsageStatus === 'error') {
     return (
@@ -611,6 +626,7 @@ function ProductSampleAction({
   );
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- the product view intentionally renders the complete demo, stock, sample, review, and transaction state matrix
 export function MarketplaceProductDetail({
   canTransact = true,
   canReview,
@@ -627,12 +643,15 @@ export function MarketplaceProductDetail({
   onReportReview,
   onRetry,
   onSample,
+  onTransactionAction,
   pendingAction,
   product,
   reviews,
   sampleUsage,
   similar,
   t,
+  transactionActionLabel,
+  transactionHint,
 }: Readonly<ProductDetailProps>) {
   const [quantity, setQuantity] = useState(1);
   const [reviewComment, setReviewComment] = useState('');
@@ -656,6 +675,10 @@ export function MarketplaceProductDetail({
   const productSection = sectionForProduct(product);
   const outOfStock = product.status !== 'active' || product.stockQuantity <= 0;
   const sampleAvailable = sampleUsage.status === 'ready' && sampleUsage.data.remaining > 0;
+  const isDemo = product.provenance === 'demo';
+  const transactionRestricted = !canTransact || product.transactional === false;
+  const restrictionHint = isDemo ? t('agritech.marketplace.access.demo') : transactionHint;
+  const restrictionId = `marketplace-product-${product.id}-detail-restriction`;
   let reviewsContent: ReactNode;
   if (reviews.status === 'loading') {
     reviewsContent = <MarketplaceSkeleton count={2} />;
@@ -803,6 +826,9 @@ export function MarketplaceProductDetail({
                   : t(`agritech.marketplace.section.${productSection}`)}
               </p>
               <h1>{name}</h1>
+              {product.provenance === 'demo' ? (
+                <span className="dh-badge dh-badge--neutral">{t('agritech.marketplace.access.demoBadge')}</span>
+              ) : null}
               <p>
                 {product.region} · {product.supplierName}
               </p>
@@ -814,7 +840,9 @@ export function MarketplaceProductDetail({
                   : t('agritech.marketplace.product.addFavorite')
               }
               aria-pressed={favoriteIds.has(product.id)}
+              aria-describedby={product.provenance === 'demo' ? restrictionId : undefined}
               className={`dh-icon-button${favoriteIds.has(product.id) ? ' is-active' : ''}`}
+              disabled={product.provenance === 'demo'}
               onClick={() => {
                 onFavorite(product);
               }}
@@ -858,30 +886,40 @@ export function MarketplaceProductDetail({
               <dd>{product.id}</dd>
             </div>
           </dl>
-          {canTransact ? (
-            <div className="dh-buy-row">
-              <label className="dh-quantity">
-                <span>{t('agritech.marketplace.product.quantity')}</span>
-                <input
-                  min="1"
-                  onChange={(event) => {
-                    setQuantity(Math.max(1, Number(event.target.value) || 1));
-                  }}
-                  type="number"
-                  value={quantity}
-                />
-              </label>
-              <button
-                className="dh-button dh-button--primary"
-                disabled={outOfStock || pendingAction === `cart:${product.id}`}
-                onClick={() => {
-                  onAdd(product, quantity);
+          <div className="dh-buy-row">
+            <label className="dh-quantity">
+              <span>{t('agritech.marketplace.product.quantity')}</span>
+              <input
+                disabled={transactionRestricted}
+                min="1"
+                onChange={(event) => {
+                  setQuantity(Math.max(1, Number(event.target.value) || 1));
                 }}
-                type="button"
-              >
-                <MarketplaceIcon name="cart" />
-                {t('agritech.marketplace.product.addToCart')}
-              </button>
+                type="number"
+                value={quantity}
+              />
+            </label>
+            <button
+              aria-describedby={transactionRestricted ? restrictionId : undefined}
+              className="dh-button dh-button--primary"
+              disabled={transactionRestricted || outOfStock || pendingAction === `cart:${product.id}`}
+              onClick={() => {
+                onAdd(product, quantity);
+              }}
+              type="button"
+            >
+              <MarketplaceIcon name="cart" />
+              {t('agritech.marketplace.product.addToCart')}
+            </button>
+          </div>
+          {transactionRestricted && restrictionHint ? (
+            <div className="dh-state-inline" id={restrictionId}>
+              <span>{restrictionHint}</span>
+              {!isDemo && transactionActionLabel && onTransactionAction ? (
+                <button className="dh-text-button" onClick={onTransactionAction} type="button">
+                  {transactionActionLabel}
+                </button>
+              ) : null}
             </div>
           ) : null}
           <div className="dh-sample-callout">
@@ -891,7 +929,8 @@ export function MarketplaceProductDetail({
               <p>{t('agritech.marketplace.samples.deliveryDisclaimer')}</p>
             </div>
             <ProductSampleAction
-              canTransact={canTransact}
+              restrictionId={restrictionId}
+              transactionRestricted={transactionRestricted}
               onRetry={onRetry}
               onSample={onSample}
               pendingAction={pendingAction}
@@ -973,9 +1012,12 @@ export function MarketplaceProductDetail({
                 onAdd={onAdd}
                 onFavorite={onFavorite}
                 onOpen={onOpen}
+                onTransactionAction={onTransactionAction}
                 pendingAction={pendingAction}
                 product={item}
                 t={t}
+                transactionActionLabel={transactionActionLabel}
+                transactionHint={transactionHint}
               />
             ))}
           </div>
@@ -1002,9 +1044,12 @@ export function MarketplaceSellerProfile({
   onAdd,
   onFavorite,
   onOpen,
+  onTransactionAction,
   pendingAction,
   seller,
   t,
+  transactionActionLabel,
+  transactionHint,
 }: Readonly<SellerProfileProps>) {
   if (seller.status === 'loading' || seller.status === 'idle') {
     return <MarketplaceSkeleton count={5} />;
@@ -1043,9 +1088,13 @@ export function MarketplaceSellerProfile({
           <p>{seller.data.description ?? t('agritech.marketplace.seller.noDescription')}</p>
           <small>{seller.data.region}</small>
         </div>
-        <div className="dh-verification-chip dh-verification-chip--verified">
+        <div className={`dh-verification-chip${seller.data.verified ? ' dh-verification-chip--verified' : ''}`}>
           <MarketplaceIcon name="shield" />
-          <span>{t('agritech.marketplace.seller.verified')}</span>
+          <span>
+            {seller.data.provenance === 'demo'
+              ? t('agritech.marketplace.access.demoBadge')
+              : t('agritech.marketplace.seller.verified')}
+          </span>
         </div>
       </div>
       <section aria-labelledby="dh-seller-catalog" className="dh-detail-section">
@@ -1076,9 +1125,12 @@ export function MarketplaceSellerProfile({
                 onAdd={onAdd}
                 onFavorite={onFavorite}
                 onOpen={onOpen}
+                onTransactionAction={onTransactionAction}
                 pendingAction={pendingAction}
                 product={product}
                 t={t}
+                transactionActionLabel={transactionActionLabel}
+                transactionHint={transactionHint}
               />
             ))}
           </div>
@@ -1121,9 +1173,12 @@ export function MarketplaceFavorites({ status, ...props }: Readonly<FavoritesPro
             onAdd={props.onAdd}
             onFavorite={props.onFavorite}
             onOpen={props.onOpen}
+            onTransactionAction={props.onTransactionAction}
             pendingAction={props.pendingAction}
             product={product}
             t={props.t}
+            transactionActionLabel={props.transactionActionLabel}
+            transactionHint={props.transactionHint}
           />
         ))}
       </div>

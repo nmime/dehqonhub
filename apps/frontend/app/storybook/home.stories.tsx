@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, waitFor, within } from 'storybook/test';
 import { createMemoryHistory, RouterProvider } from '@tanstack/react-router';
-import { ApiClientProvider } from '@app/frontend-api-client';
+import { ApiClientProvider, type MarketplacePublicProductListingDto } from '@app/frontend-api-client';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
 import { createUserRouter } from '../src/app/router/user-route-tree';
@@ -9,38 +9,56 @@ import userStyles from '../src/styles.css?inline';
 
 const catalogProducts = [
   {
+    availableQuantity: 18,
     category: 'seed',
-    createdAt: '2026-08-09T10:00:00.000Z',
     description: 'Certified drought-resistant corn seed for field production.',
     id: '65cb7c88-6b04-40d5-8443-f2d8de152119',
     images: [],
-    name: 'Samarqand corn seed',
+    kind: 'product',
     priceUzs: 4_080_000,
+    promoted: false,
+    provenance: 'live',
+    publishedAt: '2026-08-09T10:00:00.000Z',
     region: 'Samarqand',
-    status: 'active',
-    stockQuantity: 18,
-    supplierId: '5e64471f-7444-4b69-a28d-6d4cb8f59de0',
-    supplierName: 'Zarafshon Agro',
+    sampleAvailable: true,
+    section: 'seeds',
+    seller: {
+      displayName: 'Zarafshon Agro',
+      id: '5e64471f-7444-4b69-a28d-6d4cb8f59de0',
+      region: 'Samarqand',
+      verified: true,
+    },
+    title: 'Samarqand corn seed',
+    transactional: true,
     unit: 't',
     updatedAt: '2026-08-09T10:00:00.000Z',
   },
   {
+    availableQuantity: 24,
     category: 'seed',
-    createdAt: '2026-08-09T10:00:00.000Z',
     description: 'Regionally adapted wheat seed with current availability.',
     id: '18b392f4-09f6-44d9-a104-54db9e731631',
     images: [],
-    name: 'Jizzakh wheat seed',
+    kind: 'product',
     priceUzs: 3_850_000,
+    promoted: false,
+    provenance: 'live',
+    publishedAt: '2026-08-09T10:00:00.000Z',
     region: 'Jizzakh',
-    status: 'active',
-    stockQuantity: 24,
-    supplierId: 'a6d5d506-275d-44fa-b079-192371263fc2',
-    supplierName: 'AgroSem Trade',
+    sampleAvailable: true,
+    section: 'seeds',
+    seller: {
+      displayName: 'AgroSem Trade',
+      id: 'a6d5d506-275d-44fa-b079-192371263fc2',
+      region: 'Jizzakh',
+      verified: true,
+    },
+    title: 'Jizzakh wheat seed',
+    transactional: true,
     unit: 't',
     updatedAt: '2026-08-09T10:00:00.000Z',
   },
-] as const;
+] as const satisfies readonly MarketplacePublicProductListingDto[];
 
 const marketplaceFetch =
   (products: readonly (typeof catalogProducts)[number][] = []): typeof fetch =>

@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019
+// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ONBOARDING-023
 import { useState, type ReactNode, type SyntheticEvent } from 'react';
 import type { Locale } from '@app/frontend-runtime';
 import type {
@@ -27,6 +27,8 @@ const formText = (form: FormData, field: string): string => {
 };
 
 interface MarketplaceManagementProps {
+  readonly buyerAccessActionLabel?: string;
+  readonly buyerAccessHint?: string;
   readonly aiConsultations: Resource<MarketplaceAiConsultationDto[]>;
   readonly canActivatePromotions: boolean;
   readonly canPublishListings: boolean;
@@ -36,6 +38,7 @@ interface MarketplaceManagementProps {
   readonly myRequests: Resource<BuyerRequestViewDto[]>;
   readonly navigate: MarketplaceNavigate;
   readonly notifications: Resource<MarketplaceContractNotificationRecipientDto[]>;
+  readonly onBuyerAccessAction?: () => void;
   readonly onActivatePromotion: (listingPublicId: string, planCode: PromotionPlanCode) => void;
   readonly onLoadPromotion: (promotionId: string) => void;
   readonly onPublishListing: (sourceId: string, sourceKind: 'produce' | 'product', section: ListingSection) => void;
@@ -50,6 +53,9 @@ interface MarketplaceManagementProps {
   readonly promotions: Resource<MarketplaceListingPromotionDto[]>;
   readonly requestPublications: Resource<MarketplaceOwnedRequestPublicationDto[]>;
   readonly samples: Resource<MarketplaceSampleDto[]>;
+  readonly sellerAccessActionLabel?: string;
+  readonly sellerAccessHint?: string;
+  readonly onSellerAccessAction?: () => void;
   readonly supplierProducts: Resource<SupplierProductViewDto[]>;
   readonly t: MarketplaceTranslate;
 }
@@ -148,6 +154,12 @@ function PublicationWorkspace({
   requestPublications,
   supplierProducts,
   t,
+  buyerAccessActionLabel,
+  buyerAccessHint,
+  onBuyerAccessAction,
+  sellerAccessActionLabel,
+  sellerAccessHint,
+  onSellerAccessAction,
 }: Pick<
   MarketplaceManagementProps,
   | 'canPublishListings'
@@ -163,6 +175,12 @@ function PublicationWorkspace({
   | 'requestPublications'
   | 'supplierProducts'
   | 't'
+  | 'buyerAccessActionLabel'
+  | 'buyerAccessHint'
+  | 'onBuyerAccessAction'
+  | 'sellerAccessActionLabel'
+  | 'sellerAccessHint'
+  | 'onSellerAccessAction'
 >) {
   const [sections, setSections] = useState<Record<string, Exclude<ListingSection, 'produce'>>>({});
 
@@ -174,105 +192,78 @@ function PublicationWorkspace({
           <h2 id="dh-publication-title">{t('agritech.marketplace.publication.title')}</h2>
         </div>
       </div>
-      {!canPublishListings && !canPublishRequests ? (
-        <p className="dh-muted">{t('agritech.marketplace.management.verificationRequired')}</p>
-      ) : null}
-      {canPublishListings ? (
-        <div className="dh-management-grid">
-          <div>
-            <h3>{t('agritech.marketplace.publication.products')}</h3>
-            <SourceResourceMessage
-              onRetry={onRetry}
-              produceListings={produceListings}
-              supplierProducts={supplierProducts}
-              t={t}
-            />
-            <div className="dh-management-list">
-              {supplierProducts.data.map((product) => {
-                const section = sections[product.id] ?? sourceSection(product);
-                return (
-                  <article key={product.id}>
-                    <div>
-                      <strong>{product.name}</strong>
-                      <small>{t(`agritech.marketplace.publication.sourceStatus.${product.status}`)}</small>
-                    </div>
-                    <select
-                      aria-label={t('agritech.marketplace.publication.section')}
-                      onChange={(event) => {
-                        setSections((value) => ({
-                          ...value,
-                          [product.id]: event.target.value as Exclude<ListingSection, 'produce'>,
-                        }));
-                      }}
-                      value={section}
-                    >
-                      <option value="seeds">{t('agritech.marketplace.section.seeds')}</option>
-                      <option value="equipment">{t('agritech.marketplace.section.equipment')}</option>
-                    </select>
-                    <button
-                      className="dh-button dh-button--secondary"
-                      disabled={pendingAction === `publish-listing:${product.id}`}
-                      onClick={() => {
-                        onPublishListing(product.id, 'product', section);
-                      }}
-                      type="button"
-                    >
-                      {t('agritech.marketplace.publication.publish')}
-                    </button>
-                  </article>
-                );
-              })}
-              {produceListings.data.map((produce) => {
-                return (
-                  <article key={produce.id}>
-                    <div>
-                      <strong>{produce.crop}</strong>
-                      <small>
-                        {produce.region} · {produce.grade}
-                      </small>
-                    </div>
-                    <span className="dh-badge dh-badge--soft">{t('agritech.marketplace.section.produce')}</span>
-                    <button
-                      className="dh-button dh-button--secondary"
-                      disabled={pendingAction === `publish-listing:${produce.id}`}
-                      onClick={() => {
-                        onPublishListing(produce.id, 'produce', 'produce');
-                      }}
-                      type="button"
-                    >
-                      {t('agritech.marketplace.publication.publish')}
-                    </button>
-                  </article>
-                );
-              })}
-            </div>
-          </div>
-          <PublicationReceipts listings={listingPublications} locale={locale} requests={requestPublications} t={t} />
-        </div>
-      ) : null}
-      {canPublishRequests ? (
+      <div className="dh-management-grid">
         <div>
-          <h3>{t('agritech.marketplace.publication.requests')}</h3>
-          <ResourceMessage
-            emptyKey="agritech.marketplace.orders.empty"
-            errorKey="agritech.marketplace.orders.unavailable"
+          <h3>{t('agritech.marketplace.publication.products')}</h3>
+          {!canPublishListings ? (
+            <div className="dh-state-inline" id="marketplace-listing-publication-access">
+              <span>{sellerAccessHint ?? t('agritech.marketplace.management.verificationRequired')}</span>
+              {sellerAccessActionLabel && onSellerAccessAction ? (
+                <button className="dh-text-button" onClick={onSellerAccessAction} type="button">
+                  {sellerAccessActionLabel}
+                </button>
+              ) : null}
+            </div>
+          ) : null}
+          <SourceResourceMessage
             onRetry={onRetry}
-            resource={myRequests}
+            produceListings={produceListings}
+            supplierProducts={supplierProducts}
             t={t}
           />
           <div className="dh-management-list">
-            {myRequests.data.map((request) => {
+            {supplierProducts.data.map((product) => {
+              const section = sections[product.id] ?? sourceSection(product);
               return (
-                <article key={request.id}>
+                <article key={product.id}>
                   <div>
-                    <strong>{request.title}</strong>
-                    <small>{t(`agritech.marketplace.orders.${request.status}`)}</small>
+                    <strong>{product.name}</strong>
+                    <small>{t(`agritech.marketplace.publication.sourceStatus.${product.status}`)}</small>
                   </div>
+                  <select
+                    aria-label={t('agritech.marketplace.publication.section')}
+                    disabled={!canPublishListings}
+                    onChange={(event) => {
+                      setSections((value) => ({
+                        ...value,
+                        [product.id]: event.target.value as Exclude<ListingSection, 'produce'>,
+                      }));
+                    }}
+                    value={section}
+                  >
+                    <option value="seeds">{t('agritech.marketplace.section.seeds')}</option>
+                    <option value="equipment">{t('agritech.marketplace.section.equipment')}</option>
+                  </select>
                   <button
                     className="dh-button dh-button--secondary"
-                    disabled={pendingAction === `publish-request:${request.id}`}
+                    aria-describedby={!canPublishListings ? 'marketplace-listing-publication-access' : undefined}
+                    disabled={!canPublishListings || pendingAction === `publish-listing:${product.id}`}
                     onClick={() => {
-                      onPublishRequest(request.id);
+                      onPublishListing(product.id, 'product', section);
+                    }}
+                    type="button"
+                  >
+                    {t('agritech.marketplace.publication.publish')}
+                  </button>
+                </article>
+              );
+            })}
+            {produceListings.data.map((produce) => {
+              return (
+                <article key={produce.id}>
+                  <div>
+                    <strong>{produce.crop}</strong>
+                    <small>
+                      {produce.region} · {produce.grade}
+                    </small>
+                  </div>
+                  <span className="dh-badge dh-badge--soft">{t('agritech.marketplace.section.produce')}</span>
+                  <button
+                    className="dh-button dh-button--secondary"
+                    aria-describedby={!canPublishListings ? 'marketplace-listing-publication-access' : undefined}
+                    disabled={!canPublishListings || pendingAction === `publish-listing:${produce.id}`}
+                    onClick={() => {
+                      onPublishListing(produce.id, 'produce', 'produce');
                     }}
                     type="button"
                   >
@@ -283,7 +274,51 @@ function PublicationWorkspace({
             })}
           </div>
         </div>
-      ) : null}
+        <PublicationReceipts listings={listingPublications} locale={locale} requests={requestPublications} t={t} />
+      </div>
+      <div>
+        <h3>{t('agritech.marketplace.publication.requests')}</h3>
+        {!canPublishRequests ? (
+          <div className="dh-state-inline" id="marketplace-request-publication-access">
+            <span>{buyerAccessHint ?? t('agritech.marketplace.management.verificationRequired')}</span>
+            {buyerAccessActionLabel && onBuyerAccessAction ? (
+              <button className="dh-text-button" onClick={onBuyerAccessAction} type="button">
+                {buyerAccessActionLabel}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
+        <ResourceMessage
+          emptyKey="agritech.marketplace.orders.empty"
+          errorKey="agritech.marketplace.orders.unavailable"
+          onRetry={onRetry}
+          resource={myRequests}
+          t={t}
+        />
+        <div className="dh-management-list">
+          {myRequests.data.map((request) => {
+            return (
+              <article key={request.id}>
+                <div>
+                  <strong>{request.title}</strong>
+                  <small>{t(`agritech.marketplace.orders.${request.status}`)}</small>
+                </div>
+                <button
+                  className="dh-button dh-button--secondary"
+                  aria-describedby={!canPublishRequests ? 'marketplace-request-publication-access' : undefined}
+                  disabled={!canPublishRequests || pendingAction === `publish-request:${request.id}`}
+                  onClick={() => {
+                    onPublishRequest(request.id);
+                  }}
+                  type="button"
+                >
+                  {t('agritech.marketplace.publication.publish')}
+                </button>
+              </article>
+            );
+          })}
+        </div>
+      </div>
     </section>
   );
 }
@@ -349,6 +384,9 @@ function PromotionWorkspace({
   promotionPlans,
   promotions,
   t,
+  sellerAccessActionLabel,
+  sellerAccessHint,
+  onSellerAccessAction,
 }: Pick<
   MarketplaceManagementProps,
   | 'canActivatePromotions'
@@ -362,6 +400,9 @@ function PromotionWorkspace({
   | 'promotionPlans'
   | 'promotions'
   | 't'
+  | 'sellerAccessActionLabel'
+  | 'sellerAccessHint'
+  | 'onSellerAccessAction'
 >) {
   const [listingId, setListingId] = useState('');
   const [planCode, setPlanCode] = useState<PromotionPlanCode>('catalog_7d');
@@ -372,9 +413,6 @@ function PromotionWorkspace({
     }
   };
 
-  if (!canActivatePromotions) {
-    return null;
-  }
   return (
     <section aria-labelledby="dh-promotion-title" className="dh-panel dh-management-section">
       <div className="dh-panel__head">
@@ -384,6 +422,16 @@ function PromotionWorkspace({
         </div>
       </div>
       <p>{t('agritech.marketplace.promotion.description')}</p>
+      {!canActivatePromotions ? (
+        <div className="dh-state-inline" id="marketplace-promotion-access">
+          <span>{sellerAccessHint ?? t('agritech.marketplace.management.verificationRequired')}</span>
+          {sellerAccessActionLabel && onSellerAccessAction ? (
+            <button className="dh-text-button" onClick={onSellerAccessAction} type="button">
+              {sellerAccessActionLabel}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <ResourceMessage
         emptyKey="agritech.marketplace.publication.historyEmpty"
         errorKey="agritech.marketplace.publication.historyUnavailable"
@@ -402,7 +450,7 @@ function PromotionWorkspace({
         <label>
           <span>{t('agritech.marketplace.promotion.listing')}</span>
           <select
-            disabled={listingPublications.status !== 'ready'}
+            disabled={!canActivatePromotions || listingPublications.status !== 'ready'}
             onChange={(event) => {
               setListingId(event.target.value);
             }}
@@ -424,6 +472,7 @@ function PromotionWorkspace({
         <label>
           <span>{t('agritech.marketplace.promotion.plan')}</span>
           <select
+            disabled={!canActivatePromotions}
             onChange={(event) => {
               setPlanCode(event.target.value as PromotionPlanCode);
             }}
@@ -438,7 +487,13 @@ function PromotionWorkspace({
         </label>
         <button
           className="dh-button dh-button--primary"
-          disabled={!listingId || promotionPlans.status !== 'ready' || pendingAction === 'promotion:activate'}
+          aria-describedby={!canActivatePromotions ? 'marketplace-promotion-access' : undefined}
+          disabled={
+            !canActivatePromotions ||
+            !listingId ||
+            promotionPlans.status !== 'ready' ||
+            pendingAction === 'promotion:activate'
+          }
           type="submit"
         >
           {t('agritech.marketplace.promotion.activate')}

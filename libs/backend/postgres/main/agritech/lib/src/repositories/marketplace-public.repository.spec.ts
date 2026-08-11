@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-PUBLIC-018
+// @requirements REQ-AGRITECH-PUBLIC-018 REQ-AGRITECH-DEMO-024
 import type { EntityManager } from '@mikro-orm/core';
 import { describe, expect, it, vi } from 'vitest';
 import { FarmerEntity } from '../entities/farmer.entity';
@@ -30,6 +30,20 @@ const entityManager = () => {
 };
 
 describe('PostgresMarketplacePublicRepository', () => {
+  it('reads the dedicated boolean demo flag from the default governance tenant', async () => {
+    const { em, execute } = entityManager();
+    execute.mockResolvedValueOnce([{ enabled: true, value: true }]);
+    const repository = new PostgresMarketplacePublicRepository(em as unknown as EntityManager);
+
+    await expect(repository.isDemoCatalogEnabled()).resolves.toBe(true);
+    expect(execute).toHaveBeenCalledWith(expect.stringContaining("key = 'marketplace.demo'"), [expect.any(String)]);
+
+    execute.mockResolvedValueOnce([{ enabled: false, value: true }]);
+    await expect(repository.isDemoCatalogEnabled()).resolves.toBe(false);
+    execute.mockResolvedValueOnce([{ enabled: true, value: 'true' }]);
+    await expect(repository.isDemoCatalogEnabled()).resolves.toBe(false);
+  });
+
   it('returns only the caller-owned bounded publication status projection', async () => {
     const { em } = entityManager();
     const updatedAt = new Date('2030-01-02T00:00:00.000Z');

@@ -1,4 +1,4 @@
-// @requirements REQ-API-CLIENT-005
+// @requirements REQ-API-CLIENT-005 REQ-AUTH-RECOVERY-010 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024
 // Evidence for: REQ-API-CLIENT-005
 import { configureApiLocale } from '@app/frontend-api-support';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
@@ -101,6 +101,8 @@ const session: AuthSessionViewDto = {
   authProvider: 'password',
   user: {
     email: 'ada@example.com',
+    emailVerified: false,
+    credentialRevision: 0,
     id: 'user-1',
     permissions: ['profile:read'],
     roles: ['user'],

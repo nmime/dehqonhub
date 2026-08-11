@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017
+// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024
 import { createHash, randomUUID } from 'node:crypto';
 import { MikroORM, type EntityManager } from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';
@@ -98,6 +98,17 @@ describe('Marketplace commerce PostgreSQL boundaries', () => {
         buyer,
         { actingPartnerId: buyerPartnerId, listingPublicationId: productId, quantity: 1 },
         'private-source-0001',
+      ),
+    ).resolves.toEqual({ status: 'not_found', field: 'listingPublicationId' });
+    await expect(
+      repository.addToCart(
+        buyer,
+        {
+          actingPartnerId: buyerPartnerId,
+          listingPublicationId: '9d000000-0000-4000-8000-000000000101',
+          quantity: 1,
+        },
+        'demo-listing-0001',
       ),
     ).resolves.toEqual({ status: 'not_found', field: 'listingPublicationId' });
     if (added.status !== 'ok') {

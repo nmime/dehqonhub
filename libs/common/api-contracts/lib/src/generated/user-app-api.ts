@@ -1799,8 +1799,9 @@ export interface components {
       id: string;
       displayName: string;
       region: string;
-      /** @enum {boolean} */
-      verified: true;
+      verified: boolean;
+      /** @enum {string} */
+      provenance: 'live' | 'demo';
       description?: string;
     };
     MarketplacePublicProductListingDto: {
@@ -1817,6 +1818,9 @@ export interface components {
       region: string;
       images: string[];
       promoted: boolean;
+      /** @enum {string} */
+      provenance: 'live' | 'demo';
+      transactional: boolean;
       sampleAvailable: boolean;
       seller: components['schemas']['MarketplacePublicSellerDto'];
       /** Format: date-time */
@@ -1847,6 +1851,9 @@ export interface components {
       region: string;
       images: string[];
       promoted: boolean;
+      /** @enum {string} */
+      provenance: 'live' | 'demo';
+      transactional: boolean;
       sampleAvailable: boolean;
       seller: components['schemas']['MarketplacePublicSellerDto'];
       /** Format: date-time */

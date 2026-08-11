@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-SHELL-004
+// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-DEMO-024
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -81,5 +81,40 @@ describe('FeatureFlagsPage', () => {
 
     expect(await screen.findByText('No feature flags')).toBeTruthy();
     expect(screen.queryByRole('button', { name: 'Save feature flag' })).toBeFalsy();
+    expect(screen.getByRole('switch', { name: 'Show synthetic marketplace catalog' }).hasAttribute('disabled')).toBe(
+      true,
+    );
+  });
+
+  it('toggles the audited synthetic browse-only marketplace catalog', async () => {
+    vi.spyOn(adminApi, 'adminFeatureFlagsControllerList').mockResolvedValue(ok({ items: [] }));
+    const upsert = vi.spyOn(adminApi, 'adminFeatureFlagsControllerUpsert').mockResolvedValue(
+      ok({
+        createdAt: '2026-08-11T00:00:00.000Z',
+        description: 'Synthetic browse-only marketplace catalog controlled by an audited operator flag.',
+        enabled: true,
+        id: '00000000-0000-4000-8000-000000000124',
+        key: 'marketplace.demo',
+        updatedAt: '2026-08-11T00:00:00.000Z',
+        value: true,
+      }),
+    );
+
+    renderPage(['admin:feature-flags:read', 'admin:feature-flags:write']);
+    expect(await screen.findByText('No feature flags')).toBeTruthy();
+    const demoSwitch = await screen.findByRole('switch', { name: 'Show synthetic marketplace catalog' });
+    fireEvent.click(demoSwitch);
+
+    await waitFor(() => {
+      expect(upsert).toHaveBeenCalledWith(
+        'marketplace.demo',
+        {
+          description: 'Synthetic browse-only marketplace catalog controlled by an audited operator flag.',
+          enabled: true,
+          value: true,
+        },
+        undefined,
+      );
+    });
   });
 });

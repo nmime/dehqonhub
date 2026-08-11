@@ -1165,3 +1165,92 @@ operations evidence.
 
 - **WHEN** buyer, seller, foreign member, and tenant administrator read notification status in each supported locale
 - **THEN** each active party sees only its safe localized in-app records, the administrator sees only the derived tenant scope, and internal lease, template, provider, receipt, and error fields remain absent from recipient responses
+
+### Requirement: [REQ-AGRITECH-ONBOARDING-023] Marketplace access is progressive and explains restricted actions
+
+The responsive user marketplace SHALL remain useful before marketplace
+verification while every commercial mutation remains server-authoritative.
+Public discovery SHALL remain anonymous. Signed-in users SHALL retain profile,
+favorites, organization application, and verification readiness/history.
+Controls for unavailable commercial actions SHALL remain visible when they aid
+task understanding, SHALL be disabled, and SHALL state the exact missing
+identity or approved-organization prerequisite with a next action.
+
+**Evidence profile:** API, domain, security, journey, accessibility
+
+**Invariants:**
+
+- UI hints are not authority; every command repeats the persistent identity,
+  role, organization, tenant, resource, and state checks it requires.
+- Email assurance, Telegram authentication, marketplace identity verification,
+  and organization approval are distinct facts and never imply one another.
+- A pending, rejected, expired, disabled, or unavailable verification provider
+  does not hide public discovery or safe authenticated account capabilities.
+- Commercial commands retain the verified-role and organization prerequisites
+  owned by their existing requirements.
+
+**Failure behavior:**
+
+- An unavailable capability is disabled before submission with localized
+  guidance, while a direct API attempt still returns safe RFC 9457 denial.
+- Stale cached verification or organization state never enables a command; a
+  denial refreshes the authoritative readiness state.
+
+#### Scenario: Unverified user keeps safe marketplace access
+
+- **WHEN** a signed-in user has no verified marketplace identity
+- **THEN** public discovery, favorites, profile, organization application, and verification remain usable while commercial controls show a verification-required hint
+
+#### Scenario: Verified user still needs an approved organization
+
+- **WHEN** a verified buyer or seller lacks the matching approved organization membership
+- **THEN** role-specific commercial controls remain disabled with a link to create or review the organization application
+
+#### Scenario: Fully eligible actor receives only role capabilities
+
+- **WHEN** a verified actor has an approved buyer, seller, or farmer organization relationship
+- **THEN** the UI enables only that role's commands and the backend independently authorizes every submitted mutation
+
+### Requirement: [REQ-AGRITECH-DEMO-024] Administrator-governed demo catalog is honest and isolated
+
+The platform SHALL expose a deterministic versioned demo catalog only while an
+authorized tenant administrator enables the dedicated demo-catalog feature
+flag. Demo listings SHALL be clearly labelled, browse-only, and carried through
+the generated public API contract with explicit demo provenance and
+non-transactional state. Disabling the flag SHALL remove the projection
+immediately without creating, changing, or deleting real marketplace records.
+
+**Evidence profile:** API, domain, persistence, security, journey
+
+**Invariants:**
+
+- Demo data creates no user, organization, source row, publication, inventory
+  mutation, cart, order, contract, payment, review, notification, provider
+  receipt, or authoritative metric.
+- Demo identifiers are stable and disjoint from persisted publication sources.
+- Repeated enable or disable writes are idempotent because the projection is
+  derived from current flag state rather than materialized as commerce rows.
+- Only the existing tenant-scoped, audited feature-flag admin permission can
+  change demo visibility.
+
+**Failure behavior:**
+
+- Missing, disabled, malformed, or unreadable feature-flag state fails closed
+  to no demo records while authoritative public records remain available.
+- Any attempted transaction against a demo identifier returns safe not-found or
+  denied behavior and creates no commercial state.
+
+#### Scenario: Admin enables the demo catalog
+
+- **WHEN** an authorized administrator enables the dedicated demo-catalog toggle
+- **THEN** guests and users see localized labelled demo listings with disabled commercial actions and no change to authoritative marketplace metrics
+
+#### Scenario: Admin disables the demo catalog
+
+- **WHEN** the administrator disables the toggle
+- **THEN** demo listings disappear immediately and all real publications, carts, orders, and analytics remain unchanged
+
+#### Scenario: Unauthorized demo toggle is denied
+
+- **WHEN** a caller without feature-flag write permission attempts to change demo visibility
+- **THEN** the backend denies the request and the admin UI exposes no writable toggle

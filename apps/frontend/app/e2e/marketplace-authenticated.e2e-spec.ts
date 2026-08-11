@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006
+// @requirements REQ-AUTH-RECOVERY-010 REQ-AGRITECH-WEB-006 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024
 import { expect, test, type Page, type Route } from '@playwright/test';
 import type {
   ContractArtifactDto,
@@ -34,6 +34,7 @@ const seller = {
   description: 'Certified seed cooperative',
   displayName: 'Seed cooperative',
   id: '55555555-5555-4555-8555-555555555555',
+  provenance: 'live',
   region: 'Samarqand',
   verified: true,
 } satisfies MarketplacePublicProductListingDto['seller'];
@@ -47,14 +48,34 @@ const listing = {
   kind: 'product',
   priceUzs: 1_250_000,
   promoted: false,
+  provenance: 'live',
   publishedAt: now,
   region: 'Samarqand',
   sampleAvailable: true,
   section: 'seeds',
   seller,
   title: 'Certified corn seed',
+  transactional: true,
   unit: 't',
   updatedAt: now,
+} satisfies MarketplacePublicProductListingDto;
+
+const demoListing = {
+  ...listing,
+  availableQuantity: 80,
+  id: '9d000000-0000-4000-8000-000000000101',
+  provenance: 'demo',
+  sampleAvailable: true,
+  seller: {
+    description: 'Synthetic preview profile',
+    displayName: 'DehqonHub demo farm',
+    id: '9d000000-0000-4000-8000-000000000001',
+    provenance: 'demo',
+    region: 'Samarqand',
+    verified: false,
+  },
+  title: 'Premium demo cotton seed',
+  transactional: false,
 } satisfies MarketplacePublicProductListingDto;
 
 const providerCapability = {
@@ -427,7 +448,7 @@ class MarketplaceFixtureApi {
       '/marketplace/promotions/plans': {
         items: [{ code: 'catalog_7d', currency: 'UZS', durationDays: 7, priceUzs: 100_000 }],
       },
-      '/marketplace/public/catalog': { items: [listing] },
+      '/marketplace/public/catalog': { items: [listing, demoListing] },
       '/marketplace/public/requests': {
         items: [
           {
@@ -750,6 +771,21 @@ for (const viewport of viewports) {
     await expect(page.getByText('Simulation — no live-provider approval')).toBeVisible();
     await expectNoHorizontalOverflow(page, `${viewport.name} verification`);
 
+    await page.goto('/catalog');
+    const liveListingCard = page.locator('article').filter({ hasText: listing.title });
+    await expect(liveListingCard.getByRole('button', { name: 'Add to cart' })).toBeDisabled();
+    await expect(liveListingCard.getByText('Complete marketplace verification to use this action.')).toBeVisible();
+    await expect(liveListingCard.getByRole('button', { name: 'Open verification' })).toBeVisible();
+    const demoListingCard = page.locator('article').filter({ hasText: demoListing.title });
+    await expect(demoListingCard.getByText('Demo', { exact: true })).toBeVisible();
+    await expect(demoListingCard.getByRole('button', { name: 'Add to cart' })).toBeDisabled();
+    await expect(
+      demoListingCard.getByText(
+        'This is synthetic preview data. Browse it freely; transactions and engagement are disabled.',
+      ),
+    ).toBeVisible();
+    await expectNoHorizontalOverflow(page, `${viewport.name} progressive catalog`);
+
     fixture.useVerifiedVerification();
     await page.goto('/requests');
     await expect(page.getByText(seller.displayName)).toBeVisible();
@@ -812,3 +848,68 @@ for (const viewport of viewports) {
     expect([...fixture.unhandledApiPaths]).toEqual([]);
   });
 }
+
+test('account recovery requests and confirms single-use credentials without exposing server detail', async ({
+  page,
+}) => {
+  const commands: string[] = [];
+  await page.setViewportSize({ height: 760, width: 375 });
+  await page.route('**/*', async (route) => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    if (request.method() === 'GET' && path === '/auth/me') {
+      await route.fulfill({
+        body: JSON.stringify({ detail: 'Authentication is required.', status: 401, title: 'Unauthorized' }),
+        contentType: 'application/problem+json',
+        status: 401,
+      });
+      return;
+    }
+    if (request.method() === 'GET' && path === '/auth/problem-presentations') {
+      await route.fulfill({ body: JSON.stringify({ data: { items: [] } }), contentType: 'application/json' });
+      return;
+    }
+    if (
+      request.method() === 'POST' &&
+      [
+        '/auth/email-verification-token',
+        '/auth/email-verification/confirm',
+        '/auth/password-reset-token',
+        '/auth/password-reset/confirm',
+      ].includes(path)
+    ) {
+      commands.push(path);
+      await route.fulfill({
+        body: JSON.stringify({ data: { accepted: true, confirmed: true } }),
+        contentType: 'application/json',
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto('/auth');
+  const verification = page.getByRole('heading', { name: 'Email verification' }).locator('..');
+  await verification.getByLabel('Email').fill('member@example.com');
+  await verification.getByRole('button', { name: 'Send verification code' }).click();
+  await expect(page.getByText('If the account exists, a verification code has been sent.')).toBeVisible();
+  await verification.getByLabel('Single-use code').fill('verification-code-1234567890');
+  await verification.getByRole('button', { name: 'Verify email' }).click();
+  await expect(page.getByText('Your email is verified.')).toBeVisible();
+
+  const reset = page.getByRole('heading', { name: 'Password reset' }).locator('..');
+  await reset.getByLabel('Email').fill('member@example.com');
+  await reset.getByRole('button', { name: 'Send reset code' }).click();
+  await expect(page.getByText('If the account exists, a password reset code has been sent.')).toBeVisible();
+  await reset.getByLabel('Single-use code').fill('password-reset-code-1234567890');
+  await reset.getByLabel('New password').fill('correct-horse-battery-staple');
+  await reset.getByRole('button', { name: 'Set new password' }).click();
+  await expect(page.getByText('Your password has been updated. Sign in again on other devices.')).toBeVisible();
+  expect(commands).toEqual([
+    '/auth/email-verification-token',
+    '/auth/email-verification/confirm',
+    '/auth/password-reset-token',
+    '/auth/password-reset/confirm',
+  ]);
+  await expectNoHorizontalOverflow(page, '375 recovery');
+});

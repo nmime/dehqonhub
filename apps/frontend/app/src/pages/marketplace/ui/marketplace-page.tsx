@@ -128,6 +128,7 @@ const verificationStatusForContract = (verification: Resource<VerificationViewDt
   return status === 'verified' && !canMutate ? 'none' : status;
 };
 
+// eslint-disable-next-line sonarjs/cognitive-complexity -- this owner coordinates fail-closed command handlers across the complete marketplace route surface
 export const MarketplacePage = observer(function MarketplacePage({
   contractId,
   locationSearch = '',
@@ -378,6 +379,10 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const addToCart = (product: MarketplaceListing, quantity = 1) => {
+    if (!product.transactional) {
+      flash(translate('agritech.marketplace.access.demo'), 'info');
+      return;
+    }
     if (!canBuy || !buyerPartner) {
       flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
       navigate('/verification');
@@ -400,6 +405,10 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const toggleFavorite = (product: MarketplaceListing) => {
+    if (product.provenance === 'demo') {
+      flash(translate('agritech.marketplace.access.demo'), 'info');
+      return;
+    }
     const favorite = favoriteIds.has(product.id);
     void runMutation(
       `favorite:${product.id}`,
@@ -503,6 +512,10 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const requestSample = (product: MarketplaceListing) => {
+    if (!product.transactional) {
+      flash(translate('agritech.marketplace.access.demo'), 'info');
+      return;
+    }
     if (!canBuy) {
       flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
       navigate('/verification');
@@ -1076,6 +1089,69 @@ export const MarketplacePage = observer(function MarketplacePage({
     navigate(`/requests?q=${encodeURIComponent(suggestion.label)}`);
   };
 
+  const sharedTransactionAccess = (() => {
+    if (data.auth !== 'signed-in') {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.signIn'),
+        hint: translate('agritech.marketplace.access.signIn'),
+        path: '/auth',
+      };
+    }
+    if (data.verification.status === 'loading' || data.verification.status === 'idle') {
+      return { hint: translate('agritech.marketplace.access.checking') };
+    }
+    if (!isVerified) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.verify'),
+        hint: translate('agritech.marketplace.access.verify'),
+        path: '/verification',
+      };
+    }
+    return undefined;
+  })();
+
+  const transactionAccess = (() => {
+    if (sharedTransactionAccess) {
+      return sharedTransactionAccess;
+    }
+    if (!canBuy) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.verify'),
+        hint: translate('agritech.marketplace.access.buyerRole'),
+        path: '/verification',
+      };
+    }
+    if (!buyerPartner) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.organization'),
+        hint: translate('agritech.marketplace.access.organization'),
+        path: '/account',
+      };
+    }
+    return undefined;
+  })();
+
+  const sellerTransactionAccess = (() => {
+    if (sharedTransactionAccess) {
+      return sharedTransactionAccess;
+    }
+    if (!canOffer) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.verify'),
+        hint: translate('agritech.marketplace.access.sellerRole'),
+        path: '/verification',
+      };
+    }
+    if (!supplierPartner) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.organization'),
+        hint: translate('agritech.marketplace.access.sellerOrganization'),
+        path: '/account',
+      };
+    }
+    return undefined;
+  })();
+
   const productActions = {
     canTransact: canBuy && Boolean(buyerPartner),
     favoriteIds,
@@ -1084,9 +1160,18 @@ export const MarketplacePage = observer(function MarketplacePage({
     onAdd: addToCart,
     onFavorite: toggleFavorite,
     onOpen: openProduct,
+    ...(transactionAccess?.path
+      ? {
+          onTransactionAction: () => {
+            navigate(transactionAccess.path);
+          },
+        }
+      : {}),
     pendingAction,
     products: data.catalog.data,
     t: translate,
+    ...(transactionAccess?.actionLabel ? { transactionActionLabel: transactionAccess.actionLabel } : {}),
+    ...(transactionAccess?.hint ? { transactionHint: transactionAccess.hint } : {}),
   };
 
   const privateView =
@@ -1097,6 +1182,7 @@ export const MarketplacePage = observer(function MarketplacePage({
   const contentUnavailable = (privateView && data.auth === 'error') || (catalogView && data.catalog.status === 'error');
   const catalogLoading = catalogView && (data.catalog.status === 'loading' || data.catalog.status === 'idle');
   const productLoading = view === 'product' && data.selectedListing.status === 'loading';
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- an exhaustive route-state switch keeps loading, auth, access, recovery, and command props in one auditable boundary
   const renderContent = (): ReactNode => {
     let rendered: ReactNode;
     if (authChecking) {
@@ -1160,10 +1246,19 @@ export const MarketplacePage = observer(function MarketplacePage({
           rendered = (
             <MarketplaceCart
               canCheckout={canBuy}
+              {...(transactionAccess?.actionLabel ? { checkoutActionLabel: transactionAccess.actionLabel } : {})}
+              {...(transactionAccess?.hint ? { checkoutHint: transactionAccess.hint } : {})}
               carts={data.carts}
               locale={locale}
               navigate={navigate}
               onCheckout={checkout}
+              {...(transactionAccess?.path
+                ? {
+                    onCheckoutAction: () => {
+                      navigate(transactionAccess.path);
+                    },
+                  }
+                : {})}
               onUpdate={(cartId, itemProductId, quantity) => {
                 const cart = data.carts.data.find((entry) => entry.id === cartId);
                 if (cart) {
@@ -1179,11 +1274,20 @@ export const MarketplacePage = observer(function MarketplacePage({
         case 'requests':
           rendered = (
             <MarketplaceRequests
+              {...(transactionAccess?.actionLabel ? { buyerAccessActionLabel: transactionAccess.actionLabel } : {})}
+              {...(transactionAccess?.hint ? { buyerAccessHint: transactionAccess.hint } : {})}
               isVerified={isVerified}
               locale={locale}
               myRequests={data.myRequests}
               navigate={navigate}
               offersByRequest={data.offersByRequest}
+              {...(transactionAccess?.path
+                ? {
+                    onBuyerAccessAction: () => {
+                      navigate(transactionAccess.path);
+                    },
+                  }
+                : {})}
               onChoose={chooseOffer}
               onCreate={createRequest}
               onOffer={makeOffer}
@@ -1191,6 +1295,17 @@ export const MarketplacePage = observer(function MarketplacePage({
               pendingAction={pendingAction}
               requests={data.requests}
               role={data.verification.data?.role}
+              {...(sellerTransactionAccess?.actionLabel
+                ? { sellerAccessActionLabel: sellerTransactionAccess.actionLabel }
+                : {})}
+              {...(sellerTransactionAccess?.hint ? { sellerAccessHint: sellerTransactionAccess.hint } : {})}
+              {...(sellerTransactionAccess?.path
+                ? {
+                    onSellerAccessAction: () => {
+                      navigate(sellerTransactionAccess.path);
+                    },
+                  }
+                : {})}
               t={translate}
             />
           );
@@ -1219,6 +1334,8 @@ export const MarketplacePage = observer(function MarketplacePage({
               locale={locale}
               management={
                 <MarketplaceUserManagement
+                  {...(transactionAccess?.actionLabel ? { buyerAccessActionLabel: transactionAccess.actionLabel } : {})}
+                  {...(transactionAccess?.hint ? { buyerAccessHint: transactionAccess.hint } : {})}
                   aiConsultations={data.aiConsultations}
                   canActivatePromotions={canOffer && Boolean(supplierPartner)}
                   canPublishListings={canOffer && Boolean(supplierPartner)}
@@ -1228,6 +1345,13 @@ export const MarketplacePage = observer(function MarketplacePage({
                   myRequests={data.myRequests}
                   navigate={navigate}
                   notifications={data.notifications}
+                  {...(transactionAccess?.path
+                    ? {
+                        onBuyerAccessAction: () => {
+                          navigate(transactionAccess.path);
+                        },
+                      }
+                    : {})}
                   onActivatePromotion={activatePromotion}
                   onLoadPromotion={loadPromotion}
                   onPublishListing={publishListing}
@@ -1242,6 +1366,17 @@ export const MarketplacePage = observer(function MarketplacePage({
                   promotions={data.promotions}
                   requestPublications={data.ownedRequestPublications}
                   samples={data.samples}
+                  {...(sellerTransactionAccess?.actionLabel
+                    ? { sellerAccessActionLabel: sellerTransactionAccess.actionLabel }
+                    : {})}
+                  {...(sellerTransactionAccess?.hint ? { sellerAccessHint: sellerTransactionAccess.hint } : {})}
+                  {...(sellerTransactionAccess?.path
+                    ? {
+                        onSellerAccessAction: () => {
+                          navigate(sellerTransactionAccess.path);
+                        },
+                      }
+                    : {})}
                   supplierProducts={data.supplierProducts}
                   t={translate}
                 />
