@@ -28,6 +28,10 @@ const authProviderIdentitiesPath = '/auth/provider-identities';
 const authProviderIdentityPath = '/auth/provider-identities/{identityId}';
 const authLinkTokensPath = '/auth/link-tokens';
 const authProblemPresentationsPath = '/auth/problem-presentations';
+const authEmailVerificationTokenPath = '/auth/email-verification-token';
+const authPasswordResetTokenPath = '/auth/password-reset-token';
+const authEmailVerificationConfirmPath = '/auth/email-verification/confirm';
+const authPasswordResetConfirmPath = '/auth/password-reset/confirm';
 
 export const client = createClient<paths>();
 export const query = createQueryClient(client);
@@ -54,6 +58,11 @@ export type ProviderIdentitiesPayloadDto = components['schemas']['ProviderIdenti
 export type UnlinkProviderIdentityPayloadDto = components['schemas']['UnlinkProviderIdentityPayloadDto'];
 export type ProblemPresentationRuntimeViewDto = components['schemas']['ProblemPresentationRuntimeViewDto'];
 export type ProblemPresentationRuntimePayloadDto = components['schemas']['ProblemPresentationRuntimePayloadDto'];
+export type UserActionTokenRequestDto = components['schemas']['UserActionTokenRequestDto'];
+export type UserActionTokenConfirmDto = components['schemas']['UserActionTokenConfirmDto'];
+export type PasswordResetConfirmDto = components['schemas']['PasswordResetConfirmDto'];
+export type UserActionTokenPayloadDto = components['schemas']['UserActionTokenPayloadDto'];
+export type UserActionConfirmationPayloadDto = components['schemas']['UserActionConfirmationPayloadDto'];
 export type DiscordCallbackQuery = NonNullable<paths[typeof authDiscordCallbackPath]['get']['parameters']['query']>;
 
 export const authControllerRegister = (body: RegisterDto, options?: ApiClientRequestOptions) =>
@@ -186,6 +195,36 @@ export type AuthControllerProblemPresentationsResponse = OpenApiData<typeof auth
 export type AuthControllerProblemPresentationsData = EnvelopeData<AuthControllerProblemPresentationsResponse>;
 export type AuthControllerProblemPresentationsError = OpenApiError<typeof authControllerProblemPresentations>;
 
+export const authControllerRequestEmailVerification = (
+  body: UserActionTokenRequestDto,
+  options?: ApiClientRequestOptions,
+) => client.POST(authEmailVerificationTokenPath, { ...toOpenApiFetchOptions(options), body });
+export type AuthControllerRequestEmailVerificationResponse = OpenApiData<typeof authControllerRequestEmailVerification>;
+export type AuthControllerRequestEmailVerificationData = EnvelopeData<AuthControllerRequestEmailVerificationResponse>;
+export type AuthControllerRequestEmailVerificationError = OpenApiError<typeof authControllerRequestEmailVerification>;
+
+export const authControllerRequestPasswordReset = (
+  body: UserActionTokenRequestDto,
+  options?: ApiClientRequestOptions,
+) => client.POST(authPasswordResetTokenPath, { ...toOpenApiFetchOptions(options), body });
+export type AuthControllerRequestPasswordResetResponse = OpenApiData<typeof authControllerRequestPasswordReset>;
+export type AuthControllerRequestPasswordResetData = EnvelopeData<AuthControllerRequestPasswordResetResponse>;
+export type AuthControllerRequestPasswordResetError = OpenApiError<typeof authControllerRequestPasswordReset>;
+
+export const authControllerConfirmEmailVerification = (
+  body: UserActionTokenConfirmDto,
+  options?: ApiClientRequestOptions,
+) => client.POST(authEmailVerificationConfirmPath, { ...toOpenApiFetchOptions(options), body });
+export type AuthControllerConfirmEmailVerificationResponse = OpenApiData<typeof authControllerConfirmEmailVerification>;
+export type AuthControllerConfirmEmailVerificationData = EnvelopeData<AuthControllerConfirmEmailVerificationResponse>;
+export type AuthControllerConfirmEmailVerificationError = OpenApiError<typeof authControllerConfirmEmailVerification>;
+
+export const authControllerConfirmPasswordReset = (body: PasswordResetConfirmDto, options?: ApiClientRequestOptions) =>
+  client.POST(authPasswordResetConfirmPath, { ...toOpenApiFetchOptions(options), body });
+export type AuthControllerConfirmPasswordResetResponse = OpenApiData<typeof authControllerConfirmPasswordReset>;
+export type AuthControllerConfirmPasswordResetData = EnvelopeData<AuthControllerConfirmPasswordResetResponse>;
+export type AuthControllerConfirmPasswordResetError = OpenApiError<typeof authControllerConfirmPasswordReset>;
+
 export const getAuthControllerMeQueryKey = () => ['get', authMePath] as const;
 export const getAuthControllerProblemPresentationsQueryKey = () => ['get', authProblemPresentationsPath] as const;
 export const getAuthControllerProviderIdentitiesQueryKey = () => ['get', authProviderIdentitiesPath] as const;
@@ -213,6 +252,12 @@ export const getAuthControllerDiscordAuthorizationRequestMutationKey = () =>
   ['post', authDiscordAuthorizationRequestPath] as const;
 export const getAuthControllerUnlinkProviderIdentityMutationKey = () => ['delete', authProviderIdentityPath] as const;
 export const getAuthControllerCreateLinkTokenMutationKey = () => ['post', authLinkTokensPath] as const;
+export const getAuthControllerRequestEmailVerificationMutationKey = () =>
+  ['post', authEmailVerificationTokenPath] as const;
+export const getAuthControllerRequestPasswordResetMutationKey = () => ['post', authPasswordResetTokenPath] as const;
+export const getAuthControllerConfirmEmailVerificationMutationKey = () =>
+  ['post', authEmailVerificationConfirmPath] as const;
+export const getAuthControllerConfirmPasswordResetMutationKey = () => ['post', authPasswordResetConfirmPath] as const;
 
 type OpenApiQueryOptions<TData, TError> = Omit<UseQueryOptions<TData, TError, TData>, 'queryFn'> & {
   queryFn: NonNullable<UseQueryOptions<TData, TError, TData>['queryFn']>;
@@ -399,5 +444,65 @@ export const useAuthControllerCreateLinkTokenMutation = <TContext = unknown>({
   useMutation({
     mutationKey: getAuthControllerCreateLinkTokenMutationKey(),
     mutationFn: (body) => throwOnOpenApiErrorData(authControllerCreateLinkToken(body, request)),
+    ...options,
+  });
+
+export const useAuthControllerRequestEmailVerificationMutation = <TContext = unknown>({
+  request,
+  ...options
+}: MutationConfig<
+  AuthControllerRequestEmailVerificationData,
+  AuthControllerRequestEmailVerificationError,
+  UserActionTokenRequestDto,
+  TContext
+> = {}) =>
+  useMutation({
+    mutationKey: getAuthControllerRequestEmailVerificationMutationKey(),
+    mutationFn: (body) => throwOnOpenApiErrorData(authControllerRequestEmailVerification(body, request)),
+    ...options,
+  });
+
+export const useAuthControllerRequestPasswordResetMutation = <TContext = unknown>({
+  request,
+  ...options
+}: MutationConfig<
+  AuthControllerRequestPasswordResetData,
+  AuthControllerRequestPasswordResetError,
+  UserActionTokenRequestDto,
+  TContext
+> = {}) =>
+  useMutation({
+    mutationKey: getAuthControllerRequestPasswordResetMutationKey(),
+    mutationFn: (body) => throwOnOpenApiErrorData(authControllerRequestPasswordReset(body, request)),
+    ...options,
+  });
+
+export const useAuthControllerConfirmEmailVerificationMutation = <TContext = unknown>({
+  request,
+  ...options
+}: MutationConfig<
+  AuthControllerConfirmEmailVerificationData,
+  AuthControllerConfirmEmailVerificationError,
+  UserActionTokenConfirmDto,
+  TContext
+> = {}) =>
+  useMutation({
+    mutationKey: getAuthControllerConfirmEmailVerificationMutationKey(),
+    mutationFn: (body) => throwOnOpenApiErrorData(authControllerConfirmEmailVerification(body, request)),
+    ...options,
+  });
+
+export const useAuthControllerConfirmPasswordResetMutation = <TContext = unknown>({
+  request,
+  ...options
+}: MutationConfig<
+  AuthControllerConfirmPasswordResetData,
+  AuthControllerConfirmPasswordResetError,
+  PasswordResetConfirmDto,
+  TContext
+> = {}) =>
+  useMutation({
+    mutationKey: getAuthControllerConfirmPasswordResetMutationKey(),
+    mutationFn: (body) => throwOnOpenApiErrorData(authControllerConfirmPasswordReset(body, request)),
     ...options,
   });

@@ -10,6 +10,8 @@ const record: AuthUserRecord = {
   email: 'user@example.com',
   displayName: null,
   passwordHash: 'hash',
+  emailVerifiedAt: null,
+  credentialRevision: 0,
   roles: ['user'],
   permissions: ['profile:read'],
   locale: null,

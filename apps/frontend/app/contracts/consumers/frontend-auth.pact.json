@@ -29,6 +29,8 @@
             "user": {
               "id": "user-1",
               "email": "contract@example.com",
+              "emailVerified": true,
+              "credentialRevision": 0,
               "theme": "system",
               "roles": ["user"],
               "permissions": [],

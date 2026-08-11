@@ -28,6 +28,12 @@ export function ProfileStatusCard({ state, t }: Readonly<ProfileStatusCardProps>
               <dt>{t('user.form.email')}</dt>
               <dd>{state.email ?? t('user.profile.emailFallback')}</dd>
             </div>
+            {state.emailVerified !== undefined ? (
+              <div>
+                <dt>{t('user.profile.emailStatus')}</dt>
+                <dd>{t(state.emailVerified ? 'user.profile.emailVerified' : 'user.profile.emailUnverified')}</dd>
+              </div>
+            ) : null}
             <div>
               <dt>{t('user.profile.unknown')}</dt>
               <dd>{state.subject}</dd>

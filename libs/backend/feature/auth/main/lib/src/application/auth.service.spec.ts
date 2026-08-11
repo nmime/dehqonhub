@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-ACCESS-001
+// @requirements REQ-AUTH-ACCESS-001 REQ-AUTH-RECOVERY-010
 // Evidence for: REQ-AUTH-CREDENTIAL-003
 import { BadRequestException, ConflictException, NotFoundException, UnauthorizedException } from '@nestjs/common';
 import { describe, expect, it, vi } from 'vitest';
@@ -28,6 +28,8 @@ const createUserRecord = (overrides: Partial<AuthUserRecord> = {}): AuthUserReco
   avatarHash: null,
   avatarStatus: 'none',
   ...overrides,
+  emailVerifiedAt: overrides.emailVerifiedAt ?? null,
+  credentialRevision: overrides.credentialRevision ?? 0,
 });
 
 describe('AuthService', () => {
@@ -210,6 +212,8 @@ describe('AuthService', () => {
       setLocale: () => okAsync(null),
       setPreferences: () => okAsync(null),
       recordLogin: () => okAsync(null),
+      verifyEmail: () => okAsync(null),
+      replacePassword: () => okAsync(null),
       syncProviderAvatar: () => okAsync(null),
     };
     const serviceWithFindFailure = new AuthService(failingStore);
@@ -278,6 +282,8 @@ describe('AuthService', () => {
       setLocale: () => okAsync(null),
       setPreferences: () => okAsync(null),
       recordLogin: () => okAsync(null),
+      verifyEmail: () => okAsync(activeRecord),
+      replacePassword: () => okAsync(activeRecord),
       syncProviderAvatar: () => okAsync(null),
     }).login({ email: 'active@example.com', password: 'password123' });
     expect(fallbackLogin.user.id).toBe('active-id');
@@ -341,6 +347,35 @@ describe('AuthService', () => {
     await expect(actionService.consumeUserActionToken(verificationToken ?? '', 'email_verification')).resolves.toBe(
       false,
     );
+  });
+
+  it('confirms email once and resets credentials with session-revision invalidation', async () => {
+    const users = new InMemoryAuthUserStore();
+    const tokens = new InMemoryAuthTokenStore();
+    const service = new AuthService(users, tokens);
+    const registered = await service.register({
+      email: 'recovery@example.com',
+      password: 'password123',
+    });
+
+    expect(registered.user).toMatchObject({ emailVerified: false, credentialRevision: 0 });
+
+    const verificationToken = await service.issueEmailVerificationToken({ email: 'recovery@example.com' });
+    await expect(service.confirmEmailVerification(verificationToken ?? '')).resolves.toMatchObject({
+      emailVerified: true,
+      credentialRevision: 0,
+    });
+    await expect(service.confirmEmailVerification(verificationToken ?? '')).rejects.toThrow(BadRequestException);
+
+    const resetToken = await service.issuePasswordResetToken({ email: 'recovery@example.com' });
+    await expect(service.confirmPasswordReset(resetToken ?? '', 'replacement123')).resolves.toBeUndefined();
+    await expect(service.login({ email: 'recovery@example.com', password: 'password123' })).rejects.toThrow(
+      UnauthorizedException,
+    );
+    await expect(service.login({ email: 'recovery@example.com', password: 'replacement123' })).resolves.toMatchObject({
+      user: { emailVerified: true, credentialRevision: 1 },
+    });
+    await expect(service.confirmPasswordReset(resetToken ?? '', 'replacement456')).rejects.toThrow(BadRequestException);
   });
 
   it('maps explicit-tenant preference updates, conflicts, and missing users', async () => {

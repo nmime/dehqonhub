@@ -17,6 +17,8 @@ export interface AuthSessionUserRecord {
   email: string | null;
   displayName: string | null;
   passwordHash: string;
+  emailVerifiedAt: Date | null;
+  credentialRevision: number;
   roles: string[];
   permissions: string[];
   locale: Locale | null;
@@ -52,6 +54,8 @@ export function toSessionPrincipal(session: AuthSessionView): AuthenticatedPrinc
     subject: session.user.id,
     tenantId: session.user.tenantId,
     email: session.user.email ?? undefined,
+    emailVerified: session.user.emailVerified,
+    credentialRevision: session.user.credentialRevision,
     displayName: session.user.displayName,
     avatarUrl: session.user.avatarUrl ?? undefined,
     locale: normalizeSessionLocale(session.user.locale),

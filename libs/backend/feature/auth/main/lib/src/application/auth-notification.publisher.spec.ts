@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-ACCESS-001
+// @requirements REQ-AUTH-ACCESS-001 REQ-AUTH-RECOVERY-010
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { NotificationChannel, NotificationDeliveryProvider, NotificationTargetType } from '@app/common-notifications';
 import { AuthNotificationPublisher } from './auth-notification.publisher';
@@ -22,6 +22,22 @@ describe(AuthNotificationPublisher.name, () => {
         deliveries: [{ channel: NotificationChannel.Bot, provider: NotificationDeliveryProvider.TelegramBot }],
         sensitiveData: { code: 'secret-code' },
         inAppVisible: false,
+      }),
+    );
+    expect(notifications.upsertTemplate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        channels: expect.arrayContaining([
+          expect.objectContaining({
+            content: expect.objectContaining({
+              body: expect.objectContaining({
+                en: expect.any(String),
+                ru: expect.any(String),
+                uz: expect.any(String),
+                'uz-cyrl': expect.any(String),
+              }),
+            }),
+          }),
+        ]),
       }),
     );
   });

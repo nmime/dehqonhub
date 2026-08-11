@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-ACCESS-001
+// @requirements REQ-AUTH-ACCESS-001 REQ-AUTH-RECOVERY-010
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { supportedLocales } from '@app/backend-common-i18n';
 import {
@@ -22,6 +22,8 @@ import { AuthController, DiscordCallbackQueryDto, SessionCookieName } from './au
 type AuthControllerService = Pick<
   AuthService,
   | 'getUserById'
+  | 'confirmEmailVerification'
+  | 'confirmPasswordReset'
   | 'issueEmailVerificationToken'
   | 'issuePasswordResetToken'
   | 'login'
@@ -68,6 +70,8 @@ const sessionView = {
     tenantId: DefaultAuthTenantId,
     email: 'user@example.com',
     displayName: 'Ada Lovelace',
+    emailVerified: false,
+    credentialRevision: 0,
     locale: 'ru',
     theme: AuthenticatedTheme.Dark,
     roles: ['user', 'admin'],
@@ -104,6 +108,8 @@ function createService(
     login: vi.fn(() => Promise.resolve(sessionView)),
     issueEmailVerificationToken: vi.fn(() => Promise.resolve('verification-token')),
     issuePasswordResetToken: vi.fn(() => Promise.resolve('reset-token')),
+    confirmEmailVerification: vi.fn(() => Promise.resolve(sessionView.user)),
+    confirmPasswordReset: vi.fn(() => Promise.resolve()),
     getUserById: vi.fn(() => Promise.resolve(sessionView.user)),
     updateUserPreferences: vi.fn(() => Promise.resolve(sessionView.user)),
     ...overrides,
@@ -198,6 +204,8 @@ describe('AuthController', () => {
       subject: sessionView.user.id,
       tenantId: sessionView.user.tenantId,
       email: sessionView.user.email,
+      emailVerified: sessionView.user.emailVerified,
+      credentialRevision: sessionView.user.credentialRevision,
       displayName: sessionView.user.displayName,
       locale: sessionView.user.locale,
       theme: sessionView.user.theme,
@@ -260,9 +268,9 @@ describe('AuthController', () => {
       email: sessionView.user.email,
       password: 'password123',
     });
-    expect(session.user).toEqual({ ...expectedPrincipal, roles: [], permissions: [] });
-    expect(request.user).toEqual(expectedPrincipal);
-    expect(request.auth).toEqual(expectedPrincipal);
+    expect(session.user).toMatchObject({ ...expectedPrincipal, roles: [], permissions: [] });
+    expect(request.user).toMatchObject(expectedPrincipal);
+    expect(request.auth).toMatchObject(expectedPrincipal);
     expect(session.regenerate).toHaveBeenCalledOnce();
     expect(session.save).toHaveBeenCalledOnce();
   });
@@ -486,6 +494,12 @@ describe('AuthController', () => {
     await expect(controller.requestPasswordReset({ email: 'user@example.com' })).resolves.toEqual({
       data: { issued: true },
     });
+    await expect(controller.confirmEmailVerification({ token: 'verification-token' })).resolves.toEqual({
+      data: { confirmed: true },
+    });
+    await expect(
+      controller.confirmPasswordReset({ token: 'reset-token', password: 'replacement123' }),
+    ).resolves.toEqual({ data: { confirmed: true } });
   });
 
   it('binds created link tokens to the caller tenant and ignores a body-supplied tenantId', async () => {

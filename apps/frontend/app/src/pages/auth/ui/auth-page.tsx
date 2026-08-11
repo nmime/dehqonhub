@@ -1,5 +1,5 @@
 import { observer, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
-import { useAuthSessionFlow } from '../../../features/auth';
+import { AuthRecoveryCard, useAuthSessionFlow } from '../../../features/auth';
 import { SocialAuthButtons, useSocialAuth } from '../../../features/social-auth';
 import { UiSection } from '../../../shared/ui';
 import { isTelegramAuthEnabled } from '../../../shared/config';
@@ -60,6 +60,7 @@ export const AuthPage = observer(function AuthPage({
       >
         <ProfileStatusCard state={authSession.profileState} t={t} />
       </AuthPanel>
+      <AuthRecoveryCard t={t} />
     </UiSection>
   );
 });

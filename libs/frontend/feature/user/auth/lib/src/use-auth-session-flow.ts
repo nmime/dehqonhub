@@ -121,6 +121,7 @@ export function useAuthSessionFlow({
       messages.profileRequestFailed,
       messages.profileUnknown,
       profileQuery.error,
+      authMeQuery.data ?? undefined,
     );
   }, [
     authLocale,

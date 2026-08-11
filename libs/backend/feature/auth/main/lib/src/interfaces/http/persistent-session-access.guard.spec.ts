@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-SESSION-002
+// @requirements REQ-AUTH-SESSION-002 REQ-AUTH-RECOVERY-010
 // Evidence for: REQ-AUTH-SESSION-002
 import { InternalServerErrorException, UnauthorizedException } from '@nestjs/common';
 // Domain evidence for REQ-AUTH-SESSION-002.
@@ -9,7 +9,13 @@ import type { AuthRoleStore, AuthUserStore } from '../../infrastructure';
 import { PersistentSessionAccessGuard } from './persistent-session-access.guard';
 
 const tenantId = '00000000-0000-4000-8000-000000000001';
-const principal = { subject: 'user-id', tenantId, roles: ['stale'], permissions: ['stale:permission'] };
+const principal = {
+  subject: 'user-id',
+  tenantId,
+  credentialRevision: 0,
+  roles: ['stale'],
+  permissions: ['stale:permission'],
+};
 
 function contextFor(request: AuthenticatedRequest) {
   return {
@@ -20,7 +26,7 @@ function contextFor(request: AuthenticatedRequest) {
 }
 
 function dependencies(input?: {
-  user?: { status: string } | null;
+  user?: { status: string; credentialRevision?: number; emailVerifiedAt?: Date | null } | null;
   userError?: boolean;
   accessError?: boolean;
   public?: boolean;
@@ -32,7 +38,13 @@ function dependencies(input?: {
     findById: vi.fn(async () =>
       input?.userError
         ? ({ isErr: () => true } as never)
-        : ({ isErr: () => false, value: input?.user === undefined ? { status: 'active' } : input.user } as never),
+        : ({
+            isErr: () => false,
+            value:
+              input?.user === undefined
+                ? { status: 'active', credentialRevision: 0, emailVerifiedAt: null }
+                : input.user,
+          } as never),
     ),
   } as unknown as AuthUserStore;
   const roles = {
@@ -64,6 +76,14 @@ describe(PersistentSessionAccessGuard.name, () => {
     await expect(dependencies().guard.canActivate(contextFor({}))).rejects.toBeInstanceOf(UnauthorizedException);
     await expect(
       dependencies({ user: { status: 'disabled' } }).guard.canActivate(contextFor({ session: { user: principal } })),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+  });
+
+  it('rejects a cookie session created before a password reset', async () => {
+    await expect(
+      dependencies({ user: { status: 'active', credentialRevision: 1 } }).guard.canActivate(
+        contextFor({ session: { user: principal } }),
+      ),
     ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 

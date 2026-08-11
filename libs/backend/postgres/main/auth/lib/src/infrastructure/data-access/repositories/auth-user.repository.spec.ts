@@ -24,8 +24,12 @@ function createEntityManagerMock() {
     findOne,
     getConnection: () => ({ execute }),
   } as unknown as EntityManager;
+  const transactional = vi.fn(async <T>(work: (manager: EntityManager) => Promise<T>): Promise<T> =>
+    work(entityManager),
+  );
+  Object.assign(entityManager, { transactional });
 
-  return { create, persist, flush, findOne, execute, entityManager };
+  return { create, persist, flush, findOne, execute, transactional, entityManager };
 }
 
 describe('AuthUserRepository', () => {
@@ -251,6 +255,38 @@ describe('AuthUserRepository', () => {
     expect(flush).toHaveBeenCalledTimes(1);
   });
 
+  it('verifies email once and preserves the first verification timestamp', async () => {
+    const entity = new AuthUserEntity({ email: 'user@example.com' });
+    const first = new Date('2026-08-11T08:00:00.000Z');
+    const second = new Date('2026-08-11T09:00:00.000Z');
+    const { findOne, flush, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValue(entity);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    await expect(authUsers.verifyEmail('user-id', DefaultAuthTenantId, first)).resolves.toMatchObject({
+      value: expect.objectContaining({ emailVerifiedAt: first }),
+    });
+    await expect(authUsers.verifyEmail('user-id', DefaultAuthTenantId, second)).resolves.toMatchObject({
+      value: expect.objectContaining({ emailVerifiedAt: first }),
+    });
+    expect(flush).toHaveBeenCalledTimes(2);
+  });
+
+  it('replaces a password transactionally, increments its revision, and returns null for a missing user', async () => {
+    const entity = new AuthUserEntity({ email: 'user@example.com', passwordHash: 'old-hash' });
+    const { findOne, flush, transactional, entityManager } = createEntityManagerMock();
+    findOne.mockResolvedValueOnce(entity).mockResolvedValueOnce(null);
+    const authUsers = new AuthUserRepository(entityManager);
+
+    const replaced = await authUsers.replacePassword('user-id', 'new-hash');
+    expect(replaced._unsafeUnwrap()).toMatchObject({ passwordHash: 'new-hash', credentialRevision: 1 });
+    expect(transactional).toHaveBeenCalledOnce();
+    expect(flush).toHaveBeenCalledOnce();
+    await expect(
+      authUsers.replacePassword('missing-user', 'unused').then((result) => result._unsafeUnwrap()),
+    ).resolves.toBeNull();
+  });
+
   it('returns null when an email or id is unknown', async () => {
     const { entityManager } = createEntityManagerMock();
     const authUsers = new AuthUserRepository(entityManager);
@@ -259,6 +295,7 @@ describe('AuthUserRepository', () => {
     expect((await authUsers.findById('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
     expect((await authUsers.setLocale('00000000-0000-4000-8000-000000000000', 'ru'))._unsafeUnwrap()).toBeNull();
     expect((await authUsers.recordLogin('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
+    expect((await authUsers.verifyEmail('00000000-0000-4000-8000-000000000000'))._unsafeUnwrap()).toBeNull();
   });
 
   it('maps repository errors when creating users', async () => {

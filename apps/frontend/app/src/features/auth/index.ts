@@ -3,3 +3,4 @@
 // auth-cards UI stays here; both are re-exported to keep the public API stable.
 export * from '@app/frontend-feature-user-auth';
 export * from './ui/auth-cards';
+export * from './ui/auth-recovery-card';

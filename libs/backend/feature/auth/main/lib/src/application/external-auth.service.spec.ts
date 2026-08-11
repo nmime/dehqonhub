@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-IDENTITY-005
+// @requirements REQ-AUTH-IDENTITY-005 REQ-AUTH-PROVISIONING-011
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { errAsync, okAsync } from 'neverthrow';
 import type { Locale } from '@app/backend-common-i18n';
@@ -1261,6 +1261,8 @@ describe('ExternalAuthService', () => {
     const external = service.createSessionWithClaims(
       {
         email: null,
+        emailVerifiedAt: null,
+        credentialRevision: 0,
         id: 'external-user-id',
         passwordHash: 'hash',
         permissions: ['profile:read'],

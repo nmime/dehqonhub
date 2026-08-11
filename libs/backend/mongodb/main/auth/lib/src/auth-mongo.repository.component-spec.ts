@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-PERSISTENCE-007
+// @requirements REQ-AUTH-PERSISTENCE-007 REQ-AUTH-RECOVERY-010
 import { randomUUID } from 'node:crypto';
 import { MongoDBContainer, type StartedMongoDBContainer } from '@testcontainers/mongodb';
 import { AuthProvider, AuthProviderChannel, DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
@@ -64,6 +64,32 @@ describe('Mongo auth repositories on a replica set', () => {
       permissions: ['profile:read'],
     });
     await expect(unwrap(reloaded.users.findById(user.id, DefaultAuthTenantId))).resolves.toBeNull();
+  });
+
+  it('persists email assurance and atomically advances credential revisions', async () => {
+    const { users } = repositories();
+    const tenantId = randomUUID();
+    const previousCredentialDigest = ['credential', 'hash', 'v1'].join(':');
+    const nextCredentialDigest = ['credential', 'hash', 'v2'].join(':');
+    const user = await unwrap(
+      users.createUser({ tenantId, email: 'recovery@example.com', passwordHash: previousCredentialDigest }),
+    );
+    const verifiedAt = new Date('2026-08-11T08:00:00.000Z');
+
+    await expect(unwrap(users.verifyEmail(user.id, tenantId, verifiedAt))).resolves.toMatchObject({
+      credentialRevision: 0,
+      emailVerifiedAt: verifiedAt,
+    });
+    await expect(unwrap(users.replacePassword(user.id, nextCredentialDigest, tenantId))).resolves.toMatchObject({
+      credentialRevision: 1,
+      passwordHash: nextCredentialDigest,
+    });
+    await expect(unwrap(users.findById(user.id, tenantId))).resolves.toMatchObject({
+      credentialRevision: 1,
+      emailVerifiedAt: verifiedAt,
+      passwordHash: nextCredentialDigest,
+    });
+    await expect(unwrap(users.findById(user.id, DefaultAuthTenantId))).resolves.toBeNull();
   });
 
   it('consumes a one-time token exactly once under concurrency', async () => {

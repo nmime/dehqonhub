@@ -58,6 +58,8 @@ describe('session lifecycle utilities', () => {
           id: 'user-id',
           tenantId: 'tenant-id',
           email: null,
+          emailVerified: false,
+          credentialRevision: 0,
           locale: 'uz' as never,
           theme: AuthenticatedTheme.System,
           roles: [],

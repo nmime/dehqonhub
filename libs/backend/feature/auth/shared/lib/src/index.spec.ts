@@ -48,9 +48,11 @@ describe('auth shared', () => {
         permissions: ['profile:read', ''],
       }),
     ).toEqual({
+      credentialRevision: 0,
       id: 'id',
       tenantId: DefaultAuthTenantId,
       email: 'user@example.com',
+      emailVerified: false,
       displayName: 'User',
       locale: 'ru',
       theme: 'dark',
@@ -58,9 +60,11 @@ describe('auth shared', () => {
       permissions: ['profile:read'],
     });
     expect(toAuthenticatedUserView({ id: 'id', email: 'e' })).toEqual({
+      credentialRevision: 0,
       id: 'id',
       tenantId: DefaultAuthTenantId,
       email: 'e',
+      emailVerified: false,
       theme: 'system',
       roles: [],
       permissions: [],

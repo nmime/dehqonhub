@@ -15,6 +15,7 @@ export interface AuthUserPayload {
   id?: string;
   subject?: string;
   email?: string | null;
+  emailVerified?: boolean;
   locale?: Locale;
   theme?: UiTheme;
 }

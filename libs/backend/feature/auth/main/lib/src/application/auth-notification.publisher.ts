@@ -88,16 +88,25 @@ function codeTemplateChannels(purpose: AuthAction): Array<{
         body: {
           en: `Your ${action} code is {code}. Do not share this code with anyone.`,
           ru: `Ваш код для ${isReset ? 'сброса пароля' : 'подтверждения email'}: {code}. Никому не сообщайте этот код.`,
+          uz: `${isReset ? 'Parolni tiklash' : 'Elektron pochtani tasdiqlash'} kodingiz: {code}. Bu kodni hech kimga bermang.`,
+          'uz-cyrl': `${isReset ? 'Паролни тиклаш' : 'Электрон почтани тасдиқлаш'} кодингиз: {code}. Бу кодни ҳеч кимга берманг.`,
         },
       },
     },
     {
       channel: NotificationChannel.Email,
       content: {
-        subject: { en: subject, ru: isReset ? 'Сброс пароля' : 'Подтвердите email' },
+        subject: {
+          en: subject,
+          ru: isReset ? 'Сброс пароля' : 'Подтвердите email',
+          uz: isReset ? 'Parolni tiklash' : 'Elektron pochtani tasdiqlash',
+          'uz-cyrl': isReset ? 'Паролни тиклаш' : 'Электрон почтани тасдиқлаш',
+        },
         body: {
           en: `Your ${action} code is {code}. Do not share this code with anyone.`,
           ru: `Ваш код для ${isReset ? 'сброса пароля' : 'подтверждения email'}: {code}. Никому не сообщайте этот код.`,
+          uz: `${isReset ? 'Parolni tiklash' : 'Elektron pochtani tasdiqlash'} kodingiz: {code}. Bu kodni hech kimga bermang.`,
+          'uz-cyrl': `${isReset ? 'Паролни тиклаш' : 'Электрон почтани тасдиқлаш'} кодингиз: {code}. Бу кодни ҳеч кимга берманг.`,
         },
       },
     },

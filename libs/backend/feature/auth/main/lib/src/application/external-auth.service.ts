@@ -413,6 +413,7 @@ export class ExternalAuthService {
     const created = await this.users.create({
       tenantId: input.tenantId,
       email: displayEmail,
+      emailVerifiedAt: input.profile.emailVerified && displayEmail ? new Date() : null,
       displayName: input.profile.displayName ?? input.profile.username ?? null,
       passwordHash: hashPassword(ExternalAccountPasswordSeed + randomBytes(16).toString('hex')),
       roles: roleKeys,

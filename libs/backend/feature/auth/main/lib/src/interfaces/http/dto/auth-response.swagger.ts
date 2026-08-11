@@ -47,6 +47,12 @@ export class AuthenticatedUserViewDto {
   @ApiProperty({ format: 'email', nullable: true, type: String })
   email!: string | null;
 
+  @ApiProperty()
+  emailVerified!: boolean;
+
+  @ApiProperty({ minimum: 0, type: 'integer' })
+  credentialRevision!: number;
+
   @ApiPropertyOptional()
   displayName?: string;
 
@@ -181,6 +187,11 @@ export class LinkTokenResultDto {
 export class UserActionTokenPayloadDto {
   @ApiProperty()
   issued!: boolean;
+}
+
+export class UserActionConfirmationPayloadDto {
+  @ApiProperty({ enum: [true] })
+  confirmed!: true;
 }
 
 export class MePayloadDto {
