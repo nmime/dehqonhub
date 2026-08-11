@@ -1,0 +1,16 @@
+{
+  "admin.marketplace.moderation.eyebrow": "Trust and publication safety",
+  "admin.marketplace.moderation.title": "Marketplace moderation",
+  "admin.marketplace.moderation.description": "Review tenant-scoped identity evidence and immutable publication snapshots before they become public.",
+  "admin.marketplace.moderation.verifications": "Verification reviews",
+  "admin.marketplace.moderation.sellers": "Seller profiles",
+  "admin.marketplace.moderation.listings": "Listings",
+  "admin.marketplace.moderation.requests": "Buyer requests",
+  "admin.marketplace.moderation.revision": "Revision",
+  "admin.marketplace.moderation.provider": "Evidence provider",
+  "admin.marketplace.moderation.documents": "Documents",
+  "admin.marketplace.moderation.rejectionReason": "Rejection reason",
+  "admin.marketplace.moderation.reason.criteria": "Criteria not met",
+  "admin.marketplace.moderation.reason.documents": "Documents unreadable",
+  "admin.marketplace.moderation.reason.identity": "Identity mismatch"
+}

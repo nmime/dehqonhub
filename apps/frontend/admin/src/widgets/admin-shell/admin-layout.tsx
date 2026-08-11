@@ -93,6 +93,53 @@ const buildAdminNavigation = ({
       visible: Boolean(access?.canReadNotificationBroadcasts),
     },
   ]);
+  const marketplace = visibleNavigationItems([
+    {
+      item: {
+        href: '/admin/marketplace/overview',
+        icon: 'analytics',
+        isCurrent: path === '/' || path === '/marketplace/overview',
+        label: t('admin.marketplace.nav.overview'),
+      },
+      visible: Boolean(access?.canReadAgriTech),
+    },
+    {
+      item: {
+        href: '/admin/marketplace/moderation',
+        icon: 'users',
+        isCurrent: path === '/marketplace/moderation',
+        label: t('admin.marketplace.nav.moderation'),
+      },
+      visible: Boolean(access?.canReadAgriTech),
+    },
+    {
+      item: {
+        href: '/admin/marketplace/commerce',
+        icon: 'dashboard',
+        isCurrent: path === '/marketplace/commerce',
+        label: t('admin.marketplace.nav.commerce'),
+      },
+      visible: Boolean(access?.canReadAgriTech),
+    },
+    {
+      item: {
+        href: '/admin/marketplace/engagement',
+        icon: 'messaging',
+        isCurrent: path === '/marketplace/engagement',
+        label: t('admin.marketplace.nav.engagement'),
+      },
+      visible: Boolean(access?.canReadAgriTech),
+    },
+    {
+      item: {
+        href: '/admin/marketplace/operations',
+        icon: 'settings',
+        isCurrent: path === '/marketplace/operations',
+        label: t('admin.marketplace.nav.operations'),
+      },
+      visible: Boolean(access?.canReadAgriTech),
+    },
+  ]);
   const system = visibleNavigationItems([
     {
       item: {
@@ -136,15 +183,6 @@ const buildAdminNavigation = ({
     ...visibleNavigationItems([
       {
         item: {
-          href: '/admin',
-          icon: 'analytics',
-          isCurrent: path === '/',
-          label: t('admin.action.agritech'),
-        },
-        visible: Boolean(access?.canReadAgriTech),
-      },
-      {
-        item: {
           href: '/admin/dashboard',
           icon: 'dashboard',
           isCurrent: path === '/dashboard',
@@ -153,6 +191,7 @@ const buildAdminNavigation = ({
         visible: access?.canReadDashboard ?? true,
       },
     ]),
+    ...navigationSection('marketplace', 'analytics', t('admin.marketplace.nav.group'), marketplace),
     ...navigationSection('users', 'users', t('admin.navigation.section.users'), users),
     ...navigationSection('messaging', 'messaging', t('admin.navigation.section.messaging'), messaging),
     ...navigationSection('system', 'settings', t('admin.navigation.group.system'), system),
@@ -211,7 +250,7 @@ export const AdminLayout = observer(function AdminLayout({
       brandHref="/admin"
       breadcrumbLabel={t('admin.navigation.breadcrumbs')}
       breadcrumbs={[
-        { href: '/admin', label: t('admin.action.agritech') },
+        { href: '/admin', label: t('admin.marketplace.nav.overview') },
         ...(currentItem && currentItem.href !== '/admin' ? [{ label: currentItem.label }] : []),
       ]}
       className="admin-shell"

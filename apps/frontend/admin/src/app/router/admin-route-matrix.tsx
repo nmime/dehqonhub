@@ -14,7 +14,7 @@ import { ProblemPresentationsPage } from '../../pages/problem-presentations';
 import { ProfilePage } from '../../pages/profile';
 import { RolesPage } from '../../pages/roles';
 import { UsersPage } from '../../pages/users';
-import { AgriTechAdminPage } from '../../pages/agritech';
+import { AgriTechAdminPage, MarketplaceAdminPage, type MarketplaceAdminView } from '../../pages/agritech';
 import {
   fallbackTranslate,
   isUsersRoute,
@@ -41,7 +41,29 @@ function renderReadyAdminRoute(
   runtime: AdminRouteRuntime,
 ): ReactElement {
   const routePath = normalizeAdminPath(path);
-  if (routePath === '/') {
+  if (routePath === '/' || routePath === '/marketplace/overview') {
+    return state.access.canReadAgriTech ? (
+      <MarketplaceAdminPage access={state.access} requestOptions={runtime.requestOptions} view="overview" />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.agritechMissing')} />
+    );
+  }
+  if (
+    routePath === '/marketplace/moderation' ||
+    routePath === '/marketplace/commerce' ||
+    routePath === '/marketplace/engagement'
+  ) {
+    return state.access.canReadAgriTech ? (
+      <MarketplaceAdminPage
+        access={state.access}
+        requestOptions={runtime.requestOptions}
+        view={routePath.slice('/marketplace/'.length) as MarketplaceAdminView}
+      />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.agritechMissing')} />
+    );
+  }
+  if (routePath === '/marketplace/operations') {
     return state.access.canReadAgriTech ? (
       <AgriTechAdminPage access={state.access} requestOptions={runtime.requestOptions} />
     ) : (

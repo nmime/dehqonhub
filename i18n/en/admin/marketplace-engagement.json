@@ -1,0 +1,14 @@
+{
+  "admin.marketplace.engagement.eyebrow": "Trust after the transaction",
+  "admin.marketplace.engagement.title": "Marketplace engagement",
+  "admin.marketplace.engagement.description": "Operate sample quotas, review-report moderation, and contract-notification delivery health.",
+  "admin.marketplace.engagement.samplePolicy": "Sample request policy",
+  "admin.marketplace.engagement.version": "Policy version",
+  "admin.marketplace.engagement.monthlyLimit": "Monthly sample limit",
+  "admin.marketplace.engagement.activatePolicy": "Activate sample policy",
+  "admin.marketplace.engagement.reviewReports": "Review reports",
+  "admin.marketplace.engagement.dismissReport": "Dismiss report",
+  "admin.marketplace.engagement.hideReview": "Hide review",
+  "admin.marketplace.engagement.notifications": "Contract notification delivery",
+  "admin.marketplace.engagement.attempts": "Attempts"
+}

@@ -1,0 +1,16 @@
+{
+  "admin.marketplace.moderation.eyebrow": "Доверие и безопасность публикаций",
+  "admin.marketplace.moderation.title": "Модерация маркетплейса",
+  "admin.marketplace.moderation.description": "Проверяйте документы арендатора и неизменяемые снимки публикаций до размещения.",
+  "admin.marketplace.moderation.verifications": "Проверки пользователей",
+  "admin.marketplace.moderation.sellers": "Профили продавцов",
+  "admin.marketplace.moderation.listings": "Объявления",
+  "admin.marketplace.moderation.requests": "Запросы покупателей",
+  "admin.marketplace.moderation.revision": "Ревизия",
+  "admin.marketplace.moderation.provider": "Провайдер доказательств",
+  "admin.marketplace.moderation.documents": "Документы",
+  "admin.marketplace.moderation.rejectionReason": "Причина отказа",
+  "admin.marketplace.moderation.reason.criteria": "Критерии не выполнены",
+  "admin.marketplace.moderation.reason.documents": "Документы не читаются",
+  "admin.marketplace.moderation.reason.identity": "Личность не совпадает"
+}
