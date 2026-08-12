@@ -170,6 +170,32 @@ describe('frontend UI-web locale and theme switchers', () => {
 
     expect(onLocaleChange).toHaveBeenCalledWith('ru');
     expect(setItem).toHaveBeenCalledWith('boilerplate.locale', 'ru');
-    expect(screen.getByRole('button', { name: 'Язык' })).toBeTruthy();
+    // The visible label follows the new locale while the accessible name stays
+    // the plain "Language" wording every console header relies on.
+    expect(screen.getByRole('button', { name: 'Язык' }).textContent).toBe('Русский');
+  });
+
+  it('narrows the select variant when a compact row asks for it', () => {
+    render(
+      <FrontendI18nProvider initialLocale="en">
+        <LanguageSwitcher compact />
+      </FrontendI18nProvider>,
+    );
+
+    const trigger = screen.getByRole('combobox', { name: 'Language' });
+
+    expect(trigger.closest('.xr-language-switcher')?.className).toContain('xr-switcher--compact');
+  });
+
+  it('shows the locale code instead of the language name when compact', () => {
+    render(
+      <FrontendI18nProvider initialLocale="ru">
+        <LanguageSwitcher compact variant="menu" />
+      </FrontendI18nProvider>,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Язык' });
+
+    expect(trigger.textContent).toBe('RU');
   });
 });

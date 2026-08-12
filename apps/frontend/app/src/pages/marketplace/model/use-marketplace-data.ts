@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   isApiClientError,
   throwOnOpenApiErrorData,
@@ -13,9 +13,29 @@ import {
   type SampleViewDto,
   type VerificationViewDto,
 } from '@app/frontend-api-client';
+import {
+  addGuestCartItem,
+  clearGuestCart,
+  readGuestCarts,
+  readGuestFavorites,
+  toggleGuestFavorite,
+  updateGuestCartItem,
+} from './guest-session';
 
 export type ResourceStatus = 'idle' | 'loading' | 'ready' | 'empty' | 'error';
 type SessionState = 'checking' | 'signed-in' | 'signed-out' | 'error';
+type CatalogSource = 'checking' | 'demo' | 'live' | 'unavailable';
+
+/**
+ * What the marketplace banner has to disclose.
+ * - `demo-catalog`: the API answered with its demo dataset, because the tenant
+ *   has published nothing yet, so the listings are not live inventory.
+ * - `guest`: live listings, but nobody is signed in — the banner offers the
+ *   review logins.
+ * - `unavailable`: the catalog request failed; the banner keeps a retry.
+ * - `none`: live listings read by a signed-in account; no banner.
+ */
+export type DemoReason = 'demo-catalog' | 'guest' | 'none' | 'unavailable';
 
 export interface Resource<T> {
   data: T;
@@ -26,12 +46,30 @@ const listResource = <T>(): Resource<T[]> => ({ data: [], status: 'idle' });
 
 const initialUsage: SampleUsageViewDto = { limit: 5, remaining: 5, used: 0 };
 
+/**
+ * Cart and favourite writes for a visitor without a session. They persist to
+ * `localStorage` instead of the API, because both endpoints require a session
+ * and bouncing someone to a sign-in form on their first "add to cart" is how a
+ * marketplace loses them.
+ */
+export interface MarketplaceLocalActions {
+  addToCart: (product: ProductViewDto, quantity: number) => void;
+  checkout: (cartId: string) => void;
+  toggleFavorite: (productId: string) => void;
+  updateCart: (productId: string, quantity: number) => void;
+}
+
 export interface MarketplaceData {
   auth: SessionState;
   carts: Resource<CartViewDto[]>;
   catalog: Resource<ProductViewDto[]>;
   contracts: Resource<ContractViewDto[]>;
+  /** What the banner should disclose about the data on screen. */
+  demo: DemoReason;
   favorites: Resource<FavoriteViewDto[]>;
+  /** True while cart and favourite writes stay in this browser: no session. */
+  local: boolean;
+  localActions: MarketplaceLocalActions;
   myRequests: Resource<BuyerRequestViewDto[]>;
   offersByRequest: Resource<Record<string, OfferViewDto[]>>;
   refresh: () => void;
@@ -43,10 +81,24 @@ export interface MarketplaceData {
 
 const statusForList = (items: readonly unknown[]): ResourceStatus => (items.length === 0 ? 'empty' : 'ready');
 
+/** Reduces the catalog source and session state to the one thing to disclose. */
+const disclosureFor = (source: CatalogSource, auth: SessionState): DemoReason => {
+  if (source === 'unavailable') {
+    return 'unavailable';
+  }
+  if (source === 'demo') {
+    return 'demo-catalog';
+  }
+  // `checking` stays silent: the page shows its loading state, and a banner that
+  // appears for one frame and then leaves reads as a glitch.
+  return auth === 'signed-out' || auth === 'error' ? 'guest' : 'none';
+};
+
 export function useMarketplaceData(): MarketplaceData {
   const { api, requestOptions } = useUserApiClient();
   const epochRef = useRef(0);
   const [auth, setAuth] = useState<SessionState>('checking');
+  const [catalogSource, setCatalogSource] = useState<CatalogSource>('checking');
   const [catalog, setCatalog] = useState<Resource<ProductViewDto[]>>(listResource);
   const [verification, setVerification] = useState<Resource<VerificationViewDto | null>>({
     data: null,
@@ -67,6 +119,24 @@ export function useMarketplaceData(): MarketplaceData {
     status: 'idle',
   });
 
+  /**
+   * Restores the browser-local basket for a visitor with no session, and empties
+   * the resources that only exist per account. Their per-resource requests are
+   * deliberately skipped: they would each 401, and those 401s would fire the
+   * runtime's auth-required navigation mid-browse.
+   */
+  const enterGuestMode = useCallback(() => {
+    const favoriteEntries = readGuestFavorites();
+    const cartEntries = readGuestCarts();
+    setCarts({ data: cartEntries, status: statusForList(cartEntries) });
+    setFavorites({ data: favoriteEntries, status: statusForList(favoriteEntries) });
+    setMyRequests({ data: [], status: 'empty' });
+    setOffersByRequest({ data: {}, status: 'empty' });
+    setContracts({ data: [], status: 'empty' });
+    setSamples({ data: [], status: 'empty' });
+    setSampleUsage({ data: initialUsage, status: 'ready' });
+  }, []);
+
   const load = useCallback(async () => {
     const epoch = epochRef.current + 1;
     epochRef.current = epoch;
@@ -74,45 +144,64 @@ export function useMarketplaceData(): MarketplaceData {
 
     setAuth('checking');
     setCatalog((resource) => ({ ...resource, status: 'loading' }));
-
-    let products: ProductViewDto[];
-    try {
-      const response = await throwOnOpenApiErrorData(api.productControllerList(requestOptions));
-      products = response.items;
-    } catch (error) {
-      if (!current()) {
-        return;
-      }
-      setCatalog({ data: [], status: 'error' });
-      setAuth(isApiClientError(error) && error.status === 401 ? 'signed-out' : 'error');
-      return;
-    }
-
-    if (!current()) {
-      return;
-    }
-    setAuth('signed-in');
-    setCatalog({ data: products, status: statusForList(products) });
-    setVerification((resource) => ({ ...resource, status: 'loading' }));
-    setCarts((resource) => ({ ...resource, status: 'loading' }));
-    setFavorites((resource) => ({ ...resource, status: 'loading' }));
     setRequests((resource) => ({ ...resource, status: 'loading' }));
-    setMyRequests((resource) => ({ ...resource, status: 'loading' }));
-    setContracts((resource) => ({ ...resource, status: 'loading' }));
-    setSamples((resource) => ({ ...resource, status: 'loading' }));
-    setSampleUsage((resource) => ({ ...resource, status: 'loading' }));
-    setOffersByRequest((resource) => ({ ...resource, status: 'loading' }));
+    setVerification((resource) => ({ ...resource, status: 'loading' }));
 
-    const loadVerification = async () => {
+    /**
+     * The catalog read needs no session, and the API answers a tenant that has
+     * published nothing with its own demo dataset — so a listing on screen is
+     * always server-owned, and the only failure left here is an unreachable API.
+     */
+    const loadCatalog = async () => {
       try {
-        const data = await throwOnOpenApiErrorData(api.marketplaceControllerGetVerification(requestOptions));
+        const response = await throwOnOpenApiErrorData(api.productControllerList(requestOptions));
+        // A 200 that carries no list is a malformed payload, not an empty catalog.
+        // The chrome issues this request on every route, so a proxy or a stub
+        // answering it with an unrelated body must not take the whole site down.
+        const products = Array.isArray(response.items) ? response.items : [];
         if (current()) {
-          setVerification({ data, status: 'ready' });
+          setCatalogSource(response.demo ? 'demo' : 'live');
+          setCatalog({ data: products, status: statusForList(products) });
         }
       } catch {
         if (current()) {
-          setVerification({ data: null, status: 'error' });
+          setCatalogSource('unavailable');
+          setCatalog({ data: [], status: 'error' });
         }
+      }
+    };
+
+    const loadRequests = async () => {
+      try {
+        const data = await throwOnOpenApiErrorData(api.marketplaceControllerListRequests(requestOptions));
+        if (current()) {
+          setRequests({ data: data.items, status: statusForList(data.items) });
+        }
+      } catch {
+        if (current()) {
+          setRequests({ data: [], status: 'error' });
+        }
+      }
+    };
+
+    /**
+     * Verification is the cheapest guarded read, so it doubles as the session
+     * probe: its 401 is how the page learns that nobody is signed in.
+     */
+    const loadSession = async (): Promise<boolean> => {
+      try {
+        const data = await throwOnOpenApiErrorData(api.marketplaceControllerGetVerification(requestOptions));
+        if (current()) {
+          setAuth('signed-in');
+          setVerification({ data, status: 'ready' });
+        }
+        return true;
+      } catch (error) {
+        if (current()) {
+          setAuth(isApiClientError(error) && error.status === 401 ? 'signed-out' : 'error');
+          setVerification({ data: null, status: 'idle' });
+        }
+        return false;
       }
     };
 
@@ -138,19 +227,6 @@ export function useMarketplaceData(): MarketplaceData {
       } catch {
         if (current()) {
           setFavorites({ data: [], status: 'error' });
-        }
-      }
-    };
-
-    const loadRequests = async () => {
-      try {
-        const data = await throwOnOpenApiErrorData(api.marketplaceControllerListRequests(requestOptions));
-        if (current()) {
-          setRequests({ data: data.items, status: statusForList(data.items) });
-        }
-      } catch {
-        if (current()) {
-          setRequests({ data: [], status: 'error' });
         }
       }
     };
@@ -245,17 +321,25 @@ export function useMarketplaceData(): MarketplaceData {
       }
     };
 
-    await Promise.all([
-      loadVerification(),
-      loadCarts(),
-      loadFavorites(),
-      loadRequests(),
-      loadMyRequestsAndOffers(),
-      loadContracts(),
-      loadSamples(),
-      loadUsage(),
-    ]);
-  }, [api, requestOptions]);
+    const loadAccountResources = async () => {
+      if (!(await loadSession())) {
+        if (current()) {
+          enterGuestMode();
+        }
+        return;
+      }
+      await Promise.all([
+        loadCarts(),
+        loadFavorites(),
+        loadMyRequestsAndOffers(),
+        loadContracts(),
+        loadSamples(),
+        loadUsage(),
+      ]);
+    };
+
+    await Promise.all([loadCatalog(), loadRequests(), loadAccountResources()]);
+  }, [api, enterGuestMode, requestOptions]);
 
   useEffect(() => {
     void load();
@@ -264,12 +348,37 @@ export function useMarketplaceData(): MarketplaceData {
     };
   }, [load]);
 
+  const localActions = useMemo<MarketplaceLocalActions>(
+    () => ({
+      addToCart: (product, quantity) => {
+        const next = addGuestCartItem(product, quantity);
+        setCarts({ data: next, status: statusForList(next) });
+      },
+      checkout: (cartId) => {
+        const next = clearGuestCart(cartId);
+        setCarts({ data: next, status: statusForList(next) });
+      },
+      toggleFavorite: (productId) => {
+        const next = toggleGuestFavorite(productId);
+        setFavorites({ data: next, status: statusForList(next) });
+      },
+      updateCart: (productId, quantity) => {
+        const next = updateGuestCartItem(productId, quantity);
+        setCarts({ data: next, status: statusForList(next) });
+      },
+    }),
+    [],
+  );
+
   return {
     auth,
     carts,
     catalog,
     contracts,
+    demo: disclosureFor(catalogSource, auth),
     favorites,
+    local: auth === 'signed-out' || auth === 'error',
+    localActions,
     myRequests,
     offersByRequest,
     refresh: () => void load(),

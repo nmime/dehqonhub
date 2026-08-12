@@ -20,9 +20,7 @@ function createEntityManagerMock() {
     Promise.resolve(null as unknown),
   );
   const entityManager = { persist, flush, find, findOne } as unknown as EntityManager;
-  const transactional = vi.fn(async (handler: (manager: EntityManager) => Promise<unknown>) =>
-    handler(entityManager),
-  );
+  const transactional = vi.fn(async (handler: (manager: EntityManager) => Promise<unknown>) => handler(entityManager));
   Object.assign(entityManager, { transactional });
 
   return { persist, flush, find, findOne, transactional, entityManager };
@@ -92,7 +90,9 @@ function createInput(overrides: Partial<CreatePaymentDto> = {}): CreatePaymentDt
   };
 }
 
-function createProviderInput(overrides: Partial<Parameters<PostgresPaymentRepository['createProviderTransaction']>[0]> = {}) {
+function createProviderInput(
+  overrides: Partial<Parameters<PostgresPaymentRepository['createProviderTransaction']>[0]> = {},
+) {
   return {
     tenantId,
     provider: 'payme' as PaymentProvider,
@@ -340,18 +340,15 @@ describe('PostgresPaymentRepository', () => {
       expect(result).toEqual({ status: 'amount_mismatch' });
     });
 
-    it.each(['cancelled', 'delivered'] as OrderStatus[])(
-      'rejects a callback for a %s order',
-      async (status) => {
-        const { findOne, entityManager } = createEntityManagerMock();
-        repository = new PostgresPaymentRepository(entityManager);
-        findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(createOrder({ status }));
+    it.each(['cancelled', 'delivered'] as OrderStatus[])('rejects a callback for a %s order', async (status) => {
+      const { findOne, entityManager } = createEntityManagerMock();
+      repository = new PostgresPaymentRepository(entityManager);
+      findOne.mockResolvedValueOnce(null).mockResolvedValueOnce(createOrder({ status }));
 
-        const result = await repository.createProviderTransaction(createProviderInput());
+      const result = await repository.createProviderTransaction(createProviderInput());
 
-        expect(result).toEqual({ status: 'invalid_state' });
-      },
-    );
+      expect(result).toEqual({ status: 'invalid_state' });
+    });
 
     it('returns not_found when the order has no created payment intent', async () => {
       const { flush, findOne, entityManager } = createEntityManagerMock();
@@ -383,9 +380,7 @@ describe('PostgresPaymentRepository', () => {
       expect(intent.providerCreatedAt).toBe(now);
       expect(intent.state).toBe('pending');
       expect(order.status).toBe('confirmed');
-      expect(order.history).toEqual([
-        expect.objectContaining({ status: 'confirmed', actorUserId: 'payme:callback' }),
-      ]);
+      expect(order.history).toEqual([expect.objectContaining({ status: 'confirmed', actorUserId: 'payme:callback' })]);
       expect(flush).toHaveBeenCalledTimes(1);
       expect(result).toEqual({
         status: 'ok',
@@ -473,9 +468,7 @@ describe('PostgresPaymentRepository', () => {
       expect(product.stockQuantity).toBe(10);
       expect(product.status).toBe('active');
       expect(order.status).toBe('cancelled');
-      expect(order.history).toEqual([
-        expect.objectContaining({ status: 'cancelled', actorUserId: 'payme:timeout' }),
-      ]);
+      expect(order.history).toEqual([expect.objectContaining({ status: 'cancelled', actorUserId: 'payme:timeout' })]);
       expect(flush).toHaveBeenCalledTimes(1);
     });
 
@@ -513,9 +506,7 @@ describe('PostgresPaymentRepository', () => {
 
       expect(transaction.state).toBe('paid');
       expect(order.status).toBe('processing');
-      expect(order.history).toEqual([
-        expect.objectContaining({ status: 'processing', actorUserId: 'payme:callback' }),
-      ]);
+      expect(order.history).toEqual([expect.objectContaining({ status: 'processing', actorUserId: 'payme:callback' })]);
       expect(flush).toHaveBeenCalledTimes(1);
       expect(result).toEqual({ status: 'ok', transaction: expect.objectContaining({ state: 'paid' }) });
     });
@@ -601,9 +592,7 @@ describe('PostgresPaymentRepository', () => {
       expect(product.stockQuantity).toBe(10);
       expect(product.status).toBe('active');
       expect(order.status).toBe('cancelled');
-      expect(order.history).toEqual([
-        expect.objectContaining({ status: 'cancelled', actorUserId: 'payme:callback' }),
-      ]);
+      expect(order.history).toEqual([expect.objectContaining({ status: 'cancelled', actorUserId: 'payme:callback' })]);
       expect(flush).toHaveBeenCalledTimes(1);
       expect(result).toEqual({
         status: 'ok',

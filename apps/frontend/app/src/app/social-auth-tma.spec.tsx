@@ -3,6 +3,7 @@ import { StrictMode } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './app';
+import { TmaAuthPanel } from '../features/tma-auth';
 
 vi.mock('@tma.js/sdk-react', async () => {
   const actual = await vi.importActual<typeof import('@tma.js/sdk-react')>('@tma.js/sdk-react');
@@ -87,11 +88,20 @@ const deferredResponse = () => {
   return { promise, resolve: resolveResponse };
 };
 
+// The site chrome reads the catalog, the request feed and the session probe on
+// every route, so they are answered outside each test's queue: these tests are
+// about the auth flows, not the chrome's own requests.
+const marketplaceChromeEndpoints = new Set([
+  '/marketplace/catalog',
+  '/marketplace/requests',
+  '/marketplace/verification',
+]);
+
 const setFetch = (...responses: Response[]) => {
   const queue = [...responses];
   const fetchMock = vi.fn<typeof fetch>((input) => {
     const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
-    if (pathname === '/auth/me') {
+    if (pathname === '/auth/me' || marketplaceChromeEndpoints.has(pathname)) {
       return Promise.resolve(jsonResponse({}, false, 401));
     }
     const response = queue.shift();
@@ -154,17 +164,22 @@ describe('social auth and TMA UI', () => {
     expect(screen.queryByText('Something went wrong')).toBeFalsy();
   });
 
-  it('negotiates fullscreen colored Telegram chrome with native back and share controls', async () => {
+  // Telegram frames the mini app itself: the route adds no header or bottom bar
+  // of its own, and the only control it wires is Telegram's native back button.
+  it('negotiates fullscreen colored Telegram chrome and wires the native back control', async () => {
     resetPath('/tma?startapp=profile');
     tma.isTMA.mockReturnValue(true);
 
     render(<App />);
 
-    await screen.findAllByRole('button', { name: 'Share' });
-    const shell = document.querySelector<HTMLElement>('.xr-mini-app-shell');
-    expect(shell?.dataset.miniAppEnvironment).toBe('telegram');
-    expect(document.querySelector('.xr-header')).toBeTruthy();
-    expect(document.querySelector('.xr-mini-app-bottom-bar')).toBeTruthy();
+    const frame = await waitFor(() => {
+      const element = document.querySelector<HTMLElement>('.dh-telegram-frame');
+      expect(element).toBeTruthy();
+      return element as HTMLElement;
+    });
+    expect(frame.dataset.miniAppEnvironment).toBe('telegram');
+    expect(document.querySelector('.dh-header')).toBeNull();
+    expect(document.querySelector('.dh-mobile-nav')).toBeNull();
     await waitFor(() => {
       expect(tma.viewport.requestFullscreen).toHaveBeenCalledOnce();
     });
@@ -172,37 +187,9 @@ describe('social auth and TMA UI', () => {
     expect(tma.miniApp.setBottomBarColor).toHaveBeenCalledWith('#0f172a');
     expect(tma.backButton.onClick).toHaveBeenCalledOnce();
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'Share' })[0]);
-    expect(tma.shareURL).toHaveBeenCalledWith(
-      'https://app.local.test/tma?startapp=profile',
-      'Manage partners, inputs, produce, orders, delivery, payments, and field operations.',
-    );
     act(() => {
       tma.backButton.onClick.mock.calls[0]?.[0]();
     });
-    await waitFor(() => {
-      expect(window.location.pathname).toBe('/');
-    });
-  });
-
-  it('uses browser back and Web Share from the same shell outside Telegram', async () => {
-    resetPath('/profile?tgWebAppData=secret&ref=friend');
-    const share = vi.fn(() => Promise.resolve());
-    vi.stubGlobal('navigator', { share });
-
-    render(<App />);
-
-    expect(await screen.findByRole('button', { name: 'Back' })).toBeTruthy();
-    fireEvent.click(screen.getAllByRole('button', { name: 'Share' })[0]);
-    await waitFor(() => {
-      expect(share).toHaveBeenCalledOnce();
-    });
-    expect(share).toHaveBeenCalledWith({
-      text: 'Manage partners, inputs, produce, orders, delivery, payments, and field operations.',
-      title: 'AgriTech',
-      url: 'https://app.local.test/profile?ref=friend',
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     await waitFor(() => {
       expect(window.location.pathname).toBe('/');
     });
@@ -418,11 +405,20 @@ describe('social auth and TMA UI', () => {
   it('finishes Discord callback through the SPA route', async () => {
     resetPath('/auth/discord/callback?code=discord-code&state=oauth-state');
     const pending = deferredResponse();
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockReturnValueOnce(pending.promise)
-      .mockResolvedValueOnce(jsonResponse({ data: { user: { locale: 'en' } } }))
-      .mockResolvedValueOnce(jsonResponse({ data: { profile: { email: 'discord@example.com' } } }));
+    // The callback, the session read and the profile read keep their order; only
+    // the chrome's own marketplace requests are answered out of band.
+    const queue: Array<Promise<Response>> = [
+      pending.promise,
+      Promise.resolve(jsonResponse({ data: { user: { locale: 'en' } } })),
+      Promise.resolve(jsonResponse({ data: { profile: { email: 'discord@example.com' } } })),
+    ];
+    const fetchMock = vi.fn<typeof fetch>((input) => {
+      const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+      if (marketplaceChromeEndpoints.has(pathname)) {
+        return Promise.resolve(jsonResponse({}, false, 401));
+      }
+      return queue.shift() ?? Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
+    });
     vi.stubGlobal('fetch', fetchMock);
 
     render(<App />);
@@ -466,6 +462,30 @@ describe('social auth and TMA UI', () => {
     render(<App />);
 
     expect(await screen.findByText('Discord did not return the required sign-in state. Start again.')).toBeTruthy();
+  });
+
+  // A Discord exchange the server rejects leaves the visitor on the callback page,
+  // where the reason has to be stated instead of a spinner that never resolves.
+  it('states why a Discord exchange the server rejected could not be verified', async () => {
+    resetPath('/auth/discord/callback?code=discord-code&state=oauth-state');
+    setFetch(jsonResponse({ message: 'Invalid authorization code' }, false, 400));
+
+    render(<App />);
+
+    expect(await screen.findByText('Invalid authorization code')).toBeTruthy();
+    expect(screen.queryByText('Waiting for Discord confirmation.')).toBeNull();
+  });
+
+  // A 200 that carries neither a session nor a link keeps the visitor here: the
+  // exchange worked, so it is reported as done rather than as a failure.
+  it('reports a Discord exchange that answered without a session or a link', async () => {
+    resetPath('/auth/discord/callback?code=discord-code&state=oauth-state');
+    setFetch(jsonResponse({ data: { status: 'pending' } }));
+
+    render(<App />);
+
+    expect(await screen.findByText('Discord sign-in completed.')).toBeTruthy();
+    expect(window.location.pathname).toBe('/auth/discord/callback');
   });
 
   it('projects a completed Better Auth Telegram OIDC session through the SPA callback', async () => {
@@ -515,6 +535,28 @@ describe('social auth and TMA UI', () => {
     expect(sessionStorage.getItem('telegramOidcAuthState')).toBeNull();
   });
 
+  it('states why a Telegram session projection the server rejected failed', async () => {
+    resetPath('/auth/telegram/callback');
+    sessionStorage.setItem('telegramOidcAuthState', JSON.stringify({ intent: 'login', returnUrl: '/profile' }));
+    setFetch(jsonResponse({ message: 'The OIDC session has expired' }, false, 400));
+
+    render(<App />);
+
+    expect(await screen.findByText('The OIDC session has expired')).toBeTruthy();
+    expect(screen.queryByText('Verifying the Telegram session.')).toBeNull();
+  });
+
+  it('reports a Telegram projection that answered without a session or a link', async () => {
+    resetPath('/auth/telegram/callback');
+    sessionStorage.setItem('telegramOidcAuthState', JSON.stringify({ intent: 'login' }));
+    setFetch(jsonResponse({ data: { status: 'pending' } }));
+
+    render(<App />);
+
+    expect(await screen.findByText('Telegram sign-in completed.')).toBeTruthy();
+    expect(window.location.pathname).toBe('/auth/telegram/callback');
+  });
+
   it('does not project a Telegram OIDC callback that contains a provider error', async () => {
     resetPath('/auth/telegram/callback?error=access_denied');
     sessionStorage.setItem('telegramOidcAuthState', JSON.stringify({ intent: 'login', returnUrl: '/profile' }));
@@ -523,7 +565,13 @@ describe('social auth and TMA UI', () => {
     render(<App />);
 
     expect(await screen.findByText('Telegram did not complete sign-in. Start again.')).toBeTruthy();
-    expect(fetchMock).not.toHaveBeenCalled();
+    // The chrome's own session and catalog reads still happen; what must not
+    // happen is a session projection for a failed provider callback.
+    expect(
+      fetchMock.mock.calls.some(([input]) =>
+        (input instanceof Request ? input.url : String(input)).includes('/auth/telegram/oidc/session'),
+      ),
+    ).toBe(false);
     expect(sessionStorage.getItem('telegramOidcAuthState')).toBeNull();
   });
 
@@ -584,7 +632,10 @@ describe('social auth and TMA UI', () => {
     const fetchMock = setFetch(jsonResponse({ redirect: false, url: '' }));
 
     render(<App />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Continue with Telegram' }));
+    const telegramButton = await screen.findByRole('button', { name: 'Continue with Telegram' });
+    fireEvent.click(telegramButton);
+    // A second click on the same button must not open a second authorization.
+    fireEvent.click(telegramButton);
 
     await waitFor(() => {
       expect(
@@ -593,6 +644,11 @@ describe('social auth and TMA UI', () => {
         ),
       ).toBe(true);
     });
+    expect(
+      fetchMock.mock.calls.filter(([input]) =>
+        (input instanceof Request ? input.url : String(input)).includes('/api/auth/sign-in/oauth2'),
+      ),
+    ).toHaveLength(1);
     const request = fetchMock.mock.calls.find(([input]) =>
       (input instanceof Request ? input.url : String(input)).includes('/api/auth/sign-in/oauth2'),
     )?.[0] as Request;
@@ -605,14 +661,179 @@ describe('social auth and TMA UI', () => {
     expect(window.location.pathname).toBe('/auth');
   });
 
-  it('navigates route links without a full page reload', async () => {
+  it('navigates the site chrome without a full page reload', async () => {
     resetPath('/auth');
+    setFetch();
     render(<App />);
 
-    fireEvent.click((await screen.findAllByRole('link', { name: 'Settings' }))[0]!);
+    fireEvent.click(await screen.findByRole('button', { name: 'Settings' }));
 
     await waitFor(() => {
       expect(window.location.pathname).toBe('/settings');
     });
+  });
+
+  // Registering through Telegram is the same redirect as signing in through it,
+  // so the stepped flow hands the choice straight to the provider — and the flow
+  // still offers the way back to the sign-in card.
+  it('starts Telegram registration from the stepped flow and returns to sign-in', async () => {
+    resetPath('/auth');
+    const fetchMock = setFetch(jsonResponse({ redirect: false, url: '' }));
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Create an account' }));
+    fireEvent.click(await screen.findByRole('button', { name: /Register with Telegram/u }));
+
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          (input instanceof Request ? input.url : String(input)).includes('/api/auth/sign-in/oauth2'),
+        ),
+      ).toBe(true);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    expect(await screen.findByRole('button', { name: 'Login' })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: /Register with Telegram/u })).toBeNull();
+  });
+
+  // While the authorization request is in flight the button says so and takes no
+  // further clicks; once it settles, the button is usable again.
+  it('holds the Telegram button in its waiting state while the request is in flight', async () => {
+    resetPath('/auth');
+    const pending = deferredResponse();
+    const fetchMock = vi.fn<typeof fetch>((input) => {
+      const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+      if (pathname === '/auth/me' || marketplaceChromeEndpoints.has(pathname)) {
+        return Promise.resolve(jsonResponse({}, false, 401));
+      }
+      return pending.promise;
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue with Telegram' }));
+
+    const waiting = await screen.findByRole('button', { name: /Waiting for Telegram/u });
+    fireEvent.click(waiting);
+    pending.resolve(jsonResponse({ redirect: false, url: '' }));
+
+    expect(await screen.findByRole('button', { name: 'Continue with Telegram' })).toBeTruthy();
+    expect(
+      fetchMock.mock.calls.filter(([input]) =>
+        (input instanceof Request ? input.url : String(input)).includes('/api/auth/sign-in/oauth2'),
+      ),
+    ).toHaveLength(1);
+  });
+
+  // A "create an account" link anywhere on the site carries `?mode=register`, so
+  // the visitor lands on the first registration step instead of the sign-in form.
+  it('opens the stepped registration flow directly from a register link', async () => {
+    resetPath('/auth?mode=register');
+    setFetch();
+
+    render(<App />);
+
+    expect(await screen.findByRole('button', { name: /Register with Telegram/u })).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Login' })).toBeNull();
+  });
+
+  // The settings page owns where each provider link goes: Discord is an OAuth
+  // redirect from the page itself, Telegram is the Mini App route.
+  it('routes each account link from the settings page to its own provider flow', async () => {
+    resetPath('/settings');
+    const session = {
+      data: {
+        session: {
+          user: {
+            email: 'farmer@example.com',
+            id: 'user-id',
+            permissions: [],
+            roles: [],
+            tenantId: 'tenant-id',
+            theme: 'system',
+          },
+        },
+        status: 'authenticated',
+      },
+    };
+    const fetchMock = vi.fn<typeof fetch>((input) => {
+      const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
+      if (pathname === '/auth/me') {
+        return Promise.resolve(jsonResponse(session));
+      }
+      if (pathname === '/auth/provider-identities') {
+        return Promise.resolve(jsonResponse({ data: { identities: [] } }));
+      }
+      if (pathname === '/auth/discord/authorization-request') {
+        return Promise.resolve(jsonResponse({ data: {} }));
+      }
+      return Promise.resolve(jsonResponse({}, false, 401));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole('button', { name: 'Link Discord' }));
+    await waitFor(() => {
+      expect(
+        fetchMock.mock.calls.some(([input]) =>
+          (input instanceof Request ? input.url : String(input)).includes('/auth/discord/authorization-request'),
+        ),
+      ).toBe(true);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Link Telegram' }));
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/link/telegram');
+    });
+  });
+
+  it('names a Mini App destination it cannot open, and a link it completed', () => {
+    const view = render(
+      <TmaAuthPanel
+        deepNavigationState="unsupported"
+        error={null}
+        intent="link"
+        isTelegram
+        isVerifying={false}
+        status="idle"
+        t={(key) => key}
+      />,
+    );
+
+    expect(screen.getByText('tma.deepNavigation.unsupported')).toBeTruthy();
+    expect(screen.getByText('tma.link.pending')).toBeTruthy();
+
+    view.rerender(
+      <TmaAuthPanel
+        deepNavigationState="none"
+        error={null}
+        intent="link"
+        isTelegram
+        isVerifying={false}
+        status="success"
+        t={(key) => key}
+      />,
+    );
+
+    expect(screen.getByText('tma.link.success')).toBeTruthy();
+    expect(screen.queryByText('tma.deepNavigation.unsupported')).toBeNull();
+
+    // The same panel, reached as a sign-in rather than as a link from settings.
+    view.rerender(
+      <TmaAuthPanel
+        deepNavigationState="none"
+        error={null}
+        intent="login"
+        isTelegram
+        isVerifying={false}
+        status="success"
+        t={(key) => key}
+      />,
+    );
+
+    expect(screen.getByText('tma.authenticated')).toBeTruthy();
   });
 });

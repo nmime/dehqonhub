@@ -17,9 +17,11 @@ import {
   type RequestOfferDto,
   type ReviewViewDto,
 } from '@app/frontend-api-client';
-import { LanguageSwitcher, ThemeSwitcher } from '../../../shared/ui';
+import { LanguageSwitcher } from '../../../shared/ui';
 import { useMarketplaceData, type Resource } from '../model/use-marketplace-data';
 import { MarketplaceAi } from './marketplace-ai';
+import { MarketplaceBrandLockup } from './marketplace-brand';
+import { MarketplaceDemoBanner } from './marketplace-demo-banner';
 import {
   MarketplaceAccount,
   MarketplaceCart,
@@ -29,7 +31,6 @@ import {
 } from './marketplace-commerce';
 import {
   MarketplaceCatalog,
-  MarketplaceEmpty,
   MarketplaceFavorites,
   MarketplaceHome,
   MarketplaceProductDetail,
@@ -44,6 +45,8 @@ import {
 } from './marketplace-ui';
 
 export interface MarketplacePageProps {
+  /** Route content rendered inside the site chrome when `view` is `embedded`. */
+  children?: ReactNode;
   contractId?: string;
   locationSearch?: string;
   navigate?: MarketplaceNavigate;
@@ -65,7 +68,16 @@ const defaultNavigate: MarketplaceNavigate = (to) => {
   globalThis.location.assign(to);
 };
 
+/**
+ * Views that show a person's own identity, documents or agreements. Everything
+ * else stays browsable without an account; these three have nothing to show
+ * without one, and a placeholder would read as a session that does not exist.
+ */
+const requiresOwnSession = (view: MarketplaceView): boolean =>
+  view === 'account' || view === 'contract' || view === 'verification';
+
 export const MarketplacePage = observer(function MarketplacePage({
+  children,
   contractId,
   locationSearch = '',
   navigate = defaultNavigate,
@@ -117,10 +129,12 @@ export const MarketplacePage = observer(function MarketplacePage({
   );
 
   useEffect(() => {
-    if (view !== 'product' || !productId || data.auth !== 'signed-in') {
+    if (view !== 'product' || !productId) {
       setReviews({ data: [], status: 'idle' });
       return undefined;
     }
+    // Ratings are a public read, so they load for a visitor with no account too:
+    // nobody decides to register in order to find out whether a seller is any good.
     let active = true;
     setReviews((resource) => ({ ...resource, status: 'loading' }));
     void throwOnOpenApiErrorData(api.marketplaceControllerListReviews(productId, requestOptions))
@@ -137,7 +151,7 @@ export const MarketplacePage = observer(function MarketplacePage({
     return () => {
       active = false;
     };
-  }, [api, data.auth, productId, requestOptions, view]);
+  }, [api, productId, requestOptions, view]);
 
   const favoriteIds = useMemo(
     () => new Set(data.favorites.data.map((favorite) => favorite.productId)),
@@ -147,6 +161,17 @@ export const MarketplacePage = observer(function MarketplacePage({
   const selectedContract = data.contracts.data.find((contract) => contract.id === contractId);
   const currentUserId = data.verification.data?.userId;
   const isVerified = data.verification.data?.status === 'verified';
+  /** No session behind the page: writes that need one are explained, not attempted. */
+  const guestOnly = data.local;
+  const requiresAccount = useCallback((): boolean => {
+    if (!guestOnly) {
+      return false;
+    }
+    // Letting the request through would 401 at the fetch layer and bounce the
+    // visitor to the sign-in form mid-flow, which reads as a random redirect.
+    flash(translate('agritech.marketplace.demo.signInRequired'), 'info');
+    return true;
+  }, [guestOnly, flash, translate]);
   const canReviewSelectedProduct = Boolean(
     selectedProduct &&
     currentUserId &&
@@ -212,18 +237,32 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const addToCart = (product: ProductViewDto, quantity = 1) => {
+    const success = translate('agritech.marketplace.cart.addedToSellerCart', { seller: product.supplierName });
+    if (data.local) {
+      data.localActions.addToCart(product, quantity);
+      flash(success);
+      return;
+    }
     void runMutation(
       `cart:${product.id}`,
       () =>
         throwOnOpenApiErrorData(
           api.marketplaceControllerAddToCart({ productId: product.id, quantity }, requestOptions),
         ),
-      translate('agritech.marketplace.cart.addedToSellerCart', { seller: product.supplierName }),
+      success,
     );
   };
 
   const toggleFavorite = (product: ProductViewDto) => {
     const favorite = favoriteIds.has(product.id);
+    const success = favorite
+      ? translate('agritech.marketplace.favorites.removed')
+      : translate('agritech.marketplace.favorites.added');
+    if (data.local) {
+      data.localActions.toggleFavorite(product.id);
+      flash(success);
+      return;
+    }
     void runMutation(
       `favorite:${product.id}`,
       () =>
@@ -232,13 +271,14 @@ export const MarketplacePage = observer(function MarketplacePage({
             ? api.marketplaceControllerRemoveFavorite(product.id, requestOptions)
             : api.marketplaceControllerAddFavorite(product.id, requestOptions),
         ),
-      favorite
-        ? translate('agritech.marketplace.favorites.removed')
-        : translate('agritech.marketplace.favorites.added'),
+      success,
     );
   };
 
   const addReview = (product: ProductViewDto, rating: number, comment?: string) => {
+    if (requiresAccount()) {
+      return Promise.resolve(false);
+    }
     return runMutation(
       `review:${product.id}`,
       () =>
@@ -260,6 +300,11 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const updateCart = (cart: CartViewDto, productIdToUpdate: string, quantity: number) => {
+    if (data.local) {
+      data.localActions.updateCart(productIdToUpdate, quantity);
+      flash(translate('agritech.marketplace.cart.updated'));
+      return;
+    }
     void runMutation(
       `cart-update:${productIdToUpdate}`,
       () =>
@@ -273,6 +318,9 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const requestSample = (product: ProductViewDto) => {
+    if (requiresAccount()) {
+      return;
+    }
     if (!isVerified) {
       flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
       navigate('/verification');
@@ -294,7 +342,10 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const checkout = (cart: CartViewDto, deliveryTerms: DeliveryTerms) => {
-    if (!isVerified) {
+    // Identity checks belong to accounts. Sending a guest to /verification would
+    // land them on the sign-in wall instead of telling them what checkout needs,
+    // so their basket runs to the confirmation and stops there with a note.
+    if (!data.local && !isVerified) {
       flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
       navigate('/verification');
       return;
@@ -307,6 +358,13 @@ export const MarketplacePage = observer(function MarketplacePage({
       confirmLabel: translate('agritech.marketplace.cart.reviewContract'),
       description: translate('agritech.marketplace.cart.checkoutConfirmation', { seller: sellerName }),
       onConfirm: async () => {
+        if (data.local) {
+          // No contract can be drafted without a session, so a guest run ends at
+          // an emptied cart plus an explicit note about what signing needs.
+          data.localActions.checkout(cart.id);
+          flash(translate('agritech.marketplace.demo.checkoutDone'), 'info');
+          return;
+        }
         await runMutation(
           `checkout:${cart.id}`,
           () =>
@@ -322,6 +380,9 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const createRequest = (input: CreateRequestDto) => {
+    if (requiresAccount()) {
+      return;
+    }
     void runMutation(
       'request:create',
       () => throwOnOpenApiErrorData(api.marketplaceControllerCreateRequest(input, requestOptions)),
@@ -330,6 +391,9 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const makeOffer = (request: BuyerRequestViewDto, input: RequestOfferDto) => {
+    if (requiresAccount()) {
+      return;
+    }
     void runMutation(
       `offer:${request.id}`,
       () => throwOnOpenApiErrorData(api.marketplaceControllerMakeOffer(request.id, input, requestOptions)),
@@ -338,6 +402,9 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const chooseOffer = (request: BuyerRequestViewDto, offer: OfferViewDto) => {
+    if (requiresAccount()) {
+      return;
+    }
     setConfirmation({
       confirmLabel: translate('agritech.marketplace.orders.confirmOffer'),
       description: translate('agritech.marketplace.orders.confirmOfferDescription'),
@@ -401,24 +468,31 @@ export const MarketplacePage = observer(function MarketplacePage({
     t: translate,
   };
 
-  let content: ReactNode;
-  if (data.auth === 'checking') {
-    content = <MarketplaceLoading t={translate} />;
-  } else if (data.auth === 'signed-out') {
-    content = <MarketplaceSignedOut navigate={navigate} t={translate} />;
-  } else if (data.auth === 'error' || data.catalog.status === 'error') {
-    content = (
-      <MarketplaceEmpty
-        actionLabel={translate('ui.runtime.retry')}
-        headingLevel={1}
-        icon="produce"
-        message={translate('agritech.marketplace.catalog.unavailableDescription')}
-        onAction={data.refresh}
-        title={translate('agritech.marketplace.catalog.unavailable')}
+  // Rendered inside the home page just below the hero, and above the content on
+  // every other view: the hero is the first thing a visitor should see, so the
+  // credential card follows it instead of pushing it off the first screen.
+  const demoBanner =
+    data.demo === 'none' ? null : (
+      <MarketplaceDemoBanner
+        navigate={navigate}
+        onRetry={data.refresh}
+        reason={data.demo}
+        t={translate}
+        variant={view === 'home' ? 'full' : 'compact'}
       />
     );
+
+  let content: ReactNode;
+  if (view === 'embedded') {
+    // Route content owns its own loading and empty states, so the chrome must not
+    // hold it behind a catalog request it does not read.
+    content = children;
+  } else if (data.auth === 'checking') {
+    content = <MarketplaceLoading t={translate} />;
   } else if (data.catalog.status === 'loading' || data.catalog.status === 'idle') {
     content = <MarketplaceLoading t={translate} />;
+  } else if (guestOnly && requiresOwnSession(view)) {
+    content = <MarketplaceSignedOut navigate={navigate} t={translate} />;
   } else {
     switch (view) {
       case 'catalog':
@@ -451,12 +525,7 @@ export const MarketplacePage = observer(function MarketplacePage({
             locale={locale}
             navigate={navigate}
             onCheckout={checkout}
-            onUpdate={(cartId, itemProductId, quantity) => {
-              const cart = data.carts.data.find((entry) => entry.id === cartId);
-              if (cart) {
-                updateCart(cart, itemProductId, quantity);
-              }
-            }}
+            onUpdate={updateCart}
             pendingAction={pendingAction}
             products={data.catalog.data}
             t={translate}
@@ -523,7 +592,7 @@ export const MarketplacePage = observer(function MarketplacePage({
         );
         break;
       default:
-        content = <MarketplaceHome {...productActions} />;
+        content = <MarketplaceHome {...productActions} banner={demoBanner} />;
     }
   }
 
@@ -543,31 +612,19 @@ export const MarketplacePage = observer(function MarketplacePage({
         verificationStatus={data.verification.data?.status}
         view={view}
       />
-      {notice && (
-        <div
-          aria-live="polite"
-          className={`dh-notice dh-notice--${notice.kind}`}
-          role={notice.kind === 'error' ? 'alert' : 'status'}
-        >
-          <MarketplaceIcon name={notice.kind === 'error' ? 'shield' : 'check'} />
-          <span>{notice.message}</span>
-          <button
-            aria-label={translate('agritech.marketplace.close')}
-            onClick={() => {
-              setNotice(undefined);
-            }}
-            type="button"
-          >
-            <MarketplaceIcon name="close" />
-          </button>
-        </div>
-      )}
+      <MarketplaceNoticeBar
+        notice={notice}
+        onClose={() => {
+          setNotice(undefined);
+        }}
+        t={translate}
+      />
       <main className="dh-main" id="dh-main">
+        {view === 'home' ? null : demoBanner}
         {content}
       </main>
       <div className="dh-mobile-preferences">
         <LanguageSwitcher variant="menu" />
-        <ThemeSwitcher variant="menu" />
       </div>
       <MarketplaceFooter navigate={navigate} t={translate} />
       {data.auth === 'signed-in' && (
@@ -609,18 +666,6 @@ interface HeaderProps {
   view: MarketplaceView;
 }
 
-function MarketplaceBrandLabel({ t }: Readonly<{ t: MarketplaceTranslate }>) {
-  const brand = t('agritech.marketplace.brand');
-  const accentStart = Math.max(0, brand.length - 3);
-
-  return (
-    <>
-      <span>{brand.slice(0, accentStart)}</span>
-      <strong>{brand.slice(accentStart)}</strong>
-    </>
-  );
-}
-
 function MarketplaceHeader({
   cartCount,
   favoriteCount,
@@ -643,7 +688,7 @@ function MarketplaceHeader({
           }}
           type="button"
         >
-          <MarketplaceBrandLabel t={t} />
+          <MarketplaceBrandLockup t={t} />
         </button>
         <button
           className={`dh-button dh-button--catalog${view === 'catalog' ? ' is-active' : ''}`}
@@ -664,7 +709,7 @@ function MarketplaceHeader({
             onChange={(event) => {
               setSearch(event.target.value);
             }}
-            placeholder={t('agritech.marketplace.search')}
+            placeholder={t('agritech.marketplace.search.placeholder')}
             type="search"
             value={search}
           />
@@ -713,8 +758,9 @@ function MarketplaceHeader({
           />
         </nav>
         <div className="dh-header__preferences">
-          <LanguageSwitcher />
-          <ThemeSwitcher />
+          {/* Code, not language name: the header already carries a brand lockup, a
+              catalog button, the search field and four actions. */}
+          <LanguageSwitcher compact variant="menu" />
         </div>
       </div>
       <nav aria-label={t('agritech.marketplace.catalog.categories')} className="dh-header__categories">
@@ -760,6 +806,29 @@ function HeaderAction({
       </span>
       <small>{label}</small>
     </button>
+  );
+}
+
+/** Transient result of an action: an error speaks up, anything else reports. */
+function MarketplaceNoticeBar({
+  notice,
+  onClose,
+  t,
+}: Readonly<{ notice: MarketplaceNotice | undefined; onClose: () => void; t: MarketplaceTranslate }>) {
+  if (!notice) {
+    return null;
+  }
+
+  const isError = notice.kind === 'error';
+
+  return (
+    <div aria-live="polite" className={`dh-notice dh-notice--${notice.kind}`} role={isError ? 'alert' : 'status'}>
+      <MarketplaceIcon name={isError ? 'alert' : 'check'} />
+      <span>{notice.message}</span>
+      <button aria-label={t('agritech.marketplace.close')} onClick={onClose} type="button">
+        <MarketplaceIcon name="close" />
+      </button>
+    </div>
   );
 }
 
@@ -885,7 +954,7 @@ function MarketplaceFooter({ navigate, t }: Readonly<{ navigate: MarketplaceNavi
           }}
           type="button"
         >
-          <MarketplaceBrandLabel t={t} />
+          <MarketplaceBrandLockup t={t} />
         </button>
         <p>{t('agritech.marketplace.footer.description')}</p>
       </div>
@@ -939,6 +1008,25 @@ function MarketplaceFooter({ navigate, t }: Readonly<{ navigate: MarketplaceNavi
           type="button"
         >
           {t('agritech.marketplace.account')}
+        </button>
+        {/* The profile and preferences pages used to hang off a second, generic
+            navigation bar. That bar is gone, so the site's own footer carries
+            them — otherwise both pages would only be reachable by URL. */}
+        <button
+          onClick={() => {
+            navigate('/profile');
+          }}
+          type="button"
+        >
+          {t('user.nav.profile')}
+        </button>
+        <button
+          onClick={() => {
+            navigate('/settings');
+          }}
+          type="button"
+        >
+          {t('user.nav.settings')}
         </button>
         <span>{t('agritech.marketplace.footer.providerBoundary')}</span>
       </div>

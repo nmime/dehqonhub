@@ -16,7 +16,12 @@ import { ApiOkResponse, ApiParam, ApiProperty, ApiPropertyOptional, ApiTags } fr
 import { IsDateString, IsIn, IsInt, IsOptional, IsString, IsUUID, Matches, Max, MaxLength, Min } from 'class-validator';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse } from '@app/backend-common-response';
-import { CurrentUser, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
+import {
+  CurrentUser,
+  DefaultAuthTenantId,
+  Public,
+  type AuthenticatedPrincipal,
+} from '@app/backend-feature-auth-shared';
 import type { AgriTechOwner } from '@app/backend-feature-agritech-shared';
 import { MarketplaceService } from './marketplace.service';
 import {
@@ -253,14 +258,18 @@ export class MarketplaceController {
     );
   }
 
+  // Ratings are part of deciding whether to buy, so they are readable without a
+  // session — the same reasoning that makes the catalog itself public. Writing a
+  // review stays guarded above.
   @Get('reviews/:productId')
+  @Public()
   @ApiParam({ format: 'uuid', name: 'productId' })
   @ApiOkDataResponse(ReviewListDto)
   async listReviews(
-    @CurrentUser() principal: AuthenticatedPrincipal,
+    @CurrentUser() principal: AuthenticatedPrincipal | undefined,
     @Param('productId', ParseUUIDPipe) productId: string,
   ) {
-    return createOkResponse({ items: await this.service.listProductReviews(principal.tenantId, productId) });
+    return createOkResponse({ items: await this.service.listProductReviews(tenantOf(principal), productId) });
   }
 
   // ---- Requests (reverse auction) ----
@@ -271,10 +280,14 @@ export class MarketplaceController {
     return createOkResponse(await this.service.createRequest(marketplaceOwner(principal), input));
   }
 
+  // The open-request feed is what tells a visiting seller there is demand here,
+  // so it reads without a session. Posting a request and offering on one stay
+  // guarded: both are acts by an identified buyer or seller.
   @Get('requests')
+  @Public()
   @ApiOkDataResponse(BuyerRequestListDto)
-  async listRequests(@CurrentUser() principal: AuthenticatedPrincipal, @Query() query: RequestQueryDto) {
-    return createOkResponse({ items: await this.service.listRequests(principal.tenantId, query.status) });
+  async listRequests(@CurrentUser() principal: AuthenticatedPrincipal | undefined, @Query() query: RequestQueryDto) {
+    return createOkResponse({ items: await this.service.listRequests(tenantOf(principal), query.status) });
   }
 
   @Get('requests/mine')
@@ -370,3 +383,6 @@ const marketplaceOwner = (principal: AuthenticatedPrincipal): AgriTechOwner => (
   tenantId: principal.tenantId,
   userId: principal.subject,
 });
+
+/** Tenant behind a public read: the visitor's own when signed in, else the default. */
+const tenantOf = (principal: AuthenticatedPrincipal | undefined): string => principal?.tenantId ?? DefaultAuthTenantId;

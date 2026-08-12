@@ -5,6 +5,11 @@ import { UiDropdownMenu } from './dropdown-menu';
 import { UiSelect } from './select';
 
 export interface LanguageSwitcherProps {
+  /**
+   * Trims the control to the bare minimum: the `menu` variant shows the locale
+   * code instead of the language name, which keeps a header row readable when
+   * the full name ("Русский") would push the rest of the chrome out of line.
+   */
   compact?: boolean;
   variant?: 'select' | 'menu';
 }
@@ -14,6 +19,7 @@ export const LanguageSwitcher = observer(function LanguageSwitcher({
   variant = 'select',
 }: Readonly<LanguageSwitcherProps>) {
   const { locale, setLocale, t } = useI18n();
+  const languageName = t(`common.language.${locale}`);
   const languageOptions = supportedLocales.map((nextLocale) => ({
     label: (
       <span className="xr-switcher-menu__option">
@@ -33,9 +39,18 @@ export const LanguageSwitcher = observer(function LanguageSwitcher({
         items={languageOptions}
         label={t('common.language')}
         trigger={
-          <UiButton aria-label={t('common.language')} className="xr-language-menu-trigger" size="sm" variant="ghost">
+          <UiButton
+            aria-label={t('common.language')}
+            className={
+              compact ? 'xr-language-menu-trigger xr-language-menu-trigger--compact' : 'xr-language-menu-trigger'
+            }
+            size="sm"
+            variant="ghost"
+          >
             <Languages aria-hidden="true" size={17} strokeWidth={2} />
-            <span>{t(`common.language.${locale}`)}</span>
+            {/* Compact headers show the locale code; the accessible name stays the
+                plain label so console specs and screen readers agree on it. */}
+            <span>{compact ? locale.toUpperCase() : languageName}</span>
             <ChevronDown aria-hidden="true" size={15} strokeWidth={2.2} />
           </UiButton>
         }

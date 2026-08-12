@@ -26,6 +26,13 @@ export interface ProductShellProps {
   children: ReactNode;
   headerLeading?: ReactNode;
   headerTrailing?: ReactNode;
+  /**
+   * Set to `false` in products that ship a single palette. The control is a
+   * header default because most consoles support both themes, but offering it in
+   * a light-only product leaves a switch that visibly breaks the design and, for
+   * signed-in shells, writes the choice back to the profile.
+   */
+  showThemeSwitcher?: boolean;
 }
 
 export const ProductShell = observer(function ProductShell({
@@ -43,6 +50,7 @@ export const ProductShell = observer(function ProductShell({
   children,
   headerLeading,
   headerTrailing,
+  showThemeSwitcher = true,
 }: Readonly<ProductShellProps>) {
   const { locale, t } = useI18n();
   const uiStore = useOptionalRootStore()?.ui;
@@ -88,7 +96,7 @@ export const ProductShell = observer(function ProductShell({
           <div className="xr-header__controls">
             <div className="xr-header__primary-controls">
               <LanguageSwitcher />
-              <ThemeSwitcher />
+              {showThemeSwitcher ? <ThemeSwitcher /> : null}
               {status ? <UiStatusPill label={status} tone={statusTone} /> : null}
             </div>
             {headerTrailing}

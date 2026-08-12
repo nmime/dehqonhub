@@ -15,8 +15,6 @@
   "agritech.marketplace.catalog.noBranchRecordsDescription": "Bu bo'lim uchun joriy katalog yozuvlari mavjud emas.",
   "agritech.marketplace.catalog.noResultsDescription": "Qidiruv yoki filtrlarni o'zgartirib, qayta urinib ko'ring.",
   "agritech.marketplace.catalog.resultCount": "{{count}} ta mahsulot",
-  "agritech.marketplace.catalog.unavailable": "Katalog mavjud emas",
-  "agritech.marketplace.catalog.unavailableDescription": "Katalogni serverdan yuklab bo'lmadi. Qayta urinib ko'ring.",
   "agritech.marketplace.filter.from": "Dan",
   "agritech.marketplace.filter.open": "Filtrlarni ochish",
   "agritech.marketplace.filter.title": "Katalog filtrlari",

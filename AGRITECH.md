@@ -15,7 +15,7 @@ Uzbekistan produces $34.2B of agriculture a year. 63.1% of it comes from
 dehqan farms averaging under 0.2 hectares. Existing platforms (UFarmer,
 AgroHub, the state integration layer) cover the formal, large, state-visible
 slice — UFarmer reaches under 3% of smallholders after years of operation.
-The remaining 93% of trade is informal, credit-based (*nasia*), and
+The remaining 93% of trade is informal, credit-based (_nasia_), and
 trust-enforced inside local communities. AgroUz does not compete for that
 formal slice. It wraps the informal trade that already exists: a field agent
 physically verifies each delivery, the obligation is recorded against a
@@ -47,26 +47,26 @@ same sequence (3 districts → 12 states).
 All of the following is implemented, typechecked (81 projects), and covered
 by 370+ automated tests:
 
-| Area | State |
-| --- | --- |
-| Tenant-isolated core | Every record carries `tenantId`; identity comes from the authenticated principal |
-| Farmer profiles | Verified create/read/update, owned by tenant+user |
-| Input catalog | Active listings with category/region filters, UZ/RU/EN names |
-| Orders | Server-priced lines, pessimistic stock locking, single PostgreSQL transaction, oversell-proof |
-| Produce listings | Farmer-side output listings with grade, availability windows |
-| Produce reservation | Atomic quantity reservation under `SELECT ... FOR UPDATE`; order created in the same transaction |
-| Price discovery | Median/min/max across active listings per crop/region |
-| Supplier partners | Onboarding, approval workflow, product catalog management |
-| Buyer partners | Onboarding, approval, marketplace access gated by status |
-| Field agents | Assigned-farmer list, field-visit records with observed grading |
-| Deliveries | Explicit state machine, proof-of-delivery required, actor/timestamped history |
-| Advisories | Source-attributed agronomy/weather entries with observation/expiry windows |
-| Payments | Idempotent initiation (tenant+provider+order+key), Click/Payme callbacks with amount verification and replay protection, payme 12h timeout with automatic inventory release |
-| Analytics | Tenant KPIs: GMV, commission (configurable basis points), repeat-buyer rate, fulfillment rate |
-| Pilot cohorts | Lifecycle management with actual vs target counts |
-| Operator console | Full admin UI with RBAC (read/write/approve permission separation) |
-| Frontend | User SPA (registration, catalog, dashboard, operations) and operator console, EN/RU/UZ i18n |
-| Telegram | Bot with `/agritech` entry and localized notifications |
+| Area                 | State                                                                                                                                                                       |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tenant-isolated core | Every record carries `tenantId`; identity comes from the authenticated principal                                                                                            |
+| Farmer profiles      | Verified create/read/update, owned by tenant+user                                                                                                                           |
+| Input catalog        | Active listings with category/region filters, UZ/RU/EN names                                                                                                                |
+| Orders               | Server-priced lines, pessimistic stock locking, single PostgreSQL transaction, oversell-proof                                                                               |
+| Produce listings     | Farmer-side output listings with grade, availability windows                                                                                                                |
+| Produce reservation  | Atomic quantity reservation under `SELECT ... FOR UPDATE`; order created in the same transaction                                                                            |
+| Price discovery      | Median/min/max across active listings per crop/region                                                                                                                       |
+| Supplier partners    | Onboarding, approval workflow, product catalog management                                                                                                                   |
+| Buyer partners       | Onboarding, approval, marketplace access gated by status                                                                                                                    |
+| Field agents         | Assigned-farmer list, field-visit records with observed grading                                                                                                             |
+| Deliveries           | Explicit state machine, proof-of-delivery required, actor/timestamped history                                                                                               |
+| Advisories           | Source-attributed agronomy/weather entries with observation/expiry windows                                                                                                  |
+| Payments             | Idempotent initiation (tenant+provider+order+key), Click/Payme callbacks with amount verification and replay protection, payme 12h timeout with automatic inventory release |
+| Analytics            | Tenant KPIs: GMV, commission (configurable basis points), repeat-buyer rate, fulfillment rate                                                                               |
+| Pilot cohorts        | Lifecycle management with actual vs target counts                                                                                                                           |
+| Operator console     | Full admin UI with RBAC (read/write/approve permission separation)                                                                                                          |
+| Frontend             | User SPA (registration, catalog, dashboard, operations) and operator console, EN/RU/UZ i18n                                                                                 |
+| Telegram             | Bot with `/agritech` entry and localized notifications                                                                                                                      |
 
 ## What is NOT done (honestly)
 

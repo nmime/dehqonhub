@@ -1,10 +1,28 @@
 import type { Locale } from '@app/frontend-runtime';
 import type { ProductViewDto } from '@app/frontend-api-client';
 
+/**
+ * `embedded` is the view every non-marketplace route uses: the page renders the
+ * shared DehqonHub chrome around its children instead of one of its own surfaces,
+ * so auth, settings and the operations consoles sit in the same site rather than
+ * a second application with its own header and navigation.
+ */
 export type MarketplaceView =
-  'account' | 'cart' | 'catalog' | 'contract' | 'favorites' | 'home' | 'product' | 'requests' | 'verification';
+  | 'account'
+  | 'cart'
+  | 'catalog'
+  | 'contract'
+  | 'embedded'
+  | 'favorites'
+  | 'home'
+  | 'product'
+  | 'requests'
+  | 'verification';
 
 export type MarketplaceSection = 'all' | 'equipment' | 'produce' | 'seeds';
+
+/** The sections a product can be filed under. `all` is a filter value, never a shelf. */
+export type MarketplaceProductSection = Exclude<MarketplaceSection, 'all'>;
 
 export type MarketplaceNavigate = (to: string, options?: { replace?: boolean }) => void;
 export type MarketplaceTranslate = (key: string, params?: Record<string, number | string>) => string;
@@ -20,14 +38,29 @@ const intlLocaleByLocale: Record<Locale, string> = {
   uz: 'uz-UZ',
 };
 
-export const sectionForProduct = (product: ProductViewDto): MarketplaceSection => {
-  if (product.category === 'seed') {
-    return 'seeds';
+/**
+ * Maps every catalog category onto a browsable section. The mapping is total on
+ * purpose: an unmapped category fell through to `all`, which no shelf or section
+ * tab renders, so those products became unreachable. Crop inputs (fertiliser,
+ * crop protection) sit with seeds because that is how they are bought — as one
+ * planting-season basket — and `other` is where harvested goods land, which is
+ * the produce section's only data source.
+ */
+export const sectionForProduct = (product: ProductViewDto): MarketplaceProductSection => {
+  switch (product.category) {
+    case 'equipment':
+    case 'irrigation': {
+      return 'equipment';
+    }
+    case 'fertilizer':
+    case 'pesticide':
+    case 'seed': {
+      return 'seeds';
+    }
+    default: {
+      return 'produce';
+    }
   }
-  if (product.category === 'equipment' || product.category === 'irrigation') {
-    return 'equipment';
-  }
-  return 'all';
 };
 
 export const localizedProductName = (product: ProductViewDto, locale: Locale): string => {

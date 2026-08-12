@@ -15,8 +15,6 @@
   "agritech.marketplace.catalog.noBranchRecordsDescription": "No current catalog records are available for this section.",
   "agritech.marketplace.catalog.noResultsDescription": "Change the search or filters and try again.",
   "agritech.marketplace.catalog.resultCount": "{{count}} products",
-  "agritech.marketplace.catalog.unavailable": "Catalog unavailable",
-  "agritech.marketplace.catalog.unavailableDescription": "The catalog could not be loaded from the server. Try again.",
   "agritech.marketplace.filter.from": "From",
   "agritech.marketplace.filter.open": "Open filters",
   "agritech.marketplace.filter.title": "Catalog filters",

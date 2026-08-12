@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
 import { apiRuntimeEvents, clearApiAuthRequired } from '@app/frontend-api-support';
 import { isTmaApp, type TmaEnvironment } from '@app/frontend-runtime';
-import { isMarketplaceRoute } from '../router/user-navigation';
 
 const defaultAuthRoute = '/auth';
 
@@ -25,6 +24,26 @@ const isAuthRoute = (path: string, authRoute: string): boolean => {
   const normalizedAuthRoute = normalizePath(authRoute);
   return route === normalizedAuthRoute || route.startsWith(`${normalizedAuthRoute}/`);
 };
+
+// Endpoints whose 401 is a normal outcome for an anonymous visitor: the caller
+// already degrades to a local-only result, so the runtime must not navigate.
+//
+// - Preference writes are opportunistic: a visitor toggling language or theme
+//   keeps the choice locally.
+// - The marketplace chrome probes `/marketplace/verification` on every route to
+//   find out whether anybody is signed in, and renders the guest catalog when
+//   the answer is no. The catalog and the request feed are public on a current
+//   backend and stay listed so an older one cannot bounce a browsing visitor.
+const sessionOptionalEndpoints = new Set([
+  '/auth/me/preferences',
+  '/auth/me/locale',
+  '/marketplace/catalog',
+  '/marketplace/requests',
+  '/marketplace/verification',
+]);
+
+const isSessionOptionalEndpoint = (endpoint: string | null | undefined): boolean =>
+  typeof endpoint === 'string' && sessionOptionalEndpoints.has(normalizePath(endpoint));
 
 const isTelegramRoute = (path: string): boolean => {
   const route = normalizePath(path);
@@ -72,15 +91,12 @@ export const AuthRedirectBridge = () => {
           return;
         }
 
-        // Marketplace entry routes intentionally render their own signed-out
-        // state when the initial tenant catalog rejects an absent session.
-        // Other 401s (for example, an expired session during a mutation) keep
-        // the normal protected-route redirect behavior.
-        if (
-          isMarketplaceRoute(pathname) &&
-          event.reason === 'unauthenticated' &&
-          event.error?.endpoint === '/marketplace/catalog'
-        ) {
+        // An absent session is an expected outcome for these reads, not a prompt
+        // to sign in, and the route is deliberately not part of the check: the
+        // chrome issues them wherever it is mounted, so keying on the path bounced
+        // visitors off pages such as preferences. Other 401s (for example, an
+        // expired session during a mutation) keep the protected-route redirect.
+        if (event.reason === 'unauthenticated' && isSessionOptionalEndpoint(event.error?.endpoint)) {
           clearApiAuthRequired();
           return;
         }

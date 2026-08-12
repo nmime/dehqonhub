@@ -223,6 +223,34 @@ describe('ProviderIdentitiesPanel', () => {
     expect((unlinkButton as HTMLButtonElement).disabled).toBe(true);
   });
 
+  it('states a plain unlink failure when the API names no reason for it', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          data: {
+            identities: [
+              {
+                id: 'discord-identity',
+                provider: 'discord',
+              },
+            ],
+          },
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ detail: 'Unlink failed.', status: 500 }, false, 500));
+
+    renderPanel(fetchMock);
+
+    fireEvent.click(
+      await screen.findByRole('button', {
+        name: 'auth.social.button.unlinkDiscord',
+      }),
+    );
+
+    expect(await screen.findByText('auth.social.unlink.error')).toBeTruthy();
+  });
+
   it('renders provider unavailable errors from the identities query', async () => {
     const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(jsonResponse({}, false, 503));
 

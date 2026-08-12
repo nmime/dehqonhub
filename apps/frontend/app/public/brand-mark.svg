@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" role="img" aria-label="DehqonHub">
+  <!-- DehqonHub emblem: flat gold-and-green sprout on a transparent ground.
+       Deliberately has no white plate so it sits directly on cream, white, and
+       full-green surfaces. Greens are the design-reference range
+       (#0e7a3c / #1ca24c / #7ed957); the gold is the brand's warm accent. -->
+  <path d="M23.4 21.2C15.6 22 9.7 17.3 8.6 9.6c7.5-1.1 13.7 3.9 14.8 11.6Z" fill="#0e7a3c" />
+  <path d="M24.6 21.2C32.4 22 38.3 17.3 39.4 9.6c-7.5-1.1-13.7 3.9-14.8 11.6Z" fill="#7ed957" />
+  <path d="M24 3.6c6 5.1 6 13.6 0 19.4-6-5.8-6-14.3 0-19.4Z" fill="#1ca24c" />
+  <g fill="none" stroke="#c98f28" stroke-linecap="round" stroke-width="3">
+    <path d="M24 41.4V22.6" />
+    <path d="M13.8 39.6c4 3.4 16.4 3.4 20.4 0" />
+  </g>
+</svg>

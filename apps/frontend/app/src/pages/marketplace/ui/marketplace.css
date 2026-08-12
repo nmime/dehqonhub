@@ -1,47 +1,69 @@
+/* The marketplace consumes the canonical design-reference tokens declared in
+   @app/frontend-ui-web. The --dh-* names are a thin role mapping kept so the
+   rest of this sheet reads in marketplace terms; the values are never invented
+   here. Light only by design — there is no dark variant of this brand. */
 .dh-marketplace {
-  --dh-ink: #203128;
-  --dh-muted: #5f6d64;
-  --dh-green: #0b7138;
-  --dh-green-strong: #07552b;
-  --dh-green-soft: #e4f4e6;
-  --dh-lime: #8bd456;
-  --dh-cream: #fbf3e3;
-  --dh-cream-deep: #f1e3c9;
-  --dh-surface: #fffefa;
-  --dh-surface-muted: #f8f6ef;
-  --dh-border: #dce3d9;
-  --dh-danger: #a82f2f;
-  --dh-warning: #9a5b0b;
-  --dh-shadow: 0 1rem 3rem rgb(42 62 49 / 10%);
-  --dh-shadow-soft: 0 0.5rem 1.5rem rgb(42 62 49 / 7%);
-  background:
-    radial-gradient(circle at 100% 0%, rgb(139 212 86 / 10%), transparent 27rem),
-    linear-gradient(180deg, var(--dh-cream), color-mix(in srgb, var(--dh-cream) 72%, white));
+  --dh-ink: var(--ink);
+  --dh-muted: var(--ink-soft);
+  --dh-green: var(--green-primary);
+  /* Deep green carries every green-on-light text/icon role: --green-primary
+     only reaches 2.9:1 on cream, --green-deep clears AA at 4.8:1. */
+  --dh-green-strong: var(--green-deep);
+  --dh-green-soft: var(--green-tint);
+  --dh-lime: var(--green-accent);
+  --dh-cream: var(--bg-cream);
+  --dh-cream-deep: var(--bg-cream-card);
+  --dh-surface: var(--surface-white);
+  --dh-surface-muted: var(--bg-cream-card);
+  --dh-border: var(--line);
+  --dh-danger: var(--danger);
+  --dh-warning: var(--warning);
+  --dh-shadow: var(--shadow-pop);
+  --dh-shadow-soft: var(--shadow-hover);
+  /* Flat, print-like ground — the reference forbids decorative gradients here. */
+  background: var(--bg-cream);
   color: var(--dh-ink);
-  font-family: 'Avenir Next', var(--xr-font-family), sans-serif;
+  font-family: var(--font-body);
   min-height: 100dvh;
   overflow-x: clip;
   padding-bottom: env(safe-area-inset-bottom, 0);
 }
 
-:root[data-theme='dark'] .dh-marketplace,
-.xr-shell[data-theme='dark'] .dh-marketplace {
-  --dh-ink: #f2f6ef;
-  --dh-muted: #b1bdb4;
-  --dh-green: #56c979;
-  --dh-green-strong: #82dc9b;
-  --dh-green-soft: #183d27;
-  --dh-lime: #9ddd70;
-  --dh-cream: #111a14;
-  --dh-cream-deep: #1b271e;
-  --dh-surface: #17211a;
-  --dh-surface-muted: #1d2920;
-  --dh-border: #35463a;
-  --dh-danger: #ff9999;
-  --dh-warning: #ffc876;
-  --dh-shadow: 0 1rem 3rem rgb(0 0 0 / 28%);
-  --dh-shadow-soft: 0 0.5rem 1.5rem rgb(0 0 0 / 22%);
-  background: radial-gradient(circle at 100% 0%, rgb(86 201 121 / 11%), transparent 27rem), var(--dh-cream);
+/* Token bridge for the shared `xr-*` components. Every route now renders inside
+   this shell, and the shared cards, forms and buttons ship the console's blue
+   palette by default — inside a cream marketplace that read as two different
+   applications stitched together. Remapping the tokens keeps one set of
+   components while the whole site stays on the brand palette. */
+.dh-marketplace {
+  --xr-color-background: var(--bg-cream);
+  --xr-color-background-accent: var(--green-tint);
+  --xr-color-surface: var(--surface-white);
+  --xr-color-surface-strong: var(--surface-white);
+  --xr-color-border: var(--line);
+  --xr-color-text: var(--ink);
+  --xr-color-muted: var(--ink-soft);
+  --xr-color-primary: var(--green-primary);
+  --xr-color-primary-strong: var(--green-deep);
+  --xr-color-primary-contrast: var(--ink-on-green);
+  --xr-color-info: var(--green-deep);
+  --xr-color-success: var(--green-deep);
+  --xr-color-warning: var(--warning);
+  --xr-color-destructive: var(--danger);
+  --xr-border: var(--line);
+  --xr-muted: var(--ink-soft);
+  --xr-text: var(--ink);
+  --xr-surface: var(--surface-white);
+  --xr-control-background: var(--bg-cream-card);
+  --xr-input-background: var(--surface-white);
+  --xr-card-background: var(--surface-white);
+  --xr-feedback-background: var(--surface-white);
+  --xr-focus-ring: 0 0 0 3px color-mix(in srgb, var(--green-primary) 26%, transparent);
+  --xr-focus-ring-strong: 0 0 0 4px color-mix(in srgb, var(--green-primary) 32%, transparent);
+  --xr-radius-sm: 0.75rem;
+  --xr-radius-md: 1rem;
+  --xr-radius-lg: 1.35rem;
+  --xr-shadow-sm: var(--shadow-card);
+  --xr-shadow-md: var(--shadow-hover);
 }
 
 .dh-marketplace,
@@ -81,8 +103,8 @@
 .dh-marketplace h2,
 .dh-marketplace h3,
 .dh-brand {
-  font-family: 'Avenir Next', var(--xr-font-family), sans-serif;
-  letter-spacing: -0.035em;
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
 }
 
 .dh-marketplace h1 {
@@ -113,7 +135,7 @@
 .dh-skip-link {
   background: var(--dh-green-strong);
   border-radius: 0 0 0.7rem 0.7rem;
-  color: white;
+  color: var(--ink-on-green);
   font-weight: 800;
   left: 1rem;
   padding: 0.8rem 1rem;
@@ -136,13 +158,15 @@
   z-index: 30;
 }
 
+/* 1320px container with the reference's 24px desktop / 16px mobile gutters. The
+   previous clamp() widened the gutter to 40px on large screens. */
 .dh-header__main,
 .dh-header__categories,
 .dh-main,
 .dh-footer {
   margin-inline: auto;
-  max-width: 82.5rem;
-  width: calc(100% - clamp(2rem, 5vw, 5rem));
+  max-width: var(--shell-max);
+  width: calc(100% - var(--shell-gutter) * 2);
 }
 
 .dh-header__main {
@@ -154,23 +178,38 @@
 }
 
 .dh-brand {
-  align-items: baseline;
+  align-items: center;
   background: transparent;
   border: 0;
   cursor: pointer;
   display: inline-flex;
   font-size: 1.36rem;
   font-weight: 900;
-  min-height: 2.75rem;
+  gap: 0.5rem;
+  min-height: var(--control-height);
   padding: 0.5rem 0;
 }
 
-.dh-brand span {
+/* The emblem is transparent artwork, so it needs no plate and scales with the
+   wordmark rather than sitting in a fixed white box. */
+.dh-brand__mark {
+  flex: 0 0 auto;
+  height: 2rem;
+  width: 2rem;
+}
+
+.dh-brand__word {
+  display: inline-flex;
+  line-height: 1;
+}
+
+.dh-brand__word span {
   color: var(--dh-ink);
 }
 
-.dh-brand strong {
+.dh-brand__word strong {
   color: var(--dh-green);
+  font-weight: inherit;
 }
 
 .dh-button {
@@ -183,8 +222,10 @@
   gap: 0.5rem;
   justify-content: center;
   line-height: 1.1;
-  min-height: 2.75rem;
-  padding: 0.7rem 1.15rem;
+  /* 44px tall with 12px/20px padding — the reference's control geometry, on the
+     8px step. The old 0.7rem/1.15rem pair was off-grid and read as lopsided. */
+  min-height: var(--control-height);
+  padding: var(--space-1) 1.25rem;
   transition:
     background-color 160ms ease,
     border-color 160ms ease,
@@ -211,23 +252,18 @@
   width: 1.15rem;
 }
 
+/* Primary action green comes straight from the reference (--green-primary);
+   hover/pressed steps down to --green-primary-2. */
 .dh-button--primary,
 .dh-button--catalog {
-  background: var(--dh-green-strong);
-  color: white;
-}
-
-:root[data-theme='dark'] .dh-button--primary,
-:root[data-theme='dark'] .dh-button--catalog,
-.xr-shell[data-theme='dark'] .dh-button--primary,
-.xr-shell[data-theme='dark'] .dh-button--catalog {
-  color: #07170d;
+  background: var(--green-primary);
+  color: var(--ink-on-green);
 }
 
 .dh-button--primary:hover:not(:disabled),
 .dh-button--catalog:hover:not(:disabled),
 .dh-button--catalog.is-active {
-  background: color-mix(in srgb, var(--dh-green-strong) 84%, black);
+  background: var(--green-primary-2);
 }
 
 .dh-button--secondary {
@@ -237,14 +273,14 @@
 }
 
 .dh-button--surface {
-  background: white;
-  color: #173223;
+  background: var(--surface-white);
+  color: var(--green-deep);
 }
 
 .dh-button--glass {
   background: rgb(255 255 255 / 10%);
   border-color: rgb(255 255 255 / 65%);
-  color: white;
+  color: var(--ink-on-green);
 }
 
 .dh-button--block {
@@ -270,25 +306,41 @@
 .dh-search input {
   background: transparent;
   border: 0;
-  min-height: 2.7rem;
+  min-height: var(--control-height);
   min-width: 0;
   outline: 0;
-  padding: 0.65rem 1rem;
+  padding: var(--space-1) 0.5rem var(--space-1) 1.1rem;
+  /* The prompt still outgrows a 200px field at 360px, so it ends in an ellipsis
+     instead of a word cut in half. */
+  text-overflow: ellipsis;
   width: 100%;
 }
 
+/* The submit control is a small mark inside the field, not a second button beside
+   it: a full-height circle with a 24px default lucide glyph read as an oversized
+   blob welded to the input. */
 .dh-search button {
   align-items: center;
   background: var(--dh-green-strong);
   border: 0;
   border-radius: 50%;
-  color: white;
+  color: var(--ink-on-green);
   cursor: pointer;
   display: inline-flex;
-  height: 2.75rem;
+  height: 2.15rem;
   justify-content: center;
-  margin-right: 0.24rem;
-  width: 2.75rem;
+  margin-right: 0.3rem;
+  transition: background 0.15s ease;
+  width: 2.15rem;
+}
+
+.dh-search button:hover {
+  background: color-mix(in srgb, var(--dh-green-strong) 84%, var(--ink));
+}
+
+.dh-search button svg {
+  height: 1.05rem;
+  width: 1.05rem;
 }
 
 .dh-header__nav,
@@ -341,7 +393,7 @@
   background: var(--dh-green-strong);
   border: 2px solid var(--dh-cream);
   border-radius: 50%;
-  color: white;
+  color: var(--ink-on-green);
   display: flex;
   font-size: 0.58rem;
   font-style: normal;
@@ -357,6 +409,26 @@
 
 .dh-header__preferences > * {
   flex: none;
+}
+
+/* The switcher is a shared component styled for the admin console, so the
+   marketplace restates it in its own palette: pill radius, cream surface and the
+   same green hover the header actions use. */
+.dh-header__preferences .xr-language-menu-trigger.xr-button {
+  background: var(--dh-surface);
+  border-color: var(--dh-border);
+  border-radius: 999px;
+  box-shadow: none;
+  color: var(--dh-ink);
+  font-family: var(--font-body);
+  min-height: 2.5rem;
+}
+
+.dh-header__preferences .xr-language-menu-trigger.xr-button:hover,
+.dh-header__preferences .xr-language-menu-trigger.xr-button:focus-visible {
+  background: var(--dh-green-soft);
+  border-color: color-mix(in srgb, var(--dh-green) 45%, var(--dh-border));
+  color: var(--dh-green-strong);
 }
 
 .dh-mobile-preferences {
@@ -412,13 +484,14 @@
   gap: clamp(1.5rem, 4vw, 3.5rem);
 }
 
+/* Sentence case: the reference rules out all-caps outright, so the eyebrow gets
+   weight and size to set it apart instead of uppercasing plus wide tracking. */
 .dh-eyebrow {
   color: var(--dh-green-strong);
-  font-size: 0.72rem;
-  font-weight: 850;
-  letter-spacing: 0.12em;
-  margin-bottom: 0.45rem;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin-bottom: 0.5rem;
 }
 
 .dh-muted,
@@ -433,12 +506,146 @@
   line-height: 1.55;
 }
 
+/* Demo banner: card surface rather than another green panel, so it reads as an
+   informational notice next to the hero instead of competing with it. */
+.dh-demo {
+  align-items: start;
+  background: var(--bg-cream-card);
+  border: 1px solid var(--dh-border);
+  border-radius: var(--r-panel);
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+  margin-bottom: var(--space-6);
+  padding: clamp(var(--space-3), 4vw, var(--space-4));
+}
+
+/* The bottom margin separates the banner from the page content when it sits
+   directly inside `.dh-main`; inside the home stack the grid gap already does. */
+.dh-home > .dh-demo {
+  margin-bottom: 0;
+}
+
+/* Strip form for every surface other than the home page: it keeps the disclosure
+   and the way back to the credentials without pushing the page's own content
+   below the fold. */
+.dh-demo--compact {
+  align-items: center;
+  gap: var(--space-2);
+  grid-template-columns: minmax(0, 1fr) auto;
+  margin-bottom: var(--space-4);
+  padding: var(--space-2) var(--space-3);
+}
+
+.dh-demo__strip {
+  align-items: center;
+  color: var(--dh-muted);
+  display: flex;
+  font-size: 0.9375rem;
+  gap: 0.625rem;
+  margin: 0;
+}
+
+.dh-demo__strip svg {
+  color: var(--dh-green-strong);
+  flex: 0 0 auto;
+  height: 1.125rem;
+  width: 1.125rem;
+}
+
+/* A failed catalog request shows the alert triangle; in brand green it reads as
+   decoration rather than as the warning the full card marks in the same colour. */
+.dh-demo__strip--warning svg {
+  color: var(--dh-warning);
+}
+
+.dh-demo__intro h2 {
+  margin-bottom: var(--space-1);
+}
+
+.dh-demo__intro p {
+  color: var(--dh-muted);
+  margin-bottom: var(--space-2);
+  max-width: 42ch;
+}
+
+.dh-demo__warning {
+  align-items: center;
+  color: var(--dh-warning);
+  display: flex;
+  font-size: 0.875rem;
+  gap: 0.5rem;
+  margin-bottom: var(--space-2);
+}
+
+.dh-demo__warning svg {
+  flex: 0 0 auto;
+  height: 1.125rem;
+  width: 1.125rem;
+}
+
+.dh-demo__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+}
+
+.dh-demo__accounts {
+  display: grid;
+  gap: var(--space-1);
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-demo__accounts li {
+  align-items: center;
+  background: var(--surface-white);
+  border: 1px solid var(--dh-border);
+  border-radius: var(--r-img);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  justify-content: space-between;
+  padding: var(--space-1) var(--space-2);
+}
+
+.dh-demo__account {
+  display: grid;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.dh-demo__account strong {
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+}
+
+.dh-demo__account code {
+  color: var(--dh-green-strong);
+  font-family: ui-monospace, monospace;
+  font-size: 0.875rem;
+}
+
+.dh-demo__account small {
+  color: var(--dh-muted);
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 62rem) {
+  /* Applies to the compact strip as well: below this width the notice and its
+     buttons no longer fit on one row. */
+  .dh-demo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .dh-hero {
-  background:
-    radial-gradient(circle at 80% 10%, rgb(255 255 255 / 18%), transparent 15rem),
-    linear-gradient(118deg, #07542b, #168d45 58%, #78c94b);
+  /* The reference defines exactly one green gradient; the hero used an invented
+     darker one. */
+  background: var(--grad-green);
   border-radius: clamp(1.5rem, 4vw, 2.25rem);
-  color: white;
+  color: var(--ink-on-green);
   display: grid;
   grid-template-columns: minmax(0, 1.25fr) minmax(15rem, 0.75fr);
   isolation: isolate;
@@ -483,11 +690,11 @@
 }
 
 .dh-hero .dh-eyebrow {
-  color: #d8ffc1;
+  color: var(--green-tint);
 }
 
 .dh-hero h1 {
-  color: white;
+  color: var(--ink-on-green);
   margin-bottom: 1rem;
   max-width: 13ch;
 }
@@ -963,7 +1170,7 @@
   align-items: center;
   background: var(--dh-lime);
   border-radius: 50%;
-  color: #102218;
+  color: var(--ink);
   content: counter(dh-step);
   display: flex;
   font-weight: 900;
@@ -1040,6 +1247,9 @@
   font-weight: 800;
 }
 
+/* Every control is a full pill at the reference's 44px height, with the same
+   12px/20px padding so text never sits against the rounded edge. Radius was
+   0.75rem here, under the 16px floor the reference sets. */
 .dh-filter-fields input,
 .dh-filter-fields select,
 .dh-form input,
@@ -1049,18 +1259,28 @@
 .dh-quantity input,
 .dh-ai-panel__composer input,
 .dh-ai-panel__composer textarea {
-  background: var(--dh-surface-muted);
+  background: var(--surface-white);
   border: 1px solid var(--dh-border);
-  border-radius: 0.75rem;
-  min-height: 2.75rem;
-  padding: 0.65rem 0.8rem;
+  border-radius: var(--r-pill);
+  min-height: var(--control-height);
+  padding: var(--space-1) 1.25rem;
   width: 100%;
 }
 
+/* Multi-line fields cannot be pills; they take the smallest allowed radius. */
 .dh-form textarea,
 .dh-ai-panel__composer textarea {
+  border-radius: var(--r-img);
   min-height: 6rem;
+  padding: 0.75rem 1rem;
   resize: vertical;
+}
+
+/* Placeholders had no rule at all, so they inherited the browser's near-black
+   default and read as filled-in values. */
+.dh-marketplace ::placeholder {
+  color: var(--ink-soft);
+  opacity: 1;
 }
 
 .dh-field-row,
@@ -1603,7 +1823,7 @@
   background: var(--dh-green-strong);
   border: 0.45rem double color-mix(in srgb, var(--dh-lime) 70%, white);
   border-radius: 50%;
-  color: white;
+  color: var(--ink-on-green);
   display: inline-flex;
   flex: none;
   height: 5rem;
@@ -1844,7 +2064,7 @@
 .dh-timeline li.is-done > span {
   background: var(--dh-green-strong);
   border-color: var(--dh-green-strong);
-  color: white;
+  color: var(--ink-on-green);
 }
 
 .dh-timeline svg {
@@ -1947,7 +2167,7 @@
   border-radius: 999px;
   bottom: 1.4rem;
   box-shadow: var(--dh-shadow);
-  color: white;
+  color: var(--ink-on-green);
   cursor: pointer;
   display: flex;
   font-weight: 800;
@@ -1984,7 +2204,7 @@
   align-items: center;
   align-items: center;
   background: linear-gradient(135deg, var(--dh-green-strong), var(--dh-green));
-  color: white;
+  color: var(--ink-on-green);
   display: flex;
   gap: 0.75rem;
   padding: 1rem;
@@ -2013,7 +2233,7 @@
 .dh-ai-panel > header button {
   background: transparent;
   border-color: rgb(255 255 255 / 35%);
-  color: white;
+  color: var(--ink-on-green);
 }
 
 .dh-ai-panel__body {

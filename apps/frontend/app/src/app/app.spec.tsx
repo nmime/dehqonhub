@@ -40,8 +40,10 @@ function installRadixPointerMocks() {
   });
 }
 
-function chooseSelectOption(label: string | RegExp, option: string) {
-  const trigger = screen.getByRole('combobox', { name: label });
+// `index` picks between duplicate controls: the site header carries its own
+// switchers, so pages that also offer one in a preferences card match twice.
+function chooseSelectOption(label: string | RegExp, option: string, index = 0) {
+  const trigger = screen.getAllByRole('combobox', { name: label })[index]!;
 
   installRadixPointerMocks();
   fireEvent.pointerDown(trigger, {
@@ -56,7 +58,62 @@ function chooseSelectOption(label: string | RegExp, option: string) {
   fireEvent.click(optionElement as HTMLElement);
 }
 
+// The site header carries the language control as a dropdown menu (the mobile
+// row repeats it), so flows that are not on the preferences page switch locale
+// through the menu rather than a select.
+function chooseLanguageFromHeader(triggerName: string, optionName: string) {
+  installRadixPointerMocks();
+  fireEvent.pointerDown(screen.getAllByRole('button', { name: triggerName })[0]!, {
+    button: 0,
+    ctrlKey: false,
+    pointerType: 'mouse',
+  });
+  fireEvent.click(screen.getByRole('menuitem', { name: optionName }));
+}
+
 type FetchReply = Response | { rejectsWith: Error };
+
+/**
+ * One listing in the shape the API publishes, standing in for the demo
+ * assortment the catalog endpoint answers with while a tenant has nothing of its
+ * own. The frontend no longer bundles a dataset, so a rendered product name is
+ * proof the payload made it through the client and onto the page.
+ */
+const catalogListing = {
+  category: 'equipment',
+  createdAt: '2026-03-02T08:00:00.000Z',
+  description: 'Traktor, 2023-yil, 80 ot kuchi.',
+  id: 'dec0de00-0000-4000-8000-000000000012',
+  images: [],
+  name: 'Tractor TTZ-80, 2023',
+  nameRu: 'Трактор ТТЗ-80, 2023',
+  nameUz: 'Traktor TTZ-80, 2023',
+  priceUzs: 185_000_000,
+  region: 'Farg‘ona viloyati',
+  status: 'active',
+  stockQuantity: 2,
+  supplierId: 'demo-supplier-dehqon-bozori-kooperativi',
+  supplierName: 'Dehqon Bozori Kooperativi',
+  unit: 'dona',
+  updatedAt: '2026-07-28T08:00:00.000Z',
+};
+
+/**
+ * The site chrome wraps every route, so its three marketplace reads fire on the
+ * auth and account pages too. Answering them outside each test's queue keeps
+ * these tests about the flow under test instead of the chrome's own requests.
+ * Two are public; verification is the session probe, and its 401 is how the
+ * chrome learns that nobody is signed in.
+ */
+const marketplaceChromeResponse = (pathname: string): Response | undefined => {
+  if (pathname === '/marketplace/catalog') {
+    return jsonResponse({ data: { demo: true, items: [catalogListing] } });
+  }
+  if (pathname === '/marketplace/requests') {
+    return jsonResponse({ data: { items: [] } });
+  }
+  return pathname === '/marketplace/verification' ? jsonResponse({}, false, 401) : undefined;
+};
 
 const setFetch = (...responses: FetchReply[]) => {
   let initialSessionChecked = false;
@@ -66,6 +123,10 @@ const setFetch = (...responses: FetchReply[]) => {
     if (pathname === '/auth/me' && !initialSessionChecked) {
       initialSessionChecked = true;
       return Promise.resolve(jsonResponse({}, false, 401));
+    }
+    const chrome = marketplaceChromeResponse(pathname);
+    if (chrome) {
+      return Promise.resolve(chrome);
     }
     const response = queue.shift();
     if (!response) {
@@ -82,7 +143,11 @@ const installSignedOutMarketplaceFetch = () => {
     'fetch',
     vi.fn((input: RequestInfo | URL) => {
       const pathname = new URL(input instanceof Request ? input.url : String(input), window.location.origin).pathname;
-      if (pathname === '/auth/me' || pathname === '/marketplace/catalog') {
+      const chrome = marketplaceChromeResponse(pathname);
+      if (chrome) {
+        return Promise.resolve(chrome);
+      }
+      if (pathname === '/auth/me') {
         return Promise.resolve(jsonResponse({}, false, 401));
       }
       return Promise.reject(new Error(`Unexpected fetch: ${pathname}`));
@@ -205,15 +270,12 @@ const expectFetchRequest = (
   return init as FetchInit;
 };
 
-// Waits for the async router to render the persistent shell (its nav is present
-// on every route) so the outlet content is available to query.
-const awaitShell = () => screen.findAllByRole('link', { name: 'Home' });
+// Waits for the async router to render the site chrome (its search field is
+// present on every route) so the outlet content is available to query.
+const awaitShell = () => screen.findByRole('search');
 
 const submitLogin = async (email = 'user@example.com') => {
   await awaitShell();
-  if (!screen.queryByLabelText('Login email')) {
-    fireEvent.click(screen.getAllByRole('link', { name: /^(Auth|Вход)$/u })[0]!);
-  }
   fireEvent.change(await screen.findByLabelText('Login email'), {
     target: { value: email },
   });
@@ -221,6 +283,36 @@ const submitLogin = async (email = 'user@example.com') => {
     target: { value: 'password123' },
   });
   fireEvent.click(screen.getByRole('button', { name: 'Login' }));
+};
+
+/**
+ * Registration is a three-step flow, so a test that registers walks it: leave the
+ * sign-in card, choose the email method, say who you are, then set a password.
+ * The names are matched per locale because these tests switch language mid-flow.
+ */
+const submitRegister = async ({ displayName, email }: { displayName?: string; email: string }) => {
+  await awaitShell();
+  fireEvent.click(
+    await screen.findByRole('button', {
+      name: /^(Create an account|Создать аккаунт|Hisob yaratish)$/u,
+    }),
+  );
+  // The method tiles carry their explanation inside the button, so the accessible
+  // name starts with the tile's own title rather than matching it exactly.
+  fireEvent.click(screen.getByRole('button', { name: /^(Email and password|Email и пароль|Email va parol)/u }));
+  if (displayName !== undefined) {
+    fireEvent.change(screen.getByLabelText(/^(Register display name|Отображаемое имя для регистрации)$/u), {
+      target: { value: displayName },
+    });
+  }
+  fireEvent.change(screen.getByLabelText(/^(Register email|Email для регистрации|Email de registro)$/u), {
+    target: { value: email },
+  });
+  fireEvent.click(screen.getByRole('button', { name: /^(Continue|Продолжить|Davom etish)$/u }));
+  fireEvent.change(screen.getByLabelText(/^(Register password|Пароль для регистрации|Contraseña de registro)$/u), {
+    target: { value: 'password123' },
+  });
+  fireEvent.click(screen.getByRole('button', { name: /^(Register|Зарегистрироваться|Registrarse)$/u }));
 };
 
 describe('User app shell', () => {
@@ -240,14 +332,17 @@ describe('User app shell', () => {
     vi.unstubAllEnvs();
   });
 
-  it('renders the signed-out DehqonHub entry at the repository root without duplicate product chrome', async () => {
+  it('renders the demo DehqonHub catalog at the repository root without duplicate product chrome', async () => {
     installSignedOutMarketplaceFetch();
     const { container } = render(<App />);
-    await screen.findByRole('heading', { name: 'Sign in to DehqonHub' });
+    // The catalog read needs no session, so a visitor lands on listings served by
+    // the API rather than on a sign-in wall.
+    await screen.findByRole('heading', { name: 'Test accounts for review' });
     const html = container.innerHTML;
 
     expect(container.querySelectorAll('.dh-marketplace')).toHaveLength(1);
     expect(html).toContain('Dehqon');
+    expect(html).toContain('Tractor TTZ-80, 2023');
     expect(html).not.toContain('xr-mini-app-bottom-bar');
     expect(html).not.toContain('design v3');
     expect(html).not.toContain('route readiness');
@@ -260,7 +355,26 @@ describe('User app shell', () => {
     expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/');
   });
 
+  it('offers the demo credentials and keeps favorites in local storage without a session', async () => {
+    installSignedOutMarketplaceFetch();
+    render(<App />);
+    await screen.findByRole('heading', { name: 'Test accounts for review' });
+
+    expect(screen.getByText('dehqon@demo.dehqonhub.uz')).toBeTruthy();
+    expect(screen.getByText('DemoDehqon2026')).toBeTruthy();
+
+    // Favouriting without a session is a local write: no request, and the choice
+    // survives in local storage for the next visit.
+    fireEvent.click(screen.getAllByRole('button', { name: 'Add product to favorites' })[0]!);
+    await waitFor(() => {
+      expect(window.localStorage.getItem('dehqonhub.guest.favorites')).toContain(catalogListing.id);
+    });
+  });
+
   it('keeps marketplace loading and catalog failure states inside DehqonHub chrome', async () => {
+    // The catalog is the API's to serve, so a failed read is a real failure with
+    // nothing to show. It has to say so inside the chrome and keep the retry
+    // within reach, rather than leave a blank page behind the header.
     let resolveCatalog: ((response: Response) => void) | undefined;
     vi.stubGlobal(
       'fetch',
@@ -300,12 +414,19 @@ describe('User app shell', () => {
     );
 
     const failed = render(<App />);
-    expect(await screen.findByRole('heading', { level: 1, name: 'Catalog unavailable' })).toBeTruthy();
+    expect(
+      await screen.findByText(
+        'The catalog is unreachable right now. Try again in a moment, or sign in with a test account below.',
+      ),
+    ).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Retry' })).toBeTruthy();
     expect(failed.container.innerHTML).not.toContain('xr-mini-app-bottom-bar');
   });
 
-  it('returns through browser history for routes opened by the app', async () => {
+  // One chrome for the whole site: moving between the marketplace and the
+  // account pages keeps the same header, footer and mobile navigation, and the
+  // navigation stays client-side.
+  it('moves between the account pages and the marketplace inside one chrome', async () => {
     window.history.replaceState({}, '', '/auth');
     vi.stubGlobal(
       'fetch',
@@ -313,28 +434,16 @@ describe('User app shell', () => {
     );
     render(<App />);
     await awaitShell();
-    fireEvent.click(screen.getAllByRole('link', { name: 'Settings' })[0]!);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Settings' }));
     await screen.findByText('Preferences');
+    expect(window.location.pathname).toBe('/settings');
+    expect(await awaitShell()).toBeTruthy();
 
-    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    fireEvent.click(screen.getAllByRole('button', { name: 'Home' })[0]!);
 
-    expect(back).toHaveBeenCalledOnce();
-    back.mockRestore();
-  });
-
-  it('falls back to home when there is no in-app history to pop', async () => {
-    installSignedOutMarketplaceFetch();
-    window.history.pushState({}, '', '/settings');
-    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
-
-    render(<App />);
-    await awaitShell();
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-
-    expect(await screen.findByRole('heading', { name: 'Sign in to DehqonHub' })).toBeTruthy();
-    expect(back).not.toHaveBeenCalled();
-    back.mockRestore();
+    expect(await screen.findByRole('heading', { name: 'Test accounts for review' })).toBeTruthy();
+    expect(window.location.pathname).toBe('/');
   });
 
   it('hydrates an authenticated session when settings is loaded directly', async () => {
@@ -369,8 +478,6 @@ describe('User app shell', () => {
   it('keeps direct settings navigation silent but reports auth when a guest opens profile', async () => {
     window.history.pushState({}, '', '/settings');
     apiRuntimeEvents.reset();
-    const events: string[] = [];
-    const unsubscribe = apiRuntimeEvents.subscribe((event) => events.push(event.type));
     const fetchMock = vi.fn(() => Promise.resolve(jsonResponse({}, false, 401)));
     vi.stubGlobal('fetch', fetchMock);
 
@@ -380,33 +487,27 @@ describe('User app shell', () => {
     await waitFor(() => {
       expect(fetchMock).toHaveBeenCalled();
     });
+    // The chrome reads the marketplace on every route, and here every read is
+    // rejected. What must not follow is a navigation: this is the reported
+    // "throws you onto another page" flow, and the bridge clears the flag for
+    // those session-optional endpoints instead of redirecting.
     expect(window.location.pathname).toBe('/settings');
-    expect(events).not.toContain('auth-required');
     expect(apiRuntimeEvents.getState().authRequired).toBe(false);
 
-    fireEvent.click(screen.getAllByRole('link', { name: 'Profile' })[0]!);
+    fireEvent.click(screen.getByRole('button', { name: 'Profile' }));
 
+    // A protected page is the opposite case: its 401 has to send the guest to
+    // the sign-in form and remember where they were going.
     await waitFor(() => {
-      expect(events).toContain('auth-required');
+      expect(window.location.pathname).toBe('/auth');
     });
-    expect(window.location.pathname).toBe('/auth');
     expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/profile');
-    expect(fetchMock).toHaveBeenCalledTimes(2);
-    unsubscribe();
+    expect(screen.queryByText('Ready: unknown')).toBeNull();
   });
 
-  it('renders every preserved user route without scaffold diagnostics', async () => {
-    const routes = [
-      '/auth',
-      '/auth/discord/callback',
-      '/profile',
-      '/settings',
-      '/tma',
-      '/tma/auth',
-      '/telegram-mini-app',
-      '/link/telegram',
-      '/link/discord',
-    ];
+  it('renders every preserved site route inside the DehqonHub chrome', async () => {
+    installSignedOutMarketplaceFetch();
+    const routes = ['/auth', '/auth/discord/callback', '/profile', '/settings', '/link/telegram', '/link/discord'];
 
     for (const route of routes) {
       window.history.pushState({}, '', route);
@@ -416,10 +517,33 @@ describe('User app shell', () => {
       const html = container.innerHTML;
 
       expect(html).toContain('<main');
-      expect(html).toContain('xr-mini-app-bottom-bar');
+      // One chrome, and it is the marketplace's: header, footer and the single
+      // mobile navigation bar, with no second generic shell inside it.
+      expect(container.querySelectorAll('.dh-header')).toHaveLength(1);
+      expect(container.querySelectorAll('.dh-mobile-nav')).toHaveLength(1);
+      expect(html).not.toContain('xr-mini-app-bottom-bar');
       expect(html).not.toContain('data-design-marker');
       expect(html).not.toContain('route readiness');
       expect(html).not.toContain('nonblank smoke');
+      unmount();
+    }
+  });
+
+  // Telegram draws its own header and back control around the webview, so the
+  // mini-app routes are the one place the site chrome stays out of the way.
+  it('renders Telegram mini-app routes without the site chrome', async () => {
+    installSignedOutMarketplaceFetch();
+
+    for (const route of ['/tma', '/tma/auth', '/telegram-mini-app']) {
+      window.history.pushState({}, '', route);
+      const { container, unmount } = render(<App />);
+      // eslint-disable-next-line no-await-in-loop -- routes render sequentially; each is unmounted before the next.
+      const frame = await screen.findByText('Open this page inside Telegram to continue.');
+
+      expect(frame).toBeTruthy();
+      expect(container.querySelector('.dh-telegram-frame')).toBeTruthy();
+      expect(container.querySelector('.dh-header')).toBeNull();
+      expect(container.querySelector('.dh-mobile-nav')).toBeNull();
       unmount();
     }
   });
@@ -435,7 +559,9 @@ describe('User app shell', () => {
     });
 
     const { container } = render(<App />);
-    await screen.findByRole('heading', { name: 'Sign in to DehqonHub' });
+    // Guest favourites and carts read local storage; a throwing accessor must
+    // degrade to an empty list rather than take the page down.
+    await screen.findByRole('heading', { name: 'Test accounts for review' });
     expect(container.innerHTML).toContain('Dehqon');
   });
 
@@ -571,7 +697,7 @@ describe('User app shell', () => {
     await submitLogin();
     expect(await screen.findByText('Ready: profile-subject')).toBeTruthy();
 
-    chooseSelectOption('Language', 'ru');
+    chooseLanguageFromHeader('Language', 'Russian');
 
     await waitFor(() => {
       expect(
@@ -615,47 +741,61 @@ describe('User app shell', () => {
     });
   });
 
-  it('persists theme switches for authenticated users', async () => {
-    window.history.pushState({}, '', '/auth');
-    const fetchMock = setFetch(
-      jsonResponse({ data: { user: {} } }),
-      jsonResponse({ data: { user: { locale: 'en', theme: 'system' } } }),
-      jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
-      jsonResponse({ data: { theme: 'dark' } }),
-      jsonResponse({ data: { user: { locale: 'en', theme: 'dark' } } }),
-      jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
+  it('keeps the shell on the light palette without exposing a theme control', async () => {
+    // DehqonHub ships one light palette. The shell used to resolve `system`,
+    // which painted `data-theme="dark"` on dark-mode machines, and the theme
+    // select wrote to `/auth/me/preferences` — a 401 for a visitor without a
+    // session, which the runtime answered by navigating to the sign-in form.
+    window.history.pushState({}, '', '/settings');
+    setFetch(
+      jsonResponse({}, false, 401),
+      jsonResponse({}, false, 401),
+      jsonResponse({}, false, 401),
+      jsonResponse({}, false, 401),
     );
 
     render(<App />);
-    await submitLogin();
-    expect(await screen.findByText('Ready: profile-subject')).toBeTruthy();
+    await screen.findByText('Preferences');
 
-    chooseSelectOption('Theme', 'dark');
+    expect(document.documentElement.dataset['theme']).toBe('light');
+    expect(document.documentElement.dataset['themePreference']).toBe('light');
+    expect(screen.queryByRole('combobox', { name: 'Theme' })).toBeNull();
+  });
 
+  it('keeps an anonymous preference change on the current page', async () => {
+    window.history.pushState({}, '', '/settings');
+    const fetchMock = setFetch(
+      jsonResponse({}, false, 401),
+      jsonResponse({}, false, 401),
+      jsonResponse({}, false, 401),
+      jsonResponse({}, false, 401),
+      jsonResponse({}, false, 401),
+      jsonResponse({}, false, 401),
+    );
+
+    render(<App />);
+    await screen.findByText('Preferences');
+    chooseSelectOption('Language', 'ru');
+
+    // The rejected preference write must not move the visitor: this is the
+    // reported "randomly throws you onto another page" flow.
     await waitFor(() => {
       expect(
         findFetchInit(
           fetchMock,
           '/auth/me/preferences',
           {
-            'Accept-Language': 'en',
+            'Accept-Language': 'ru',
             'Content-Type': 'application/json',
           },
           'PATCH',
         ),
       ).toBeTruthy();
     });
-    await expect(
-      readFetchBody(
-        fetchMock,
-        '/auth/me/preferences',
-        {
-          'Accept-Language': 'en',
-          'Content-Type': 'application/json',
-        },
-        'PATCH',
-      ),
-    ).resolves.toBe(JSON.stringify({ theme: 'dark' }));
+    await waitFor(() => {
+      expect(window.location.pathname).toBe('/settings');
+    });
+    expect(window.location.search).toBe('');
   });
 
   it('logs in then loads the protected profile', async () => {
@@ -684,16 +824,10 @@ describe('User app shell', () => {
     window.history.pushState({}, '', '/auth');
     const { unmount } = render(<App />);
 
-    fireEvent.change(await screen.findByLabelText('Register display name'), {
-      target: { value: 'Registered User' },
+    await submitRegister({
+      displayName: 'Registered User',
+      email: 'new@example.com',
     });
-    fireEvent.change(screen.getByLabelText(/^(Register email|Email de registro)$/u), {
-      target: { value: 'new@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/^(Register password|Contraseña de registro)$/u), {
-      target: { value: 'password123' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /^(Register|Registrarse)$/u }));
     expect(await screen.findByText('Forbidden: Request failed with 409.')).toBeTruthy();
     unmount();
 
@@ -758,14 +892,9 @@ describe('User app shell', () => {
     );
     window.history.pushState({}, '', '/auth');
     render(<App />);
-    (await screen.findByLabelText(/^(Register display name|Отображаемое имя для регистрации)$/u)).remove();
-    fireEvent.change(screen.getByLabelText(/^(Register email|Email для регистрации)$/u), {
-      target: { value: 'registered@example.com' },
-    });
-    fireEvent.change(screen.getByLabelText(/^(Register password|Пароль для регистрации)$/u), {
-      target: { value: 'password123' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: /^(Register|Зарегистрироваться)$/u }));
+    // No display name: the request must still carry the address and password, so
+    // the optional field stays empty rather than being removed from the step.
+    await submitRegister({ email: 'registered@example.com' });
 
     expect(await screen.findByText('Готово: registered@example.com')).toBeTruthy();
   });

@@ -15,8 +15,6 @@
   "agritech.marketplace.catalog.noBranchRecordsDescription": "Для этого раздела сейчас нет записей каталога.",
   "agritech.marketplace.catalog.noResultsDescription": "Измените поиск или фильтры и попробуйте ещё раз.",
   "agritech.marketplace.catalog.resultCount": "Товаров: {{count}}",
-  "agritech.marketplace.catalog.unavailable": "Каталог недоступен",
-  "agritech.marketplace.catalog.unavailableDescription": "Не удалось загрузить каталог с сервера. Попробуйте ещё раз.",
   "agritech.marketplace.filter.from": "От",
   "agritech.marketplace.filter.open": "Открыть фильтры",
   "agritech.marketplace.filter.title": "Фильтры каталога",

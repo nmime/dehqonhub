@@ -18,18 +18,18 @@
 
 ## The problem
 
-Uzbekistan's agricultural input trade is 93% offline. Farmers buy fertilizer, seed, and pesticides through informal credit (*nasia*) from local dealers; produce aggregation runs through phone calls and middlemen. Existing platforms focus on state cotton/wheat clusters — smallholders in the Fergana Valley, horticulture, and private trade are underserved.
+Uzbekistan's agricultural input trade is 93% offline. Farmers buy fertilizer, seed, and pesticides through informal credit (_nasia_) from local dealers; produce aggregation runs through phone calls and middlemen. Existing platforms focus on state cotton/wheat clusters — smallholders in the Fergana Valley, horticulture, and private trade are underserved.
 
 ## What it does
 
-| Actor | Journey |
-| --- | --- |
-| **Farmer** | Verified profile → produce listings with grade and availability → source-attributed agronomy/weather advisories → order and delivery visibility |
-| **Supplier** | Organization application → approval → localized input catalog (UZ/RU/EN) → stock and price maintenance |
-| **Buyer** | Organization application → approval → produce discovery → regional price statistics → atomic quantity reservation → payment handoff (Click / Payme) |
-| **Field agent** | Assigned farmer list → field-visit observations with quality grading → delivery transitions with proof-of-delivery |
-| **Operator** | Partner and farmer approval → agent assignment → advisory publication → delivery scheduling → pilot lifecycle → analytics and integration readiness |
-| **Telegram user** | Linked-identity localized notifications and Mini App entry |
+| Actor             | Journey                                                                                                                                             |
+| ----------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Farmer**        | Verified profile → produce listings with grade and availability → source-attributed agronomy/weather advisories → order and delivery visibility     |
+| **Supplier**      | Organization application → approval → localized input catalog (UZ/RU/EN) → stock and price maintenance                                              |
+| **Buyer**         | Organization application → approval → produce discovery → regional price statistics → atomic quantity reservation → payment handoff (Click / Payme) |
+| **Field agent**   | Assigned farmer list → field-visit observations with quality grading → delivery transitions with proof-of-delivery                                  |
+| **Operator**      | Partner and farmer approval → agent assignment → advisory publication → delivery scheduling → pilot lifecycle → analytics and integration readiness |
+| **Telegram user** | Linked-identity localized notifications and Mini App entry                                                                                          |
 
 ## Architecture
 
@@ -73,7 +73,7 @@ pnpm run dev:fullstack          # API + user SPA + admin SPA
 pnpm run db:migrate             # apply AgriTech migrations
 ```
 
-Product routes (no extra namespace — this repo *is* the product):
+Product routes (no extra namespace — this repo _is_ the product):
 
 - User SPA: `/` home, `/catalog`, `/dashboard`, `/farmer/register`
 - User API: `/farmer`, `/catalog`, `/orders`, `/partners`, `/produce`, `/deliveries`, `/advisories`, `/payments`
@@ -92,15 +92,15 @@ pnpm run spec:validate                    # requirement traceability check
 
 Current state:
 
-| Suite | Tests | Notes |
-| --- | --- | --- |
-| agritech-main (use cases, notifications) | 13 | 100% coverage |
-| agritech-shared (domain policies) | 5 | 100% coverage |
-| agritech-admin (operator controller) | 16 | all 14 endpoints |
-| postgres-agritech (repositories, migrations) | 141 | reservation locking, payment state machine, idempotency |
-| frontend user-app | 79 | ~98% coverage |
-| frontend admin-app | 97 | incl. agritech operator page |
-| acceptance (Cucumber) | 8 scenarios | partner gating, oversell protection, proof-of-delivery |
+| Suite                                        | Tests       | Notes                                                   |
+| -------------------------------------------- | ----------- | ------------------------------------------------------- |
+| agritech-main (use cases, notifications)     | 13          | 100% coverage                                           |
+| agritech-shared (domain policies)            | 5           | 100% coverage                                           |
+| agritech-admin (operator controller)         | 16          | all 14 endpoints                                        |
+| postgres-agritech (repositories, migrations) | 141         | reservation locking, payment state machine, idempotency |
+| frontend user-app                            | 79          | ~98% coverage                                           |
+| frontend admin-app                           | 97          | incl. agritech operator page                            |
+| acceptance (Cucumber)                        | 8 scenarios | partner gating, oversell protection, proof-of-delivery  |
 
 ## Deployment
 
@@ -114,15 +114,15 @@ Also supported: Kubernetes/Helm (`.helm/`), single-server (`deploy/single-server
 
 ## Documentation
 
-| Doc | Contents |
-| --- | --- |
-| [docs/why-us.md](docs/why-us.md) / [docs/why-us.ru.md](docs/why-us.ru.md) | **Positioning report: why AgroUz, not UFarmer** (EN/RU) |
-| [docs/agritech-platform.md](docs/agritech-platform.md) | Canonical product and operator guide |
-| [openspec/specs/agritech-marketplace/spec.md](openspec/specs/agritech-marketplace/spec.md) | Requirements (source of truth) |
-| [docs/research/report_en.html](docs/research/report_en.html) / [report_ru.html](docs/research/report_ru.html) | Uzbekistan market research (EN/RU) |
-| [docs/production-deploy.md](docs/production-deploy.md) | Production deployment |
-| [docs/environment-variables.md](docs/environment-variables.md) | Configuration reference |
-| [AGRITECH.md](AGRITECH.md) | Pitch summary |
+| Doc                                                                                                           | Contents                                                |
+| ------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| [docs/why-us.md](docs/why-us.md) / [docs/why-us.ru.md](docs/why-us.ru.md)                                     | **Positioning report: why AgroUz, not UFarmer** (EN/RU) |
+| [docs/agritech-platform.md](docs/agritech-platform.md)                                                        | Canonical product and operator guide                    |
+| [openspec/specs/agritech-marketplace/spec.md](openspec/specs/agritech-marketplace/spec.md)                    | Requirements (source of truth)                          |
+| [docs/research/report_en.html](docs/research/report_en.html) / [report_ru.html](docs/research/report_ru.html) | Uzbekistan market research (EN/RU)                      |
+| [docs/production-deploy.md](docs/production-deploy.md)                                                        | Production deployment                                   |
+| [docs/environment-variables.md](docs/environment-variables.md)                                                | Configuration reference                                 |
+| [AGRITECH.md](AGRITECH.md)                                                                                    | Pitch summary                                           |
 
 ## License
 

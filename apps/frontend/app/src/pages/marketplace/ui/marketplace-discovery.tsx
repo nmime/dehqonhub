@@ -122,8 +122,8 @@ function Shelf({
   );
 }
 
-export function MarketplaceHome(props: Readonly<SharedDiscoveryProps>) {
-  const { locale, navigate, products, t, ...actions } = props;
+export function MarketplaceHome(props: Readonly<SharedDiscoveryProps & { banner?: ReactNode }>) {
+  const { banner, locale, navigate, products, t, ...actions } = props;
   return (
     <div className="dh-home">
       <section className="dh-hero">
@@ -161,6 +161,8 @@ export function MarketplaceHome(props: Readonly<SharedDiscoveryProps>) {
           <span className="dh-hero__furrow dh-hero__furrow--three" />
         </div>
       </section>
+
+      {banner}
 
       <section aria-label={t('agritech.marketplace.catalog')} className="dh-category-grid">
         {sectionCards.map(({ icon, section }) => (
@@ -314,11 +316,14 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
   const filterControls = (
     <div className="dh-filter-fields">
       <label>
-        <span>{t('agritech.marketplace.search')}</span>
+        {/* Short label: the header's search copy is a full sentence and wrapped
+            to three lines in the 260px sidebar. */}
+        <span>{t('agritech.marketplace.filter.query')}</span>
         <input
           onChange={(event) => {
             setFilters((value) => ({ ...value, query: event.target.value }));
           }}
+          placeholder={t('agritech.marketplace.filter.queryPlaceholder')}
           type="search"
           value={filters.query}
         />
@@ -425,7 +430,9 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
       </div>
       <details className="dh-mobile-filters">
         <summary>
-          <MarketplaceIcon name="search" />
+          {/* Sliders, not a magnifier: the header already owns search, and this
+              control opens the filter set. */}
+          <MarketplaceIcon name="tune" />
           {t('agritech.marketplace.filter.open')}
         </summary>
         {filterControls}
@@ -506,6 +513,7 @@ export function MarketplaceProductDetail({
     return (
       <MarketplaceEmpty
         actionLabel={t('agritech.marketplace.back')}
+        headingLevel={1}
         icon="produce"
         message={t('agritech.marketplace.product.notFoundDescription')}
         onAction={() => {
@@ -561,11 +569,7 @@ export function MarketplaceProductDetail({
         <section className="dh-product-detail__content">
           <div className="dh-product-detail__heading">
             <div>
-              <p className="dh-eyebrow">
-                {productSection === 'all'
-                  ? t('agritech.marketplace.catalog')
-                  : t(`agritech.marketplace.section.${productSection}`)}
-              </p>
+              <p className="dh-eyebrow">{t(`agritech.marketplace.section.${productSection}`)}</p>
               <h1>{name}</h1>
               <p>
                 {product.region} · {product.supplierName}

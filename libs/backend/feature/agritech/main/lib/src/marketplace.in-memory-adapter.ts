@@ -148,7 +148,13 @@ function recordContractConsent(
   contract.updatedAt = now;
 }
 
-class InMemoryMarketplaceRepository implements MarketplaceRepository {
+/**
+ * The deterministic store behind {@link MarketplaceInMemoryAdapter}. Exported so
+ * the parity spec can drive repository results directly: the adapter reaches the
+ * repository through MarketplaceDomainService, which maps every failure onto an
+ * exception and hides which contract clause rejected the command.
+ */
+export class InMemoryMarketplaceRepository implements MarketplaceRepository {
   private readonly verifications = new Map<string, Verification>();
   private readonly approvedOrganizations = new Set<string>();
   private readonly products = new Map<string, StoredProduct>();
@@ -159,14 +165,26 @@ class InMemoryMarketplaceRepository implements MarketplaceRepository {
   private sequence = 0;
 
   registerVerifiedActor(owner: AgriTechOwner, role: VerificationRole): Verification {
+    return this.registerActor(owner, role, 'verified');
+  }
+
+  /**
+   * A submission still awaiting a decision, which is the only state
+   * {@link reviewVerification} can act on.
+   */
+  registerPendingActor(owner: AgriTechOwner, role: VerificationRole): Verification {
+    return this.registerActor(owner, role, 'pending');
+  }
+
+  private registerActor(owner: AgriTechOwner, role: VerificationRole, status: 'pending' | 'verified'): Verification {
     const now = this.now();
     const verification: Verification = {
       id: this.nextId('verification'),
       tenantId: owner.tenantId,
       userId: owner.userId,
       role,
-      level: 'verified',
-      status: 'verified',
+      level: status === 'verified' ? 'verified' : 'basic',
+      status,
       oneIdLinked: false,
       documents: [],
       createdAt: now,
@@ -790,6 +808,11 @@ export class MarketplaceInMemoryAdapter {
     return this.repository.registerVerifiedActor(owner, role);
   }
 
+  /** A submission awaiting review, so {@link reviewVerification} has a decision to make. */
+  registerPendingActor(owner: AgriTechOwner, role: VerificationRole): Verification {
+    return this.repository.registerPendingActor(owner, role);
+  }
+
   reviewVerification(
     tenantId: string,
     verificationId: string,
@@ -798,6 +821,10 @@ export class MarketplaceInMemoryAdapter {
     reason?: VerificationRejectionReason,
   ): Promise<Verification> {
     return this.service.reviewVerification(tenantId, verificationId, decision, reviewedBy, reason);
+  }
+
+  getVerification(owner: AgriTechOwner): Promise<Verification | null> {
+    return this.service.getVerification(owner);
   }
 
   registerApprovedOrganization(owner: AgriTechOwner, kind: 'buyer' | 'supplier'): void {

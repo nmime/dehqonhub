@@ -41,7 +41,7 @@
   "user.nav.profile": "Profile",
   "user.nav.settings": "Settings",
   "user.settings.title": "Settings",
-  "user.settings.description": "Choose your language and appearance, or manage the accounts connected to your profile.",
+  "user.settings.description": "Choose your language, or manage the accounts connected to your profile.",
   "user.settings.preferences.title": "Preferences",
   "user.settings.preferences.description": "These choices follow your account when a profile session is available.",
   "user.settings.connections.title": "Connected accounts",

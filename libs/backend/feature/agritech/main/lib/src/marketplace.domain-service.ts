@@ -9,6 +9,8 @@ import {
   maxMonthlySamples,
   canBuyInMarketplace,
   canOfferInMarketplace,
+  demoProductReviews,
+  filterDemoBuyerRequests,
   isVerificationReviewReasonValid,
   type AgriTechOwner,
   type AiConsultationKind,
@@ -165,8 +167,14 @@ export class MarketplaceDomainService {
     return unwrap(await this.repository.addReview(owner, productId, rating, comment), 'review');
   }
 
+  /**
+   * Ratings for one product. A product nobody has reviewed yet falls back to the
+   * demo ratings, so the block reads as a working surface rather than an empty
+   * one; a product with even a single real review only ever shows real reviews.
+   */
   async listProductReviews(tenantId: string, productId: string) {
-    return this.repository.listProductReviews(tenantId, productId);
+    const reviews = await this.repository.listProductReviews(tenantId, productId);
+    return reviews.length > 0 ? reviews : demoProductReviews(productId);
   }
 
   async createRequest(
@@ -177,8 +185,20 @@ export class MarketplaceDomainService {
     return unwrap(await this.repository.createRequest(owner, input), 'request');
   }
 
-  listRequests(tenantId: string, status?: string) {
-    return this.repository.listRequests(tenantId, status);
+  /**
+   * The reverse-auction feed. A tenant where nobody has posted a request yet
+   * falls back to the demo feed: the filter chips and the offer flow need rows to
+   * act on, and an empty feed on a new tenant reads as a broken page. The
+   * unfiltered read decides it, so a status filter that matches nothing keeps
+   * showing an honest empty result.
+   */
+  async listRequests(tenantId: string, status?: string) {
+    const requests = await this.repository.listRequests(tenantId, status);
+    if (requests.length > 0) {
+      return requests;
+    }
+    const published = status ? await this.repository.listRequests(tenantId) : requests;
+    return published.length > 0 ? requests : filterDemoBuyerRequests(status);
   }
 
   listMyRequests(owner: AgriTechOwner) {

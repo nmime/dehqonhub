@@ -3,8 +3,8 @@
 **Positioning report for the PTA 2026 application. August 2026.**
 
 This document answers the question every judge, investor, and partner will
-ask: *the market already has UFarmer with 12,000 farmers, AI, BNPL, and state
-backing — why does Uzbekistan need another AgriTech platform, and why you?*
+ask: _the market already has UFarmer with 12,000 farmers, AI, BNPL, and state
+backing — why does Uzbekistan need another AgriTech platform, and why you?_
 
 The short answer: **we are not building another UFarmer.** UFarmer digitizes
 the 7% of agricultural trade that already works like a normal e-commerce
@@ -18,16 +18,16 @@ platform serves because their unit economics do not allow it.
 
 From `docs/research/report_en.html` (120+ sources, August 2026):
 
-| Fact | Value | Source class |
-| --- | --- | --- |
-| Total agricultural output (2024) | $34.2B (444.6 trln UZS) | stat.uz |
-| Addressable B2B input+output TAM | $4.8–6.2B | our synthesis |
-| Dehqan (smallholder) farms | **414,000** | stat.uz |
-| Share of output from dehqan + subsidiary farms | **63.1%** | stat.uz |
-| Average dehqan farm size | **< 0.2 ha** (homesteads: 508K ha across 5M+ households) | Wikipedia/stat.uz |
-| Agricultural lending rate (average) | **23.13%** | bank disclosures |
-| Players already in the ecosystem | 60+ | our mapping |
-| UFarmer registered farmers | 12,000 (≈2.9% of dehqan farms) | ufarmer.uz |
+| Fact                                           | Value                                                    | Source class      |
+| ---------------------------------------------- | -------------------------------------------------------- | ----------------- |
+| Total agricultural output (2024)               | $34.2B (444.6 trln UZS)                                  | stat.uz           |
+| Addressable B2B input+output TAM               | $4.8–6.2B                                                | our synthesis     |
+| Dehqan (smallholder) farms                     | **414,000**                                              | stat.uz           |
+| Share of output from dehqan + subsidiary farms | **63.1%**                                                | stat.uz           |
+| Average dehqan farm size                       | **< 0.2 ha** (homesteads: 508K ha across 5M+ households) | Wikipedia/stat.uz |
+| Agricultural lending rate (average)            | **23.13%**                                               | bank disclosures  |
+| Players already in the ecosystem               | 60+                                                      | our mapping       |
+| UFarmer registered farmers                     | 12,000 (≈2.9% of dehqan farms)                           | ufarmer.uz        |
 
 Three conclusions follow directly from these numbers:
 
@@ -39,13 +39,13 @@ Three conclusions follow directly from these numbers:
 
 2. **After years of operation and state visibility, the best private platform
    covers under 3% of farms.** This is not an execution failure by UFarmer —
-   it is evidence that the *marketplace model itself* does not fit this
+   it is evidence that the _marketplace model itself_ does not fit this
    segment. If it did, a platform with AI scanners, BNPL, ERP, and nationwide
    delivery would not be stuck at 12,000 farmers.
 
 3. **The binding constraint is credit, not discovery.** Average lending at
    23.13% annual is unaffordable for a household buying 2 bags of fertilizer.
-   The trade already runs on informal supplier credit (*nasia*): the local
+   The trade already runs on informal supplier credit (_nasia_): the local
    dealer knows the farmer, gives inputs now, collects after harvest. No
    digital platform participates in this flow — which is why the flow stays
    offline.
@@ -66,7 +66,7 @@ not fixable by effort:
   scoring, fixed schedules, penalties. The dehqan household's real credit
   relationship is personal and seasonal — pay-after-harvest, renegotiable in
   a bad year, enforced by reputation in the mahalla. Replacing that with a
-  fintech product fails not on technology but on *fit*.
+  fintech product fails not on technology but on _fit_.
 - **State-aligned focus.** Its growth path runs through government digital
   agriculture programs and the cotton-textile cluster system (134 clusters,
   ~88% of cotton area). That is where the money and the political cover are.
@@ -88,7 +88,7 @@ for a household selling 300 kg of tomatoes.
 
 **The pattern:** every incumbent optimizes for the formal, large, state-visible
 layer of agriculture. The informal majority is not underserved because nobody
-tried — it is underserved because *their cost structures cannot reach it.*
+tried — it is underserved because _their cost structures cannot reach it._
 
 ## 3. Why us — the specific reasons we can do what they cannot
 
@@ -107,17 +107,17 @@ relationship instead of demanding it be replaced:
    transfer.
 
 Nothing in this flow requires the farmer to change behavior on day one. The
-platform earns trust by *documenting* trust relationships that already exist,
+platform earns trust by _documenting_ trust relationships that already exist,
 then monetizes the resulting data and distribution.
 
 ### 3.2 Our cost structure fits the segment
 
-| Cost driver | Marketplace model | Our model |
-| --- | --- | --- |
-| Customer acquisition | Ads, onboarding funnels | Field agents recruited from the same mahallas — trust is inherited, not bought |
-| Transaction minimum | Needs large baskets to cover logistics | Agent batch-verifies dozens of deals per trip; verification cost per deal is marginal |
-| Credit risk | BNPL scorer with no data on this segment | 1–2 seasons of verified repayment history — data no bank or fintech has |
-| App adoption | App install, account, UX learning | Telegram bot — already on every farmer's phone, zero new behavior |
+| Cost driver          | Marketplace model                        | Our model                                                                             |
+| -------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------- |
+| Customer acquisition | Ads, onboarding funnels                  | Field agents recruited from the same mahallas — trust is inherited, not bought        |
+| Transaction minimum  | Needs large baskets to cover logistics   | Agent batch-verifies dozens of deals per trip; verification cost per deal is marginal |
+| Credit risk          | BNPL scorer with no data on this segment | 1–2 seasons of verified repayment history — data no bank or fintech has               |
+| App adoption         | App install, account, UX learning        | Telegram bot — already on every farmer's phone, zero new behavior                     |
 
 UFarmer cannot copy this without abandoning its marketplace margin structure;
 the state platform cannot copy it without becoming a commercial operator.
@@ -150,7 +150,7 @@ agents. This is not modesty; it is how the model is de-risked:
 - A district is small enough that agents physically cover every deal —
   verification quality is provable, not assumed.
 - One crop cycle produces a complete credit-history dataset: issuance,
-  verification, settlement, default rate. That dataset *is* the pitch for
+  verification, settlement, default rate. That dataset _is_ the pitch for
   phase 2 and for bank partnership.
 - DeHaat ran the same play: 3 districts in Bihar to prove unit economics,
   then 12 states. Investors and judges know this precedent.
@@ -172,13 +172,13 @@ agents. This is not modesty; it is how the model is de-risked:
 
 ## 4. The honest risks — and why they do not kill the thesis
 
-| Objection | Answer |
-| --- | --- |
-| "UFarmer will copy you if it works" | Copying requires a physical agent network and abandoning marketplace margins. If they do it anyway, the segment gets validated and we compete on 18 months of local data and supplier relationships — the actual moat. |
+| Objection                            | Answer                                                                                                                                                                                                                                   |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "UFarmer will copy you if it works"  | Copying requires a physical agent network and abandoning marketplace margins. If they do it anyway, the segment gets validated and we compete on 18 months of local data and supplier relationships — the actual moat.                   |
 | "Farmers won't repay recorded debts" | Selection works in our favor: agents enroll farmers through supplier referral, not open signup. The supplier already extends credit today — we make it visible, not riskier. Pilot default rate is a measured number, not an assumption. |
-| "1 district is not a business" | Correct — it is the proof of one. The business begins at replication: district N costs a fraction of district 1 because the playbook, agent training, and software already exist. |
-| "The state could crowd you out" | The state builds visibility infrastructure, not retail trade counterparties. The plausible state role is partner/regulator of last resort for the credit layer — which legitimates us. |
-| "You are students" | True, and it constrains scale — which is why the plan is 100 farmers and verified repayment data, not "capture the market." PTA's own criteria (working MVP, real users, engagement metrics) are exactly what this plan produces. |
+| "1 district is not a business"       | Correct — it is the proof of one. The business begins at replication: district N costs a fraction of district 1 because the playbook, agent training, and software already exist.                                                        |
+| "The state could crowd you out"      | The state builds visibility infrastructure, not retail trade counterparties. The plausible state role is partner/regulator of last resort for the credit layer — which legitimates us.                                                   |
+| "You are students"                   | True, and it constrains scale — which is why the plan is 100 farmers and verified repayment data, not "capture the market." PTA's own criteria (working MVP, real users, engagement metrics) are exactly what this plan produces.        |
 
 ## 5. What we ask the reader to conclude
 
@@ -190,7 +190,7 @@ agents. This is not modesty; it is how the model is de-risked:
    that already exists — with physical verification, Telegram distribution,
    and a cost structure a marketplace cannot match.
 3. The beachhead is intentionally tiny because the asset being built is
-   *verified repayment data at district scale* — the scarcest input in Uzbek
+   _verified repayment data at district scale_ — the scarcest input in Uzbek
    agricultural finance, and the thing banks, donors, and the state all need
    and none of them have.
 
@@ -199,7 +199,7 @@ farms legible to the formal economy — and gets paid for it.
 
 ---
 
-*Data sources: `docs/research/report_en.html`, `docs/research/report_ru.html`
+_Data sources: `docs/research/report_en.html`, `docs/research/report_ru.html`
 (stat.uz, president.uz, UzEx, bank disclosures, donor program documentation —
 full citations in the reports). Product evidence: repository test suites and
-`docs/agritech-platform.md`.*
+`docs/agritech-platform.md`._

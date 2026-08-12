@@ -43,7 +43,7 @@ interface CartProps {
   locale: Locale;
   navigate: MarketplaceNavigate;
   onCheckout: (cart: CartViewDto, deliveryTerms: DeliveryTerms) => void;
-  onUpdate: (cartId: string, productId: string, quantity: number) => void;
+  onUpdate: (cart: CartViewDto, productId: string, quantity: number) => void;
   pendingAction?: string;
   products: ProductViewDto[];
   t: MarketplaceTranslate;
@@ -174,7 +174,7 @@ export function MarketplaceCart({
                     aria-label={t('agritech.marketplace.cart.decrease')}
                     disabled={pendingAction === `cart-update:${item.productId}`}
                     onClick={() => {
-                      onUpdate(selected.id, item.productId, item.quantity - 1);
+                      onUpdate(selected, item.productId, item.quantity - 1);
                     }}
                     type="button"
                   >
@@ -185,7 +185,7 @@ export function MarketplaceCart({
                     aria-label={t('agritech.marketplace.cart.increase')}
                     disabled={pendingAction === `cart-update:${item.productId}`}
                     onClick={() => {
-                      onUpdate(selected.id, item.productId, item.quantity + 1);
+                      onUpdate(selected, item.productId, item.quantity + 1);
                     }}
                     type="button"
                   >
@@ -1127,6 +1127,7 @@ export function MarketplaceContract({
     return (
       <MarketplaceEmpty
         actionLabel={t('agritech.marketplace.back')}
+        headingLevel={1}
         icon="produce"
         message={t('agritech.marketplace.contract.notFoundDescription')}
         onAction={() => {
