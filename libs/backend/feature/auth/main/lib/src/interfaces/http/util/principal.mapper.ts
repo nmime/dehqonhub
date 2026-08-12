@@ -26,3 +26,28 @@ export function principalFromUserView(
 function normalizePrincipalLocale(locale: AuthSessionView['user']['locale']): Language | undefined {
   return locale && isLanguage(locale) ? locale : undefined;
 }
+
+/**
+ * The identity attributes a session actually stores. `roles` and `permissions`
+ * are excluded: the session keeps them empty and authorization replaces them
+ * from the RBAC tables on every protected request, so comparing them would
+ * report drift on every call.
+ */
+const sessionIdentityKeys = [
+  'subject',
+  'tenantId',
+  'email',
+  'displayName',
+  'avatarUrl',
+  'locale',
+  'theme',
+] as const satisfies readonly (keyof AuthenticatedPrincipal)[];
+
+/**
+ * Whether a principal rebuilt from the stored account differs from the session's
+ * sign-in snapshot. Callers use it to re-sync only a session that has drifted,
+ * which keeps a plain read from writing to the session store.
+ */
+export function hasSessionIdentityDrift(principal: AuthenticatedPrincipal, refreshed: AuthenticatedPrincipal): boolean {
+  return sessionIdentityKeys.some((key) => principal[key] !== refreshed[key]);
+}

@@ -1,5 +1,5 @@
 // @requirements REQ-AGRITECH-ORDER-003
-import { EntityManager, LockMode, type FilterQuery } from '@mikro-orm/core';
+import { EntityManager, LockMode, type FilterQuery, type FindOptions } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import type {
   AiConsultation,
@@ -179,6 +179,63 @@ const toContract = (e: ContractEntity): Contract => ({
   createdAt: e.createdAt,
   updatedAt: e.updatedAt,
 });
+
+/**
+ * The organizations behind a set of contract party ids, keyed by tenant, kind
+ * and owner.
+ *
+ * The contract document is the one screen where a reader has to know who they
+ * are signing with, and it only ever had the uuids. Only approved partners are
+ * resolved: signing already demands an approved organization on both sides, so
+ * every live party has one, and a pending organization's self-declared name is
+ * not something to print on a contract. Both sides of every contract are
+ * collected in one query, so listing them stays two queries rather than two per
+ * row.
+ */
+const partyNamesOf = async (em: EntityManager, contracts: readonly Contract[]): Promise<Map<string, string>> => {
+  const nameByParty = new Map<string, string>();
+  if (contracts.length === 0) {
+    return nameByParty;
+  }
+  const partners = await em.find(
+    AgriTechPartnerEntity,
+    {
+      tenantId: { $in: [...new Set(contracts.map((contract) => contract.tenantId))] },
+      ownerUserId: { $in: [...new Set(contracts.flatMap((c) => [c.buyerUserId, c.sellerUserId]))] },
+      kind: { $in: ['buyer', 'supplier'] },
+      status: 'approved',
+    },
+    { orderBy: { createdAt: 'ASC' } },
+  );
+  for (const partner of partners) {
+    // A user may run several organizations of one kind; the oldest approved one
+    // is the stable answer, so a later registration cannot rename past contracts.
+    const key = `${partner.tenantId}:${partner.kind}:${partner.ownerUserId}`;
+    if (!nameByParty.has(key)) {
+      nameByParty.set(key, partner.legalName);
+    }
+  }
+  return nameByParty;
+};
+
+/** Applies resolved names to one contract. A party without one stays unnamed. */
+const namedParties = (contract: Contract, names: Map<string, string>): Contract => ({
+  ...contract,
+  buyerName: names.get(`${contract.tenantId}:buyer:${contract.buyerUserId}`),
+  sellerName: names.get(`${contract.tenantId}:supplier:${contract.sellerUserId}`),
+});
+
+const withPartyNames = async (em: EntityManager, contracts: Contract[]): Promise<Contract[]> => {
+  const names = await partyNamesOf(em, contracts);
+  return contracts.map((contract) => namedParties(contract, names));
+};
+
+/** The single-contract form of {@link withPartyNames}, applied to a command result. */
+const withPartyNamesOf = async (
+  em: EntityManager,
+  result: OperationResult<Contract>,
+): Promise<OperationResult<Contract>> =>
+  result.status === 'ok' ? ok(namedParties(result.value, await partyNamesOf(em, [result.value]))) : result;
 
 const toAi = (e: AiConsultationEntity): AiConsultation => ({
   id: e.id,
@@ -1081,7 +1138,7 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
       entity.deliveryDays = input.deliveryDays ?? null;
       entity.updatedAt = new Date();
       await em.flush();
-      return ok(toContract(entity));
+      return withPartyNamesOf(em, ok(toContract(entity)));
     });
   }
 
@@ -1101,7 +1158,9 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
 
       const signing = contractSigningDecision(entity, owner.userId);
       if ('result' in signing) {
-        return signing.result;
+        // Signing an already-signed contract answers with it unchanged, and that
+        // reply feeds the same document, so it needs its parties named too.
+        return withPartyNamesOf(em, signing.result);
       }
       const { party } = signing;
 
@@ -1125,7 +1184,7 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
       }
       entity.updatedAt = now;
       await em.flush();
-      return ok(toContract(entity));
+      return withPartyNamesOf(em, ok(toContract(entity)));
     });
   }
 
@@ -1139,13 +1198,13 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
         },
         { orderBy: { updatedAt: 'DESC' } },
       )
-      .then((rows) => rows.map(toContract));
+      .then((rows) => withPartyNames(this.em, rows.map(toContract)));
   }
 
   listTenantContracts(tenantId: string): Promise<Contract[]> {
     return this.em
       .find(ContractEntity, { tenantId }, { orderBy: { updatedAt: 'DESC' } })
-      .then((rows) => rows.map(toContract));
+      .then((rows) => withPartyNames(this.em, rows.map(toContract)));
   }
 
   // ---- AI consultant ----
@@ -1154,13 +1213,7 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
     kind: AiConsultationKind,
     question: string,
   ): Promise<OperationResult<AiConsultation>> {
-    const search = kind === 'season_advice' ? undefined : catalogSearch(owner.tenantId, question);
-    const catalog = search
-      ? await this.em.find(ProductEntity, search, {
-          limit: 50,
-          orderBy: { priceUzs: 'ASC', id: 'ASC' },
-        })
-      : [];
+    const catalog = kind === 'season_advice' ? [] : await this.searchCatalogForQuestion(owner.tenantId, question);
     const answer = buildAiAnswer(kind, question, catalog);
     const entity = new AiConsultationEntity();
     entity.id = randomUUID();
@@ -1173,6 +1226,25 @@ export class PostgresMarketplaceRepository implements MarketplaceRepository {
     this.em.persist(entity);
     await this.em.flush();
     return ok(toAi(entity));
+  }
+
+  /**
+   * People ask the consultant in sentences — "menga karbamid kerak, narxi
+   * qancha?" — and requiring every word of one to appear in a listing answered
+   * "nothing matches" for anything but a bare product name. So the strict search
+   * runs first, and only when it finds nothing does the question widen to any of
+   * its terms: a precise question keeps its precise answer, and a conversational
+   * one still reaches the catalog.
+   */
+  private async searchCatalogForQuestion(tenantId: string, question: string): Promise<ProductEntity[]> {
+    const tokens = catalogSearchTokens(question);
+    if (tokens.length === 0) {
+      return [];
+    }
+    const matches = await this.em.find(ProductEntity, catalogSearch(tenantId, tokens, 'all'), catalogSearchOptions);
+    return matches.length > 0
+      ? matches
+      : this.em.find(ProductEntity, catalogSearch(tenantId, tokens, 'any'), catalogSearchOptions);
   }
 
   listAiConsultations(owner: AgriTechOwner): Promise<AiConsultation[]> {
@@ -1235,8 +1307,10 @@ const ignoredCatalogSearchTerms = new Set([
   'цена',
 ]);
 
-function catalogSearch(tenantId: string, question: string): FilterQuery<ProductEntity> | undefined {
-  const tokens = [
+const catalogSearchOptions: FindOptions<ProductEntity> = { limit: 50, orderBy: { priceUzs: 'ASC', id: 'ASC' } };
+
+function catalogSearchTokens(question: string): string[] {
+  return [
     ...new Set(
       question
         .toLocaleLowerCase()
@@ -1244,21 +1318,21 @@ function catalogSearch(tenantId: string, question: string): FilterQuery<ProductE
         .filter((token) => token.length >= 3 && !ignoredCatalogSearchTerms.has(token)),
     ),
   ].slice(0, 6);
-  if (tokens.length === 0) {
-    return undefined;
-  }
+}
 
+function catalogSearch(tenantId: string, tokens: string[], match: 'all' | 'any'): FilterQuery<ProductEntity> {
+  const perToken = tokens.map((token): FilterQuery<ProductEntity> => ({
+    $or: [
+      { name: { $ilike: `%${token}%` } },
+      { nameRu: { $ilike: `%${token}%` } },
+      { nameUz: { $ilike: `%${token}%` } },
+      { description: { $ilike: `%${token}%` } },
+      { category: { $ilike: `%${token}%` } },
+    ],
+  }));
   return {
     tenantId,
     status: 'active',
-    $and: tokens.map((token): FilterQuery<ProductEntity> => ({
-      $or: [
-        { name: { $ilike: `%${token}%` } },
-        { nameRu: { $ilike: `%${token}%` } },
-        { nameUz: { $ilike: `%${token}%` } },
-        { description: { $ilike: `%${token}%` } },
-        { category: { $ilike: `%${token}%` } },
-      ],
-    })),
+    ...(match === 'all' ? { $and: perToken } : { $or: perToken }),
   };
 }

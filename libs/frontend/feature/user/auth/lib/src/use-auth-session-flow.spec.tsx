@@ -135,15 +135,20 @@ describe('useAuthSessionFlow', () => {
     );
   });
 
-  it('applies a diverging server locale and skips the profile query until locales match', async () => {
+  // The session payload and the profile payload can disagree about the locale —
+  // a preference saved on another device leaves one of them stale — and holding
+  // the profile query until they matched meant the card never left its spinner.
+  it('applies a diverging server locale and still resolves the profile', async () => {
     authApiMock.authControllerMe.mockResolvedValue(ok({ user: { locale: 'ru' } }));
+    profileControllerMe.mockResolvedValue(ok({ profile: { email: 'a@example.com', locale: 'en' } }));
 
-    const { applyUserLocale } = render({ locale: 'en' });
+    const { result, applyUserLocale } = render({ locale: 'en' });
 
     await waitFor(() => {
-      expect(applyUserLocale).toHaveBeenCalledWith('ru');
+      expect(result.current.profileState.status).toBe('ready');
     });
-    expect(profileControllerMe).not.toHaveBeenCalled();
+    expect(applyUserLocale).toHaveBeenCalledWith('ru');
+    expect(profileControllerMe).toHaveBeenCalled();
   });
 
   it('logs in, applies returned preferences, and navigates to a safe return url', async () => {
@@ -198,6 +203,34 @@ describe('useAuthSessionFlow', () => {
       expect(result.current.isLoginPending).toBe(false);
     });
     expect(navigate).not.toHaveBeenCalled();
+  });
+
+  // Registering from the entry point itself carries no return url, and leaving the
+  // visitor on the form they just submitted reads as a failed registration even
+  // though the account exists. An unsafe return url falls back here too.
+  it('lands on the signed-in url when the return url is absent or unsafe', async () => {
+    authApiMock.authControllerMe.mockResolvedValue(fail());
+    authApiMock.authControllerRegister.mockResolvedValue(ok({ user: { locale: 'en' } }));
+
+    const registerFrom = async (returnUrl: string | null) => {
+      const { result, navigate } = render({ returnUrl, signedInUrl: '/account' });
+
+      await waitFor(() => {
+        expect(result.current.profileState.status).toBe('unauthenticated');
+      });
+      act(() => {
+        result.current.submitAuth(
+          AuthMode.Register,
+          submitEvent({ displayName: 'Ada', email: 'a@example.com', password: 'secret123' }),
+        );
+      });
+
+      await waitFor(() => {
+        expect(navigate).toHaveBeenCalledWith('/account', { replace: true });
+      });
+    };
+
+    await Promise.all([registerFrom(null), registerFrom('//evil.example.com')]);
   });
 
   it('surfaces a forbidden state and register-pending flag when registration fails', async () => {

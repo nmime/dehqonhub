@@ -1,6 +1,8 @@
 // @requirements REQ-AUTH-ACCESS-001
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
+import { DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
 import { getBetterAuthConfig } from './better-auth';
+import { multiTenantPlugin } from './plugins/multi-tenant';
 
 describe('getBetterAuthConfig', () => {
   const originalEnv = process.env;
@@ -123,6 +125,24 @@ describe('getBetterAuthConfig', () => {
       discordRedirectUri: 'http://localhost:3003/callback/discord',
     });
     expect(auth).toBeDefined();
+  });
+});
+
+describe('multiTenantPlugin', () => {
+  it('defaults every user to the shared tenant and refuses a client-chosen one', () => {
+    expect(multiTenantPlugin.schema?.user?.fields.tenantId).toMatchObject({
+      type: 'string',
+      defaultValue: DefaultAuthTenantId,
+      input: false,
+    });
+  });
+
+  // An after hook that returns a value replaces the response, and returning the
+  // middleware context is what dropped the authorization URL that
+  // `/sign-in/oauth2` answers with — the Telegram hand-off reached the browser
+  // empty. The tenant default needs no hook, so registering one is the bug.
+  it('registers no hook that could replace an endpoint response', () => {
+    expect(multiTenantPlugin.hooks).toBeUndefined();
   });
 });
 

@@ -270,6 +270,9 @@ export class ContractViewDto {
   @ApiProperty() tenantId!: string;
   @ApiProperty() buyerUserId!: string;
   @ApiProperty() sellerUserId!: string;
+  /** The parties' organizations, absent while a contract outlives one of them. */
+  @ApiPropertyOptional({ maxLength: 200 }) buyerName?: string;
+  @ApiPropertyOptional({ maxLength: 200 }) sellerName?: string;
   @ApiPropertyOptional({ enum: ['cart_checkout', 'offer_selection'] }) sourceType?: string;
   @ApiPropertyOptional() sourceId?: string;
   @ApiProperty() subject!: string;

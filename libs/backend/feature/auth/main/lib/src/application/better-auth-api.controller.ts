@@ -141,6 +141,11 @@ export class BetterAuthApiController {
   /**
    * Unwrap Better-Auth's internal context wrapper into a clean response body
    * with only user and session metadata. Credential material is cookie-only.
+   *
+   * No endpoint should hand us a context wrapper — a plugin after hook that
+   * returned one is what used to produce them. This stays as the guard that
+   * keeps such a wrapper, with the request body and configured secret it
+   * carries, from reaching a client if one ever appears again.
    */
   private unwrapContext(ctx: Record<string, unknown>): Record<string, unknown> {
     const context = (ctx.context ?? {}) as Record<string, unknown>;

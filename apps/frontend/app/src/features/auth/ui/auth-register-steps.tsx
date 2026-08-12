@@ -24,6 +24,7 @@ const stepLabels: Record<RegisterStep, TranslationKey> = {
 
 const readField = (form: FormData, name: string): string => {
   const value = form.get(name);
+  /* v8 ignore next -- FormData yields a File only for a file input, and this flow has none; the fallback keeps the helper total. */
   return typeof value === 'string' ? value : '';
 };
 

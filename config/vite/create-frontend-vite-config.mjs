@@ -8,6 +8,7 @@ import {
   applyDefaultFrontendBuildApiBaseUrlMode,
   assertRequiredFrontendBuildApiBaseUrls,
 } from '../../libs/frontend/api-support/lib/src/frontend-env';
+import { createFrontendDevProxy } from '../../libs/frontend/api-support/lib/src/frontend-dev-proxy';
 import { workspaceTsconfigAliases } from './workspace-tsconfig-aliases.mjs';
 
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
@@ -37,13 +38,19 @@ export function createFrontendViteConfig({ appName, port }) {
         tsconfigPaths: true,
         alias: workspaceTsconfigAliases(),
       },
+      // The API base URL is same-origin by design, so both the dev server and the
+      // preview server have to route the API prefixes the way a deployment's
+      // reverse proxy does. Without this every API path resolves to the SPA
+      // fallback and the app boots against a wall of 404s.
       server: {
         port,
         host: 'localhost',
+        proxy: createFrontendDevProxy(process.env),
       },
       preview: {
         port,
         host: 'localhost',
+        proxy: createFrontendDevProxy(process.env),
       },
       plugins: [
         tailwindcss(),

@@ -73,7 +73,15 @@
   box-sizing: border-box;
 }
 
-.dh-marketplace :where(button, input, select, textarea) {
+/* A reset for native controls, so it must lose to every component class that
+   paints one. Written as `.dh-marketplace :where(...)` it still carried the
+   shell class's specificity, tied with `.xr-button--primary`, and won on source
+   order — which painted the label of every primary button, the register and
+   checkout CTAs included, in the inherited body grey on a green fill. Wrapping
+   the shell class in `:where()` too drops the whole rule to zero specificity: it
+   still overrides the user-agent defaults a bare control would fall back to,
+   and any component style now wins. */
+:where(.dh-marketplace) :where(button, input, select, textarea) {
   color: inherit;
   font: inherit;
 }
@@ -2572,8 +2580,12 @@
     font-size: clamp(2.1rem, 11vw, 3.1rem);
   }
 
+  /* Rows of actions, stacked so each action takes the full narrow width. A
+     button is itself a flex row of label and icon, so listing
+     `.dh-hero__actions .dh-button` here turned the hero CTA into a column too:
+     the label sat on one line with its arrow dropped underneath it. Full width
+     is what the buttons actually needed, and the rule below already gives it. */
   .dh-hero__actions,
-  .dh-hero__actions .dh-button,
   .dh-buy-row,
   .dh-form__actions,
   .dh-dialog__actions,

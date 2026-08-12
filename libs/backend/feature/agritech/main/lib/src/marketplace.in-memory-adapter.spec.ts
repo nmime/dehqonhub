@@ -381,6 +381,32 @@ describe('in-memory marketplace checkout', () => {
     ]);
   });
 
+  // A contract names the organizations that cleared each party to trade, because
+  // the document used to show a reader the two party uuids and nothing else.
+  it('names the parties from the organizations that cleared them', async () => {
+    const repository = createMarket();
+    repository.registerApprovedOrganization(buyer, 'buyer', 'Xaridor Demo Savdo');
+    repository.registerApprovedOrganization(seller, 'supplier', 'Dehqon Bozori Kooperativi');
+
+    await checkout(repository, 1);
+    const [contract] = await repository.listContracts(buyer);
+
+    expect(contract).toMatchObject({
+      buyerName: 'Xaridor Demo Savdo',
+      sellerName: 'Dehqon Bozori Kooperativi',
+    });
+  });
+
+  it('leaves the parties unnamed when their organizations carry no legal name', async () => {
+    const repository = createMarket();
+
+    await checkout(repository, 1);
+    const [contract] = await repository.listContracts(buyer);
+
+    expect(contract?.buyerName).toBeUndefined();
+    expect(contract?.sellerName).toBeUndefined();
+  });
+
   it('prices collection at nothing and needs no quote', async () => {
     const repository = createMarket();
     const order = await checkout(repository, 1);

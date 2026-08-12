@@ -114,12 +114,13 @@ describe("dev fullstack selection", () => {
         validateFixtureClosure,
       );
 
-      assert.equal(calls.length, 4);
+      assert.equal(calls.length, 5);
       assert.deepEqual(calls[0]?.args.slice(-3), ["up", "-d", "mongodb"]);
       assert.deepEqual(calls[1]?.args.slice(-3), ["run", "--rm", "mongodb-init"]);
       assert.deepEqual(calls[2]?.args, ["packages/tooling/bin/repo-tooling.mjs", "db", "migrate"]);
       assert.equal(calls[2]?.environment?.DATABASE_ENGINE, "mongodb");
-      assert.equal(calls[3]?.command, "pnpm");
+      assert.deepEqual(calls[3]?.args, ["packages/tooling/bin/repo-tooling.mjs", "db", "seed"]);
+      assert.equal(calls[4]?.command, "pnpm");
     } finally {
       rmSync(root, { recursive: true, force: true });
     }
@@ -153,10 +154,58 @@ describe("dev fullstack selection", () => {
         validateFixtureClosure,
       );
 
-      assert.equal(calls.length, 3);
+      assert.equal(calls.length, 4);
       assert.deepEqual(calls[0]?.args.slice(-4), ["up", "-d", "--wait", "postgres"]);
       assert.equal(calls[1]?.environment?.DATABASE_ENGINE, "postgres");
-      assert.equal(calls[2]?.command, "pnpm");
+      assert.deepEqual(calls[1]?.args, ["packages/tooling/bin/repo-tooling.mjs", "db", "migrate"]);
+      // The published review logins only exist once the seed has run, so the dev
+      // bring-up owns it the same way it owns migrations.
+      assert.deepEqual(calls[2]?.args, ["packages/tooling/bin/repo-tooling.mjs", "db", "seed"]);
+      assert.equal(calls[3]?.command, "pnpm");
+      // Compose interpolates the shared build anchor for every service in the file,
+      // so the datastore `up` fails outright without the closure context.
+      assert.equal(calls[0]?.environment?.NRB_CLOSURE_CONTEXT, join(root, ".nrb", "closure"));
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("still serves the apps when the development seed refuses to run", async () => {
+    const root = mkdtempSync(join(tmpdir(), "nrb-fullstack-"));
+    const calls: string[] = [];
+    try {
+      mkdirSync(join(root, ".nrb"));
+      writeClosure(root, ["user-app-api"], "postgres");
+      writeFileSync(
+        join(root, ".nrb", "capabilities.env"),
+        [
+          "NRB_CAPABILITIES=postgres",
+          "COMPOSE_PROFILES=postgres,user-app-api",
+          "DATABASE_ENGINE=postgres",
+          "AUTH_PERSISTENCE=postgres",
+          "DATABASE_URL=postgres://postgres:postgres@localhost:5432/nest_react_boilerplate",
+          "CONTAINER_DATABASE_URL=postgres://postgres:postgres@postgres:5432/nest_react_boilerplate",
+          "",
+        ].join("\n"),
+      );
+
+      await runFullstack(
+        root,
+        async (command, args) => {
+          calls.push([command, ...args].join(" "));
+          if (args.includes("seed")) {
+            throw new Error("Refusing to seed a non-local database.");
+          }
+        },
+        {},
+        validateFixtureClosure,
+      );
+
+      assert.equal(calls.length, 4);
+      assert.ok(
+        calls[3]?.startsWith("pnpm exec nx run-many"),
+        `a refused seed must not stop the dev servers, got: ${calls[3]}`,
+      );
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

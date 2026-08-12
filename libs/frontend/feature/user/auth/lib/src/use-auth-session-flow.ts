@@ -29,6 +29,13 @@ export interface AuthSessionFlowInput {
   messages: AuthSessionFlowMessages;
   navigate?: (to: string, options?: { replace?: boolean }) => void;
   returnUrl?: string | null;
+  /**
+   * Where to land after a successful sign-in when the visitor did not arrive from
+   * a particular page. The caller supplies it because the destination is a route
+   * of whichever shell hosts this flow — the web route tree here, an
+   * `expo-router` screen on native.
+   */
+  signedInUrl?: string;
 }
 
 export interface AuthSessionFlow {
@@ -45,20 +52,28 @@ export function useAuthSessionFlow({
   messages,
   navigate,
   returnUrl,
+  signedInUrl,
 }: AuthSessionFlowInput): AuthSessionFlow {
   const queryClient = useQueryClient();
   const authStore = useAuthShellStore();
   const authClient = useAuthApiClient();
   const userClient = useUserApiClient();
   const safeReturnUrl = returnUrl?.startsWith('/') && !returnUrl.startsWith('//') ? returnUrl : null;
-  const { authLocale, authMeQuery } = useAuthSessionProbe({
+  const { authMeQuery } = useAuthSessionProbe({
     applyUserLocale,
     applyUserTheme,
     locale,
   });
 
+  // Gating this on `authLocale === locale` used to hold the request back until
+  // the session's locale had been applied. It also deadlocked: when the session
+  // payload and the profile payload disagreed about the locale — a preference
+  // saved on another device leaves one of them stale — the two took turns
+  // applying their own value, the equality never held, and the profile card sat
+  // on its spinner forever. The locale is part of the query key, so a later
+  // locale still refetches under its own key; the gate only bought a deadlock.
   const profileQuery = useQuery({
-    enabled: Boolean(authMeQuery.data) && !authMeQuery.isLoading && (!authLocale || authLocale === locale),
+    enabled: Boolean(authMeQuery.data) && !authMeQuery.isLoading,
     queryFn: () => fetchUserProfile(userClient.api, userClient.requestOptions),
     queryKey: [...profileQueryKey(), locale],
     retry: false,
@@ -93,8 +108,15 @@ export function useAuthSessionFlow({
       }
       void queryClient.invalidateQueries({ queryKey: authMeQueryKey() });
       void queryClient.invalidateQueries({ queryKey: profileQueryKey() });
-      if (safeReturnUrl) {
-        navigate?.(safeReturnUrl, { replace: true });
+      // Leaving the form is part of succeeding. Without the `signedInUrl` half
+      // this only moved visitors who had arrived from somewhere specific; anyone
+      // who opened the entry point directly stayed on the very form they had just
+      // submitted — the stepped flow sat on "step 3 of 3" with the account
+      // already created, which reads as a failure. `replace` keeps the form out
+      // of the history so Back does not return to a filled-in wizard.
+      const destination = safeReturnUrl ?? signedInUrl;
+      if (destination) {
+        navigate?.(destination, { replace: true });
       }
     },
     retry: false,
@@ -116,19 +138,17 @@ export function useAuthSessionFlow({
     }
 
     return getProfileState(
-      authMeQuery.isLoading || profileQuery.isLoading || Boolean(authLocale && authLocale !== locale),
+      authMeQuery.isLoading || profileQuery.isLoading,
       profileQuery.data,
       messages.profileRequestFailed,
       messages.profileUnknown,
       profileQuery.error,
     );
   }, [
-    authLocale,
     authMeQuery.isLoading,
     authMeQuery.data,
     authMutation.error,
     authMutation.isError,
-    locale,
     messages,
     profileQuery.data,
     profileQuery.error,

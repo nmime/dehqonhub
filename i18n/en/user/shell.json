@@ -36,6 +36,8 @@
   "user.state.forbidden": "Forbidden: {{reason}}",
   "user.loadingProfile": "Loading profile...",
   "user.profile.unknown": "unknown",
+  "user.profile.subject": "Account identifier",
+  "user.profile.guestTitle": "Not signed in",
   "user.nav.home": "Home",
   "user.nav.auth": "Auth",
   "user.nav.profile": "Profile",

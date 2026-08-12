@@ -5,6 +5,7 @@
   "agritech.marketplace.contract.sign": "Review and consent",
   "agritech.marketplace.contract.factoring": "Financing unavailable",
   "agritech.marketplace.contract.buyer": "Buyer",
+  "agritech.marketplace.contract.partyUnnamed": "Organization not published",
   "agritech.marketplace.contract.seller": "Seller",
   "agritech.marketplace.contract.delivery": "Delivery terms",
   "agritech.marketplace.contract.deliveryPrice": "Separate delivery charge",

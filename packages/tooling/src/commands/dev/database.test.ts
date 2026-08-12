@@ -88,6 +88,12 @@ describe('dev database', () => {
       assert.deepEqual(calls[0]?.args.slice(-3), ['up', '-d', 'postgres']);
       assert.equal(calls[0]?.args.includes('mongodb'), false);
       assert.equal(calls[0]?.args.includes('mongodb-init'), false);
+      // Compose interpolates the shared build anchor for every service in the file,
+      // so the datastore-only `up` fails outright without the closure context.
+      assert.equal(
+        (calls[0]?.options?.env as NodeJS.ProcessEnv | undefined)?.NRB_CLOSURE_CONTEXT,
+        join(root, '.nrb', 'closure'),
+      );
     } finally {
       rmSync(root, { recursive: true, force: true });
     }

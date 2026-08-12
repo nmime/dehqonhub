@@ -1207,6 +1207,8 @@ export interface components {
       tenantId: string;
       buyerUserId: string;
       sellerUserId: string;
+      buyerName?: string;
+      sellerName?: string;
       /** @enum {string} */
       sourceType?: 'cart_checkout' | 'offer_selection';
       sourceId?: string;

@@ -1040,6 +1040,87 @@ describe('PostgresMarketplaceRepository — contracts, reviews, ai', () => {
     expect(em.flush).not.toHaveBeenCalled();
   });
 
+  // The contract document has to name who is signing with whom; it used to print
+  // the two party uuids, which told a reader nothing.
+  it('names both parties from their oldest approved organization', async () => {
+    const contract = {
+      id: 'c-named',
+      tenantId: 'tenant-1',
+      buyerUserId: 'user-1',
+      sellerUserId: 'seller-1',
+      sourceType: 'offer_selection',
+      sourceId: 'offer-1',
+      subject: 'Named contract',
+      amountUzs: 1_000_000,
+      lines: [],
+      deliveryTerms: 'pickup',
+      deliveryPriceUzs: 0,
+      deliveryNote: null,
+      deliveryDays: null,
+      factoringEnabled: false,
+      status: 'active',
+      buyerSignedAt: now,
+      sellerSignedAt: now,
+      signedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    em.findOne.mockResolvedValue(contract);
+    em.find.mockImplementation(async (entity: unknown) =>
+      String(entity).includes('AgriTechPartner')
+        ? [
+            partnerEntity({ id: 'p-buyer-1', kind: 'buyer', legalName: 'Xaridor Demo Savdo', ownerUserId: 'user-1' }),
+            partnerEntity({ id: 'p-buyer-2', kind: 'buyer', legalName: 'A later registration', ownerUserId: 'user-1' }),
+            partnerEntity({ id: 'p-seller-1', legalName: 'Dehqon Bozori Kooperativi', ownerUserId: 'seller-1' }),
+            partnerEntity({ id: 'p-other', kind: 'buyer', legalName: 'Someone else', ownerUserId: 'stranger' }),
+          ]
+        : [],
+    );
+
+    await expect(repo.signContract(owner, 'c-named')).resolves.toMatchObject({
+      status: 'ok',
+      value: { buyerName: 'Xaridor Demo Savdo', sellerName: 'Dehqon Bozori Kooperativi' },
+    });
+    await expect(repo.listContracts(owner)).resolves.toEqual([]);
+    await expect(repo.listTenantContracts('tenant-1')).resolves.toEqual([]);
+  });
+
+  it('leaves a party unnamed when no approved organization answers for it', async () => {
+    const contract = {
+      id: 'c-unnamed',
+      tenantId: 'tenant-1',
+      buyerUserId: 'user-1',
+      sellerUserId: 'seller-1',
+      sourceType: 'offer_selection',
+      sourceId: 'offer-1',
+      subject: 'Unnamed contract',
+      amountUzs: 1_000_000,
+      lines: [],
+      deliveryTerms: 'pickup',
+      deliveryPriceUzs: 0,
+      deliveryNote: null,
+      deliveryDays: null,
+      factoringEnabled: false,
+      status: 'active',
+      buyerSignedAt: now,
+      sellerSignedAt: now,
+      signedAt: now,
+      createdAt: now,
+      updatedAt: now,
+    };
+    em.findOne.mockResolvedValue(contract);
+    em.find.mockImplementation(async (entity: unknown) =>
+      String(entity).includes('AgriTechPartner')
+        ? [partnerEntity({ legalName: 'Only the seller', ownerUserId: 'seller-1' })]
+        : [],
+    );
+
+    const result = await repo.signContract(owner, 'c-unnamed');
+
+    expect(result).toMatchObject({ status: 'ok', value: { sellerName: 'Only the seller' } });
+    expect(result.status === 'ok' && result.value.buyerName).toBeUndefined();
+  });
+
   it('commits frozen cart quantities exactly when the second party activates the contract', async () => {
     const product = productEntity({ stockQuantity: 3 });
     const contract = {
@@ -1229,6 +1310,46 @@ describe('PostgresMarketplaceRepository — contracts, reviews, ai', () => {
       }),
       { limit: 50, orderBy: { id: 'ASC', priceUzs: 'ASC' } },
     );
+  });
+
+  // Questions arrive as sentences, and requiring every word of one to appear in a
+  // listing answered "nothing matches" for anything but a bare product name.
+  it('widens a conversational question to any of its terms when every term together matches nothing', async () => {
+    const match = productEntity({ id: 'p-9' });
+    em.find.mockResolvedValueOnce([]).mockResolvedValueOnce([match]);
+
+    await expect(repo.askAi(owner, 'recommendation', 'Menga karbamid kerak, qancha turadi?')).resolves.toMatchObject({
+      status: 'ok',
+      value: { answer: 'catalog_match', productIds: ['p-9'] },
+    });
+    expect(em.find).toHaveBeenNthCalledWith(
+      1,
+      expect.anything(),
+      expect.objectContaining({ $and: expect.any(Array) }),
+      { limit: 50, orderBy: { id: 'ASC', priceUzs: 'ASC' } },
+    );
+    expect(em.find).toHaveBeenNthCalledWith(
+      2,
+      expect.anything(),
+      expect.objectContaining({
+        tenantId: 'tenant-1',
+        status: 'active',
+        $or: expect.arrayContaining([
+          expect.objectContaining({
+            $or: expect.arrayContaining([expect.objectContaining({ name: { $ilike: '%karbamid%' } })]),
+          }),
+        ]),
+      }),
+      { limit: 50, orderBy: { id: 'ASC', priceUzs: 'ASC' } },
+    );
+  });
+
+  it('asks the catalog nothing when a question carries no searchable term', async () => {
+    await expect(repo.askAi(owner, 'generic', 'Ok, da?')).resolves.toMatchObject({
+      status: 'ok',
+      value: { answer: 'no_catalog_match', productIds: [] },
+    });
+    expect(em.find).not.toHaveBeenCalled();
   });
 
   it('fails closed without persisting unsupported agronomy advice', async () => {

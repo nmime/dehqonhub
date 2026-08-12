@@ -106,6 +106,15 @@ export interface Contract {
   tenantId: string;
   buyerUserId: string;
   sellerUserId: string;
+  /**
+   * The organizations behind the two ids, so a contract can name its parties.
+   * The document used to print the raw party uuids, which told a reader nothing
+   * about who they were about to sign with. Optional because a party's
+   * organization is what carries the name, and a contract outlives it: a party
+   * whose organization was removed still has to render.
+   */
+  buyerName?: string;
+  sellerName?: string;
   sourceType?: ContractSourceType;
   sourceId?: string;
   subject: string;

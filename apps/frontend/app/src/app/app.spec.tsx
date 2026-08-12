@@ -274,6 +274,12 @@ const expectFetchRequest = (
 // present on every route) so the outlet content is available to query.
 const awaitShell = () => screen.findByRole('search');
 
+/**
+ * Signs in through the form. Succeeding now means leaving it: a visitor with no
+ * return url lands on the signed-in hub instead of staring at the card they just
+ * submitted. So a test that watches the profile state opens the form with
+ * `?returnUrl=/profile`, which is where that card lives once signed in.
+ */
 const submitLogin = async (email = 'user@example.com') => {
   await awaitShell();
   fireEvent.change(await screen.findByLabelText('Login email'), {
@@ -566,7 +572,7 @@ describe('User app shell', () => {
   });
 
   it('loads a profile after login establishes a cookie session', async () => {
-    window.history.pushState({}, '', '/auth');
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     vi.stubEnv('VITE_USER_API_BASE_URL', 'https://user-api/');
     const fetchMock = setFetch(
       jsonResponse({ data: { user: {} } }),
@@ -612,14 +618,14 @@ describe('User app shell', () => {
   });
 
   it('shows forbidden states for profile response and thrown failures', async () => {
-    window.history.pushState({}, '', '/auth');
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), jsonResponse({}, false, 403));
     const { unmount } = render(<App />);
     await submitLogin();
     expect(await screen.findByText('Forbidden: Request failed with 403.')).toBeTruthy();
     unmount();
 
-    window.history.pushState({}, '', '/auth');
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), {
       rejectsWith: 'network failed',
     });
@@ -629,7 +635,7 @@ describe('User app shell', () => {
   });
 
   it('handles incomplete profile payloads and non-error auth rejections', async () => {
-    window.history.pushState({}, '', '/auth');
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), jsonResponse({ data: {} }));
     const { unmount } = render(<App />);
     await submitLogin();
@@ -657,14 +663,20 @@ describe('User app shell', () => {
   });
 
   it('uses saved user locale before profile calls and ignores stale local storage', async () => {
-    window.history.pushState({}, '', '/auth');
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     window.localStorage.setItem('boilerplate.locale', 'en');
     vi.stubEnv('VITE_USER_API_BASE_URL', 'https://user-api/');
+    // Signing in navigates and the language switch to Russian re-keys both reads,
+    // so the session and the profile are each fetched twice. Every reply carries
+    // the same session and principal, which keeps the test about the language
+    // each request asked in rather than about the order they came back.
+    const signedIn = { principal: { subject: 'profile-subject' }, user: { locale: 'ru' } };
     const fetchMock = setFetch(
       jsonResponse({ data: { user: {} } }),
-      jsonResponse({ data: { user: { locale: 'ru' } } }),
-      jsonResponse({ data: { user: { locale: 'ru' } } }),
-      jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
+      jsonResponse({ data: signedIn }),
+      jsonResponse({ data: signedIn }),
+      jsonResponse({ data: signedIn }),
+      jsonResponse({ data: signedIn }),
     );
 
     render(<App />);
@@ -683,7 +695,7 @@ describe('User app shell', () => {
   });
 
   it('persists language switches for authenticated users and subsequent calls', async () => {
-    window.history.pushState({}, '', '/auth');
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     const fetchMock = setFetch(
       jsonResponse({ data: { user: {} } }),
       jsonResponse({ data: { user: { locale: 'en' } } }),
@@ -805,7 +817,7 @@ describe('User app shell', () => {
       jsonResponse({ data: { user: { locale: 'en' } } }),
       jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
     );
-    window.history.pushState({}, '', '/auth');
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     render(<App />);
 
     fireEvent.change(await screen.findByLabelText('Login email'), {
@@ -846,13 +858,13 @@ describe('User app shell', () => {
       jsonResponse({ data: { user: { locale: 'en' } } }),
       jsonResponse({ data: { profile: { email: 'after-auth@example.com' } } }),
     );
-    window.history.pushState({}, '', '/auth');
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     const { unmount } = render(<App />);
     await submitLogin();
     expect(await screen.findByText('Ready: after-auth@example.com')).toBeTruthy();
     unmount();
 
-    window.history.pushState({}, '', '/auth');
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     setFetch(jsonResponse({ data: { user: {} } }), jsonResponse({ data: {} }), {
       rejectsWith: { detail: 'Object detail' },
     });
@@ -862,7 +874,7 @@ describe('User app shell', () => {
   });
 
   it('applies profile locales and auth success locale/theme payloads', async () => {
-    window.history.pushState({}, '', '/auth');
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     setFetch(
       jsonResponse({ data: { user: {} } }),
       jsonResponse({ data: { user: { locale: 'en', theme: 'light' } } }),
@@ -890,7 +902,7 @@ describe('User app shell', () => {
       jsonResponse({ data: { user: { locale: 'ru', theme: 'dark' } } }),
       jsonResponse({ data: { profile: { email: 'registered@example.com' } } }),
     );
-    window.history.pushState({}, '', '/auth');
+    window.history.pushState({}, '', '/auth?returnUrl=/profile');
     render(<App />);
     // No display name: the request must still carry the address and password, so
     // the optional field stays empty rather than being removed from the step.

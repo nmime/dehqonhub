@@ -661,6 +661,32 @@ describe('social auth and TMA UI', () => {
     expect(window.location.pathname).toBe('/auth');
   });
 
+  // A provider hand-off that is refused before the redirect starts used to leave
+  // the button looking like it had done nothing. Each provider now says why, and
+  // it says what the auth service said rather than a generic apology.
+  it('states why a refused Telegram hand-off never redirected', async () => {
+    resetPath('/auth');
+    setFetch(jsonResponse({ detail: 'Telegram sign-in is not configured for this environment.' }, false, 503));
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue with Telegram' }));
+
+    expect(await screen.findByText('Telegram sign-in is not configured for this environment.')).toBeTruthy();
+  });
+
+  it('states why a refused Discord hand-off never redirected', async () => {
+    resetPath('/auth');
+    setFetch(jsonResponse({ detail: 'Discord sign-in is not configured for this environment.' }, false, 503));
+
+    render(<App />);
+    fireEvent.click(await screen.findByRole('button', { name: 'Continue with Discord' }));
+
+    expect(await screen.findByText('Discord sign-in is not configured for this environment.')).toBeTruthy();
+    // Telegram is the first provider the toast reports, so its own hand-off has
+    // to be untouched for the Discord failure to be the one on screen.
+    expect(screen.queryByText(/Telegram sign-in is temporarily unavailable/u)).toBeNull();
+  });
+
   it('navigates the site chrome without a full page reload', async () => {
     resetPath('/auth');
     setFetch();

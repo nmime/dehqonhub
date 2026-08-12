@@ -5,6 +5,7 @@
   "agritech.marketplace.contract.sign": "Tekshirish va rozilik bildirish",
   "agritech.marketplace.contract.factoring": "Moliyalashtirish mavjud emas",
   "agritech.marketplace.contract.buyer": "Xaridor",
+  "agritech.marketplace.contract.partyUnnamed": "Tashkilot ko‘rsatilmagan",
   "agritech.marketplace.contract.seller": "Sotuvchi",
   "agritech.marketplace.contract.delivery": "Yetkazib berish shartlari",
   "agritech.marketplace.contract.deliveryPrice": "Yetkazib berishning alohida narxi",

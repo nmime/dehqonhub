@@ -23248,6 +23248,14 @@
           "sellerUserId": {
             "type": "string"
           },
+          "buyerName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "sellerName": {
+            "type": "string",
+            "maxLength": 200
+          },
           "sourceType": {
             "type": "string",
             "enum": ["cart_checkout", "offer_selection"]

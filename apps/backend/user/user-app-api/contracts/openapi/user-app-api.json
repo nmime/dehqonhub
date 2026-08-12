@@ -14650,6 +14650,7 @@
             "required": true,
             "in": "path",
             "schema": {
+              "format": "uuid",
               "type": "string"
             }
           }
@@ -16257,6 +16258,14 @@
           },
           "sellerUserId": {
             "type": "string"
+          },
+          "buyerName": {
+            "type": "string",
+            "maxLength": 200
+          },
+          "sellerName": {
+            "type": "string",
+            "maxLength": 200
           },
           "sourceType": {
             "type": "string",
