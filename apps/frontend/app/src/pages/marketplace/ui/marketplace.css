@@ -2683,8 +2683,10 @@
   }
 
   /* The AI button floats above this corner, and the page comes to rest here, so
-     without a gutter the last line of the footer sits permanently half-covered. */
-  .dh-footer__legal {
+     without a gutter the last line of the footer sits permanently half-covered.
+     Only when the button is actually there: for a signed-out visitor the same
+     gutter is 4.6rem of dead space that wraps the legal line for no reason. */
+  [data-assistant='on'] .dh-footer__legal {
     padding-right: 4.6rem;
   }
 
