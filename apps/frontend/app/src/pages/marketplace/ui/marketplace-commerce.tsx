@@ -4,17 +4,12 @@ import type {
   BuyerRequestViewDto,
   CartViewDto,
   ContractDeliveryQuoteDto,
-  ContractLifecycleDto,
   ContractViewDto,
   CreateRequestDto,
-  FulfillmentCommandDto,
-  MarketplaceRoleDashboardDto,
-  MarketplaceProviderReadinessDto,
-  MarketplaceSampleDto,
   OfferViewDto,
+  ProductViewDto,
   RequestOfferDto,
-  SettlementCommandDto,
-  VerificationDocumentInputDto,
+  SampleViewDto,
   VerificationViewDto,
 } from '@app/frontend-api-client';
 import type { Resource, ResourceStatus } from '../model/use-marketplace-data';
@@ -25,23 +20,11 @@ import {
   formatDate,
   formatMoney,
   localizedProductName,
-  type MarketplaceListing,
   type MarketplaceNavigate,
-  type MarketplaceRequestFeedItem,
   type MarketplaceTranslate,
 } from './marketplace-ui';
 
 type DeliveryTerms = 'by_agreement' | 'pickup' | 'seller_delivery';
-type MarketplaceVerificationRole = VerificationViewDto['role'];
-type MarketplaceVerificationDocumentKind = VerificationDocumentInputDto['kind'];
-type DisputeReason = 'delivery_issue' | 'other' | 'quality_issue' | 'quantity_issue';
-export type MarketplaceCreateRequestInput = Omit<CreateRequestDto, 'actingPartnerId'>;
-export type MarketplaceOfferInput = Omit<RequestOfferDto, 'actingPartnerId'>;
-export type MarketplaceContractDeliveryQuoteInput = Omit<ContractDeliveryQuoteDto, 'expectedRevision'>;
-export type MarketplaceContractLifecycleAction =
-  | { kind: 'factoring-consent' }
-  | { body: SettlementCommandDto; kind: 'settlement' }
-  | { body: FulfillmentCommandDto; kind: 'fulfillment' };
 
 const deliveryTranslationKeys: Record<DeliveryTerms, string> = {
   by_agreement: 'agritech.marketplace.product.byAgreement',
@@ -49,42 +32,28 @@ const deliveryTranslationKeys: Record<DeliveryTerms, string> = {
   seller_delivery: 'agritech.marketplace.product.sellerDelivery',
 };
 
-const verificationRoleIcons: Record<MarketplaceVerificationRole, MarketplaceIconName> = {
+const verificationRoleIcons: Record<'buyer' | 'farmer' | 'seller', MarketplaceIconName> = {
   buyer: 'account',
   farmer: 'seeds',
   seller: 'equipment',
 };
 
-const verificationDocumentsByRole: Record<MarketplaceVerificationRole, MarketplaceVerificationDocumentKind[]> = {
-  buyer: ['id', 'business'],
-  farmer: ['id', 'land', 'lease', 'cadastre', 'farm'],
-  seller: ['id', 'business', 'warehouse'],
-};
-
 interface CartProps {
-  canCheckout?: boolean;
-  checkoutActionLabel?: string;
-  checkoutHint?: string;
   carts: Resource<CartViewDto[]>;
   locale: Locale;
   navigate: MarketplaceNavigate;
   onCheckout: (cart: CartViewDto, deliveryTerms: DeliveryTerms) => void;
-  onCheckoutAction?: () => void;
-  onUpdate: (cartId: string, listingPublicationId: string, quantity: number) => void;
+  onUpdate: (cart: CartViewDto, productId: string, quantity: number) => void;
   pendingAction?: string;
-  products: MarketplaceListing[];
+  products: ProductViewDto[];
   t: MarketplaceTranslate;
 }
 
 export function MarketplaceCart({
-  canCheckout = true,
-  checkoutActionLabel,
-  checkoutHint,
   carts,
   locale,
   navigate,
   onCheckout,
-  onCheckoutAction,
   onUpdate,
   pendingAction,
   products,
@@ -93,12 +62,13 @@ export function MarketplaceCart({
   const [activeId, setActiveId] = useState<string>();
   const [delivery, setDelivery] = useState<Record<string, DeliveryTerms>>({});
   const selected = carts.data.find((cart) => cart.id === activeId) ?? carts.data[0];
-  const checkoutHintId = 'marketplace-cart-checkout-hint';
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products]);
-  const sellerNameFor = (cart: CartViewDto): string => cart.seller.displayName;
+  const sellerNameFor = (cart: CartViewDto): string =>
+    cart.items.map((item) => productById.get(item.productId)).find((product) => product?.supplierId === cart.sellerId)
+      ?.supplierName ?? cart.sellerId;
   const estimatedTotal =
     selected?.items.reduce(
-      (total, item) => total + (productById.get(item.listingPublicationId)?.priceUzs ?? 0) * item.quantity,
+      (total, item) => total + (productById.get(item.productId)?.priceUzs ?? 0) * item.quantity,
       0,
     ) ?? 0;
   const heading = (
@@ -183,9 +153,9 @@ export function MarketplaceCart({
             <span className="dh-badge dh-badge--soft">{t('agritech.marketplace.cart.oneSeller')}</span>
           </div>
           {selected.items.map((item) => {
-            const product = productById.get(item.listingPublicationId);
+            const product = productById.get(item.productId);
             return (
-              <article className="dh-cart-line" key={item.listingPublicationId}>
+              <article className="dh-cart-line" key={item.productId}>
                 {product ? (
                   <ProductMedia compact locale={locale} product={product} t={t} />
                 ) : (
@@ -197,16 +167,14 @@ export function MarketplaceCart({
                   <strong>
                     {product ? localizedProductName(product, locale) : t('agritech.marketplace.product.unavailable')}
                   </strong>
-                  <span>
-                    {product ? `${formatMoney(product.priceUzs, locale)} / ${product.unit}` : item.listingPublicationId}
-                  </span>
+                  <span>{product ? `${formatMoney(product.priceUzs, locale)} / ${product.unit}` : item.productId}</span>
                 </div>
                 <div aria-label={t('agritech.marketplace.product.quantity')} className="dh-stepper">
                   <button
                     aria-label={t('agritech.marketplace.cart.decrease')}
-                    disabled={pendingAction === `cart-update:${item.listingPublicationId}`}
+                    disabled={pendingAction === `cart-update:${item.productId}`}
                     onClick={() => {
-                      onUpdate(selected.id, item.listingPublicationId, item.quantity - 1);
+                      onUpdate(selected, item.productId, item.quantity - 1);
                     }}
                     type="button"
                   >
@@ -215,9 +183,9 @@ export function MarketplaceCart({
                   <output>{item.quantity}</output>
                   <button
                     aria-label={t('agritech.marketplace.cart.increase')}
-                    disabled={pendingAction === `cart-update:${item.listingPublicationId}`}
+                    disabled={pendingAction === `cart-update:${item.productId}`}
                     onClick={() => {
-                      onUpdate(selected.id, item.listingPublicationId, item.quantity + 1);
+                      onUpdate(selected, item.productId, item.quantity + 1);
                     }}
                     type="button"
                   >
@@ -251,9 +219,8 @@ export function MarketplaceCart({
             ))}
           </fieldset>
           <button
-            aria-describedby={!canCheckout && checkoutHint ? checkoutHintId : undefined}
             className="dh-button dh-button--primary dh-button--block"
-            disabled={!canCheckout || pendingAction === `checkout:${selected.id}`}
+            disabled={pendingAction === `checkout:${selected.id}`}
             onClick={() => {
               onCheckout(selected, selectedDelivery);
             }}
@@ -262,16 +229,6 @@ export function MarketplaceCart({
             <MarketplaceIcon name="contract" />
             {t('agritech.marketplace.cart.reviewContract')}
           </button>
-          {!canCheckout && checkoutHint ? (
-            <div className="dh-state-inline" id={checkoutHintId}>
-              <span>{checkoutHint}</span>
-              {checkoutActionLabel && onCheckoutAction ? (
-                <button className="dh-text-button" onClick={onCheckoutAction} type="button">
-                  {checkoutActionLabel}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
           <p className="dh-fine-print">{t('agritech.marketplace.cart.contractBoundary')}</p>
         </aside>
       </div>
@@ -280,72 +237,55 @@ export function MarketplaceCart({
 }
 
 interface RequestProps {
-  buyerAccessActionLabel?: string;
-  buyerAccessHint?: string;
   isVerified: boolean;
   locale: Locale;
   myRequests: Resource<BuyerRequestViewDto[]>;
   navigate: MarketplaceNavigate;
   offersByRequest: Resource<Record<string, OfferViewDto[]>>;
-  onBuyerAccessAction?: () => void;
   onChoose: (request: BuyerRequestViewDto, offer: OfferViewDto) => void;
-  onCreate: (input: MarketplaceCreateRequestInput) => void;
-  onOffer: (request: MarketplaceRequestFeedItem, input: MarketplaceOfferInput) => void;
+  onCreate: (input: CreateRequestDto) => void;
+  onOffer: (request: BuyerRequestViewDto, input: RequestOfferDto) => void;
   onRetry: () => void;
-  onSellerAccessAction?: () => void;
   pendingAction?: string;
-  requests: Resource<MarketplaceRequestFeedItem[]>;
+  requests: Resource<BuyerRequestViewDto[]>;
   role?: string;
-  sellerAccessActionLabel?: string;
-  sellerAccessHint?: string;
   t: MarketplaceTranslate;
 }
 
-const emptyRequest: MarketplaceCreateRequestInput = { region: '', title: '' };
+const emptyRequest: CreateRequestDto = { region: '', title: '' };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- one explicit renderer keeps buyer and seller eligibility, loading, empty, and offer states visibly aligned
 export function MarketplaceRequests({
-  buyerAccessActionLabel,
-  buyerAccessHint,
   isVerified,
   locale,
   myRequests,
   navigate,
   offersByRequest,
-  onBuyerAccessAction,
   onChoose,
   onCreate,
   onOffer,
   onRetry,
-  onSellerAccessAction,
   pendingAction,
   requests,
   role,
-  sellerAccessActionLabel,
-  sellerAccessHint,
   t,
 }: Readonly<RequestProps>) {
-  const eligibleBuyer = isVerified && (role === 'buyer' || role === 'farmer');
-  const eligibleSeller = isVerified && (role === 'farmer' || role === 'seller');
   const [creating, setCreating] = useState(
     () =>
-      eligibleBuyer &&
       typeof globalThis.location !== 'undefined' &&
       new URLSearchParams(globalThis.location.search).get('create') === '1',
   );
-  const [requestInput, setRequestInput] = useState<MarketplaceCreateRequestInput>(emptyRequest);
+  const [requestInput, setRequestInput] = useState<CreateRequestDto>(emptyRequest);
   const [offeringId, setOfferingId] = useState<string>();
-  const [offerInput, setOfferInput] = useState<MarketplaceOfferInput>({
+  const [offerInput, setOfferInput] = useState<RequestOfferDto>({
     deliveryTerms: 'by_agreement',
     priceUzs: 0,
   });
   const myIds = useMemo(() => new Set(myRequests.data.map((request) => request.id)), [myRequests.data]);
-  const buyerAccessId = 'marketplace-request-buyer-access';
-  const sellerAccessId = 'marketplace-request-seller-access';
+  const eligibleSeller = isVerified && (role === 'farmer' || role === 'seller');
 
   const submitRequest = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!eligibleBuyer) {
+    if (!isVerified) {
       navigate('/verification');
       return;
     }
@@ -355,13 +295,13 @@ export function MarketplaceRequests({
       deadline: typeof formDeadline === 'string' && formDeadline.length > 0 ? formDeadline : undefined,
     });
   };
-  const submitOffer = (event: SyntheticEvent<HTMLFormElement>, request: MarketplaceRequestFeedItem) => {
+  const submitOffer = (event: SyntheticEvent<HTMLFormElement>, request: BuyerRequestViewDto) => {
     event.preventDefault();
     onOffer(request, offerInput);
   };
 
   const toggleCreating = () => {
-    if (eligibleBuyer) {
+    if (isVerified) {
       setCreating((value) => !value);
     } else {
       navigate('/verification');
@@ -407,118 +347,118 @@ export function MarketplaceRequests({
               </div>
             </dl>
             {request.requirements && <p>{request.requirements}</p>}
-            {offeringId === request.id && eligibleSeller ? (
-              <form
-                className="dh-inline-form"
-                onSubmit={(event) => {
-                  submitOffer(event, request);
-                }}
-              >
-                <label>
-                  <span>{t('agritech.marketplace.orders.price')}</span>
-                  <input
-                    min="1"
-                    onChange={(event) => {
-                      setOfferInput((value) => ({ ...value, priceUzs: Number(event.target.value) }));
-                    }}
-                    required
-                    type="number"
-                    value={offerInput.priceUzs || ''}
-                  />
-                </label>
-                <label>
-                  <span>{t('agritech.marketplace.product.delivery')}</span>
-                  <select
-                    onChange={(event) => {
-                      const deliveryTerms = event.target.value as DeliveryTerms;
-                      setOfferInput((value) => ({
-                        ...value,
-                        deliveryPriceUzs: undefined,
-                        deliveryTerms,
-                      }));
-                    }}
-                    value={offerInput.deliveryTerms}
-                  >
-                    {(Object.keys(deliveryTranslationKeys) as DeliveryTerms[]).map((term) => (
-                      <option key={term} value={term}>
-                        {t(deliveryTranslationKeys[term])}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                {offerInput.deliveryTerms === 'seller_delivery' ? (
+            {eligibleSeller &&
+              (request.status === 'open' || request.status === 'offering') &&
+              (offeringId === request.id ? (
+                <form
+                  className="dh-inline-form"
+                  onSubmit={(event) => {
+                    submitOffer(event, request);
+                  }}
+                >
                   <label>
-                    <span>{t('agritech.marketplace.contract.deliveryPrice')}</span>
+                    <span>{t('agritech.marketplace.orders.price')}</span>
+                    <input
+                      min="1"
+                      onChange={(event) => {
+                        setOfferInput((value) => ({ ...value, priceUzs: Number(event.target.value) }));
+                      }}
+                      required
+                      type="number"
+                      value={offerInput.priceUzs || ''}
+                    />
+                  </label>
+                  <label>
+                    <span>{t('agritech.marketplace.product.delivery')}</span>
+                    <select
+                      onChange={(event) => {
+                        const deliveryTerms = event.target.value as DeliveryTerms;
+                        setOfferInput((value) => ({
+                          ...value,
+                          deliveryPriceUzs: undefined,
+                          deliveryTerms,
+                        }));
+                      }}
+                      value={offerInput.deliveryTerms}
+                    >
+                      {(Object.keys(deliveryTranslationKeys) as DeliveryTerms[]).map((term) => (
+                        <option key={term} value={term}>
+                          {t(deliveryTranslationKeys[term])}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  {offerInput.deliveryTerms === 'seller_delivery' ? (
+                    <label>
+                      <span>{t('agritech.marketplace.contract.deliveryPrice')}</span>
+                      <input
+                        min="1"
+                        onChange={(event) => {
+                          setOfferInput((value) => ({
+                            ...value,
+                            deliveryPriceUzs: Number(event.target.value),
+                          }));
+                        }}
+                        required
+                        type="number"
+                        value={offerInput.deliveryPriceUzs ?? ''}
+                      />
+                    </label>
+                  ) : null}
+                  <label>
+                    <span>{t('agritech.marketplace.orders.timing')}</span>
                     <input
                       min="1"
                       onChange={(event) => {
                         setOfferInput((value) => ({
                           ...value,
-                          deliveryPriceUzs: Number(event.target.value),
+                          deliveryDays: event.target.value ? Number(event.target.value) : undefined,
                         }));
                       }}
-                      required
                       type="number"
-                      value={offerInput.deliveryPriceUzs ?? ''}
+                      value={offerInput.deliveryDays ?? ''}
                     />
                   </label>
-                ) : null}
-                <label>
-                  <span>{t('agritech.marketplace.orders.timing')}</span>
-                  <input
-                    min="1"
-                    onChange={(event) => {
-                      setOfferInput((value) => ({
-                        ...value,
-                        deliveryDays: event.target.value ? Number(event.target.value) : undefined,
-                      }));
-                    }}
-                    type="number"
-                    value={offerInput.deliveryDays ?? ''}
-                  />
-                </label>
-                <label>
-                  <span>{t('agritech.marketplace.orders.deliveryNote')}</span>
-                  <input
-                    onChange={(event) => {
-                      setOfferInput((value) => ({ ...value, deliveryNote: event.target.value || undefined }));
-                    }}
-                    value={offerInput.deliveryNote ?? ''}
-                  />
-                </label>
-                <div>
-                  <button
-                    className="dh-button dh-button--secondary"
-                    onClick={() => {
-                      setOfferingId(undefined);
-                    }}
-                    type="button"
-                  >
-                    {t('agritech.marketplace.cancel')}
-                  </button>
-                  <button
-                    className="dh-button dh-button--primary"
-                    disabled={pendingAction === `offer:${request.id}`}
-                    type="submit"
-                  >
-                    {t('agritech.marketplace.orders.submitOffer')}
-                  </button>
-                </div>
-              </form>
-            ) : (
-              <button
-                aria-describedby={!eligibleSeller ? sellerAccessId : undefined}
-                className="dh-button dh-button--secondary"
-                disabled={!eligibleSeller}
-                onClick={() => {
-                  setOfferingId(request.id);
-                  setOfferInput({ deliveryTerms: 'by_agreement', priceUzs: 0 });
-                }}
-                type="button"
-              >
-                {t('agritech.marketplace.orders.makeOffer')}
-              </button>
-            )}
+                  <label>
+                    <span>{t('agritech.marketplace.orders.deliveryNote')}</span>
+                    <input
+                      onChange={(event) => {
+                        setOfferInput((value) => ({ ...value, deliveryNote: event.target.value || undefined }));
+                      }}
+                      value={offerInput.deliveryNote ?? ''}
+                    />
+                  </label>
+                  <div>
+                    <button
+                      className="dh-button dh-button--secondary"
+                      onClick={() => {
+                        setOfferingId(undefined);
+                      }}
+                      type="button"
+                    >
+                      {t('agritech.marketplace.cancel')}
+                    </button>
+                    <button
+                      className="dh-button dh-button--primary"
+                      disabled={pendingAction === `offer:${request.id}`}
+                      type="submit"
+                    >
+                      {t('agritech.marketplace.orders.submitOffer')}
+                    </button>
+                  </div>
+                </form>
+              ) : (
+                <button
+                  className="dh-button dh-button--secondary"
+                  onClick={() => {
+                    setOfferingId(request.id);
+                    setOfferInput({ deliveryTerms: 'by_agreement', priceUzs: 0 });
+                  }}
+                  type="button"
+                >
+                  {t('agritech.marketplace.orders.makeOffer')}
+                </button>
+              ))}
           </article>
         ))}
       </div>
@@ -564,9 +504,6 @@ export function MarketplaceRequests({
                   <div className={index === 0 ? 'is-best' : ''} key={offer.id}>
                     <div>
                       <span>{index === 0 && t('agritech.marketplace.orders.bestOffer')}</span>
-                      <span>
-                        {offer.seller.displayName} · {offer.seller.region}
-                      </span>
                       <strong>{formatMoney(offer.priceUzs, locale)}</strong>
                       <small>
                         {t(deliveryTranslationKeys[offer.deliveryTerms])}
@@ -579,9 +516,8 @@ export function MarketplaceRequests({
                       </small>
                     </div>
                     <button
-                      aria-describedby={!eligibleBuyer ? buyerAccessId : undefined}
                       className="dh-button dh-button--secondary"
-                      disabled={!eligibleBuyer || offer.status !== 'pending' || pendingAction === `choose:${offer.id}`}
+                      disabled={offer.status !== 'pending' || pendingAction === `choose:${offer.id}`}
                       onClick={() => {
                         onChoose(request, offer);
                       }}
@@ -616,16 +552,12 @@ export function MarketplaceRequests({
   } else {
     myRequestContent = (
       <MarketplaceEmpty
-        {...(eligibleBuyer ? { actionLabel: t('agritech.marketplace.orders.create') } : {})}
+        actionLabel={t('agritech.marketplace.orders.create')}
         icon="search"
         message={t('agritech.marketplace.orders.emptyDescription')}
-        {...(eligibleBuyer
-          ? {
-              onAction: () => {
-                setCreating(true);
-              },
-            }
-          : {})}
+        onAction={() => {
+          setCreating(true);
+        }}
         title={t('agritech.marketplace.orders.empty')}
       />
     );
@@ -639,28 +571,11 @@ export function MarketplaceRequests({
           <h1>{t('agritech.marketplace.orders.title')}</h1>
           <p>{t('agritech.marketplace.orders.description')}</p>
         </div>
-        <button
-          aria-describedby={!eligibleBuyer ? buyerAccessId : undefined}
-          className="dh-button dh-button--primary"
-          disabled={!eligibleBuyer}
-          onClick={toggleCreating}
-          type="button"
-        >
+        <button className="dh-button dh-button--primary" onClick={toggleCreating} type="button">
           <MarketplaceIcon name="plus" />
           {t('agritech.marketplace.orders.create')}
         </button>
       </div>
-
-      {!eligibleBuyer && buyerAccessHint ? (
-        <div className="dh-state-inline" id={buyerAccessId}>
-          <span>{buyerAccessHint}</span>
-          {buyerAccessActionLabel && onBuyerAccessAction ? (
-            <button className="dh-text-button" onClick={onBuyerAccessAction} type="button">
-              {buyerAccessActionLabel}
-            </button>
-          ) : null}
-        </div>
-      ) : null}
 
       {creating && (
         <form className="dh-panel dh-form" onSubmit={submitRequest}>
@@ -783,16 +698,6 @@ export function MarketplaceRequests({
               <h2 id="dh-request-feed">{t('agritech.marketplace.orders.feed')}</h2>
             </div>
           </div>
-          {!eligibleSeller && sellerAccessHint ? (
-            <div className="dh-state-inline" id={sellerAccessId}>
-              <span>{sellerAccessHint}</span>
-              {sellerAccessActionLabel && onSellerAccessAction ? (
-                <button className="dh-text-button" onClick={onSellerAccessAction} type="button">
-                  {sellerAccessActionLabel}
-                </button>
-              ) : null}
-            </div>
-          ) : null}
           {sellerFeed}
         </section>
 
@@ -812,240 +717,12 @@ export function MarketplaceRequests({
 
 interface VerificationProps {
   navigate: MarketplaceNavigate;
-  onLinkIdentity: (verification: VerificationViewDto) => void;
   onRetry: () => void;
-  onStart: (role: MarketplaceVerificationRole) => void;
-  onSubmit: (verification: VerificationViewDto) => void;
-  onUploadDocument: (verification: VerificationViewDto, kind: MarketplaceVerificationDocumentKind, file: File) => void;
-  pendingAction?: string;
-  readiness: Resource<MarketplaceProviderReadinessDto | null>;
   t: MarketplaceTranslate;
   verification: Resource<VerificationViewDto | null>;
 }
 
-function VerificationTerminalStatus({
-  current,
-  navigate,
-  t,
-}: Readonly<{
-  current: VerificationViewDto;
-  navigate: MarketplaceNavigate;
-  t: MarketplaceTranslate;
-}>): ReactNode | null {
-  if (current.status === 'verified') {
-    return (
-      <MarketplaceStatus
-        icon="shield"
-        message={t('agritech.marketplace.verify.success')}
-        title={t('agritech.marketplace.verify.verified')}
-      >
-        <span className="dh-badge dh-badge--soft">
-          {t(`agritech.marketplace.verify.providerMode.${current.providerMode}`)}
-          {current.simulation ? ` · ${t('agritech.marketplace.verify.simulationDisclosure')}` : ''}
-        </span>
-        <button
-          className="dh-button dh-button--primary"
-          onClick={() => {
-            navigate('/account');
-          }}
-          type="button"
-        >
-          {t('agritech.marketplace.account.title')}
-        </button>
-      </MarketplaceStatus>
-    );
-  }
-  if (current.status === 'pending') {
-    return (
-      <MarketplaceStatus
-        icon="contract"
-        message={t('agritech.marketplace.verify.pendingDescription')}
-        title={t('agritech.marketplace.verify.pending')}
-      >
-        <span className="dh-badge dh-badge--neutral">
-          {t(`agritech.marketplace.verify.providerMode.${current.providerMode}`)}
-          {current.simulation ? ` · ${t('agritech.marketplace.verify.simulationDisclosure')}` : ''}
-        </span>
-        <p className="dh-fine-print">{t('agritech.marketplace.verify.noFixedReviewTime')}</p>
-      </MarketplaceStatus>
-    );
-  }
-  return null;
-}
-
-function VerificationActions({
-  canSubmit,
-  current,
-  onLinkIdentity,
-  onStart,
-  onSubmit,
-  pendingAction,
-  readiness,
-  role,
-  t,
-}: Readonly<{
-  canSubmit: boolean;
-  current: VerificationViewDto | null;
-  onLinkIdentity: (verification: VerificationViewDto) => void;
-  onStart: (role: MarketplaceVerificationRole) => void;
-  onSubmit: (verification: VerificationViewDto) => void;
-  pendingAction?: string;
-  readiness: Resource<MarketplaceProviderReadinessDto | null>;
-  role: MarketplaceVerificationRole;
-  t: MarketplaceTranslate;
-}>) {
-  if (!current) {
-    return (
-      <button
-        className="dh-button dh-button--primary"
-        disabled={pendingAction === 'verification:start'}
-        onClick={() => {
-          onStart(role);
-        }}
-        type="button"
-      >
-        {t('agritech.marketplace.verify.start')}
-      </button>
-    );
-  }
-  if (current.status === 'rejected') {
-    return (
-      <button
-        className="dh-button dh-button--primary"
-        disabled={pendingAction === 'verification:start'}
-        onClick={() => {
-          onStart(current.role);
-        }}
-        type="button"
-      >
-        {t('agritech.marketplace.verify.resume')}
-      </button>
-    );
-  }
-  return (
-    <div className="dh-management-actions">
-      {!current.oneIdLinked ? (
-        <button
-          className="dh-button dh-button--secondary"
-          disabled={!readiness.data?.oneId.ready || pendingAction === 'verification:identity'}
-          onClick={() => {
-            onLinkIdentity(current);
-          }}
-          type="button"
-        >
-          {t('agritech.marketplace.verify.linkIdentity')}
-        </button>
-      ) : (
-        <span className="dh-badge dh-badge--soft">{t('agritech.marketplace.verify.identityLinked')}</span>
-      )}
-      <button
-        className="dh-button dh-button--primary"
-        disabled={!canSubmit || pendingAction === 'verification:submit'}
-        onClick={() => {
-          onSubmit(current);
-        }}
-        type="button"
-      >
-        {t('agritech.marketplace.verify.submit')}
-      </button>
-    </div>
-  );
-}
-
-function VerificationEvidenceList({
-  current,
-  onUploadDocument,
-  pendingAction,
-  readiness,
-  requiredDocuments,
-  storedDocumentByKind,
-  t,
-}: Readonly<{
-  current: VerificationViewDto | null;
-  onUploadDocument: VerificationProps['onUploadDocument'];
-  pendingAction?: string;
-  readiness: Resource<MarketplaceProviderReadinessDto | null>;
-  requiredDocuments: MarketplaceVerificationDocumentKind[];
-  storedDocumentByKind: Map<string, VerificationViewDto['documents'][number]>;
-  t: MarketplaceTranslate;
-}>) {
-  return (
-    <ul className="dh-document-list">
-      {requiredDocuments.map((kind) => {
-        const stored = storedDocumentByKind.get(kind);
-        const documentLabel = t(`agritech.marketplace.verify.doc.${kind}`);
-        const uploadLabel = t(
-          stored ? 'agritech.marketplace.verify.replaceDocument' : 'agritech.marketplace.verify.uploadDocument',
-          { document: documentLabel },
-        );
-        return (
-          <li key={kind}>
-            <MarketplaceIcon name={stored ? 'check' : 'contract'} />
-            <span>{stored?.fileName ?? documentLabel}</span>
-            {current ? (
-              <label className="dh-document-upload">
-                <span>{uploadLabel}</span>
-                <input
-                  accept="application/pdf,image/jpeg,image/png"
-                  aria-label={uploadLabel}
-                  disabled={
-                    current.status === 'rejected' ||
-                    !readiness.data?.verificationDocuments.ready ||
-                    pendingAction === `verification:document:${kind}`
-                  }
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) {
-                      onUploadDocument(current, kind, file);
-                      event.target.value = '';
-                    }
-                  }}
-                  type="file"
-                />
-              </label>
-            ) : null}
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
-
-function VerificationRejection({
-  current,
-  t,
-}: Readonly<{ current: VerificationViewDto | null; t: MarketplaceTranslate }>) {
-  if (current?.status !== 'rejected') {
-    return null;
-  }
-  return (
-    <div className="dh-state-inline dh-state-inline--error" role="alert">
-      <strong>{t('agritech.marketplace.verify.rejected')}</strong>
-      <p>
-        {current.rejectionReason
-          ? t(`agritech.marketplace.verify.rejection.${current.rejectionReason}`)
-          : t('agritech.marketplace.verify.rejectedDescription')}
-      </p>
-      <span className="dh-badge dh-badge--neutral">
-        {t(`agritech.marketplace.verify.providerMode.${current.providerMode}`)}
-        {current.simulation ? ` · ${t('agritech.marketplace.verify.simulationDisclosure')}` : ''}
-      </span>
-    </div>
-  );
-}
-
-export function MarketplaceVerification({
-  navigate,
-  onLinkIdentity,
-  onRetry,
-  onStart,
-  onSubmit,
-  onUploadDocument,
-  pendingAction,
-  readiness,
-  t,
-  verification,
-}: Readonly<VerificationProps>) {
+export function MarketplaceVerification({ navigate, onRetry, t, verification }: Readonly<VerificationProps>) {
   const [role, setRole] = useState<'buyer' | 'farmer' | 'seller'>('farmer');
   if (verification.status === 'loading' || verification.status === 'idle') {
     return <MarketplaceSkeleton count={3} />;
@@ -1062,18 +739,57 @@ export function MarketplaceVerification({
     );
   }
   const current = verification.data;
-  if (current) {
-    const terminalStatus = <VerificationTerminalStatus current={current} navigate={navigate} t={t} />;
-    if (current.status === 'verified' || current.status === 'pending') {
-      return terminalStatus;
-    }
+  if (current?.status === 'verified') {
+    return (
+      <MarketplaceStatus
+        icon="shield"
+        message={t('agritech.marketplace.verify.success')}
+        title={t('agritech.marketplace.verify.verified')}
+      >
+        <button
+          className="dh-button dh-button--primary"
+          onClick={() => {
+            navigate('/account');
+          }}
+          type="button"
+        >
+          {t('agritech.marketplace.account.title')}
+        </button>
+      </MarketplaceStatus>
+    );
   }
-  const activeRole = current?.role ?? role;
-  const requiredDocuments = verificationDocumentsByRole[activeRole];
-  const storedDocumentByKind = new Map(current?.documents.map((document) => [document.kind, document]));
-  const providerReady = Boolean(readiness.data?.oneId.ready && readiness.data.verificationDocuments.ready);
-  const documentsReady = requiredDocuments.every((kind) => storedDocumentByKind.has(kind));
-  const canSubmit = Boolean(current?.oneIdLinked && documentsReady && providerReady);
+  if (current?.status === 'pending') {
+    return (
+      <MarketplaceStatus
+        icon="contract"
+        message={t('agritech.marketplace.verify.pendingDescription')}
+        title={t('agritech.marketplace.verify.pending')}
+      >
+        <p className="dh-fine-print">{t('agritech.marketplace.verify.noFixedReviewTime')}</p>
+      </MarketplaceStatus>
+    );
+  }
+  if (current?.status === 'rejected') {
+    return (
+      <MarketplaceStatus
+        icon="shield"
+        message={
+          current.rejectionReason
+            ? t(`agritech.marketplace.verify.rejection.${current.rejectionReason}`)
+            : t('agritech.marketplace.verify.rejectedDescription')
+        }
+        title={t('agritech.marketplace.verify.rejected')}
+      >
+        <p className="dh-fine-print">{t('agritech.marketplace.verify.correctionUnavailable')}</p>
+      </MarketplaceStatus>
+    );
+  }
+
+  const documents: Record<typeof role, string[]> = {
+    buyer: ['id', 'business'],
+    farmer: ['id', 'land', 'lease', 'cadastre', 'farm'],
+    seller: ['id', 'business', 'warehouse'],
+  };
   return (
     <div className="dh-verification-page">
       <div className="dh-page-heading">
@@ -1085,7 +801,6 @@ export function MarketplaceVerification({
       </div>
       <div className="dh-verification-layout">
         <section className="dh-panel">
-          <VerificationRejection current={current} t={t} />
           <div className="dh-panel__head">
             <div>
               <p className="dh-eyebrow">{t('agritech.marketplace.verify.step.role')}</p>
@@ -1098,9 +813,8 @@ export function MarketplaceVerification({
           <div className="dh-role-grid">
             {(['farmer', 'seller', 'buyer'] as const).map((value) => (
               <button
-                aria-pressed={activeRole === value}
-                className={activeRole === value ? 'is-active' : ''}
-                disabled={Boolean(current)}
+                aria-pressed={role === value}
+                className={role === value ? 'is-active' : ''}
                 key={value}
                 onClick={() => {
                   setRole(value);
@@ -1114,66 +828,35 @@ export function MarketplaceVerification({
             ))}
           </div>
           <h3>{t('agritech.marketplace.verify.requiredDocuments')}</h3>
-          <VerificationEvidenceList
-            current={current}
-            onUploadDocument={onUploadDocument}
-            pendingAction={pendingAction}
-            readiness={readiness}
-            requiredDocuments={requiredDocuments}
-            storedDocumentByKind={storedDocumentByKind}
-            t={t}
-          />
+          <ul className="dh-document-list">
+            {documents[role].map((document) => (
+              <li key={document}>
+                <MarketplaceIcon name="contract" />
+                <span>{t(`agritech.marketplace.verify.doc.${document}`)}</span>
+              </li>
+            ))}
+          </ul>
         </section>
         <aside className="dh-panel dh-provider-state">
           <span className="dh-provider-state__icon">
             <MarketplaceIcon name="shield" />
           </span>
           <p className="dh-eyebrow">{t('agritech.marketplace.verify.provider')}</p>
-          <h2>{t('agritech.marketplace.verify.identity')}</h2>
-          <p>{t('agritech.marketplace.verify.reason')}</p>
-          {readiness.status === 'loading' || readiness.status === 'idle' ? (
-            <p aria-live="polite" className="dh-state-inline" role="status">
-              {t('agritech.marketplace.verify.providerChecking')}
-            </p>
-          ) : null}
-          {readiness.status === 'error' ? (
-            <div>
-              <p className="dh-state-inline dh-state-inline--error">
-                {t('agritech.marketplace.verify.providerUnavailableDescription')}
-              </p>
-              <button className="dh-text-button" onClick={onRetry} type="button">
-                {t('ui.runtime.retry')}
-              </button>
-            </div>
-          ) : null}
-          {readiness.data ? (
-            <ul className="dh-document-list">
-              {(['oneId', 'verificationDocuments'] as const).map((capability) => (
-                <li key={capability}>
-                  <MarketplaceIcon name={readiness.data?.[capability].ready ? 'check' : 'shield'} />
-                  <span>
-                    {t(`agritech.marketplace.verify.capability.${capability}`)} ·{' '}
-                    {t(`agritech.marketplace.verify.providerMode.${readiness.data?.[capability].mode}`)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          ) : null}
-          <p className="dh-fine-print">{t('agritech.marketplace.verify.storageNotice')}</p>
-          <VerificationActions
-            canSubmit={canSubmit}
-            current={current}
-            onLinkIdentity={onLinkIdentity}
-            onStart={onStart}
-            onSubmit={onSubmit}
-            pendingAction={pendingAction}
-            readiness={readiness}
-            role={activeRole}
-            t={t}
-          />
-          {current && !canSubmit ? (
-            <p className="dh-fine-print">{t('agritech.marketplace.verify.completeRequiredSteps')}</p>
-          ) : null}
+          <h2>{t('agritech.marketplace.verify.providerUnavailable')}</h2>
+          <p>{t('agritech.marketplace.verify.providerUnavailableDescription')}</p>
+          <div className="dh-state-inline">
+            <MarketplaceIcon name="check" />
+            {t('agritech.marketplace.verify.noPlaceholderSubmission')}
+          </div>
+          <button
+            className="dh-button dh-button--secondary"
+            onClick={() => {
+              navigate('/account');
+            }}
+            type="button"
+          >
+            {t('agritech.marketplace.account.title')}
+          </button>
         </aside>
       </div>
     </div>
@@ -1201,86 +884,32 @@ function MarketplaceStatus({
 
 interface AccountProps {
   contracts: Resource<ContractViewDto[]>;
-  dashboard: Resource<MarketplaceRoleDashboardDto | null>;
   locale: Locale;
-  management?: ReactNode;
+  myRequests: Resource<BuyerRequestViewDto[]>;
   navigate: MarketplaceNavigate;
-  onRetry: () => void;
-  samples: Resource<MarketplaceSampleDto[]>;
+  samples: Resource<SampleViewDto[]>;
   t: MarketplaceTranslate;
   verification: Resource<VerificationViewDto | null>;
 }
 
-const contractCountForDashboard = (dashboard: MarketplaceRoleDashboardDto): number => {
-  if (dashboard.buyer) {
-    return dashboard.buyer.activeDeals + dashboard.buyer.completedDeals;
-  }
-  if (dashboard.seller) {
-    return dashboard.seller.activeDeals + dashboard.seller.completedDeals;
-  }
-  return 0;
-};
-
 export function MarketplaceAccount({
   contracts,
-  dashboard,
   locale,
-  management,
+  myRequests,
   navigate,
-  onRetry,
   samples,
   t,
   verification,
 }: Readonly<AccountProps>) {
   const current = verification.data;
-  const roleDashboard = dashboard.data;
-  let dashboardContent: ReactNode;
-  if (dashboard.status === 'loading' || dashboard.status === 'idle') {
-    dashboardContent = <MarketplaceSkeleton count={2} />;
-  } else if (dashboard.status === 'error') {
-    dashboardContent = (
-      <div>
-        <p className="dh-state-inline dh-state-inline--error">
-          {t('agritech.marketplace.account.dashboardUnavailable')}
-        </p>
-        <button className="dh-text-button" onClick={onRetry} type="button">
-          {t('ui.runtime.retry')}
-        </button>
-      </div>
-    );
-  } else if (!roleDashboard) {
-    dashboardContent = <p className="dh-muted">{t('agritech.marketplace.account.dashboardEmpty')}</p>;
-  } else {
-    const dashboardOrderCount = roleDashboard.buyer?.openPurchaseRequests ?? roleDashboard.seller?.pendingOffers ?? 0;
-    const stats = [
-      [dashboardOrderCount, 'agritech.marketplace.account.stat.orders'],
-      [contractCountForDashboard(roleDashboard), 'agritech.marketplace.account.stat.contracts'],
-    ] as const;
-    dashboardContent = (
-      <section aria-label={t('agritech.marketplace.account.dashboard')} className="dh-stat-grid">
-        {stats.map(([value, key]) => (
-          <div key={key}>
-            <strong>{value}</strong>
-            <span>{t(key)}</span>
-          </div>
-        ))}
-      </section>
-    );
-  }
+  const stats = [
+    [myRequests.data.length, 'agritech.marketplace.account.stat.orders'],
+    [contracts.data.length, 'agritech.marketplace.account.stat.contracts'],
+    [samples.data.length, 'agritech.marketplace.account.samples'],
+  ] as const;
   let contractContent: ReactNode;
-  if (contracts.status === 'loading' || contracts.status === 'idle') {
+  if (contracts.status === 'loading') {
     contractContent = <MarketplaceSkeleton count={2} />;
-  } else if (contracts.status === 'error') {
-    contractContent = (
-      <div>
-        <p className="dh-state-inline dh-state-inline--error">
-          {t('agritech.marketplace.account.contractsUnavailable')}
-        </p>
-        <button className="dh-text-button" onClick={onRetry} type="button">
-          {t('ui.runtime.retry')}
-        </button>
-      </div>
-    );
   } else if (contracts.data.length > 0) {
     contractContent = (
       <div className="dh-compact-list">
@@ -1310,17 +939,8 @@ export function MarketplaceAccount({
   }
 
   let sampleContent: ReactNode;
-  if (samples.status === 'loading' || samples.status === 'idle') {
+  if (samples.status === 'loading') {
     sampleContent = <MarketplaceSkeleton count={2} />;
-  } else if (samples.status === 'error') {
-    sampleContent = (
-      <div>
-        <p className="dh-state-inline dh-state-inline--error">{t('agritech.marketplace.samples.unavailable')}</p>
-        <button className="dh-text-button" onClick={onRetry} type="button">
-          {t('ui.runtime.retry')}
-        </button>
-      </div>
-    );
   } else if (samples.data.length > 0) {
     sampleContent = (
       <div className="dh-sample-list">
@@ -1328,7 +948,7 @@ export function MarketplaceAccount({
           <div key={sample.id}>
             <MarketplaceIcon name="seeds" />
             <span>
-              <strong>{sample.listing.title}</strong>
+              <strong>{sample.productId}</strong>
               <small>{formatDate(sample.createdAt, locale)}</small>
             </span>
             <em>{t(`agritech.marketplace.samples.status.${sample.status}`)}</em>
@@ -1346,8 +966,8 @@ export function MarketplaceAccount({
           <p className="dh-eyebrow">{t('agritech.marketplace.account.dashboard')}</p>
           <h1>{t('agritech.marketplace.account.title')}</h1>
           <p>
-            {(roleDashboard ?? current)
-              ? t(`agritech.marketplace.account.role.${roleDashboard?.role ?? current?.role}`)
+            {current
+              ? t(`agritech.marketplace.account.role.${current.role}`)
               : t('agritech.marketplace.account.role.none')}
           </p>
         </div>
@@ -1358,7 +978,14 @@ export function MarketplaceAccount({
           </span>
         </div>
       </div>
-      {dashboardContent}
+      <section aria-label={t('agritech.marketplace.account.dashboard')} className="dh-stat-grid">
+        {stats.map(([value, key]) => (
+          <div key={key}>
+            <strong>{value}</strong>
+            <span>{t(key)}</span>
+          </div>
+        ))}
+      </section>
       {!current || current.status !== 'verified' ? (
         <div className="dh-callout">
           <div>
@@ -1400,365 +1027,35 @@ export function MarketplaceAccount({
           <p className="dh-fine-print">{t('agritech.marketplace.samples.deliveryDisclaimer')}</p>
         </section>
       </div>
-      {management}
     </div>
   );
 }
 
-type ContractIdentityStatus = ResourceStatus | VerificationViewDto['status'];
-
 interface ContractProps {
   contract?: ContractViewDto;
-  identityStatus: ContractIdentityStatus;
-  lifecycle: Resource<ContractLifecycleDto | null>;
+  currentUserId?: string;
+  identityStatus: ResourceStatus;
   locale: Locale;
   navigate: MarketplaceNavigate;
-  onDownloadArtifact: (contract: ContractViewDto) => void;
-  onOpenDispute: (contract: ContractViewDto, reason: DisputeReason) => void;
-  onQuote: (contract: ContractViewDto, input: MarketplaceContractDeliveryQuoteInput) => void;
-  onRefreshArtifact: (contract: ContractViewDto) => void;
+  onQuote: (contract: ContractViewDto, input: ContractDeliveryQuoteDto) => void;
   onRetry: () => void;
   onSign: (contract: ContractViewDto) => void;
-  onUploadDisputeEvidence: (contract: ContractViewDto, evidence: File) => void;
-  onAdvanceLifecycle: (contract: ContractViewDto, action: MarketplaceContractLifecycleAction) => void;
   pendingAction?: string;
   status: ResourceStatus;
   t: MarketplaceTranslate;
 }
 
-function ContractEvidencePanel({
-  canMutate,
-  contract,
-  lifecycle,
-  onDownloadArtifact,
-  onOpenDispute,
-  onRefreshArtifact,
-  onUploadDisputeEvidence,
-  pendingAction,
-  t,
-}: Readonly<{
-  canMutate: boolean;
-  contract: ContractViewDto;
-  lifecycle: ContractLifecycleDto;
-  onDownloadArtifact: () => void;
-  onOpenDispute: (reason: DisputeReason) => void;
-  onRefreshArtifact: () => void;
-  onUploadDisputeEvidence: (evidence: File) => void;
-  pendingAction?: string;
-  t: MarketplaceTranslate;
-}>) {
-  const [disputeReason, setDisputeReason] = useState<DisputeReason>('delivery_issue');
-  const [evidence, setEvidence] = useState<File>();
-  const disputeOpen = lifecycle.dispute?.status === 'open';
-  return (
-    <section className="dh-panel dh-contract-evidence">
-      <p className="dh-eyebrow">{t('agritech.marketplace.contract.artifact')}</p>
-      <h2>{t('agritech.marketplace.contract.documentsAndDispute')}</h2>
-      {lifecycle.artifact ? (
-        <dl className="dh-facts">
-          <div>
-            <dt>{t('agritech.marketplace.contract.artifactVersion')}</dt>
-            <dd>{lifecycle.artifact.templateVersion}</dd>
-          </div>
-          <div>
-            <dt>{t('agritech.marketplace.contract.artifactSize')}</dt>
-            <dd>{lifecycle.artifact.byteSize}</dd>
-          </div>
-          <div>
-            <dt>{t('agritech.marketplace.contract.provider')}</dt>
-            <dd>{lifecycle.artifact.providerName}</dd>
-          </div>
-          <div>
-            <dt>{t('agritech.marketplace.contract.providerMode')}</dt>
-            <dd>{t(`agritech.marketplace.contract.providerMode.${lifecycle.artifact.providerMode}`)}</dd>
-          </div>
-        </dl>
-      ) : (
-        <p className="dh-muted">{t('agritech.marketplace.contract.artifactUnavailable')}</p>
-      )}
-      {lifecycle.artifact?.simulation ? (
-        <span className="dh-badge dh-badge--neutral">{t('agritech.marketplace.contract.simulationDisclosure')}</span>
-      ) : null}
-      {lifecycle.artifact?.watermark ? (
-        <p className="dh-fine-print">{t('agritech.marketplace.contract.simulationWatermark')}</p>
-      ) : null}
-      {canMutate ? (
-        <div className="dh-management-actions">
-          <button
-            className="dh-button dh-button--secondary"
-            disabled={pendingAction === `artifact:${contract.id}`}
-            onClick={onRefreshArtifact}
-            type="button"
-          >
-            {t('agritech.marketplace.contract.refreshArtifact')}
-          </button>
-          {lifecycle.artifact ? (
-            <button
-              className="dh-button dh-button--secondary"
-              disabled={pendingAction === `artifact-download:${contract.id}`}
-              onClick={onDownloadArtifact}
-              type="button"
-            >
-              {t('agritech.marketplace.contract.downloadArtifact')}
-            </button>
-          ) : null}
-        </div>
-      ) : null}
-      <hr />
-      <h3>{t('agritech.marketplace.contract.dispute')}</h3>
-      {lifecycle.dispute ? (
-        <p className="dh-state-inline">
-          {t(`agritech.marketplace.contract.disputeStatus.${lifecycle.dispute.status}`)} ·{' '}
-          {t(`agritech.marketplace.contract.disputeReason.${lifecycle.dispute.reason}`)}
-        </p>
-      ) : null}
-      {!lifecycle.dispute && canMutate ? (
-        <form
-          className="dh-inline-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            onOpenDispute(disputeReason);
-          }}
-        >
-          <label>
-            <span>{t('agritech.marketplace.contract.disputeReason')}</span>
-            <select
-              onChange={(event) => {
-                setDisputeReason(event.target.value as DisputeReason);
-              }}
-              value={disputeReason}
-            >
-              {(['delivery_issue', 'quality_issue', 'quantity_issue', 'other'] as const).map((reason) => (
-                <option key={reason} value={reason}>
-                  {t(`agritech.marketplace.contract.disputeReason.${reason}`)}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button
-            className="dh-button dh-button--secondary"
-            disabled={pendingAction === `dispute:${contract.id}`}
-            type="submit"
-          >
-            {t('agritech.marketplace.contract.openDispute')}
-          </button>
-        </form>
-      ) : null}
-      {!lifecycle.dispute && !canMutate ? (
-        <p className="dh-muted">{t('agritech.marketplace.cart.verifyRequired')}</p>
-      ) : null}
-      {disputeOpen && canMutate ? (
-        <form
-          className="dh-inline-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            if (evidence) {
-              onUploadDisputeEvidence(evidence);
-            }
-          }}
-        >
-          <label>
-            <span>{t('agritech.marketplace.contract.disputeEvidence')}</span>
-            <input
-              accept="application/pdf,image/jpeg,image/png"
-              onChange={(event) => {
-                setEvidence(event.target.files?.[0]);
-              }}
-              required
-              type="file"
-            />
-          </label>
-          <button
-            className="dh-button dh-button--secondary"
-            disabled={!evidence || pendingAction === `dispute-evidence:${contract.id}`}
-            type="submit"
-          >
-            {t('agritech.marketplace.contract.uploadEvidence')}
-          </button>
-        </form>
-      ) : null}
-      {lifecycle.disputeEvidence.length > 0 ? (
-        <ul className="dh-document-list">
-          {lifecycle.disputeEvidence.map((item) => (
-            <li key={item.id}>
-              <MarketplaceIcon name="contract" />
-              <span>
-                {item.fileName} · {item.byteSize}
-                {item.simulation ? ` · ${t('agritech.marketplace.contract.simulationDisclosure')}` : ''}
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </section>
-  );
-}
-
-const lifecycleEventTranslationKeys: Record<string, string> = {
-  artifact_stored: 'marketplace.contract.notification.artifactStored',
-  buyer_consented: 'marketplace.contract.notification.buyerConsented',
-  buyer_payment_confirmed: 'marketplace.contract.notification.buyerPaymentConfirmed',
-  buyer_repaid: 'marketplace.contract.notification.buyerRepaid',
-  contract_completed: 'marketplace.contract.notification.contractCompleted',
-  factoring_approved: 'marketplace.contract.notification.factoringApproved',
-  factoring_closed: 'marketplace.contract.notification.factoringClosed',
-  factoring_rejected: 'marketplace.contract.notification.factoringRejected',
-  factoring_requested: 'marketplace.contract.notification.factoringRequested',
-  fulfillment_delivered: 'marketplace.contract.notification.fulfillmentDelivered',
-  fulfillment_ready: 'marketplace.contract.notification.fulfillmentReady',
-  fulfillment_started: 'marketplace.contract.notification.fulfillmentStarted',
-  seller_consented: 'marketplace.contract.notification.sellerConsented',
-  seller_paid: 'marketplace.contract.notification.sellerPaid',
-  seller_receipt_confirmed: 'marketplace.contract.notification.sellerReceiptConfirmed',
-  signature_recorded: 'marketplace.contract.notification.signatureRecorded',
-};
-
-function nextFulfillmentAction(
-  contract: ContractViewDto,
-  lifecycle: ContractLifecycleDto,
-): MarketplaceContractLifecycleAction | undefined {
-  if (lifecycle.fulfillment.status === 'ready' && contract.actorParty === 'seller') {
-    return { body: { command: 'start' }, kind: 'fulfillment' };
+function hasCurrentPartySigned(contract: ContractViewDto, currentUserId: string | undefined): boolean {
+  if (!currentUserId) {
+    return false;
   }
-  if (lifecycle.fulfillment.status === 'in_progress' && contract.actorParty === 'seller') {
-    return { body: { command: 'mark_delivered' }, kind: 'fulfillment' };
-  }
-  if (lifecycle.fulfillment.status === 'delivered' && contract.actorParty === 'buyer') {
-    return { body: { command: 'accept_delivery' }, kind: 'fulfillment' };
-  }
-  return undefined;
-}
-
-function nextDirectSettlementAction(
-  contract: ContractViewDto,
-  lifecycle: ContractLifecycleDto,
-): MarketplaceContractLifecycleAction | undefined {
-  if (lifecycle.settlement.status === 'awaiting_buyer_confirmation' && contract.actorParty === 'buyer') {
-    return { body: { command: 'confirm_buyer_payment' }, kind: 'settlement' };
-  }
-  if (lifecycle.settlement.status === 'buyer_confirmed' && contract.actorParty === 'seller') {
-    return { body: { command: 'confirm_seller_receipt' }, kind: 'settlement' };
-  }
-  return undefined;
-}
-
-function nextFactoringSettlementAction(
-  contract: ContractViewDto,
-  lifecycle: ContractLifecycleDto,
-): MarketplaceContractLifecycleAction | undefined {
-  const { settlement } = lifecycle;
-  if (settlement.status === 'awaiting_consents') {
-    const alreadyConsented =
-      contract.actorParty === 'buyer'
-        ? 'buyerConsentedAt' in settlement && Boolean(settlement.buyerConsentedAt)
-        : 'sellerConsentedAt' in settlement && Boolean(settlement.sellerConsentedAt);
-    return alreadyConsented ? undefined : { kind: 'factoring-consent' };
-  }
-  if (settlement.status === 'ready_to_request' && contract.actorParty === 'buyer') {
-    return { body: { command: 'request_decision' }, kind: 'settlement' };
-  }
-  if (settlement.status === 'approved' && contract.actorParty === 'seller') {
-    return { body: { command: 'record_seller_payout' }, kind: 'settlement' };
-  }
-  if (settlement.status === 'seller_paid' && contract.actorParty === 'buyer') {
-    return { body: { command: 'record_buyer_repayment' }, kind: 'settlement' };
-  }
-  if (settlement.status === 'buyer_repaid' && contract.actorParty === 'buyer') {
-    return { body: { command: 'close' }, kind: 'settlement' };
-  }
-  return undefined;
-}
-
-function nextLifecycleAction(
-  contract: ContractViewDto,
-  lifecycle: ContractLifecycleDto,
-): MarketplaceContractLifecycleAction | undefined {
-  if (contract.status !== 'active' || lifecycle.dispute?.status === 'open') {
-    return undefined;
-  }
-  const fulfillmentAction = nextFulfillmentAction(contract, lifecycle);
-  if (fulfillmentAction) {
-    return fulfillmentAction;
-  }
-  return contract.factoringEnabled
-    ? nextFactoringSettlementAction(contract, lifecycle)
-    : nextDirectSettlementAction(contract, lifecycle);
-}
-
-function ContractLifecyclePanel({
-  canAdvance,
-  contract,
-  lifecycle,
-  onAdvance,
-  onRetry,
-  pending,
-  t,
-}: Readonly<{
-  canAdvance: boolean;
-  contract: ContractViewDto;
-  lifecycle: Resource<ContractLifecycleDto | null>;
-  onAdvance: (action: MarketplaceContractLifecycleAction) => void;
-  onRetry: () => void;
-  pending: boolean;
-  t: MarketplaceTranslate;
-}>) {
-  const current = lifecycle.data;
-  if (lifecycle.status === 'loading' || lifecycle.status === 'idle') {
-    return <MarketplaceSkeleton count={1} />;
-  }
-  if (lifecycle.status === 'empty') {
-    return <p className="dh-muted">{t('agritech.marketplace.contract.artifactUnavailable')}</p>;
-  }
-  if (lifecycle.status === 'error' || !current) {
-    return (
-      <div>
-        <p className="dh-state-inline dh-state-inline--error">{t('agritech.marketplace.error')}</p>
-        <button className="dh-text-button" onClick={onRetry} type="button">
-          {t('ui.runtime.retry')}
-        </button>
-      </div>
-    );
-  }
-  const latestEvent = current.timeline.at(-1);
-  const statusKey = latestEvent
-    ? (lifecycleEventTranslationKeys[latestEvent.eventType] ?? 'marketplace.contract.notification.updated')
-    : 'agritech.marketplace.contract.settlement.awaiting';
-  const action = canAdvance ? nextLifecycleAction(contract, current) : undefined;
-  return (
-    <>
-      <h2>
-        {t(
-          contract.factoringEnabled
-            ? 'agritech.marketplace.contract.settlement.factoring'
-            : 'agritech.marketplace.contract.settlement.direct',
-        )}
-      </h2>
-      <p>{t('agritech.marketplace.contract.settlement.description')}</p>
-      <span className="dh-badge dh-badge--neutral">{t(statusKey)}</span>
-      {current.settlement.simulation || latestEvent?.simulation ? (
-        <span className="dh-badge dh-badge--neutral">{t('agritech.marketplace.contract.simulationDisclosure')}</span>
-      ) : null}
-      {action ? (
-        <button
-          className="dh-button dh-button--secondary"
-          disabled={pending}
-          onClick={() => {
-            onAdvance(action);
-          }}
-          type="button"
-        >
-          {t('agritech.marketplace.contract.settlement.advance')}
-        </button>
-      ) : null}
-    </>
-  );
-}
-
-function hasCurrentPartySigned(contract: ContractViewDto): boolean {
-  if (contract.actorParty === 'buyer') {
+  if (currentUserId === contract.buyerUserId) {
     return Boolean(contract.buyerSignedAt);
   }
-  return Boolean(contract.sellerSignedAt);
+  if (currentUserId === contract.sellerUserId) {
+    return Boolean(contract.sellerSignedAt);
+  }
+  return false;
 }
 
 interface ContractConsentState {
@@ -1767,19 +1064,16 @@ interface ContractConsentState {
   messageKey: string;
 }
 
-function contractConsentState(contract: ContractViewDto, identityStatus: ContractIdentityStatus): ContractConsentState {
+function contractConsentState(
+  contract: ContractViewDto,
+  currentUserId: string | undefined,
+  identityStatus: ResourceStatus,
+): ContractConsentState {
   if (identityStatus === 'error') {
     return {
       canSign: false,
       icon: 'shield',
       messageKey: 'agritech.marketplace.verify.unavailableDescription',
-    };
-  }
-  if (identityStatus !== 'verified') {
-    return {
-      canSign: false,
-      icon: 'shield',
-      messageKey: 'agritech.marketplace.cart.verifyRequired',
     };
   }
   if (contract.status === 'legacy_review_required') {
@@ -1796,47 +1090,64 @@ function contractConsentState(contract: ContractViewDto, identityStatus: Contrac
       messageKey: 'agritech.marketplace.contract.deliveryQuoteRequired',
     };
   }
-  if (hasCurrentPartySigned(contract)) {
+  if (hasCurrentPartySigned(contract, currentUserId)) {
     return {
       canSign: false,
       icon: 'check',
       messageKey: 'agritech.marketplace.contract.yourSignatureRecorded',
     };
   }
+  const isCurrentParty = currentUserId === contract.buyerUserId || currentUserId === contract.sellerUserId;
   const isSignable = contract.status === 'draft' || contract.status === 'signed';
   return {
-    canSign: isSignable,
+    canSign: isCurrentParty && isSignable,
     icon: 'shield',
     messageKey: 'agritech.marketplace.contract.notYourContract',
   };
 }
 
-const canActorQuoteDelivery = (contract: ContractViewDto, quotePending: boolean): boolean =>
-  quotePending &&
-  contract.actorParty === 'seller' &&
-  contract.status === 'draft' &&
-  !contract.buyerSignedAt &&
-  !contract.sellerSignedAt;
-
-function ContractConsentAction({
-  consent,
+export function MarketplaceContract({
   contract,
+  currentUserId,
   identityStatus,
+  locale,
+  navigate,
+  onQuote,
   onRetry,
   onSign,
   pendingAction,
+  status,
   t,
-}: Readonly<{
-  consent: ContractConsentState;
-  contract: ContractViewDto;
-  identityStatus: ContractIdentityStatus;
-  onRetry: () => void;
-  onSign: (contract: ContractViewDto) => void;
-  pendingAction?: string;
-  t: MarketplaceTranslate;
-}>) {
-  if (identityStatus === 'error') {
+}: Readonly<ContractProps>) {
+  const [quoteInput, setQuoteInput] = useState<ContractDeliveryQuoteDto>({ deliveryPriceUzs: 0 });
+  if (status === 'loading' || status === 'idle') {
+    return <MarketplaceSkeleton count={3} />;
+  }
+  if (!contract) {
     return (
+      <MarketplaceEmpty
+        actionLabel={t('agritech.marketplace.back')}
+        headingLevel={1}
+        icon="produce"
+        message={t('agritech.marketplace.contract.notFoundDescription')}
+        onAction={() => {
+          navigate('/account');
+        }}
+        title={t('agritech.marketplace.contract.notFound')}
+      />
+    );
+  }
+  const consent = contractConsentState(contract, currentUserId, identityStatus);
+  const deliveryQuotePending = contract.deliveryTerms === 'seller_delivery' && contract.deliveryPriceUzs === undefined;
+  const canQuoteDelivery =
+    deliveryQuotePending &&
+    currentUserId === contract.sellerUserId &&
+    contract.status === 'draft' &&
+    !contract.buyerSignedAt &&
+    !contract.sellerSignedAt;
+  let consentAction: ReactNode;
+  if (identityStatus === 'error') {
+    consentAction = (
       <div>
         <span className="dh-state-inline dh-state-inline--error">
           <MarketplaceIcon name={consent.icon} />
@@ -1847,9 +1158,8 @@ function ContractConsentAction({
         </button>
       </div>
     );
-  }
-  if (consent.canSign) {
-    return (
+  } else if (consent.canSign) {
+    consentAction = (
       <button
         className="dh-button dh-button--primary"
         disabled={pendingAction === `sign:${contract.id}`}
@@ -1862,54 +1172,14 @@ function ContractConsentAction({
         {t('agritech.marketplace.contract.signOwnParty')}
       </button>
     );
-  }
-  return (
-    <span className="dh-state-inline">
-      <MarketplaceIcon name={consent.icon} />
-      {t(consent.messageKey)}
-    </span>
-  );
-}
-
-export function MarketplaceContract({
-  contract,
-  identityStatus,
-  lifecycle,
-  locale,
-  navigate,
-  onDownloadArtifact,
-  onAdvanceLifecycle,
-  onOpenDispute,
-  onQuote,
-  onRefreshArtifact,
-  onRetry,
-  onSign,
-  onUploadDisputeEvidence,
-  pendingAction,
-  status,
-  t,
-}: Readonly<ContractProps>) {
-  const [quoteInput, setQuoteInput] = useState<MarketplaceContractDeliveryQuoteInput>({ deliveryPriceUzs: 0 });
-  if (status === 'loading' || status === 'idle') {
-    return <MarketplaceSkeleton count={3} />;
-  }
-  if (!contract) {
-    return (
-      <MarketplaceEmpty
-        actionLabel={t('agritech.marketplace.back')}
-        icon="produce"
-        message={t('agritech.marketplace.contract.notFoundDescription')}
-        onAction={() => {
-          navigate('/account');
-        }}
-        title={t('agritech.marketplace.contract.notFound')}
-      />
+  } else {
+    consentAction = (
+      <span className="dh-state-inline">
+        <MarketplaceIcon name={consent.icon} />
+        {t(consent.messageKey)}
+      </span>
     );
   }
-  const consent = contractConsentState(contract, identityStatus);
-  const canMutate = identityStatus === 'verified';
-  const deliveryQuotePending = contract.deliveryTerms === 'seller_delivery' && contract.deliveryPriceUzs === undefined;
-  const canQuoteDelivery = canMutate && canActorQuoteDelivery(contract, deliveryQuotePending);
   const timeline = [
     ['generated', contract.createdAt, true],
     ['buyerSigned', contract.buyerSignedAt, Boolean(contract.buyerSignedAt)],
@@ -1952,8 +1222,7 @@ export function MarketplaceContract({
           <div className="dh-contract-parties">
             <div>
               <span>{t('agritech.marketplace.contract.buyer')}</span>
-              <strong>{contract.buyerPartySnapshot.legalName}</strong>
-              <small>{contract.buyerPartySnapshot.region}</small>
+              <strong>{contract.buyerUserId}</strong>
               {contract.buyerSignedAt && (
                 <small>
                   <MarketplaceIcon name="check" />
@@ -1963,8 +1232,7 @@ export function MarketplaceContract({
             </div>
             <div>
               <span>{t('agritech.marketplace.contract.seller')}</span>
-              <strong>{contract.sellerPartySnapshot.legalName}</strong>
-              <small>{contract.sellerPartySnapshot.region}</small>
+              <strong>{contract.sellerUserId}</strong>
               {contract.sellerSignedAt && (
                 <small>
                   <MarketplaceIcon name="check" />
@@ -2023,7 +1291,7 @@ export function MarketplaceContract({
             <div className="dh-contract-lines">
               <h2>{t('agritech.marketplace.contract.lines')}</h2>
               {contract.lines.map((item) => (
-                <div key={item.sourcePublicationId}>
+                <div key={item.productId}>
                   <span>
                     {item.name} × {item.quantity}
                   </span>
@@ -2088,15 +1356,7 @@ export function MarketplaceContract({
           ) : null}
           <div className="dh-contract-consent">
             <p>{t('agritech.marketplace.contract.consent')}</p>
-            <ContractConsentAction
-              consent={consent}
-              contract={contract}
-              identityStatus={identityStatus}
-              onRetry={onRetry}
-              onSign={onSign}
-              pendingAction={pendingAction}
-              t={t}
-            />
+            {consentAction}
           </div>
         </article>
         <aside className="dh-contract-sidebar">
@@ -2119,39 +1379,12 @@ export function MarketplaceContract({
               <MarketplaceIcon name="shield" />
             </span>
             <p className="dh-eyebrow">{t('agritech.marketplace.contract.payment')}</p>
-            <ContractLifecyclePanel
-              canAdvance={canMutate}
-              contract={contract}
-              lifecycle={lifecycle}
-              onAdvance={(action) => {
-                onAdvanceLifecycle(contract, action);
-              }}
-              onRetry={onRetry}
-              pending={pendingAction === `lifecycle:${contract.id}`}
-              t={t}
-            />
+            <h2>{t('agritech.marketplace.contract.paymentUnavailable')}</h2>
+            <p>{t('agritech.marketplace.contract.paymentUnavailableDescription')}</p>
+            <span className="dh-badge dh-badge--neutral">
+              {t('agritech.marketplace.contract.factoringUnavailable')}
+            </span>
           </section>
-          {lifecycle.data ? (
-            <ContractEvidencePanel
-              canMutate={canMutate}
-              contract={contract}
-              lifecycle={lifecycle.data}
-              onDownloadArtifact={() => {
-                onDownloadArtifact(contract);
-              }}
-              onOpenDispute={(reason) => {
-                onOpenDispute(contract, reason);
-              }}
-              onRefreshArtifact={() => {
-                onRefreshArtifact(contract);
-              }}
-              onUploadDisputeEvidence={(evidence) => {
-                onUploadDisputeEvidence(contract, evidence);
-              }}
-              pendingAction={pendingAction}
-              t={t}
-            />
-          ) : null}
         </aside>
       </div>
     </div>

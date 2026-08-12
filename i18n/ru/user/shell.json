@@ -41,7 +41,7 @@
   "user.nav.profile": "Профиль",
   "user.nav.settings": "Настройки",
   "user.settings.title": "Настройки",
-  "user.settings.description": "Выберите язык и оформление или управляйте аккаунтами, подключенными к вашему профилю.",
+  "user.settings.description": "Выберите язык или управляйте аккаунтами, подключенными к вашему профилю.",
   "user.settings.preferences.title": "Предпочтения",
   "user.settings.preferences.description": "Эти настройки сохраняются в профиле, когда доступна пользовательская сессия.",
   "user.settings.connections.title": "Подключенные аккаунты",

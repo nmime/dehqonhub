@@ -33,6 +33,17 @@ export const isMarketplaceRoute = (path: string): boolean => {
   );
 };
 
+const bareRoutes = new Set(['/telegram-mini-app', '/tma', '/tma/auth']);
+
+/**
+ * Routes that render without the site chrome. These are the Telegram mini-app
+ * entry points: they open inside Telegram's own frame, which already supplies a
+ * header and a back control, so a marketplace header with search and a bottom
+ * navigation bar would be a second chrome stacked inside the first. Account
+ * linking (`/link/telegram`) is deliberately not here — it starts on the site.
+ */
+export const isBareRoute = (path: string): boolean => bareRoutes.has(normalizePath(path));
+
 export const getLinkRoute = (path: string): '/link/telegram' | '/link/discord' | null => {
   const normalized = normalizePath(path);
   if (normalized === '/link/telegram' || normalized === '/link/discord') {

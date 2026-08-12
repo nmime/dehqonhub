@@ -29,6 +29,11 @@ export class ProductViewDto {
 
 export class ProductListDto {
   @ApiProperty({ type: [ProductViewDto] }) items!: ProductViewDto[];
+  /**
+   * True when the tenant has published nothing and the API answered with the
+   * demo catalog instead, so the surface can label what the visitor is reading.
+   */
+  @ApiProperty() demo!: boolean;
 }
 
 export class CreateProductDto {

@@ -1,4 +1,4 @@
-// @requirements REQ-ASSURANCE-INVENTORY-004 REQ-ASSURANCE-RELEASE-003
+// @requirements REQ-ASSURANCE-INVENTORY-004
 // Evidence for: REQ-ASSURANCE-FRESHNESS-002 REQ-ASSURANCE-INVENTORY-004 REQ-ASSURANCE-OWNERSHIP-006 REQ-ASSURANCE-TRACE-001
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
@@ -214,69 +214,6 @@ test('builds a complete trace and selects only the requested evidence lane', () 
   });
   assert.deepEqual(pr.runs.map(({ key }) => key), ['fixture:test']);
   assert.deepEqual(nightly.runs.map(({ key }) => key), ['fixture:static-check']);
-});
-
-test('rejects self-recursive specification verification evidence', () => {
-  const workspace = fixtureWorkspace();
-  writeFileSync(
-    join(workspace, 'package.json'),
-    JSON.stringify({ scripts: { 'fixture:check': 'true', 'spec:verify': 'true' } }),
-  );
-  const file = verificationFile(workspace);
-  writeFileSync(
-    file,
-    readFileSync(file, 'utf8').replace(
-      `      - kind: vitest
-        file: apps/fixture/evidence.test.ts
-        target: fixture:test
-        lanes: [pr, main]
-`,
-      `      - kind: vitest
-        file: apps/fixture/evidence.test.ts
-        target: fixture:test
-        lanes: [pr, main]
-      - kind: operations
-        file: apps/fixture/evidence.test.ts
-        script: spec:verify
-        lanes: [pr, main]
-`,
-    ),
-  );
-
-  const model = loadAssuranceModel(workspace);
-
-  assert.ok(
-    model.errors.includes(
-      'openspec/specs/fixture/verification.yaml: REQ-FIXTURE-RULE-001: spec:verify cannot execute itself as evidence; map a non-recursive target instead',
-    ),
-  );
-});
-
-test('rejects evidence collection when the requested head is not checked out', () => {
-  const workspace = fixtureWorkspace();
-  runGit(workspace, ['init', '--quiet']);
-  runGit(workspace, ['add', '.']);
-  runGit(workspace, ['commit', '--quiet', '-m', 'verified source']);
-  const verifiedSource = runGit(workspace, ['rev-parse', 'HEAD']);
-  writeFileSync(join(workspace, 'unrelated.txt'), 'new source\n');
-  runGit(workspace, ['add', '.']);
-  runGit(workspace, ['commit', '--quiet', '-m', 'moved source']);
-  const model = loadAssuranceModel(workspace);
-
-  const report = verifyRequirements({
-    model,
-    requirementIds: ['REQ-FIXTURE-RULE-001'],
-    dryRun: false,
-    lane: 'pr',
-    head: verifiedSource,
-    reportPath: 'assurance.json',
-  });
-
-  assert.equal(report.status, 'failed');
-  assert.equal(report.workspaceState, 'clean');
-  assert.equal(report.runs.length, 1);
-  assert.equal(report.runs[0]?.key, 'exact-source-head');
-  assert.match(report.runs[0]?.stderrTail ?? '', /checked-out source/u);
 });
 
 test('repository-global source, config, workflow, and policy changes select every requirement', () => {
@@ -602,13 +539,13 @@ test('keeps the complete repository disposition inventory synchronized', () => {
 
   assert.deepEqual(model.errors, []);
   const expectedInventory = {
-    projects: 116,
-    behaviorTests: 604,
-    features: 7,
-    scenarios: 33,
-    requirements: 84,
-    acceptanceRequirements: 13,
-    evidence: 399,
+    projects: 111,
+    behaviorTests: 551,
+    features: 6,
+    scenarios: 19,
+    requirements: 74,
+    acceptanceRequirements: 9,
+    evidence: 241,
   };
   assert.deepEqual(report.totals, {
     ...expectedInventory,

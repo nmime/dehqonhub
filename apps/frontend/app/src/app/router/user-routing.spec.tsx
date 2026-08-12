@@ -1,37 +1,25 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016, REQ-AGRITECH-ROUTING-015, REQ-API-PROBLEM-001, REQ-FRONTEND-SHELL-004
-import { cleanup, render, screen } from '@testing-library/react';
-import type { ReactNode } from 'react';
+// @requirements REQ-AGRITECH-MARKETPLACE-016
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { getLinkRoute, isBareRoute, isMarketplaceRoute, normalizePath } from './user-navigation';
 import { UserRouter } from './user-router';
 
 const marketplaceRender = vi.hoisted(() => vi.fn());
 
 vi.mock('../../pages/marketplace', () => ({
-  MarketplacePage: (props: { contractId?: string; productId?: string; sellerId?: string; view?: string }) => {
+  MarketplacePage: (props: { contractId?: string; productId?: string; view?: string }) => {
     marketplaceRender(props);
 
     return (
       <div
         data-contract-id={props.contractId}
         data-product-id={props.productId}
-        data-seller-id={props.sellerId}
         data-testid="marketplace-route"
         data-view={props.view}
       />
     );
   },
 }));
-
-vi.mock('../../shared/ui', async (importOriginal) => {
-  const actual = await importOriginal<typeof import('../../shared/ui')>();
-
-  return {
-    ...actual,
-    MiniAppShell: ({ children }: Readonly<{ children: ReactNode }>) => (
-      <div data-testid="generic-user-shell">{children}</div>
-    ),
-  };
-});
 
 vi.mock('@app/frontend-runtime', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@app/frontend-runtime')>();
@@ -69,76 +57,107 @@ describe('DehqonHub marketplace routes', () => {
     ['/requests', 'requests'],
     ['/verification', 'verification'],
     ['/account', 'account'],
-  ])('maps %s to the %s marketplace state without the generic shell', async (path, view) => {
+  ])('maps %s to the %s marketplace state', async (path, view) => {
     const route = await renderRoute(path);
 
     expect(route.dataset['view']).toBe(view);
-    expect(screen.queryByTestId('generic-user-shell')).toBeNull();
   });
 
-  it('passes decoded product, seller and contract identifiers into marketplace states', async () => {
+  it('passes decoded product and contract identifiers into their marketplace states', async () => {
     let route = await renderRoute('/products/seed%2042');
 
     expect(route.dataset['view']).toBe('product');
     expect(route.dataset['productId']).toBe('seed 42');
-    expect(screen.queryByTestId('generic-user-shell')).toBeNull();
-
-    cleanup();
-    route = await renderRoute('/sellers/seller%2042');
-
-    expect(route.dataset['view']).toBe('seller');
-    expect(route.dataset['sellerId']).toBe('seller 42');
-    expect(screen.queryByTestId('generic-user-shell')).toBeNull();
 
     cleanup();
     route = await renderRoute('/contracts/DH%201042');
 
     expect(route.dataset['view']).toBe('contract');
     expect(route.dataset['contractId']).toBe('DH 1042');
-    expect(screen.queryByTestId('generic-user-shell')).toBeNull();
   });
 
-  it('keeps a non-canonical legacy path inside the generic user shell', async () => {
-    window.history.replaceState({}, '', '/marketplace');
-    render(<UserRouter applyUserLocale={vi.fn()} applyUserTheme={vi.fn()} />);
+  // Everything that is not a marketplace view — the preferences page, the auth
+  // flow, a legacy path that lands on not-found — renders as embedded content
+  // inside the same chrome, so the site has one header and one navigation.
+  it.each([['/marketplace'], ['/settings'], ['/auth']])('renders %s inside the site chrome', async (path) => {
+    const route = await renderRoute(path);
 
-    expect(await screen.findByTestId('generic-user-shell')).toBeTruthy();
-    expect(screen.queryByTestId('marketplace-route')).toBeNull();
+    expect(route.dataset['view']).toBe('embedded');
+  });
 
-    const dispatchAnchorClick = (configure?: (anchor: HTMLAnchorElement) => void, init?: MouseEventInit) => {
-      const anchor = document.createElement('a');
-      anchor.href = '/auth';
-      configure?.(anchor);
-      document.body.append(anchor);
-      const event = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0, ...init });
-      anchor.dispatchEvent(event);
-      anchor.remove();
-      return event;
+  it('routes in-app anchors client-side and leaves every other click to the browser', async () => {
+    await renderRoute('/settings');
+    const anchor = document.createElement('a');
+    document.body.append(anchor);
+
+    const clickAnchor = (attributes: Record<string, string>, init: MouseEventInit = {}) => {
+      anchor.removeAttribute('download');
+      anchor.removeAttribute('target');
+      for (const [name, value] of Object.entries(attributes)) {
+        anchor.setAttribute(name, value);
+      }
+      fireEvent.click(anchor, { button: 0, ...init });
     };
 
-    expect(dispatchAnchorClick(undefined, { ctrlKey: true }).defaultPrevented).toBe(false);
-    const text = document.createTextNode('not-an-element');
-    document.body.append(text);
-    const textClick = new MouseEvent('click', { bubbles: true, cancelable: true, button: 0 });
-    text.dispatchEvent(textClick);
-    text.remove();
-    expect(textClick.defaultPrevented).toBe(false);
-    expect(dispatchAnchorClick((anchor) => (anchor.target = '_blank')).defaultPrevented).toBe(false);
-    expect(
-      dispatchAnchorClick((anchor) => {
-        anchor.setAttribute('download', '');
-      }).defaultPrevented,
-    ).toBe(false);
-    expect(dispatchAnchorClick((anchor) => (anchor.href = 'https://example.test')).defaultPrevented).toBe(false);
-    expect(dispatchAnchorClick((anchor) => (anchor.target = '_self')).defaultPrevented).toBe(true);
+    // A click the browser must keep: modified clicks, new-tab targets, downloads
+    // and anything pointing off-site never turn into a client-side navigation.
+    clickAnchor({ href: '/catalog' }, { metaKey: true });
+    clickAnchor({ href: '/catalog' }, { button: 1 });
+    clickAnchor({ href: '/catalog', target: '_blank' });
+    clickAnchor({ download: '', href: '/catalog' });
+    clickAnchor({ href: 'https://example.test/catalog' });
+    fireEvent.click(document.body);
+    // A click that starts on a text node carries no element to read a link from.
+    const looseText = document.createTextNode('loose text');
+    document.body.append(looseText);
+    looseText.dispatchEvent(new MouseEvent('click', { bubbles: true, button: 0 }));
+    looseText.remove();
+    expect(window.location.pathname).toBe('/settings');
+
+    clickAnchor({ href: '/catalog?section=seeds', target: '_self' });
+    await vi.waitFor(() => {
+      expect(window.location.pathname).toBe('/catalog');
+    });
+    expect(window.location.search).toBe('?section=seeds');
+
+    anchor.remove();
   });
 
-  it('serves the RFC 9457 problem registry from the user application', async () => {
-    window.history.replaceState({}, '', '/problems');
+  // Telegram supplies its own frame around a mini app, so these routes render
+  // with no chrome of their own rather than stacking a second one inside it.
+  it('renders Telegram mini-app routes without the site chrome', async () => {
+    window.history.replaceState({}, '', '/tma');
     render(<UserRouter applyUserLocale={vi.fn()} applyUserTheme={vi.fn()} />);
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'site.problems.title' })).toBeTruthy();
-    expect(screen.getByText('https://dehqonhub.uz/problems')).toBeTruthy();
-    expect(screen.getByRole('heading', { level: 2, name: 'about:blank' })).toBeTruthy();
+    await vi.waitFor(() => {
+      expect(marketplaceRender).not.toHaveBeenCalled();
+    });
+    expect(screen.queryByTestId('marketplace-route')).toBeNull();
+  });
+});
+
+describe('site route boundaries', () => {
+  it('treats a trailing slash as the same route', () => {
+    expect(normalizePath('/catalog/')).toBe('/catalog');
+    expect(normalizePath('/')).toBe('/');
+    expect(isMarketplaceRoute('/catalog/')).toBe(true);
+    expect(isMarketplaceRoute('/products/seed-1')).toBe(true);
+    expect(isMarketplaceRoute('/contracts/DH-1')).toBe(true);
+    expect(isMarketplaceRoute('/products/seed-1/reviews')).toBe(false);
+    expect(isMarketplaceRoute('/settings')).toBe(false);
+  });
+
+  it('keeps the Telegram entry points chrome-free and account linking on the site', () => {
+    expect(isBareRoute('/tma')).toBe(true);
+    expect(isBareRoute('/tma/auth')).toBe(true);
+    expect(isBareRoute('/telegram-mini-app')).toBe(true);
+    expect(isBareRoute('/link/telegram')).toBe(false);
+  });
+
+  it('recognizes only the two account-linking routes', () => {
+    expect(getLinkRoute('/link/telegram')).toBe('/link/telegram');
+    expect(getLinkRoute('/link/discord/')).toBe('/link/discord');
+    expect(getLinkRoute('/link/github')).toBeNull();
+    expect(getLinkRoute('/settings')).toBeNull();
   });
 });

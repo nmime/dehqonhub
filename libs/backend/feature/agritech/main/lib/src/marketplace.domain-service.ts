@@ -6,21 +6,25 @@ import {
   ResourceNotFoundException,
 } from '@app/backend-common-exception';
 import {
+  maxMonthlySamples,
   canBuyInMarketplace,
   canOfferInMarketplace,
+  demoProductReviews,
+  filterDemoBuyerRequests,
   isVerificationReviewReasonValid,
   type AgriTechOwner,
-  type AddCartItemInput,
+  type AiConsultationKind,
+  type BuyerRequest,
   type Cart,
   type CheckoutCartInput,
   type CheckoutCartResult,
   type Contract,
   type ContractDeliveryQuoteInput,
-  type CreateBuyerRequestInput,
-  type CreateRequestOfferInput,
+  type DeliveryTerms,
   type MarketplaceRepository,
   type OperationResult,
   type OfferSelectionResult,
+  type SampleRequest,
   type Verification,
   type VerificationRejectionReason,
   type VerificationRole,
@@ -66,26 +70,13 @@ export class MarketplaceDomainService {
     verificationId: string,
     decision: 'verified' | 'rejected',
     reviewedBy: string,
-    expectedRevision: number,
-    idempotencyKey: string,
     reason?: VerificationRejectionReason,
   ): Promise<Verification> {
     if (!isVerificationReviewReasonValid(decision, reason)) {
       throw new BadRequestException({ meta: { resourceType: 'verification', field: 'reason' } });
     }
-    if (!Number.isInteger(expectedRevision) || expectedRevision < 0) {
-      throw new BadRequestException({ meta: { resourceType: 'verification', field: 'expectedRevision' } });
-    }
     return unwrap(
-      await this.repository.reviewVerification(
-        tenantId,
-        verificationId,
-        decision,
-        reviewedBy,
-        expectedRevision,
-        idempotencyKey,
-        reason,
-      ),
+      await this.repository.reviewVerification(tenantId, verificationId, decision, reviewedBy, reason),
       'verification',
     );
   }
@@ -105,17 +96,9 @@ export class MarketplaceDomainService {
     return role as VerificationRole;
   }
 
-  private async requireBuyerVerificationRole(owner: AgriTechOwner): Promise<VerificationRole> {
+  private async requireOfferRole(owner: AgriTechOwner): Promise<VerificationRole> {
     const role = await this.repository.roleOf(owner);
-    if (!canBuyInMarketplace(role)) {
-      throw new ForbiddenException('marketplace:buy', role);
-    }
-    return role as VerificationRole;
-  }
-
-  private async requireOfferVerificationRole(owner: AgriTechOwner): Promise<VerificationRole> {
-    const role = await this.repository.roleOf(owner);
-    if (!canOfferInMarketplace(role)) {
+    if (!canOfferInMarketplace(role) || !(await this.repository.isApprovedOrganization(owner, 'supplier'))) {
       throw new ForbiddenException('marketplace:offer', role);
     }
     return role as VerificationRole;
@@ -133,55 +116,89 @@ export class MarketplaceDomainService {
     return cart;
   }
 
-  async addToCart(owner: AgriTechOwner, item: AddCartItemInput, idempotencyKey: string): Promise<Cart> {
+  async addToCart(owner: AgriTechOwner, item: { productId: string; quantity: number }): Promise<Cart> {
     if (item.quantity <= 0) {
       throw new BadRequestException({ meta: { field: 'quantity' } });
     }
-    await this.requireBuyerVerificationRole(owner);
-    return unwrap(await this.repository.addToCart(owner, item, idempotencyKey), 'cart');
+    return unwrap(await this.repository.addToCart(owner, item), 'cart');
   }
 
-  async updateCartItem(
+  async updateCartItem(owner: AgriTechOwner, cartId: string, productId: string, quantity: number): Promise<Cart> {
+    return unwrap(await this.repository.updateCartItem(owner, cartId, productId, quantity), 'cart');
+  }
+
+  async removeCartItem(owner: AgriTechOwner, cartId: string, productId: string): Promise<Cart> {
+    return unwrap(await this.repository.removeCartItem(owner, cartId, productId), 'cart');
+  }
+
+  async checkoutCart(owner: AgriTechOwner, cartId: string, input: CheckoutCartInput): Promise<CheckoutCartResult> {
+    await this.requireBuyerRole(owner);
+    return unwrap(await this.repository.checkoutCart(owner, cartId, input), 'cart');
+  }
+
+  async requestSample(owner: AgriTechOwner, productId: string): Promise<SampleRequest> {
+    await this.requireBuyerRole(owner);
+    return unwrap(await this.repository.requestSample(owner, productId), 'sample');
+  }
+
+  async listSamples(owner: AgriTechOwner): Promise<SampleRequest[]> {
+    return this.repository.listSamples(owner);
+  }
+
+  async sampleUsage(owner: AgriTechOwner): Promise<{ used: number; limit: number; remaining: number }> {
+    const used = await this.repository.sampleUsageThisMonth(owner);
+    return { used, limit: maxMonthlySamples, remaining: Math.max(0, maxMonthlySamples - used) };
+  }
+
+  async addFavorite(owner: AgriTechOwner, productId: string): Promise<{ productId: string }> {
+    return unwrap(await this.repository.addFavorite(owner, productId), 'favorite');
+  }
+
+  async removeFavorite(owner: AgriTechOwner, productId: string): Promise<{ productId: string }> {
+    return unwrap(await this.repository.removeFavorite(owner, productId), 'favorite');
+  }
+
+  async listFavorites(owner: AgriTechOwner) {
+    return this.repository.listFavorites(owner);
+  }
+
+  async addReview(owner: AgriTechOwner, productId: string, rating: number, comment?: string) {
+    await this.requireBuyerRole(owner);
+    return unwrap(await this.repository.addReview(owner, productId, rating, comment), 'review');
+  }
+
+  /**
+   * Ratings for one product. A product nobody has reviewed yet falls back to the
+   * demo ratings, so the block reads as a working surface rather than an empty
+   * one; a product with even a single real review only ever shows real reviews.
+   */
+  async listProductReviews(tenantId: string, productId: string) {
+    const reviews = await this.repository.listProductReviews(tenantId, productId);
+    return reviews.length > 0 ? reviews : demoProductReviews(productId);
+  }
+
+  async createRequest(
     owner: AgriTechOwner,
-    cartId: string,
-    listingPublicationId: string,
-    quantity: number,
-    idempotencyKey: string,
-  ): Promise<Cart> {
-    await this.requireBuyerVerificationRole(owner);
-    return unwrap(
-      await this.repository.updateCartItem(owner, cartId, listingPublicationId, quantity, idempotencyKey),
-      'cart',
-    );
+    input: Omit<BuyerRequest, 'id' | 'tenantId' | 'buyerUserId' | 'status' | 'createdAt' | 'updatedAt'>,
+  ) {
+    await this.requireBuyerRole(owner);
+    return unwrap(await this.repository.createRequest(owner, input), 'request');
   }
 
-  async removeCartItem(
-    owner: AgriTechOwner,
-    cartId: string,
-    listingPublicationId: string,
-    idempotencyKey: string,
-  ): Promise<Cart> {
-    await this.requireBuyerVerificationRole(owner);
-    return unwrap(await this.repository.removeCartItem(owner, cartId, listingPublicationId, idempotencyKey), 'cart');
-  }
-
-  async checkoutCart(
-    owner: AgriTechOwner,
-    cartId: string,
-    input: CheckoutCartInput,
-    idempotencyKey: string,
-  ): Promise<CheckoutCartResult> {
-    await this.requireBuyerVerificationRole(owner);
-    return unwrap(await this.repository.checkoutCart(owner, cartId, input, idempotencyKey), 'cart');
-  }
-
-  async createRequest(owner: AgriTechOwner, input: CreateBuyerRequestInput, idempotencyKey: string) {
-    await this.requireBuyerVerificationRole(owner);
-    return unwrap(await this.repository.createRequest(owner, input, idempotencyKey), 'request');
-  }
-
-  listRequests(tenantId: string, status?: string) {
-    return this.repository.listRequests(tenantId, status);
+  /**
+   * The reverse-auction feed. A tenant where nobody has posted a request yet
+   * falls back to the demo feed: the filter chips and the offer flow need rows to
+   * act on, and an empty feed on a new tenant reads as a broken page. The
+   * unfiltered read decides it, so a status filter that matches nothing keeps
+   * showing an honest empty result.
+   */
+  async listRequests(tenantId: string, status?: string) {
+    const requests = await this.repository.listRequests(tenantId, status);
+    if (requests.length > 0) {
+      return requests;
+    }
+    const published = status ? await this.repository.listRequests(tenantId) : requests;
+    return published.length > 0 ? requests : filterDemoBuyerRequests(status);
   }
 
   listMyRequests(owner: AgriTechOwner) {
@@ -190,42 +207,49 @@ export class MarketplaceDomainService {
 
   async makeOffer(
     owner: AgriTechOwner,
-    requestPublicId: string,
-    input: CreateRequestOfferInput,
-    idempotencyKey: string,
+    requestId: string,
+    priceUzs: number,
+    deliveryTerms: DeliveryTerms,
+    deliveryPriceUzs?: number,
+    deliveryNote?: string,
+    deliveryDays?: number,
   ) {
-    await this.requireOfferVerificationRole(owner);
-    return unwrap(await this.repository.makeOffer(owner, requestPublicId, input, idempotencyKey), 'offer');
+    await this.requireOfferRole(owner);
+    return unwrap(
+      await this.repository.makeOffer(
+        owner,
+        requestId,
+        priceUzs,
+        deliveryTerms,
+        deliveryPriceUzs,
+        deliveryNote,
+        deliveryDays,
+      ),
+      'offer',
+    );
   }
 
   async listOffers(owner: AgriTechOwner, requestId: string) {
     return unwrap(await this.repository.listOffers(owner, requestId), 'request');
   }
 
-  async chooseOffer(
-    owner: AgriTechOwner,
-    requestPublicId: string,
-    offerId: string,
-    idempotencyKey: string,
-  ): Promise<OfferSelectionResult> {
-    await this.requireBuyerVerificationRole(owner);
-    return unwrap(await this.repository.chooseOffer(owner, requestPublicId, offerId, idempotencyKey), 'offer');
+  async chooseOffer(owner: AgriTechOwner, requestId: string, offerId: string): Promise<OfferSelectionResult> {
+    await this.requireBuyerRole(owner);
+    return unwrap(await this.repository.chooseOffer(owner, requestId, offerId), 'offer');
   }
 
   async updateContractDeliveryQuote(
     owner: AgriTechOwner,
     contractId: string,
     input: ContractDeliveryQuoteInput,
-    idempotencyKey: string,
   ): Promise<Contract> {
-    await this.requireOfferVerificationRole(owner);
-    if (!Number.isInteger(input.expectedRevision) || input.expectedRevision < 0) {
-      throw new BadRequestException({ meta: { field: 'expectedRevision', resourceType: 'contract' } });
-    }
-    return unwrap(
-      await this.repository.updateContractDeliveryQuote(owner, contractId, input, idempotencyKey),
-      'contract',
-    );
+    await this.requireOfferRole(owner);
+    return unwrap(await this.repository.updateContractDeliveryQuote(owner, contractId, input), 'contract');
+  }
+
+  async signContract(owner: AgriTechOwner, contractId: string): Promise<Contract> {
+    await this.requireVerified(owner);
+    return unwrap(await this.repository.signContract(owner, contractId), 'contract');
   }
 
   listContracts(owner: AgriTechOwner) {
@@ -234,5 +258,13 @@ export class MarketplaceDomainService {
 
   listTenantContracts(tenantId: string) {
     return this.repository.listTenantContracts(tenantId);
+  }
+
+  async askAi(owner: AgriTechOwner, kind: AiConsultationKind, question: string) {
+    return unwrap(await this.repository.askAi(owner, kind, question), 'ai');
+  }
+
+  async listAiConsultations(owner: AgriTechOwner) {
+    return this.repository.listAiConsultations(owner);
   }
 }

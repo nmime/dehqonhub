@@ -2,7 +2,7 @@ import { useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
 import { useAuthSessionProbe } from '../../../features/auth';
 import { LogoutButton } from '../../../features/logout';
 import { ProviderIdentitiesPanel, SocialAuthProvider, useSocialAuth } from '../../../features/social-auth';
-import { LanguageSwitcher, ThemeSwitcher, UiCard, UiSection } from '../../../shared/ui';
+import { LanguageSwitcher, UiCard, UiSection } from '../../../shared/ui';
 
 interface SettingsPageProps {
   applyUserLocale: (locale: Locale) => void;
@@ -31,9 +31,11 @@ export function SettingsPage({ applyUserLocale, applyUserTheme, navigate }: Read
       <div className="user-settings__grid">
         <UiCard className="user-settings__card" title={t('user.settings.preferences.title')}>
           <p>{t('user.settings.preferences.description')}</p>
+          {/* Language only: DehqonHub has one light palette, and the theme
+              control also wrote to `/auth/me/preferences`, so switching it
+              without a session bounced the visitor to the sign-in form. */}
           <div className="user-settings__controls">
             <LanguageSwitcher />
-            <ThemeSwitcher />
           </div>
           <div className="user-settings__sign-out">
             <LogoutButton navigate={navigate} t={t} />

@@ -63,7 +63,23 @@ export const userUuids = [
   "30000000-0000-0000-0000-000000000001",
   "30000000-0000-0000-0000-000000000002",
   "30000000-0000-0000-0000-000000000003",
+  "30000000-0000-0000-0000-000000000011",
+  "30000000-0000-0000-0000-000000000012",
+  "30000000-0000-0000-0000-000000000013",
 ];
+
+/**
+ * DehqonHub review logins, one per marketplace role. They are listed on the
+ * marketplace home banner so a reviewer can sign in without being handed
+ * credentials out of band; the frontend copy of the same list lives in
+ * `apps/frontend/app/src/pages/marketplace/model/demo-catalog.ts` and the two
+ * must stay in step. Demo-only, and seeding refuses to run against production.
+ */
+const dehqonHubReviewUsers = [
+  { email: "dehqon@demo.dehqonhub.uz", displayName: "Dehqon Demo", password: "DemoDehqon2026", index: 3 },
+  { email: "sotuvchi@demo.dehqonhub.uz", displayName: "Sotuvchi Demo", password: "DemoSotuvchi2026", index: 4 },
+  { email: "xaridor@demo.dehqonhub.uz", displayName: "Xaridor Demo", password: "DemoXaridor2026", index: 5 },
+] as const;
 
 export function buildSeedUsers(basePassword: string, locale = "en"): SeedUser[] {
   const adminPassword = basePassword === DefaultAdminPassword ? "Admin@Secure1!" : basePassword;
@@ -95,5 +111,14 @@ export function buildSeedUsers(basePassword: string, locale = "en"): SeedUser[] 
       locale,
       theme: "dark",
     },
+    ...dehqonHubReviewUsers.map((user) => ({
+      id: userUuids[user.index],
+      email: user.email,
+      displayName: user.displayName,
+      password: user.password,
+      role: "user",
+      locale,
+      theme: "light",
+    })),
   ];
 }

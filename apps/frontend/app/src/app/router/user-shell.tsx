@@ -1,29 +1,24 @@
-import { useCallback, useEffect } from 'react';
-import { Outlet, useRouter, useRouterState } from '@tanstack/react-router';
-import { observer, useI18n } from '@app/frontend-runtime';
-import { MiniAppShell } from '../../shared/ui';
-import { getLinkRoute, isMarketplaceRoute, normalizePath, useUserNavigate } from './user-navigation';
+import { useEffect } from 'react';
+import { Outlet, useRouterState } from '@tanstack/react-router';
+import { observer } from '@app/frontend-runtime';
+import { MarketplacePage } from '../../pages/marketplace';
+import { TelegramMiniAppFrame } from './telegram-frame';
+import { isBareRoute, isMarketplaceRoute, normalizePath, useUserNavigate } from './user-navigation';
 
 /**
- * Layout route rendered for every user route. DehqonHub marketplace routes own
- * their complete product chrome; preserved account/auth/TMA routes retain the
- * generic `MiniAppShell` navigation and Back control. In-app anchors are still
- * delegated to the router in both shells so they route client-side.
+ * The site's only layout. Marketplace routes render their own view inside the
+ * DehqonHub chrome; every other route — auth, account preferences, the farmer
+ * consoles, not-found — renders as embedded content inside the same chrome, so
+ * the header, categories, mobile navigation and footer never change between
+ * pages. Telegram mini-app routes are the single exception: they run inside
+ * Telegram's own frame, which supplies the surrounding chrome.
+ *
+ * In-app anchors are delegated to the router so they route client-side.
  */
 export const UserShell = observer(function UserShell() {
-  const { t } = useI18n();
-  const router = useRouter();
   const navigate = useUserNavigate();
   const pathname = useRouterState({ select: (state) => state.location.pathname });
   const route = normalizePath(pathname);
-  const linkRoute = getLinkRoute(route);
-  const onBack = useCallback(() => {
-    if (router.history.canGoBack()) {
-      router.history.back();
-      return;
-    }
-    navigate('/', { replace: true });
-  }, [navigate, router]);
 
   useEffect(() => {
     const clickHandler = (event: MouseEvent) => {
@@ -68,49 +63,17 @@ export const UserShell = observer(function UserShell() {
     return <Outlet />;
   }
 
-  const actions = [
-    { href: '/', isCurrent: route === '/', label: t('user.nav.home') },
-    {
-      href: '/auth',
-      isCurrent: route === '/auth' || route === '/auth/discord/callback' || route === '/auth/telegram/callback',
-      label: t('user.nav.auth'),
-      variant: 'secondary' as const,
-    },
-    {
-      href: '/profile',
-      isCurrent: route === '/profile',
-      label: t('user.nav.profile'),
-      variant: 'secondary' as const,
-    },
-    {
-      href: '/settings',
-      isCurrent: route === '/settings' || linkRoute === '/link/discord',
-      label: t('user.nav.settings'),
-      variant: 'secondary' as const,
-    },
-    {
-      href: '/tma',
-      isCurrent:
-        route === '/tma' || route === '/tma/auth' || route === '/telegram-mini-app' || linkRoute === '/link/telegram',
-      label: t('auth.provider.telegram'),
-      variant: 'secondary' as const,
-    },
-  ];
+  if (isBareRoute(route)) {
+    return (
+      <TelegramMiniAppFrame navigate={navigate}>
+        <Outlet />
+      </TelegramMiniAppFrame>
+    );
+  }
 
   return (
-    <MiniAppShell
-      activePath={linkRoute ?? route}
-      actions={actions}
-      appName={t('user.appName')}
-      description={t('user.description')}
-      eyebrow={t('user.eyebrow')}
-      heroActions={[]}
-      onBack={onBack}
-      shareText={t('user.description')}
-      shareTitle={t('user.appName')}
-      title={t('user.title')}
-    >
+    <MarketplacePage navigate={navigate} view="embedded">
       <Outlet />
-    </MiniAppShell>
+    </MarketplacePage>
   );
 });

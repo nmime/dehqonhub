@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { observer, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
-import { AuthRecoveryCard, useAuthSessionFlow } from '../../../features/auth';
+import { useAuthSessionFlow, type AuthView } from '../../../features/auth';
 import { SocialAuthButtons, useSocialAuth } from '../../../features/social-auth';
 import { UiSection } from '../../../shared/ui';
 import { isTelegramAuthEnabled } from '../../../shared/config';
@@ -18,7 +19,11 @@ export const AuthPage = observer(function AuthPage({
   navigate,
 }: Readonly<AuthPageProps>) {
   const { locale, t } = useI18n();
-  const returnUrl = new URLSearchParams(globalThis.location.search).get('returnUrl') ?? null;
+  const query = new URLSearchParams(globalThis.location.search);
+  const returnUrl = query.get('returnUrl') ?? null;
+  // `?mode=register` opens the stepped flow directly, so a "create an account"
+  // link elsewhere on the site does not land on the sign-in form first.
+  const [view, setView] = useState<AuthView>(query.get('mode') === 'register' ? 'register' : 'sign-in');
   const authSession = useAuthSessionFlow({
     applyUserLocale,
     applyUserTheme,
@@ -33,15 +38,31 @@ export const AuthPage = observer(function AuthPage({
     returnUrl,
   });
   const socialAuth = useSocialAuth({ navigate });
+  const isRegistering = view === 'register';
 
   return (
-    <UiSection className="user-auth" eyebrow={t('user.nav.auth')} title={t('user.auth.title')}>
-      <p className="user-page-intro">{t('user.auth.description')}</p>
+    <UiSection
+      className="user-auth"
+      eyebrow={t('user.nav.auth')}
+      title={t(isRegistering ? 'user.auth.register.title' : 'user.auth.title')}
+    >
+      <p className="user-page-intro">{t(isRegistering ? 'user.auth.register.description' : 'user.auth.description')}</p>
       <AuthPanel
         isLoginPending={authSession.isLoginPending}
         isRegisterPending={authSession.isRegisterPending}
+        isTelegramEnabled={isTelegramAuthEnabled()}
+        isTelegramPending={socialAuth.isTelegramOidcPending}
         loadingLabel={t('user.loadingProfile')}
         onAuthSubmit={authSession.submitAuth}
+        onTelegram={() => {
+          // Telegram OIDC has no separate sign-up: the provider creates the
+          // account the first time someone arrives through it.
+          socialAuth.continueWithTelegram({
+            intent: 'login',
+            returnUrl: returnUrl ?? undefined,
+          });
+        }}
+        onViewChange={setView}
         socialAuthSlot={
           <SocialAuthButtons
             isDiscordPending={socialAuth.isDiscordPending}
@@ -57,10 +78,10 @@ export const AuthPage = observer(function AuthPage({
           />
         }
         t={t}
+        view={view}
       >
         <ProfileStatusCard state={authSession.profileState} t={t} />
       </AuthPanel>
-      <AuthRecoveryCard t={t} />
     </UiSection>
   );
 });

@@ -1,386 +1,411 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019
-import { act, renderHook, waitFor } from '@testing-library/react';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { VerificationViewDto } from '@app/frontend-api-client';
+// @requirements REQ-AGRITECH-MARKETPLACE-016
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { ProductViewDto } from '@app/frontend-api-client';
+import { useMarketplaceData } from './use-marketplace-data';
 
-const api = vi.hoisted(() => ({
-  agriTechOperationsControllerListPartners: vi.fn(),
-  agriTechOperationsControllerListProduce: vi.fn(),
-  agriTechOperationsControllerListSupplierProducts: vi.fn(),
-  marketplaceControllerGetDashboard: vi.fn(),
-  marketplaceControllerGetVerification: vi.fn(),
-  marketplaceControllerGetVerificationReadiness: vi.fn(),
-  marketplaceControllerListAi: vi.fn(),
-  marketplaceControllerListCarts: vi.fn(),
-  marketplaceControllerListContracts: vi.fn(),
-  marketplaceControllerListFavorites: vi.fn(),
-  marketplaceControllerListMyRequests: vi.fn(),
-  marketplaceControllerListNotifications: vi.fn(),
-  marketplaceControllerListOffers: vi.fn(),
-  marketplaceControllerListSamples: vi.fn(),
-  marketplaceControllerSampleUsage: vi.fn(),
-  marketplacePromotionControllerList: vi.fn(),
-  marketplacePromotionControllerListPlans: vi.fn(),
-  marketplacePublicControllerGetListing: vi.fn(),
-  marketplacePublicControllerGetSeller: vi.fn(),
-  marketplacePublicControllerListCatalog: vi.fn(),
-  marketplacePublicControllerListRequests: vi.fn(),
-  marketplacePublicControllerListSellerCatalog: vi.fn(),
-  marketplacePublicationControllerListMine: vi.fn(),
+const ok = <T,>(data: T) => Promise.resolve({ data, response: new Response(null, { status: 200 }) });
+
+const fail = (status: number) =>
+  Promise.resolve({ error: { detail: 'nope' }, response: new Response(null, { status }) });
+
+const product: ProductViewDto = {
+  category: 'seed',
+  createdAt: '2026-08-09T10:00:00.000Z',
+  description: 'Certified corn seed',
+  id: 'seed-1',
+  images: [],
+  name: 'Corn seed',
+  priceUzs: 1_250_000,
+  region: 'Samarqand',
+  status: 'active',
+  stockQuantity: 20,
+  supplierId: 'seller-1',
+  supplierName: 'Seed cooperative',
+  unit: 't',
+  updatedAt: '2026-08-09T10:00:00.000Z',
+};
+
+const request = {
+  createdAt: '2026-08-09T10:00:00.000Z',
+  deadline: '2026-09-01T00:00:00.000Z',
+  id: 'request-1',
+  productId: product.id,
+  quantity: 5,
+  status: 'open',
+  tenantId: 'tenant-1',
+  unit: 't',
+  userId: 'buyer-1',
+};
+
+const verification = {
+  createdAt: '2026-08-09T10:00:00.000Z',
+  documents: [],
+  id: 'verification-1',
+  level: 'verified',
+  oneIdLinked: false,
+  role: 'buyer',
+  status: 'verified',
+  tenantId: 'tenant-1',
+  updatedAt: '2026-08-09T10:00:00.000Z',
+  userId: 'buyer-1',
+};
+
+/**
+ * Every read the chrome issues, each answering with an empty-but-valid payload.
+ * The client object and its request options keep one identity for the whole
+ * test: the hook reloads whenever they change, so fresh objects per render would
+ * spin forever.
+ */
+const apiState = vi.hoisted(() => ({
+  api: {} as Record<string, ReturnType<typeof vi.fn>>,
+  requestOptions: {},
 }));
-const requestOptions = vi.hoisted(() => ({}));
 
 vi.mock('@app/frontend-api-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@app/frontend-api-client')>();
+
   return {
     ...actual,
-    useUserApiClient: () => ({ api, requestOptions }),
+    useUserApiClient: () => apiState,
   };
 });
 
-const { useMarketplaceData } = await import('./use-marketplace-data');
-
-const apiSuccess = (data: unknown) => ({ data: { data }, response: new Response(null) });
-
-const pendingVerification: VerificationViewDto = {
-  createdAt: '2026-08-10T08:00:00.000Z',
-  documents: [],
-  id: '9efffefa-f488-4fb8-8e8e-7b33d10e4259',
-  identityAssurance: 'mock',
-  level: 'basic',
-  oneIdLinked: true,
-  providerMode: 'mock',
-  revision: 3,
-  role: 'buyer',
-  simulation: true,
-  status: 'pending',
-  step: 'review',
-  updatedAt: '2026-08-10T08:05:00.000Z',
+const stubApi = (overrides: Record<string, ReturnType<typeof vi.fn>> = {}) => {
+  apiState.api = {
+    marketplaceControllerGetVerification: vi.fn(() => ok(verification)),
+    marketplaceControllerListCarts: vi.fn(() => ok({ items: [] })),
+    marketplaceControllerListContracts: vi.fn(() => ok({ items: [] })),
+    marketplaceControllerListFavorites: vi.fn(() => ok({ items: [] })),
+    marketplaceControllerListMyRequests: vi.fn(() => ok({ items: [] })),
+    marketplaceControllerListOffers: vi.fn(() => ok({ items: [] })),
+    marketplaceControllerListRequests: vi.fn(() => ok({ items: [request] })),
+    marketplaceControllerListSamples: vi.fn(() => ok({ items: [] })),
+    marketplaceControllerSampleUsage: vi.fn(() => ok({ limit: 5, remaining: 5, used: 0 })),
+    productControllerList: vi.fn(() => ok({ demo: false, items: [product] })),
+    ...overrides,
+  };
 };
 
-const verifiedBuyer: VerificationViewDto = {
-  ...pendingVerification,
-  level: 'verified',
-  status: 'verified',
-  step: 'complete',
+/**
+ * Holds every read open so a test can unmount the page while the requests are
+ * still in flight, then let them all land on a page that no longer exists.
+ */
+const openGate = () => {
+  let open = () => {};
+  const gate = new Promise<void>((resolve) => {
+    open = resolve;
+  });
+
+  return {
+    answers: <T,>(data: T) =>
+      vi.fn(async () => {
+        await gate;
+
+        return { data, response: new Response(null, { status: 200 }) };
+      }),
+    rejects: (status: number) =>
+      vi.fn(async () => {
+        await gate;
+
+        return { error: { detail: 'nope' }, response: new Response(null, { status }) };
+      }),
+    release: async () => {
+      open();
+      // A macrotask drains the whole await chain the released reads resume.
+      await act(async () => {
+        await new Promise((resolve) => {
+          setTimeout(resolve, 0);
+        });
+      });
+    },
+  };
 };
 
-const verifiedSeller: VerificationViewDto = {
-  ...verifiedBuyer,
-  role: 'seller',
-};
+const renderMarketplaceData = async () => {
+  const view = renderHook(() => useMarketplaceData());
 
-const listRequests = [
-  api.agriTechOperationsControllerListPartners,
-  api.agriTechOperationsControllerListProduce,
-  api.agriTechOperationsControllerListSupplierProducts,
-  api.marketplaceControllerListAi,
-  api.marketplaceControllerListCarts,
-  api.marketplaceControllerListContracts,
-  api.marketplaceControllerListFavorites,
-  api.marketplaceControllerListMyRequests,
-  api.marketplaceControllerListNotifications,
-  api.marketplaceControllerListSamples,
-  api.marketplacePromotionControllerList,
-  api.marketplacePromotionControllerListPlans,
-  api.marketplacePublicControllerListCatalog,
-  api.marketplacePublicControllerListRequests,
-] as const;
+  await waitFor(() => {
+    expect(view.result.current.auth).not.toBe('checking');
+  });
+
+  return view;
+};
 
 describe('useMarketplaceData', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    for (const request of listRequests) {
-      request.mockResolvedValue(apiSuccess({ items: [] }));
-    }
-    api.marketplaceControllerGetVerification.mockResolvedValue(apiSuccess(pendingVerification));
-    api.marketplaceControllerGetVerificationReadiness.mockResolvedValue(apiSuccess({}));
-    api.marketplacePublicationControllerListMine.mockResolvedValue(apiSuccess({ listings: [], requests: [] }));
-    api.marketplaceControllerGetDashboard.mockRejectedValue(new Error('verification required'));
-    api.marketplaceControllerSampleUsage.mockRejectedValue(new Error('verification required'));
+    globalThis.localStorage.clear();
+    stubApi();
   });
 
-  it.each([
-    ['without a verification case', null],
-    ['with a pending verification case', pendingVerification],
-  ] as const)('does not request verification-gated resources %s', async (_label, verification) => {
-    api.marketplaceControllerGetVerification.mockResolvedValue(apiSuccess(verification));
-    const { result } = renderHook(() => useMarketplaceData());
-
-    await waitFor(() => {
-      expect(result.current.verification).toEqual({ data: verification, status: 'ready' });
-      expect(result.current.ownedListingPublications.status).toBe('empty');
-    });
-
-    expect(api.marketplaceControllerGetDashboard).not.toHaveBeenCalled();
-    expect(api.marketplaceControllerSampleUsage).not.toHaveBeenCalled();
-    expect(result.current.dashboard).toEqual({ data: null, status: 'empty' });
-    expect(result.current.sampleUsage).toEqual({
-      data: { limit: 5, period: 'current', policyVersion: 1, remaining: 5, used: 0 },
-      status: 'idle',
-    });
+  afterEach(() => {
+    cleanup();
+    globalThis.localStorage.clear();
   });
 
-  it('loads the dashboard but not buyer sample usage for a verified seller', async () => {
-    api.marketplaceControllerGetVerification.mockResolvedValue(apiSuccess(verifiedSeller));
-    api.marketplaceControllerGetDashboard.mockResolvedValue(apiSuccess({ role: 'seller' }));
-    const { result } = renderHook(() => useMarketplaceData());
-
-    await waitFor(() => {
-      expect(result.current.dashboard.status).toBe('ready');
+  it('reads the account resources once a session answers, and discloses nothing', async () => {
+    stubApi({
+      marketplaceControllerListMyRequests: vi.fn(() => ok({ items: [request] })),
+      marketplaceControllerListOffers: vi.fn(() =>
+        ok({
+          items: [
+            {
+              createdAt: '2026-08-09T10:00:00.000Z',
+              deliveryTerms: 'pickup',
+              id: 'offer-1',
+              priceUzs: 1000,
+              requestId: request.id,
+              sellerUserId: 'seller-1',
+              status: 'open',
+              tenantId: 'tenant-1',
+            },
+          ],
+        }),
+      ),
     });
 
-    expect(api.marketplaceControllerGetDashboard).toHaveBeenCalledOnce();
-    expect(api.marketplaceControllerSampleUsage).not.toHaveBeenCalled();
+    const { result } = await renderMarketplaceData();
+
+    expect(result.current.auth).toBe('signed-in');
+    expect(result.current.local).toBe(false);
+    expect(result.current.demo).toBe('none');
+    expect(result.current.catalog).toEqual({ data: [product], status: 'ready' });
+    expect(result.current.requests.status).toBe('ready');
+    expect(result.current.offersByRequest.status).toBe('ready');
+    expect(result.current.offersByRequest.data[request.id]).toHaveLength(1);
+    expect(result.current.verification.data?.status).toBe('verified');
   });
 
-  it('loads dashboard and sample usage for a verified buyer', async () => {
-    api.marketplaceControllerGetVerification.mockResolvedValue(apiSuccess(verifiedBuyer));
-    api.marketplaceControllerGetDashboard.mockResolvedValue(apiSuccess({ role: 'buyer' }));
-    api.marketplaceControllerSampleUsage.mockResolvedValue(
-      apiSuccess({ limit: 5, period: '2026-08', policyVersion: 1, remaining: 5, used: 0 }),
+  it('holds an own request that nobody has answered yet as an empty offer list', async () => {
+    stubApi({
+      marketplaceControllerListMyRequests: vi.fn(() => ok({ items: [request] })),
+      marketplaceControllerListOffers: vi.fn(() => ok({ items: [] })),
+    });
+
+    const { result } = await renderMarketplaceData();
+
+    expect(result.current.myRequests.status).toBe('ready');
+    expect(result.current.offersByRequest).toEqual({ data: { [request.id]: [] }, status: 'empty' });
+  });
+
+  it('reports missing offers for one request as an error rather than an empty list', async () => {
+    stubApi({
+      marketplaceControllerListMyRequests: vi.fn(() => ok({ items: [request] })),
+      marketplaceControllerListOffers: vi.fn(() => fail(500)),
+    });
+
+    const { result } = await renderMarketplaceData();
+
+    expect(result.current.myRequests.status).toBe('ready');
+    expect(result.current.offersByRequest).toEqual({ data: {}, status: 'error' });
+  });
+
+  it('browses as a guest on a 401 and restores the basket from this browser', async () => {
+    globalThis.localStorage.setItem('dehqonhub.guest.favorites', JSON.stringify([product.id]));
+    globalThis.localStorage.setItem(
+      'dehqonhub.guest.carts',
+      JSON.stringify([{ productId: product.id, quantity: 2, sellerId: product.supplierId }]),
     );
-    const { result } = renderHook(() => useMarketplaceData());
+    stubApi({ marketplaceControllerGetVerification: vi.fn(() => fail(401)) });
 
-    await waitFor(() => {
-      expect(result.current.dashboard.status).toBe('ready');
-      expect(result.current.sampleUsage.status).toBe('ready');
-    });
+    const { result } = await renderMarketplaceData();
 
-    expect(api.marketplaceControllerGetDashboard).toHaveBeenCalledOnce();
-    expect(api.marketplaceControllerSampleUsage).toHaveBeenCalledOnce();
+    expect(result.current.auth).toBe('signed-out');
+    expect(result.current.local).toBe(true);
+    expect(result.current.demo).toBe('guest');
+    expect(result.current.favorites.data).toEqual([expect.objectContaining({ productId: product.id })]);
+    expect(result.current.carts.data).toEqual([expect.objectContaining({ id: `guest-cart-${product.supplierId}` })]);
+    // The per-account reads would each 401 and bounce the visitor mid-browse.
+    expect(apiState.api['marketplaceControllerListCarts']).not.toHaveBeenCalled();
+    expect(apiState.api['marketplaceControllerListFavorites']).not.toHaveBeenCalled();
   });
 
-  it('reports public, authenticated partial-failure, offer, refresh, and signed-out states independently', async () => {
-    const publicListing = {
-      availableQuantity: 8,
-      category: 'seed',
-      description: 'Public listing',
-      id: 'listing-public',
-      images: [],
-      kind: 'product',
-      priceUzs: 500_000,
-      promoted: false,
-      region: 'Buxoro',
-      sampleAvailable: true,
-      section: 'seeds',
-      seller: { displayName: 'Public seller', id: 'seller-public' },
-      title: 'Seed listing',
-      unit: 'kg',
-    };
-    const publicRequest = {
-      buyerDisplayName: 'Public buyer',
-      createdAt: '2026-08-10T08:00:00.000Z',
-      id: 'request-public',
-      region: 'Buxoro',
-      status: 'open',
-      title: 'Need seed',
-      updatedAt: '2026-08-10T08:00:00.000Z',
-    };
-    const ownedRequests = [
-      { ...publicRequest, id: 'owned-one' },
-      { ...publicRequest, id: 'owned-two' },
-    ];
-    api.marketplacePublicControllerListCatalog.mockResolvedValue(apiSuccess({ items: [publicListing] }));
-    api.marketplacePublicControllerListRequests.mockResolvedValue(apiSuccess({ items: [publicRequest] }));
-    api.marketplacePublicControllerGetListing.mockResolvedValue(apiSuccess(publicListing));
-    api.marketplacePublicControllerGetSeller.mockResolvedValue(
-      apiSuccess({
-        description: 'Seller profile',
-        displayName: 'Public seller',
-        id: 'seller-public',
-        region: 'Buxoro',
-      }),
-    );
-    api.marketplacePublicControllerListSellerCatalog.mockResolvedValue(apiSuccess({ items: [publicListing] }));
-    api.marketplaceControllerGetVerification.mockResolvedValue(apiSuccess(verifiedBuyer));
-    api.marketplaceControllerListMyRequests.mockResolvedValue(apiSuccess({ items: ownedRequests }));
-    api.marketplaceControllerListOffers
-      .mockResolvedValueOnce(apiSuccess({ items: [{ id: 'offer-one', priceUzs: 100 }] }))
-      .mockRejectedValueOnce(new Error('one seller offer list failed'));
-    api.marketplaceControllerGetDashboard.mockRejectedValue(new Error('dashboard unavailable'));
-    api.marketplaceControllerSampleUsage.mockRejectedValue(new Error('usage unavailable'));
-    api.marketplaceControllerGetVerificationReadiness.mockRejectedValue(new Error('readiness unavailable'));
-    api.marketplacePublicationControllerListMine.mockRejectedValue(new Error('publication history unavailable'));
-    api.marketplaceControllerListCarts.mockRejectedValue(new Error('carts unavailable'));
+  it('keeps guest writes in this browser and reflects them immediately', async () => {
+    stubApi({ marketplaceControllerGetVerification: vi.fn(() => fail(401)) });
 
-    const signedIn = renderHook(() => useMarketplaceData('listing-public', 'seller-public'));
-    await waitFor(() => {
-      expect(signedIn.result.current.auth).toBe('signed-in');
-      expect(signedIn.result.current.selectedListing.status).toBe('ready');
-      expect(signedIn.result.current.seller.status).toBe('ready');
-      expect(signedIn.result.current.sellerCatalog.status).toBe('ready');
-      expect(signedIn.result.current.carts.status).toBe('error');
-      expect(signedIn.result.current.offersByRequest.status).toBe('error');
-      expect(signedIn.result.current.dashboard.status).toBe('error');
-      expect(signedIn.result.current.sampleUsage.status).toBe('error');
-      expect(signedIn.result.current.providerReadiness.status).toBe('error');
-      expect(signedIn.result.current.ownedListingPublications.status).toBe('error');
-    });
-    expect(signedIn.result.current.catalog.data[0]?.id).toBe('listing-public');
-    expect(signedIn.result.current.requests.data[0]?.status).toBe('open');
-    signedIn.result.current.refresh();
-    await waitFor(() => {
-      expect(api.marketplacePublicControllerListCatalog).toHaveBeenCalledTimes(2);
-    });
-    signedIn.unmount();
+    const { result } = await renderMarketplaceData();
 
-    api.marketplaceControllerGetVerification.mockResolvedValue({
-      error: { detail: 'Authentication required' },
-      response: new Response(null, { status: 401 }),
-    });
-    const signedOut = renderHook(() => useMarketplaceData());
-    await waitFor(() => {
-      expect(signedOut.result.current.auth).toBe('signed-out');
-      expect(signedOut.result.current.verification.status).toBe('empty');
-      expect(signedOut.result.current.carts.status).toBe('empty');
-    });
-    signedOut.unmount();
-
-    api.marketplaceControllerGetVerification.mockRejectedValue(new Error('session service unavailable'));
-    const authError = renderHook(() => useMarketplaceData());
-    await waitFor(() => {
-      expect(authError.result.current.auth).toBe('error');
-      expect(authError.result.current.verification.status).toBe('error');
-    });
-    authError.unmount();
-
-    vi.clearAllMocks();
-    for (const listRequest of listRequests) {
-      listRequest.mockResolvedValue(apiSuccess({ items: [] }));
-    }
-    api.marketplacePublicControllerListCatalog.mockRejectedValue(new Error('catalog unavailable'));
-    api.marketplacePublicControllerListRequests.mockRejectedValue(new Error('requests unavailable'));
-    api.marketplacePublicControllerGetListing.mockResolvedValue(apiSuccess(null));
-    api.marketplacePublicControllerGetSeller.mockRejectedValue(new Error('seller unavailable'));
-    api.marketplacePublicControllerListSellerCatalog.mockRejectedValue(new Error('seller catalog unavailable'));
-    api.marketplaceControllerGetVerification.mockResolvedValue(apiSuccess(pendingVerification));
-    api.marketplaceControllerGetVerificationReadiness.mockResolvedValue(apiSuccess({}));
-    api.marketplacePublicationControllerListMine.mockResolvedValue(apiSuccess({ listings: [], requests: [] }));
-    const publicFailures = renderHook(() => useMarketplaceData('missing-listing', 'missing-seller'));
-    await waitFor(() => {
-      expect(publicFailures.result.current.catalog.status).toBe('error');
-      expect(publicFailures.result.current.requests.status).toBe('error');
-      expect(publicFailures.result.current.selectedListing.status).toBe('error');
-      expect(publicFailures.result.current.seller.status).toBe('error');
-      expect(publicFailures.result.current.sellerCatalog.status).toBe('error');
-    });
-    publicFailures.unmount();
-
-    vi.clearAllMocks();
-    for (const listRequest of listRequests) {
-      listRequest.mockResolvedValue(apiSuccess({ items: [] }));
-    }
-    api.marketplaceControllerGetVerification.mockResolvedValue(apiSuccess(verifiedBuyer));
-    api.marketplaceControllerGetDashboard.mockResolvedValue(apiSuccess({ role: 'buyer' }));
-    api.marketplaceControllerSampleUsage.mockResolvedValue(
-      apiSuccess({ limit: 5, period: '2026-08', policyVersion: 1, remaining: 4, used: 1 }),
-    );
-    api.marketplaceControllerGetVerificationReadiness.mockResolvedValue(apiSuccess({}));
-    api.marketplacePublicationControllerListMine.mockResolvedValue(apiSuccess({ listings: [], requests: [] }));
-    api.marketplaceControllerListMyRequests.mockRejectedValueOnce(new Error('owned requests unavailable'));
-    const ownedFailure = renderHook(() => useMarketplaceData());
-    await waitFor(() => {
-      expect(ownedFailure.result.current.myRequests.status).toBe('error');
-      expect(ownedFailure.result.current.offersByRequest.status).toBe('error');
-    });
-    ownedFailure.unmount();
-
-    api.marketplaceControllerListMyRequests.mockResolvedValue(apiSuccess({ items: [ownedRequests[0]] }));
-    api.marketplaceControllerListOffers.mockResolvedValue(apiSuccess({ items: [] }));
-    const offerStates = renderHook(() => useMarketplaceData());
-    await waitFor(() => {
-      expect(offerStates.result.current.offersByRequest.status).toBe('empty');
-    });
-    api.marketplaceControllerListOffers.mockResolvedValue(apiSuccess({ items: [{ id: 'offer-ready', priceUzs: 50 }] }));
     act(() => {
-      offerStates.result.current.refresh();
+      result.current.localActions.addToCart(product, 2);
     });
+    expect(result.current.carts.data[0]?.items).toEqual([{ productId: product.id, quantity: 2 }]);
+
+    act(() => {
+      result.current.localActions.updateCart(product.id, 5);
+    });
+    expect(result.current.carts.data[0]?.items).toEqual([{ productId: product.id, quantity: 5 }]);
+
+    act(() => {
+      result.current.localActions.toggleFavorite(product.id);
+    });
+    expect(result.current.favorites.data).toHaveLength(1);
+
+    act(() => {
+      result.current.localActions.checkout(`guest-cart-${product.supplierId}`);
+    });
+    expect(result.current.carts).toEqual({ data: [], status: 'empty' });
+  });
+
+  it('treats an unreachable session as a guest visit rather than a broken page', async () => {
+    stubApi({ marketplaceControllerGetVerification: vi.fn(() => fail(500)) });
+
+    const { result } = await renderMarketplaceData();
+
+    expect(result.current.auth).toBe('error');
+    expect(result.current.local).toBe(true);
+    expect(result.current.demo).toBe('guest');
+  });
+
+  it('discloses a demo assortment served by the API', async () => {
+    stubApi({ productControllerList: vi.fn(() => ok({ demo: true, items: [product] })) });
+
+    const { result } = await renderMarketplaceData();
+
+    expect(result.current.demo).toBe('demo-catalog');
+    expect(result.current.catalog.data).toEqual([product]);
+  });
+
+  it('keeps a retry in reach when the catalog request fails', async () => {
+    const list = vi.fn(() => fail(503));
+    stubApi({ productControllerList: list });
+
+    const { result } = await renderMarketplaceData();
+
+    expect(result.current.demo).toBe('unavailable');
+    expect(result.current.catalog).toEqual({ data: [], status: 'error' });
+
+    list.mockImplementation(() => ok({ demo: false, items: [product] }));
+    act(() => {
+      result.current.refresh();
+    });
+
     await waitFor(() => {
-      expect(offerStates.result.current.offersByRequest.status).toBe('ready');
+      expect(result.current.catalog.status).toBe('ready');
     });
-    offerStates.unmount();
+    expect(result.current.demo).toBe('none');
+  });
 
-    let resolveVerification!: (value: ReturnType<typeof apiSuccess>) => void;
-    api.marketplaceControllerGetVerification.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveVerification = resolve;
-        }),
-    );
-    const staleVerification = renderHook(() => useMarketplaceData());
+  it('survives a 200 that carries no catalog list', async () => {
+    stubApi({ productControllerList: vi.fn(() => ok({ demo: false, items: undefined })) });
+
+    const { result } = await renderMarketplaceData();
+
+    expect(result.current.catalog).toEqual({ data: [], status: 'empty' });
+    expect(result.current.demo).toBe('none');
+  });
+
+  it('marks each failed account resource without taking the others down', async () => {
+    stubApi({
+      marketplaceControllerListCarts: vi.fn(() => fail(500)),
+      marketplaceControllerListContracts: vi.fn(() => fail(500)),
+      marketplaceControllerListFavorites: vi.fn(() => fail(500)),
+      marketplaceControllerListMyRequests: vi.fn(() => fail(500)),
+      marketplaceControllerListRequests: vi.fn(() => fail(500)),
+      marketplaceControllerListSamples: vi.fn(() => fail(500)),
+      marketplaceControllerSampleUsage: vi.fn(() => fail(500)),
+    });
+
+    const { result } = await renderMarketplaceData();
+
+    expect(result.current.auth).toBe('signed-in');
+    expect(result.current.carts.status).toBe('error');
+    expect(result.current.contracts.status).toBe('error');
+    expect(result.current.favorites.status).toBe('error');
+    expect(result.current.myRequests.status).toBe('error');
+    expect(result.current.offersByRequest.status).toBe('error');
+    expect(result.current.requests.status).toBe('error');
+    expect(result.current.samples.status).toBe('error');
+    expect(result.current.sampleUsage).toEqual({ data: { limit: 5, remaining: 5, used: 0 }, status: 'error' });
+    expect(result.current.catalog.status).toBe('ready');
+  });
+
+  it('abandons every in-flight read once the page it was loading is gone', async () => {
+    const gate = openGate();
+    stubApi({
+      marketplaceControllerGetVerification: gate.answers(verification),
+      marketplaceControllerListCarts: gate.answers({ items: [] }),
+      marketplaceControllerListContracts: gate.answers({ items: [] }),
+      marketplaceControllerListFavorites: gate.answers({ items: [] }),
+      marketplaceControllerListMyRequests: gate.answers({ items: [request] }),
+      marketplaceControllerListRequests: gate.answers({ items: [request] }),
+      marketplaceControllerListSamples: gate.answers({ items: [] }),
+      marketplaceControllerSampleUsage: gate.answers({ limit: 5, remaining: 5, used: 0 }),
+      productControllerList: gate.answers({ demo: false, items: [product] }),
+    });
+
+    const view = renderHook(() => useMarketplaceData());
+    expect(view.result.current.auth).toBe('checking');
+
+    view.unmount();
+    await gate.release();
+
+    // The session probe answered, so the account reads went out — and each one
+    // found the page gone and wrote nothing back into it.
+    expect(apiState.api.marketplaceControllerListCarts).toHaveBeenCalledOnce();
+    expect(apiState.api.marketplaceControllerListSamples).toHaveBeenCalledOnce();
+    expect(apiState.api.marketplaceControllerSampleUsage).toHaveBeenCalledOnce();
+    // The owned-requests read stops before its per-request offer fan-out.
+    expect(apiState.api.marketplaceControllerListOffers).not.toHaveBeenCalled();
+    expect(view.result.current.auth).toBe('checking');
+    expect(view.result.current.carts).toEqual({ data: [], status: 'idle' });
+  });
+
+  // The owned requests arrive while the page is still up, so the per-request offer
+  // fan-out goes out — and then the visitor leaves before those offers land.
+  it('drops an offer fan-out that lands after the page that asked for it is gone', async () => {
+    const gate = openGate();
+    stubApi({
+      marketplaceControllerListMyRequests: vi.fn(() => ok({ items: [request] })),
+      marketplaceControllerListOffers: gate.answers({ items: [] }),
+    });
+
+    const view = renderHook(() => useMarketplaceData());
     await waitFor(() => {
-      expect(api.marketplaceControllerGetVerification).toHaveBeenCalled();
+      expect(apiState.api.marketplaceControllerListOffers).toHaveBeenCalledOnce();
     });
-    staleVerification.unmount();
-    resolveVerification(apiSuccess(verifiedBuyer));
-    await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
 
-    let resolveOffers!: (value: ReturnType<typeof apiSuccess>) => void;
-    api.marketplaceControllerGetVerification.mockResolvedValue(apiSuccess(verifiedBuyer));
-    api.marketplaceControllerListMyRequests.mockResolvedValue(apiSuccess({ items: [ownedRequests[0]] }));
-    api.marketplaceControllerListOffers.mockImplementationOnce(
-      () =>
-        new Promise((resolve) => {
-          resolveOffers = resolve;
-        }),
-    );
-    const staleOffers = renderHook(() => useMarketplaceData());
-    await waitFor(() => {
-      expect(api.marketplaceControllerListOffers).toHaveBeenCalled();
+    view.unmount();
+    await gate.release();
+
+    expect(view.result.current.offersByRequest).toEqual({ data: {}, status: 'idle' });
+  });
+
+  it('keeps a failure that arrives after the page is gone off the screen it left', async () => {
+    const gate = openGate();
+    stubApi({
+      marketplaceControllerGetVerification: gate.answers(verification),
+      marketplaceControllerListCarts: gate.rejects(500),
+      marketplaceControllerListContracts: gate.rejects(500),
+      marketplaceControllerListFavorites: gate.rejects(500),
+      marketplaceControllerListMyRequests: gate.rejects(500),
+      marketplaceControllerListRequests: gate.rejects(500),
+      marketplaceControllerListSamples: gate.rejects(500),
+      marketplaceControllerSampleUsage: gate.rejects(500),
+      productControllerList: gate.rejects(500),
     });
-    staleOffers.unmount();
-    resolveOffers(apiSuccess({ items: [] }));
-    await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
 
-    const staleResourceRun = async (outcome: 'resolve' | 'reject') => {
-      vi.clearAllMocks();
-      for (const listRequest of listRequests) {
-        listRequest.mockResolvedValue(apiSuccess({ items: [] }));
-      }
-      api.marketplaceControllerGetVerification.mockResolvedValue(apiSuccess(verifiedBuyer));
+    const view = renderHook(() => useMarketplaceData());
+    view.unmount();
+    await gate.release();
 
-      const carts = Promise.withResolvers<ReturnType<typeof apiSuccess>>();
-      const dashboard = Promise.withResolvers<ReturnType<typeof apiSuccess>>();
-      const myRequests = Promise.withResolvers<ReturnType<typeof apiSuccess>>();
-      const publications = Promise.withResolvers<ReturnType<typeof apiSuccess>>();
-      const readiness = Promise.withResolvers<ReturnType<typeof apiSuccess>>();
-      const usage = Promise.withResolvers<ReturnType<typeof apiSuccess>>();
-      api.marketplaceControllerListCarts.mockReturnValueOnce(carts.promise);
-      api.marketplaceControllerGetDashboard.mockReturnValueOnce(dashboard.promise);
-      api.marketplaceControllerListMyRequests.mockReturnValueOnce(myRequests.promise);
-      api.marketplacePublicationControllerListMine.mockReturnValueOnce(publications.promise);
-      api.marketplaceControllerGetVerificationReadiness.mockReturnValueOnce(readiness.promise);
-      api.marketplaceControllerSampleUsage.mockReturnValueOnce(usage.promise);
+    expect(apiState.api.marketplaceControllerListCarts).toHaveBeenCalledOnce();
+    expect(view.result.current.carts).toEqual({ data: [], status: 'idle' });
+    expect(view.result.current.catalog).toEqual({ data: [], status: 'loading' });
+    expect(view.result.current.samples.status).toBe('idle');
+  });
 
-      const staleResources = renderHook(() => useMarketplaceData());
-      await waitFor(() => {
-        expect(api.marketplaceControllerListCarts).toHaveBeenCalled();
-        expect(api.marketplaceControllerGetDashboard).toHaveBeenCalled();
-        expect(api.marketplaceControllerListMyRequests).toHaveBeenCalled();
-        expect(api.marketplacePublicationControllerListMine).toHaveBeenCalled();
-        expect(api.marketplaceControllerGetVerificationReadiness).toHaveBeenCalled();
-        expect(api.marketplaceControllerSampleUsage).toHaveBeenCalled();
-      });
-      staleResources.unmount();
+  it('leaves the browser-local basket alone when the session probe outlives the page', async () => {
+    const gate = openGate();
+    stubApi({
+      marketplaceControllerGetVerification: gate.rejects(401),
+    });
 
-      const deferred = [carts, dashboard, myRequests, publications, readiness, usage];
-      if (outcome === 'resolve') {
-        carts.resolve(apiSuccess({ items: [] }));
-        dashboard.resolve(apiSuccess({ role: 'buyer' }));
-        myRequests.resolve(apiSuccess({ items: [] }));
-        publications.resolve(apiSuccess({ listings: [], requests: [] }));
-        readiness.resolve(apiSuccess({}));
-        usage.resolve(apiSuccess({ limit: 5, period: '2026-08', policyVersion: 1, remaining: 5, used: 0 }));
-      } else {
-        for (const request of deferred) {
-          request.reject(new Error('stale request failed'));
-        }
-      }
-      await Promise.allSettled(deferred.map(({ promise }) => promise));
-      await new Promise((resolve) => globalThis.setTimeout(resolve, 0));
-    };
-    await staleResourceRun('resolve');
-    await staleResourceRun('reject');
+    const view = renderHook(() => useMarketplaceData());
+    view.unmount();
+    await gate.release();
+
+    expect(view.result.current.auth).toBe('checking');
+    expect(view.result.current.carts).toEqual({ data: [], status: 'idle' });
+    expect(view.result.current.sampleUsage.status).toBe('idle');
   });
 });
