@@ -2430,18 +2430,18 @@
     display: none;
   }
 
+  /* A row that centres the language chip, and nothing more. Painted as a card of
+     its own it left the control alone against a wide empty white field — a chip
+     inside a chip — which read like a section that had failed to load. */
   .dh-mobile-preferences {
     align-items: center;
-    background: var(--dh-surface);
-    border: 1px solid var(--dh-border);
-    border-radius: 1rem;
     display: flex;
     gap: 0.5rem;
-    justify-content: space-between;
-    margin: 0 auto 6.5rem;
+    justify-content: center;
+    /* The shell already reserves the bottom nav's height, so this only needs to
+       part the chip from the footer rule below it. */
+    margin: 0 auto 1.75rem;
     max-width: min(100% - 2rem, var(--dh-content));
-    padding: 0.65rem;
-    width: 100%;
   }
 
   .dh-category-grid,
@@ -2680,6 +2680,12 @@
   .dh-footer__brand,
   .dh-footer__legal {
     grid-column: auto;
+  }
+
+  /* The AI button floats above this corner, and the page comes to rest here, so
+     without a gutter the last line of the footer sits permanently half-covered. */
+  .dh-footer__legal {
+    padding-right: 4.6rem;
   }
 
   .dh-mobile-nav {
