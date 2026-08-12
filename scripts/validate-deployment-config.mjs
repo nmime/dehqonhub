@@ -1184,6 +1184,15 @@ if (validateHelmStatic) {
     ['discordAppApi', 'discord-app-api', 'discord-app-api.example.com'],
     ['telegramBotApi', 'telegram-bot-api', 'telegram-bot-api.example.com'],
   ];
+  const productionPublicDomainAssignments = [
+    ['userApp', 'user-app', 'dehqonhub.uz'],
+    ['mobileApp', 'mobile-app', 'mobile-app.dehqonhub.uz'],
+    ['adminApp', 'admin-app', 'admin-app.dehqonhub.uz'],
+    ['authAppApi', 'auth-app-api', 'auth-app-api.dehqonhub.uz'],
+    ['userAppApi', 'user-app-api', 'user-app-api.dehqonhub.uz'],
+    ['adminAppApi', 'admin-app-api', 'admin-app-api.dehqonhub.uz'],
+    ['telegramBotApi', 'telegram-bot-api', 'telegram-bot-api.dehqonhub.uz'],
+  ];
   const publicDomainAssignments = [...frontendDomainAssignments, ...coreApiDomainAssignments];
   assert.equal(
     new Set([...publicDomainAssignments, ...optionalApiDomainAssignments].map(([, , host]) => host)).size,
@@ -1206,7 +1215,9 @@ if (validateHelmStatic) {
   ]) {
     const ingressBlock = yamlMapEntry(values, 'ingress', 0);
     const configBlock = yamlMapEntry(values, 'config', 0);
-    for (const [app, service, host] of publicDomainAssignments) {
+    const expectedDomainAssignments =
+      label === 'production' ? productionPublicDomainAssignments : publicDomainAssignments;
+    for (const [app, service, host] of expectedDomainAssignments) {
       const appBlock = yamlMapEntry(values, app);
       has(ingressBlock, `host: ${host}`, `${label} ${app} ingress host`);
       has(ingressBlock, `service: ${service}`, `${label} ${app} ingress service`);
@@ -1227,7 +1238,7 @@ if (validateHelmStatic) {
       }
     }
 
-    for (const [app, service, host] of optionalApiDomainAssignments) {
+    for (const [app, service, host] of label === 'default' ? optionalApiDomainAssignments : []) {
       const appBlock = yamlMapEntry(values, app);
       has(appBlock, 'enabled: false', `${label} ${app} remains opt-in`);
       const hostEntry = section(ingressBlock, `- host: ${host}`, '\n    - host:');

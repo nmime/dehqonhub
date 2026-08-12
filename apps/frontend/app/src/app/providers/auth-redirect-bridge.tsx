@@ -96,7 +96,7 @@ export const AuthRedirectBridge = () => {
           isAnonymousPublicRoute(pathname) &&
           event.reason === 'unauthenticated' &&
           event.error?.method === 'GET' &&
-          event.error?.endpoint === '/auth/me'
+          event.error.endpoint === '/auth/me'
         ) {
           clearApiAuthRequired();
           return;

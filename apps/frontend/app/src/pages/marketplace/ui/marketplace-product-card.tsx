@@ -104,8 +104,7 @@ export function MarketplaceProductCard({
         }
         aria-pressed={favorite}
         className={`dh-icon-button dh-product-card__favorite${favorite ? ' is-active' : ''}`}
-        aria-describedby={isDemo ? restrictionId : undefined}
-        disabled={favoritePending || isDemo}
+        disabled={favoritePending}
         onClick={() => {
           onFavorite(product);
         }}

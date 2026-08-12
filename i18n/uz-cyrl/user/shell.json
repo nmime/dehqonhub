@@ -1,5 +1,5 @@
 {
-  "user.appName": "AgriTech",
+  "user.appName": "DehqonHub",
   "user.eyebrow": "Даладан бозоргача",
   "user.title": "Қишлоқ хўжалиги — ягона тизимда.",
   "user.description": "Ҳамкорлар, ресурслар, ҳосил, буюртмалар, етказиб бериш, тўловлар ва дала ишларини бошқаринг.",
@@ -8,7 +8,7 @@
   "user.action.signOut": "Тизимдан чиқиш",
   "user.action.signingOut": "Чиқиш…",
   "user.auth.eyebrow": "Аутентификация",
-  "user.auth.title": "Тизимга қандай киришни танланг",
+  "user.auth.title": "DehqonHubʼга кириш",
   "user.auth.description": "Электрон почтангиз ва паролингиздан фойдаланинг ёки уланган ҳисоб билан давом этинг.",
   "user.auth.social.title": "Уланган ҳисоблар",
   "user.auth.social.description": "Сизнинг муҳитингиз учун ушбу провайдерлар ёқилган бўлса, Telegram ёки Discord билан давом этинг.",
@@ -51,5 +51,5 @@
   "user.notFound.eyebrow": "Навигация",
   "user.notFound.sectionTitle": "Саҳифа топилмади",
   "user.notFound.title": "Бу йўналиш мавжуд эмас.",
-  "user.notFound.description": "AgriTech бош саҳифасига қайтинг ва мавжуд жараённи танланг."
+  "user.notFound.description": "DehqonHub бош саҳифасига қайтинг ва мавжуд жараённи танланг."
 }

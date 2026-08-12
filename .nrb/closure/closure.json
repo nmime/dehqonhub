@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "configHash": "d05e95c047339148a4f755e7ca5bd3ccfcc176887229c6a36188bb9a806cf047",
-  "graphDigest": "34d3fa0bef41b2d697409a4e43639e86552e86eafc7e5327583ff57c23b9ddb4",
+  "graphDigest": "62499608cad187a400bacdfd2fe3cf660927efe29f033b33136d2eb01e96fba3",
   "provider": "postgres",
   "roots": [
     "admin-app",
@@ -436,7 +436,10 @@
     "@fastify/multipart": "10.1.0",
     "@fastify/otel": "0.20.1",
     "@fastify/session": "11.1.2",
+    "@fontsource-variable/manrope": "5.3.0",
+    "@fontsource-variable/montserrat": "5.3.0",
     "@fontsource/noto-sans": "5.3.0",
+    "@fontsource/poppins": "5.3.0",
     "@grammyjs/auto-retry": "2.0.2",
     "@grammyjs/conversations": "2.1.1",
     "@grammyjs/hydrate": "1.7.0",

@@ -1,4 +1,4 @@
-import { Check, ChevronDown, Languages, Lightbulb, Monitor, Moon, Sun } from 'lucide-react';
+import { Check, ChevronDown, Languages, Monitor, Moon, Sun } from 'lucide-react';
 import { observer, supportedLocales, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
 import { UiButton } from './button';
 import { UiDropdownMenu } from './dropdown-menu';
@@ -71,6 +71,7 @@ export interface ThemeSwitcherProps {
 
 export const ThemeSwitcher = observer(function ThemeSwitcher({ variant = 'select' }: Readonly<ThemeSwitcherProps>) {
   const { setTheme, t, theme } = useI18n();
+  const CurrentThemeIcon = themeIcons[theme];
   const themeOptions = supportedThemes.map((nextTheme) => {
     const ThemeIcon = themeIcons[nextTheme];
 
@@ -96,7 +97,7 @@ export const ThemeSwitcher = observer(function ThemeSwitcher({ variant = 'select
         label={t('common.theme')}
         trigger={
           <UiButton aria-label={t('common.theme')} className="xr-theme-menu-trigger" size="icon" variant="ghost">
-            <Lightbulb aria-hidden="true" size={18} strokeWidth={2} />
+            <CurrentThemeIcon aria-hidden="true" size={18} strokeWidth={2} />
             <span className="sr-only">{t(`common.theme.${theme}`)}</span>
           </UiButton>
         }

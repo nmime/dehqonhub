@@ -1,4 +1,5 @@
 import { useState, type ReactNode } from 'react';
+import { ArrowLeft, Check, Home, LogIn, Send, Settings, Share2, UserRound, type LucideIcon } from 'lucide-react';
 import { ProductShell, type ProductShellAction, type ProductShellProps } from '@app/frontend-ui-web';
 import { useMiniApp, useMiniAppBackButton } from './mini-app-provider';
 
@@ -21,6 +22,22 @@ const getShareUrl = (): string => {
 };
 
 const bottomActionKey = (action: ProductShellAction) => `${action.href}:${action.label}`;
+
+const iconForAction = (href: string): LucideIcon => {
+  if (href === '/') {
+    return Home;
+  }
+  if (href.startsWith('/auth')) {
+    return LogIn;
+  }
+  if (href.startsWith('/profile')) {
+    return UserRound;
+  }
+  if (href.startsWith('/settings') || href.startsWith('/link/')) {
+    return Settings;
+  }
+  return Send;
+};
 
 export function MiniAppShell({
   activePath,
@@ -57,8 +74,8 @@ export function MiniAppShell({
         onClick={onBack}
         type="button"
       >
-        <span aria-hidden="true">←</span>
-        <span>{backLabel}</span>
+        <ArrowLeft aria-hidden="true" size={19} strokeWidth={2} />
+        <span className="sr-only">{backLabel}</span>
       </button>
     ) : null;
   const shareControl = (
@@ -69,8 +86,12 @@ export function MiniAppShell({
       onClick={() => void handleShare()}
       type="button"
     >
-      <span aria-hidden="true">↗</span>
-      <span>{shareResult === 'copied' ? 'Copied' : shareLabel}</span>
+      {shareResult === 'copied' ? (
+        <Check aria-hidden="true" size={19} strokeWidth={2} />
+      ) : (
+        <Share2 aria-hidden="true" size={19} strokeWidth={2} />
+      )}
+      <span className="sr-only">{shareResult === 'copied' ? 'Copied' : shareLabel}</span>
     </button>
   );
 
@@ -91,23 +112,35 @@ export function MiniAppShell({
         {children}
       </ProductShell>
       <nav aria-label={`${appName} bottom navigation`} className="xr-mini-app-bottom-bar">
-        {actions.map((action) => (
-          <a
-            aria-current={action.isCurrent ? 'page' : undefined}
-            className="xr-mini-app-bottom-bar__action"
-            data-current={action.isCurrent ?? false}
-            href={action.href}
-            key={bottomActionKey(action)}
-          >
-            {action.label}
-          </a>
-        ))}
+        {actions.map((action) => {
+          const ActionIcon = iconForAction(action.href);
+          return (
+            <a
+              aria-current={action.isCurrent ? 'page' : undefined}
+              className="xr-mini-app-bottom-bar__action"
+              data-current={action.isCurrent ?? false}
+              href={action.href}
+              key={bottomActionKey(action)}
+              title={action.label}
+            >
+              <ActionIcon aria-hidden="true" size={20} strokeWidth={2} />
+              <span className="sr-only">{action.label}</span>
+            </a>
+          );
+        })}
         <button
+          aria-label={shareLabel}
           className="xr-mini-app-bottom-bar__action xr-mini-app-bottom-bar__share"
           onClick={() => void handleShare()}
+          title={shareLabel}
           type="button"
         >
-          {shareResult === 'copied' ? 'Copied' : shareLabel}
+          {shareResult === 'copied' ? (
+            <Check aria-hidden="true" size={20} strokeWidth={2} />
+          ) : (
+            <Share2 aria-hidden="true" size={20} strokeWidth={2} />
+          )}
+          <span className="sr-only">{shareResult === 'copied' ? 'Copied' : shareLabel}</span>
         </button>
       </nav>
       <span aria-live="polite" className="sr-only">

@@ -30,7 +30,13 @@ test('a copyleft licence outside the allow-list fails the gate', () => {
 
 test('a package-scoped font licence does not authorize unrelated packages', () => {
   const violations = collectLicenseViolations({
-    'OFL-1.1': [{ name: '@fontsource/noto-sans' }, { name: 'unexpected-ofl-code-package' }],
+    'OFL-1.1': [
+      { name: '@fontsource/noto-sans' },
+      { name: '@fontsource-variable/manrope' },
+      { name: '@fontsource-variable/montserrat' },
+      { name: '@fontsource/poppins' },
+      { name: 'unexpected-ofl-code-package' },
+    ],
   });
 
   assert.equal(acknowledgedPackageLicenses.get('OFL-1.1')?.has('@fontsource/noto-sans'), true);

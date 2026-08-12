@@ -202,7 +202,7 @@ describe('social auth and TMA UI', () => {
     });
     expect(share).toHaveBeenCalledWith({
       text: 'Manage partners, inputs, produce, orders, delivery, payments, and field operations.',
-      title: 'AgriTech',
+      title: 'DehqonHub',
       url: 'https://app.local.test/profile?ref=friend',
     });
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));

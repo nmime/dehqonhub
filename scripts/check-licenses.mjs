@@ -41,7 +41,17 @@ export const allowedLicenses = new Set([
 ]);
 
 /** Licences approved only for the named production packages. */
-export const acknowledgedPackageLicenses = new Map([['OFL-1.1', new Set(['@fontsource/noto-sans'])]]);
+export const acknowledgedPackageLicenses = new Map([
+  [
+    'OFL-1.1',
+    new Set([
+      '@fontsource/noto-sans',
+      '@fontsource-variable/manrope',
+      '@fontsource-variable/montserrat',
+      '@fontsource/poppins',
+    ]),
+  ],
+]);
 
 /**
  * Packages whose manifest omits a licence field. Each is MIT upstream; they are listed

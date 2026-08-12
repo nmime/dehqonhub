@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019
+// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-EXPERIENCE-026
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -1240,7 +1240,7 @@ describe('MarketplacePage route action orchestration', () => {
     };
     renderPage();
     viewProps<ProductActions>('home').onFavorite(product);
-    expect(navigate).toHaveBeenCalledWith(expect.stringMatching(/^\/auth\?returnUrl=/u));
+    expect(navigate).not.toHaveBeenCalledWith(expect.stringMatching(/^\/auth\?returnUrl=/u));
 
     testState.marketplaceData = {
       ...buildMarketplaceData(refresh),

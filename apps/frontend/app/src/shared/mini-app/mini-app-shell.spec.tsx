@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-ACCESSIBILITY-003
+// @requirements REQ-FRONTEND-ACCESSIBILITY-003 REQ-AGRITECH-EXPERIENCE-026
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MiniAppShell } from './mini-app-shell';

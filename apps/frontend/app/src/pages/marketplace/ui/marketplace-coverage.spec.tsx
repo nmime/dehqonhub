@@ -139,16 +139,9 @@ describe('marketplace projections and discovery interactions', () => {
       'agritech.marketplace.scenario.createOrder',
       'agritech.marketplace.scenario.sample',
       'agritech.marketplace.scenario.verify',
-      'agritech.marketplace.scenario.sell',
+      'agritech.marketplace.scenario.contracts',
     ]) {
       fireEvent.click(screen.getAllByRole('button', { name })[0]!);
-    }
-    for (const name of [
-      /^agritech\.marketplace\.section\.equipment/u,
-      /^agritech\.marketplace\.section\.seeds/u,
-      /^agritech\.marketplace\.section\.produce/u,
-    ]) {
-      fireEvent.click(screen.getByRole('button', { name }));
     }
     for (const seeAll of screen.getAllByRole('button', { name: 'agritech.marketplace.shelf.seeAll' })) {
       fireEvent.click(seeAll);
@@ -239,12 +232,17 @@ describe('marketplace projections and discovery interactions', () => {
     expect(dialog.hasAttribute('open')).toBe(false);
 
     const filterPanel = screen.getByRole('complementary', { name: 'agritech.marketplace.filter.title' });
+    expect(within(filterPanel).getByRole('searchbox').getAttribute('placeholder')).toBe(
+      'agritech.marketplace.filter.queryPlaceholder',
+    );
     const inputs = within(filterPanel).getAllByRole('spinbutton');
+    expect(inputs[0]?.getAttribute('placeholder')).toBe('agritech.marketplace.filter.fromPlaceholder');
+    expect(inputs[1]?.getAttribute('placeholder')).toBe('agritech.marketplace.filter.toPlaceholder');
     fireEvent.change(within(filterPanel).getByRole('searchbox'), { target: { value: 'seed' } });
     fireEvent.change(inputs[0]!, { target: { value: '50' } });
     fireEvent.change(inputs[1]!, { target: { value: '500' } });
     fireEvent.change(within(filterPanel).getByRole('combobox'), { target: { value: 'Buxoro' } });
-    fireEvent.click(within(filterPanel).getByRole('checkbox'));
+    fireEvent.click(within(filterPanel).getByRole('checkbox', { name: 'agritech.marketplace.filter.inStock' }));
     expect(screen.getByText(cheap.name)).toBeTruthy();
     expect(screen.queryByText(expensive.name)).toBeNull();
 
@@ -259,7 +257,7 @@ describe('marketplace projections and discovery interactions', () => {
     expect(screen.queryByText(cheap.name)).toBeNull();
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.section.equipment' }));
     fireEvent.click(within(filterPanel).getByRole('button', { name: 'agritech.marketplace.filter.reset' }));
-    fireEvent.click(within(filterPanel).getByRole('checkbox'));
+    fireEvent.click(within(filterPanel).getByRole('checkbox', { name: 'agritech.marketplace.filter.inStock' }));
     expect(screen.getByText(expensive.name)).toBeTruthy();
     expect(screen.queryByText(inactiveStock.name)).toBeNull();
   });

@@ -167,7 +167,7 @@ describe('Marketplace user management', () => {
     const onSampleFeedback = vi.fn();
     const onSampleTransition = vi.fn();
 
-    const view = render(
+    render(
       <MarketplaceUserManagement
         aiConsultations={{ data: [consultation], status: 'ready' }}
         canActivatePromotions

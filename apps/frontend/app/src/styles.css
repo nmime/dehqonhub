@@ -1,5 +1,193 @@
 /* User-app composition only. Shared tokens and primitives live in @app/frontend-ui-web. */
 
+.xr-mini-app-shell .xr-shell {
+  --xr-font-family: 'Poppins', 'Manrope Variable', sans-serif;
+  --xr-radius-md: 0.9rem;
+  --xr-radius-lg: 1.35rem;
+  --xr-color-background: #fbf3e3;
+  --xr-color-background-accent: rgb(44 196 99 / 14%);
+  --xr-color-surface: rgb(255 253 248 / 94%);
+  --xr-color-surface-strong: #fffdf8;
+  --xr-color-border: #e8dcc7;
+  --xr-color-text: #202720;
+  --xr-color-muted: #687067;
+  --xr-color-primary: #18a957;
+  --xr-color-primary-strong: #08783a;
+  --xr-color-primary-contrast: #fffdf8;
+  --xr-control-background: #f5ecdc;
+  --xr-input-background: #fffdf8;
+  --xr-card-background: #fffdf8;
+  --xr-feedback-background: #fffdf8;
+  --xr-focus-ring: 0 0 0 3px rgb(24 169 87 / 24%);
+  --xr-shadow-sm: 0 1px 2px rgb(36 49 39 / 6%);
+  --xr-shadow-md: 0 14px 36px rgb(36 49 39 / 10%);
+  --xr-mini-app-header-color: #fffdf8;
+  --xr-mini-app-bottom-color: #fffdf8;
+  --background: var(--xr-color-surface-strong);
+  --foreground: var(--xr-color-text);
+  --card: var(--xr-card-background);
+  --card-foreground: var(--xr-color-text);
+  --popover: var(--xr-color-surface-strong);
+  --popover-foreground: var(--xr-color-text);
+  --primary: var(--xr-color-primary);
+  --primary-foreground: var(--xr-color-primary-contrast);
+  --secondary: var(--xr-control-background);
+  --secondary-foreground: var(--xr-color-text);
+  --muted: var(--xr-control-background);
+  --muted-foreground: var(--xr-color-muted);
+  --accent: color-mix(in srgb, var(--xr-color-primary) 12%, transparent);
+  --accent-foreground: var(--xr-color-primary-strong);
+  --border: var(--xr-color-border);
+  --input: var(--xr-color-border);
+  --ring: var(--xr-color-primary);
+  background: #fbf3e3;
+  font-family: var(--xr-font-family);
+}
+
+.xr-mini-app-shell .xr-shell[data-theme='dark'] {
+  --xr-color-background: #0d110e;
+  --xr-color-background-accent: rgb(46 205 100 / 10%);
+  --xr-color-surface: rgb(21 26 22 / 96%);
+  --xr-color-surface-strong: #151a16;
+  --xr-color-border: #2b382e;
+  --xr-color-text: #f5f7f2;
+  --xr-color-muted: #a8b0a9;
+  --xr-color-primary: #55d77e;
+  --xr-color-primary-strong: #2db862;
+  --xr-color-primary-contrast: #07140b;
+  --xr-control-background: #19221b;
+  --xr-input-background: #151a16;
+  --xr-card-background: #151a16;
+  --xr-feedback-background: #151a16;
+  --xr-mini-app-header-color: #111612;
+  --xr-mini-app-bottom-color: #111612;
+  background: #0d110e;
+}
+
+.xr-mini-app-shell .xr-shell .xr-header {
+  background: color-mix(in srgb, var(--xr-color-surface-strong) 94%, transparent);
+  border-bottom-color: var(--xr-color-border);
+  box-shadow: none;
+  color: var(--xr-color-text);
+}
+
+.xr-mini-app-shell .xr-shell .xr-brand,
+.xr-mini-app-shell .xr-shell .xr-header .xr-field__label {
+  color: var(--xr-color-text);
+}
+
+.xr-mini-app-shell .xr-shell .xr-brand {
+  color: var(--xr-color-primary-strong);
+  font-size: 1.05rem;
+  letter-spacing: -0.04em;
+}
+
+.xr-mini-app-shell .xr-brand__mark {
+  display: none;
+}
+
+.xr-mini-app-shell .xr-mini-app-control {
+  border-color: var(--xr-color-border);
+  background: var(--xr-control-background);
+  color: var(--xr-color-text);
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0.65rem;
+}
+
+.xr-mini-app-shell .xr-mini-app-control:hover,
+.xr-mini-app-shell .xr-mini-app-control:focus-visible {
+  background: color-mix(in srgb, var(--xr-color-primary) 14%, var(--xr-control-background));
+}
+
+.xr-mini-app-shell[data-mini-app-path]:not([data-mini-app-path='/']) .xr-hero {
+  display: none;
+}
+
+.xr-mini-app-shell .xr-content {
+  max-width: 82.5rem;
+  padding-top: clamp(1.5rem, 4vw, 3rem);
+}
+
+.xr-mini-app-shell .xr-section h1,
+.xr-mini-app-shell .xr-section h2 {
+  font-family: 'Poppins', 'Manrope Variable', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+}
+
+.xr-mini-app-shell .xr-card {
+  border-radius: 1.35rem;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.xr-mini-app-shell .xr-button,
+.xr-mini-app-shell .xr-input,
+.xr-mini-app-shell select {
+  min-height: 2.75rem;
+  border-radius: 999px;
+}
+
+.xr-mini-app-shell .xr-input {
+  padding-inline: 1rem;
+}
+
+.xr-mini-app-shell .xr-input::placeholder {
+  color: var(--xr-color-muted);
+  opacity: 1;
+}
+
+.xr-mini-app-shell .xr-mini-app-bottom-bar {
+  right: auto;
+  bottom: max(0.75rem, var(--xr-mini-app-safe-bottom));
+  left: 50%;
+  display: flex;
+  width: auto;
+  min-height: auto;
+  gap: 0.25rem;
+  padding: 0.45rem;
+  border: 1px solid #e8dcc7;
+  border-radius: 999px;
+  background: rgb(255 253 248 / 94%);
+  box-shadow: 0 14px 36px rgb(36 49 39 / 12%);
+  transform: translateX(-50%);
+}
+
+.xr-mini-app-shell .xr-mini-app-bottom-bar__action {
+  display: grid;
+  width: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border-radius: 999px;
+  color: #687067;
+  padding: 0;
+}
+
+.xr-mini-app-shell .xr-mini-app-bottom-bar__action[data-current='true'],
+.xr-mini-app-shell .xr-mini-app-bottom-bar__action:hover,
+.xr-mini-app-shell .xr-mini-app-bottom-bar__action:focus-visible {
+  background: #e5f7e9;
+  color: #08783a;
+}
+
+:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar {
+  border-color: #2b382e;
+  background: rgb(17 22 18 / 96%);
+  box-shadow: 0 14px 36px rgb(0 0 0 / 32%);
+}
+
+:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action {
+  color: #a8b0a9;
+}
+
+:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action[data-current='true'],
+:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action:hover,
+:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action:focus-visible {
+  background: #1d3424;
+  color: #55d77e;
+}
+
 .xr-mini-app-shell .xr-hero {
   padding-block: clamp(1.75rem, 5vw, 3.5rem) clamp(1rem, 3vw, 2rem);
 }
@@ -28,6 +216,11 @@
 .user-auth__card {
   display: grid;
   gap: 1rem;
+}
+
+.user-auth {
+  margin-inline: auto;
+  max-width: 70rem;
 }
 
 .user-page-intro {
@@ -226,6 +419,17 @@
 }
 
 @media (max-width: 40rem) {
+  .xr-mini-app-shell .xr-shell .xr-brand > span:last-child {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: nowrap;
+  }
+
   .user-problem-card dl,
   .user-problem-card li {
     grid-template-columns: 1fr;

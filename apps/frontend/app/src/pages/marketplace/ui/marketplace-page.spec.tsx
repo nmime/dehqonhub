@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ONBOARDING-023
+// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-EXPERIENCE-026 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ONBOARDING-023
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContractLifecycleDto, VerificationViewDto } from '@app/frontend-api-client';
@@ -454,7 +454,7 @@ describe('MarketplacePage mutations', () => {
     expect(Boolean(rating)).toBe(expected);
   });
 
-  it('renders the public catalog for an anonymous visitor while keeping private favorites behind auth', () => {
+  it('renders the public catalog and local favorites for an anonymous visitor', () => {
     if (!testState.marketplaceData) {
       throw new Error('Marketplace fixture is unavailable.');
     }
@@ -470,7 +470,8 @@ describe('MarketplacePage mutations', () => {
     expect(screen.queryByText('agritech.marketplace.auth.title')).toBeNull();
 
     catalogView.rerender(<MarketplacePage navigate={vi.fn()} view="favorites" />);
-    expect(screen.getByText('agritech.marketplace.auth.title')).toBeTruthy();
+    expect(screen.queryByText('agritech.marketplace.auth.title')).toBeNull();
+    expect(screen.getByText('agritech.marketplace.favorites.localOnly')).toBeTruthy();
   });
 
   it('renders the public purchase-request feed without a session', () => {

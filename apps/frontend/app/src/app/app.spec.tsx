@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016 REQ-API-PROBLEM-001
+// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-EXPERIENCE-026 REQ-API-PROBLEM-001
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { apiRuntimeEvents } from '@app/frontend-api-support';
@@ -256,7 +256,7 @@ describe('User app shell', () => {
     enableProductionSameOriginApi();
     const fetchMock = installSignedOutMarketplaceFetch();
     const { container } = render(<App />);
-    await screen.findByRole('heading', { name: 'Everything for your farm in one place' });
+    await screen.findByRole('heading', { name: "Uzbekistan's entire agro market — on one platform" });
     await waitFor(() => {
       expect(
         fetchMock.mock.calls.some(
@@ -271,14 +271,8 @@ describe('User app shell', () => {
     const html = container.innerHTML;
 
     expect(container.querySelectorAll('.dh-marketplace')).toHaveLength(1);
-    const brandMarks = container.querySelectorAll<HTMLImageElement>('.dh-brand__mark img');
-    expect(brandMarks).toHaveLength(2);
-    for (const brandMark of brandMarks) {
-      expect(brandMark.getAttribute('alt')).toBe('');
-      expect(brandMark.getAttribute('src')).toContain('dehqonhub-logo');
-      expect(brandMark.getAttribute('width')).toBe('512');
-      expect(brandMark.getAttribute('height')).toBe('512');
-    }
+    expect(container.querySelectorAll('.dh-brand__mark img')).toHaveLength(0);
+    expect(container.querySelectorAll('.dh-brand__wordmark')).toHaveLength(2);
     expect(html).toContain('Dehqon');
     expect(html).not.toContain('xr-mini-app-bottom-bar');
     expect(html).not.toContain('design v3');
@@ -415,7 +409,9 @@ describe('User app shell', () => {
     await awaitShell();
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
 
-    expect(await screen.findByRole('heading', { name: 'Everything for your farm in one place' })).toBeTruthy();
+    expect(
+      await screen.findByRole('heading', { name: "Uzbekistan's entire agro market — on one platform" }),
+    ).toBeTruthy();
     expect(back).not.toHaveBeenCalled();
     back.mockRestore();
   });
@@ -518,7 +514,7 @@ describe('User app shell', () => {
     });
 
     const { container } = render(<App />);
-    await screen.findByRole('heading', { name: 'Everything for your farm in one place' });
+    await screen.findByRole('heading', { name: "Uzbekistan's entire agro market — on one platform" });
     expect(container.innerHTML).toContain('Dehqon');
   });
 
@@ -714,6 +710,8 @@ describe('User app shell', () => {
     expect(await screen.findByText('Ready: profile-subject')).toBeTruthy();
 
     chooseSelectOption('Theme', 'dark');
+
+    expect(window.location.pathname).toBe('/auth');
 
     await waitFor(() => {
       expect(

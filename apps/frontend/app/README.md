@@ -19,15 +19,18 @@ pnpm run test:storybook
 pnpm run frontend:fsd:check
 ```
 
-`storybook/home.stories.tsx` composes the DehqonHub home screen with deterministic
-providers and an honest empty catalog. Keep routing, authentication, API
-behavior, Telegram integration, and complete account flows in `user-app:e2e`.
+`storybook/home.stories.tsx` composes the DehqonHub home and catalog with a
+deterministic, realistic multi-category review catalog. Those records are
+Storybook-only fixtures; production continues to render API data and the
+explicitly labelled, feature-flagged demo catalog. Keep routing,
+authentication, API behavior, Telegram integration, local-favorite behavior,
+and complete account flows in `user-app:e2e` and `user-app:e2e-authenticated`.
 
 ## Telegram Mini App and browser shell
 
 The same `user-app` bundle is the canonical Telegram Mini App and normal web
 application. Configure BotFather with
-`https://example.com/telegram-mini-app`; `/tma` and `/tma/auth` remain
+`https://dehqonhub.uz/telegram-mini-app`; `/tma` and `/tma/auth` remain
 supported launch aliases.
 
 - `MiniAppProvider` in `@app/frontend-runtime` detects Telegram without making

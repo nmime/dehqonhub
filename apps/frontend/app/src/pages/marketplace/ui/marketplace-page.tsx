@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019
+// @requirements REQ-AGRITECH-EXPERIENCE-026 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import './marketplace.css';
 import { observer, useI18n } from '@app/frontend-runtime';
@@ -21,6 +21,7 @@ import {
   type VerificationViewDto,
 } from '@app/frontend-api-client';
 import { LanguageSwitcher, ThemeSwitcher } from '../../../shared/ui';
+import { useGuestFavorites } from '../model/use-guest-favorites';
 import { useMarketplaceData, type Resource } from '../model/use-marketplace-data';
 import { MarketplaceAi } from './marketplace-ai';
 import {
@@ -108,8 +109,6 @@ const replaceReview = (
   status: 'ready',
 });
 
-const dehqonHubLogoUrl = new URL('../../../assets/dehqonhub-logo.webp', import.meta.url).href;
-
 const defaultNavigate: MarketplaceNavigate = (to) => {
   globalThis.location.assign(to);
 };
@@ -144,6 +143,7 @@ export const MarketplacePage = observer(function MarketplacePage({
   );
   const { api, requestOptions } = useUserApiClient();
   const data = useMarketplaceData(productId, sellerId);
+  const guestFavorites = useGuestFavorites();
   const [notice, setNotice] = useState<MarketplaceNotice>();
   const [pendingAction, setPendingAction] = useState<string>();
   const [search, setSearch] = useState('');
@@ -277,10 +277,14 @@ export const MarketplacePage = observer(function MarketplacePage({
     };
   }, [api, contractId, contractLifecycleReload, data.auth, requestOptions, view]);
 
-  const favoriteIds = useMemo(
-    () => new Set(data.favorites.data.map((favorite) => favorite.listing.id)),
-    [data.favorites.data],
-  );
+  const favoriteIds = useMemo(() => {
+    const serverIds = data.auth === 'signed-in' ? data.favorites.data.map((favorite) => favorite.listing.id) : [];
+    const localIds = data.catalog.data
+      .filter((product) => data.auth !== 'signed-in' || product.provenance === 'demo')
+      .map((product) => product.id)
+      .filter((id) => guestFavorites.ids.has(id));
+    return new Set([...serverIds, ...localIds]);
+  }, [data.auth, data.catalog.data, data.favorites.data, guestFavorites.ids]);
   const selectedProduct = data.selectedListing.data ?? data.catalog.data.find((product) => product.id === productId);
   const selectedContract = data.contracts.data.find((contract) => contract.id === contractId);
   const buyerPartner = data.partners.data.find((partner) => partner.kind === 'buyer' && partner.status === 'approved');
@@ -405,8 +409,15 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const toggleFavorite = (product: MarketplaceListing) => {
-    if (product.provenance === 'demo') {
-      flash(translate('agritech.marketplace.access.demo'), 'info');
+    if (data.auth !== 'signed-in' || product.provenance === 'demo') {
+      const wasFavorite = guestFavorites.ids.has(product.id);
+      guestFavorites.toggle(product.id);
+      flash(
+        wasFavorite
+          ? translate('agritech.marketplace.favorites.localRemoved')
+          : translate('agritech.marketplace.favorites.localAdded'),
+        'info',
+      );
       return;
     }
     const favorite = favoriteIds.has(product.id);
@@ -1174,8 +1185,7 @@ export const MarketplacePage = observer(function MarketplacePage({
     ...(transactionAccess?.hint ? { transactionHint: transactionAccess.hint } : {}),
   };
 
-  const privateView =
-    view === 'account' || view === 'cart' || view === 'contract' || view === 'favorites' || view === 'verification';
+  const privateView = view === 'account' || view === 'cart' || view === 'contract' || view === 'verification';
   const catalogView = view === 'catalog' || view === 'home';
   const authChecking = privateView && data.auth === 'checking';
   const authSignedOut = privateView && data.auth === 'signed-out';
@@ -1240,7 +1250,13 @@ export const MarketplacePage = observer(function MarketplacePage({
           rendered = <MarketplaceSellerProfile {...productActions} catalog={data.sellerCatalog} seller={data.seller} />;
           break;
         case 'favorites':
-          rendered = <MarketplaceFavorites {...productActions} status={data.favorites.status} />;
+          rendered = (
+            <MarketplaceFavorites
+              {...productActions}
+              localOnly={data.auth !== 'signed-in'}
+              status={data.auth === 'signed-in' ? data.favorites.status : 'ready'}
+            />
+          );
           break;
         case 'cart':
           rendered = (
@@ -1508,15 +1524,10 @@ function MarketplaceBrand({ t }: Readonly<{ t: MarketplaceTranslate }>) {
   const accentStart = Math.max(0, brand.length - 3);
 
   return (
-    <>
-      <span aria-hidden="true" className="dh-brand__mark">
-        <img alt="" decoding="async" height="512" src={dehqonHubLogoUrl} width="512" />
-      </span>
-      <span className="dh-brand__wordmark">
-        <span>{brand.slice(0, accentStart)}</span>
-        <strong>{brand.slice(accentStart)}</strong>
-      </span>
-    </>
+    <span className="dh-brand__wordmark">
+      <span>{brand.slice(0, accentStart)}</span>
+      <strong>{brand.slice(accentStart)}</strong>
+    </span>
   );
 }
 
@@ -1652,8 +1663,8 @@ function MarketplaceHeader({
           />
         </nav>
         <div className="dh-header__preferences">
-          <LanguageSwitcher />
-          <ThemeSwitcher />
+          <LanguageSwitcher variant="menu" />
+          <ThemeSwitcher variant="menu" />
         </div>
       </div>
       <nav aria-label={t('agritech.marketplace.catalog.categories')} className="dh-header__categories">

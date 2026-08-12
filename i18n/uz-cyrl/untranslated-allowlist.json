@@ -16,6 +16,7 @@
       "user.appName"
     ],
     "emailExamples": ["user.form.emailPlaceholder", "user.form.registerEmailPlaceholder"],
+    "numericExamples": ["agritech.marketplace.filter.fromPlaceholder"],
     "protocolsAndIdentifiers": [
       "admin.audit.filter.uuidPlaceholder",
       "admin.loginAnalytics.column.geo",
@@ -34,6 +35,7 @@
     "admin.notification.option.provider.resend",
     "agritech.brand",
     "agritech.marketplace.brand",
+    "agritech.marketplace.filter.fromPlaceholder",
     "auth.provider.discord",
     "auth.provider.telegram",
     "auth.social.protocol.oauth",

@@ -167,6 +167,39 @@ requirements:
         file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
         target: user-app:e2e-authenticated
         lanes: [pr, main]
+  - id: REQ-AGRITECH-EXPERIENCE-026
+    projects: [user-app, '@app/frontend-feature-user-i18n']
+    risk: high
+    profiles: [domain, journey]
+    cucumber:
+      disposition: not-applicable
+      reason: Renderer-owned reference fidelity, responsive layout, theme parity, local-storage behavior, and filter interaction are directly falsified by component and browser evidence.
+      alternativeEvidence: [vitest, playwright]
+    evidence:
+      - kind: vitest
+        file: apps/frontend/app/src/app/app.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/shared/mini-app/mini-app-shell.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/model/use-guest-favorites.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-components.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-page.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
+        target: user-app:e2e-authenticated
+        lanes: [pr, main]
   - id: REQ-AGRITECH-PARTNER-007
     projects:
       [

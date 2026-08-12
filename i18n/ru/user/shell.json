@@ -1,5 +1,5 @@
 {
-  "user.appName": "AgriTech",
+  "user.appName": "DehqonHub",
   "user.eyebrow": "От поля до рынка",
   "user.title": "Сельское хозяйство — в единой системе.",
   "user.description": "Управляйте партнерами, ресурсами, урожаем, заказами, доставкой, оплатой и полевыми работами.",
@@ -8,7 +8,7 @@
   "user.action.signOut": "Выйти",
   "user.action.signingOut": "Выход…",
   "user.auth.eyebrow": "Аутентификация",
-  "user.auth.title": "Выберите способ входа",
+  "user.auth.title": "Вход в DehqonHub",
   "user.auth.description": "Используйте email и пароль или продолжите через подключенный аккаунт.",
   "user.auth.social.title": "Подключенные аккаунты",
   "user.auth.social.description": "Продолжите через Telegram или Discord, если эти провайдеры включены в вашем окружении.",
@@ -51,5 +51,5 @@
   "user.notFound.eyebrow": "Навигация",
   "user.notFound.sectionTitle": "Страница не найдена",
   "user.notFound.title": "Этот маршрут недоступен.",
-  "user.notFound.description": "Вернитесь на главную страницу AgriTech и выберите доступный сценарий."
+  "user.notFound.description": "Вернитесь на главную страницу DehqonHub и выберите доступный сценарий."
 }

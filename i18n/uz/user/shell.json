@@ -1,5 +1,5 @@
 {
-  "user.appName": "AgriTech",
+  "user.appName": "DehqonHub",
   "user.eyebrow": "Daladan bozorgacha",
   "user.title": "Qishloq xo‘jaligi — yagona tizimda.",
   "user.description": "Hamkorlar, resurslar, hosil, buyurtmalar, yetkazib berish, to‘lovlar va dala ishlarini boshqaring.",
@@ -8,7 +8,7 @@
   "user.action.signOut": "Tizimdan chiqish",
   "user.action.signingOut": "Chiqish…",
   "user.auth.eyebrow": "Autentifikatsiya",
-  "user.auth.title": "Tizimga qanday kirishni tanlang",
+  "user.auth.title": "DehqonHubʼga kirish",
   "user.auth.description": "Elektron pochtangiz va parolingizdan foydalaning yoki ulangan hisob bilan davom eting.",
   "user.auth.social.title": "Ulangan hisoblar",
   "user.auth.social.description": "Sizning muhitingiz uchun ushbu provayderlar yoqilgan boʻlsa, Telegram yoki Discord bilan davom eting.",
@@ -51,5 +51,5 @@
   "user.notFound.eyebrow": "Navigatsiya",
   "user.notFound.sectionTitle": "Sahifa topilmadi",
   "user.notFound.title": "Bu yo‘nalish mavjud emas.",
-  "user.notFound.description": "AgriTech bosh sahifasiga qayting va mavjud jarayonni tanlang."
+  "user.notFound.description": "DehqonHub bosh sahifasiga qayting va mavjud jarayonni tanlang."
 }

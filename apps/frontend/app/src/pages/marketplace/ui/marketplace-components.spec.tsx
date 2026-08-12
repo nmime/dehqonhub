@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024
+// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-EXPERIENCE-026 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -277,14 +277,14 @@ describe('DehqonHub marketplace components', () => {
 
     expect(screen.getByText('agritech.marketplace.access.demoBadge')).toBeTruthy();
     expect(screen.getByText('agritech.marketplace.access.demo')).toBeTruthy();
-    expect(
-      screen.getByRole('button', { name: 'agritech.marketplace.product.addFavorite' }).hasAttribute('disabled'),
-    ).toBe(true);
+    const favorite = screen.getByRole('button', { name: 'agritech.marketplace.product.addFavorite' });
+    expect(favorite.hasAttribute('disabled')).toBe(false);
     expect(
       screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }).hasAttribute('disabled'),
     ).toBe(true);
     expect(onAdd).not.toHaveBeenCalled();
-    expect(onFavorite).not.toHaveBeenCalled();
+    fireEvent.click(favorite);
+    expect(onFavorite).toHaveBeenCalledWith(demoSeed);
   });
   it('keeps catalog branches distinct and applies real record filters', () => {
     window.history.replaceState({}, '', '/catalog?section=seeds');

@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-RECOVERY-010 REQ-AGRITECH-WEB-006 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ROUTING-015 REQ-API-PROBLEM-001 REQ-FRONTEND-ACCESSIBILITY-003
+// @requirements REQ-AUTH-RECOVERY-010 REQ-AGRITECH-WEB-006 REQ-AGRITECH-EXPERIENCE-026 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ROUTING-015 REQ-API-PROBLEM-001 REQ-FRONTEND-ACCESSIBILITY-003
 import { expect, test, type Page, type Route } from '@playwright/test';
 import type {
   ContractArtifactDto,
@@ -743,7 +743,117 @@ test('anonymous visitors keep the public marketplace when optional presentation 
   await page.waitForLoadState('networkidle');
 
   await expect(page).toHaveURL(/\/$/u);
-  await expect(page.getByRole('heading', { level: 1, name: 'Everything for your farm in one place' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 1, name: "Uzbekistan's entire agro market — on one platform" }),
+  ).toBeVisible();
+});
+
+test('reference-led public marketplace keeps local favorites and a polished black theme', async ({ page }) => {
+  await page.setViewportSize({ height: 812, width: 375 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      consoleErrors.push(message.text());
+    }
+  });
+  page.on('pageerror', (error) => {
+    pageErrors.push(error.message);
+  });
+  await page.route('**/auth/problem-presentations', async (route) => {
+    await route.fulfill({ body: JSON.stringify({ data: { items: [] } }), contentType: 'application/json' });
+  });
+  await page.route('**/auth/me', fulfillAnonymousAuthFailure);
+  await page.route('**/auth/me/preferences', async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ data: { user: { theme: 'dark' } } }),
+      contentType: 'application/json',
+    });
+  });
+  await page.route('**/marketplace/catalog', fulfillAnonymousAuthFailure);
+  await page.route('**/marketplace/verification', fulfillAnonymousAuthFailure);
+  await page.route('**/marketplace/public/catalog', async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ data: { items: [listing, demoListing] } }),
+      contentType: 'application/json',
+    });
+  });
+  await page.route('**/marketplace/public/requests', async (route) => {
+    await route.fulfill({ body: JSON.stringify({ data: { items: [] } }), contentType: 'application/json' });
+  });
+
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: "Uzbekistan's entire agro market — on one platform" }),
+  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Explore the governed demo catalog' })).toBeVisible();
+  await expect(page.locator('.dh-brand__wordmark').first()).toContainText('DehqonHub');
+  await expect(page.locator('.dh-brand__mark img')).toHaveCount(0);
+  await expectNoHorizontalOverflow(page, '375px reference home');
+
+  const favorite = page
+    .locator('article')
+    .filter({ hasText: listing.title })
+    .getByRole('button', { name: 'Add product to favorites' });
+  await favorite.click();
+  await expect(
+    page
+      .locator('article')
+      .filter({ hasText: listing.title })
+      .getByRole('button', { name: 'Remove product from favorites' }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect
+    .poll(() =>
+      page.evaluate((id) => localStorage.getItem('dehqonhub.marketplace.guest-favorites.v1')?.includes(id), listingId),
+    )
+    .toBe(true);
+
+  const theme = page.getByRole('button', { name: 'Theme' }).last();
+  const publicRouteBeforeThemeChange = page.url();
+  await theme.click();
+  await page.getByRole('menuitem', { name: 'Dark' }).click();
+  await expect(page).toHaveURL(publicRouteBeforeThemeChange);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  const visualTokens = await page.evaluate(() => {
+    const root = document.querySelector<HTMLElement>('.dh-marketplace');
+    const catalogButton = document.querySelector<HTMLElement>('.dh-button--catalog');
+    if (!root || !catalogButton) {
+      throw new Error('Marketplace reference shell is missing.');
+    }
+    const rootStyle = getComputedStyle(root);
+    const buttonStyle = getComputedStyle(catalogButton);
+    return {
+      background: rootStyle.backgroundColor,
+      fontFamily: rootStyle.fontFamily,
+      paddingLeft: buttonStyle.paddingLeft,
+      paddingRight: buttonStyle.paddingRight,
+    };
+  });
+  expect(visualTokens.background).toBe('rgb(13, 17, 14)');
+  expect(visualTokens.fontFamily).toContain('Poppins');
+  expect(visualTokens.paddingLeft).toBe(visualTokens.paddingRight);
+  expect(
+    await page
+      .locator('.dh-button--catalog')
+      .evaluate((element) => Number.parseFloat(getComputedStyle(element).transitionDuration)),
+  ).toBeLessThanOrEqual(0.00001);
+
+  await page.getByRole('button', { name: 'Language' }).last().click();
+  await page.getByRole('menuitem', { name: 'Russian' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Весь агрорынок Узбекистана — на одной платформе' }),
+  ).toBeVisible();
+  await expectNoHorizontalOverflow(page, '375px Russian black theme');
+  expect(
+    consoleErrors.filter(
+      (message) => message !== 'Failed to load resource: the server responded with a status of 401 (Unauthorized)',
+    ),
+  ).toEqual([]);
+  expect(pageErrors).toEqual([]);
 });
 
 test('anonymous visitors can read the public RFC 9457 problem registry', async ({ page }) => {
