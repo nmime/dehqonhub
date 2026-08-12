@@ -597,7 +597,9 @@ export const MarketplacePage = observer(function MarketplacePage({
   }
 
   return (
-    <div className="dh-marketplace">
+    // The floating assistant is signed-in only, and the phone footer has to keep
+    // its last line out from under it, so the shell states whether it is there.
+    <div className="dh-marketplace" data-assistant={data.auth === 'signed-in' ? 'on' : undefined}>
       <a className="dh-skip-link" href="#dh-main">
         {translate('agritech.marketplace.accessibility.skipToContent')}
       </a>
