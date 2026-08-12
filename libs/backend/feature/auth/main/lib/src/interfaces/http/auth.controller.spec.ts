@@ -224,12 +224,15 @@ describe('AuthController', () => {
         request,
       ),
     ).resolves.toEqual({ data: sessionView });
-    await expect(controller.me(principal)).resolves.toEqual({
+    const { request: meRequest, session: meSession } = createRequest(principal);
+    await expect(controller.me(principal, meRequest)).resolves.toEqual({
       data: {
         principal,
         user: sessionView.user,
       },
     });
+    // Nothing drifted, so reading the session must not write to it.
+    expect(meSession.save).not.toHaveBeenCalled();
     expect(controller.locales()).toEqual({
       data: { supportedLocales },
     });
@@ -242,6 +245,61 @@ describe('AuthController', () => {
     });
     expect(session.regenerate).toHaveBeenCalledOnce();
     expect(session.save).toHaveBeenCalledOnce();
+  });
+
+  // A preference saved from another device or tab updates the account row but
+  // not this session, so `/auth/me` answered with two locales for one visitor —
+  // the stale snapshot beside the stored value — and the web app flipped between
+  // them instead of settling.
+  it('re-syncs a drifted session snapshot from the stored account', async () => {
+    const controller = toController(createService());
+    const stale: AuthenticatedPrincipal = {
+      subject: sessionView.user.id,
+      tenantId: sessionView.user.tenantId,
+      email: sessionView.user.email,
+      displayName: 'Ada Lovelace (old)',
+      locale: 'en',
+      theme: AuthenticatedTheme.Light,
+      roles: sessionView.user.roles,
+      permissions: sessionView.user.permissions,
+    };
+    const { request, session } = createRequest(stale);
+
+    await expect(controller.me(stale, request)).resolves.toEqual({
+      data: {
+        principal: {
+          ...stale,
+          displayName: sessionView.user.displayName,
+          locale: sessionView.user.locale,
+          theme: sessionView.user.theme,
+        },
+        user: sessionView.user,
+      },
+    });
+    expect(session.user).toEqual({
+      ...stale,
+      displayName: sessionView.user.displayName,
+      locale: sessionView.user.locale,
+      theme: sessionView.user.theme,
+      roles: [],
+      permissions: [],
+    });
+    expect(session.save).toHaveBeenCalledOnce();
+  });
+
+  it('answers with the session principal when the stored account is gone', async () => {
+    const controller = toController(createService({ getUserById: vi.fn(() => Promise.resolve(null)) }));
+    const principal: AuthenticatedPrincipal = {
+      subject: sessionView.user.id,
+      tenantId: sessionView.user.tenantId,
+      locale: 'en',
+      roles: [],
+      permissions: [],
+    };
+    const { request, session } = createRequest(principal);
+
+    await expect(controller.me(principal, request)).resolves.toEqual({ data: { principal, user: null } });
+    expect(session.save).not.toHaveBeenCalled();
   });
 
   it('stores identity-only session data while exposing the resolved request principal', async () => {

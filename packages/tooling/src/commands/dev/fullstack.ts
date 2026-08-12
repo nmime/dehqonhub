@@ -52,10 +52,16 @@ export function resolveFullstackRuntime(
   if (selectedProviders.length > 1) {
     throw new Error('The fullstack selection cannot enable both mongodb and postgres.');
   }
+  // Compose interpolates the shared build anchor for every service in the file,
+  // profile-gated or not, so a datastore-only `up` still has to name the closure
+  // context or interpolation fails before Docker starts anything.
+  const closureContext = join(workspaceRoot, '.nrb', 'closure');
+
   if (selectedProviders.length === 0) {
     return {
       environment: {
         ...baseEnvironment,
+        NRB_CLOSURE_CONTEXT: closureContext,
         SESSION_SECRET: baseEnvironment.SESSION_SECRET ?? 'local-dev-session-secret-change-me',
         VITE_AUTH_API_BASE_URL: baseEnvironment.VITE_AUTH_API_BASE_URL ?? 'http://localhost:3003',
         VITE_USER_API_BASE_URL: baseEnvironment.VITE_USER_API_BASE_URL ?? 'http://localhost:3002',
@@ -80,6 +86,7 @@ export function resolveFullstackRuntime(
     environment: {
       ...baseEnvironment,
       ...generatedEnvironment,
+      NRB_CLOSURE_CONTEXT: closureContext,
       SESSION_SECRET: baseEnvironment.SESSION_SECRET ?? 'local-dev-session-secret-change-me',
       VITE_AUTH_API_BASE_URL: baseEnvironment.VITE_AUTH_API_BASE_URL ?? 'http://localhost:3003',
       VITE_USER_API_BASE_URL: baseEnvironment.VITE_USER_API_BASE_URL ?? 'http://localhost:3002',
@@ -137,6 +144,22 @@ export async function runFullstack(
       cwd: workspaceRoot,
       env: runtime.environment,
     });
+    // The marketplace home page publishes its review logins, so a local run has
+    // to hold the accounts behind them or the first thing a reviewer tries fails.
+    // The seed is idempotent and refuses anything but a local development
+    // database, and that refusal is a reason to warn rather than to withhold the
+    // dev servers, so a failure here is reported and the apps still start.
+    try {
+      await execute('node', ['packages/tooling/bin/repo-tooling.mjs', 'db', 'seed'], {
+        cwd: workspaceRoot,
+        env: runtime.environment,
+      });
+    } catch (error) {
+      console.warn(
+        `Skipping the development seed: ${error instanceof Error ? error.message : String(error)}\n` +
+          'The apps still start, but the published review logins will not exist until `pnpm db:seed` succeeds.',
+      );
+    }
   }
 
   console.log(`Starting ${selection.projects.join(', ')} (.nrb/closure.json selection).`);

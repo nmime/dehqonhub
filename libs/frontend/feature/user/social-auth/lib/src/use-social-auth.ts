@@ -133,6 +133,10 @@ export function useSocialAuth({ navigate }: UseSocialAuthInput = {}) {
     continueWithDiscord: discordMutation.mutate,
     completeDiscordCallback: discordCallbackMutation.mutate,
     discordCallbackError: discordCallbackMutation.error,
+    // The failure of *starting* the redirect, as opposed to the failure of the
+    // callback that comes back. Only the status was exposed, so a caller could
+    // tell that the handoff broke but had nothing to show for it.
+    discordError: discordMutation.error,
     discordCallbackStatus: discordCallbackMutation.status,
     discordStatus: discordMutation.status,
     isDiscordCallbackPending: discordCallbackMutation.isPending,

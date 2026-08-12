@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { observer, useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
 import { useAuthSessionFlow, type AuthView } from '../../../features/auth';
 import { SocialAuthButtons, useSocialAuth } from '../../../features/social-auth';
-import { UiSection } from '../../../shared/ui';
+import { UiSection, UiToast } from '../../../shared/ui';
+import { getErrorReason } from '../../../shared/lib';
 import { isTelegramAuthEnabled } from '../../../shared/config';
 import { AuthPanel } from '../../../widgets/auth-panel';
 import { ProfileStatusCard } from '../../../widgets/profile-status';
@@ -36,9 +37,20 @@ export const AuthPage = observer(function AuthPage({
     },
     navigate,
     returnUrl,
+    // The signed-in hub. Someone who opened the entry point directly has no
+    // page to be returned to, and the account area is where a fresh account
+    // continues: it shows the verification state a new seller needs next.
+    signedInUrl: '/account',
   });
   const socialAuth = useSocialAuth({ navigate });
   const isRegistering = view === 'register';
+  // Choosing a provider hands off to a redirect. When that handoff is refused
+  // before it starts — a callback URL the auth service does not trust, a provider
+  // that is off in this environment — nothing navigates, so without this the
+  // button simply did nothing and the visitor had no way to know why.
+  const providerStart = socialAuth.telegramOidcError
+    ? { error: socialAuth.telegramOidcError, provider: 'auth.provider.telegram' as const }
+    : socialAuth.discordError && { error: socialAuth.discordError, provider: 'auth.provider.discord' as const };
 
   return (
     <UiSection
@@ -47,6 +59,17 @@ export const AuthPage = observer(function AuthPage({
       title={t(isRegistering ? 'user.auth.register.title' : 'user.auth.title')}
     >
       <p className="user-page-intro">{t(isRegistering ? 'user.auth.register.description' : 'user.auth.description')}</p>
+      {providerStart ? (
+        <UiToast
+          message={getErrorReason(
+            providerStart.error,
+            t('auth.social.error.providerUnavailable', {
+              provider: t(providerStart.provider),
+            }),
+          )}
+          tone="warning"
+        />
+      ) : null}
       <AuthPanel
         isLoginPending={authSession.isLoginPending}
         isRegisterPending={authSession.isRegisterPending}

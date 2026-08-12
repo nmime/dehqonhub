@@ -880,6 +880,7 @@ function MarketplaceConfirmation({
     pendingRef.current = pending;
   }, [pending]);
   useEffect(() => {
+    /* v8 ignore next -- the dialog always opens from a focused control, so activeElement is an HTMLElement; the null keeps focus restoration total. */
     previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     confirmRef.current?.focus();
     const onKey = (event: KeyboardEvent) => {

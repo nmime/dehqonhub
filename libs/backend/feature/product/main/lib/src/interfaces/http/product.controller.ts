@@ -1,6 +1,6 @@
 // REQ-AGRITECH-CATALOG-002 REQ-AGRITECH-ROUTING-015: the farmer-facing API exposes active catalog reads only.
-import { Controller, Get, Param, Query } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
+import { ApiParam, ApiTags } from '@nestjs/swagger';
 import { IsIn, IsOptional, IsString } from 'class-validator';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse } from '@app/backend-common-response';
@@ -46,10 +46,15 @@ export class ProductController {
     return createOkResponse(await this.listProducts.execute(tenantOf(principal), query));
   }
 
+  // Listing ids are UUIDs, and this route is public, so any visitor can reach it
+  // with a hand-typed or stale link. Without the pipe a malformed id travelled
+  // down to the database driver and came back as a 500; parsing it here answers
+  // the same 400 every other listing-scoped route already answers.
   @Get(':id')
   @Public()
+  @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(ProductViewDto)
-  async getById(@CurrentUser() principal: AuthenticatedPrincipal | undefined, @Param('id') id: string) {
+  async getById(@CurrentUser() principal: AuthenticatedPrincipal | undefined, @Param('id', ParseUUIDPipe) id: string) {
     return createOkResponse(await this.getProduct.execute(tenantOf(principal), id));
   }
 }

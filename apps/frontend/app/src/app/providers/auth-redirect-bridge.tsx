@@ -34,9 +34,14 @@ const isAuthRoute = (path: string, authRoute: string): boolean => {
 //   find out whether anybody is signed in, and renders the guest catalog when
 //   the answer is no. The catalog and the request feed are public on a current
 //   backend and stay listed so an older one cannot bounce a browsing visitor.
+// - Problem-presentation overrides are tenant-scoped, so the API client's
+//   start-up read of them 401s for every visitor who is not signed in. The
+//   client falls back to the built-in presentations; without this entry that one
+//   boot request bounced a guest off the home page and onto the sign-in form.
 const sessionOptionalEndpoints = new Set([
   '/auth/me/preferences',
   '/auth/me/locale',
+  '/auth/problem-presentations',
   '/marketplace/catalog',
   '/marketplace/requests',
   '/marketplace/verification',

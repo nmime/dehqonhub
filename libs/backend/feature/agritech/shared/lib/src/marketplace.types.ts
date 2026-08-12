@@ -2,23 +2,11 @@ export type VerificationRole = 'farmer' | 'seller' | 'buyer';
 export type VerificationLevel = 'basic' | 'verified' | 'trusted';
 export type VerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
 export type VerificationRejectionReason = 'criteria_not_met' | 'documents_unreadable' | 'identity_mismatch';
-export type MarketplaceProviderMode = 'none' | 'legacy' | 'mock' | 'live';
-export type VerificationIdentityAssurance = 'none' | 'legacy_unknown' | 'mock' | 'provider_verified';
 
 export interface VerificationDocument {
-  kind: 'id' | 'land' | 'lease' | 'cadastre' | 'farm' | 'machinery' | 'warehouse' | 'business' | 'license';
-  evidenceId?: string;
+  kind: 'id' | 'land' | 'lease' | 'cadastre' | 'farm' | 'machinery' | 'warehouse' | 'business';
   fileName: string;
-  storageKey?: string;
-  mimeType?: 'application/pdf' | 'image/jpeg' | 'image/png';
-  sizeBytes?: number;
-  providerMode?: Exclude<MarketplaceProviderMode, 'none'>;
-  providerName?: string;
-  providerReceiptId?: string;
-  sha256?: string;
-  storedAt?: string;
-  caseRevision?: number;
-  evidenceRevision?: number;
+  storageKey: string;
   optional?: boolean;
 }
 
@@ -30,14 +18,6 @@ export interface Verification {
   level: VerificationLevel;
   status: VerificationStatus;
   oneIdLinked: boolean;
-  providerMode: MarketplaceProviderMode;
-  identityAssurance: VerificationIdentityAssurance;
-  providerName?: string;
-  providerSubjectKey?: string;
-  providerReceiptId?: string;
-  oneIdLinkedAt?: Date;
-  version: number;
-  caseRevision: number;
   documents: VerificationDocument[];
   reviewedBy?: string;
   reviewedAt?: Date;
@@ -47,30 +27,31 @@ export interface Verification {
 }
 
 export interface CartItem {
-  listingPublicationId: string;
-  sourceKind: 'product' | 'produce';
-  sourceId: string;
+  productId: string;
   quantity: number;
-}
-
-export interface MarketplaceSafeParty {
-  displayName: string;
-  region: string;
 }
 
 export interface Cart {
   id: string;
-  buyerTenantId: string;
-  buyerUserId: string;
-  buyerPartnerId: string;
-  sellerTenantId: string;
-  sellerUserId: string;
-  sellerPartnerId: string;
-  seller: MarketplaceSafeParty;
+  tenantId: string;
+  userId: string;
+  sellerId: string;
   items: CartItem[];
   status: 'open' | 'ordered' | 'abandoned';
   createdAt: Date;
   updatedAt: Date;
+}
+
+export type SampleStatus = 'pending' | 'shipped' | 'delivered' | 'cancelled';
+
+export interface SampleRequest {
+  id: string;
+  tenantId: string;
+  userId: string;
+  productId: string;
+  sellerId: string;
+  status: SampleStatus;
+  createdAt: Date;
 }
 
 export type RequestStatus = 'open' | 'offering' | 'selected' | 'closed' | 'expired';
@@ -79,7 +60,6 @@ export interface BuyerRequest {
   id: string;
   tenantId: string;
   buyerUserId: string;
-  buyerPartnerId: string;
   title: string;
   product?: string;
   volume?: string;
@@ -92,40 +72,13 @@ export interface BuyerRequest {
   updatedAt: Date;
 }
 
-export interface CreateBuyerRequestInput extends Omit<
-  BuyerRequest,
-  'id' | 'tenantId' | 'buyerUserId' | 'buyerPartnerId' | 'status' | 'createdAt' | 'updatedAt'
-> {
-  actingPartnerId: string;
-}
-
-export interface AddCartItemInput {
-  actingPartnerId: string;
-  listingPublicationId: string;
-  quantity: number;
-}
-
 export type OfferStatus = 'pending' | 'accepted' | 'declined';
-
-export interface CreateRequestOfferInput {
-  actingPartnerId: string;
-  priceUzs: number;
-  deliveryTerms: DeliveryTerms;
-  deliveryPriceUzs?: number;
-  deliveryNote?: string;
-  deliveryDays?: number;
-}
 
 export interface RequestOffer {
   id: string;
-  requestPublicId: string;
-  buyerTenantId: string;
-  buyerUserId: string;
-  buyerPartnerId: string;
-  sellerTenantId: string;
+  requestId: string;
+  tenantId: string;
   sellerUserId: string;
-  sellerPartnerId: string;
-  seller: MarketplaceSafeParty;
   priceUzs: number;
   deliveryTerms: DeliveryTerms;
   deliveryPriceUzs?: number;
@@ -140,10 +93,7 @@ export type DeliveryTerms = 'pickup' | 'seller_delivery' | 'by_agreement';
 export type ContractSourceType = 'cart_checkout' | 'offer_selection';
 
 export interface ContractLine {
-  sourcePublicationId: string;
-  sourceKind: 'product' | 'produce' | 'request';
-  sourceId: string;
-  sourceRevision: number;
+  productId: string;
   name: string;
   unit: string;
   unitPriceUzs: number;
@@ -153,15 +103,18 @@ export interface ContractLine {
 
 export interface Contract {
   id: string;
-  revision: number;
-  buyerTenantId: string;
+  tenantId: string;
   buyerUserId: string;
-  buyerPartnerId: string;
-  sellerTenantId: string;
   sellerUserId: string;
-  sellerPartnerId: string;
-  buyerPartySnapshot: MarketplacePartySnapshot;
-  sellerPartySnapshot: MarketplacePartySnapshot;
+  /**
+   * The organizations behind the two ids, so a contract can name its parties.
+   * The document used to print the raw party uuids, which told a reader nothing
+   * about who they were about to sign with. Optional because a party's
+   * organization is what carries the name, and a contract outlives it: a party
+   * whose organization was removed still has to render.
+   */
+  buyerName?: string;
+  sellerName?: string;
   sourceType?: ContractSourceType;
   sourceId?: string;
   subject: string;
@@ -180,14 +133,6 @@ export interface Contract {
   updatedAt: Date;
 }
 
-export interface MarketplacePartySnapshot {
-  tenantId: string;
-  userId: string;
-  partnerId: string;
-  legalName: string;
-  region: string;
-}
-
 export interface CheckoutCartInput {
   deliveryTerms: DeliveryTerms;
 }
@@ -201,15 +146,42 @@ export interface ContractDeliveryQuoteInput {
   deliveryPriceUzs: number;
   deliveryNote?: string;
   deliveryDays?: number;
-  expectedRevision: number;
 }
 
 export interface OfferSelectionResult {
-  requestPublicId: string;
+  requestId: string;
   offerId: string;
   sellerUserId: string;
   contractId: string;
 }
 
+export interface Favorite {
+  tenantId: string;
+  userId: string;
+  productId: string;
+  createdAt: Date;
+}
+
+export interface Review {
+  id: string;
+  tenantId: string;
+  productId: string;
+  userId: string;
+  rating: number;
+  comment?: string;
+  createdAt: Date;
+}
+
 export type AiConsultationKind = 'recommendation' | 'find_cheaper' | 'season_advice' | 'generic';
 export type AiConsultationAnswer = 'catalog_match' | 'no_catalog_match';
+
+export interface AiConsultation {
+  id: string;
+  tenantId: string;
+  userId: string;
+  kind: AiConsultationKind;
+  question: string;
+  answer: AiConsultationAnswer;
+  productIds: string[];
+  createdAt: Date;
+}

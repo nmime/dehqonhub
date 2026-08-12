@@ -72,7 +72,7 @@ export const userUuids = [
  * DehqonHub review logins, one per marketplace role. They are listed on the
  * marketplace home banner so a reviewer can sign in without being handed
  * credentials out of band; the frontend copy of the same list lives in
- * `apps/frontend/app/src/pages/marketplace/model/demo-catalog.ts` and the two
+ * `apps/frontend/app/src/pages/marketplace/model/demo-accounts.ts` and the two
  * must stay in step. Demo-only, and seeding refuses to run against production.
  */
 const dehqonHubReviewUsers = [

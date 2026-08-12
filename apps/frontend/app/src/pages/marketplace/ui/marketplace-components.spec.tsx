@@ -1355,6 +1355,50 @@ describe('DehqonHub marketplace components', () => {
     expect(document.querySelector('.dh-inline-form')).toBeNull();
   });
 
+  // The document is where a reader decides whether to sign, so it names the two
+  // organizations. It printed their raw uuids before, and a contract that
+  // outlived a party's organization falls back to a label rather than an id.
+  it('names both parties and falls back to a label for an unnamed one', () => {
+    const named = signedContract({ buyerName: 'Xaridor Demo Savdo', sellerName: 'Dehqon Bozori Kooperativi' });
+    const { unmount } = render(
+      <MarketplaceContract
+        contract={named}
+        currentUserId="buyer-1"
+        identityStatus="ready"
+        locale="en"
+        navigate={vi.fn()}
+        onQuote={vi.fn()}
+        onRetry={vi.fn()}
+        onSign={vi.fn()}
+        status="ready"
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('Xaridor Demo Savdo')).toBeTruthy();
+    expect(screen.getByText('Dehqon Bozori Kooperativi')).toBeTruthy();
+    expect(screen.queryByText('buyer-1')).toBeNull();
+    expect(screen.queryByText('seller-a')).toBeNull();
+    unmount();
+
+    render(
+      <MarketplaceContract
+        contract={signedContract({ sellerName: 'Dehqon Bozori Kooperativi' })}
+        currentUserId="buyer-1"
+        identityStatus="ready"
+        locale="en"
+        navigate={vi.fn()}
+        onQuote={vi.fn()}
+        onRetry={vi.fn()}
+        onSign={vi.fn()}
+        status="ready"
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('agritech.marketplace.contract.partyUnnamed')).toBeTruthy();
+  });
+
   it('quotes a delivery the seller owes without inventing optional terms', () => {
     const onQuote = vi.fn();
     const quotable = signedContract({ deliveryTerms: 'seller_delivery' });

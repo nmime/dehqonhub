@@ -41,7 +41,14 @@ export async function resolveDevDatabaseRuntime(
   return {
     provider,
     environmentPath,
-    environment: { ...baseEnvironment, ...generatedEnvironment },
+    environment: {
+      ...baseEnvironment,
+      ...generatedEnvironment,
+      // Compose interpolates the shared build anchor for every service in the file,
+      // profile-gated or not, so the datastore-only `up` still has to name the
+      // closure context or interpolation fails before Docker starts anything.
+      NRB_CLOSURE_CONTEXT: join(workspaceRoot, '.nrb', 'closure'),
+    },
   };
 }
 

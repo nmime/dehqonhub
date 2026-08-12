@@ -148,22 +148,6 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/produce/{id}/sample-availability': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch: operations['AgriTechOperationsController_updateProduceSampleAvailability'];
-    trace?: never;
-  };
   '/produce/prices': {
     parameters: {
       query?: never;
@@ -301,71 +285,7 @@ export interface paths {
     };
     get: operations['MarketplaceController_getVerification'];
     put?: never;
-    post: operations['MarketplaceController_createVerification'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/verification/oneid/link': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceController_linkOneId'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/verification/providers/readiness': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplaceController_providerReadiness'];
-    put?: never;
     post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/verification/documents': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceController_storeVerificationDocuments'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/verification/submit': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceController_submitVerification'];
     delete?: never;
     options?: never;
     head?: never;
@@ -420,7 +340,7 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/marketplace/cart/{id}/items/{listingPublicationId}': {
+  '/marketplace/cart/{id}/items/{productId}': {
     parameters: {
       query?: never;
       header?: never;
@@ -446,6 +366,86 @@ export interface paths {
     get?: never;
     put?: never;
     post: operations['MarketplaceController_checkoutCart'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/marketplace/samples': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MarketplaceController_listSamples'];
+    put?: never;
+    post: operations['MarketplaceController_requestSample'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/marketplace/samples/usage': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MarketplaceController_sampleUsage'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/marketplace/favorites': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MarketplaceController_listFavorites'];
+    put?: never;
+    post: operations['MarketplaceController_addFavorite'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/marketplace/favorites/{productId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post?: never;
+    delete: operations['MarketplaceController_removeFavorite'];
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/marketplace/reviews/{productId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MarketplaceController_listReviews'];
+    put?: never;
+    post: operations['MarketplaceController_addReview'];
     delete?: never;
     options?: never;
     head?: never;
@@ -532,6 +532,22 @@ export interface paths {
     patch: operations['MarketplaceController_updateContractDeliveryQuote'];
     trace?: never;
   };
+  '/marketplace/contracts/{id}/sign': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get?: never;
+    put?: never;
+    post: operations['MarketplaceController_signContract'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/marketplace/contracts': {
     parameters: {
       query?: never;
@@ -548,560 +564,16 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
-  '/marketplace/public/catalog': {
+  '/marketplace/ai': {
     parameters: {
       query?: never;
       header?: never;
       path?: never;
       cookie?: never;
     };
-    get: operations['MarketplacePublicController_listCatalog'];
+    get: operations['MarketplaceController_listAi'];
     put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/public/catalog/suggestions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplacePublicController_listSuggestions'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/public/catalog/{listingId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplacePublicController_getListing'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/public/sellers/{sellerId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplacePublicController_getSeller'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/public/sellers/{sellerId}/catalog': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplacePublicController_listSellerCatalog'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/public/requests': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplacePublicController_listRequests'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/publications/mine': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplacePublicationController_listMine'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/publications/listings': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplacePublicationController_publishListing'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/publications/requests': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplacePublicationController_publishRequest'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/promotions': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplacePromotionController_list'];
-    put?: never;
-    post: operations['MarketplacePromotionController_activate'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/promotions/plans': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplacePromotionController_listPlans'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/promotions/{id}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplacePromotionController_get'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/contracts/{id}/artifact': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplaceContractLifecycleController_getArtifact'];
-    put?: never;
-    post: operations['MarketplaceContractLifecycleController_createArtifact'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/contracts/{id}/artifact/download': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplaceContractLifecycleController_downloadArtifact'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/contracts/{id}/sign': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceContractLifecycleController_sign'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/contracts/{id}/factoring/consent': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceContractLifecycleController_consentFactoring'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/contracts/{id}/settlement/events': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceContractLifecycleController_recordSettlementEvent'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/contracts/{id}/fulfillment': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceContractLifecycleController_transitionFulfillment'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/contracts/{id}/dispute': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceContractLifecycleController_openDispute'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/contracts/{id}/dispute-evidence': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceContractLifecycleController_storeDisputeEvidence'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/contracts/{id}/lifecycle': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplaceContractLifecycleController_getLifecycle'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/notifications': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplaceContractNotificationController_list'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/dashboard': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplaceDashboardAiController_dashboard'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/ai/consultations': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplaceDashboardAiController_listConsultations'];
-    put?: never;
-    post: operations['MarketplaceDashboardAiController_createConsultation'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/ai/consultations/{id}/starter-cart': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceDashboardAiController_confirmStarterCart'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/favorites/{listingPublicationId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceEngagementController_addFavorite'];
-    delete: operations['MarketplaceEngagementController_removeFavorite'];
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/favorites': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplaceEngagementController_listFavorites'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/samples': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplaceEngagementController_listSamples'];
-    put?: never;
-    post: operations['MarketplaceEngagementController_requestSample'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/samples/usage': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplaceEngagementController_getSampleUsage'];
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/samples/{sampleId}': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post?: never;
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch: operations['MarketplaceEngagementController_transitionSample'];
-    trace?: never;
-  };
-  '/marketplace/samples/{sampleId}/feedback': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceEngagementController_submitSampleFeedback'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/reviews': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceEngagementController_submitReview'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/reviews/{reviewId}/reply': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceEngagementController_replyToReview'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/reviews/{reviewId}/reports': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get?: never;
-    put?: never;
-    post: operations['MarketplaceEngagementController_reportReview'];
-    delete?: never;
-    options?: never;
-    head?: never;
-    patch?: never;
-    trace?: never;
-  };
-  '/marketplace/public/catalog/{listingPublicationId}/reviews': {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    get: operations['MarketplacePublicEngagementController_listReviews'];
-    put?: never;
-    post?: never;
+    post: operations['MarketplaceController_askAi'];
     delete?: never;
     options?: never;
     head?: never;
@@ -1262,7 +734,7 @@ export interface components {
       email?: string;
       displayName?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru' | 'uz' | 'uz-cyrl';
+      locale?: 'en' | 'ru' | 'uz';
       roles: string[];
       permissions: string[];
     };
@@ -1272,7 +744,7 @@ export interface components {
       email?: string;
       displayName?: string;
       /** @enum {string} */
-      locale?: 'en' | 'ru' | 'uz' | 'uz-cyrl';
+      locale?: 'en' | 'ru' | 'uz';
       roles: string[];
       permissions: string[];
     };
@@ -1323,15 +795,12 @@ export interface components {
       name: string;
       nameRu?: string;
       nameUz?: string;
-      nameUzCyrl?: string;
       /** @enum {string} */
       category: 'fertilizer' | 'seed' | 'pesticide' | 'equipment' | 'irrigation' | 'other';
       description: string;
       priceUzs: number;
       unit: string;
       stockQuantity: number;
-      /** @default false */
-      sampleAvailable: boolean;
       region: string;
     };
     SupplierProductViewDto: {
@@ -1342,14 +811,12 @@ export interface components {
       name: string;
       nameRu?: string;
       nameUz?: string;
-      nameUzCyrl?: string;
       /** @enum {string} */
       category: 'fertilizer' | 'seed' | 'pesticide' | 'equipment' | 'irrigation' | 'other';
       description: string;
       priceUzs: number;
       unit: string;
       stockQuantity: number;
-      sampleAvailable: boolean;
       region: string;
       /** @enum {string} */
       status: 'active' | 'inactive' | 'out_of_stock';
@@ -1358,13 +825,8 @@ export interface components {
       items: components['schemas']['SupplierProductViewDto'][];
     };
     UpdateSupplierProductDto: {
-      name?: string;
-      nameRu?: string;
-      nameUz?: string;
-      nameUzCyrl?: string;
       priceUzs: number;
       stockQuantity: number;
-      sampleAvailable?: boolean;
       /** @enum {string} */
       status: 'active' | 'inactive' | 'out_of_stock';
     };
@@ -1379,7 +841,6 @@ export interface components {
       grade: 'A' | 'B' | 'C';
       quantityKg: number;
       availableQuantityKg: number;
-      sampleAvailable: boolean;
       pricePerKgUzs: number;
       region: string;
       /** Format: date-time */
@@ -1394,14 +855,10 @@ export interface components {
       updatedAt: string;
     };
     CreateProduceDto: {
-      /** Format: uuid */
-      supplierPartnerId: string;
       crop: string;
       /** @enum {string} */
       grade: 'A' | 'B' | 'C';
       quantityKg: number;
-      /** @default false */
-      sampleAvailable: boolean;
       pricePerKgUzs: number;
       region: string;
       /** Format: date-time */
@@ -1411,9 +868,6 @@ export interface components {
     };
     ProduceListingListDto: {
       items: components['schemas']['ProduceListingViewDto'][];
-    };
-    UpdateSampleAvailabilityDto: {
-      sampleAvailable: boolean;
     };
     PriceDiscoveryViewDto: {
       crop: string;
@@ -1540,36 +994,23 @@ export interface components {
     VerificationDocumentDto: {
       kind: string;
       fileName: string;
-      mimeType?: string;
-      sizeBytes?: number;
-      /** @enum {string} */
-      providerMode?: 'legacy' | 'mock' | 'live';
-      providerName?: string;
-      /** Format: date-time */
-      storedAt?: string;
+      storageKey: string;
       optional?: boolean;
-      simulation: boolean;
     };
     VerificationViewDto: {
       /** Format: uuid */
       id: string;
-      revision: number;
+      tenantId: string;
+      userId: string;
       /** @enum {string} */
       role: 'farmer' | 'seller' | 'buyer';
       /** @enum {string} */
       level: 'basic' | 'verified' | 'trusted';
       /** @enum {string} */
       status: 'none' | 'pending' | 'verified' | 'rejected';
-      /** @enum {string} */
-      step: 'identity' | 'documents' | 'review' | 'complete';
       oneIdLinked: boolean;
-      /** @enum {string} */
-      providerMode: 'none' | 'legacy' | 'mock' | 'live';
-      simulation: boolean;
-      /** @enum {string} */
-      identityAssurance: 'none' | 'legacy_unknown' | 'mock' | 'provider_verified';
-      providerName?: string;
       documents: components['schemas']['VerificationDocumentDto'][];
+      reviewedBy?: string;
       /** Format: date-time */
       reviewedAt?: string;
       /** @enum {string} */
@@ -1582,58 +1023,16 @@ export interface components {
     NullableVerificationResponseDto: {
       data: components['schemas']['VerificationViewDto'] | null;
     };
-    StartVerificationDto: {
-      /** @enum {string} */
-      role: 'farmer' | 'seller' | 'buyer';
-      expectedRevision: number;
-    };
-    MarketplaceProviderCapabilityReadinessDto: {
-      /** @enum {string} */
-      mode: 'disabled' | 'mock' | 'live';
-      providerName: string | null;
-      ready: boolean;
-      /** @enum {string} */
-      reconciliation: 'disabled' | 'idempotent-retry';
-      simulation: boolean;
-      timeoutMs: number;
-    };
-    MarketplaceProviderReadinessDto: {
-      contractArtifactStorage: components['schemas']['MarketplaceProviderCapabilityReadinessDto'];
-      directPayment: components['schemas']['MarketplaceProviderCapabilityReadinessDto'];
-      factoring: components['schemas']['MarketplaceProviderCapabilityReadinessDto'];
-      oneId: components['schemas']['MarketplaceProviderCapabilityReadinessDto'];
-      notificationDelivery: components['schemas']['MarketplaceProviderCapabilityReadinessDto'];
-      promotionBilling: components['schemas']['MarketplaceProviderCapabilityReadinessDto'];
-      qualifiedSignature: components['schemas']['MarketplaceProviderCapabilityReadinessDto'];
-      verificationDocuments: components['schemas']['MarketplaceProviderCapabilityReadinessDto'];
-    };
-    VerificationDocumentInputDto: {
-      /** @enum {string} */
-      kind: 'id' | 'land' | 'lease' | 'cadastre' | 'farm' | 'machinery' | 'warehouse' | 'business' | 'license';
-      fileName: string;
-      /** @enum {string} */
-      mimeType: 'application/pdf' | 'image/jpeg' | 'image/png';
-      /** @description Base64-encoded evidence bytes. Size and checksum are derived server-side. */
-      contentBase64: string;
-    };
-    SubmitVerificationDto: {
-      expectedRevision: number;
-    };
-    MarketplaceSafePartyDto: {
-      displayName: string;
-      region: string;
-    };
     CartItemDto: {
-      /** Format: uuid */
-      listingPublicationId: string;
-      /** @enum {string} */
-      sourceKind: 'product' | 'produce';
+      productId: string;
       quantity: number;
     };
     CartViewDto: {
       /** Format: uuid */
       id: string;
-      seller: components['schemas']['MarketplaceSafePartyDto'];
+      tenantId: string;
+      userId: string;
+      sellerId: string;
       items: components['schemas']['CartItemDto'][];
       /** @enum {string} */
       status: 'open' | 'ordered' | 'abandoned';
@@ -1647,9 +1046,7 @@ export interface components {
     };
     AddToCartDto: {
       /** Format: uuid */
-      actingPartnerId: string;
-      /** Format: uuid */
-      listingPublicationId: string;
+      productId: string;
       quantity: number;
     };
     UpdateCartItemDto: {
@@ -1665,9 +1062,70 @@ export interface components {
       /** @enum {string} */
       deliveryTerms: 'pickup' | 'seller_delivery' | 'by_agreement';
     };
+    SampleViewDto: {
+      /** Format: uuid */
+      id: string;
+      tenantId: string;
+      userId: string;
+      productId: string;
+      sellerId: string;
+      /** @enum {string} */
+      status: 'pending' | 'shipped' | 'delivered' | 'cancelled';
+      /** Format: date-time */
+      createdAt: string;
+    };
+    RequestSampleDto: {
+      /** Format: uuid */
+      productId: string;
+    };
+    SampleListDto: {
+      items: components['schemas']['SampleViewDto'][];
+    };
+    SampleUsageViewDto: {
+      used: number;
+      limit: number;
+      remaining: number;
+    };
+    FavoriteMutationResultDto: {
+      productId: string;
+    };
+    AddFavoriteDto: {
+      /** Format: uuid */
+      productId: string;
+    };
+    FavoriteViewDto: {
+      tenantId: string;
+      userId: string;
+      productId: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    FavoriteListDto: {
+      items: components['schemas']['FavoriteViewDto'][];
+    };
+    ReviewViewDto: {
+      /** Format: uuid */
+      id: string;
+      tenantId: string;
+      productId: string;
+      userId: string;
+      rating: number;
+      comment?: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    AddReviewDto: {
+      rating: number;
+      comment?: string;
+    };
+    ReviewListDto: {
+      items: components['schemas']['ReviewViewDto'][];
+    };
     BuyerRequestViewDto: {
       /** Format: uuid */
       id: string;
+      tenantId: string;
+      buyerUserId: string;
       title: string;
       product?: string;
       volume?: string;
@@ -1683,8 +1141,6 @@ export interface components {
       updatedAt: string;
     };
     CreateRequestDto: {
-      /** Format: uuid */
-      actingPartnerId: string;
       title: string;
       product?: string;
       volume?: string;
@@ -1701,8 +1157,9 @@ export interface components {
       /** Format: uuid */
       id: string;
       /** Format: uuid */
-      requestPublicId: string;
-      seller: components['schemas']['MarketplaceSafePartyDto'];
+      requestId: string;
+      tenantId: string;
+      sellerUserId: string;
       priceUzs: number;
       /** @enum {string} */
       deliveryTerms: 'pickup' | 'seller_delivery' | 'by_agreement';
@@ -1716,8 +1173,6 @@ export interface components {
       createdAt: string;
     };
     RequestOfferDto: {
-      /** Format: uuid */
-      actingPartnerId: string;
       priceUzs: number;
       /** @enum {string} */
       deliveryTerms: 'pickup' | 'seller_delivery' | 'by_agreement';
@@ -1731,22 +1186,15 @@ export interface components {
     };
     OfferSelectionResultDto: {
       /** Format: uuid */
-      requestPublicId: string;
+      requestId: string;
       /** Format: uuid */
       offerId: string;
+      sellerUserId: string;
       /** Format: uuid */
       contractId: string;
     };
-    MarketplacePartySnapshotDto: {
-      legalName: string;
-      region: string;
-    };
     ContractLineDto: {
-      /** Format: uuid */
-      sourcePublicationId: string;
-      /** @enum {string} */
-      sourceKind: 'product' | 'produce' | 'request';
-      sourceRevision: number;
+      productId: string;
       name: string;
       unit: string;
       unitPriceUzs: number;
@@ -1756,13 +1204,14 @@ export interface components {
     ContractViewDto: {
       /** Format: uuid */
       id: string;
-      revision: number;
-      /** @enum {string} */
-      actorParty: 'buyer' | 'seller';
-      buyerPartySnapshot: components['schemas']['MarketplacePartySnapshotDto'];
-      sellerPartySnapshot: components['schemas']['MarketplacePartySnapshotDto'];
+      tenantId: string;
+      buyerUserId: string;
+      sellerUserId: string;
+      buyerName?: string;
+      sellerName?: string;
       /** @enum {string} */
       sourceType?: 'cart_checkout' | 'offer_selection';
+      sourceId?: string;
       subject: string;
       amountUzs: number;
       lines: components['schemas']['ContractLineDto'][];
@@ -1786,7 +1235,6 @@ export interface components {
       updatedAt: string;
     };
     ContractDeliveryQuoteDto: {
-      expectedRevision: number;
       deliveryPriceUzs: number;
       deliveryNote?: string;
       deliveryDays?: number;
@@ -1794,851 +1242,30 @@ export interface components {
     ContractListDto: {
       items: components['schemas']['ContractViewDto'][];
     };
-    MarketplacePublicSellerDto: {
+    AiConsultationViewDto: {
       /** Format: uuid */
       id: string;
-      displayName: string;
-      region: string;
-      verified: boolean;
-      /** @enum {string} */
-      provenance: 'live' | 'demo';
-      description?: string;
-    };
-    MarketplacePublicProductListingDto: {
-      /** Format: uuid */
-      id: string;
-      title: string;
-      titleRu?: string;
-      titleUz?: string;
-      titleUzCyrl?: string;
-      description?: string;
-      priceUzs: number;
-      unit: string;
-      availableQuantity: number;
-      region: string;
-      images: string[];
-      promoted: boolean;
-      /** @enum {string} */
-      provenance: 'live' | 'demo';
-      transactional: boolean;
-      sampleAvailable: boolean;
-      seller: components['schemas']['MarketplacePublicSellerDto'];
-      /** Format: date-time */
-      publishedAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-      /**
-       * @description discriminator enum property added by openapi-typescript
-       * @enum {string}
-       */
-      kind: 'product';
-      /** @enum {string} */
-      section: 'equipment' | 'seeds';
-      /** @enum {string} */
-      category: 'fertilizer' | 'seed' | 'pesticide' | 'equipment' | 'irrigation' | 'other';
-    };
-    MarketplacePublicProduceListingDto: {
-      /** Format: uuid */
-      id: string;
-      title: string;
-      titleRu?: string;
-      titleUz?: string;
-      titleUzCyrl?: string;
-      description?: string;
-      priceUzs: number;
-      unit: string;
-      availableQuantity: number;
-      region: string;
-      images: string[];
-      promoted: boolean;
-      /** @enum {string} */
-      provenance: 'live' | 'demo';
-      transactional: boolean;
-      sampleAvailable: boolean;
-      seller: components['schemas']['MarketplacePublicSellerDto'];
-      /** Format: date-time */
-      publishedAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-      /**
-       * @description discriminator enum property added by openapi-typescript
-       * @enum {string}
-       */
-      kind: 'produce';
-      /** @enum {string} */
-      section: 'produce';
-      crop: string;
-      /** @enum {string} */
-      grade: 'A' | 'B' | 'C';
-    };
-    MarketplacePublicCatalogPageDto: {
-      items: (
-        | components['schemas']['MarketplacePublicProductListingDto']
-        | components['schemas']['MarketplacePublicProduceListingDto']
-      )[];
-      nextCursor?: string;
-    };
-    MarketplacePublicSuggestionDto: {
-      /** Format: uuid */
-      id: string;
-      /** @enum {string} */
-      kind: 'listing' | 'seller' | 'request';
-      label: string;
-      /** @enum {string} */
-      section?: 'equipment' | 'seeds' | 'produce';
-    };
-    MarketplacePublicSuggestionListDto: {
-      items: components['schemas']['MarketplacePublicSuggestionDto'][];
-    };
-    MarketplacePublicRequestDto: {
-      /** Format: uuid */
-      id: string;
-      title: string;
-      product?: string;
-      volume?: string;
-      region: string;
-      /** Format: date */
-      deadline?: string;
-      budgetUzs?: number;
-      requirements?: string;
-      buyerDisplayName: string;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    MarketplacePublicRequestPageDto: {
-      items: components['schemas']['MarketplacePublicRequestDto'][];
-      nextCursor?: string;
-    };
-    MarketplaceOwnedListingPublicationDto: {
-      /** @enum {string} */
-      kind: 'listing';
-      /** Format: uuid */
-      id: string;
-      /** @enum {string} */
-      sourceKind: 'product' | 'produce';
-      /** @enum {string} */
-      section: 'equipment' | 'seeds' | 'produce';
-      title: string;
-      titleRu?: string;
-      titleUz?: string;
-      titleUzCyrl?: string;
-      /** @enum {string} */
-      status: 'published' | 'paused' | 'rejected';
-      /** @enum {string} */
-      moderationStatus: 'pending' | 'approved' | 'rejected';
-      /** Format: uuid */
-      sellerPublicId: string;
-      revision: number;
-      /** Format: date-time */
-      publishedAt?: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    MarketplaceOwnedRequestPublicationDto: {
-      /** @enum {string} */
-      kind: 'request';
-      /** Format: uuid */
-      id: string;
-      title: string;
-      buyerDisplayName: string;
-      /** @enum {string} */
-      status: 'published' | 'paused' | 'rejected';
-      /** @enum {string} */
-      moderationStatus: 'pending' | 'approved' | 'rejected';
-      revision: number;
-      /** Format: date-time */
-      publishedAt?: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    MarketplaceOwnedPublicationsDto: {
-      listings: components['schemas']['MarketplaceOwnedListingPublicationDto'][];
-      requests: components['schemas']['MarketplaceOwnedRequestPublicationDto'][];
-    };
-    MarketplaceListingPublicationDto: {
-      /** Format: uuid */
-      id: string;
-      /** @enum {string} */
-      sourceKind: 'product' | 'produce';
-      /** Format: uuid */
-      sourceId: string;
-      /** @enum {string} */
-      section: 'equipment' | 'seeds' | 'produce';
-      /** @enum {string} */
-      status: 'published' | 'paused' | 'rejected';
-      /** @enum {string} */
-      moderationStatus: 'pending' | 'approved' | 'rejected';
-      /** Format: uuid */
-      sellerPublicId: string;
-      revision: number;
-      /** Format: date-time */
-      publishedAt?: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    PublishMarketplaceListingDto: {
-      /** Format: uuid */
-      sellerPartnerId: string;
-      /** @enum {string} */
-      sourceKind: 'product' | 'produce';
-      /** Format: uuid */
-      sourceId: string;
-      /** @enum {string} */
-      section: 'equipment' | 'seeds' | 'produce';
-    };
-    MarketplaceRequestPublicationDto: {
-      /** Format: uuid */
-      id: string;
-      /** Format: uuid */
-      requestId: string;
-      /** @enum {string} */
-      status: 'published' | 'paused' | 'rejected';
-      /** @enum {string} */
-      moderationStatus: 'pending' | 'approved' | 'rejected';
-      revision: number;
-      /** Format: date-time */
-      publishedAt?: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    PublishMarketplaceRequestDto: {
-      /** Format: uuid */
-      buyerPartnerId: string;
-      /** Format: uuid */
-      requestId: string;
-    };
-    MarketplaceListingPromotionDto: {
-      /** Format: uuid */
-      id: string;
-      /** Format: uuid */
-      listingPublicId: string;
-      /** Format: uuid */
-      sellerPartnerId: string;
-      /** @enum {string} */
-      planCode: 'catalog_7d' | 'catalog_14d' | 'catalog_30d';
-      /** @enum {string} */
-      status: 'scheduled' | 'active' | 'expired';
-      /** Format: date-time */
-      startsAt: string;
-      /** Format: date-time */
-      endsAt: string;
-      priceUzs: number;
-      /** @enum {string} */
-      currency: 'UZS';
-      /** @description Internal activation audit reference; it is not a payment receipt. */
-      activationReference: string;
-      /** Format: date-time */
-      activatedAt: string;
-      revision: number;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    ActivateMarketplacePromotionDto: {
-      /**
-       * Format: uuid
-       * @description Approved seller organization used for this command.
-       */
-      actingPartnerId: string;
-      /** Format: uuid */
-      listingPublicId: string;
-      /** @enum {string} */
-      planCode: 'catalog_7d' | 'catalog_14d' | 'catalog_30d';
-      /** Format: date-time */
-      startsAt?: string;
-    };
-    MarketplaceListingPromotionListDto: {
-      items: components['schemas']['MarketplaceListingPromotionDto'][];
-    };
-    MarketplacePromotionPlanDto: {
-      /** @enum {string} */
-      code: 'catalog_7d' | 'catalog_14d' | 'catalog_30d';
-      /** @enum {string} */
-      currency: 'UZS';
-      durationDays: number;
-      priceUzs: number;
-    };
-    MarketplacePromotionPlanListDto: {
-      items: components['schemas']['MarketplacePromotionPlanDto'][];
-    };
-    ContractArtifactDto: {
-      byteSize: number;
-      checksumSha256: string;
-      /** Format: date-time */
-      createdAt: string;
-      /** @enum {string} */
-      mediaType: 'application/pdf';
-      /** @enum {string} */
-      providerMode: 'mock' | 'live';
-      providerName: string;
-      simulation: boolean;
-      snapshotFingerprint: string;
-      /** @enum {number} */
-      snapshotRevision: 1;
-      /** @enum {string} */
-      templateVersion: 'dehqonhub-contract-v1';
-      /** @enum {string|null} */
-      watermark: 'MOCK PROVIDER — NOT A LEGAL CONTRACT' | null;
-    };
-    CreateContractArtifactDto: {
-      /** @enum {string} */
-      settlementKind: 'direct_payment' | 'factoring';
-    };
-    DirectPaymentSettlementDto: {
-      /**
-       * @description discriminator enum property added by openapi-typescript
-       * @enum {string}
-       */
-      kind: 'direct_payment';
-      /** @enum {string} */
-      status: 'awaiting_buyer_confirmation' | 'buyer_confirmed' | 'seller_received';
-      amountUzs: number;
-      /** @enum {string} */
-      currency: 'UZS';
-      /** @enum {string} */
-      latestProviderMode: 'none' | 'mock' | 'live';
-      /** @enum {string} */
-      reconciliationState: 'clear' | 'required';
-      reconciliationReason?: string;
-      revision: number;
-      simulation: boolean;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    FactoringSettlementDto: {
-      /**
-       * @description discriminator enum property added by openapi-typescript
-       * @enum {string}
-       */
-      kind: 'factoring';
-      /** @enum {string} */
-      status:
-        'awaiting_consents' | 'ready_to_request' | 'approved' | 'rejected' | 'seller_paid' | 'buyer_repaid' | 'closed';
-      amountUzs: number;
-      /** @enum {string} */
-      currency: 'UZS';
-      /** @enum {string} */
-      latestProviderMode: 'none' | 'mock' | 'live';
-      /** @enum {string} */
-      reconciliationState: 'clear' | 'required';
-      reconciliationReason?: string;
-      revision: number;
-      simulation: boolean;
-      /** Format: date-time */
-      buyerConsentedAt?: string;
-      /** Format: date-time */
-      sellerConsentedAt?: string;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    CommissionRateSnapshotDto: {
-      produce: number;
-      product: number;
-      request: number;
-    };
-    ContractCommissionDto: {
-      amountUzs: number;
-      baseAmountUzs: number;
-      /** @enum {string} */
-      currency: 'UZS';
-      /** Format: date-time */
-      createdAt: string;
-      rateSnapshot: components['schemas']['CommissionRateSnapshotDto'];
-      rateVersion: string;
-    };
-    ContractDisputeDto: {
-      /** @enum {string} */
-      openedByParty: 'buyer' | 'seller';
-      /** @enum {string} */
-      reason: 'delivery_issue' | 'quality_issue' | 'quantity_issue' | 'other';
-      /** @enum {string} */
-      status: 'open' | 'resolved';
-      /** Format: date-time */
-      createdAt: string;
-      /** @enum {string} */
-      decision?: 'dismissed' | 'upheld_cancelled';
-      evidenceRevision?: number;
-      outcomeNote?: string;
-      /** Format: date-time */
-      resolvedAt?: string;
-    };
-    ContractDisputeEvidenceDto: {
-      byteSize: number;
-      checksumSha256: string;
-      /** Format: date-time */
-      createdAt: string;
-      fileName: string;
-      /** Format: uuid */
-      id: string;
-      /** @enum {string} */
-      mediaType: 'application/pdf' | 'image/jpeg' | 'image/png';
-      /** @enum {string} */
-      providerMode: 'mock' | 'live';
-      providerName: string;
-      revision: number;
-      simulation: boolean;
-      /** @enum {string} */
-      uploadedByParty: 'buyer' | 'seller';
-    };
-    ContractFulfillmentDto: {
-      /** @enum {string} */
-      status: 'awaiting_settlement' | 'ready' | 'in_progress' | 'delivered' | 'disputed' | 'cancelled' | 'completed';
-      revision: number;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-      /** Format: date-time */
-      startedAt?: string;
-      /** Format: date-time */
-      deliveredAt?: string;
-      /** Format: date-time */
-      completedAt?: string;
-    };
-    ContractNotificationIntentDto: {
-      /** @enum {string} */
-      channel: 'telegram' | 'sms';
-      /** @enum {string} */
-      recipientParty: 'buyer' | 'seller';
-      /** @enum {string} */
-      status: 'pending' | 'simulated' | 'delivered' | 'failed' | 'reconciliation_required';
-      attempts: number;
-      simulation: boolean;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      lastAttemptAt?: string;
-    };
-    ContractReviewEligibilityDto: {
-      eligible: boolean;
-      sourceCount: number;
-    };
-    ContractReputationSignalDto: {
-      /** Format: date-time */
-      createdAt: string;
-      /** @enum {string} */
-      impact: 'negative';
-      /** @enum {string} */
-      outcome: 'dispute_dismissed' | 'dispute_upheld';
-      /** @enum {string} */
-      reason: 'delivery_issue' | 'quality_issue' | 'quantity_issue' | 'other';
-      /** @enum {string} */
-      subjectParty: 'buyer' | 'seller';
-    };
-    ContractSettlementEventDto: {
-      /** @enum {string} */
-      actorParty: 'buyer' | 'seller';
-      /** @enum {string} */
-      eventType:
-        | 'buyer_consented'
-        | 'seller_consented'
-        | 'buyer_payment_confirmed'
-        | 'seller_receipt_confirmed'
-        | 'factoring_requested'
-        | 'factoring_approved'
-        | 'factoring_rejected'
-        | 'seller_paid'
-        | 'buyer_repaid'
-        | 'factoring_closed';
-      /** @enum {string} */
-      providerMode: 'none' | 'mock' | 'live';
-      providerName?: string;
-      sequence: number;
-      simulation: boolean;
-      /** Format: date-time */
-      createdAt: string;
-    };
-    ContractSignatureDto: {
-      artifactChecksum: string;
-      /** @enum {string} */
-      party: 'buyer' | 'seller';
-      /** @enum {string} */
-      providerMode: 'mock' | 'live';
-      providerName: string;
-      /** Format: date-time */
-      signedAt: string;
-      simulation: boolean;
-      /** @enum {number} */
-      snapshotRevision: 1;
-    };
-    ContractTimelineEventDto: {
-      /** @enum {string} */
-      actorParty: 'buyer' | 'seller' | 'admin';
-      /** @enum {string} */
-      category: 'artifact' | 'signature' | 'settlement' | 'fulfillment' | 'dispute' | 'completion';
-      eventType: string;
-      /** @enum {string} */
-      providerMode: 'none' | 'mock' | 'live';
-      sequence: number;
-      simulation: boolean;
-      /** Format: date-time */
-      createdAt: string;
-    };
-    ContractLifecycleDto: {
-      artifact?: components['schemas']['ContractArtifactDto'];
-      commission?: components['schemas']['ContractCommissionDto'];
-      /** Format: uuid */
-      contractId: string;
-      dispute?: components['schemas']['ContractDisputeDto'];
-      disputeEvidence: components['schemas']['ContractDisputeEvidenceDto'][];
-      fulfillment: components['schemas']['ContractFulfillmentDto'];
-      notificationIntents: components['schemas']['ContractNotificationIntentDto'][];
-      reviewEligibility: components['schemas']['ContractReviewEligibilityDto'];
-      reputationSignals: components['schemas']['ContractReputationSignalDto'][];
-      settlement: components['schemas']['DirectPaymentSettlementDto'] | components['schemas']['FactoringSettlementDto'];
-      settlementEvents: components['schemas']['ContractSettlementEventDto'][];
-      signatures: components['schemas']['ContractSignatureDto'][];
-      timeline: components['schemas']['ContractTimelineEventDto'][];
-    };
-    SettlementCommandDto: {
-      /** @enum {string} */
-      command:
-        | 'confirm_buyer_payment'
-        | 'confirm_seller_receipt'
-        | 'request_decision'
-        | 'record_seller_payout'
-        | 'record_buyer_repayment'
-        | 'close';
-    };
-    FulfillmentCommandDto: {
-      /** @enum {string} */
-      command: 'start' | 'mark_delivered' | 'accept_delivery';
-    };
-    OpenDisputeDto: {
-      /** @enum {string} */
-      reason: 'delivery_issue' | 'quality_issue' | 'quantity_issue' | 'other';
-    };
-    MarketplaceContractNotificationRecipientDto: {
-      attempts: number;
-      /** Format: date-time */
-      attemptedAt?: string;
-      /** Format: uuid */
-      contractId: string;
-      contractPath: string;
-      /** @enum {string} */
-      deliveryChannel: 'telegram' | 'sms';
-      event: string;
-      /** Format: uuid */
-      id: string;
-      /** @enum {string} */
-      locale: 'en' | 'ru' | 'uz' | 'uz-cyrl';
-      message: string;
-      /** Format: date-time */
-      occurredAt: string;
-      /** @enum {string} */
-      recipientParty: 'buyer' | 'seller';
-      simulation: boolean;
-      /** @enum {string} */
-      status: 'pending' | 'simulated' | 'delivered' | 'failed' | 'reconciliation_required';
-      /** @enum {string} */
-      surface: 'in-app';
-    };
-    MarketplaceContractNotificationListDto: {
-      items: components['schemas']['MarketplaceContractNotificationRecipientDto'][];
-    };
-    MarketplaceBuyerDashboardMetricsDto: {
-      openCarts: number;
-      openPurchaseRequests: number;
-      activeDeals: number;
-      completedDeals: number;
-      completedSpendUzs: number;
-    };
-    MarketplaceDashboardTopListingDto: {
-      /** Format: uuid */
-      listingPublicationId: string;
-      title: string;
-      completedQuantity: number;
-      revenueUzs: number;
-    };
-    MarketplaceSellerDashboardMetricsDto: {
-      activeListings: number;
-      pendingOffers: number;
-      activeDeals: number;
-      completedDeals: number;
-      completedRevenueUzs: number;
-      offerConversionBps: number;
-      topListings: components['schemas']['MarketplaceDashboardTopListingDto'][];
-    };
-    MarketplaceDashboardMonthlyActivityDto: {
-      month: string;
-      completedPurchases: number;
-      completedSales: number;
-      purchaseSpendUzs: number;
-      salesRevenueUzs: number;
-    };
-    MarketplaceDashboardRecentDealDto: {
-      /** Format: uuid */
-      contractId: string;
-      /** @enum {string} */
-      side: 'buyer' | 'seller';
-      counterpartyName?: string;
-      amountUzs: number;
-      /** @enum {string} */
-      status: 'draft' | 'signed' | 'active' | 'completed' | 'cancelled' | 'legacy_review_required';
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    MarketplaceRoleDashboardDto: {
-      /** @enum {string} */
-      role: 'buyer' | 'farmer' | 'seller';
-      buyer?: components['schemas']['MarketplaceBuyerDashboardMetricsDto'];
-      seller?: components['schemas']['MarketplaceSellerDashboardMetricsDto'];
-      monthlyActivity: components['schemas']['MarketplaceDashboardMonthlyActivityDto'][];
-      recentDeals: components['schemas']['MarketplaceDashboardRecentDealDto'][];
-      /** Format: date-time */
-      generatedAt: string;
-    };
-    MarketplaceAiLocalizedTitlesDto: {
-      en: string;
-      ru: string;
-      uz: string;
-      uzCyrl: string;
-    };
-    MarketplaceAiAvailabilityDto: {
-      /** @enum {string} */
-      status: 'in_stock_at_consultation';
-      quantity: number;
-      unit: string;
-      /** @enum {string} */
-      warningCode: 'stock_may_change';
-    };
-    MarketplaceAiRecommendationDto: {
-      /** Format: uuid */
-      listingPublicationId: string;
-      /** Format: uuid */
-      sellerPublicId: string;
-      titles: components['schemas']['MarketplaceAiLocalizedTitlesDto'];
-      priceUzs: number;
-      availability: components['schemas']['MarketplaceAiAvailabilityDto'];
-      reasonCodes: ('query_terms_match' | 'current_public_stock' | 'lowest_current_price')[];
-    };
-    MarketplaceAiPreviewPartitionDto: {
-      /** Format: uuid */
-      sellerPublicId: string;
-      listingPublicationIds: string[];
-    };
-    MarketplaceAiStarterCartPreviewDto: {
-      /** @enum {string} */
-      status: 'requires_confirmation' | 'unavailable';
-      sellerPartitions: components['schemas']['MarketplaceAiPreviewPartitionDto'][];
-    };
-    MarketplaceAiGroundedResponseDto: {
-      explanationCodes: (
-        | 'grounded_at_consultation_time'
-        | 'lowest_current_price_first'
-        | 'seasonal_calendar_unavailable'
-        | 'stock_revalidated_on_confirmation'
-        | 'no_grounded_catalog_match'
-      )[];
-      recommendations: components['schemas']['MarketplaceAiRecommendationDto'][];
-      starterCartPreview: components['schemas']['MarketplaceAiStarterCartPreviewDto'];
-    };
-    MarketplaceAiConsultationDto: {
-      /** Format: uuid */
-      id: string;
+      tenantId: string;
+      userId: string;
       /** @enum {string} */
       kind: 'recommendation' | 'find_cheaper' | 'season_advice' | 'generic';
       question: string;
-      /** @enum {string} */
+      /**
+       * @description Semantic result code; clients localize user-facing consultation copy.
+       * @enum {string}
+       */
       answer: 'catalog_match' | 'no_catalog_match';
-      listingPublicationIds: string[];
-      response: components['schemas']['MarketplaceAiGroundedResponseDto'];
-      /** Format: date-time */
-      confirmedAt?: string;
+      productIds: string[];
       /** Format: date-time */
       createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
     };
-    CreateAiConsultationDto: {
+    AskAiDto: {
       /** @enum {string} */
       kind: 'recommendation' | 'find_cheaper' | 'season_advice' | 'generic';
       question: string;
     };
-    MarketplaceAiConsultationListDto: {
-      items: components['schemas']['MarketplaceAiConsultationDto'][];
-    };
-    MarketplaceAiStarterCartPartitionDto: {
-      /** Format: uuid */
-      cartId: string;
-      /** Format: uuid */
-      sellerPublicId: string;
-      listingPublicationIds: string[];
-    };
-    MarketplaceAiStarterCartResultDto: {
-      /** Format: uuid */
-      consultationId: string;
-      /** @enum {string} */
-      status: 'confirmed';
-      carts: components['schemas']['MarketplaceAiStarterCartPartitionDto'][];
-      /** Format: date-time */
-      confirmedAt: string;
-    };
-    ConfirmAiStarterCartDto: {
-      /** Format: uuid */
-      actingPartnerId: string;
-      /** @description Must be true. Closing or cancelling the preview sends no command. */
-      confirmed: boolean;
-    };
-    MarketplaceFavoriteMutationDto: {
-      /** Format: uuid */
-      listingPublicationId: string;
-      favorited: boolean;
-    };
-    MarketplaceEngagementSellerDto: {
-      /** Format: uuid */
-      id: string;
-      displayName: string;
-    };
-    MarketplaceEngagementListingDto: {
-      /** Format: uuid */
-      id: string;
-      /** @enum {string} */
-      kind: 'produce' | 'product';
-      title: string;
-      titleRu?: string;
-      titleUz?: string;
-      titleUzCyrl?: string;
-      sampleAvailable: boolean;
-      seller: components['schemas']['MarketplaceEngagementSellerDto'];
-    };
-    MarketplaceFavoriteDto: {
-      listing: components['schemas']['MarketplaceEngagementListingDto'];
-      /** Format: date-time */
-      createdAt: string;
-    };
-    MarketplaceFavoriteListDto: {
-      items: components['schemas']['MarketplaceFavoriteDto'][];
-    };
-    MarketplaceSampleDeliveryDto: {
-      /** @enum {string} */
-      method: 'pickup' | 'seller_delivery';
-      /** @enum {boolean} */
-      requesterPays: true;
-      /** @enum {integer} */
-      itemPriceUzs: 0;
-      quoteUzs?: number;
-    };
-    MarketplaceSampleFeedbackDto: {
-      rating: number;
-      comment?: string;
-      /** Format: date-time */
-      createdAt: string;
-    };
-    MarketplaceSampleDto: {
-      /** Format: uuid */
-      id: string;
-      listing: components['schemas']['MarketplaceEngagementListingDto'];
-      /** @enum {string} */
-      actorRole: 'requester' | 'seller';
-      seasonKey: string;
-      policyVersion: number;
-      /** @enum {string} */
-      status: 'requested' | 'approved' | 'declined' | 'cancelled' | 'shipped' | 'received';
-      delivery: components['schemas']['MarketplaceSampleDeliveryDto'];
-      feedback?: components['schemas']['MarketplaceSampleFeedbackDto'];
-      revision: number;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    RequestMarketplaceSampleDto: {
-      /** Format: uuid */
-      listingPublicationId: string;
-      /** @enum {string} */
-      deliveryMethod: 'pickup' | 'seller_delivery';
-    };
-    MarketplaceSampleListDto: {
-      items: components['schemas']['MarketplaceSampleDto'][];
-    };
-    MarketplaceSampleUsageDto: {
-      period: string;
-      used: number;
-      limit: number;
-      remaining: number;
-      policyVersion: number;
-    };
-    TransitionMarketplaceSampleDto: {
-      /** @enum {string} */
-      action: 'approve' | 'cancel' | 'decline' | 'receive' | 'ship';
-      expectedRevision: number;
-      deliveryQuoteUzs?: number;
-    };
-    SubmitMarketplaceSampleFeedbackDto: {
-      rating: number;
-      comment?: string;
-      expectedRevision: number;
-    };
-    MarketplaceReviewReplyDto: {
-      /** Format: uuid */
-      id: string;
-      comment: string;
-      revision: number;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    MarketplaceReviewDto: {
-      /** Format: uuid */
-      id: string;
-      /** Format: uuid */
-      listingPublicationId: string;
-      rating: number;
-      comment?: string;
-      assetReferences: string[];
-      /** @enum {boolean} */
-      verifiedDeal: true;
-      reply?: components['schemas']['MarketplaceReviewReplyDto'];
-      revision: number;
-      /** Format: date-time */
-      createdAt: string;
-      /** Format: date-time */
-      updatedAt: string;
-    };
-    SubmitMarketplaceReviewDto: {
-      /** Format: uuid */
-      listingPublicationId: string;
-      rating: number;
-      comment?: string;
-      assetReferences: string[];
-    };
-    ReplyMarketplaceReviewDto: {
-      comment: string;
-      expectedRevision: number;
-    };
-    MarketplaceReviewReportReceiptDto: {
-      /** Format: uuid */
-      id: string;
-      /** @enum {string} */
-      status: 'pending';
-      revision: number;
-      /** Format: date-time */
-      createdAt: string;
-    };
-    ReportMarketplaceReviewDto: {
-      /** @enum {string} */
-      reason: 'abuse' | 'off_topic' | 'privacy' | 'spam';
-      comment?: string;
-    };
-    MarketplaceReviewAggregateDto: {
-      /** Format: uuid */
-      listingPublicationId: string;
-      reviewCount: number;
-      averageRating: number | null;
-      revision: number;
-    };
-    MarketplaceReviewPageDto: {
-      aggregate: components['schemas']['MarketplaceReviewAggregateDto'];
-      items: components['schemas']['MarketplaceReviewDto'][];
+    AiConsultationListDto: {
+      items: components['schemas']['AiConsultationViewDto'][];
     };
     FarmerProfileDto: {
       /** @example +998901234567 */
@@ -2803,7 +1430,7 @@ export interface components {
       returnUrl: string;
       idempotencyKey: string;
       /** @enum {string} */
-      locale: 'en' | 'ru' | 'uz' | 'uz-cyrl';
+      locale: 'en' | 'ru' | 'uz';
     };
     ProductViewDto: {
       /** Format: uuid */
@@ -2811,7 +1438,6 @@ export interface components {
       name: string;
       nameRu?: string;
       nameUz?: string;
-      nameUzCyrl?: string;
       /** @enum {string} */
       category: 'fertilizer' | 'seed' | 'pesticide' | 'equipment' | 'irrigation' | 'other';
       description: string;
@@ -2820,7 +1446,6 @@ export interface components {
       priceUzs: number;
       unit: string;
       stockQuantity: number;
-      sampleAvailable: boolean;
       region: string;
       /** @enum {string} */
       status: 'active' | 'inactive' | 'out_of_stock';
@@ -4610,256 +3235,6 @@ export interface operations {
     requestBody: {
       content: {
         'application/json': components['schemas']['CreateProduceDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['ProduceListingViewDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  AgriTechOperationsController_updateProduceSampleAvailability: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['UpdateSampleAvailabilityDto'];
       };
     };
     responses: {
@@ -7275,43 +5650,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -7337,1655 +5675,6 @@ export interface operations {
              * @enum {integer}
              */
             status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceController_createVerification: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and resource-scoped command replay key. */
-        'Idempotency-Key': string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['StartVerificationDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['VerificationViewDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceController_linkOneId: {
-    parameters: {
-      query?: never;
-      header: {
-        'Idempotency-Key': string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['VerificationViewDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceController_providerReadiness: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceProviderReadinessDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceController_storeVerificationDocuments: {
-    parameters: {
-      query?: never;
-      header: {
-        'Idempotency-Key': string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['VerificationDocumentInputDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['VerificationViewDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceController_submitVerification: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and resource-scoped command replay key. */
-        'Idempotency-Key': string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SubmitVerificationDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['VerificationViewDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
             /**
@@ -9205,43 +5894,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -9267,43 +5919,6 @@ export interface operations {
              * @enum {integer}
              */
             status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
             /**
@@ -9525,43 +6140,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -9599,51 +6177,12 @@ export interface operations {
           };
         };
       };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
     };
   };
   MarketplaceController_addToCart: {
     parameters: {
       query?: never;
-      header: {
-        'Idempotency-Key': string;
-      };
+      header?: never;
       path?: never;
       cookie?: never;
     };
@@ -9849,43 +6388,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -9923,54 +6425,15 @@ export interface operations {
           };
         };
       };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
     };
   };
   MarketplaceController_removeCartItem: {
     parameters: {
       query?: never;
-      header: {
-        'Idempotency-Key': string;
-      };
+      header?: never;
       path: {
         id: string;
-        listingPublicationId: string;
+        productId: string;
       };
       cookie?: never;
     };
@@ -10172,43 +6635,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -10246,54 +6672,15 @@ export interface operations {
           };
         };
       };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
     };
   };
   MarketplaceController_updateCartItem: {
     parameters: {
       query?: never;
-      header: {
-        'Idempotency-Key': string;
-      };
+      header?: never;
       path: {
         id: string;
-        listingPublicationId: string;
+        productId: string;
       };
       cookie?: never;
     };
@@ -10499,43 +6886,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -10573,51 +6923,12 @@ export interface operations {
           };
         };
       };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
     };
   };
   MarketplaceController_checkoutCart: {
     parameters: {
       query?: never;
-      header: {
-        'Idempotency-Key': string;
-      };
+      header?: never;
       path: {
         id: string;
       };
@@ -10825,8 +7136,8 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
+      /** @description Internal Server Error */
+      500: {
         headers: {
           [name: string]: unknown;
         };
@@ -10841,15 +7152,222 @@ export interface operations {
             type: 'about:blank';
             /**
              * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
+             * @example Internal Server Error
              */
             title: string;
             /**
              * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
+             * @example 500
              * @enum {integer}
              */
-            status: 413;
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplaceController_listSamples: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['SampleListDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
             /**
@@ -10899,8 +7417,34 @@ export interface operations {
           };
         };
       };
-      /** @description Service Unavailable */
-      503: {
+    };
+  };
+  MarketplaceController_requestSample: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['RequestSampleDto'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['SampleViewDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
         headers: {
           [name: string]: unknown;
         };
@@ -10915,15 +7459,1678 @@ export interface operations {
             type: 'about:blank';
             /**
              * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
+             * @example Bad Request
              */
             title: string;
             /**
              * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
+             * @example 400
              * @enum {integer}
              */
-            status: 503;
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplaceController_sampleUsage: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['SampleUsageViewDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplaceController_listFavorites: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['FavoriteListDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplaceController_addFavorite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddFavoriteDto'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['FavoriteMutationResultDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplaceController_removeFavorite: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        productId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['FavoriteMutationResultDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplaceController_listReviews: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        productId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ReviewListDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplaceController_addReview: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        productId: string;
+      };
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'application/json': components['schemas']['AddReviewDto'];
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ReviewViewDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
             /**
@@ -11145,43 +9352,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -11219,51 +9389,12 @@ export interface operations {
           };
         };
       };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
     };
   };
   MarketplaceController_createRequest: {
     parameters: {
       query?: never;
-      header: {
-        'Idempotency-Key': string;
-      };
+      header?: never;
       path?: never;
       cookie?: never;
     };
@@ -11469,43 +9600,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -11531,43 +9625,6 @@ export interface operations {
              * @enum {integer}
              */
             status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
             /**
@@ -11787,43 +9844,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -11849,43 +9869,6 @@ export interface operations {
              * @enum {integer}
              */
             status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
             /**
@@ -12107,43 +10090,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -12181,51 +10127,12 @@ export interface operations {
           };
         };
       };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
     };
   };
   MarketplaceController_makeOffer: {
     parameters: {
       query?: never;
-      header: {
-        'Idempotency-Key': string;
-      };
+      header?: never;
       path: {
         id: string;
       };
@@ -12433,43 +10340,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -12507,51 +10377,12 @@ export interface operations {
           };
         };
       };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
     };
   };
   MarketplaceController_chooseOffer: {
     parameters: {
       query?: never;
-      header: {
-        'Idempotency-Key': string;
-      };
+      header?: never;
       path: {
         id: string;
         offerId: string;
@@ -12756,43 +10587,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -12830,52 +10624,12 @@ export interface operations {
           };
         };
       };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
     };
   };
   MarketplaceController_updateContractDeliveryQuote: {
     parameters: {
       query?: never;
-      header: {
-        /** @description Actor- and resource-scoped command replay key. */
-        'Idempotency-Key': string;
-      };
+      header?: never;
       path: {
         id: string;
       };
@@ -13083,43 +10837,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -13157,8 +10874,32 @@ export interface operations {
           };
         };
       };
-      /** @description Service Unavailable */
-      503: {
+    };
+  };
+  MarketplaceController_signContract: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['ContractViewDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
         headers: {
           [name: string]: unknown;
         };
@@ -13173,15 +10914,200 @@ export interface operations {
             type: 'about:blank';
             /**
              * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
+             * @example Bad Request
              */
             title: string;
             /**
              * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
+             * @example 400
              * @enum {integer}
              */
-            status: 503;
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
             /**
@@ -13401,226 +11327,6 @@ export interface operations {
           };
         };
       };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePublicController_listCatalog: {
-    parameters: {
-      query?: {
-        cursor?: string;
-        limit?: number;
-        q?: string;
-        region?: string;
-        section?: 'equipment' | 'seeds' | 'produce';
-        category?: 'fertilizer' | 'seed' | 'pesticide' | 'equipment' | 'irrigation' | 'other';
-        crop?: string;
-        minPriceUzs?: number;
-        maxPriceUzs?: number;
-        minAvailableQuantity?: number;
-        sampleAvailable?: boolean;
-        sort?: 'newest' | 'price_asc' | 'price_desc';
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplacePublicCatalogPageDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
       /** @description Internal Server Error */
       500: {
         headers: {
@@ -13660,1449 +11366,7 @@ export interface operations {
       };
     };
   };
-  MarketplacePublicController_listSuggestions: {
-    parameters: {
-      query: {
-        q: string;
-        limit?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplacePublicSuggestionListDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePublicController_getListing: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        listingId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data:
-              | components['schemas']['MarketplacePublicProductListingDto']
-              | components['schemas']['MarketplacePublicProduceListingDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePublicController_getSeller: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        sellerId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplacePublicSellerDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePublicController_listSellerCatalog: {
-    parameters: {
-      query?: {
-        cursor?: string;
-        limit?: number;
-        q?: string;
-        region?: string;
-        section?: 'equipment' | 'seeds' | 'produce';
-        category?: 'fertilizer' | 'seed' | 'pesticide' | 'equipment' | 'irrigation' | 'other';
-        crop?: string;
-        minPriceUzs?: number;
-        maxPriceUzs?: number;
-        minAvailableQuantity?: number;
-        sampleAvailable?: boolean;
-        sort?: 'newest' | 'price_asc' | 'price_desc';
-      };
-      header?: never;
-      path: {
-        sellerId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplacePublicCatalogPageDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePublicController_listRequests: {
-    parameters: {
-      query?: {
-        cursor?: string;
-        limit?: number;
-        q?: string;
-        region?: string;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplacePublicRequestPageDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePublicationController_listMine: {
-    parameters: {
-      query?: {
-        limit?: number;
-      };
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceOwnedPublicationsDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePublicationController_publishListing: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and source-scoped publication command key. */
-        'Idempotency-Key': string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['PublishMarketplaceListingDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceListingPublicationDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePublicationController_publishRequest: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and source-scoped publication command key. */
-        'Idempotency-Key': string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['PublishMarketplaceRequestDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceRequestPublicationDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePromotionController_list: {
+  MarketplaceController_listAi: {
     parameters: {
       query?: never;
       header?: never;
@@ -15118,7 +11382,7 @@ export interface operations {
         };
         content: {
           'application/json': {
-            data: components['schemas']['MarketplaceListingPromotionListDto'];
+            data: components['schemas']['AiConsultationListDto'];
           };
         };
       };
@@ -15346,7112 +11610,16 @@ export interface operations {
       };
     };
   };
-  MarketplacePromotionController_activate: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and route-scoped internal promotion activation command key. */
-        'Idempotency-Key': string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ActivateMarketplacePromotionDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceListingPromotionDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePromotionController_listPlans: {
+  MarketplaceController_askAi: {
     parameters: {
       query?: never;
       header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplacePromotionPlanListDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePromotionController_get: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceListingPromotionDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceContractLifecycleController_getArtifact: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['ContractArtifactDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceContractLifecycleController_createArtifact: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and route-scoped command key; exact replay returns the original lifecycle state. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateContractArtifactDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['ContractArtifactDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceContractLifecycleController_downloadArtifact: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description Authorized immutable contract artifact download. */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/pdf': string;
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceContractLifecycleController_sign: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and route-scoped command key; exact replay returns the original lifecycle state. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['ContractLifecycleDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceContractLifecycleController_consentFactoring: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and route-scoped command key; exact replay returns the original lifecycle state. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['ContractLifecycleDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceContractLifecycleController_recordSettlementEvent: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and route-scoped command key; exact replay returns the original lifecycle state. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SettlementCommandDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['ContractLifecycleDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceContractLifecycleController_transitionFulfillment: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and route-scoped command key; exact replay returns the original lifecycle state. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['FulfillmentCommandDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['ContractLifecycleDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceContractLifecycleController_openDispute: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and route-scoped command key; exact replay returns the original lifecycle state. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['OpenDisputeDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['ContractLifecycleDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceContractLifecycleController_storeDisputeEvidence: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Actor- and route-scoped command key; exact replay returns the original lifecycle state. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'multipart/form-data': {
-          /** Format: binary */
-          evidence: string;
-        };
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['ContractDisputeEvidenceDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceContractLifecycleController_getLifecycle: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['ContractLifecycleDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Payload Too Large */
-      413: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Payload Too Large
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 413
-             * @enum {integer}
-             */
-            status: 413;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Service Unavailable */
-      503: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Service Unavailable
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 503
-             * @enum {integer}
-             */
-            status: 503;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceContractNotificationController_list: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceContractNotificationListDto'];
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceDashboardAiController_dashboard: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceRoleDashboardDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceDashboardAiController_listConsultations: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceAiConsultationListDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceDashboardAiController_createConsultation: {
-    parameters: {
-      query?: never;
-      header: {
-        'Idempotency-Key': string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['CreateAiConsultationDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceAiConsultationDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceDashboardAiController_confirmStarterCart: {
-    parameters: {
-      query?: never;
-      header: {
-        'Idempotency-Key': string;
-      };
-      path: {
-        id: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ConfirmAiStarterCartDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceAiStarterCartResultDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceEngagementController_addFavorite: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Command key. An exact replay returns the persisted original result. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        listingPublicationId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceFavoriteMutationDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceEngagementController_removeFavorite: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Command key. An exact replay returns the persisted original result. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        listingPublicationId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceFavoriteMutationDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceEngagementController_listFavorites: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceFavoriteListDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceEngagementController_listSamples: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceSampleListDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceEngagementController_requestSample: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Command key. An exact replay returns the persisted original result. */
-        'Idempotency-Key': string;
-      };
-      path?: never;
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['RequestMarketplaceSampleDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceSampleDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceEngagementController_getSampleUsage: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path?: never;
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceSampleUsageDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceEngagementController_transitionSample: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Command key. An exact replay returns the persisted original result. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        sampleId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['TransitionMarketplaceSampleDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceSampleDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceEngagementController_submitSampleFeedback: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Command key. An exact replay returns the persisted original result. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        sampleId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['SubmitMarketplaceSampleFeedbackDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceSampleDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceEngagementController_submitReview: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Command key. An exact replay returns the persisted original result. */
-        'Idempotency-Key': string;
-      };
       path?: never;
       cookie?: never;
     };
     requestBody: {
       content: {
-        'application/json': components['schemas']['SubmitMarketplaceReviewDto'];
+        'application/json': components['schemas']['AskAiDto'];
       };
     };
     responses: {
@@ -22462,7 +11630,7 @@ export interface operations {
         };
         content: {
           'application/json': {
-            data: components['schemas']['MarketplaceReviewDto'];
+            data: components['schemas']['AiConsultationViewDto'];
           };
         };
       };
@@ -22639,647 +11807,6 @@ export interface operations {
              * @enum {integer}
              */
             status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceEngagementController_replyToReview: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Command key. An exact replay returns the persisted original result. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        reviewId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ReplyMarketplaceReviewDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceReviewDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplaceEngagementController_reportReview: {
-    parameters: {
-      query?: never;
-      header: {
-        /** @description Command key. An exact replay returns the persisted original result. */
-        'Idempotency-Key': string;
-      };
-      path: {
-        reviewId: string;
-      };
-      cookie?: never;
-    };
-    requestBody: {
-      content: {
-        'application/json': components['schemas']['ReportMarketplaceReviewDto'];
-      };
-    };
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceReviewReportReceiptDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Unauthorized */
-      401: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Unauthorized
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 401
-             * @enum {integer}
-             */
-            status: 401;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Forbidden */
-      403: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Forbidden
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 403
-             * @enum {integer}
-             */
-            status: 403;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Conflict */
-      409: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Conflict
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 409
-             * @enum {integer}
-             */
-            status: 409;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Internal Server Error */
-      500: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Internal Server Error
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 500
-             * @enum {integer}
-             */
-            status: 500;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-    };
-  };
-  MarketplacePublicEngagementController_listReviews: {
-    parameters: {
-      query?: never;
-      header?: never;
-      path: {
-        listingPublicationId: string;
-      };
-      cookie?: never;
-    };
-    requestBody?: never;
-    responses: {
-      /** @description OK */
-      200: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/json': {
-            data: components['schemas']['MarketplaceReviewPageDto'];
-          };
-        };
-      };
-      /** @description Bad Request */
-      400: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Bad Request
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 400
-             * @enum {integer}
-             */
-            status: 400;
-            /** @description A human-readable explanation specific to this occurrence. */
-            detail?: string;
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying this specific occurrence.
-             */
-            instance?: string;
-          } & {
-            [key: string]: unknown;
-          };
-        };
-      };
-      /** @description Not Found */
-      404: {
-        headers: {
-          [name: string]: unknown;
-        };
-        content: {
-          'application/problem+json': {
-            /**
-             * Format: uri-reference
-             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
-             * @example about:blank
-             * @enum {string}
-             */
-            type: 'about:blank';
-            /**
-             * @description A short human-readable summary of the problem type.
-             * @example Not Found
-             */
-            title: string;
-            /**
-             * @description The HTTP status code generated by the origin server for this occurrence.
-             * @example 404
-             * @enum {integer}
-             */
-            status: 404;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
             /**

@@ -1222,7 +1222,7 @@ export function MarketplaceContract({
           <div className="dh-contract-parties">
             <div>
               <span>{t('agritech.marketplace.contract.buyer')}</span>
-              <strong>{contract.buyerUserId}</strong>
+              <strong>{contract.buyerName ?? t('agritech.marketplace.contract.partyUnnamed')}</strong>
               {contract.buyerSignedAt && (
                 <small>
                   <MarketplaceIcon name="check" />
@@ -1232,7 +1232,7 @@ export function MarketplaceContract({
             </div>
             <div>
               <span>{t('agritech.marketplace.contract.seller')}</span>
-              <strong>{contract.sellerUserId}</strong>
+              <strong>{contract.sellerName ?? t('agritech.marketplace.contract.partyUnnamed')}</strong>
               {contract.sellerSignedAt && (
                 <small>
                   <MarketplaceIcon name="check" />

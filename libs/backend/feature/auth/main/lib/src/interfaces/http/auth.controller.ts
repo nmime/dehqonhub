@@ -79,7 +79,7 @@ import {
   establishRequestSession,
   SessionCookieName,
 } from './util/session-lifecycle.util';
-import { principalFromUserView } from './util/principal.mapper';
+import { hasSessionIdentityDrift, principalFromUserView } from './util/principal.mapper';
 
 // The request DTOs, public payload interfaces, and the session-cookie name were
 // decomposed into role-based sibling files; they are re-exported here so the
@@ -360,11 +360,25 @@ export class AuthController {
   @ApiOkDataResponse(MePayloadDto)
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
-  async me(@CurrentUser() principal: AuthenticatedPrincipal): Promise<OkResponse<MePayload>> {
-    return createOkResponse({
-      principal,
-      user: await this.auth.getUserById(principal.subject, principal.tenantId),
-    });
+  async me(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Req() request: AuthenticatedRequest,
+  ): Promise<OkResponse<MePayload>> {
+    const user = await this.auth.getUserById(principal.subject, principal.tenantId);
+    // The session holds a snapshot taken at sign-in. Saving a preference from
+    // another device or tab updates the account row but not this session, and
+    // the payload then reported two different locales for one visitor — which
+    // left the web app flipping between them and never settling. Re-sync the
+    // snapshot from the row just read, and only when it actually drifted so an
+    // ordinary read stays free of a session write. A missing row means the
+    // account is gone; there is nothing to sync to, so answer with the session.
+    const current = user ? principalFromUserView(principal, user) : principal;
+    if (user && hasSessionIdentityDrift(principal, current)) {
+      setSessionPrincipal(request, current);
+      await callSessionMethod(request, 'save');
+    }
+
+    return createOkResponse({ principal: current, user });
   }
 
   @Patch('me/locale')

@@ -36,6 +36,8 @@
   "user.state.forbidden": "Доступ ограничен: {{reason}}",
   "user.loadingProfile": "Загрузка профиля...",
   "user.profile.unknown": "неизвестно",
+  "user.profile.subject": "Идентификатор аккаунта",
+  "user.profile.guestTitle": "Вы не вошли в аккаунт",
   "user.nav.home": "Главная",
   "user.nav.auth": "Вход",
   "user.nav.profile": "Профиль",

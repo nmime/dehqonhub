@@ -282,4 +282,137 @@ describe("unified auth migration integration", { skip: SKIP }, () => {
       console.log(`Idempotent: betterAuthSkipped=${summary.betterAuthSkipped}`);
     }, { timeout: 60_000 });
   });
+
+  /**
+   * Seeding is only meaningful against the schema the migrations actually
+   * produce, which is why it is verified here rather than against a stub. Both
+   * halves of this suite caught a real break: the migrations create roles and
+   * permissions with generated ids, and they moved a user's roles out of
+   * `auth_users` into the join tables, so a seed written against the old shape
+   * failed outright and left the published DehqonHub review logins nonexistent.
+   */
+  describe("db seed against the migrated schema (e2e)", () => {
+    const reviewEmails = [
+      "dehqon@demo.dehqonhub.uz",
+      "sotuvchi@demo.dehqonhub.uz",
+      "xaridor@demo.dehqonhub.uz",
+    ];
+
+    it("creates every seed user with a resolvable role grant", async () => {
+      const { seedPostgresDatabase } = await import("./postgres-seed.ts");
+      const { buildSeedUsers } = await import("./seed-data.ts");
+      const seedUsers = buildSeedUsers("Seed@Integration1!", "en");
+
+      const inserted = await seedPostgresDatabase(dbUrl, seedUsers);
+      assert.strictEqual(inserted.users, seedUsers.length, "every seed user should be inserted");
+      assert.strictEqual(inserted.userRoles, seedUsers.length, "every seed user should be granted its role");
+
+      const pool = new Pool({ connectionString: dbUrl });
+      try {
+        for (const email of reviewEmails) {
+          const granted = await pool.query(
+            `SELECT r."key" AS role_key, count(rp."permission_id")::int AS permissions
+               FROM "auth_users" u
+               JOIN "auth_user_roles" ur ON ur."auth_user_id" = u."id"
+               JOIN "auth_roles" r ON r."id" = ur."role_id"
+               LEFT JOIN "auth_role_permissions" rp ON rp."role_id" = r."id"
+              WHERE u."email" = $1
+              GROUP BY r."key"`,
+            [email],
+          );
+          assert.strictEqual(granted.rowCount, 1, `${email} should hold exactly one role`);
+          assert.strictEqual(granted.rows[0].role_key, "user", `${email} should be a marketplace user`);
+          assert.ok(granted.rows[0].permissions > 0, `${email}'s role should carry permissions`);
+        }
+
+        const hashes = await pool.query(
+          `SELECT "password_hash" FROM "auth_users" WHERE "email" = ANY($1::text[])`,
+          [reviewEmails],
+        );
+        for (const row of hashes.rows) {
+          assert.match(row.password_hash, /^pbkdf2_sha256\$120000\$/u, "review logins need a verifiable hash");
+        }
+      } finally {
+        await pool.end();
+      }
+    }, { timeout: 60_000 });
+
+    /**
+     * The review logins could sign in long before they could transact: buying is
+     * gated on an approved buyer organization plus a verified role, and a cart
+     * resolves its seller through the listing's `supplier_id`. Asserting the
+     * chain here is what keeps the published demo accounts from becoming dead
+     * ends again.
+     */
+    it("gives the review logins a catalog they can actually transact against", async () => {
+      const { demoMarketplacePartners, demoMarketplaceProducts, demoMarketplaceVerifications } = await import(
+        "./marketplace-seed-data.ts"
+      );
+
+      const pool = new Pool({ connectionString: dbUrl });
+      try {
+        const orphaned = await pool.query(
+          `SELECT p."id" FROM "products" p
+             LEFT JOIN "agritech_partners" a
+               ON a."id"::text = p."supplier_id" AND a."kind" = 'supplier' AND a."status" = 'approved'
+            WHERE a."id" IS NULL`,
+        );
+        assert.strictEqual(orphaned.rowCount, 0, "every seeded listing needs an approved supplier behind it");
+
+        const counted = await pool.query(
+          `SELECT
+             (SELECT count(*)::int FROM "products") AS products,
+             (SELECT count(*)::int FROM "agritech_partners" WHERE "status" = 'approved') AS partners,
+             (SELECT count(*)::int FROM "marketplace_verifications" WHERE "status" = 'verified') AS verifications`,
+        );
+        assert.deepStrictEqual(
+          counted.rows[0],
+          {
+            products: demoMarketplaceProducts.length,
+            partners: demoMarketplacePartners.length,
+            verifications: demoMarketplaceVerifications.length,
+          },
+          "the seed should write the whole fixture",
+        );
+
+        for (const email of reviewEmails) {
+          const role = await pool.query(
+            `SELECT v."role", v."status", count(a."id")::int AS organizations
+               FROM "auth_users" u
+               JOIN "marketplace_verifications" v ON v."user_id" = u."id"::text
+               LEFT JOIN "agritech_partners" a ON a."owner_user_id" = u."id"::text AND a."status" = 'approved'
+              WHERE u."email" = $1
+              GROUP BY v."role", v."status"`,
+            [email],
+          );
+          assert.strictEqual(role.rowCount, 1, `${email} should hold one marketplace role`);
+          assert.strictEqual(role.rows[0].status, "verified", `${email} should be verified`);
+          assert.ok(role.rows[0].organizations > 0, `${email} should own an approved organization`);
+        }
+      } finally {
+        await pool.end();
+      }
+    }, { timeout: 60_000 });
+
+    it("is idempotent on second run", async () => {
+      const { seedPostgresDatabase } = await import("./postgres-seed.ts");
+      const { buildSeedUsers } = await import("./seed-data.ts");
+
+      const inserted = await seedPostgresDatabase(dbUrl, buildSeedUsers("Seed@Integration1!", "en"));
+      assert.deepStrictEqual(
+        inserted,
+        {
+          permissions: 0,
+          roles: 0,
+          rolePermissions: 0,
+          users: 0,
+          userRoles: 0,
+          demoPartners: 0,
+          demoVerifications: 0,
+          demoProducts: 0,
+        },
+        "a second seed should insert nothing",
+      );
+    }, { timeout: 60_000 });
+  });
 }, { timeout: 180_000 });

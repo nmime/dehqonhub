@@ -375,9 +375,9 @@ export class ApiToastRuntime {
     this.visibleToasts = this.visibleToasts.filter((toast) => toast.id !== id);
   }
 
-  show(input: { category: ApiToastCategory; dedupeKey?: string; message?: string; title: string }): ApiToast | null {
+  show(input: { category: ApiToastCategory; message?: string; title: string }): ApiToast | null {
     const now = this.clock();
-    const dedupeKey = input.dedupeKey ?? `${input.category}:${input.title}:${input.message ?? ''}`;
+    const dedupeKey = `${input.category}:${input.title}:${input.message ?? ''}`;
     const lastShownAt = this.recentByKey.get(dedupeKey);
 
     if (lastShownAt !== undefined && now - lastShownAt < this.rateLimitMs) {
@@ -417,9 +417,12 @@ export class ApiToastRuntime {
       return null;
     }
 
+    // Deliberately keyed on what the reader would see, not on the rule that
+    // produced it. Every endpoint carries its own generated rule, so an
+    // unreachable API used to stack one identical toast per in-flight request;
+    // collapsing by rendered copy says the same thing once.
     return this.show({
       category: rule.toast.category,
-      dedupeKey: rule.id,
       message: rule.toast.messageSource === 'problem' ? context.message : rule.toast.message,
       title,
     });

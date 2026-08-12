@@ -156,7 +156,8 @@ function recordContractConsent(
  */
 export class InMemoryMarketplaceRepository implements MarketplaceRepository {
   private readonly verifications = new Map<string, Verification>();
-  private readonly approvedOrganizations = new Set<string>();
+  /** Keyed by owner and kind, valued by the legal name a contract prints. */
+  private readonly approvedOrganizations = new Map<string, string | undefined>();
   private readonly products = new Map<string, StoredProduct>();
   private readonly carts = new Map<string, Cart>();
   private readonly requests = new Map<string, BuyerRequest>();
@@ -194,8 +195,8 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepository {
     return cloneVerification(verification);
   }
 
-  registerApprovedOrganization(owner: AgriTechOwner, kind: 'buyer' | 'supplier'): void {
-    this.approvedOrganizations.add(organizationKey(owner, kind));
+  registerApprovedOrganization(owner: AgriTechOwner, kind: 'buyer' | 'supplier', legalName?: string): void {
+    this.approvedOrganizations.set(organizationKey(owner, kind), legalName);
   }
 
   registerProduct(input: MarketplaceInMemoryProductInput): void {
@@ -775,12 +776,21 @@ export class InMemoryMarketplaceRepository implements MarketplaceRepository {
     return {
       id: this.nextId('contract'),
       ...input,
+      // Named from the organizations that made the parties eligible in the first
+      // place, so a demo contract reads like the persisted one rather than
+      // showing a reader two uuids.
+      buyerName: this.organizationNameOf(input.tenantId, input.buyerUserId, 'buyer'),
+      sellerName: this.organizationNameOf(input.tenantId, input.sellerUserId, 'supplier'),
       lines: input.lines.map((line) => ({ ...line })),
       factoringEnabled: false,
       status: 'draft',
       createdAt: now,
       updatedAt: now,
     };
+  }
+
+  private organizationNameOf(tenantId: string, userId: string, kind: 'buyer' | 'supplier'): string | undefined {
+    return this.approvedOrganizations.get(organizationKey({ tenantId, userId }, kind));
   }
 
   private nextId(kind: string): string {

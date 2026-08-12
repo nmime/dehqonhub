@@ -5,6 +5,7 @@
   "agritech.marketplace.contract.sign": "Проверить и подтвердить согласие",
   "agritech.marketplace.contract.settlement.direct": "Симуляция прямого банковского платежа",
   "agritech.marketplace.contract.buyer": "Покупатель",
+  "agritech.marketplace.contract.partyUnnamed": "Организация не указана",
   "agritech.marketplace.contract.seller": "Продавец",
   "agritech.marketplace.contract.delivery": "Условия доставки",
   "agritech.marketplace.contract.deliveryPrice": "Отдельная стоимость доставки",
