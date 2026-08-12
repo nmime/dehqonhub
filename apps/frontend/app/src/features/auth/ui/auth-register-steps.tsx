@@ -275,7 +275,10 @@ export function AuthRegisterSteps({
   });
 
   return (
-    <UiCard className="user-auth__card user-auth__card--flow" title={t('user.auth.register.title')}>
+    // Untitled on purpose: the page heading directly above already reads "Create
+    // an account", and repeating it inside the card put the same words twice in a
+    // row. The step trail is this card's own heading.
+    <UiCard className="user-auth__card user-auth__card--flow">
       <StepTrail current={step} t={t} />
       {step === 'method' ? (
         <MethodStep
