@@ -124,10 +124,15 @@ backend delivery eligibility.
 
 - Preference changes cannot target another user.
 - Mandatory security notifications remain governed by explicit policy.
+- A preference the user set explicitly MUST survive a failed write to the
+  server: the stored value the server would serve back is the very value it
+  declined to replace, so re-applying it would silently undo the user's choice.
 
 **Failure behavior:**
 
 - Invalid or unavailable preference state fails safely without widening sends.
+- A rejected preference write leaves the local choice in place and is retried on
+  the next explicit change, never reverted on the next server read.
 
 #### Scenario: Disabled optional channel
 
