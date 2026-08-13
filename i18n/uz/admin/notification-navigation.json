@@ -1,11 +1,11 @@
 {
-  "admin.action.notificationTemplates": "Message templates",
-  "admin.action.notificationSegments": "Audiences",
-  "admin.action.notificationBroadcasts": "Broadcasts",
-  "admin.notification.description": "Create localized messages, select reusable audiences, and operate durable broadcasts across email, bots, and push.",
-  "admin.notification.common.success": "Notification operation completed.",
-  "admin.notification.common.failed": "Notification operation failed.",
-  "admin.permission.notificationTemplatesMissing": "Missing notification template read permission.",
-  "admin.permission.notificationSegmentsMissing": "Missing notification segment read permission.",
-  "admin.permission.notificationBroadcastsMissing": "Missing notification broadcast read permission."
+  "admin.action.notificationTemplates": "Xabar shablonlari",
+  "admin.action.notificationSegments": "Auditoriyalar",
+  "admin.action.notificationBroadcasts": "Ommaviy jo'natmalar",
+  "admin.notification.description": "Mahalliylashtirilgan xabarlar yarating, qayta ishlatiladigan auditoriyalarni tanlang va email, botlar va push orqali barqaror jo'natmalarni boshqaring.",
+  "admin.notification.common.success": "Bildirishnoma amali bajarildi.",
+  "admin.notification.common.failed": "Bildirishnoma amali bajarilmadi.",
+  "admin.permission.notificationTemplatesMissing": "Bildirishnoma shablonlarini o'qish ruxsati yo'q.",
+  "admin.permission.notificationSegmentsMissing": "Bildirishnoma auditoriyasini o'qish ruxsati yo'q.",
+  "admin.permission.notificationBroadcastsMissing": "Ommaviy jo'natmalarni o'qish ruxsati yo'q."
 }
