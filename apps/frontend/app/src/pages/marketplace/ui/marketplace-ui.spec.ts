@@ -43,10 +43,10 @@ describe('marketplace presentation helpers', () => {
   });
 
   it('prefers the translated product name and falls back to the base one', () => {
-    const translated = product({ nameRu: 'Семена пшеницы', nameUz: 'Bug‘doy urug‘i' });
+    const translated = product({ nameRu: 'Семена пшеницы', nameUz: "Bug'doy urug'i" });
 
     expect(localizedProductName(translated, 'ru')).toBe('Семена пшеницы');
-    expect(localizedProductName(translated, 'uz')).toBe('Bug‘doy urug‘i');
+    expect(localizedProductName(translated, 'uz')).toBe("Bug'doy urug'i");
     expect(localizedProductName(translated, 'en')).toBe('Wheat seed');
     expect(localizedProductName(product(), 'ru')).toBe('Wheat seed');
     expect(localizedProductName(product(), 'uz')).toBe('Wheat seed');
