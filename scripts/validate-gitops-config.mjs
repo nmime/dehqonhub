@@ -75,8 +75,9 @@ assert.match(
 );
 assert.ok(!/github\.com\/example\//u.test(argoRepo), 'GitOps repository must not use an example owner.');
 
-has(releaseImagePlan, 'loadSelectedReleaseClosure', 'release planning validates the selected closure');
-has(tagUpdater, "re.fullmatch(r'[0-9a-fA-F]{40}', args.sha)", 'tag updater requires the source full SHA');
+has(releaseImagePlan, 'Object.values(appCatalog)', 'release image planning derives ownership from the setup catalog');
+has(releaseImagePlan, '--names', 'release image planning supports runner-neutral image inventory output');
+has(tagUpdater, "re.fullmatch(r'[0-9a-fA-F]{40}', args.sha)", 'tag updater requires the release source full SHA');
 has(tagUpdater, "re.fullmatch(r'sha256:[0-9a-fA-F]{64}', digest)", 'tag updater requires immutable image digests');
 has(
   tagUpdater,

@@ -20,10 +20,16 @@ Use this policy to keep dependency updates low-risk and reproducible.
 
 - Keep `pnpm-lock.yaml` committed and install with `pnpm install --frozen-lockfile` in CI and release builds.
 - pnpm's implicit dependency reconciliation is disabled with `verifyDepsBeforeRun: false` in `pnpm-workspace.yaml`. Run `pnpm install` explicitly when manifests change; ordinary scripts must not mutate `node_modules` or the lockfile.
-- Group routine minor and patch updates into a focused maintainer-owned change;
-  review major updates one ecosystem at a time.
+- Prefer grouped minor/patch Dependabot PRs for routine updates; review major updates one ecosystem at a time.
 - Run `pnpm run format:check`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:coverage`, and `pnpm run audit` before merging dependency PRs.
 - Regenerate API contracts/clients only when dependency changes affect generated output, then commit the generated diff in the same PR.
+
+The production licence gate permits `OFL-1.1` only for redistributed font
+packages such as the embedded Noto Sans contract-artifact fonts, and permits
+the permissive `(MIT AND Zlib)` expression used by their compression
+dependencies. Runtime packaging must retain each dependency's bundled licence
+and copyright files; extracting font binaries without those notices is not an
+approved distribution path.
 
 ## Workspace dependency map
 
@@ -145,10 +151,10 @@ Unexpected new package build scripts should be treated as a supply-chain review 
 
 ## Hosted execution
 
-The repository contains no GitHub Actions, composite actions, or hosted
-dependency-update configuration, and the static tooling gate rejects Actions
-reintroduction. Any external runner is maintained outside this repository and
-must use the frozen pnpm lockfile and exact source revision.
+The repository contains no GitHub Actions or composite actions and the static
+tooling gate rejects their reintroduction. npm and Docker Dependabot updates
+remain configured. Any external runner is maintained outside this repository
+and must use the frozen pnpm lockfile and exact source revision.
 
 ## Security gates
 

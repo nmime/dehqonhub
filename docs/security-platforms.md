@@ -6,7 +6,7 @@
 | ------------------ | ----------------- | ---------------------- |
 | PR/MR templates    | ✅                | ✅                     |
 | Secret scanning    | ✅ Gitleaks       | ✅ Secret Detection    |
-| Dependency updates | Manual            | ✅ Dependency Scanning |
+| Dependency updates | ✅ Dependabot     | ✅ Dependency Scanning |
 | SAST               | Local native SAST | ✅ SAST                |
 | Container scanning | Not automated     | ✅ Container Scanning  |
 | CODEOWNERS         | ✅                | ✅                     |
@@ -18,7 +18,7 @@
 ### GitHub
 
 - CODEOWNERS in .github/CODEOWNERS
-- Dependency updates are initiated and reviewed by maintainers
+- Dependabot in .github/dependabot.yml
 - No repository-owned CodeQL, dependency-review, or Scorecard execution
 - Security advisories via Settings → Security
 

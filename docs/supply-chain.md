@@ -3,13 +3,13 @@
 Supply-chain claims must distinguish checked-in controls from external service
 configuration. This repository has no GitHub Actions or composite actions.
 
-| Boundary     | Repository-owned control                                                          | Current limitation                                                        |
-| ------------ | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| Dependencies | pnpm lockfile, frozen install, `pnpm audit`, and license checks                   | No automated dependency updates or pull-request dependency-review job     |
-| Source       | secret scan, native SAST, lint, typecheck, tests, exact-SHA OpenSpec dossier      | No CodeQL upload or OpenSSF Scorecard run                                 |
-| Build inputs | selected closure, image inventory, Docker Bake generation, Docker/Helm validators | No repository-owned remote builder or artifact retention                  |
-| Images       | immutable-digest validation and GitOps tag-update guards                          | No automated SBOM, Trivy, signature, attestation, or registry publication |
-| Promotion    | reviewed GitOps manifests and full-SHA/digest input validation                    | No automated promotion pull request                                       |
+| Boundary     | Repository-owned control                                                                   | Current limitation                                                        |
+| ------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Dependencies | pnpm lockfile, frozen install, `pnpm audit`, license check, npm/Docker Dependabot metadata | No repository-owned pull-request dependency-review job                    |
+| Source       | secret scan, native SAST, lint, typecheck, tests, exact-SHA OpenSpec dossier               | No CodeQL upload or OpenSSF Scorecard run                                 |
+| Build inputs | selected closure, image inventory, Docker Bake generation, Docker/Helm validators          | No repository-owned remote builder or artifact retention                  |
+| Images       | immutable-digest validation and GitOps tag-update guards                                   | No automated SBOM, Trivy, signature, attestation, or registry publication |
+| Promotion    | reviewed GitOps manifests and full-SHA/digest input validation                             | No automated promotion pull request                                       |
 
 ## Dependency discipline
 
@@ -18,8 +18,8 @@ configuration. This repository has no GitHub Actions or composite actions.
 - Keep `pnpm-lock.yaml` authoritative; Bun must not create package-manager state.
 - Run `pnpm run audit:ci`, `pnpm run audit:licenses`, secret scanning, and native
   SAST as selected by the change risk.
-- Dependency updates are maintainer-owned and must preserve the frozen
-  lockfile plus the selected validation evidence.
+- Dependabot remains configured for npm and Docker updates. There is no
+  `github-actions` update block because no Actions are tracked.
 
 ## Exact-source evidence
 

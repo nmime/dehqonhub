@@ -105,7 +105,7 @@ requirements:
           - main
       - kind: operations
         file: packages/tooling/src/commands/spec/assurance.ts
-        target: '@repo/tooling:test'
+        script: spec:verify
         lanes:
           - pr
           - main

@@ -425,7 +425,11 @@ function backupRestoreCiGate() {
   const qualityPresetScript = packageJson.scripts?.["quality:presets"] ?? "";
   assertGate(!qualityPresetScript.includes("--dry-run"), "quality:presets must not default to dry-run", {});
   assertGate(/world-class-gates/.test(worldClassScript), "test:world-class must run the repository-owned gate", {});
-  assertGate(/test:world-class/.test(qualityPresetScript), "quality:presets must include the world-class gate", {});
+  assertGate(
+    /test:world-class/.test(qualityPresetScript),
+    "quality:presets must include the world-class gate",
+    {},
+  );
   return {
     ...evidence,
     assuranceCommands: ["package.json#test:world-class", "package.json#quality:presets"],

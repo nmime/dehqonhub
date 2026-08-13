@@ -1,42 +1,155 @@
-# DehqonHub documentation
+# Documentation Index
 
-The website is [dehqonhub.uz](https://dehqonhub.uz). Durable product behavior
-lives in [OpenSpec](../openspec/specs/agritech-marketplace/spec.md); code and
-configuration remain authoritative for implementation details.
+Role-based entry points and reference guides for the Nest React Boilerplate monorepo.
 
-## Product and design
+## Getting started
 
-- [Platform](agritech-platform.md), [marketplace design](design/dehqonhub-marketplace.md), [architecture](architecture.md), [architecture deep dives](architecture/README.md)
-- [Frontend FSD](frontend-fsd.md), [state](frontend-state.md), [UX](frontend-ux.md), [SSR strategy](frontend-ssr-framework-strategy.md), [deployment topology](frontend-deployment-topology.md)
-- [Internationalization](i18n.md), [feature flags](feature-flags.md), [notifications](notifications.md), [NATS](nats.md)
-- [Tenant/auth hardening](auth-tenant-hardening.md), [login analytics](auth-login-analytics.md), [social auth and bots](social-auth-bots.md), [live auth testing](social-auth-live-test-guide.md)
+- [Quick Start](quick-start.md) — clone, set up, and run the stack in under five minutes.
+- [Launching a New Project](new-project.md) — rename, initialize, and harden the boilerplate for your product.
+- [First Feature Walkthrough](first-feature-walkthrough.md) — end-to-end guide for shipping a vertical slice.
+- [Scaffolding and Extension Contract](scaffolding-and-extension.md) — canonical fresh-clone, app/library/feature, domain, and production-registration lifecycle.
+- [Project Catalog](project-catalog.md) — generated application IDs, Nx roots, runtimes, selection dependencies, and template hostnames.
 
-## APIs and data
+## Setup and configuration
 
-- [API contracts](api-contracts.md), [conventions](api-conventions.md), [lifecycle policy](api-lifecycle-policy.md), [generated clients](api-client.md), [toast mapping](api-toast-config.md)
-- [Database migrations](database-migrations.md), [dependency management](dependency-management.md), [environment variables](environment-variables.md)
+- [Setup and Configuration](setup/configuration.md) — interactive and noninteractive setup, `pnpm nrb doctor`, config schema.
+- [Presets and Technologies](setup/presets-and-technologies.md) — preset matrix, supported apps/capabilities, dependency rules.
+- [CLI Reference](setup/cli-reference.md) — every `nrb` / `repo-tooling` command with flags and examples.
+- [Nx Generators](setup/nx-generators.md) — repository generators, generated contracts, and verification.
+- [Discord Bot Setup](setup/discord-bot.md) — select, configure, and validate the Discord bot integration.
+- [TypeScript 7 Upgrade](setup/upgrade-typescript-7.md) — staged compiler upgrade research and compatibility plan.
 
-## Development and verification
+## Day-to-day usage
 
-- [Scaffolding contract](scaffolding-and-extension.md), [first feature](first-feature-walkthrough.md), [CLI reference](setup/cli-reference.md), [setup](setup/configuration.md)
-- [Presets](setup/presets-and-technologies.md), [Nx generators](setup/nx-generators.md), [generator extension](setup/extending-generators.md), [migration](setup/migration.md), [troubleshooting](setup/troubleshooting.md), [Discord setup](setup/discord-bot.md)
-- [Testing](testing.md), [modern QA](testing/modern-qa.md), [test reliability](testing/test-reliability.md), [specification assurance](specification-assurance.md)
-- [Local verification](local-verification.md), [command matrix](command-matrix.md), [Bun contract](bun-runtime-research.md)
+- [Adding a New Service](usage/adding-a-new-service.md) — create and wire a NestJS backend service.
+- [Adding a New Frontend Page](usage/adding-a-new-frontend-page.md) — add a route, page, and tests to a frontend app.
+- [Adding an Auth Provider](usage/adding-an-auth-provider.md) — integrate a Better Auth provider with database migrations.
 
-## Deployment and operations
+## Extension and migration
 
-- [Deployment](deployment.md), [platforms](deployment-platforms.md), [production](production-deploy.md), [Compose](docker-compose-production.md), [single server](single-server-deployment.md)
-- [Production readiness](production-readiness.md), [hardening](production-hardening.md), [release boundary](release-hardening.md), [branch policy](branch-protection.md)
-- [Operations](operations.md), [monitoring](monitoring.md), [health](operations/health-checks.md), [logging](operations/logging.md), [OpenTelemetry](operations/otel.md)
-- [Disaster recovery](operations/observability-dr.md), [RPO/RTO](operations/rpo-rto.md), [dependency triage](operations/dependency-triage.md), [execution policy](operations/execution-policy.md)
-- [Runbooks](runbooks/README.md), [incident template](runbooks/service-incident.md), [security platforms](security-platforms.md), [supply chain](supply-chain.md)
-- [Validation observability](ci-observability.md), [cache](ci-cache.md)
+- [Extending Generators](setup/extending-generators.md) — catalog entries, planner operations, adapters, and templates.
+- [Migration Guide](setup/migration.md) — migrate from `init:project` / `generate:feature` to the NRB setup engine.
+- [Troubleshooting](setup/troubleshooting.md) — recovery for dirty trees, conflicts, stale state, Docker issues, and failed rollbacks.
 
-## Repository reference
+## Architecture
 
-- [Project catalog](project-catalog.md), [ports](PORTS.md), [agent skills](agent-skills.md), [ADR index](adr/README.md), [ADR template](adr/0000-template.md), [Nx ADR](adr/0001-use-nx-over-turborepo.md), [Fastify ADR](adr/0002-use-fastify-over-express.md)
-- [Agent policy](ai/agent-policy.md), [repo map](ai/repo-map.md), [retrieval policy](ai/retrieval-policy.md), [workflows](ai/agent-workflows.md), [context packing](ai/context-packing.md)
+- [AgriTech Platform](agritech-platform.md) — complete marketplace scope, actor journeys, payments, Telegram, pilots, and launch gates.
+- [Why AgroUz — not UFarmer (EN)](why-us.md) / [Почему AgroUz — не UFarmer (RU)](why-us.ru.md) — competitive positioning report for the PTA 2026 pitch: structural reasons the marketplace incumbents cannot serve the 414K smallholder majority, and how our agent-verified credit-trade model does.
+- [Architecture Overview](architecture.md) — app/library split, runtime boundaries, data flow.
+- [Architecture Deep Dives](architecture/README.md) — DDD boundaries, naming conventions, and library contracts.
+- [Architecture Decision Records](adr/README.md) — durable decisions and ADR template.
+- [Technology Choices](technology-choices.md) — framework and platform decisions.
 
-`docs/project-catalog.md` is generated. Run `pnpm run docs:catalog` after
-changing projects or setup ownership; `pnpm run docs:check` validates the
-catalog, links, commands, and reachability of every maintained document.
+## API and contracts
+
+- [API Contracts](api-contracts.md) — OpenAPI generation, consumer contracts, and error responses.
+- [API Conventions](api-conventions.md) — controller patterns, DTOs, validation, and guards.
+- [API Lifecycle Policy](api-lifecycle-policy.md) — versioning, deprecation, and compatibility rules.
+- [API Client](api-client.md) — generated frontend clients and typed service wrappers.
+
+## Frontend
+
+- [DehqonHub Marketplace Design Reference](design/dehqonhub-marketplace.md) — product visual language, marketplace structure, responsive patterns, and UI anti-patterns.
+- [Frontend FSD](frontend-fsd.md) — Feature-Sliced Design boundaries and enforcement.
+- [Frontend State](frontend-state.md) — TanStack Query, MobX shell state, theme/i18n ownership.
+- [Frontend UX](frontend-ux.md) — shared UI primitives, Storybook, and accessibility.
+- [Frontend SSR Strategy](frontend-ssr-framework-strategy.md) — Vike SSR and Astro island architecture.
+- [Frontend Deployment Topology](frontend-deployment-topology.md) — build outputs, CDN, and edge considerations.
+
+## Database and persistence
+
+- [Database Migrations](database-migrations.md) — PostgreSQL/MikroORM and native MongoDB migration, consistency, and non-parity contracts.
+- [Dependency Management](dependency-management.md) — supply chain, versions, and update policy.
+
+## Testing and quality
+
+- [Testing Guide](testing.md) — unit, component, and e2e strategy.
+- [Specification Assurance](specification-assurance.md) — OpenSpec requirements, explicit Cucumber dispositions, evidence lanes, and exact-SHA dossiers.
+- [Modern QA](testing/modern-qa.md) — Storybook tests, mutation testing, and coverage gates.
+- [Test Reliability](testing/test-reliability.md) — flaky test detection and isolation.
+
+## Operations and deployment
+
+- [Operations Guide](operations.md) — release, runtime, and runbook overview.
+- [Production Deploy](production-deploy.md) — Kubernetes, Ansible, and Helm deployment.
+- [Deployment](deployment.md) — Docker Compose, Dockerfiles, and multi-stage builds.
+- [Production Readiness](production-readiness.md) — checklists for launch.
+- [Release Hardening](release-hardening.md) — pre-release audit and verification steps.
+- [Local Verification](local-verification.md) — reproducible workstation checks.
+- [Bun Runtime Support](bun-runtime-research.md) — pinned Bun 1.3.14 compatibility contract, evidence, and adoption boundaries.
+- [Validation Observability](ci-observability.md) — runner-neutral local assurance, evidence recording, and hosted-control gaps.
+- [CI Cache](ci-cache.md) — cache ownership, keys, restore behavior, and troubleshooting.
+- [Branch Protection](branch-protection.md) — repository governance and merge rules.
+- [Deployment Platforms](deployment-platforms.md) — supported deployment targets and platform boundaries.
+- [GitOps](../GITOPS.md) — infrastructure-as-code and continuous delivery.
+
+### Operations deep dives
+
+- [Health Checks](operations/health-checks.md)
+- [Logging](operations/logging.md)
+- [OpenTelemetry](operations/otel.md)
+- [Observability and Disaster Recovery](operations/observability-dr.md)
+- [RPO/RTO](operations/rpo-rto.md)
+- [Dependency Triage](operations/dependency-triage.md)
+- [Execution Policy](operations/execution-policy.md)
+
+### Runbooks
+
+- [Runbook Index](runbooks/README.md)
+- [Service Incident Template](runbooks/service-incident.md)
+
+## Security and auth
+
+- [Security Baseline](../SECURITY.md) — reporting expectations and baseline controls.
+- [Auth Production Gap Register](auth-production-roadmap.md)
+- [Auth Tenant Hardening](auth-tenant-hardening.md)
+- [Auth Login Analytics](auth-login-analytics.md)
+- [Social Auth and Bots](social-auth-bots.md)
+- [Social Auth Live Test Guide](social-auth-live-test-guide.md)
+- [Security Platforms](security-platforms.md)
+- [Supply Chain Security](supply-chain.md)
+
+## AI agent policy
+
+- [Agent Policy](ai/agent-policy.md) — rules for AI coding agents in this repo.
+- [Repo Map for Agents](ai/repo-map.md) — context organization for agents.
+- [Retrieval Policy](ai/retrieval-policy.md)
+- [Context Packing](ai/context-packing.md)
+- [Agent Workflows](ai/agent-workflows.md)
+
+## Reference
+
+- [Project Catalog](project-catalog.md)
+- [Service Port Registry](PORTS.md)
+- [Command Matrix](command-matrix.md) — supported local and CI commands.
+- [Feature Flags](feature-flags.md)
+- [i18n](i18n.md)
+- [NATS](nats.md)
+- [Notifications](notifications.md)
+- [API Toast Configuration](api-toast-config.md)
+- [Docker Compose Production](docker-compose-production.md)
+- [Idempotent Single-Server Deployment](single-server-deployment.md)
+- [Production Hardening](production-hardening.md)
+- [Agent Skills](agent-skills.md)
+- [Billing Extension and Admin Capability Status](billing-admin-roadmap.md)
+
+## Documentation authority
+
+Reference facts have one owner. Topic guides link to that owner instead of
+copying project, hostname, port, command, or environment tables:
+
+| Fact                                                                          | Canonical owner                                                             |
+| ----------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| Application ID, Nx root, runtime, class, hostname, and selection dependencies | [Project Catalog](project-catalog.md)                                       |
+| Library identity, tags, targets, and source root                              | The library's `project.json`; inspect with `pnpm exec nx show project <id>` |
+| Public TypeScript aliases                                                     | `tsconfig.base.json`                                                        |
+| Local and staging ports                                                       | [Service Port Registry](PORTS.md)                                           |
+| Public root commands                                                          | [Command Matrix](command-matrix.md) and `package.json`                      |
+| Environment variables                                                         | [Environment Variables](environment-variables.md) and `.env.example`        |
+| Project-specific behavior                                                     | The nearest project `README.md` and `AGENTS.md`                             |
+
+`docs/project-catalog.md` is generated. Change the setup catalog or Nx project
+configuration, run `pnpm run docs:catalog`, and let `pnpm run docs:check` prove
+that the rendered catalog and all local links remain current. The same check
+requires every Markdown document under `docs/**` to be reachable from this
+index, directly or through a linked nested index.

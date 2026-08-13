@@ -32,51 +32,31 @@ commit according to the promotion policy.
 ```mermaid
 flowchart LR
   merge[Merge application code] --> tag[Create reviewed release tag]
-  tag --> plan[Trusted operator validates the clean selected closure]
-  plan --> images[Build and publish its complete selected image set]
-  images --> verify[Record immutable digests and independently verified evidence]
-  verify --> promote[Update values with the full 40-character Git SHA and digests]
-  promote --> pr[Open a reviewed promotion change]
-  pr --> reconcile[Merge after assurance; Argo CD or Flux reconciles]
+  tag --> plan[Trusted operator validates the fresh selected closure]
+  plan --> images[Build and publish the selected image set]
+  images --> verify[Record immutable digests and any independently produced supply-chain evidence]
+  verify --> pr[Open a reviewed change updating values-production.yaml]
+  pr --> reconcile[Merge after validation; Argo CD or Flux reconciles]
 ```
 
-The repository contains no GitHub Actions release or promotion workflow. A
-trusted operator or separately configured runner performs the promotion
-procedure from a clean exact revision. It:
+The repository does not contain an automated publisher or promotion actor. A
+trusted operator must accept only a full 40-character source SHA, validate its
+setup-selected closure, intersect `releaseImages` with effective Helm ownership,
+and provide every required immutable digest to the tag updater. Unselected or
+disabled image values stay unchanged. Run `pnpm run deploy:validate:gitops` on
+the resulting topic branch and merge it only through normal review.
 
-1. accepts only a full 40-character commit SHA already contained in `main`;
-2. validates that SHA's setup-selected closure and intersects its
-   `releaseImages` with applications and migrations enabled by the matching
-   setup-generated `.helm/values-selection.yaml` and effective Helm production values;
-3. requires every image in that exact set to have an immutable registry digest
-   and records any independently produced signature, SBOM, provenance, or scan
-   evidence without claiming artifacts that do not exist;
-4. rejects missing required digests and supplied unselected or disabled image
-   digests, then updates the exact set to the full-SHA tag plus digest;
-5. leaves image values outside the selected-and-enabled set unchanged;
-6. renders the chart and validates both GitOps controller manifests;
-7. creates a policy-compliant topic branch with the real maintainer identity and
-   opens a reviewed pull request.
-
-It never commits directly to `main`, never shortens the image tag, and never
-creates an execution loop. Promotion fails when required images or immutable
-digests are missing. Security evidence is required only when the selected
-external release policy explicitly produces and verifies it.
-
-The release planner uses Nx's affected graph for application images and a
-separate migration-path rule for the migration image, then intersects both with
-the current closure's `releaseImages`. Tag releases and explicit `force_full`
-dispatches build every selected image so the result is promotable; this never
-expands to every catalog image. Missing or stale closure metadata fails release
-and promotion. Every product image build runs through the generated Bake plan
-with its validated selected `nrb-closure` context; no direct Docker workspace
-target bypasses that plan.
+The release planner still derives application images from the setup catalog and
+the selected closure; missing or stale closure metadata fails validation.
+SBOMs, scans, signatures, and attestations are required only when the selected
+external release policy calls for them and must be verified independently. They
+are not produced by this repository.
 
 ## Common prerequisites
 
 - a Kubernetes cluster compatible with the selected Helm version;
-- release images published under full-SHA tags by a trusted builder, with the
-  selected workloads pinned to recorded immutable digests;
+- release images published under full-SHA tags by a trusted builder and recorded
+  by immutable digest;
 - a target namespace Secret named by `secrets.existingSecret` containing at
   least `SESSION_SECRET`, `BETTER_AUTH_SECRET`, and the selected provider
   credential: `DATABASE_URL` for PostgreSQL or a replica-set `MONGODB_URI` for
@@ -118,9 +98,9 @@ namespace, and retries transient sync failures. For a private Git repository,
 configure repository credentials in Argo CD; do not add credentials to this
 manifest.
 
-There is no repository-owned Argo sync automation. Operators use the Argo CD CLI
-or controller UI with separately managed credentials and record the exact
-source revision they reconcile.
+No repository-owned Argo sync shortcut is installed. Run the reviewed Argo CD
+CLI commands from the platform operations environment with its scoped
+credentials.
 
 ## Flux
 

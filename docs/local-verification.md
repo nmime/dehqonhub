@@ -86,8 +86,8 @@ git diff --check
 ```
 
 Record each executed command separately. Local audit, secret scan, Docker smoke,
-Fullstack Playwright, and Runtime QA/ops do not imply CodeQL or another hosted
-service ran. Keep failures grouped by command and distinguish
+Fullstack Playwright, and Runtime QA/ops do not imply CodeQL, GitGuardian, or
+another hosted service ran. Keep failures grouped by command and distinguish
 task-related failures from runner or optional-tool availability.
 
 ## Pass 3 targeted validation

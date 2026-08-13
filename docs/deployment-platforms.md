@@ -11,7 +11,7 @@ no GitHub Actions execution. `.gitlab-ci.yml` is an optional external runner.
 | CI config          | None in repository                 | Optional `.gitlab-ci.yml`          |
 | MR/PR templates    | `.github/PULL_REQUEST_TEMPLATE.md` | `.gitlab/merge_request_templates/` |
 | Issue templates    | `.github/ISSUE_TEMPLATE/`          | `.gitlab/issue_templates/`         |
-| Dependency updates | Maintainer-owned                   | GitLab Dependency Scanning         |
+| Dependency updates | Dependabot                         | GitLab Dependency Scanning         |
 | GitOps promotion   | Maintainer-owned reviewed PR       | Product-owned pipeline/MR          |
 | Releases           | Manual/trusted-runner invocation   | Optional native GitLab CI          |
 | Container registry | GHCR                               | GitLab Container Registry          |

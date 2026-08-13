@@ -2,8 +2,7 @@
 
 ## Supported versions
 
-Security fixes target the current `main` branch. Supported release windows are
-defined when a production release is published.
+Security fixes target the current `main` branch. Projects launched from this boilerplate should define their own supported release windows after the first production release.
 
 ## Reporting a vulnerability
 
@@ -11,7 +10,7 @@ Please report suspected vulnerabilities privately. Do not open public issues for
 
 ### GitHub
 
-Report through [GitHub Security Advisories](https://github.com/nmime/dehqonhub/security/advisories/new). This is the canonical private intake channel for this repository.
+Report through [GitHub Security Advisories](https://github.com/nmime/nest-react-boilerplate/security/advisories/new). This is the canonical private intake channel for this repository.
 
 ### GitLab
 
@@ -19,8 +18,8 @@ If you are using a GitLab mirror, contact that mirror's owner privately or use a
 private vulnerability-report feature that its maintainers have explicitly
 enabled. Do not post an exploitable finding in a public issue.
 
-Production operations must configure and document a monitored security contact
-before launch; this repository does not publish a fallback mailbox.
+Projects created from this boilerplate must configure and document their own
+monitored security contact before launch; the template does not invent a mailbox.
 
 ### Response targets
 
@@ -28,21 +27,16 @@ before launch; this repository does not publish a fallback mailbox.
 - We complete initial severity and ownership triage within 5 business days.
 - We keep the reporter informed when remediation timing or disclosure plans change.
 
-## Security validation
+## Automated security scans
 
-Repository-owned commands provide the security checks; running them locally or
-on a trusted external runner does not by itself prove protected branches or
-merge enforcement.
+This repository includes the following checked-in security jobs. A job being
+present does not prove that a hosting project has enabled required pipelines,
+protected branches, or merge blocking.
 
-- `pnpm run tooling:static-check` enforces repository policy and secret-safe
-  configuration.
-- `pnpm run audit:ci` and the native security tests validate dependencies and
-  source-owned security rules.
-- The optional `.gitlab-ci.yml` runner adds Gitleaks, Secret Detection,
-  Dependency Scanning, SAST, and Container Scanning.
-- GitHub-hosted automation is intentionally disabled. Dependency and security
-  checks run only through repository-owned commands or a trusted external
-  runner selected by the operator.
+| Platform | Checked-in coverage                                                                                                         | Enforcement notes                                                                                                                           |
+| -------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| GitHub   | Collaboration metadata, npm/Docker Dependabot, local Gitleaks/native SAST, and `audit:ci` commands                          | No repository-owned GitHub Actions, CodeQL, Scorecard, dependency review, image scanning, signing, or hosted status checks are configured.  |
+| GitLab   | Blocking Gitleaks and `audit:ci`, plus GitLab Secret Detection, Dependency Scanning, SAST, and Container Scanning templates | The checked-in jobs do not use `allow_failure`; availability of GitLab-managed scanner templates depends on the hosting tier/configuration. |
 
 ## Secured components
 

@@ -1,4 +1,4 @@
-# Optional GitLab CI runner for the repository-owned validation commands
+# GitLab CI is an optional external runner for the same repository-owned local commands.
 # Variables: NODE_VERSION_FILE, PNPM_VERSION, CI, NX_DAEMON
 
 stages:

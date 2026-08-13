@@ -1,0 +1,60 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    assignees:
+      - nmime
+    reviewers:
+      - nmime
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:00'
+    open-pull-requests-limit: 10
+    labels: [dependencies, security]
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      npm-minor-patch:
+        update-types: [minor, patch]
+      nx:
+        patterns:
+          - '@nx/*'
+          - nx
+      nestjs:
+        patterns:
+          - '@nestjs/*'
+      opentelemetry:
+        patterns:
+          - '@opentelemetry/*'
+  - package-ecosystem: docker
+    directory: /
+    assignees:
+      - nmime
+    reviewers:
+      - nmime
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:30'
+    open-pull-requests-limit: 5
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: chore
+      include: scope
+  - package-ecosystem: docker
+    directory: /docker
+    assignees:
+      - nmime
+    reviewers:
+      - nmime
+    schedule:
+      interval: weekly
+      day: monday
+      time: '04:45'
+    open-pull-requests-limit: 5
+    labels: [dependencies, docker]
+    commit-message:
+      prefix: chore
+      include: scope
