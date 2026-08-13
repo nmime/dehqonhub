@@ -57,7 +57,10 @@ interface PixelInsets {
 
 const authPassword = 'fullstack-secret';
 
-const successfulAuthStatuses = [200, 201];
+// Every POST that opens a session declares 200 in its OpenAPI contract, so the
+// suite asserts that one code. It used to accept 201 as well, which is exactly
+// what let the handlers drift away from the contract unnoticed.
+const successfulAuthStatus = 200;
 
 const healthyStatuses = ['ok', 'degraded'];
 
@@ -73,7 +76,7 @@ function bootstrapAdminEnabledFor(email: string): boolean {
 }
 
 async function parseSessionResponse(response: Response, action: string): Promise<SessionResponse> {
-  expect(successfulAuthStatuses, `${action} should return a successful session response`).toContain(response.status);
+  expect(response.status, `${action} should return a successful session response`).toBe(successfulAuthStatus);
   return (await response.json()) as SessionResponse;
 }
 
@@ -192,12 +195,12 @@ test('@critical @api-critical registration and login preserve the durable API se
   const registration = await request.post(`${urls.authApi}/auth/register`, {
     data: { displayName: 'Fullstack API User', email, password: authPassword },
   });
-  expect(successfulAuthStatuses).toContain(registration.status());
+  expect(registration.status()).toBe(successfulAuthStatus);
 
   const loginResponse = await request.post(`${urls.authApi}/auth/login`, {
     data: { email, password: authPassword },
   });
-  expect(successfulAuthStatuses).toContain(loginResponse.status());
+  expect(loginResponse.status()).toBe(successfulAuthStatus);
 
   const sessionResponse = await request.get(`${urls.authApi}/auth/me`);
   expect(sessionResponse.status()).toBe(200);
@@ -473,7 +476,7 @@ test('Telegram TMA establishes Better Auth and application sessions through the 
   const applicationAuthResponse = await request.post(`${urls.userApp}/auth/telegram/tma`, {
     data: { initData },
   });
-  expect(successfulAuthStatuses).toContain(applicationAuthResponse.status());
+  expect(applicationAuthResponse.status()).toBe(successfulAuthStatus);
   const applicationAuth = (await applicationAuthResponse.json()) as ExternalAuthSessionResponse;
   expect(applicationAuth.data.session.user.email).toBeNull();
   expect(applicationAuth.data.session).not.toHaveProperty('accessToken');
@@ -508,7 +511,7 @@ test('admin API accepts only its cookie session and ignores browser URL tokens',
   const loginResponse = await page.context().request.post(`${urls.authApi}/auth/login`, {
     data: { email: 'admin@example.com', password: authPassword },
   });
-  expect(successfulAuthStatuses).toContain(loginResponse.status());
+  expect(loginResponse.status()).toBe(successfulAuthStatus);
   const adminProfile = await page.context().request.get(`${urls.adminApi}/admin/profile/me`);
   expect(adminProfile.status()).toBe(200);
   expect(await adminProfile.text()).toContain('admin@example.com');
@@ -563,7 +566,7 @@ test('admin API accepts only its cookie session and ignores browser URL tokens',
       permissions: ['admin:dashboard:read'],
     },
   });
-  expect(successfulAuthStatuses).toContain(createRoleResponse.status());
+  expect(createRoleResponse.status()).toBe(successfulAuthStatus);
 
   const assignRoleResponse = await page
     .context()

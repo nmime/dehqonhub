@@ -1,6 +1,17 @@
-// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-STAGE2-017
-import { Body, Controller, Get, Headers, Param, ParseUUIDPipe, Patch, Post, UseGuards } from '@nestjs/common';
-import { ApiHeader, ApiParam, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
+// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
+import { ApiParam, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsDate,
@@ -8,7 +19,6 @@ import {
   IsInt,
   IsOptional,
   IsString,
-  Matches,
   Min,
   registerDecorator,
   type ValidationArguments,
@@ -16,7 +26,6 @@ import {
 } from 'class-validator';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse } from '@app/backend-common-response';
-import { BadRequestException } from '@app/backend-common-exception';
 import {
   AdminAgriTechApprovePermission,
   AdminAgriTechReadPermission,
@@ -35,19 +44,13 @@ import {
   FarmerAssignmentViewDto,
   IntegrationReadinessListDto,
   MarketplaceService,
-  MarketplacePublicService,
-  MarketplaceListingPublicationDto,
-  MarketplacePublicModerationQueueDto,
-  MarketplaceRequestPublicationDto,
-  MarketplaceSellerProfileModerationItemDto,
   PartnerListDto,
   PartnerViewDto,
   PilotListDto,
   PilotViewDto,
   ContractListDto,
-  AdminVerificationListDto,
-  AdminVerificationViewDto,
-  toVerificationAdminView,
+  VerificationListDto,
+  VerificationViewDto,
   ownerFrom,
 } from '@app/backend-feature-agritech-main';
 
@@ -97,61 +100,6 @@ class PilotStatusDto {
 }
 
 const verificationRejectionReasons = ['criteria_not_met', 'documents_unreadable', 'identity_mismatch'] as const;
-const publicationModerationDecisions = ['approved', 'rejected'] as const;
-const idempotencyKeyPattern = /^[A-Za-z0-9:_-]{8,100}$/u;
-const idempotencyHeaderSchema = {
-  description: 'Actor- and resource-scoped command replay key.',
-  name: 'Idempotency-Key',
-  required: true,
-  schema: { maxLength: 100, minLength: 8, pattern: idempotencyKeyPattern.source, type: 'string' },
-} as const;
-const contentFingerprintPattern = /^[a-f0-9]{64}$/u;
-
-class ReviewListingPublicationDto {
-  @ApiProperty({ enum: publicationModerationDecisions })
-  @IsIn(publicationModerationDecisions)
-  decision!: (typeof publicationModerationDecisions)[number];
-
-  @ApiProperty({ minimum: 0, type: 'integer' })
-  @IsInt()
-  @Min(0)
-  expectedRevision!: number;
-
-  @ApiProperty({ maxLength: 64, minLength: 64, pattern: contentFingerprintPattern.source })
-  @Matches(contentFingerprintPattern)
-  expectedSellerContentFingerprint!: string;
-
-  @ApiProperty({ minimum: 1, type: 'integer' })
-  @IsInt()
-  @Min(1)
-  expectedSellerContentRevision!: number;
-}
-
-class ReviewSellerProfileDto {
-  @ApiProperty({ enum: publicationModerationDecisions })
-  @IsIn(publicationModerationDecisions)
-  decision!: (typeof publicationModerationDecisions)[number];
-
-  @ApiProperty({ maxLength: 64, minLength: 64, pattern: contentFingerprintPattern.source })
-  @Matches(contentFingerprintPattern)
-  expectedContentFingerprint!: string;
-
-  @ApiProperty({ minimum: 1, type: 'integer' })
-  @IsInt()
-  @Min(1)
-  expectedContentRevision!: number;
-}
-
-class ReviewRequestPublicationDto {
-  @ApiProperty({ enum: publicationModerationDecisions })
-  @IsIn(publicationModerationDecisions)
-  decision!: (typeof publicationModerationDecisions)[number];
-
-  @ApiProperty({ minimum: 0, type: 'integer' })
-  @IsInt()
-  @Min(0)
-  expectedRevision!: number;
-}
 
 function IsDecisionRejectionReason(validationOptions?: ValidationOptions): PropertyDecorator {
   return (target, propertyName) => {
@@ -186,10 +134,6 @@ export class ReviewVerificationDto {
   })
   @IsDecisionRejectionReason()
   reason?: 'criteria_not_met' | 'documents_unreadable' | 'identity_mismatch';
-  @ApiProperty({ minimum: 0, type: 'integer' })
-  @IsInt()
-  @Min(0)
-  expectedRevision!: number;
 }
 
 @ApiTags('admin-agritech')
@@ -201,105 +145,32 @@ export class AgriTechAdminController {
   constructor(
     private readonly service: AgriTechOperationsService,
     private readonly marketplace: MarketplaceService,
-    private readonly marketplacePublic: MarketplacePublicService,
   ) {}
 
   @Get('verifications')
-  @ApiOkDataResponse(AdminVerificationListDto)
+  @ApiOkDataResponse(VerificationListDto)
   @RequirePermissions(AdminAgriTechReadPermission)
   async listVerifications(@CurrentUser() principal: AuthenticatedPrincipal) {
-    return createOkResponse({
-      items: (await this.marketplace.listVerifications(principal.tenantId)).map(toVerificationAdminView),
-    });
+    return createOkResponse({ items: await this.marketplace.listVerifications(principal.tenantId) });
   }
 
   @Patch('verifications/:id')
   @ApiParam({ format: 'uuid', name: 'id' })
-  @ApiHeader(idempotencyHeaderSchema)
-  @ApiOkDataResponse(AdminVerificationViewDto)
+  @ApiOkDataResponse(VerificationViewDto)
   @RequirePermissions(AdminAgriTechApprovePermission)
   async reviewVerification(
     @CurrentUser() principal: AuthenticatedPrincipal,
     @Param('id', ParseUUIDPipe) id: string,
-    @Headers('idempotency-key') idempotencyKey: string | undefined,
     @Body() input: ReviewVerificationDto,
   ) {
     return createOkResponse(
-      toVerificationAdminView(
-        await this.marketplace.reviewVerification(
-          principal.tenantId,
-          id,
-          input.decision,
-          principal.subject,
-          input.expectedRevision,
-          requireIdempotencyKey(idempotencyKey),
-          input.reason,
-        ),
+      await this.marketplace.reviewVerification(
+        principal.tenantId,
+        id,
+        input.decision,
+        principal.subject,
+        input.reason,
       ),
-    );
-  }
-
-  @Get('marketplace/publications/pending')
-  @ApiOkDataResponse(MarketplacePublicModerationQueueDto)
-  @RequirePermissions(AdminAgriTechReadPermission)
-  async listPendingMarketplacePublications(@CurrentUser() principal: AuthenticatedPrincipal) {
-    return createOkResponse(await this.marketplacePublic.listPendingModeration(principal.tenantId));
-  }
-
-  @Patch('marketplace/publications/sellers/:id')
-  @ApiParam({ format: 'uuid', name: 'id' })
-  @ApiHeader({ name: 'Idempotency-Key', required: true })
-  @ApiOkDataResponse(MarketplaceSellerProfileModerationItemDto)
-  @RequirePermissions(AdminAgriTechApprovePermission)
-  async reviewMarketplaceSellerProfile(
-    @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Headers('idempotency-key') idempotencyKey: string | undefined,
-    @Body() input: ReviewSellerProfileDto,
-  ) {
-    return createOkResponse(
-      await this.marketplacePublic.reviewSellerProfile(principal.tenantId, id, principal.subject, {
-        ...input,
-        idempotencyKey: requireIdempotencyKey(idempotencyKey),
-      }),
-    );
-  }
-
-  @Patch('marketplace/publications/listings/:id')
-  @ApiParam({ format: 'uuid', name: 'id' })
-  @ApiHeader({ name: 'Idempotency-Key', required: true })
-  @ApiOkDataResponse(MarketplaceListingPublicationDto)
-  @RequirePermissions(AdminAgriTechApprovePermission)
-  async reviewMarketplaceListingPublication(
-    @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Headers('idempotency-key') idempotencyKey: string | undefined,
-    @Body() input: ReviewListingPublicationDto,
-  ) {
-    return createOkResponse(
-      await this.marketplacePublic.reviewListingPublication(principal.tenantId, id, principal.subject, {
-        ...input,
-        idempotencyKey: requireIdempotencyKey(idempotencyKey),
-      }),
-    );
-  }
-
-  @Patch('marketplace/publications/requests/:id')
-  @ApiParam({ format: 'uuid', name: 'id' })
-  @ApiHeader({ name: 'Idempotency-Key', required: true })
-  @ApiOkDataResponse(MarketplaceRequestPublicationDto)
-  @RequirePermissions(AdminAgriTechApprovePermission)
-  async reviewMarketplaceRequestPublication(
-    @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Headers('idempotency-key') idempotencyKey: string | undefined,
-    @Body() input: ReviewRequestPublicationDto,
-  ) {
-    return createOkResponse(
-      await this.marketplacePublic.reviewRequestPublication(principal.tenantId, id, principal.subject, {
-        ...input,
-        idempotencyKey: requireIdempotencyKey(idempotencyKey),
-      }),
     );
   }
 
@@ -368,6 +239,7 @@ export class AgriTechAdminController {
   }
 
   @Post('deliveries')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(DeliveryViewDto)
   @RequirePermissions(AdminAgriTechWritePermission)
   async scheduleDelivery(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: ScheduleDeliveryDto) {
@@ -375,6 +247,7 @@ export class AgriTechAdminController {
   }
 
   @Post('advisories')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdvisoryViewDto)
   @RequirePermissions(AdminAgriTechWritePermission)
   async publishAdvisory(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: PublishAdvisoryDto) {
@@ -389,6 +262,7 @@ export class AgriTechAdminController {
   }
 
   @Post('pilots')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(PilotViewDto)
   @RequirePermissions(AdminAgriTechWritePermission)
   async createPilot(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreatePilotDto) {
@@ -421,11 +295,3 @@ export class AgriTechAdminController {
     return createOkResponse({ items: await this.service.integrationReadiness(principal.tenantId) });
   }
 }
-
-const requireIdempotencyKey = (value: string | undefined): string => {
-  const key = value?.trim();
-  if (!key || !idempotencyKeyPattern.test(key)) {
-    throw new BadRequestException({ meta: { field: 'Idempotency-Key' } });
-  }
-  return key;
-};

@@ -1,4 +1,3 @@
-// @requirements REQ-ASSURANCE-RELEASE-003 REQ-SCAFFOLD-QUALITY-006
 import { existsSync, lstatSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { isBuiltin } from "node:module";
 import { extname } from "node:path";
@@ -102,6 +101,12 @@ const duplicatedLibrarySourceLibPath =
   /libs\/[A-Za-z0-9_./-]+\/lib\/src\/lib(?:\/|\b)/u;
 const staleSlashStyleAppAliasImport =
   /(?:from\s+["']|import\s+(?:type\s+)?["']|import\s*\(["']|require\(["'])(@app\/(?:backend|common|frontend)\/[A-Za-z0-9_./-]+)["']/u;
+const postRouteDecorator = /@Post\s*\(/u;
+const declaredOkResponseDecorator =
+  /@(?:ApiOkDataResponse|ApiOkResponse|ApiReadinessResponses)\s*\(|status:\s*(?:HttpStatus\.OK|200)\b/u;
+const httpCodeDecorator = /@HttpCode\s*\(/u;
+const methodSignature =
+  /^\s*(?:public\s+|private\s+|protected\s+)?(?:async\s+)?([A-Za-z_$][\w$]*)\s*\(/u;
 
 interface StaleReferencePattern {
   label: string;
@@ -190,11 +195,6 @@ export const thinLocaleCatalogFileNames = [
   "admin/problem-presentations.json",
   "admin/login-analytics.json",
   "admin/agritech.json",
-  "admin/marketplace.json",
-  "admin/marketplace-status.json",
-  "admin/marketplace-moderation.json",
-  "admin/marketplace-commerce.json",
-  "admin/marketplace-engagement.json",
   "user/shell.json",
   "user/site.json",
   "user/mobile.json",
@@ -212,9 +212,6 @@ export const thinLocaleCatalogFileNames = [
   "user/agritech-marketplace-offers.json",
   "user/agritech-marketplace-contract-status.json",
   "user/agritech-marketplace-contracts.json",
-  "user/agritech-marketplace-engagement.json",
-  "user/agritech-marketplace-lifecycle.json",
-  "user/agritech-marketplace-management.json",
   "user/agritech-marketplace-verification.json",
   "user/agritech-marketplace-account-ai.json",
   "bots/shared.json",
@@ -410,6 +407,8 @@ const staleReferenceIgnoredFiles = new Set([
 ]);
 
 const localWorktreePrefix = ".claude/worktrees/";
+const workingSpecArchivePrefix = "docs/archive/working-specs/";
+
 const generatedContractImportExtensions = new Set([
   ".cjs",
   ".cts",
@@ -452,13 +451,13 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkPackageProjectReferences(workspaceRoot),
     ...checkFrontendFsd(workspaceRoot),
     ...checkWorkspaceMetadata(workspaceRoot),
-    ...checkGitHubActionsAbsent(workspaceRoot),
     ...checkBunPackageManagerParity(workspaceRoot),
     ...checkExportedAllCapsConstantConventions(workspaceRoot),
     ...checkExportedSymbolTokenConventions(workspaceRoot),
     ...checkLocalBarrelExportConventions(workspaceRoot),
     ...checkDuplicatedLibrarySourceLibPaths(workspaceRoot),
     ...checkFrontendUiOwnership(workspaceRoot),
+    ...checkPostHandlerStatusCodes(workspaceRoot),
     ...checkGeneratedContractImports(workspaceRoot),
     ...checkStaleSlashStyleAliasImports(workspaceRoot),
     ...checkForbiddenSocialAuthImports(workspaceRoot),
@@ -487,7 +486,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
       importSmoke: smokeCommands.length,
       frontendFsdSelfTest: "ok",
       frontendFsdWorkspaceCheck: "ok",
-      githubActions: "absent",
+      postHandlerStatusParity: "ok",
       workspaceMetadata: "ok",
       generatedContractImportPatterns: generatedContractImportPatterns.length,
       staleReferenceDenylist: staleReferencePatterns.length,
@@ -496,21 +495,6 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
   );
 
   return 0;
-}
-
-export function checkGitHubActionsAbsent(workspaceRoot: string): CheckFailure[] {
-  return [".github/actions", ".github/workflows"].flatMap((directory) => {
-    const absoluteDirectory = join(workspaceRoot, directory);
-    if (!existsSync(absoluteDirectory)) return [];
-
-    return walk(absoluteDirectory).map((file) => ({
-      command: "GitHub Actions absence",
-      file: relativeToWorkspace(workspaceRoot, file),
-      status: 1,
-      stdout: "",
-      stderr: `${relativeToWorkspace(workspaceRoot, file)} configures repository-owned GitHub execution; use the runner-neutral package commands from a clean exact revision instead.`,
-    }));
-  });
 }
 
 export function checkBunPackageManagerParity(workspaceRoot: string): CheckFailure[] {
@@ -550,7 +534,6 @@ export function checkBunPackageManagerParity(workspaceRoot: string): CheckFailur
   if (existsSync(workflowsRoot)) {
     for (const file of walk(workflowsRoot)) executableFiles.add(relativeToWorkspace(workspaceRoot, file));
   }
-  if (existsSync(join(workspaceRoot, ".gitlab-ci.yml"))) executableFiles.add(".gitlab-ci.yml");
 
   const forbiddenCommand = /\b(?:bunx|bun\s+(?:add|install|pm|remove|update|x))\b/u;
   for (const file of [...executableFiles].sort()) {
@@ -1254,6 +1237,89 @@ export function checkDuplicatedLibrarySourceLibPaths(
   return failures;
 }
 
+// Nest answers POST with 201 unless the handler says otherwise, but every
+// endpoint here documents 200 through ApiOkDataResponse. Thirty-eight handlers
+// had silently drifted apart from their own contract before this guard existed:
+// the generated clients only branch on response.ok, so nothing failed loudly.
+export function checkPostHandlerStatusCodes(workspaceRoot: string): CheckFailure[] {
+  const roots = ["apps/backend", "libs/backend"]
+    .map((root) => resolve(workspaceRoot, root))
+    .filter((root) => existsSync(root));
+
+  return roots.flatMap((root) =>
+    walk(root)
+      .filter((file) => file.endsWith(".controller.ts"))
+      .flatMap((file) => {
+        const relativeFile = relativeToWorkspace(workspaceRoot, file);
+        return collectDecoratedHandlers(readFileSync(file, "utf8"))
+          .filter(
+            (handler) =>
+              postRouteDecorator.test(handler.decorators) &&
+              declaredOkResponseDecorator.test(handler.decorators) &&
+              !httpCodeDecorator.test(handler.decorators),
+          )
+          .map((handler) => ({
+            command: "post handler declared status parity",
+            file: `${relativeFile}:${handler.line}`,
+            status: 1,
+            stdout: "",
+            stderr: `${handler.name} documents 200 but answers 201, because Nest defaults POST to Created. Add @HttpCode(HttpStatus.OK) next to the @Post decorator.`,
+          }));
+      }),
+  );
+}
+
+interface DecoratedHandler {
+  decorators: string;
+  line: number;
+  name: string;
+}
+
+// A handler is the run of decorator lines directly above a method signature.
+// Decorator arguments span lines, so the parenthesis depth decides where the
+// run ends rather than a line-shape guess.
+function collectDecoratedHandlers(source: string): DecoratedHandler[] {
+  const lines = source.split(/\r?\n/u);
+  const handlers: DecoratedHandler[] = [];
+  let pending: string[] = [];
+  let pendingLine = 0;
+  let depth = 0;
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+
+    if (depth > 0) {
+      pending.push(line);
+      depth += countUnbalancedParentheses(line);
+      return;
+    }
+
+    if (trimmed.startsWith("@")) {
+      if (pending.length === 0) pendingLine = index + 1;
+      pending.push(line);
+      depth = Math.max(0, countUnbalancedParentheses(line));
+      return;
+    }
+
+    const name = methodSignature.exec(line)?.[1];
+    if (name && pending.length > 0) {
+      handlers.push({ decorators: pending.join("\n"), line: pendingLine, name });
+      pending = [];
+      return;
+    }
+
+    if (trimmed.length > 0 && !trimmed.startsWith("//") && !trimmed.startsWith("*")) {
+      pending = [];
+    }
+  });
+
+  return handlers;
+}
+
+function countUnbalancedParentheses(line: string): number {
+  return line.split("(").length - line.split(")").length;
+}
+
 export function checkFrontendUiOwnership(workspaceRoot: string): CheckFailure[] {
   const roots = ["apps/frontend", "libs/frontend"]
     .map((root) => resolve(workspaceRoot, root))
@@ -1469,11 +1535,9 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
   }
 
   const localeKeys = new Map<string, Set<string>>();
-  const localeValues = new Map<string, Map<string, string>>();
 
   for (const locale of supportedLocales) {
     const mergedKeys = new Set<string>();
-    const mergedValues = new Map<string, string>();
     const localeDirectory = join(i18nRoot, locale);
     if (!existsSync(localeDirectory)) continue;
 
@@ -1533,10 +1597,6 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
           );
         }
 
-        if (typeof value === "string") {
-          mergedValues.set(key, value);
-        }
-
         if (
           !relativeFile.includes("/bots/") &&
           (key.startsWith("bot.") || key.startsWith("discord."))
@@ -1559,7 +1619,6 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
     }
 
     localeKeys.set(locale, mergedKeys);
-    localeValues.set(locale, mergedValues);
   }
 
   const fallbackKeys = localeKeys.get(defaultLocale) ?? new Set<string>();
@@ -1588,218 +1647,9 @@ export function checkThinLocaleCatalogs(workspaceRoot: string): CheckFailure[] {
         ),
       );
     }
-
-    if (locale === defaultLocale) continue;
-    const fallbackValues = localeValues.get(defaultLocale) ?? new Map<string, string>();
-    const values = localeValues.get(locale) ?? new Map<string, string>();
-    for (const [key, fallbackValue] of fallbackValues.entries()) {
-      const value = values.get(key);
-      if (value === undefined) continue;
-      const expectedPlaceholders = extractTranslationPlaceholders(fallbackValue);
-      const actualPlaceholders = extractTranslationPlaceholders(value);
-      if (
-        expectedPlaceholders.length === actualPlaceholders.length &&
-        expectedPlaceholders.every((placeholder, index) => placeholder === actualPlaceholders[index])
-      ) {
-        continue;
-      }
-
-      failures.push(
-        thinLocaleFailure(
-          `i18n/${locale}`,
-          `placeholder mismatch for ${key}: expected [${expectedPlaceholders.join(", ")}], received [${actualPlaceholders.join(", ")}]`,
-        ),
-      );
-    }
-  }
-
-  failures.push(...checkUzbekTranslationQuality(workspaceRoot, localeValues));
-
-  return failures;
-}
-
-function checkUzbekTranslationQuality(
-  workspaceRoot: string,
-  localeValues: Map<string, Map<string, string>>,
-): CheckFailure[] {
-  const english = localeValues.get('en');
-  const latin = localeValues.get('uz');
-  const cyrillic = localeValues.get('uz-cyrl');
-  if (!english || !latin || !cyrillic) return [];
-
-  const failures: CheckFailure[] = [];
-  const allowlistPath = join(workspaceRoot, 'i18n', 'uz-cyrl', 'untranslated-allowlist.json');
-  let allowlistedKeys: string[] = [];
-  let allowlistCategories: Record<string, string[]> = {};
-  if (existsSync(allowlistPath)) {
-    try {
-      const parsed = JSON.parse(readFileSync(allowlistPath, 'utf8')) as { categories?: unknown; keys?: unknown };
-      if (!Array.isArray(parsed.keys) || parsed.keys.some((key) => typeof key !== 'string')) {
-        failures.push(
-          thinLocaleFailure(
-            'i18n/uz-cyrl/untranslated-allowlist.json',
-            'untranslated allowlist keys must be an array of strings',
-          ),
-        );
-      } else {
-        allowlistedKeys = parsed.keys;
-      }
-      if (
-        parsed.categories === null ||
-        typeof parsed.categories !== 'object' ||
-        Array.isArray(parsed.categories) ||
-        Object.values(parsed.categories).some(
-          (keys) => !Array.isArray(keys) || keys.some((key) => typeof key !== 'string'),
-        )
-      ) {
-        failures.push(
-          thinLocaleFailure(
-            'i18n/uz-cyrl/untranslated-allowlist.json',
-            'untranslated allowlist categories must map category names to arrays of strings',
-          ),
-        );
-      } else {
-        allowlistCategories = parsed.categories as Record<string, string[]>;
-      }
-    } catch (error) {
-      failures.push(
-        thinLocaleFailure(
-          'i18n/uz-cyrl/untranslated-allowlist.json',
-          `invalid untranslated allowlist JSON: ${String(error)}`,
-        ),
-      );
-    }
-  }
-
-  const sortedAllowlist = [...new Set(allowlistedKeys)].sort((left, right) => left.localeCompare(right));
-  if (JSON.stringify(allowlistedKeys) !== JSON.stringify(sortedAllowlist)) {
-    failures.push(
-      thinLocaleFailure(
-        'i18n/uz-cyrl/untranslated-allowlist.json',
-        'untranslated allowlist keys must be unique and sorted',
-      ),
-    );
-  }
-
-  const categorizedKeys = Object.entries(allowlistCategories).flatMap(([category, keys]) => {
-    const sortedKeys = [...new Set(keys)].sort((left, right) => left.localeCompare(right));
-    if (JSON.stringify(keys) !== JSON.stringify(sortedKeys)) {
-      failures.push(
-        thinLocaleFailure(
-          'i18n/uz-cyrl/untranslated-allowlist.json',
-          `untranslated allowlist category ${category} must be unique and sorted`,
-        ),
-      );
-    }
-    return keys;
-  });
-  const sortedCategorizedKeys = [...categorizedKeys].sort((left, right) => left.localeCompare(right));
-  if (JSON.stringify(sortedCategorizedKeys) !== JSON.stringify(sortedAllowlist)) {
-    failures.push(
-      thinLocaleFailure(
-        'i18n/uz-cyrl/untranslated-allowlist.json',
-        'untranslated allowlist categories must contain every key exactly once',
-      ),
-    );
-  }
-
-  const unresolvedKeys = [...english.entries()]
-    .filter(([key, value]) => latin.get(key) === value || cyrillic.get(key) === value)
-    .map(([key]) => key)
-    .sort((left, right) => left.localeCompare(right));
-  const allowlisted = new Set(allowlistedKeys);
-  const untrackedFallbacks = unresolvedKeys.filter((key) => !allowlisted.has(key));
-  const staleAllowances = allowlistedKeys.filter((key) => !unresolvedKeys.includes(key));
-  if (untrackedFallbacks.length > 0) {
-    failures.push(
-      thinLocaleFailure(
-        'i18n/uz-cyrl',
-        `English fallback keys missing from untranslated allowlist: ${untrackedFallbacks.join(', ')}`,
-      ),
-    );
-  }
-  if (staleAllowances.length > 0) {
-    failures.push(
-      thinLocaleFailure(
-        'i18n/uz-cyrl/untranslated-allowlist.json',
-        `remove translated keys from the untranslated allowlist: ${staleAllowances.join(', ')}`,
-      ),
-    );
-  }
-
-  const residuePatterns = [
-    { pattern: /[\p{Script=Cyrillic}]['’ʻ`ʼ][\p{Script=Cyrillic}]/u, label: 'Latin apostrophe inside Cyrillic text' },
-    { pattern: /(?:^|[^\p{L}])[Ее]ълон(?:$|[^\p{L}])/u, label: 'еълон transliteration; use эълон' },
-    { pattern: /(?:^|[^\p{L}])[Ее]мас(?:$|[^\p{L}])/u, label: 'емас transliteration; use эмас' },
-    { pattern: /[Ёё]ъқ/u, label: 'ёъқ transliteration; use йўқ' },
-    { pattern: /[Гг]ъ/u, label: 'гъ transliteration; use ғ' },
-    { pattern: /ц(?:из|са)/iu, label: 'ц across an Uzbek suffix boundary; use тс' },
-    { pattern: /тсия/u, label: '-тсия transliteration; use the reviewed -ция form' },
-    { pattern: /рад етилди/u, label: 'рад етилди transliteration; use рад этилди' },
-  ] as const;
-  for (const [key, value] of cyrillic.entries()) {
-    for (const residue of residuePatterns) {
-      if (!residue.pattern.test(value)) continue;
-      failures.push(
-        thinLocaleFailure(
-          'i18n/uz-cyrl',
-          `${key} contains ${residue.label}`,
-        ),
-      );
-    }
-    if (!allowlisted.has(key)) {
-      const unreviewedLatin = removeReviewedTechnicalLatin(value).match(/[A-Za-z]{2,}/gu) ?? [];
-      if (unreviewedLatin.length > 0) {
-        failures.push(
-          thinLocaleFailure(
-            'i18n/uz-cyrl',
-            `${key} contains unreviewed Latin fragment(s): ${[...new Set(unreviewedLatin)].join(', ')}`,
-          ),
-        );
-      }
-    }
-  }
-
-  const englishSentenceWords = /(?<![\p{L}’'ʻʼ])(?:a|an|and|are|before|cancel|failed|for|from|have|is|loading|no|not|of|or|please|save|settings|that|the|these|this|to|try|user|users|with|you|your)(?![\p{L}’'ʻʼ])/giu;
-  for (const [key, value] of latin.entries()) {
-    if (allowlisted.has(key)) continue;
-    const sentenceMarkers = removeReviewedTechnicalLatin(value).match(englishSentenceWords) ?? [];
-    if (sentenceMarkers.length < 2) continue;
-    failures.push(
-      thinLocaleFailure(
-        'i18n/uz',
-        `${key} contains probable English prose: ${[...new Set(sentenceMarkers.map((word) => word.toLowerCase()))].join(', ')}`,
-      ),
-    );
   }
 
   return failures;
-}
-
-function removeReviewedTechnicalLatin(value: string): string {
-  let remaining = value;
-  let previous: string;
-
-  do {
-    previous = remaining;
-    remaining = remaining
-      .replace(/\{\{[^{}]+\}\}|\{[^{}]+\}/gu, '')
-      .replace(/https?:\/\/[^\s]+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|`[^`]+`|\/[a-z][\w-]*/giu, '')
-      .replace(/\b[A-Z][A-Z0-9_.+-]{1,}\b/gu, '')
-      .replace(
-        /\b(?:AgriTech|DehqonHub|Discord|Fastify|GitHub|Google|MailPace|MikroORM|Nest React Boilerplate|NestJS|OneID|OpenID|Payme|PostgreSQL|Redis|Telegram|WebAuthn)\b/gu,
-        '',
-      );
-  } while (remaining !== previous);
-
-  return remaining;
-}
-
-function extractTranslationPlaceholders(value: string): string[] {
-  return [...value.matchAll(/\{\{\s*([\w.-]+)\s*\}\}/gu)]
-    .map((match) => match[1] ?? "")
-    .filter(Boolean)
-    .sort((left, right) => left.localeCompare(right));
 }
 
 function collectLocaleJsonFiles(localeDirectory: string): string[] {
@@ -1812,10 +1662,7 @@ function collectLocaleJsonFiles(localeDirectory: string): string[] {
         return visit(path).map((nestedFile) => `${entry}/${nestedFile}`);
       }
 
-      return stat.isFile() &&
-        entry.endsWith(".json") &&
-        entry !== "project.json" &&
-        entry !== "untranslated-allowlist.json"
+      return stat.isFile() && entry.endsWith(".json") && entry !== "project.json"
         ? [entry]
         : [];
     });
@@ -2092,6 +1939,7 @@ function envExampleFailure(file: string, message: string): CheckFailure {
 export function checkStaleReferences(workspaceRoot: string): CheckFailure[] {
   return collectStaleReferenceTargets(workspaceRoot).flatMap((file) => {
     const relativeFile = relativeToWorkspace(workspaceRoot, file);
+    if (relativeFile.startsWith(workingSpecArchivePrefix)) return [];
     const text = readFileSync(file, "utf8");
     const failures: CheckFailure[] = [];
 

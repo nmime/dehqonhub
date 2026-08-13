@@ -233,7 +233,7 @@ describe('AgriTechOperationsController HTTP input contract', () => {
       url: '/supplier/products',
     });
 
-    expect(response.statusCode).toBe(201);
+    expect(response.statusCode).toBe(200);
     expect(response.json()).toEqual({ data: { id: productId } });
     expect(service.createSupplierProduct).toHaveBeenCalledWith(
       { tenantId, userId },

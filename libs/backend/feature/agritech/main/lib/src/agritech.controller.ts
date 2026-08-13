@@ -1,20 +1,8 @@
-// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-ENGAGEMENT-019
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ROUTING-015
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiParam, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import {
-  IsDate,
-  IsBoolean,
-  IsIn,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Matches,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsDate, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse } from '@app/backend-common-response';
 import { CurrentUser, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
@@ -54,25 +42,9 @@ class CreatePartnerDto {
 
 class CreateSupplierProductDto {
   @ApiProperty({ format: 'uuid' }) @IsUUID() partnerId!: string;
-  @ApiProperty({ maxLength: 200, minLength: 1 }) @IsString() @Matches(/\S/u) @MaxLength(200) name!: string;
-  @ApiPropertyOptional({ maxLength: 200, minLength: 1 })
-  @IsOptional()
-  @IsString()
-  @Matches(/\S/u)
-  @MaxLength(200)
-  nameRu?: string;
-  @ApiPropertyOptional({ maxLength: 200, minLength: 1 })
-  @IsOptional()
-  @IsString()
-  @Matches(/\S/u)
-  @MaxLength(200)
-  nameUz?: string;
-  @ApiPropertyOptional({ maxLength: 200, minLength: 1 })
-  @IsOptional()
-  @IsString()
-  @Matches(/\S/u)
-  @MaxLength(200)
-  nameUzCyrl?: string;
+  @ApiProperty() @IsString() name!: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() nameRu?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() nameUz?: string;
   @ApiProperty({ enum: productCategories }) @IsIn(productCategories) category!: (typeof productCategories)[number];
   @ApiProperty() @IsString() description!: string;
   @ApiProperty({ maximum: maximumSupplierPriceUzs, minimum: 1, type: 'integer' })
@@ -86,35 +58,10 @@ class CreateSupplierProductDto {
   @Min(0)
   @Max(maximumIntegerQuantity)
   stockQuantity!: number;
-  @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() sampleAvailable?: boolean;
   @ApiProperty() @IsString() region!: string;
 }
 
 class UpdateSupplierProductDto {
-  @ApiPropertyOptional({ maxLength: 200, minLength: 1 })
-  @IsOptional()
-  @IsString()
-  @Matches(/\S/u)
-  @MaxLength(200)
-  name?: string;
-  @ApiPropertyOptional({ maxLength: 200, minLength: 1 })
-  @IsOptional()
-  @IsString()
-  @Matches(/\S/u)
-  @MaxLength(200)
-  nameRu?: string;
-  @ApiPropertyOptional({ maxLength: 200, minLength: 1 })
-  @IsOptional()
-  @IsString()
-  @Matches(/\S/u)
-  @MaxLength(200)
-  nameUz?: string;
-  @ApiPropertyOptional({ maxLength: 200, minLength: 1 })
-  @IsOptional()
-  @IsString()
-  @Matches(/\S/u)
-  @MaxLength(200)
-  nameUzCyrl?: string;
   @ApiProperty({ maximum: maximumSupplierPriceUzs, minimum: 1, type: 'integer' })
   @IsInt()
   @Min(1)
@@ -125,30 +72,19 @@ class UpdateSupplierProductDto {
   @Min(0)
   @Max(maximumIntegerQuantity)
   stockQuantity!: number;
-  @ApiPropertyOptional() @IsOptional() @IsBoolean() sampleAvailable?: boolean;
   @ApiProperty({ enum: ['active', 'inactive', 'out_of_stock'] })
   @IsIn(['active', 'inactive', 'out_of_stock'])
   status!: 'active' | 'inactive' | 'out_of_stock';
 }
 
 class CreateProduceDto {
-  @ApiProperty({ format: 'uuid' }) @IsUUID() supplierPartnerId!: string;
   @ApiProperty() @IsString() crop!: string;
   @ApiProperty({ enum: produceGrades }) @IsIn(produceGrades) grade!: ProduceGrade;
   @ApiProperty({ minimum: 1 }) @IsInt() @Min(1) quantityKg!: number;
-  @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() sampleAvailable?: boolean;
-  @ApiProperty({ maximum: maximumSupplierPriceUzs, minimum: 1, type: 'integer' })
-  @IsInt()
-  @Min(1)
-  @Max(maximumSupplierPriceUzs)
-  pricePerKgUzs!: number;
+  @ApiProperty({ minimum: 1 }) @IsNumber() @Min(1) pricePerKgUzs!: number;
   @ApiProperty() @IsString() region!: string;
   @ApiProperty({ format: 'date-time' }) @Type(() => Date) @IsDate() availableFrom!: Date;
   @ApiProperty({ format: 'date-time' }) @Type(() => Date) @IsDate() availableUntil!: Date;
-}
-
-class UpdateSampleAvailabilityDto {
-  @ApiProperty() @IsBoolean() sampleAvailable!: boolean;
 }
 
 class ProduceQueryDto {
@@ -189,6 +125,7 @@ export class AgriTechOperationsController {
   constructor(private readonly service: AgriTechOperationsService) {}
 
   @Post('partners')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(PartnerViewDto)
   async createPartner(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreatePartnerDto) {
     return createOkResponse(await this.service.createPartner(ownerFrom(principal), input));
@@ -201,6 +138,7 @@ export class AgriTechOperationsController {
   }
 
   @Post('supplier/products')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(CreatedResourceDto)
   async createSupplierProduct(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -227,6 +165,7 @@ export class AgriTechOperationsController {
   }
 
   @Post('produce')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(ProduceListingViewDto)
   async createProduce(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreateProduceDto) {
     return createOkResponse(await this.service.createProduceListing(ownerFrom(principal), input));
@@ -238,19 +177,6 @@ export class AgriTechOperationsController {
     return createOkResponse({ items: await this.service.listProduce(ownerFrom(principal), query) });
   }
 
-  @Patch('produce/:id/sample-availability')
-  @ApiParam({ format: 'uuid', name: 'id' })
-  @ApiOkDataResponse(ProduceListingViewDto)
-  async updateProduceSampleAvailability(
-    @CurrentUser() principal: AuthenticatedPrincipal,
-    @Param('id', ParseUUIDPipe) id: string,
-    @Body() input: UpdateSampleAvailabilityDto,
-  ) {
-    return createOkResponse(
-      await this.service.updateProduceSampleAvailability(ownerFrom(principal), id, input.sampleAvailable),
-    );
-  }
-
   @Get('produce/prices')
   @ApiOkDataResponse(PriceDiscoveryViewDto)
   async discoverPrice(@CurrentUser() principal: AuthenticatedPrincipal, @Query() query: PriceQueryDto) {
@@ -258,6 +184,7 @@ export class AgriTechOperationsController {
   }
 
   @Post('produce/:id/reservations')
+  @HttpCode(HttpStatus.OK)
   @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(ProduceReservationViewDto)
   async reserveProduce(
@@ -299,6 +226,7 @@ export class AgriTechOperationsController {
   }
 
   @Post('field-visits')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(FieldVisitViewDto)
   async recordFieldVisit(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreateFieldVisitDto) {
     return createOkResponse(await this.service.recordFieldVisit(ownerFrom(principal), input));

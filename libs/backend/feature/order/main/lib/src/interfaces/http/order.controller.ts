@@ -1,5 +1,5 @@
 // REQ-AGRITECH-ORDER-003 REQ-AGRITECH-ROUTING-015: all order routes derive ownership from the authenticated principal.
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse } from '@app/backend-common-response';
@@ -24,6 +24,7 @@ export class OrderController {
   ) {}
 
   @Post()
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(OrderViewDto)
   async create(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreateOrderDto) {
     return createOkResponse(await this.createOrder.execute(ownerFrom(principal), input));

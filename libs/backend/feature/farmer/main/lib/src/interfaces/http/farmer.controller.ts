@@ -1,5 +1,5 @@
 // REQ-AGRITECH-PROFILE-001 REQ-AGRITECH-ROUTING-015: authority comes from the authenticated principal, never route or body IDs.
-import { Body, Controller, Get, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Patch, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse } from '@app/backend-common-response';
@@ -24,6 +24,7 @@ export class FarmerController {
   ) {}
 
   @Post()
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(FarmerProfileDto)
   async create(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreateFarmerDto) {
     return createOkResponse(await this.createFarmer.execute(ownerFrom(principal), input));
