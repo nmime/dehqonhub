@@ -23,8 +23,8 @@ Use the canonical runbooks:
 
 ```mermaid
 flowchart LR
-  commit[Reviewed Git SHA + current selected closure] --> release[Release selected images workflow]
-  release --> verify[Signed SBOM, passing scan, SLSA provenance, signature, and digest]
+  commit[Reviewed Git SHA + current selected closure] --> release[Trusted operator or external builder]
+  release --> verify[Recorded digest and any independently verified scan, SBOM, or signature]
   verify --> runtime{Selected runtime}
   runtime --> compose[Compose database + domain + TLS topology]
   runtime --> helm[Direct Helm]
@@ -51,9 +51,9 @@ pnpm run deploy:validate:helm
 pnpm run deploy:validate:gitops
 ```
 
-The commands are no-deploy checks. CI additionally requires Docker Compose,
-Helm, and kubectl rendering so missing local tools cannot silently approve a
-broken release contract.
+The commands are no-deploy checks. A trusted release environment must require
+Docker Compose, Helm, and kubectl rendering so missing tools cannot silently
+approve a broken release contract.
 
 Run `pnpm nrb setup` and `pnpm nrb closure check` before release. The release
 planner intersects affected and force-full image sets with
@@ -118,18 +118,17 @@ kubectl apply -k deploy/argocd
 kubectl apply -k deploy/flux
 ```
 
-Run the manual **Promote GitOps release** workflow with the exact source SHA
-after release images exist. It verifies the selected closure at that source
-revision, intersects its `releaseImages` with enabled Helm deployment ownership,
-using the matching setup-generated `.helm/values-selection.yaml`, and requires
-every digest in that exact set. A registry manifest is not sufficient: each selected
-digest must have a valid keyless signature from the exact release workflow and
-source SHA plus signed SPDX SBOM, SLSA provenance, and passing Trivy policy
-attestations. The workflow opens `release/gitops-sha-<full-sha>` and creates a
-promotion PR. Tag-triggered image releases build the complete selected closure
-set; use `force_full` for a promotable manual image run. Unselected or disabled
-image values are not promoted.
-Only a reviewed merge changes the desired production version.
+After verified release images exist, run the tag updater from the exact source
+SHA on a topic branch. Intersect the fresh selected closure's `releaseImages`
+with enabled Helm ownership from the matching setup-generated
+`.helm/values-selection.yaml`, provide every required immutable digest, run
+`pnpm run deploy:validate:gitops`, and open a reviewed promotion change.
+Unselected or disabled image values are not promoted. Only a reviewed merge
+changes the desired production version.
+
+The repository does not currently automate image publication, SBOM/Trivy/cosign
+evidence, or promotion pull requests. Require and verify those artifacts only
+when a separately configured trusted release system actually produces them.
 
 ## Backup, verification, and rollback
 

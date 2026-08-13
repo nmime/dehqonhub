@@ -1,48 +1,19 @@
-# CI computation cache
+# Local Nx cache
 
-The CI workflow uses `.github/actions/nx-cache` to persist Nx task outputs in
-the GitHub Actions cache service. It is intentionally a remote cache without a
-separate Nx Cloud, S3, or MinIO credential: the workflow receives no cache
-token, and GitHub applies the repository and branch cache-access rules.
+The repository uses the local `.nx/cache` directory for Nx task outputs. It no
+longer contains GitHub Actions workflows or a repository-owned remote cache
+adapter.
 
-Each job has a stable cache scope (`quality`, `e2e`, and so on) to avoid racing
-multiple cache uploads for the same key. A new commit restores the most recent
-scope cache, then Nx validates every task hash before reusing an output; changed
-sources, environment inputs, or declared dependencies execute normally.
+Keep cache inputs reproducible:
 
-Only `.nx/cache` is persisted. Do not add `.env*`, Docker credentials,
-`node_modules`, test secrets, or generated deployment credentials to this cache.
-Fork pull requests can restore permitted base caches, but they do not receive
-deployment secrets and cannot write to the protected default-branch cache.
+- install with `pnpm install --frozen-lockfile`;
+- keep `NX_DAEMON=false` in non-interactive validation;
+- never add `.env*`, credentials, Docker secret files, or other secret-bearing
+  paths to a cache archive;
+- treat a cache miss as a performance event, never as permission to skip a
+  required command.
 
-## Opt-in: shared Nx Cloud / object-store backend
-
-For an organization that wants a single cache shared across every job (and across
-developer machines) instead of the per-scope GitHub caches, layer a dedicated
-backend on top. Keep this GitHub cache as the no-secret fallback, and never put a
-remote-cache token in `nx.json`, source code, image build args, or production
-environment files.
-
-To enable **Nx Cloud** (no `nx.json` secret required):
-
-1. Run `pnpm exec nx connect` once — this adds a non-secret `nxCloudId` to `nx.json`.
-2. Add the access token as the protected repository secret `NX_CLOUD_ACCESS_TOKEN`.
-3. Expose it to each compute job (`fast-check`, `non-runtime-validation`,
-   `bun-compat`, `quality`, `e2e`, `visual-regression`) with a job-level env — never
-   the workflow top-level `env` (the `secrets` context is not available there) and
-   never `.github/actions/nx-cache` (the composite action must stay secret-free):
-
-   ```yaml
-   jobs:
-     quality:
-       env:
-         NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
-   ```
-
-   When the secret is unset the value is empty and Nx silently falls back to the
-   GitHub Actions cache service, so adding the line is a safe no-op until you
-   provision the backend.
-
-For a **self-hosted S3/MinIO** cache, install the Nx self-hosted cache plugin and
-supply the bucket credentials through the standard `AWS_*` job-level env from CI
-secrets — again, never committed to `nx.json`.
+A trusted external runner may persist `.nx/cache` using its own protected cache
+facility. That runner configuration is external to this repository and must not
+change the command, source SHA, or lockfile being verified. Local cache hits do
+not provide provenance, signing, or release authorization.

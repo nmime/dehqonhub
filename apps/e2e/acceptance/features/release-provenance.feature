@@ -1,11 +1,11 @@
 @REQ-ASSURANCE-RELEASE-003
 Feature: Releases use verified source
 
-  Rule: A successful workflow authorizes only its own current main revision
+  Rule: Release evidence is collected from a clean exact source revision
 
     @SCN-ASSURANCE-RELEASE-01
     Scenario: Release provenance is exact
-      Given the release workflow
-      When its successful CI provenance is inspected
-      Then it checks out the successful workflow SHA
-      And it refuses a SHA that is no longer current main
+      Given the runner-neutral release assurance sources
+      When its exact revision controls are inspected
+      Then repository-owned GitHub execution remains absent
+      And release evidence binds a clean exact source revision

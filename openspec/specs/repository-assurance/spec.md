@@ -77,25 +77,28 @@ requirements, evidence lane, commands, outcomes, and execution time.
 
 ### Requirement: [REQ-ASSURANCE-RELEASE-003] Releases consume verified source only
 
-A release SHALL run only after the required CI workflow succeeds and SHALL
-checkout the exact successful workflow commit while confirming it is still the
-current main revision.
+A release SHALL consume only a clean exact source revision whose selected
+repository-owned assurance commands pass. Repository-owned GitHub Actions
+execution SHALL remain absent; a maintainer MAY execute the same commands on a
+trusted external runner without changing their source-revision contract.
 
 **Evidence profile:** acceptance, security, operations
 
 **Invariants:**
 
-- Release automation never creates an untested source-code commit.
-- A stale successful workflow cannot release a newer or replaced main revision.
+- Release activity never creates an untested source-code commit.
+- Evidence records the source SHA and specification hash it actually verified.
+- The absence of hosted execution is never reported as passing evidence.
 
 **Failure behavior:**
 
-- Any provenance mismatch stops the release before publication.
+- A dirty worktree, missing evidence, or provenance mismatch stops release
+  preparation before publication.
 
-#### Scenario: Successful CI provenance
+#### Scenario: Clean exact-revision provenance
 
-- **WHEN** release automation receives a successful main CI workflow
-- **THEN** it verifies and releases only that workflow source SHA
+- **WHEN** release evidence is prepared locally or on a trusted runner
+- **THEN** it verifies and records only the clean checked-out source SHA
 
 #### Scenario: Main moved after validation
 

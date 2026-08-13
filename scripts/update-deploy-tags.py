@@ -5,9 +5,9 @@ Usage:
     python3 scripts/update-deploy-tags.py <full_sha> --selected-image <name> \
         --image <name>=<sha256:digest> [--image ...] [--dry-run]
 
-The release workflow supplies the fresh setup-selected image inventory. This
-script intersects it with enabled Helm deployment ownership and requires an
-exact digest set for that intersection on initial and later promotions.
+The caller supplies the fresh setup-selected image inventory. This script
+intersects it with enabled Helm deployment ownership and requires an exact
+digest set for that intersection on initial and later promotions.
 """
 import argparse
 import difflib

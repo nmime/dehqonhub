@@ -98,14 +98,14 @@ requirements:
           - pr
           - main
       - kind: security
-        file: scripts/validate-github-workflows.mjs
-        script: ci:workflows:check
+        file: packages/tooling/src/commands/tooling/static-check.ts
+        script: tooling:static-check
         lanes:
           - pr
           - main
       - kind: operations
-        file: scripts/validate-github-workflows.mjs
-        script: ci:workflows:check
+        file: packages/tooling/src/commands/spec/assurance.ts
+        script: spec:verify
         lanes:
           - pr
           - main

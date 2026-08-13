@@ -3,7 +3,9 @@
 If repository settings are not managed automatically, protect `main` with:
 
 - pull requests required before merge;
-- `pnpm check`, CodeQL, and relevant deployment checks required;
+- required reviews plus recorded clean exact-SHA `pnpm check`, OpenSpec, and
+  relevant deployment evidence; local commands cannot be configured as hosted
+  status checks unless an external runner publishes them;
 - stale approvals dismissed after new commits;
 - conversation resolution required;
 - force pushes and branch deletion disabled;

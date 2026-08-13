@@ -24,6 +24,13 @@ Use this policy to keep dependency updates low-risk and reproducible.
 - Run `pnpm run format:check`, `pnpm run lint`, `pnpm run typecheck`, `pnpm run test:coverage`, and `pnpm run audit` before merging dependency PRs.
 - Regenerate API contracts/clients only when dependency changes affect generated output, then commit the generated diff in the same PR.
 
+The production licence gate permits `OFL-1.1` only for redistributed font
+packages such as the embedded Noto Sans contract-artifact fonts, and permits
+the permissive `(MIT AND Zlib)` expression used by their compression
+dependencies. Runtime packaging must retain each dependency's bundled licence
+and copyright files; extracting font binaries without those notices is not an
+approved distribution path.
+
 ## Workspace dependency map
 
 Run `pnpm run deps:map` for the live Markdown report or
@@ -140,18 +147,20 @@ This repository intentionally allows native build steps only for packages requir
 - `nx`
 - `sharp`
 
-Unexpected new package build scripts should be treated as a supply-chain review item. Approve them only when the package is necessary, the install script is documented, and CI still uses the frozen lockfile.
+Unexpected new package build scripts should be treated as a supply-chain review item. Approve them only when the package is necessary, the install script is documented, and every trusted validation environment still uses the frozen lockfile.
 
-## GitHub Actions
+## Hosted execution
 
-- Pin third-party and first-party GitHub Actions to full 40-character commit SHAs in workflow `uses:` entries.
-- Keep the human-readable version tag in a trailing comment (for example, `# v4`) so Dependabot action updates remain easy to review.
-- Prefer pinned runner images such as `ubuntu-22.04` over floating labels such as `ubuntu-latest` for CI and release reproducibility.
+The repository contains no GitHub Actions or composite actions and the static
+tooling gate rejects their reintroduction. npm and Docker Dependabot updates
+remain configured. Any external runner is maintained outside this repository
+and must use the frozen pnpm lockfile and exact source revision.
 
 ## Security gates
 
-- Pull requests run Dependency Review and fail on moderate-or-higher vulnerable dependency additions.
-- Mainline/release workflows run CodeQL, `pnpm audit`, container SBOM generation, Trivy scanning, and keyless image signing.
+- Run `pnpm audit`, the repository secret scan, and native SAST locally or on a
+  trusted runner. There is no repository-owned CodeQL, dependency-review,
+  SBOM, Trivy, or keyless-signing job.
 - Production releases should record the image digest and may also use the
   commit-addressed `sha-<git-sha>` tag. Protect tags from mutation; the digest,
   not the tag's spelling, is the immutable artifact identity.

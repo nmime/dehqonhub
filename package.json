@@ -139,7 +139,6 @@
     "tooling:static-check": "pnpm --filter @repo/tooling tooling tooling static-check",
     "images:webp": "pnpm --filter @repo/tooling tooling images webp",
     "images:webp:check": "pnpm --filter @repo/tooling tooling images webp --dry-run",
-    "ci:workflows:check": "node scripts/validate-github-workflows.mjs",
     "branch:cleanup:check": "pnpm --filter @repo/tooling tooling git branch-cleanup --target HEAD",
     "branch:cleanup": "pnpm --filter @repo/tooling tooling git branch-cleanup",
     "git:conventions": "pnpm --filter @repo/tooling tooling git conventions",

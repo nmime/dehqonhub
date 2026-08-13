@@ -6,8 +6,8 @@ prerequisite unless the selected path renders or deploys the Helm chart.
 
 ## Build and release
 
-- [ ] CI passes `pnpm run check` or the equivalent format, lint, typecheck, and
-      test commands for the release branch.
+- [ ] A clean exact-SHA checkout passes `pnpm run check` or the risk-selected
+      equivalent format, lint, typecheck, test, migration, and build commands.
 - [ ] Images are built from a clean lockfile, published under full Git-SHA tags,
       and recorded by digest; registry policy prevents tag mutation where tags
       are used for deployment.
@@ -28,13 +28,14 @@ prerequisite unless the selected path renders or deploys the Helm chart.
 
 ## Supply-chain gates
 
-- [ ] GitHub Actions remain pinned to full commit SHAs with an adjacent version
-      comment for reviewability.
-- [ ] Routine GitHub Actions minor/patch updates may be grouped by Dependabot;
-      major action updates are reviewed separately for Node runtime, hosted
-      runner, and input/behavior changes.
-- [ ] CodeQL, dependency review, SBOM generation, Trivy scanning, and cosign
-      signing gates remain enabled for release workflows.
+- [ ] `pnpm run tooling:static-check` confirms repository-owned GitHub Actions
+      execution remains absent.
+- [ ] Exact-SHA `spec:impact` and `spec:verify` reports are retained with the
+      review or release record; skipped or unavailable evidence is not marked
+      passed.
+- [ ] Any required CodeQL-equivalent analysis, dependency review, SBOM, image
+      scan, signature, or attestation is produced and verified by the selected
+      external release system. These controls are not repository-automated.
 
 ## Configuration and secrets
 

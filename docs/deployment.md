@@ -228,12 +228,13 @@ kubectl apply -k deploy/argocd
 kubectl apply -k deploy/flux
 ```
 
-The manual promotion workflow resolves the images published for one full Git
+The manual promotion procedure resolves the images published for one full Git
 SHA and first validates that SHA's setup-generated `.nrb/closure.json` against
 its live Nx graph. It intersects the closure's `releaseImages` with effective
 enabled Helm ownership, including the matching generated
 `.helm/values-selection.yaml`, requires every image in that set to have a candidate
-digest, pins exactly those workloads, and opens a topic-branch pull request.
+digest, and pins exactly those workloads. A maintainer reviews the resulting
+diff and opens a topic-branch pull request.
 Missing required or extra unselected/disabled digest updates fail. Values
 outside the intersection remain unchanged. Missing or stale closure metadata
 also aborts promotion.

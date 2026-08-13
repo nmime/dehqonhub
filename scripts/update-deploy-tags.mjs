@@ -5,13 +5,12 @@
  *
  *   node scripts/update-deploy-tags.mjs <full-sha> --image <name>=sha256:<digest> [--image ...] [--dry-run]
  *
- * The release workflow only supplies images built for the candidate SHA, so digests
- * for unaffected workloads stay untouched and a small feature release does not roll
- * the whole fleet.
+ * The maintainer supplies only images built for the candidate SHA, so digests for
+ * unaffected workloads stay untouched and a small feature release does not roll the
+ * whole fleet.
  *
  * The promotable image names come from `releaseImages` — the single authoritative
- * image inventory — so this file can never drift from what the release pipeline
- * actually builds.
+ * image inventory — so this file stays aligned with the repository build plan.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';

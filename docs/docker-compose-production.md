@@ -106,8 +106,8 @@ chmod 600 .env.production docker/secrets/*.txt
 ```
 
 Replace `IMAGE_TAG=sha-000000000000` with the full-SHA tag produced by the
-release workflow. Protect that tag from mutation or use the documented digest
-override when immutable identity is required:
+maintainer's explicit image build. Protect that tag from mutation or use the
+documented digest override when immutable identity is required:
 
 ```text
 IMAGE_TAG=sha-0123456789abcdef0123456789abcdef01234567

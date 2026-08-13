@@ -1,179 +1,53 @@
-# Supply Chain Security
+# Supply-chain security
 
-Supply-chain posture, SLSA alignment, SBOM generation, and dependency management for the Nest React Boilerplate platform.
+Supply-chain claims must distinguish checked-in controls from external service
+configuration. This repository has no GitHub Actions or composite actions.
 
-## Checked-in provenance and supply-chain posture
+| Boundary     | Repository-owned control                                                                   | Current limitation                                                        |
+| ------------ | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------- |
+| Dependencies | pnpm lockfile, frozen install, `pnpm audit`, license check, npm/Docker Dependabot metadata | No repository-owned pull-request dependency-review job                    |
+| Source       | secret scan, native SAST, lint, typecheck, tests, exact-SHA OpenSpec dossier               | No CodeQL upload or OpenSSF Scorecard run                                 |
+| Build inputs | selected closure, image inventory, Docker Bake generation, Docker/Helm validators          | No repository-owned remote builder or artifact retention                  |
+| Images       | immutable-digest validation and GitOps tag-update guards                                   | No automated SBOM, Trivy, signature, attestation, or registry publication |
+| Promotion    | reviewed GitOps manifests and full-SHA/digest input validation                             | No automated promotion pull request                                       |
 
-[SLSA](https://slsa.dev/) (Supply-chain Levels for Software Artifacts) defines a framework for securing the software supply chain. The table below reports only controls visible in this repository. It does not claim a SLSA level or infer GitHub organization and repository settings that are configured outside Git.
+## Dependency discipline
 
-| Control                      | Checked-in status | Evidence or remaining boundary                                                                                                                                                              |
-| ---------------------------- | ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Build inputs**             | Implemented       | CI uses a frozen pnpm lockfile, pinned action SHAs, and explicit Node/pnpm versions. Most jobs use `ubuntu-22.04`; the Gitleaks and release-note jobs still use `ubuntu-latest`.            |
-| **Build provenance**         | Implemented       | `release-images.yml` enables Docker Buildx `provenance: mode=max` and addresses every published image by digest after the build.                                                            |
-| **Build isolation**          | Partial           | Release builds run in GitHub-hosted jobs, but dependency installation and base-image resolution can use the network. The repository does not claim a hermetic build.                        |
-| **Source integrity**         | External setting  | Branch protection, required reviews, tag protection, and rulesets are GitHub settings. Maintainers must verify them in repository settings; checked-in workflow files cannot prove them.    |
-| **Dependency audit**         | Implemented       | `dependency-review.yml` installs the frozen lockfile and runs `pnpm run audit:ci` for production dependencies at the moderate severity threshold.                                           |
-| **SBOM generation**          | Implemented       | Docker Buildx embeds SBOM metadata and `anchore/sbom-action` uploads a separate SPDX JSON artifact for each release image.                                                                  |
-| **Vulnerability scanning**   | Implemented       | Trivy scans every release image for CRITICAL/HIGH OS and library findings with `exit-code: '1'`; CodeQL and native secret/SAST gates run separately.                                        |
-| **Image signing**            | Implemented       | `sigstore/cosign-installer` signs each release image digest through GitHub OIDC.                                                                                                            |
-| **Workflow least privilege** | Partial           | Workflows declare scoped permissions and actions are SHA-pinned. Release publishing grants package, identity-token, security-event, and attestation permissions; host approval is external. |
+- Use Node.js 24 and pnpm 11.15.1.
+- Install with `pnpm install --frozen-lockfile`.
+- Keep `pnpm-lock.yaml` authoritative; Bun must not create package-manager state.
+- Run `pnpm run audit:ci`, `pnpm run audit:licenses`, secret scanning, and native
+  SAST as selected by the change risk.
+- Dependabot remains configured for npm and Docker updates. There is no
+  `github-actions` update block because no Actions are tracked.
 
-### Host and build controls still to verify or add
+## Exact-source evidence
 
-1. **Verify host rules** — confirm branch protection/rulesets, required reviews and checks, environment approvals, and release-tag restrictions in GitHub.
-2. **Choose a target SLSA level** — assess the release workflow against the current SLSA specification and record evidence before claiming conformance.
-3. **Reduce mutable build inputs** — pin runner images where practical and use immutable base-image digests if the product's release policy requires them.
-4. **Add hermetic controls if required** — prefetch and verify dependencies/base images, then prevent network access during the actual build step.
+Run `spec:impact` and `spec:verify` from a clean checkout. The dossier records
+the checked-out source SHA and specification hash. A local pass does not prove a
+remote branch, built image, deployed workload, or provider canary uses that SHA;
+record those links separately.
 
-## SBOM generation
+## Images and attestations
 
-### Using Syft (local / ad-hoc)
+The release image plan and Bake generator remain the canonical inventory and
+build-input tools. An operator may use them on a trusted external builder, but
+must separately retain:
 
-Install [Syft](https://github.com/anchore/syft) and run against your built image:
+- immutable image digests;
+- source SHA and selected closure;
+- SBOM and vulnerability scan output;
+- signer identity and signature/attestation verification output;
+- the reviewed GitOps change that promotes those digests.
 
-```bash
-# Against a local Docker image
-syft ghcr.io/nmime/nest-react-boilerplate/admin-app-api:sha-$(git rev-parse HEAD) \
-  --output spdx-json > sbom-admin-app-api.spdx.json
+The former GitHub workflow OIDC identity is not available. If keyless signing is
+reintroduced on another platform, define and review that platform's identity
+policy before accepting signatures. Otherwise use a protected key-based model
+with documented custody and rotation.
 
-# Against a directory (source SBOM)
-syft ./apps/backend/admin/admin-app-api \
-  --source-name admin-app-api \
-  --source-version $(git rev-parse --short HEAD) \
-  --output cyclonedx-json > sbom-admin-app-api.cdx.json
-```
+## Honest assurance
 
-### In CI (release-images.yml)
-
-The release workflow generates SBOMs automatically:
-
-```yaml
-- name: Generate SBOM artifact
-  uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
-  with:
-    image: ${{ env.IMAGE_PREFIX }}/${{ matrix.name }}@${{ steps.build.outputs.digest }}
-    format: spdx-json
-    output-file: sbom-${{ matrix.name }}.spdx.json
-```
-
-SBOM artifacts are uploaded per-service. Download them from the workflow run artifacts tab.
-
-### Storing SBOMs
-
-For compliance, push SBOMs to your artifact registry:
-
-```bash
-# Example: upload to S3
-aws s3 cp sbom-admin-app-api.spdx.json \
-  s3://sbom-bucket/nest-react-boilerplate/admin-app-api/$(git rev-parse HEAD).spdx.json
-
-# Or upload to the product's registry/compliance store using its documented
-# OCI-artifact or signed-attestation policy.
-```
-
-Do not describe a raw SBOM attachment as a transparency-log attestation. If the
-product requires signed SBOM attestations, pin a current cosign release and add
-the matching `attest`/`verify-attestation` commands plus policy tests as one
-change.
-
-## pnpm supply-chain quarantine
-
-`pnpm-workspace.yaml` enforces supply-chain protections:
-
-### Version quarantine
-
-```yaml
-# Reject versions published less than a day ago (1440 minutes = 24 hours)
-minimumReleaseAge: 1440
-```
-
-This delays newly published versions and reduces immediate exposure to a
-compromised release; it is not a substitute for audit and review. If a critical
-security patch was just published, prefer adding the reviewed `pkg@version` to
-`minimumReleaseAgeExclude` instead of weakening the repository-wide delay:
-
-```yaml
-minimumReleaseAgeExclude:
-  # Explicitly reviewed newly-published version allowed through the quarantine
-  - 'some-package@1.2.3'
-```
-
-### Workspace overrides
-
-Critical transitive dependencies are pinned to safe versions in `pnpm-workspace.yaml`:
-
-| Package            | Pinned to       | Reason                                             |
-| ------------------ | --------------- | -------------------------------------------------- |
-| `@fastify/static`  | `10.1.2`        | CVE-2026-7120 and CVE-2026-15074                   |
-| `better-auth`      | `1.6.23`        | Multiple CVEs in `1.4.21`                          |
-| `brace-expansion`  | `5.0.9`         | Current regular-expression DoS advisories          |
-| `drizzle-orm`      | `0.45.2`        | SQL injection in `0.41.0`                          |
-| `ip-address`       | `10.3.1`        | Current address-parser advisories                  |
-| `js-yaml`          | version-scoped  | Security-patched 3.x, 4.x, and 5.x floors          |
-| `typescript`       | `6.0.3`         | Workspace consistency until NestJS/Nx support TS 7 |
-| `follow-redirects` | security-pinned | CVE in older versions                              |
-| `axios`            | security-pinned | Multiple CVEs in older versions                    |
-| `ws`               | security-pinned | Remote code execution in older versions            |
-
-### .npmrc settings
-
-```ini
-engine-strict=true           # Fail if Node version doesn't match engines field
-package-manager-strict=true  # Fail if pnpm version doesn't match packageManager field
-```
-
-These prevent accidental installs with incompatible toolchain versions that might pull different dependency resolutions.
-
-## Dependabot configuration
-
-Dependabot runs automated dependency updates with grouped PRs:
-
-| Grouping          | Schedule | Packages                            |
-| ----------------- | -------- | ----------------------------------- |
-| `npm-minor-patch` | Weekly   | All npm packages (minor + patch)    |
-| `nx`              | Weekly   | `nx` and `@nx/*` packages           |
-| `nestjs`          | Weekly   | `@nestjs/*` packages                |
-| `opentelemetry`   | Weekly   | `@opentelemetry/*` packages         |
-| `github-actions`  | Weekly   | GitHub Actions versions             |
-| `docker`          | Weekly   | Docker base images (`/`, `/docker`) |
-
-There is no dedicated major-only npm group; major updates surface as individual PRs. npm dependency PRs are labeled `dependencies, security` and use the `deps:` commit prefix (github-actions uses `ci:`, docker uses `docker:`). All PRs must pass the full CI gate before merging.
-
-### Updating Dependabot groupings
-
-Edit `.github/dependabot.yml` to add/remove groupings or change schedules. Keep groupings coarse enough to avoid PR spam, but fine enough that major updates are reviewable individually.
-
-## CI gates for supply chain
-
-| Workflow                | Gate                            | What it checks                                      |
-| ----------------------- | ------------------------------- | --------------------------------------------------- |
-| `dependency-review.yml` | `Supported lockfile audit`      | `pnpm audit` on production deps; fails on moderate+ |
-| `ci.yml`                | `Native security gates`         | Secret scanning, SAST                               |
-| `codeql.yml`            | `Analyze JavaScript/TypeScript` | CodeQL semantic analysis                            |
-| `release-images.yml`    | `Trivy vulnerability scan`      | Container image vuln scan (CRITICAL, HIGH)          |
-| `release-images.yml`    | `Cosign keyless sign`           | Image signing attestation                           |
-
-## Recommendations
-
-### Image signing with Sigstore/cosign
-
-Already implemented in `release-images.yml`. To verify images locally:
-
-```bash
-# Verify a signed image
-cosign verify \
-  --certificate-identity-regexp='^https://github\.com/nmime/nest-react-boilerplate/\.github/workflows/release-images\.yml@refs/(tags/v.*|heads/main)$' \
-  --certificate-oidc-issuer=https://token.actions.githubusercontent.com \
-  ghcr.io/nmime/nest-react-boilerplate/admin-app-api@sha256:<digest>
-```
-
-### Provenance evolution
-
-The current release workflow emits BuildKit max-mode provenance. If the project adopts a formal SLSA target, select a supported generator for the repository's artifact type and validate the resulting attestation against that target. Do not copy a language-specific reusable workflow without first confirming that it supports this multi-image Docker build.
-
-### Additional hardening
-
-1. **Tag protection** — Require tag creation through the release workflow only (no manual `git push origin vX.Y.Z`).
-2. **Renovate as Dependabot alternative** — Renovate offers more granular grouping, automerge policies, and better monorepo support.
-3. **Artifact attestation** — Use GitHub's native artifact attestation (`gh attestation`) alongside cosign for dual verification.
-4. **Supply chain transparency** — Publish SBOMs to a public endpoint (e.g., GitHub releases assets) for downstream consumers.
+Missing CodeQL, Scorecard, dependency review, hosted artifacts, scheduled runs,
+SBOMs, scans, or signatures are gaps, not successful checks. A trusted external
+runner may restore some of these controls, but its configuration and live result
+must be verified independently of this repository.
