@@ -1,6 +1,7 @@
 // @requirements REQ-RUNTIME-DELIVERY-009
 // Evidence for: REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -31,6 +32,30 @@ const { target: _ignoredTarget, database: _ignoredDatabase, ...presetBase } = ba
 const titles = (plan) => plan.steps.map((step) => step.title);
 const commandLine = (step) => [step.command, ...step.args].join(' ');
 const stepFor = (plan, fragment) => plan.steps.find((step) => step.title.toLowerCase().includes(fragment));
+
+test('migrator runtime sources remain readable by the non-root image user', () => {
+  const dockerfile = readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8');
+  const migrator = dockerfile.slice(
+    dockerfile.indexOf('FROM node:${NODE_VERSION} AS migrator'),
+    dockerfile.indexOf('FROM workspace AS builder'),
+  );
+
+  for (const runtimeSource of [
+    '--from=migrator-deps /migrator/node_modules ./node_modules',
+    'packages/tooling ./packages/tooling',
+    'libs ./libs',
+    'config ./config',
+    'i18n ./i18n',
+    'tsconfig.base.json ./tsconfig.base.json',
+    'docker/migrator-run.mjs ./docker/migrator-run.mjs',
+  ]) {
+    assert.match(
+      migrator,
+      new RegExp(`COPY --chown=1000:1000 ${runtimeSource.replaceAll('/', '\\/').replaceAll('.', '\\.')}`, 'u'),
+      `${runtimeSource} must be owned by UID 1000 even when the build context uses a restrictive umask`,
+    );
+  }
+});
 
 test('every documented target is plannable', () => {
   assert.deepEqual(deployTargets, ['compose', 'pm2', 'helm']);

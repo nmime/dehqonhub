@@ -27,6 +27,8 @@ one-build activation, backend-listener, and TLS-safe redirect repairs.
 - Build local immutable images exactly once before systemd and activate those images with `--no-build`.
 - Bind backend processes to the container interface while keeping every host-published application port loopback-only.
 - Rewrite inner frontend `:8080` directory redirects to relative paths at the host TLS proxy.
+- Make standalone migrator sources readable by its numeric non-root runtime
+  user regardless of host checkout umask.
 - Add apex ownership, selected-host, certificate, and compatibility regression evidence.
 
 ## Capabilities

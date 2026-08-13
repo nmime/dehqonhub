@@ -30,6 +30,8 @@
 - Local image provenance builds the selected immutable tags once before systemd; unit activation and reboot reuse those tags with `--no-build` and never pull registry images.
 - Backend processes bind `0.0.0.0:80` inside their containers so Docker bridge and published-port traffic can reach Fastify, while the host publications remain fixed to `127.0.0.1`.
 - Frontend directory canonicalization behind host TLS remains relative, so an inner `http://<host>:8080/<path>/` redirect cannot change the browser's public scheme or expose the inner port.
+- Migrator runtime sources remain readable by the numeric non-root image user
+  even when the deployment checkout was created under a restrictive umask.
 
 ## Examples
 

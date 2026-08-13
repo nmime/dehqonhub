@@ -200,6 +200,21 @@ has(
   'migrator stages only the selected provider dependency manifest',
 );
 has(migratorStage, 'USER 1000:1000', 'migrator image defaults to the numeric non-root node user');
+for (const runtimeSource of [
+  '--from=migrator-deps /migrator/node_modules ./node_modules',
+  'packages/tooling ./packages/tooling',
+  'libs ./libs',
+  'config ./config',
+  'i18n ./i18n',
+  'tsconfig.base.json ./tsconfig.base.json',
+  'docker/migrator-run.mjs ./docker/migrator-run.mjs',
+]) {
+  has(
+    migratorStage,
+    `COPY --chown=1000:1000 ${runtimeSource}`,
+    `migrator runtime source is owned by its non-root user: ${runtimeSource}`,
+  );
+}
 has(
   migratorStage,
   'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',

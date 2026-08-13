@@ -203,7 +203,9 @@ Docker network and published-port traffic reaches the listener, while every
 application and API host publication SHALL remain bound to `127.0.0.1`.
 The host TLS renderer SHALL convert inner frontend `Location` values shaped as
 `http://<host>:8080/<path>` into relative paths without applying that rewrite
-to API proxy locations.
+to API proxy locations. The standalone migrator image SHALL assign its runtime
+dependencies and TypeScript migration sources to the numeric non-root runtime
+user independently of the host checkout umask.
 
 **Evidence profile:** operations, security
 
@@ -227,6 +229,8 @@ to API proxy locations.
 - Container listener reachability does not widen the host exposure boundary.
 - Frontend canonical redirects preserve the public TLS scheme and never expose
   the inner port.
+- Restrictive host checkout permissions cannot make staged migration sources
+  unreadable by the non-root migrator process.
 
 **Failure behavior:**
 
@@ -241,11 +245,20 @@ to API proxy locations.
   port blocks readiness.
 - An inner frontend redirect that exposes HTTP or port `8080` on a public HTTPS
   response blocks readiness.
+- An image whose non-root migrator cannot read every staged runtime source
+  blocks deployment before application services start.
 
 #### Scenario: Deployment validation
 
 - **WHEN** the supported deployment profiles are rendered
 - **THEN** each produces a valid topology without publishing or deploying it
+
+#### Scenario: Non-root migrator source ownership
+
+- **WHEN** a source checkout created under a restrictive host umask is staged
+  into the standalone migration image
+- **THEN** every runtime dependency and migration source is owned and readable
+  by the numeric non-root migrator user
 
 #### Scenario: Selected user application owns the apex
 

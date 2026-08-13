@@ -15,6 +15,9 @@
     runtime/auth/Telegram URLs, selected services, and private host binds.
   - `pnpm run server:validate` and `pnpm run deploy:validate:docker` prove the
     rendered deployment contracts.
+  - `scripts/deploy.spec.mjs` and the deployment validator prove every
+    standalone migrator runtime source is explicitly owned by UID 1000 before
+    the image switches to its non-root user.
 
 ## REQ-AGRITECH-DEPLOYMENT-014
 

@@ -56,15 +56,17 @@ WORKDIR /app
 RUN apk add --no-cache su-exec \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
-COPY --from=migrator-deps /migrator/node_modules ./node_modules
+COPY --chown=1000:1000 --from=migrator-deps /migrator/node_modules ./node_modules
 # TypeScript sources the migration transpiles on the fly (@swc-node/register +
-# tsconfig-paths); source files carry no package CVEs.
-COPY packages/tooling ./packages/tooling
-COPY libs ./libs
-COPY config ./config
-COPY i18n ./i18n
-COPY tsconfig.base.json ./tsconfig.base.json
-COPY docker/migrator-run.mjs ./docker/migrator-run.mjs
+# tsconfig-paths); source files carry no package CVEs. Explicit ownership keeps
+# them readable by the numeric non-root runtime user even when the host checkout
+# was created under a restrictive umask.
+COPY --chown=1000:1000 packages/tooling ./packages/tooling
+COPY --chown=1000:1000 libs ./libs
+COPY --chown=1000:1000 config ./config
+COPY --chown=1000:1000 i18n ./i18n
+COPY --chown=1000:1000 tsconfig.base.json ./tsconfig.base.json
+COPY --chown=1000:1000 docker/migrator-run.mjs ./docker/migrator-run.mjs
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
 USER 1000:1000
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
