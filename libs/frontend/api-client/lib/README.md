@@ -18,7 +18,9 @@ The rule sets (`adminApiToastRules()`, `authApiToastRules()`,
 arrays. Each parses on first use and caches. The indirection is what lets a
 bundler drop the generated config an app never reads — around 420 kB of admin
 rules in the case of the user marketplace — so keep the JSON referenced only from
-inside these function bodies.
+inside these function bodies, and keep `apiToastRuleCatalog()`, the only reader of
+all three configs, in `toast-rule-catalog.ts` away from the per-app rule sets.
+`docs/frontend-deployment-topology.md` records the measurements and the check.
 
 ## Commands
 

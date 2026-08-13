@@ -26,9 +26,12 @@ export default defineConfig({
     // workspace, resolves access and awaits a fistful of fetches — and pass in
     // well under a second of real work on an idle machine. On a loaded one, with
     // Vite still transforming modules and coverage instrumentation on top, the
-    // same specs cross the 5s default and report as regressions. The ceilings are
-    // the user app's, for the same reason; a genuinely stuck test still fails.
-    hookTimeout: 30_000,
+    // same specs cross the 5s default and report as regressions. The hook ceiling
+    // is the higher of the two because `main.spec.tsx` imports the entry module
+    // inside `beforeAll`: that single import transforms the shared UI library,
+    // which takes ~17s alone and more while fifteen worker forks compete for the
+    // same cores. A genuinely stuck test still fails, just later.
+    hookTimeout: 60_000,
     testTimeout: 30_000,
     setupFiles: ['../../../packages/tooling/src/testing/vitest-dom-cleanup.ts'],
     coverage: fullCoverage('coverage/apps/frontend/admin', ['src/**/*.{ts,tsx}'], [], {

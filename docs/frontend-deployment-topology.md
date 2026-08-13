@@ -197,10 +197,20 @@ public. Check it after touching that module:
 grep -c admin-app-api dist/apps/frontend/app/assets/*.js
 ```
 
-The admin console still carries all three configs in its entry chunk, because its
-route matrix imports every page statically and the presentation console reads the
-whole catalog; making that page lazy would move ~460 kB (17 kB gzipped) of user
-rules out of an internal tool's first load.
+The catalog lives in its own module (`toast-rule-catalog.ts`) for a related
+reason: a chunk holds whole modules, so while the catalog sat beside the rule
+sets an app needs for its own toasts, the third config rode into that app's entry
+chunk however little of the module was used. On its own it is reachable only from
+the console's presentation screen, which the admin route matrix now fetches on
+demand — the one lazily loaded route in that app, since the others carry no
+comparable payload and several specs assert them as synchronous markup. That
+moves 462 kB (21 kB gzipped) of user rules out of the console's first load:
+
+| admin console first load          | before                | after               |
+| --------------------------------- | --------------------- | ------------------- |
+| entry chunk                       | 1,166 kB / 88.0 kB gz | 91 kB / 21.5 kB gz  |
+| shared chunk (admin + auth rules) | —                     | 618 kB / 49.1 kB gz |
+| presentation screen (user rules)  | preloaded             | fetched on open     |
 
 ## Runtime browser config (one image, many environments)
 

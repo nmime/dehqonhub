@@ -1,6 +1,6 @@
 // @requirements REQ-API-CLIENT-005
 import { describe, expect, it } from 'vitest';
-import { adminApiToastRules, apiToastRuleCatalog, authApiToastRules, userApiToastRules } from './toast-rules';
+import { adminApiToastRules, authApiToastRules, userApiToastRules } from './toast-rules';
 
 const appsIn = (ids: readonly string[]): Set<string> =>
   new Set(ids.map((id) => id.slice(0, Math.max(id.indexOf(':'), 0))));
@@ -18,23 +18,5 @@ describe('api toast rules', () => {
     expect(userApiToastRules()).toBe(userApiToastRules());
     expect(authApiToastRules()).toBe(authApiToastRules());
     expect(adminApiToastRules()).toBe(adminApiToastRules());
-    expect(apiToastRuleCatalog()).toBe(apiToastRuleCatalog());
-  });
-
-  it('collects every app into the catalog with the presentation defaults each rule was generated with', () => {
-    const catalog = apiToastRuleCatalog();
-
-    expect(appsIn(catalog.map((item) => item.id))).toEqual(new Set(['admin-app-api', 'auth-app-api', 'user-app-api']));
-    expect(catalog.length).toBe(adminApiToastRules().length + authApiToastRules().length + userApiToastRules().length);
-
-    const item = catalog[0];
-    expect(item).toMatchObject({
-      app: expect.stringMatching(/-app-api$/u),
-      defaultDisplay: expect.stringMatching(/^(custom|modal|silent|toast)$/u),
-      defaultMessage: expect.any(String),
-      id: expect.stringContaining(':'),
-      method: expect.stringMatching(/^[A-Z]+$/u),
-      path: expect.stringMatching(/^\//u),
-    });
   });
 });
