@@ -26,6 +26,7 @@ import { Migration20260722091000DropLegacyAuthUserAccessCache } from './Migratio
 import { Migration20260722092000CreateCanonicalSessions } from './Migration20260722092000CreateCanonicalSessions';
 import { Migration20260722100000GrantFeatureFlagPermissions } from './Migration20260722100000GrantFeatureFlagPermissions';
 import { Migration20260802170000AddUzbekLocale } from './Migration20260802170000AddUzbekLocale';
+import { Migration20260810120000AddUzbekCyrillicLocale } from './Migration20260810120000AddUzbekCyrillicLocale';
 
 export const AuthMigrationsTableName = 'mikro_orm_migrations';
 
@@ -57,6 +58,7 @@ export const authMigrations = [
   Migration20260722092000CreateCanonicalSessions,
   Migration20260722100000GrantFeatureFlagPermissions,
   Migration20260802170000AddUzbekLocale,
+  Migration20260810120000AddUzbekCyrillicLocale,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -95,3 +97,4 @@ export * from './Migration20260722091000DropLegacyAuthUserAccessCache';
 export * from './Migration20260722092000CreateCanonicalSessions';
 export * from './Migration20260722100000GrantFeatureFlagPermissions';
 export * from './Migration20260802170000AddUzbekLocale';
+export * from './Migration20260810120000AddUzbekCyrillicLocale';

@@ -34,6 +34,42 @@ const mongoProductionUsers = read('docker/mongodb/create-production-user.js');
 const unsafeTags = new Set(['latest', 'main', 'master', 'dev', 'prod', 'production']);
 const placeholderTag = 'sha-000000000000';
 const externalProxyModeContract = ['EXTERNAL_PROXY_PUBLIC_MODE', 'per-app-domains'].join('=');
+const assertProductionMarketplaceProviders = (content, label) => {
+  for (const key of [
+    'MARKETPLACE_ONEID_PROVIDER_MODE',
+    'MARKETPLACE_DOCUMENT_PROVIDER_MODE',
+    'MARKETPLACE_CONTRACT_ARTIFACT_STORAGE_PROVIDER_MODE',
+    'MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_MODE',
+    'MARKETPLACE_QUALIFIED_SIGNATURE_PROVIDER_MODE',
+    'MARKETPLACE_PROMOTION_BILLING_PROVIDER_MODE',
+    'MARKETPLACE_DIRECT_PAYMENT_PROVIDER_MODE',
+    'MARKETPLACE_FACTORING_PROVIDER_MODE',
+    'MARKETPLACE_NOTIFICATION_PROVIDER_MODE',
+  ]) {
+    const value = content
+      .match(new RegExp(`^${key}=(?<value>.*)$`, 'mu'))
+      ?.groups?.value.trim()
+      .toLowerCase();
+    assert.notEqual(value, 'mock', `${label} must reject ${key}=mock.`);
+  }
+  for (const key of [
+    'MARKETPLACE_ONEID_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_DOCUMENT_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_CONTRACT_ARTIFACT_STORAGE_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_QUALIFIED_SIGNATURE_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_PROMOTION_BILLING_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_DIRECT_PAYMENT_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_FACTORING_PROVIDER_TIMEOUT_MS',
+    'MARKETPLACE_NOTIFICATION_PROVIDER_TIMEOUT_MS',
+  ]) {
+    const value = content.match(new RegExp(`^${key}=(?<value>.*)$`, 'mu'))?.groups?.value.trim();
+    assert.equal(value, '10000', `${label} must declare bounded ${key}.`);
+  }
+};
+
+assertProductionMarketplaceProviders(productionEnvExample, '.env.production.example');
+if (productionEnv !== undefined) assertProductionMarketplaceProviders(productionEnv, '.env.production');
 
 const tagFromEnvExample = productionEnvExample.match(/^IMAGE_TAG=(?<tag>.+)$/m)?.groups?.tag.trim();
 assert.ok(tagFromEnvExample, '.env.production.example must define IMAGE_TAG');

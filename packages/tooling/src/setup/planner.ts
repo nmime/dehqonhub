@@ -198,6 +198,7 @@ export function generateCapabilitiesManifest(summary: PlanSummary): { path: stri
       id: entry.id,
       activation: entry.activation,
       projects: [...entry.ownedProjects, ...(provider ? (entry.providerOwnedProjects?.[provider] ?? []) : [])].sort(),
+      runtimeExternalPackages: [...(entry.runtimeExternalPackages ?? [])].sort(),
       dockerServices: [...entry.dockerServices].sort(),
       environmentVariables: [...entry.environmentVariables].sort(),
       generatedFiles: [...generatedFiles].sort(),

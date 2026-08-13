@@ -101,6 +101,11 @@
       "@app/i18n-uz-common/*": ["i18n/uz/common/*"],
       "@app/i18n-uz-landing/*": ["i18n/uz/landing/*"],
       "@app/i18n-uz-user/*": ["i18n/uz/user/*"],
+      "@app/i18n-uz-cyrl-admin/*": ["i18n/uz-cyrl/admin/*"],
+      "@app/i18n-uz-cyrl-bots/*": ["i18n/uz-cyrl/bots/*"],
+      "@app/i18n-uz-cyrl-common/*": ["i18n/uz-cyrl/common/*"],
+      "@app/i18n-uz-cyrl-landing/*": ["i18n/uz-cyrl/landing/*"],
+      "@app/i18n-uz-cyrl-user/*": ["i18n/uz-cyrl/user/*"],
       "@app/common-problem-details": ["libs/common/problem-details/lib/src/index.ts"],
       "@app/backend-feature-notification-admin": ["libs/backend/feature/notification/admin/lib/src/index.ts"],
       "@app/backend-feature-audit-log-admin": ["libs/backend/feature/audit-log/admin/lib/src/index.ts"],
@@ -116,6 +121,18 @@
       "@app/backend-feature-agritech-main": ["libs/backend/feature/agritech/main/lib/src/index.ts"],
       "@app/backend-feature-agritech-main-marketplace-in-memory-adapter": [
         "libs/backend/feature/agritech/main/lib/src/marketplace.in-memory-adapter.ts"
+      ],
+      "@app/backend-feature-agritech-main-marketplace-public-domain-service": [
+        "libs/backend/feature/agritech/main/lib/src/marketplace-public.domain-service.ts"
+      ],
+      "@app/backend-feature-agritech-main-marketplace-promotion-domain-service": [
+        "libs/backend/feature/agritech/main/lib/src/marketplace-promotion.domain-service.ts"
+      ],
+      "@app/backend-feature-agritech-main-marketplace-dashboard-ai-domain-service": [
+        "libs/backend/feature/agritech/main/lib/src/marketplace-dashboard-ai.domain-service.ts"
+      ],
+      "@app/backend-feature-agritech-main-marketplace-verification-domain": [
+        "libs/backend/feature/agritech/main/lib/src/marketplace-verification.domain-service.ts"
       ],
       "@app/backend-feature-agritech-admin": ["libs/backend/feature/agritech/admin/lib/src/index.ts"],
       "@app/backend-feature-agritech-shared": ["libs/backend/feature/agritech/shared/lib/src/index.ts"],

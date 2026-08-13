@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016
+// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-WEB-006 REQ-AGRITECH-ENGAGEMENT-019
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type {
@@ -97,28 +97,27 @@ const identity = (overrides: Partial<VerificationViewDto> = {}): VerificationVie
 });
 
 const signedContract = (overrides: Partial<ContractViewDto> = {}): ContractViewDto => ({
+  actorParty: 'buyer',
   amountUzs: 2_500_000,
-  buyerUserId: 'buyer-1',
+  buyerPartySnapshot: { legalName: 'Bahor Savdo MChJ', region: 'Samarqand' },
   createdAt: '2026-08-09T10:00:00.000Z',
   deliveryTerms: 'pickup',
   factoringEnabled: false,
   id: 'contract-1',
   lines: [],
-  sellerUserId: 'seller-a',
+  revision: 1,
+  sellerPartySnapshot: { legalName: 'Zamin Agro MChJ', region: 'Tashkent' },
   status: 'draft',
   subject: seed.name,
-  tenantId: 'tenant-1',
   updatedAt: '2026-08-09T10:00:00.000Z',
   ...overrides,
 });
 
 const ownedRequest = (overrides: Partial<BuyerRequestViewDto> = {}): BuyerRequestViewDto => ({
-  buyerUserId: 'buyer-1',
   createdAt: '2026-08-09T10:00:00.000Z',
   id: 'request-1',
   region: 'Samarqand',
   status: 'open',
-  tenantId: 'tenant-1',
   title: 'Corn seed for autumn',
   updatedAt: '2026-08-09T10:00:00.000Z',
   ...overrides,
@@ -126,15 +125,13 @@ const ownedRequest = (overrides: Partial<BuyerRequestViewDto> = {}): BuyerReques
 
 const emptyResource = { data: [], status: 'empty' as const };
 
-const basket = (items: CartViewDto['items'], sellerId = seed.supplierId): CartViewDto => ({
+const basket = (items: CartViewDto['items'], seller = seed.supplierName): CartViewDto => ({
   createdAt: '2026-08-09T10:00:00.000Z',
   id: 'cart-a',
   items,
-  sellerId,
+  seller: { displayName: seller, region: seed.region },
   status: 'open',
-  tenantId: 'tenant-1',
   updatedAt: '2026-08-09T10:00:00.000Z',
-  userId: 'buyer-1',
 });
 
 describe('DehqonHub marketplace components', () => {
@@ -323,12 +320,10 @@ describe('DehqonHub marketplace components', () => {
 
   it('does not invite offers on closed or expired purchase requests', () => {
     const request = (id: string, status: BuyerRequestViewDto['status']): BuyerRequestViewDto => ({
-      buyerUserId: 'buyer-1',
       createdAt: '2026-08-09T10:00:00.000Z',
       id,
       region: 'Samarqand',
       status,
-      tenantId: 'tenant-1',
       title: `Request ${id}`,
       updatedAt: '2026-08-09T10:00:00.000Z',
     });
@@ -394,12 +389,10 @@ describe('DehqonHub marketplace components', () => {
 
   it('submits a seller-authored delivery quote with an offer', () => {
     const request: BuyerRequestViewDto = {
-      buyerUserId: 'buyer-1',
       createdAt: '2026-08-09T10:00:00.000Z',
       id: 'request-open',
       region: 'Samarqand',
       status: 'open',
-      tenantId: 'tenant-1',
       title: 'Corn seed',
       updatedAt: '2026-08-09T10:00:00.000Z',
     };
@@ -440,12 +433,10 @@ describe('DehqonHub marketplace components', () => {
 
   it('offers an in-place retry when an owned request offer list fails', () => {
     const request: BuyerRequestViewDto = {
-      buyerUserId: 'buyer-1',
       createdAt: '2026-08-09T10:00:00.000Z',
       id: 'request-owned',
       region: 'Samarqand',
       status: 'open',
-      tenantId: 'tenant-1',
       title: 'Corn seed',
       updatedAt: '2026-08-09T10:00:00.000Z',
     };
@@ -478,22 +469,18 @@ describe('DehqonHub marketplace components', () => {
       {
         createdAt: '2026-08-09T10:00:00.000Z',
         id: 'cart-a',
-        items: [{ productId: seed.id, quantity: 2 }],
-        sellerId: seed.supplierId,
+        items: [{ listingPublicationId: seed.id, quantity: 2, sourceKind: 'product' }],
+        seller: { displayName: seed.supplierName, region: seed.region },
         status: 'open',
-        tenantId: 'tenant-1',
         updatedAt: '2026-08-09T10:00:00.000Z',
-        userId: 'buyer-1',
       },
       {
         createdAt: '2026-08-09T10:00:00.000Z',
         id: 'cart-b',
-        items: [{ productId: tractor.id, quantity: 1 }],
-        sellerId: tractor.supplierId,
+        items: [{ listingPublicationId: tractor.id, quantity: 1, sourceKind: 'product' }],
+        seller: { displayName: tractor.supplierName, region: tractor.region },
         status: 'open',
-        tenantId: 'tenant-1',
         updatedAt: '2026-08-09T10:00:00.000Z',
-        userId: 'buyer-1',
       },
     ];
     const onCheckout = vi.fn();
@@ -551,8 +538,9 @@ describe('DehqonHub marketplace components', () => {
 
   it('lets only the current unsigned party record contract consent', () => {
     const contract: ContractViewDto = {
+      actorParty: 'buyer',
       amountUzs: 2_500_000,
-      buyerUserId: 'buyer-1',
+      buyerPartySnapshot: { legalName: 'Bahor Savdo MChJ', region: 'Samarqand' },
       createdAt: '2026-08-09T10:00:00.000Z',
       deliveryTerms: 'pickup',
       deliveryPriceUzs: 0,
@@ -562,18 +550,19 @@ describe('DehqonHub marketplace components', () => {
         {
           lineTotalUzs: 2_500_000,
           name: seed.name,
-          productId: seed.id,
           quantity: 2,
+          sourceKind: 'product',
+          sourcePublicationId: seed.id,
+          sourceRevision: 1,
           unit: seed.unit,
           unitPriceUzs: 1_250_000,
         },
       ],
-      sellerUserId: 'seller-a',
-      sourceId: 'cart-a',
+      revision: 1,
+      sellerPartySnapshot: { legalName: 'Zamin Agro MChJ', region: 'Tashkent' },
       sourceType: 'cart_checkout',
       status: 'draft',
       subject: seed.name,
-      tenantId: 'tenant-1',
       updatedAt: '2026-08-09T10:00:00.000Z',
     };
     const onSign = vi.fn();
@@ -581,7 +570,6 @@ describe('DehqonHub marketplace components', () => {
     render(
       <MarketplaceContract
         contract={contract}
-        currentUserId="buyer-1"
         identityStatus="ready"
         locale="en"
         navigate={vi.fn()}
@@ -601,26 +589,25 @@ describe('DehqonHub marketplace components', () => {
 
   it('blocks consent and lets the listed seller quote pending delivery', () => {
     const contract: ContractViewDto = {
+      actorParty: 'seller',
       amountUzs: 2_500_000,
-      buyerUserId: 'buyer-1',
+      buyerPartySnapshot: { legalName: 'Bahor Savdo MChJ', region: 'Samarqand' },
       createdAt: '2026-08-09T10:00:00.000Z',
       deliveryTerms: 'seller_delivery',
       factoringEnabled: false,
       id: 'contract-delivery',
       lines: [],
-      sellerUserId: 'seller-a',
-      sourceId: 'cart-a',
+      revision: 1,
+      sellerPartySnapshot: { legalName: 'Zamin Agro MChJ', region: 'Tashkent' },
       sourceType: 'cart_checkout',
       status: 'draft',
       subject: seed.name,
-      tenantId: 'tenant-1',
       updatedAt: '2026-08-09T10:00:00.000Z',
     };
     const onQuote = vi.fn();
     render(
       <MarketplaceContract
         contract={contract}
-        currentUserId="seller-a"
         identityStatus="ready"
         locale="en"
         navigate={vi.fn()}
@@ -642,20 +629,20 @@ describe('DehqonHub marketplace components', () => {
 
   it('keeps contract consent blocked and retries when party identity cannot load', () => {
     const contract: ContractViewDto = {
+      actorParty: 'buyer',
       amountUzs: 2_500_000,
-      buyerUserId: 'buyer-1',
+      buyerPartySnapshot: { legalName: 'Bahor Savdo MChJ', region: 'Samarqand' },
       createdAt: '2026-08-09T10:00:00.000Z',
       deliveryPriceUzs: 0,
       deliveryTerms: 'pickup',
       factoringEnabled: false,
       id: 'contract-identity-error',
       lines: [],
-      sellerUserId: 'seller-a',
-      sourceId: 'cart-a',
+      revision: 1,
+      sellerPartySnapshot: { legalName: 'Zamin Agro MChJ', region: 'Tashkent' },
       sourceType: 'cart_checkout',
       status: 'draft',
       subject: seed.name,
-      tenantId: 'tenant-1',
       updatedAt: '2026-08-09T10:00:00.000Z',
     };
     const onRetry = vi.fn();
@@ -663,7 +650,6 @@ describe('DehqonHub marketplace components', () => {
     render(
       <MarketplaceContract
         contract={contract}
-        currentUserId={undefined}
         identityStatus="error"
         locale="en"
         navigate={vi.fn()}
@@ -686,10 +672,8 @@ describe('DehqonHub marketplace components', () => {
       createdAt: '2026-08-09T10:00:00.000Z',
       id: 'ai-1',
       kind: 'recommendation',
-      productIds: [seed.id],
+      listingPublicationIds: [seed.id],
       question: 'seed',
-      tenantId: 'tenant-1',
-      userId: 'buyer-1',
     });
     const onOpenProduct = vi.fn();
 
@@ -720,10 +704,8 @@ describe('DehqonHub marketplace components', () => {
       createdAt: '2026-08-09T10:00:00.000Z',
       id: 'ai-locale',
       kind: 'recommendation',
-      productIds: [seed.id],
+      listingPublicationIds: [seed.id],
       question: 'seed',
-      tenantId: 'tenant-1',
-      userId: 'buyer-1',
     });
     const english: MarketplaceTranslate = (key) => `en:${key}`;
     const russian: MarketplaceTranslate = (key) => `ru:${key}`;
@@ -1096,16 +1078,11 @@ describe('DehqonHub marketplace components', () => {
     expect(navigate).toHaveBeenLastCalledWith('/verification');
   });
 
-  it('names who may still consent on a contract, and who never could', () => {
+  it('names who may still consent on a contract, and when nobody can', () => {
     const navigate = vi.fn();
-    const page = (
-      contract: ContractViewDto | undefined,
-      currentUserId?: string,
-      status: 'loading' | 'ready' = 'ready',
-    ) => (
+    const page = (contract: ContractViewDto | undefined, status: 'loading' | 'ready' = 'ready') => (
       <MarketplaceContract
         contract={contract}
-        currentUserId={currentUserId}
         identityStatus="ready"
         locale="en"
         navigate={navigate}
@@ -1117,25 +1094,27 @@ describe('DehqonHub marketplace components', () => {
       />
     );
 
-    const view = render(page(undefined, 'buyer-1', 'loading'));
+    const view = render(page(undefined, 'loading'));
     expect(document.querySelector('.dh-skeleton-grid')).toBeTruthy();
 
-    view.rerender(page(undefined, 'buyer-1'));
+    view.rerender(page(undefined));
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.back' }));
     expect(navigate).toHaveBeenLastCalledWith('/account');
 
-    // No identity yet: the page states the contract is not this visitor's.
-    view.rerender(page(signedContract()));
-    expect(screen.getByText('agritech.marketplace.contract.notYourContract')).toBeTruthy();
+    // A version nobody can act on any more: the page says what it is waiting for
+    // instead of offering a consent button that would be refused.
+    view.rerender(page(signedContract({ status: 'cancelled' })));
+    expect(screen.getByText('agritech.marketplace.contract.consentClosed')).toBeTruthy();
 
-    // Somebody else's contract, read by neither party.
-    view.rerender(page(signedContract(), 'onlooker-1'));
-    expect(screen.getByText('agritech.marketplace.contract.notYourContract')).toBeTruthy();
-
-    view.rerender(page(signedContract({ sellerSignedAt: '2026-08-10T10:00:00.000Z' }), 'seller-a'));
+    // The reader's own side already consented.
+    view.rerender(page(signedContract({ actorParty: 'seller', sellerSignedAt: '2026-08-10T10:00:00.000Z' })));
     expect(screen.getByText('agritech.marketplace.contract.yourSignatureRecorded')).toBeTruthy();
 
-    view.rerender(page(signedContract({ status: 'legacy_review_required' }), 'buyer-1'));
+    // The buyer's signature is not this seller's, so consent is still open.
+    view.rerender(page(signedContract({ actorParty: 'seller', buyerSignedAt: '2026-08-10T10:00:00.000Z' })));
+    expect(screen.getByRole('button', { name: /agritech\.marketplace\.contract\.signOwnParty/u })).toBeTruthy();
+
+    view.rerender(page(signedContract({ status: 'legacy_review_required' })));
     expect(screen.getByText('agritech.marketplace.contract.legacyReviewRequiredDescription')).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: /agritech\.marketplace\.back/u }));
@@ -1147,7 +1126,10 @@ describe('DehqonHub marketplace components', () => {
   it('keeps a basket line readable after its product leaves the catalog', () => {
     render(
       <MarketplaceCart
-        carts={{ data: [basket([{ productId: 'ghost-1', quantity: 2 }], 'seller-z')], status: 'ready' }}
+        carts={{
+          data: [basket([{ listingPublicationId: 'ghost-1', quantity: 2, sourceKind: 'product' }], 'Seller Z')],
+          status: 'ready',
+        }}
         locale="en"
         navigate={vi.fn()}
         onCheckout={vi.fn()}
@@ -1229,7 +1211,7 @@ describe('DehqonHub marketplace components', () => {
         onCreate={vi.fn()}
         onOffer={onOffer}
         onRetry={vi.fn()}
-        requests={{ data: [ownedRequest({ buyerUserId: 'buyer-9', id: 'request-9' })], status: 'ready' }}
+        requests={{ data: [ownedRequest({ id: 'request-9' })], status: 'ready' }}
         role="seller"
         t={t}
       />,
@@ -1248,7 +1230,7 @@ describe('DehqonHub marketplace components', () => {
     fireEvent.change(note, { target: { value: '' } });
     fireEvent.submit(form);
 
-    expect(onOffer).toHaveBeenCalledWith(ownedRequest({ buyerUserId: 'buyer-9', id: 'request-9' }), {
+    expect(onOffer).toHaveBeenCalledWith(ownedRequest({ id: 'request-9' }), {
       deliveryDays: undefined,
       deliveryNote: undefined,
       deliveryTerms: 'by_agreement',
@@ -1268,7 +1250,7 @@ describe('DehqonHub marketplace components', () => {
         onCreate={vi.fn()}
         onOffer={vi.fn()}
         onRetry={vi.fn()}
-        requests={{ data: [ownedRequest({ buyerUserId: 'buyer-9', id: 'request-9' })], status: 'ready' }}
+        requests={{ data: [ownedRequest({ id: 'request-9' })], status: 'ready' }}
         t={t}
       />,
     );
@@ -1293,7 +1275,6 @@ describe('DehqonHub marketplace components', () => {
           data: [
             ownedRequest({
               budgetUzs: 45_000_000,
-              buyerUserId: 'buyer-9',
               id: 'request-9',
               requirements: 'Certified seed only',
             }),
@@ -1336,7 +1317,6 @@ describe('DehqonHub marketplace components', () => {
     render(
       <MarketplaceContract
         contract={active}
-        currentUserId="onlooker-1"
         identityStatus="ready"
         locale="en"
         navigate={vi.fn()}
@@ -1349,7 +1329,7 @@ describe('DehqonHub marketplace components', () => {
     );
 
     expect(screen.queryByRole('button', { name: 'agritech.marketplace.contract.signOwnParty' })).toBeNull();
-    expect(screen.getByText('agritech.marketplace.contract.notYourContract')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.contract.yourSignatureRecorded')).toBeTruthy();
     expect(screen.getAllByText('agritech.marketplace.contract.signedAt')).toHaveLength(2);
     expect(screen.getByText('agritech.marketplace.orders.deliveryDays')).toBeTruthy();
     expect(document.querySelector('.dh-inline-form')).toBeNull();
@@ -1359,11 +1339,13 @@ describe('DehqonHub marketplace components', () => {
   // organizations. It printed their raw uuids before, and a contract that
   // outlived a party's organization falls back to a label rather than an id.
   it('names both parties and falls back to a label for an unnamed one', () => {
-    const named = signedContract({ buyerName: 'Xaridor Demo Savdo', sellerName: 'Dehqon Bozori Kooperativi' });
+    const named = signedContract({
+      buyerPartySnapshot: { legalName: 'Xaridor Demo Savdo', region: 'Samarqand' },
+      sellerPartySnapshot: { legalName: 'Dehqon Bozori Kooperativi', region: 'Tashkent' },
+    });
     const { unmount } = render(
       <MarketplaceContract
         contract={named}
-        currentUserId="buyer-1"
         identityStatus="ready"
         locale="en"
         navigate={vi.fn()}
@@ -1383,8 +1365,10 @@ describe('DehqonHub marketplace components', () => {
 
     render(
       <MarketplaceContract
-        contract={signedContract({ sellerName: 'Dehqon Bozori Kooperativi' })}
-        currentUserId="buyer-1"
+        contract={signedContract({
+          buyerPartySnapshot: { legalName: '', region: 'Samarqand' },
+          sellerPartySnapshot: { legalName: 'Dehqon Bozori Kooperativi', region: 'Tashkent' },
+        })}
         identityStatus="ready"
         locale="en"
         navigate={vi.fn()}
@@ -1401,12 +1385,11 @@ describe('DehqonHub marketplace components', () => {
 
   it('quotes a delivery the seller owes without inventing optional terms', () => {
     const onQuote = vi.fn();
-    const quotable = signedContract({ deliveryTerms: 'seller_delivery' });
+    const quotable = signedContract({ actorParty: 'seller', deliveryTerms: 'seller_delivery' });
 
     render(
       <MarketplaceContract
         contract={quotable}
-        currentUserId="seller-a"
         identityStatus="ready"
         locale="en"
         navigate={vi.fn()}
@@ -1465,7 +1448,7 @@ describe('DehqonHub marketplace components', () => {
   });
 
   it('keeps the assistant open on any key but Escape, and says when nothing matched', async () => {
-    const onAsk = vi.fn().mockResolvedValue({ kind: 'cheapest', productIds: [] });
+    const onAsk = vi.fn().mockResolvedValue({ kind: 'cheapest', listingPublicationIds: [] });
 
     render(<MarketplaceAi locale="en" onAsk={onAsk} onOpenProduct={vi.fn()} products={[seed]} t={t} />);
 
@@ -1487,7 +1470,7 @@ describe('DehqonHub marketplace components', () => {
   // The quick prompts are the assistant's own suggestions: one click has to ask the
   // question for the visitor, carrying the kind that prompt stands for.
   it('asks a quick prompt on the visitor behalf without typing anything', async () => {
-    const onAsk = vi.fn().mockResolvedValue({ id: 'ai-quick', kind: 'find_cheaper', productIds: [seed.id] });
+    const onAsk = vi.fn().mockResolvedValue({ id: 'ai-quick', kind: 'find_cheaper', listingPublicationIds: [seed.id] });
 
     render(<MarketplaceAi locale="en" onAsk={onAsk} onOpenProduct={vi.fn()} products={[seed]} t={t} />);
 

@@ -1,14 +1,16 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016
+// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-WEB-006 REQ-AGRITECH-ENGAGEMENT-019
 import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type {
   BuyerRequestViewDto,
   CartViewDto,
   ContractViewDto,
+  MarketplaceFavoriteDto,
+  MarketplaceReviewDto,
+  MarketplaceSampleDto,
   OfferViewDto,
+  PartnerViewDto,
   ProductViewDto,
-  ReviewViewDto,
-  SampleViewDto,
 } from '@app/frontend-api-client';
 import type { MarketplaceData } from '../model/use-marketplace-data';
 import { MarketplacePage } from './marketplace-page';
@@ -22,7 +24,7 @@ const testState = vi.hoisted(() => {
     marketplaceControllerCheckoutCart: vi.fn(),
     marketplaceControllerChooseOffer: vi.fn(),
     marketplaceControllerCreateRequest: vi.fn(),
-    marketplaceControllerListReviews: vi.fn(),
+    marketplacePublicControllerListReviews: vi.fn(),
     marketplaceControllerMakeOffer: vi.fn(),
     marketplaceControllerRemoveCartItem: vi.fn(),
     marketplaceControllerRemoveFavorite: vi.fn(),
@@ -87,6 +89,7 @@ const product = {
   region: 'Samarqand',
   status: 'active' as const,
   stockQuantity: 20,
+  sampleAvailable: true,
   supplierId: 'seller-1',
   supplierName: 'Seed cooperative',
   unit: 't',
@@ -94,6 +97,26 @@ const product = {
 };
 
 const emptyList = { data: [], status: 'empty' as const };
+
+/**
+ * The organizations the signed-in account may act for. Every commerce command
+ * names one, so the page needs an approved buyer and an approved supplier before
+ * a basket, a purchase request or an offer can be composed at all.
+ */
+const partner = (kind: 'buyer' | 'supplier', overrides: Partial<PartnerViewDto> = {}): PartnerViewDto => ({
+  createdAt: '2026-08-09T10:00:00.000Z',
+  id: `partner-${kind}`,
+  kind,
+  legalName: kind === 'buyer' ? 'Bahor Savdo MChJ' : 'Zamin Agro MChJ',
+  ownerUserId: 'buyer-1',
+  phone: '+998901234567',
+  region: 'Samarqand',
+  status: 'approved',
+  taxId: '300123456',
+  tenantId: 'tenant-1',
+  updatedAt: '2026-08-09T10:00:00.000Z',
+  ...overrides,
+});
 
 const signedInData = (): MarketplaceData => ({
   auth: 'signed-in',
@@ -106,22 +129,29 @@ const signedInData = (): MarketplaceData => ({
   localActions: testState.localActions,
   myRequests: emptyList,
   offersByRequest: { data: {}, status: 'empty' },
+  partners: { data: [partner('buyer'), partner('supplier')], status: 'ready' },
   refresh: testState.refresh,
   requests: emptyList,
   samples: emptyList,
-  sampleUsage: { data: { limit: 5, remaining: 5, used: 0 }, status: 'ready' },
+  sampleUsage: {
+    data: { limit: 5, period: '2026-08', policyVersion: 1, remaining: 5, used: 0 },
+    status: 'ready',
+  },
   verification: {
     data: {
       createdAt: '2026-08-09T10:00:00.000Z',
       documents: [],
       id: 'verification-1',
+      identityAssurance: 'provider_verified',
       level: 'verified',
       oneIdLinked: false,
+      providerMode: 'mock',
+      revision: 1,
       role: 'buyer',
+      simulation: true,
       status: 'verified',
-      tenantId: 'tenant-1',
+      step: 'complete',
       updatedAt: '2026-08-09T10:00:00.000Z',
-      userId: 'buyer-1',
     },
     status: 'ready',
   },
@@ -133,6 +163,7 @@ const guestData = (): MarketplaceData => ({
   auth: 'signed-out',
   demo: 'guest',
   local: true,
+  partners: emptyList,
   verification: { data: null, status: 'empty' },
 });
 
@@ -198,7 +229,7 @@ describe('MarketplacePage mutations', () => {
     expect(testState.addToCart).not.toHaveBeenCalled();
 
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addFavorite' }));
-    expect(testState.localActions.toggleFavorite).toHaveBeenCalledWith(product.id);
+    expect(testState.localActions.toggleFavorite).toHaveBeenCalledWith(product);
 
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.close' }));
     expect(screen.queryByRole('status')).toBeNull();
@@ -208,18 +239,7 @@ describe('MarketplacePage mutations', () => {
     testState.marketplaceData = {
       ...guestData(),
       carts: {
-        data: [
-          {
-            createdAt: '2026-08-09T10:00:00.000Z',
-            id: 'guest-cart-seller-1',
-            items: [{ productId: product.id, quantity: 2 }],
-            sellerId: product.supplierId,
-            status: 'open',
-            tenantId: 'guest',
-            updatedAt: '2026-08-09T10:00:00.000Z',
-            userId: 'guest',
-          },
-        ],
+        data: [{ ...cart([line(product.id, 2)]), id: 'guest-cart-seller-1' }],
         status: 'ready',
       },
     };
@@ -394,16 +414,34 @@ const cart = (items: CartViewDto['items']): CartViewDto => ({
   createdAt: '2026-08-09T10:00:00.000Z',
   id: 'cart-1',
   items,
-  sellerId: product.supplierId,
+  seller: { displayName: product.supplierName, region: product.region },
   status: 'open',
-  tenantId: 'tenant-1',
   updatedAt: '2026-08-09T10:00:00.000Z',
-  userId: 'buyer-1',
+});
+
+/** A saved listing, as the favourites endpoint returns it: the summary, not an id. */
+const favorite = (listing: ProductViewDto): MarketplaceFavoriteDto => ({
+  createdAt: '2026-08-10T10:00:00.000Z',
+  listing: {
+    id: listing.id,
+    kind: 'product',
+    sampleAvailable: listing.sampleAvailable,
+    seller: { displayName: listing.supplierName, id: listing.supplierId },
+    title: listing.name,
+  },
+});
+
+/** One basket line, as the API files it: a publication and how much of it. */
+const line = (listingPublicationId: string, quantity: number): CartViewDto['items'][number] => ({
+  listingPublicationId,
+  quantity,
+  sourceKind: 'product',
 });
 
 const contract = (overrides: Partial<ContractViewDto> = {}): ContractViewDto => ({
+  actorParty: 'buyer',
   amountUzs: 2_500_000,
-  buyerUserId: 'buyer-1',
+  buyerPartySnapshot: { legalName: 'Bahor Savdo MChJ', region: 'Samarqand' },
   createdAt: '2026-08-09T10:00:00.000Z',
   deliveryTerms: 'pickup',
   factoringEnabled: false,
@@ -412,27 +450,27 @@ const contract = (overrides: Partial<ContractViewDto> = {}): ContractViewDto => 
     {
       lineTotalUzs: 2_500_000,
       name: product.name,
-      productId: product.id,
       quantity: 2,
+      sourceKind: 'product',
+      sourcePublicationId: product.id,
+      sourceRevision: 1,
       unit: product.unit,
       unitPriceUzs: product.priceUzs,
     },
   ],
-  sellerUserId: 'seller-1',
+  revision: 1,
+  sellerPartySnapshot: { legalName: 'Zamin Agro MChJ', region: 'Samarqand' },
   status: 'draft',
   subject: 'Corn seed supply',
-  tenantId: 'tenant-1',
   updatedAt: '2026-08-10T10:00:00.000Z',
   ...overrides,
 });
 
 const request = (overrides: Partial<BuyerRequestViewDto> = {}): BuyerRequestViewDto => ({
-  buyerUserId: 'buyer-1',
   createdAt: '2026-08-09T10:00:00.000Z',
   id: 'request-1',
   region: 'Samarqand',
   status: 'open',
-  tenantId: 'tenant-1',
   title: 'Corn seed for autumn',
   updatedAt: '2026-08-09T10:00:00.000Z',
   ...overrides,
@@ -443,31 +481,41 @@ const offer = (overrides: Partial<OfferViewDto> = {}): OfferViewDto => ({
   deliveryTerms: 'pickup',
   id: 'offer-1',
   priceUzs: 2_400_000,
-  requestId: 'request-1',
-  sellerUserId: 'seller-1',
+  requestPublicId: 'request-1',
+  seller: { displayName: 'Zamin Agro MChJ', region: 'Samarqand' },
   status: 'pending',
-  tenantId: 'tenant-1',
   ...overrides,
 });
 
-const review = (overrides: Partial<ReviewViewDto> = {}): ReviewViewDto => ({
+const review = (overrides: Partial<MarketplaceReviewDto> = {}): MarketplaceReviewDto => ({
+  assetReferences: [],
   createdAt: '2026-08-10T10:00:00.000Z',
   id: 'review-1',
-  productId: product.id,
+  listingPublicationId: product.id,
   rating: 4,
-  tenantId: 'tenant-1',
-  userId: 'other-buyer',
+  revision: 1,
+  updatedAt: '2026-08-10T10:00:00.000Z',
+  verifiedDeal: true,
   ...overrides,
 });
 
-const sample = (overrides: Partial<SampleViewDto> = {}): SampleViewDto => ({
+const sample = (overrides: Partial<MarketplaceSampleDto> = {}): MarketplaceSampleDto => ({
+  actorRole: 'requester',
   createdAt: '2026-08-10T10:00:00.000Z',
+  delivery: { itemPriceUzs: 0, method: 'pickup', requesterPays: true },
   id: 'sample-1',
-  productId: product.id,
-  sellerId: product.supplierId,
-  status: 'pending',
-  tenantId: 'tenant-1',
-  userId: 'buyer-1',
+  listing: {
+    id: product.id,
+    kind: 'product',
+    sampleAvailable: true,
+    seller: { displayName: product.supplierName, id: product.supplierId },
+    title: product.name,
+  },
+  policyVersion: 1,
+  revision: 1,
+  seasonKey: '2026-Q3',
+  status: 'requested',
+  updatedAt: '2026-08-10T10:00:00.000Z',
   ...overrides,
 });
 
@@ -514,7 +562,7 @@ describe('MarketplacePage journeys', () => {
     for (const call of Object.values(testState.api)) {
       call.mockReset();
     }
-    testState.api.marketplaceControllerListReviews.mockResolvedValue(ok({ items: [] }));
+    testState.api.marketplacePublicControllerListReviews.mockResolvedValue(ok({ items: [] }));
     testState.marketplaceData = signedInData();
   });
 
@@ -526,9 +574,9 @@ describe('MarketplacePage journeys', () => {
   });
 
   it('loads the public ratings of a product and appends the review a buyer just wrote', async () => {
-    testState.api.marketplaceControllerListReviews.mockResolvedValue(ok({ items: [review()] }));
+    testState.api.marketplacePublicControllerListReviews.mockResolvedValue(ok({ items: [review()] }));
     testState.api.marketplaceControllerAddReview.mockResolvedValue(
-      ok(review({ comment: 'Germinated well.', id: 'review-2', rating: 4, userId: 'buyer-1' })),
+      ok(review({ comment: 'Germinated well.', id: 'review-2', rating: 4 })),
     );
     testState.marketplaceData = {
       ...signedInData(),
@@ -539,7 +587,7 @@ describe('MarketplacePage journeys', () => {
     render(<MarketplacePage productId={product.id} view="product" />);
 
     await waitFor(() => {
-      expect(testState.api.marketplaceControllerListReviews).toHaveBeenCalledWith(product.id, {});
+      expect(testState.api.marketplacePublicControllerListReviews).toHaveBeenCalledWith(product.id, {});
     });
     await waitFor(() => {
       expect(within(panel('.dh-review-list')).getByText('4/5')).toBeTruthy();
@@ -554,8 +602,8 @@ describe('MarketplacePage journeys', () => {
 
     await waitFor(() => {
       expect(testState.api.marketplaceControllerAddReview).toHaveBeenCalledWith(
-        product.id,
-        { comment: 'Germinated well.', rating: 4 },
+        { assetReferences: [], comment: 'Germinated well.', listingPublicationId: product.id, rating: 4 },
+        expect.any(String),
         {},
       );
     });
@@ -566,7 +614,7 @@ describe('MarketplacePage journeys', () => {
   });
 
   it('says the ratings are unavailable rather than reporting a product with none', async () => {
-    testState.api.marketplaceControllerListReviews.mockResolvedValue(failed(503));
+    testState.api.marketplacePublicControllerListReviews.mockResolvedValue(failed(503));
 
     render(<MarketplacePage productId={product.id} view="product" />);
 
@@ -577,8 +625,8 @@ describe('MarketplacePage journeys', () => {
 
   it('adds the chosen quantity to the basket and moves the favourite both ways', async () => {
     testState.api.marketplaceControllerAddToCart.mockResolvedValue(ok({ cartId: 'cart-1' }));
-    testState.api.marketplaceControllerAddFavorite.mockResolvedValue(ok({ productId: product.id }));
-    testState.api.marketplaceControllerRemoveFavorite.mockResolvedValue(ok({ productId: product.id }));
+    testState.api.marketplaceControllerAddFavorite.mockResolvedValue(ok(favorite(product)));
+    testState.api.marketplaceControllerRemoveFavorite.mockResolvedValue(ok({}));
 
     const view = render(<MarketplacePage productId={product.id} view="product" />);
 
@@ -587,30 +635,30 @@ describe('MarketplacePage journeys', () => {
 
     await waitFor(() => {
       expect(testState.api.marketplaceControllerAddToCart).toHaveBeenCalledWith(
-        { productId: product.id, quantity: 3 },
+        { actingPartnerId: 'partner-buyer', listingPublicationId: product.id, quantity: 3 },
+        expect.any(String),
         {},
       );
     });
 
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addFavorite' }));
     await waitFor(() => {
-      expect(testState.api.marketplaceControllerAddFavorite).toHaveBeenCalledWith(product.id, {});
+      expect(testState.api.marketplaceControllerAddFavorite).toHaveBeenCalledWith(product.id, expect.any(String), {});
     });
 
     testState.marketplaceData = {
       ...signedInData(),
-      favorites: {
-        data: [
-          { createdAt: '2026-08-10T10:00:00.000Z', productId: product.id, tenantId: 'tenant-1', userId: 'buyer-1' },
-        ],
-        status: 'ready',
-      },
+      favorites: { data: [favorite(product)], status: 'ready' },
     };
     view.rerender(<MarketplacePage productId={product.id} view="product" />);
 
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.removeFavorite' }));
     await waitFor(() => {
-      expect(testState.api.marketplaceControllerRemoveFavorite).toHaveBeenCalledWith(product.id, {});
+      expect(testState.api.marketplaceControllerRemoveFavorite).toHaveBeenCalledWith(
+        product.id,
+        expect.any(String),
+        {},
+      );
     });
   });
 
@@ -704,7 +752,11 @@ describe('MarketplacePage journeys', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'agritech.marketplace.samples.confirm' }));
 
     await waitFor(() => {
-      expect(testState.api.marketplaceControllerRequestSample).toHaveBeenCalledWith({ productId: product.id }, {});
+      expect(testState.api.marketplaceControllerRequestSample).toHaveBeenCalledWith(
+        { deliveryMethod: 'pickup', listingPublicationId: product.id },
+        expect.any(String),
+        {},
+      );
     });
     expect(await screen.findByText('agritech.marketplace.samples.requested')).toBeTruthy();
   });
@@ -712,9 +764,9 @@ describe('MarketplacePage journeys', () => {
   // Once the visitor has confirmed, the dialog is the only thing telling them a
   // write is running: Escape and a click outside must not take it away mid-flight.
   it('holds a confirmation open while the write it started is still running', async () => {
-    let land!: (value: { data: SampleViewDto; response: Response }) => void;
+    let land!: (value: { data: MarketplaceSampleDto; response: Response }) => void;
     testState.api.marketplaceControllerRequestSample.mockReturnValue(
-      new Promise<{ data: SampleViewDto; response: Response }>((resolve) => {
+      new Promise<{ data: MarketplaceSampleDto; response: Response }>((resolve) => {
         land = resolve;
       }),
     );
@@ -738,11 +790,11 @@ describe('MarketplacePage journeys', () => {
   });
 
   it('drops a rating list that lands after the visitor left the product', async () => {
-    let land!: (value: { data: { items: ReviewViewDto[] }; response: Response }) => void;
+    let land!: (value: { data: { items: MarketplaceReviewDto[] }; response: Response }) => void;
     let fail!: (reason: Error) => void;
-    testState.api.marketplaceControllerListReviews
+    testState.api.marketplacePublicControllerListReviews
       .mockReturnValueOnce(
-        new Promise<{ data: { items: ReviewViewDto[] }; response: Response }>((resolve) => {
+        new Promise<{ data: { items: MarketplaceReviewDto[] }; response: Response }>((resolve) => {
           land = resolve;
         }),
       )
@@ -772,7 +824,7 @@ describe('MarketplacePage journeys', () => {
   });
 
   it('records a rating with no comment attached to it', async () => {
-    testState.api.marketplaceControllerAddReview.mockResolvedValue(ok(review({ rating: 5, userId: 'buyer-1' })));
+    testState.api.marketplaceControllerAddReview.mockResolvedValue(ok(review({ rating: 5 })));
     testState.marketplaceData = {
       ...signedInData(),
       contracts: { data: [contract({ status: 'completed' })], status: 'ready' },
@@ -785,14 +837,18 @@ describe('MarketplacePage journeys', () => {
     fireEvent.submit(form);
 
     await waitFor(() => {
-      expect(testState.api.marketplaceControllerAddReview).toHaveBeenCalledWith(product.id, { rating: 5 }, {});
+      expect(testState.api.marketplaceControllerAddReview).toHaveBeenCalledWith(
+        { assetReferences: [], listingPublicationId: product.id, rating: 5 },
+        expect.any(String),
+        {},
+      );
     });
   });
 
   it('names the seller by identifier when the basket holds a product the catalog dropped', async () => {
     testState.marketplaceData = {
       ...signedInData(),
-      carts: { data: [cart([{ productId: 'ghost-1', quantity: 2 }])], status: 'ready' },
+      carts: { data: [cart([line('ghost-1', 2)])], status: 'ready' },
     };
 
     render(<MarketplacePage view="cart" />);
@@ -828,12 +884,7 @@ describe('MarketplacePage journeys', () => {
     testState.marketplaceData = {
       ...signedInData(),
       carts: {
-        data: [
-          cart([
-            { productId: product.id, quantity: 2 },
-            { productId: secondSeed.id, quantity: 1 },
-          ]),
-        ],
+        data: [cart([line(product.id, 2), line(secondSeed.id, 1)])],
         status: 'ready',
       },
       catalog: { data: [product, secondSeed], status: 'ready' },
@@ -848,6 +899,7 @@ describe('MarketplacePage journeys', () => {
         'cart-1',
         product.id,
         { quantity: 3 },
+        expect.any(String),
         {},
       );
     });
@@ -856,7 +908,12 @@ describe('MarketplacePage journeys', () => {
     const decreases = screen.getAllByRole('button', { name: 'agritech.marketplace.cart.decrease' });
     fireEvent.click(decreases[1] as HTMLElement);
     await waitFor(() => {
-      expect(testState.api.marketplaceControllerRemoveCartItem).toHaveBeenCalledWith('cart-1', secondSeed.id, {});
+      expect(testState.api.marketplaceControllerRemoveCartItem).toHaveBeenCalledWith(
+        'cart-1',
+        secondSeed.id,
+        expect.any(String),
+        {},
+      );
     });
 
     fireEvent.click(screen.getByLabelText('agritech.marketplace.product.pickup'));
@@ -868,6 +925,7 @@ describe('MarketplacePage journeys', () => {
       expect(testState.api.marketplaceControllerCheckoutCart).toHaveBeenCalledWith(
         'cart-1',
         { deliveryTerms: 'pickup' },
+        expect.any(String),
         {},
       );
     });
@@ -877,7 +935,7 @@ describe('MarketplacePage journeys', () => {
   it('stops an unverified basket at the identity step instead of at a draft contract', () => {
     const navigate = vi.fn();
     testState.marketplaceData = withIdentity(
-      { ...signedInData(), carts: { data: [cart([{ productId: product.id, quantity: 1 }])], status: 'ready' } },
+      { ...signedInData(), carts: { data: [cart([line(product.id, 1)])], status: 'ready' } },
       { level: 'basic', status: 'pending' },
     );
 
@@ -892,7 +950,7 @@ describe('MarketplacePage journeys', () => {
   it('keeps a guest basket quantity change in this browser', () => {
     testState.marketplaceData = {
       ...guestData(),
-      carts: { data: [cart([{ productId: product.id, quantity: 2 }])], status: 'ready' },
+      carts: { data: [cart([line(product.id, 2)])], status: 'ready' },
     };
 
     render(<MarketplacePage view="cart" />);
@@ -944,6 +1002,7 @@ describe('MarketplacePage journeys', () => {
     await waitFor(() => {
       expect(testState.api.marketplaceControllerCreateRequest).toHaveBeenCalledWith(
         {
+          actingPartnerId: 'partner-buyer',
           budgetUzs: 2_500_000,
           deadline: '2026-09-01',
           product: 'Corn seed',
@@ -952,6 +1011,7 @@ describe('MarketplacePage journeys', () => {
           title: 'Corn seed for autumn',
           volume: '40 t',
         },
+        expect.any(String),
         {},
       );
     });
@@ -963,9 +1023,9 @@ describe('MarketplacePage journeys', () => {
     testState.marketplaceData = withIdentity(
       {
         ...signedInData(),
-        requests: { data: [request({ buyerUserId: 'buyer-9', id: 'request-9' })], status: 'ready' },
+        requests: { data: [request({ id: 'request-9' })], status: 'ready' },
       },
-      { role: 'seller', userId: 'seller-1' },
+      { role: 'seller' },
     );
 
     render(<MarketplacePage view="requests" />);
@@ -992,12 +1052,14 @@ describe('MarketplacePage journeys', () => {
       expect(testState.api.marketplaceControllerMakeOffer).toHaveBeenCalledWith(
         'request-9',
         {
+          actingPartnerId: 'partner-supplier',
           deliveryDays: 7,
           deliveryNote: 'Delivered to the gate.',
           deliveryPriceUzs: 150_000,
           deliveryTerms: 'seller_delivery',
           priceUzs: 2_400_000,
         },
+        expect.any(String),
         {},
       );
     });
@@ -1011,7 +1073,7 @@ describe('MarketplacePage journeys', () => {
   it('chooses the cheapest offer and opens the contract it drafted', async () => {
     const navigate = vi.fn();
     testState.api.marketplaceControllerChooseOffer.mockResolvedValue(
-      ok({ contractId: 'contract-1', offerId: 'offer-2', requestId: 'request-1', sellerUserId: 'seller-2' }),
+      ok({ contractId: 'contract-1', offerId: 'offer-2', requestPublicId: 'request-1' }),
     );
     testState.marketplaceData = {
       ...signedInData(),
@@ -1020,7 +1082,7 @@ describe('MarketplacePage journeys', () => {
         data: {
           'request-1': [
             offer({ deliveryDays: 4, deliveryPriceUzs: 120_000, deliveryTerms: 'seller_delivery', id: 'offer-1' }),
-            offer({ id: 'offer-2', priceUzs: 2_100_000, sellerUserId: 'seller-2' }),
+            offer({ id: 'offer-2', priceUzs: 2_100_000 }),
             offer({ id: 'offer-3', priceUzs: 2_900_000, status: 'declined' }),
           ],
         },
@@ -1045,7 +1107,12 @@ describe('MarketplacePage journeys', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'agritech.marketplace.orders.confirmOffer' }));
 
     await waitFor(() => {
-      expect(testState.api.marketplaceControllerChooseOffer).toHaveBeenCalledWith('request-1', 'offer-2', {});
+      expect(testState.api.marketplaceControllerChooseOffer).toHaveBeenCalledWith(
+        'request-1',
+        'offer-2',
+        expect.any(String),
+        {},
+      );
     });
     expect(navigate).toHaveBeenCalledWith('/contracts/contract-1');
   });
@@ -1096,7 +1163,11 @@ describe('MarketplacePage journeys', () => {
     fireEvent.click(within(dialog).getByRole('button', { name: 'agritech.marketplace.contract.signOwnParty' }));
 
     await waitFor(() => {
-      expect(testState.api.marketplaceControllerSignContract).toHaveBeenCalledWith('contract-1', {});
+      expect(testState.api.marketplaceControllerSignContract).toHaveBeenCalledWith(
+        'contract-1',
+        expect.any(String),
+        {},
+      );
     });
     expect(await screen.findByText('agritech.marketplace.contract.signatureRecorded')).toBeTruthy();
   });
@@ -1108,9 +1179,9 @@ describe('MarketplacePage journeys', () => {
     testState.marketplaceData = withIdentity(
       {
         ...signedInData(),
-        contracts: { data: [contract({ deliveryTerms: 'seller_delivery' })], status: 'ready' },
+        contracts: { data: [contract({ actorParty: 'seller', deliveryTerms: 'seller_delivery' })], status: 'ready' },
       },
-      { role: 'seller', userId: 'seller-1' },
+      { role: 'seller' },
     );
 
     render(<MarketplacePage contractId="contract-1" view="contract" />);
@@ -1128,7 +1199,8 @@ describe('MarketplacePage journeys', () => {
     await waitFor(() => {
       expect(testState.api.marketplaceControllerUpdateContractDeliveryQuote).toHaveBeenCalledWith(
         'contract-1',
-        { deliveryDays: 5, deliveryNote: 'Two trucks.', deliveryPriceUzs: 150_000 },
+        { deliveryDays: 5, deliveryNote: 'Two trucks.', deliveryPriceUzs: 150_000, expectedRevision: 1 },
+        expect.any(String),
         {},
       );
     });
@@ -1148,7 +1220,7 @@ describe('MarketplacePage journeys', () => {
     render(<MarketplacePage navigate={navigate} view="account" />);
 
     expect(screen.getByText('agritech.marketplace.account.role.buyer')).toBeTruthy();
-    expect(screen.getByText('agritech.marketplace.samples.status.pending')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.samples.status.requested')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: /Corn seed supply/u }));
     expect(navigate).toHaveBeenCalledWith('/contracts/contract-1');
   });
@@ -1170,12 +1242,7 @@ describe('MarketplacePage journeys', () => {
     testState.marketplaceData = {
       ...signedInData(),
       catalog: { data: [product, secondSeed], status: 'ready' },
-      favorites: {
-        data: [
-          { createdAt: '2026-08-10T10:00:00.000Z', productId: secondSeed.id, tenantId: 'tenant-1', userId: 'buyer-1' },
-        ],
-        status: 'ready',
-      },
+      favorites: { data: [favorite(secondSeed)], status: 'ready' },
     };
 
     const view = render(<MarketplacePage locationSearch="?q=wheat" navigate={navigate} view="catalog" />);
@@ -1198,10 +1265,9 @@ describe('MarketplacePage journeys', () => {
         createdAt: '2026-08-10T10:00:00.000Z',
         id: 'consultation-1',
         kind: 'generic',
-        productIds: [product.id],
+        listingPublicationIds: [product.id],
         question: 'What corn seed do you have?',
-        tenantId: 'tenant-1',
-        userId: 'buyer-1',
+        updatedAt: '2026-08-10T10:00:00.000Z',
       }),
     );
 
@@ -1215,6 +1281,7 @@ describe('MarketplacePage journeys', () => {
     await waitFor(() => {
       expect(testState.api.marketplaceControllerAskAi).toHaveBeenCalledWith(
         { kind: 'generic', question: 'What corn seed do you have?' },
+        expect.any(String),
         {},
       );
     });
@@ -1228,7 +1295,7 @@ describe('MarketplacePage journeys', () => {
       contracts: { data: [contract({ status: 'completed' })], status: 'ready' },
       myRequests: { data: [request({ status: 'offering' })], status: 'ready' },
       offersByRequest: { data: { 'request-1': [offer()] }, status: 'ready' },
-      requests: { data: [request({ buyerUserId: 'buyer-9', id: 'request-9' })], status: 'ready' },
+      requests: { data: [request({ id: 'request-9' })], status: 'ready' },
     };
 
     const view = render(<MarketplacePage view="requests" />);
@@ -1237,7 +1304,7 @@ describe('MarketplacePage journeys', () => {
     expect(screen.getByRole('status').textContent).toContain('agritech.marketplace.demo.signInRequired');
     expect(testState.api.marketplaceControllerChooseOffer).not.toHaveBeenCalled();
 
-    testState.api.marketplaceControllerListReviews.mockResolvedValue(ok({ items: [] }));
+    testState.api.marketplacePublicControllerListReviews.mockResolvedValue(ok({ items: [] }));
     view.rerender(<MarketplacePage productId={product.id} view="product" />);
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.sample' }));
     expect(testState.api.marketplaceControllerRequestSample).not.toHaveBeenCalled();
@@ -1255,7 +1322,7 @@ describe('MarketplacePage journeys', () => {
         {
           ...guestData(),
           contracts: { data: [contract({ status: 'completed' })], status: 'ready' },
-          requests: { data: [request({ buyerUserId: 'buyer-9', id: 'request-9' })], status: 'ready' },
+          requests: { data: [request({ id: 'request-9' })], status: 'ready' },
           ...overrides,
         },
         {},
@@ -1295,7 +1362,7 @@ describe('MarketplacePage journeys', () => {
     expect(panel('.dh-notice').textContent).toContain('agritech.marketplace.demo.signInRequired');
 
     // The stale record reads as a seller, so the feed offers the quote form.
-    testState.marketplaceData = withIdentity(staleSession(), { role: 'seller', userId: 'seller-1' });
+    testState.marketplaceData = withIdentity(staleSession(), { role: 'seller' });
     view.rerender(<MarketplacePage view="requests" />);
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }));
     const offerForm = panel('.dh-inline-form');

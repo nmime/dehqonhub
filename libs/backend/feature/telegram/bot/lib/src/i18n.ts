@@ -4,6 +4,8 @@ import ruTelegramCatalog from '@app/i18n-ru-bots/telegram.json';
 import ruBotSharedCatalog from '@app/i18n-ru-bots/shared.json';
 import uzTelegramCatalog from '@app/i18n-uz-bots/telegram.json';
 import uzBotSharedCatalog from '@app/i18n-uz-bots/shared.json';
+import uzCyrlTelegramCatalog from '@app/i18n-uz-cyrl-bots/telegram.json';
+import uzCyrlBotSharedCatalog from '@app/i18n-uz-cyrl-bots/shared.json';
 import { translations as backendTranslations } from '@app/backend-common-i18n';
 import {
   defaultLocale,
@@ -43,6 +45,11 @@ export const telegramTranslations = {
     ['backend-common', backendTranslations.uz],
     ['bots/shared.json', uzBotSharedCatalog],
     ['bots/telegram.json', uzTelegramCatalog],
+  ]),
+  'uz-cyrl': mergeLocaleCatalogFiles('uz-cyrl', [
+    ['backend-common', backendTranslations['uz-cyrl']],
+    ['bots/shared.json', uzCyrlBotSharedCatalog],
+    ['bots/telegram.json', uzCyrlTelegramCatalog],
   ]),
 } as const satisfies Record<Locale, RuntimeLocaleCatalog>;
 

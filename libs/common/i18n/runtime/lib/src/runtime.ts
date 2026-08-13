@@ -3,20 +3,19 @@ export type RuntimeLocaleCatalogFileEntry<FileName extends string = string> = re
 
 export type TranslationParams = Record<string, string | number | boolean | null | undefined>;
 
-export const supportedLocales = ['en', 'ru', 'uz'] as const;
+export const supportedLocales = ['en', 'ru', 'uz', 'uz-cyrl'] as const;
 export type Locale = (typeof supportedLocales)[number];
 // eslint-disable-next-line sonarjs/redundant-type-aliases -- Public domain name retained alongside the locale representation.
 export type Language = Locale;
 export type RuntimeTranslations = Record<Locale, RuntimeLocaleCatalog>;
 export const defaultLocale = 'en' satisfies Locale;
 
-type LanguageMap = {
-  readonly [CurrentLocale in Locale as Capitalize<CurrentLocale>]: CurrentLocale;
-};
-
-export const Language = Object.freeze(
-  Object.fromEntries(supportedLocales.map((locale) => [`${locale.charAt(0).toUpperCase()}${locale.slice(1)}`, locale])),
-) as LanguageMap;
+export const Language = Object.freeze({
+  En: 'en',
+  Ru: 'ru',
+  Uz: 'uz',
+  UzCyrl: 'uz-cyrl',
+} as const satisfies Record<string, Locale>);
 
 export type Localizations<Value> = Partial<Record<Language | 'default', Value>>;
 
@@ -94,12 +93,17 @@ export function normalizeLocale(value: string | null | undefined): Locale | unde
     return undefined;
   }
 
-  const normalized = value.trim().toLowerCase().replace('_', '-');
+  const normalized = value.trim().toLowerCase().replaceAll('_', '-');
   if (!normalized) {
     return undefined;
   }
 
-  const candidates = [normalized, normalized.split('-')[0] ?? normalized];
+  const [language, scriptOrRegion] = normalized.split('-');
+  const candidates = [
+    normalized,
+    language && scriptOrRegion ? `${language}-${scriptOrRegion}` : undefined,
+    language,
+  ].filter((candidate): candidate is string => Boolean(candidate));
   return candidates.find((candidate): candidate is Locale => supportedLocaleSet.has(candidate));
 }
 

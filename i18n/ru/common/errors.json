@@ -22,6 +22,8 @@
   "errors.step-up-required.detail": "Войдите снова перед выполнением этого действия, связанного с безопасностью.",
   "errors.last-auth-method-unlink-forbidden.title": "Нельзя отвязать последний способ входа",
   "errors.last-auth-method-unlink-forbidden.detail": "Привяжите другой способ входа, прежде чем отвязывать этот.",
+  "errors.marketplace-provider-unavailable.title": "Провайдер маркетплейса недоступен",
+  "errors.marketplace-provider-unavailable.detail": "Запрошенная возможность провайдера маркетплейса временно недоступна или отключена.",
   "errors.validation-error.title": "Ошибка валидации",
   "errors.validation-error.detail": "Валидация запроса не удалась.",
   "errors.api.requestFailed": "Запрос не удался со статусом {{status}}.",

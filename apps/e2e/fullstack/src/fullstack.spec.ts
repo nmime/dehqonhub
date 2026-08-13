@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016 REQ-FRONTEND-JOURNEY-001
+// @requirements REQ-AGRITECH-ROUTING-015 REQ-FRONTEND-JOURNEY-001
 // Evidence for: REQ-AGRITECH-ROUTING-015 REQ-AUTH-FRONTEND-009 REQ-AUTH-IDENTITY-005 REQ-AUTH-SESSION-002 REQ-FRONTEND-ACCESSIBILITY-003 REQ-FRONTEND-ERROR-005 REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-SHELL-004 REQ-FRONTEND-SSR-007 REQ-NOTIFY-PREFERENCE-006
 import { randomUUID } from 'node:crypto';
 import { expect, test, type Locator, type Page } from '@playwright/test';
@@ -46,6 +46,13 @@ interface AdminAuditResponse {
   data: {
     items: Array<{ action: string; resource: string; targetId?: string }>;
   };
+}
+
+interface PixelInsets {
+  bottom: number;
+  left: number;
+  right: number;
+  top: number;
 }
 
 const authPassword = 'fullstack-secret';
@@ -137,6 +144,28 @@ async function expectPageQuality(page: Page, label: string): Promise<void> {
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(horizontalOverflow, `${label} should not overflow the viewport horizontally`).toBeLessThanOrEqual(1);
+}
+
+async function readPaddingInsets(locator: Locator): Promise<PixelInsets> {
+  return locator.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      bottom: Number.parseFloat(style.paddingBottom),
+      left: Number.parseFloat(style.paddingLeft),
+      right: Number.parseFloat(style.paddingRight),
+      top: Number.parseFloat(style.paddingTop),
+    };
+  });
+}
+
+async function applyTelegramSafeArea(page: Page, insets: PixelInsets): Promise<void> {
+  await page.locator('html').evaluate((element, safeArea) => {
+    const root = element as HTMLElement;
+    root.style.setProperty('--tg-safe-area-inset-top', `${safeArea.top}px`);
+    root.style.setProperty('--tg-safe-area-inset-right', `${safeArea.right}px`);
+    root.style.setProperty('--tg-safe-area-inset-bottom', `${safeArea.bottom}px`);
+    root.style.setProperty('--tg-safe-area-inset-left', `${safeArea.left}px`);
+  }, insets);
 }
 
 async function focusWithKeyboard(page: Page, target: Locator, label: string): Promise<void> {
@@ -345,13 +374,80 @@ test('@critical user login honors safe return navigation, survives reload, and l
 
   await gotoWithRetry(page, urls.userApp);
   await expect(page.getByRole('heading', { level: 1, name: 'Everything for your farm in one place' })).toBeVisible();
+  await expect(page).toHaveTitle('DehqonHub');
+  const brandMarks = page.locator('.dh-brand__mark img');
+  await expect(brandMarks).toHaveCount(2);
+  expect(
+    await brandMarks.evaluateAll((marks) =>
+      marks.every((mark) => mark instanceof HTMLImageElement && mark.complete && mark.naturalWidth === 512),
+    ),
+  ).toBe(true);
   await expect(page.getByRole('button', { name: 'Language' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Theme' })).toBeVisible();
+  await page.getByRole('button', { name: 'Language' }).click();
+  await page.getByRole('menuitem', { name: 'Russian' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Всё для вашего хозяйства в одном месте' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  await expectPageQuality(page, 'DehqonHub at the 375px Russian-content floor');
+
+  await page.getByRole('button', { name: 'Язык' }).click();
+  await page.getByRole('menuitem', { name: 'Узбекский (латиница)', exact: true }).click();
+  await expect(page.getByRole('heading', { level: 1, name: "Xo'jaligingiz uchun hammasi bir joyda" })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'uz');
+
+  await page.getByRole('button', { name: 'Til' }).click();
+  await page.getByRole('menuitem', { name: 'Inglizcha' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Everything for your farm in one place' })).toBeVisible();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'en');
+
+  await page.setViewportSize({ width: 320, height: 720 });
+  const safeArea: PixelInsets = { bottom: 28, left: 30, right: 26, top: 24 };
+  await applyTelegramSafeArea(page, safeArea);
+  const compactBrand = page.locator('.dh-header .dh-brand__mark');
+  await expect(compactBrand).toBeVisible();
+  const compactBrandBox = await compactBrand.boundingBox();
+  expect(compactBrandBox?.width).toBeGreaterThanOrEqual(44);
+  expect(compactBrandBox?.height).toBeGreaterThanOrEqual(44);
+  await expect(page.locator('.dh-header .dh-brand__wordmark')).toBeHidden();
+  const mobileNavigationInsets = await readPaddingInsets(page.locator('.dh-mobile-nav'));
+  expect(mobileNavigationInsets.bottom).toBeGreaterThanOrEqual(safeArea.bottom);
+  expect(mobileNavigationInsets.left).toBeGreaterThanOrEqual(safeArea.left);
+  expect(mobileNavigationInsets.right).toBeGreaterThanOrEqual(safeArea.right);
+  const confirmationDialogInsets = await page.evaluate(() => {
+    const probe = document.createElement('div');
+    probe.className = 'dh-dialog-backdrop';
+    document.body.append(probe);
+    const style = getComputedStyle(probe);
+    const result = {
+      bottom: Number.parseFloat(style.paddingBottom),
+      left: Number.parseFloat(style.paddingLeft),
+      right: Number.parseFloat(style.paddingRight),
+      top: Number.parseFloat(style.paddingTop),
+    };
+    probe.remove();
+    return result;
+  });
+  expect(confirmationDialogInsets).toEqual(safeArea);
+  await expectPageQuality(page, 'DehqonHub at the 320px viewport floor');
 
   const aiLauncher = page.getByRole('button', { name: 'Open AI assistant' });
   await aiLauncher.click();
   const aiDialog = page.getByRole('dialog', { name: 'AI assistant' });
   await expect(aiDialog).toBeVisible();
+  const aiHeaderInsets = await readPaddingInsets(aiDialog.locator(':scope > header'));
+  expect(aiHeaderInsets.top).toBeGreaterThanOrEqual(safeArea.top);
+  expect(aiHeaderInsets.left).toBeGreaterThanOrEqual(safeArea.left);
+  expect(aiHeaderInsets.right).toBeGreaterThanOrEqual(safeArea.right);
+  const aiBodyInsets = await readPaddingInsets(aiDialog.locator('.dh-ai-panel__body'));
+  expect(aiBodyInsets.left).toBeGreaterThanOrEqual(safeArea.left);
+  expect(aiBodyInsets.right).toBeGreaterThanOrEqual(safeArea.right);
+  const aiComposerInsets = await readPaddingInsets(aiDialog.locator('.dh-ai-panel__composer'));
+  expect(aiComposerInsets.left).toBeGreaterThanOrEqual(safeArea.left);
+  expect(aiComposerInsets.right).toBeGreaterThanOrEqual(safeArea.right);
+  const aiFinePrintInsets = await readPaddingInsets(aiDialog.locator('.dh-ai-panel__fine-print'));
+  expect(aiFinePrintInsets.bottom).toBeGreaterThanOrEqual(safeArea.bottom);
+  expect(aiFinePrintInsets.left).toBeGreaterThanOrEqual(safeArea.left);
+  expect(aiFinePrintInsets.right).toBeGreaterThanOrEqual(safeArea.right);
   await aiDialog.getByRole('button', { name: 'Close' }).click();
   await expect(aiLauncher).toBeFocused();
 
@@ -361,12 +457,24 @@ test('@critical user login honors safe return navigation, survives reload, and l
   await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeVisible();
 
   await gotoWithRetry(page, urls.userApp);
+  await applyTelegramSafeArea(page, safeArea);
   await page.getByRole('button', { name: 'Catalog', exact: true }).first().click();
   await expect(page).toHaveURL(`${urls.userApp}/catalog`);
   await expect(page.getByRole('heading', { level: 1, name: 'Catalog' })).toBeVisible();
-  await page.getByRole('button', { name: 'Verification', exact: true }).click();
+  await page.getByRole('button', { name: 'Open filters' }).click();
+  const filterDialog = page.getByRole('dialog', { name: 'Catalog filters' });
+  await expect(filterDialog).toBeVisible();
+  const filterSheetInsets = await readPaddingInsets(filterDialog.locator('.dh-mobile-filter-sheet'));
+  expect(filterSheetInsets.bottom).toBeGreaterThanOrEqual(safeArea.bottom);
+  expect(filterSheetInsets.left).toBeGreaterThanOrEqual(safeArea.left);
+  expect(filterSheetInsets.right).toBeGreaterThanOrEqual(safeArea.right);
+  await filterDialog.getByRole('button', { name: 'Close' }).click();
+  await page.getByRole('button', { name: 'For sellers: Verification', exact: true }).click();
   await expect(page).toHaveURL(`${urls.userApp}/verification`);
-  await expect(page.getByRole('heading', { name: 'Verification provider unavailable' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Get verified' })).toBeVisible();
+  await expect(page.getByText('Identity linking · Disabled')).toBeVisible();
+  await expect(page.getByText('Document storage · Disabled')).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Start verification' })).toBeVisible();
 
   await gotoWithRetry(page, `${urls.userApp}/profile`);
   await expect(page.getByText(`Ready: ${email}`)).toBeVisible();

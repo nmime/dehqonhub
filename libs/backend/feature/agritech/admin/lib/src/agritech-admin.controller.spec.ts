@@ -8,7 +8,11 @@ import { createValidationPipe } from '@app/backend-common-validation';
 import { AdminAgriTechApprovePermission, AdminAgriTechWritePermission } from '@app/common-authz';
 import type { AuthenticatedPrincipal, AuthenticatedRequest } from '@app/backend-feature-auth-shared';
 import { createAdminAbility, type AdminAuthorizedRequest } from '@app/backend-feature-admin-shared';
-import { AgriTechOperationsService, MarketplaceService } from '@app/backend-feature-agritech-main';
+import {
+  AgriTechOperationsService,
+  MarketplacePublicService,
+  MarketplaceService,
+} from '@app/backend-feature-agritech-main';
 import { AgriTechAdminController, ReviewVerificationDto } from './agritech-admin.controller';
 
 const principal = {
@@ -63,22 +67,31 @@ function fixture() {
     reviewVerification: vi.fn().mockResolvedValue({ id: 'v-1', status: 'verified' }),
     listTenantContracts: vi.fn().mockResolvedValue([]),
   };
+  const marketplacePublic = {
+    listOwnedPublications: vi.fn().mockResolvedValue({ listings: [], requests: [] }),
+    listPendingModeration: vi.fn().mockResolvedValue({ listings: [], requests: [], sellerProfiles: [] }),
+    reviewListingPublication: vi.fn(),
+    reviewRequestPublication: vi.fn(),
+    reviewSellerProfile: vi.fn(),
+  };
   return {
     service,
     marketplace,
+    marketplacePublic,
     controller: new AgriTechAdminController(
       service as unknown as AgriTechOperationsService,
       marketplace as unknown as MarketplaceService,
+      marketplacePublic as unknown as MarketplacePublicService,
     ),
   };
 }
 
 describe('AgriTechAdminController', () => {
   it.each([
-    [{ decision: 'rejected' }, false],
-    [{ decision: 'verified', reason: 'criteria_not_met' }, false],
-    [{ decision: 'rejected', reason: 'identity_mismatch' }, true],
-    [{ decision: 'verified' }, true],
+    [{ decision: 'rejected', expectedRevision: 1 }, false],
+    [{ decision: 'verified', expectedRevision: 1, reason: 'criteria_not_met' }, false],
+    [{ decision: 'rejected', expectedRevision: 1, reason: 'identity_mismatch' }, true],
+    [{ decision: 'verified', expectedRevision: 1 }, true],
   ] as const)('validates verification decision provenance for %j', async (input, valid) => {
     const dto = Object.assign(new ReviewVerificationDto(), input);
     expect((await validate(dto)).length === 0).toBe(valid);
@@ -87,13 +100,26 @@ describe('AgriTechAdminController', () => {
   it('derives verification review tenant and reviewer identity from the authenticated principal', async () => {
     const { marketplace, controller } = fixture();
     marketplace.reviewVerification.mockResolvedValueOnce({
+      caseRevision: 1,
+      createdAt: new Date('2026-08-01T00:00:00.000Z'),
+      documents: [],
       id: 'verification-1',
+      identityAssurance: 'none',
+      level: 'basic',
+      oneIdLinked: false,
+      providerMode: 'none',
       rejectionReason: 'identity_mismatch',
+      role: 'buyer',
       status: 'rejected',
+      tenantId: 'tenant-1',
+      updatedAt: new Date('2026-08-01T00:00:00.000Z'),
+      userId: 'buyer-1',
+      version: 1,
     });
 
-    const result = await controller.reviewVerification(principal, 'verification-1', {
+    const result = await controller.reviewVerification(principal, 'verification-1', 'verification-review-0001', {
       decision: 'rejected',
+      expectedRevision: 0,
       reason: 'identity_mismatch',
     });
 
@@ -102,14 +128,14 @@ describe('AgriTechAdminController', () => {
       'verification-1',
       'rejected',
       'operator-1',
+      0,
+      'verification-review-0001',
       'identity_mismatch',
     );
-    expect(result).toEqual({
-      data: {
-        id: 'verification-1',
-        rejectionReason: 'identity_mismatch',
-        status: 'rejected',
-      },
+    expect(result.data).toMatchObject({
+      id: 'verification-1',
+      rejectionReason: 'identity_mismatch',
+      status: 'rejected',
     });
   });
 
@@ -140,12 +166,13 @@ describe('AgriTechAdminController', () => {
       url: '/admin/pilots/not-a-uuid/status',
     },
   ])('rejects a malformed id on the production $caseName route before invoking a service', async (testCase) => {
-    const { marketplace, service } = fixture();
+    const { marketplace, marketplacePublic, service } = fixture();
     const moduleRef = await Test.createTestingModule({
       controllers: [AgriTechAdminController],
       providers: [
         { provide: AgriTechOperationsService, useValue: service },
         { provide: MarketplaceService, useValue: marketplace },
+        { provide: MarketplacePublicService, useValue: marketplacePublic },
       ],
     }).compile();
     const app = moduleRef.createNestApplication<NestFastifyApplication>(new FastifyAdapter());

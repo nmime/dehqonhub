@@ -1,4 +1,4 @@
-// @requirements REQ-RUNTIME-DELIVERY-009 REQ-AGRITECH-DEPLOYMENT-014
+// @requirements REQ-RUNTIME-DELIVERY-009 REQ-AGRITECH-DEPLOYMENT-014 REQ-AGRITECH-NOTIFICATION-022
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -64,6 +64,25 @@ test('keeps production Compose process diagnostics fixed and secret-safe', () =>
   assert.match(productionComposeDiagnostics.configurationFailure, /documented arguments and required settings/u);
   assert.match(productionComposeDiagnostics.executionFailure, /Docker availability/u);
   assert.doesNotMatch(serialized, /database|domain|profile|public|secret|tls/iu);
+});
+
+test('rejects mock marketplace providers in production Compose configuration', () => {
+  for (const key of [
+    'MARKETPLACE_ONEID_PROVIDER_MODE',
+    'MARKETPLACE_DOCUMENT_PROVIDER_MODE',
+    'MARKETPLACE_CONTRACT_ARTIFACT_STORAGE_PROVIDER_MODE',
+    'MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_MODE',
+    'MARKETPLACE_QUALIFIED_SIGNATURE_PROVIDER_MODE',
+    'MARKETPLACE_PROMOTION_BILLING_PROVIDER_MODE',
+    'MARKETPLACE_DIRECT_PAYMENT_PROVIDER_MODE',
+    'MARKETPLACE_FACTORING_PROVIDER_MODE',
+    'MARKETPLACE_NOTIFICATION_PROVIDER_MODE',
+  ]) {
+    assert.throws(
+      () => buildComposeInvocation(['config', '--env-file=.env.production.example'], { [key]: 'mock' }),
+      new RegExp(`${key}=mock is forbidden in production deployment configuration\\.`, 'u'),
+    );
+  }
 });
 
 test('reports fixed execution diagnostics for Docker launch and exit failures', () => {

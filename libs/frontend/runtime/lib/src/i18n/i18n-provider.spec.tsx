@@ -19,6 +19,10 @@ const testTranslations = {
     ...sharedFrontendTranslations.uz,
     'landing.title': 'Ishlab chiqarishga tayyor full-stack asosni ishga tushiring',
   },
+  'uz-cyrl': {
+    ...sharedFrontendTranslations['uz-cyrl'],
+    'landing.title': 'Ишлаб чиқаришга тайёр full-stack асосни ишга туширинг',
+  },
 } satisfies FrontendTranslations;
 
 function Example() {

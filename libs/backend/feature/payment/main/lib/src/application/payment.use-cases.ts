@@ -155,7 +155,7 @@ export class CreatePaymentUseCase {
       transactionId: transaction.id,
       provider: input.provider,
       state: transaction.state,
-      checkoutUrl: checkoutUrl(provider, transaction, input.returnUrl, input.locale),
+      checkoutUrl: checkoutUrl(provider, transaction, input.returnUrl, providerLocale(input.locale)),
     };
   }
 
@@ -347,6 +347,10 @@ function checkoutUrl(
     url.searchParams.set('return_url', returnUrl);
   }
   return url.toString();
+}
+
+function providerLocale(locale: CreatePaymentDto['locale']): 'en' | 'ru' | 'uz' {
+  return locale === 'uz-cyrl' ? 'uz' : locale;
 }
 
 function unwrap(result: PaymentRepositoryResult): PaymentTransaction {

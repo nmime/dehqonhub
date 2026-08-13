@@ -5,12 +5,9 @@ import {
   canOfferInMarketplace,
   isContractTransitionAllowed,
   isRequestTransitionAllowed,
-  isSampleRequestAllowed,
-  isSampleTransitionAllowed,
+  hasRequiredVerificationDocuments,
   isVerificationAllowed,
   isVerificationReviewReasonValid,
-  maxMonthlySamples,
-  samplesRemainingThisMonth,
 } from './marketplace-policies';
 
 describe('marketplace policies', () => {
@@ -22,20 +19,6 @@ describe('marketplace policies', () => {
     expect(canOfferInMarketplace('farmer')).toBe(true);
     expect(canOfferInMarketplace('buyer')).toBe(false);
     expect(canOfferInMarketplace(undefined)).toBe(false);
-  });
-
-  it('caps samples at five per month', () => {
-    expect(maxMonthlySamples).toBe(5);
-    expect(samplesRemainingThisMonth(2)).toBe(3);
-    expect(samplesRemainingThisMonth(5)).toBe(0);
-    expect(samplesRemainingThisMonth(9)).toBe(0);
-  });
-
-  it('allows a sample only for verified users under the monthly cap', () => {
-    expect(isSampleRequestAllowed({ verified: true, requestsThisMonth: 0 })).toBe(true);
-    expect(isSampleRequestAllowed({ verified: true, requestsThisMonth: 4 })).toBe(true);
-    expect(isSampleRequestAllowed({ verified: true, requestsThisMonth: 5 })).toBe(false);
-    expect(isSampleRequestAllowed({ verified: false, requestsThisMonth: 0 })).toBe(false);
   });
 
   it('gates verification resubmission on status', () => {
@@ -53,6 +36,20 @@ describe('marketplace policies', () => {
     expect(isVerificationReviewReasonValid('verified', 'criteria_not_met')).toBe(false);
   });
 
+  it('asks farmers for land or lease proof on top of the farm document', () => {
+    const documents = (...kinds: readonly string[]) => kinds.map((kind) => ({ kind }) as never);
+
+    expect(hasRequiredVerificationDocuments('farmer', documents('farm', 'land'))).toBe(true);
+    expect(hasRequiredVerificationDocuments('farmer', documents('farm', 'lease'))).toBe(true);
+    expect(hasRequiredVerificationDocuments('farmer', documents('farm'))).toBe(false);
+    expect(hasRequiredVerificationDocuments('farmer', documents('land', 'lease'))).toBe(false);
+    // A farm document does nothing for the commercial roles, and vice versa.
+    expect(hasRequiredVerificationDocuments('seller', documents('business'))).toBe(true);
+    expect(hasRequiredVerificationDocuments('buyer', documents('business'))).toBe(true);
+    expect(hasRequiredVerificationDocuments('seller', documents('farm', 'land'))).toBe(false);
+    expect(hasRequiredVerificationDocuments('farmer', documents('business'))).toBe(false);
+  });
+
   it('validates contract transitions', () => {
     expect(isContractTransitionAllowed('draft', 'signed')).toBe(true);
     expect(isContractTransitionAllowed('draft', 'cancelled')).toBe(true);
@@ -68,12 +65,5 @@ describe('marketplace policies', () => {
     expect(isRequestTransitionAllowed('offering', 'selected')).toBe(true);
     expect(isRequestTransitionAllowed('open', 'selected')).toBe(false);
     expect(isRequestTransitionAllowed('selected', 'open')).toBe(false);
-  });
-
-  it('validates sample lifecycle transitions', () => {
-    expect(isSampleTransitionAllowed('pending', 'shipped')).toBe(true);
-    expect(isSampleTransitionAllowed('shipped', 'delivered')).toBe(true);
-    expect(isSampleTransitionAllowed('pending', 'delivered')).toBe(false);
-    expect(isSampleTransitionAllowed('delivered', 'shipped')).toBe(false);
   });
 });

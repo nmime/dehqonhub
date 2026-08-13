@@ -43,6 +43,21 @@ import uzAdminAgriTechCatalog from '@app/i18n-uz-admin/agritech.json';
 import uzAdminUsersCatalog from '@app/i18n-uz-admin/users.json';
 import uzErrorsCatalog from '@app/i18n-uz-common/errors.json';
 import uzCommonCatalog from '@app/i18n-uz-common/shared.json';
+import uzCyrlAdminAuditCatalog from '@app/i18n-uz-cyrl-admin/audit.json';
+import uzCyrlAdminDashboardCatalog from '@app/i18n-uz-cyrl-admin/dashboard.json';
+import uzCyrlAdminFeatureFlagsCatalog from '@app/i18n-uz-cyrl-admin/feature-flags.json';
+import uzCyrlAdminNavigationCatalog from '@app/i18n-uz-cyrl-admin/navigation.json';
+import uzCyrlAdminNotificationOptionsCatalog from '@app/i18n-uz-cyrl-admin/notification-options.json';
+import uzCyrlAdminRolesCatalog from '@app/i18n-uz-cyrl-admin/roles.json';
+import uzCyrlAdminProblemPresentationsCatalog from '@app/i18n-uz-cyrl-admin/problem-presentations.json';
+import uzCyrlAdminNotificationsCatalog from '@app/i18n-uz-cyrl-admin/notifications.json';
+import uzCyrlAdminNotificationNavigationCatalog from '@app/i18n-uz-cyrl-admin/notification-navigation.json';
+import uzCyrlAdminLoginAnalyticsCatalog from '@app/i18n-uz-cyrl-admin/login-analytics.json';
+import uzCyrlAdminCatalog from '@app/i18n-uz-cyrl-admin/shell.json';
+import uzCyrlAdminAgriTechCatalog from '@app/i18n-uz-cyrl-admin/agritech.json';
+import uzCyrlAdminUsersCatalog from '@app/i18n-uz-cyrl-admin/users.json';
+import uzCyrlErrorsCatalog from '@app/i18n-uz-cyrl-common/errors.json';
+import uzCyrlCommonCatalog from '@app/i18n-uz-cyrl-common/shared.json';
 import { mergeLocaleCatalogFiles } from '@app/common-i18n-runtime';
 import type { FrontendLocaleCatalogFileEntry, FrontendTranslations } from '@app/frontend-i18n-shared';
 
@@ -118,8 +133,27 @@ const uzFiles = [
   ['admin/agritech.json', uzAdminAgriTechCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
+const uzCyrlFiles = [
+  ['common/shared.json', uzCyrlCommonCatalog],
+  ['common/errors.json', uzCyrlErrorsCatalog],
+  ['admin/shell.json', uzCyrlAdminCatalog],
+  ['admin/navigation.json', uzCyrlAdminNavigationCatalog],
+  ['admin/dashboard.json', uzCyrlAdminDashboardCatalog],
+  ['admin/feature-flags.json', uzCyrlAdminFeatureFlagsCatalog],
+  ['admin/users.json', uzCyrlAdminUsersCatalog],
+  ['admin/audit.json', uzCyrlAdminAuditCatalog],
+  ['admin/roles.json', uzCyrlAdminRolesCatalog],
+  ['admin/problem-presentations.json', uzCyrlAdminProblemPresentationsCatalog],
+  ['admin/notifications.json', uzCyrlAdminNotificationsCatalog],
+  ['admin/notification-options.json', uzCyrlAdminNotificationOptionsCatalog],
+  ['admin/notification-navigation.json', uzCyrlAdminNotificationNavigationCatalog],
+  ['admin/login-analytics.json', uzCyrlAdminLoginAnalyticsCatalog],
+  ['admin/agritech.json', uzCyrlAdminAgriTechCatalog],
+] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
+
 export const adminFrontendTranslations = {
   en: mergeLocaleCatalogFiles('en', enFiles),
   ru: mergeLocaleCatalogFiles('ru', ruFiles),
   uz: mergeLocaleCatalogFiles('uz', uzFiles),
+  'uz-cyrl': mergeLocaleCatalogFiles('uz-cyrl', uzCyrlFiles),
 } as const satisfies FrontendTranslations;

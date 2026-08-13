@@ -1,6 +1,6 @@
 // @requirements REQ-AGRITECH-MARKETPLACE-016
 import { describe, expect, it } from 'vitest';
-import { DemoBuyerRequests, demoProductReviews, filterDemoBuyerRequests } from './demo-marketplace';
+import { DemoBuyerRequests, demoProductReviews, demoReviewPage, filterDemoBuyerRequests } from './demo-marketplace';
 
 describe('demo marketplace activity', () => {
   it('marks every fixture as demo content the routes can parse as an id', () => {
@@ -40,5 +40,18 @@ describe('demo marketplace activity', () => {
     expect(seedReviews.map((review) => review.rating)).toEqual([5, 4]);
     expect(demoProductReviews('dec0de00-0000-4000-8000-000000000011')).toHaveLength(1);
     expect(demoProductReviews('dec0de00-0000-4000-8000-000000000099')).toEqual([]);
+  });
+
+  // The aggregate is derived from the rows beside it, so the header of the block
+  // can never disagree with the reviews underneath it.
+  it('aggregates the demo ratings of a publication, and answers nothing without any', () => {
+    expect(demoReviewPage('dec0de00-0000-4000-8000-000000000001')?.aggregate).toEqual({
+      averageRating: 4.5,
+      listingPublicationId: 'dec0de00-0000-4000-8000-000000000001',
+      reviewCount: 2,
+      revision: 1,
+    });
+    expect(demoReviewPage('dec0de00-0000-4000-8000-000000000011')?.aggregate.averageRating).toBe(5);
+    expect(demoReviewPage('dec0de00-0000-4000-8000-000000000099')).toBeUndefined();
   });
 });

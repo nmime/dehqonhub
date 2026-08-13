@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-FULFILLMENT-010
+// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-I18N-012
 import { type NestFastifyApplication, FastifyAdapter } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -42,6 +42,8 @@ const validUpdateProduct = {
   status: 'active',
   stockQuantity: 10,
 };
+
+const localizedNameFields = ['name', 'nameRu', 'nameUz', 'nameUzCyrl'] as const;
 
 interface ProblemBody {
   status?: number;
@@ -109,6 +111,28 @@ describe('AgriTechOperationsController HTTP input contract', () => {
     expect(service.createSupplierProduct).not.toHaveBeenCalled();
   });
 
+  it.each(localizedNameFields)('rejects a blank %s on supplier-product create', async (field) => {
+    const response = await app.inject({
+      method: 'POST',
+      payload: { ...validCreateProduct, [field]: '   ' },
+      url: '/supplier/products',
+    });
+
+    expectValidationProblem(response);
+    expect(service.createSupplierProduct).not.toHaveBeenCalled();
+  });
+
+  it.each(localizedNameFields)('rejects a %s longer than varchar(200) on supplier-product create', async (field) => {
+    const response = await app.inject({
+      method: 'POST',
+      payload: { ...validCreateProduct, [field]: 'a'.repeat(201) },
+      url: '/supplier/products',
+    });
+
+    expectValidationProblem(response);
+    expect(service.createSupplierProduct).not.toHaveBeenCalled();
+  });
+
   it.each([
     ['zero supplier price', { ...validUpdateProduct, priceUzs: 0 }],
     ['fractional supplier price', { ...validUpdateProduct, priceUzs: 4_000_000.25 }],
@@ -118,6 +142,28 @@ describe('AgriTechOperationsController HTTP input contract', () => {
     ['supplier stock beyond int4', { ...validUpdateProduct, stockQuantity: maximumIntegerQuantity + 1 }],
   ])('returns 400 rather than reaching persistence for %s on update', async (_caseName, payload) => {
     const response = await app.inject({ method: 'PATCH', url: `/supplier/products/${productId}`, payload });
+
+    expectValidationProblem(response);
+    expect(service.updateSupplierProduct).not.toHaveBeenCalled();
+  });
+
+  it.each(localizedNameFields)('rejects a blank %s on supplier-product update', async (field) => {
+    const response = await app.inject({
+      method: 'PATCH',
+      payload: { ...validUpdateProduct, [field]: '   ' },
+      url: `/supplier/products/${productId}`,
+    });
+
+    expectValidationProblem(response);
+    expect(service.updateSupplierProduct).not.toHaveBeenCalled();
+  });
+
+  it.each(localizedNameFields)('rejects a %s longer than varchar(200) on supplier-product update', async (field) => {
+    const response = await app.inject({
+      method: 'PATCH',
+      payload: { ...validUpdateProduct, [field]: 'a'.repeat(201) },
+      url: `/supplier/products/${productId}`,
+    });
 
     expectValidationProblem(response);
     expect(service.updateSupplierProduct).not.toHaveBeenCalled();
@@ -177,6 +223,10 @@ describe('AgriTechOperationsController HTTP input contract', () => {
       method: 'POST',
       payload: {
         ...validCreateProduct,
+        name: 'a'.repeat(200),
+        nameRu: 'б'.repeat(200),
+        nameUz: 'o'.repeat(200),
+        nameUzCyrl: 'ў'.repeat(200),
         priceUzs: maximumSupplierPriceUzs,
         stockQuantity: maximumIntegerQuantity,
       },
@@ -189,9 +239,36 @@ describe('AgriTechOperationsController HTTP input contract', () => {
       { tenantId, userId },
       {
         ...validCreateProduct,
+        name: 'a'.repeat(200),
+        nameRu: 'б'.repeat(200),
+        nameUz: 'o'.repeat(200),
+        nameUzCyrl: 'ў'.repeat(200),
         priceUzs: maximumSupplierPriceUzs,
         stockQuantity: maximumIntegerQuantity,
       },
+    );
+  });
+
+  it('accepts storage-compatible localized names on supplier-product update', async () => {
+    service.updateSupplierProduct.mockResolvedValue({ id: productId });
+    const localizedNames = {
+      name: 'a'.repeat(200),
+      nameRu: 'б'.repeat(200),
+      nameUz: 'o'.repeat(200),
+      nameUzCyrl: 'ў'.repeat(200),
+    };
+
+    const response = await app.inject({
+      method: 'PATCH',
+      payload: { ...validUpdateProduct, ...localizedNames },
+      url: `/supplier/products/${productId}`,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(service.updateSupplierProduct).toHaveBeenCalledWith(
+      { tenantId, userId },
+      productId,
+      expect.objectContaining(localizedNames),
     );
   });
 

@@ -1,0 +1,23 @@
+{
+  "agritech.marketplace.catalog": "Каталог",
+  "agritech.marketplace.catalog.results": "Каталог натижалари",
+  "agritech.marketplace.catalog.noResults": "Танланган шартларга мос маҳсулот топилмади",
+  "agritech.marketplace.filter.price": "Нарх",
+  "agritech.marketplace.filter.region": "Сотувчи ҳудуди",
+  "agritech.marketplace.filter.inStock": "Мавжуд",
+  "agritech.marketplace.filter.reset": "Тозалаш",
+  "agritech.marketplace.sort": "Саралаш",
+  "agritech.marketplace.sort.priceAsc": "Нарх: пастдан юқорига",
+  "agritech.marketplace.sort.priceDesc": "Нарх: юқоридан пастга",
+  "agritech.marketplace.catalog.categories": "Каталог тоифалари",
+  "agritech.marketplace.catalog.description": "Жорий маҳсулотларни тоифа, ҳудуд, мавжудлик ва нарх бўйича кўринг.",
+  "agritech.marketplace.catalog.noBranchRecords": "Бу бўлимда маҳсулот йўқ",
+  "agritech.marketplace.catalog.noBranchRecordsDescription": "Бу бўлим учун жорий каталог ёзувлари мавжуд эмас.",
+  "agritech.marketplace.catalog.noResultsDescription": "Қидирув ёки филтрларни ўзгартириб, қайта уриниб кўринг.",
+  "agritech.marketplace.catalog.resultCount": "{{count}} та маҳсулот",
+  "agritech.marketplace.filter.from": "Дан",
+  "agritech.marketplace.filter.open": "Филтрларни очиш",
+  "agritech.marketplace.filter.title": "Каталог филтрлари",
+  "agritech.marketplace.filter.to": "Гача",
+  "agritech.marketplace.sort.name": "Номи"
+}

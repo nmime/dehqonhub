@@ -41,6 +41,7 @@ const stringFrom = (value: unknown): string | undefined =>
 const problemDetailTranslationKeys = {
   'client-data-validation': 'errors.client-data-validation.detail',
   'last-auth-method-unlink-forbidden': 'errors.last-auth-method-unlink-forbidden.detail',
+  'marketplace-provider-unavailable': 'errors.marketplace-provider-unavailable.detail',
   'rate-limited': 'errors.rate-limited.detail',
   'resource-conflict': 'errors.resource-conflict.detail',
   'resource-not-found': 'errors.resource-not-found.detail',

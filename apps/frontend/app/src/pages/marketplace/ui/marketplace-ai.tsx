@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import type { Locale } from '@app/frontend-runtime';
-import type { AiConsultationViewDto, ProductViewDto } from '@app/frontend-api-client';
+import type { MarketplaceAiConsultationDto, ProductViewDto } from '@app/frontend-api-client';
 import { MarketplaceIcon } from './marketplace-icon';
 import { ProductMedia } from './marketplace-product-card';
 import { localizedProductName, type MarketplaceTranslate } from './marketplace-ui';
@@ -22,11 +22,11 @@ const resultKeys: Record<AiKind, string> = {
 
 type ChatMessage =
   | { id: string; role: 'user'; text: string }
-  | { answer?: AiConsultationViewDto; id: string; role: 'assistant'; translationKey: string };
+  | { answer?: MarketplaceAiConsultationDto; id: string; role: 'assistant'; translationKey: string };
 
 interface MarketplaceAiProps {
   locale: Locale;
-  onAsk: (question: string, kind: AiKind) => Promise<AiConsultationViewDto>;
+  onAsk: (question: string, kind: AiKind) => Promise<MarketplaceAiConsultationDto>;
   onOpenProduct: (product: ProductViewDto) => void;
   products: ProductViewDto[];
   t: MarketplaceTranslate;
@@ -72,7 +72,7 @@ export function MarketplaceAi({ locale, onAsk, onOpenProduct, products, t }: Rea
     try {
       const answer = await onAsk(normalized, kind);
       const translationKey =
-        answer.productIds.length === 0 ? 'agritech.marketplace.ai.noMatch' : resultKeys[answer.kind];
+        answer.listingPublicationIds.length === 0 ? 'agritech.marketplace.ai.noMatch' : resultKeys[answer.kind];
       setMessages((value) => [...value, { answer, id: answer.id, role: 'assistant', translationKey }]);
     } catch {
       setMessages((value) => [
@@ -147,7 +147,7 @@ export function MarketplaceAi({ locale, onAsk, onOpenProduct, products, t }: Rea
             </div>
             {messages.map((message) => {
               const referenced =
-                (message.role === 'assistant' ? message.answer?.productIds : undefined)
+                (message.role === 'assistant' ? message.answer?.listingPublicationIds : undefined)
                   ?.map((id) => products.find((product) => product.id === id))
                   .filter((product): product is ProductViewDto => Boolean(product)) ?? [];
               return (

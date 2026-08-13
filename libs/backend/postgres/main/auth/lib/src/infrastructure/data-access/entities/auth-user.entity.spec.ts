@@ -67,7 +67,7 @@ describe('AuthUserEntity', () => {
     expect(metadata.checks).toContainEqual(
       expect.objectContaining({
         name: 'ck__auth_users__locale',
-        expression: `"locale" in ('en', 'ru', 'uz')`,
+        expression: `"locale" in ('en', 'ru', 'uz', 'uz-cyrl')`,
       }),
     );
     expect(metadata.properties.theme.length).toBe(16);

@@ -7,6 +7,7 @@ export interface Product {
   name: string;
   nameRu?: string;
   nameUz?: string;
+  nameUzCyrl?: string;
   category: ProductCategory;
   description: string;
   supplierId: string;
@@ -14,6 +15,7 @@ export interface Product {
   priceUzs: number;
   unit: string;
   stockQuantity: number;
+  sampleAvailable: boolean;
   region: string;
   status: ProductStatus;
   images: string[];

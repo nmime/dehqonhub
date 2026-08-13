@@ -2,7 +2,12 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { derivePublicDomains, parseEnvFile, validateBaseDomain } from './compose-production.mjs';
+import {
+  derivePublicDomains,
+  parseEnvFile,
+  validateBaseDomain,
+  validateProductionMarketplaceProviderModes,
+} from './compose-production.mjs';
 
 const rootDir = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const certificateModes = new Set(['dns-wildcard', 'exact-hosts', 'existing']);
@@ -131,6 +136,7 @@ export function loadSingleServerConfiguration({ productionEnv, serverEnv, fronte
   const productionPath = resolve(rootDir, productionEnv);
   const server = readEnvironment(serverPath, 'Server environment');
   const production = readEnvironment(productionPath, 'Production environment');
+  validateProductionMarketplaceProviderModes(production);
 
   const databaseEngine = production.DATABASE_ENGINE?.trim().toLowerCase() || 'postgres';
   if (!databaseEngines.has(databaseEngine)) fail('DATABASE_ENGINE must be postgres or mongodb.');

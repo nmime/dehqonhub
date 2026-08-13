@@ -114,10 +114,11 @@
 
 ## 7. Executable Evidence
 
-- [x] 7.1 Add five independently phrased Cucumber acceptance scenarios whose
+- [x] 7.1 Add six independently phrased Cucumber acceptance scenarios whose
       steps invoke the production marketplace domain service through a public
       in-memory adapter for seller-derived carts, persisted checkout contracts,
-      offer-contract creation, party-specific consent, and organization approval.
+      offer-contract creation, party-specific consent, organization approval,
+      and verified-buyer cart authorization.
 - [x] 7.2 Add marketplace component tests for catalog filtering and query sync,
       unavailable sample and offer recovery, closed-request controls, offer and
       delivery forms, seller-separated carts, provider absence, contract consent

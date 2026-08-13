@@ -4,6 +4,8 @@ import ruDiscordCatalog from '@app/i18n-ru-bots/discord.json';
 import ruBotSharedCatalog from '@app/i18n-ru-bots/shared.json';
 import uzDiscordCatalog from '@app/i18n-uz-bots/discord.json';
 import uzBotSharedCatalog from '@app/i18n-uz-bots/shared.json';
+import uzCyrlDiscordCatalog from '@app/i18n-uz-cyrl-bots/discord.json';
+import uzCyrlBotSharedCatalog from '@app/i18n-uz-cyrl-bots/shared.json';
 import { translations as backendTranslations } from '@app/backend-common-i18n';
 import {
   defaultLocale,
@@ -40,6 +42,11 @@ export const discordTranslations = {
     ['bots/shared.json', uzBotSharedCatalog],
     ['bots/discord.json', uzDiscordCatalog],
   ]),
+  'uz-cyrl': mergeLocaleCatalogFiles('uz-cyrl', [
+    ['backend-common', backendTranslations['uz-cyrl']],
+    ['bots/shared.json', uzCyrlBotSharedCatalog],
+    ['bots/discord.json', uzCyrlDiscordCatalog],
+  ]),
 } as const satisfies Record<Locale, RuntimeLocaleCatalog>;
 
 export function t(
@@ -70,7 +77,7 @@ export function resolveInteractionLocale(interaction: APIInteraction): Locale {
 
 export function localizationsFor(key: TranslationKey): Record<string, string> {
   const entries = supportedLocales
-    .filter((locale) => locale !== defaultLocale)
+    .filter((locale) => locale === 'ru')
     .flatMap((locale) => {
       const value = discordTranslations[locale][key];
       return value ? [[locale, value] as const] : [];

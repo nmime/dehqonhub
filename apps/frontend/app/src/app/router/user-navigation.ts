@@ -28,7 +28,8 @@ export const isMarketplaceRoute = (path: string): boolean => {
   return (
     marketplaceRoutes.has(normalized) ||
     /^\/contracts\/[^/]+$/u.test(normalized) ||
-    /^\/products\/[^/]+$/u.test(normalized)
+    /^\/products\/[^/]+$/u.test(normalized) ||
+    /^\/sellers\/[^/]+$/u.test(normalized)
   );
 };
 

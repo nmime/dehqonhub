@@ -1,22 +1,41 @@
-// @requirements REQ-AGRITECH-ORDER-003 REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-MARKETPLACE-016
+// @requirements REQ-AGRITECH-ORDER-003 REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-STAGE2-017
+import { createHash } from 'node:crypto';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { EntityManager } from '@mikro-orm/core';
+import type { EntityManager } from '@mikro-orm/postgresql';
+import type {
+  MarketplaceProviderOperationPreparation,
+  VerificationDocument,
+} from '@app/backend-feature-agritech-shared';
+import { marketplaceProviderFingerprint } from '@app/backend-feature-agritech-shared';
+import { ProductEntity } from '../entities';
 import { PostgresMarketplaceRepository } from './marketplace.repository';
 
 const owner = { tenantId: 'tenant-1', userId: 'user-1' };
+const buyerPartnerId = 'partner-buyer-1';
 const sellerPartnerId = 'partner-seller-1';
 const sellerOwnerUserId = 'seller-user-1';
+const sellerTenantId = 'tenant-seller-1';
 const now = new Date('2026-08-09T00:00:00Z');
 
 function makeEm(overrides: Partial<Record<string, ReturnType<typeof vi.fn>>> = {}) {
-  const execute = vi.fn().mockResolvedValue([]);
+  const execute = vi
+    .fn()
+    .mockImplementation((sql: string) =>
+      Promise.resolve(sql.includes('insert into marketplace_provider_operations') ? [{ id: 'operation-created' }] : []),
+    );
   const em = {
     findOne: vi.fn().mockResolvedValue(null),
     find: vi.fn().mockResolvedValue([]),
     count: vi.fn().mockResolvedValue(0),
     persist: vi.fn(),
     flush: vi.fn().mockResolvedValue(undefined),
+    refresh: vi.fn().mockImplementation((entity: { version?: number }) => {
+      entity.version = 1;
+      return Promise.resolve(entity);
+    }),
     nativeDelete: vi.fn().mockResolvedValue(1),
+    execute,
+    getTransactionContext: vi.fn().mockReturnValue(undefined),
     getConnection: vi.fn(() => ({ execute })),
     transactional: vi.fn(async (cb: (em: unknown) => unknown) => cb(em)),
     ...overrides,
@@ -26,13 +45,21 @@ function makeEm(overrides: Partial<Record<string, ReturnType<typeof vi.fn>>> = {
 
 function verificationEntity(overrides: Record<string, unknown> = {}) {
   return {
-    id: 'v-1',
+    id: '11111111-1111-4111-8111-111111111111',
     tenantId: 'tenant-1',
     userId: 'user-1',
     role: 'farmer',
     level: 'verified',
     status: 'pending',
     oneIdLinked: true,
+    providerMode: 'legacy',
+    identityAssurance: 'legacy_unknown',
+    providerName: null,
+    providerSubjectKey: null,
+    providerReceiptId: null,
+    oneIdLinkedAt: null,
+    version: 0,
+    caseRevision: 0,
     documents: [{ kind: 'id', fileName: 'p.jpg', storageKey: 'k1' }],
     reviewedBy: null,
     reviewedAt: null,
@@ -43,8 +70,85 @@ function verificationEntity(overrides: Record<string, unknown> = {}) {
   };
 }
 
-function productEntity(overrides: Record<string, unknown> = {}) {
+function oneIdPreparation(
+  resourceId: string,
+  resourceRevision = 0,
+  idempotencyKey = 'oneid-key-0001',
+): MarketplaceProviderOperationPreparation {
+  const requestDescriptor = {
+    action: 'link-oneid' as const,
+    resourceId,
+    resourceRevision,
+    resourceType: 'verification' as const,
+  };
   return {
+    actorType: 'verification_subject',
+    capability: 'oneid_link',
+    idempotencyKey,
+    providerMode: 'mock',
+    providerName: 'mock-oneid',
+    requestDescriptor,
+    requestFingerprint: marketplaceProviderFingerprint(requestDescriptor),
+    resourceId,
+    resourceRevision,
+    resourceType: 'verification',
+  };
+}
+
+function documentPreparation(
+  resourceId: string,
+  resourceRevision: number,
+  idempotencyKey: string,
+  document: Required<Pick<VerificationDocument, 'fileName' | 'kind' | 'mimeType' | 'sha256' | 'sizeBytes'>>,
+): MarketplaceProviderOperationPreparation {
+  const requestDescriptor = {
+    action: 'store-verification-document' as const,
+    document,
+    resourceId,
+    resourceRevision,
+    resourceType: 'verification' as const,
+  };
+  return {
+    actorType: 'verification_subject',
+    capability: 'verification_documents',
+    idempotencyKey,
+    providerMode: 'mock',
+    providerName: 'mock-document-storage',
+    requestDescriptor,
+    requestFingerprint: marketplaceProviderFingerprint(requestDescriptor),
+    resourceId,
+    resourceRevision,
+    resourceType: 'verification',
+  };
+}
+
+function directPaymentPreparation(
+  resourceId = '33333333-3333-4333-8333-333333333333',
+  idempotencyKey = 'direct-payment-key-0001',
+): MarketplaceProviderOperationPreparation {
+  const requestDescriptor = {
+    action: 'record-direct-payment' as const,
+    parametersFingerprint: 'c'.repeat(64),
+    resourceId,
+    resourceRevision: 2,
+    resourceType: 'contract' as const,
+  };
+  return {
+    actorType: 'contract_buyer',
+    capability: 'direct_payment',
+    idempotencyKey,
+    providerMode: 'mock',
+    providerName: 'mock-direct-payment',
+    requestDescriptor,
+    requestFingerprint: marketplaceProviderFingerprint(requestDescriptor),
+    resourceId,
+    resourceRevision: 2,
+    resourceType: 'contract',
+  };
+}
+
+function productEntity(overrides: Record<string, unknown> = {}) {
+  return Object.assign(new ProductEntity(), {
     id: 'p-1',
     tenantId: 'tenant-1',
     name: 'Corn seed',
@@ -61,7 +165,7 @@ function productEntity(overrides: Record<string, unknown> = {}) {
     createdAt: now,
     updatedAt: now,
     ...overrides,
-  };
+  });
 }
 
 function partnerEntity(overrides: Record<string, unknown> = {}) {
@@ -70,34 +174,98 @@ function partnerEntity(overrides: Record<string, unknown> = {}) {
     tenantId: 'tenant-1',
     ownerUserId: sellerOwnerUserId,
     kind: 'supplier',
+    legalName: 'Agro Supply',
+    region: 'Samarkand',
     status: 'approved',
     ...overrides,
   };
 }
 
-/** A settled contract drawn by a cart checkout, which is where its seller name comes from. */
-const cartSourcedContract = {
-  id: 'c-cart-sourced',
-  tenantId: 'tenant-1',
-  buyerUserId: 'user-1',
-  sellerUserId: sellerOwnerUserId,
-  sourceType: 'cart_checkout',
-  sourceId: null as string | null,
-  subject: 'Cart contract',
-  amountUzs: 1_000_000,
-  lines: [],
-  deliveryTerms: 'pickup',
-  deliveryPriceUzs: 0,
-  deliveryNote: null,
-  deliveryDays: null,
-  factoringEnabled: false,
-  status: 'active',
-  buyerSignedAt: now,
-  sellerSignedAt: now,
-  signedAt: now,
-  createdAt: now,
-  updatedAt: now,
-};
+function commerceListingFixtures() {
+  const listing = {
+    id: 'listing-public-1',
+    tenantId: sellerTenantId,
+    ownerUserId: sellerOwnerUserId,
+    sellerPublicId: 'seller-public-1',
+    sellerRevisionId: 'seller-revision-1',
+    sellerContentRevision: 1,
+    productId: 'p-1',
+    produceListingId: null,
+    sourceKind: 'product',
+    contentRevision: 1,
+    moderationStatus: 'approved',
+    status: 'published',
+  };
+  const sellerPublic = {
+    id: listing.sellerPublicId,
+    tenantId: sellerTenantId,
+    ownerUserId: sellerOwnerUserId,
+    partnerId: sellerPartnerId,
+    status: 'published',
+  };
+  const sellerRevision = {
+    id: listing.sellerRevisionId,
+    sellerPublicId: listing.sellerPublicId,
+    tenantId: sellerTenantId,
+    contentRevision: 1,
+    moderationStatus: 'approved',
+  };
+  return { listing, sellerPublic, sellerRevision };
+}
+
+function commercePartyLookup(entity: unknown, where: Record<string, unknown>): unknown {
+  const name = String(entity);
+  if (name.includes('MarketplaceCommerceOperation')) {
+    return null;
+  }
+  if (name.includes('MarketplacePartnerMembership')) {
+    return {
+      capability: where.capability,
+      partnerId: where.partnerId,
+      status: 'active',
+      tenantId: where.tenantId,
+      userId: where.userId,
+    };
+  }
+  if (name.includes('AgriTechPartner')) {
+    return where.kind === 'buyer'
+      ? partnerEntity({
+          id: buyerPartnerId,
+          kind: 'buyer',
+          legalName: 'Buyer Cooperative',
+          ownerUserId: owner.userId,
+          tenantId: owner.tenantId,
+        })
+      : partnerEntity({ tenantId: sellerTenantId });
+  }
+  if (name.includes('Verification')) {
+    return verificationEntity({
+      role: where.role,
+      status: 'verified',
+      tenantId: where.tenantId,
+      userId: where.userId,
+    });
+  }
+  return undefined;
+}
+
+function commerceListingLookup(entity: unknown): unknown {
+  const name = String(entity);
+  const { listing, sellerPublic, sellerRevision } = commerceListingFixtures();
+  if (name.includes('MarketplaceListingPublication')) {
+    return listing;
+  }
+  if (name.includes('MarketplacePublicSellerRevision')) {
+    return sellerRevision;
+  }
+  if (name.includes('MarketplacePublicSeller')) {
+    return sellerPublic;
+  }
+  if (name.includes('Product')) {
+    return productEntity({ supplierId: sellerPartnerId, tenantId: sellerTenantId });
+  }
+  return undefined;
+}
 
 describe('PostgresMarketplaceRepository — verification', () => {
   let em: ReturnType<typeof makeEm>;
@@ -114,8 +282,18 @@ describe('PostgresMarketplaceRepository — verification', () => {
   });
 
   it('reviews a pending verification to verified', async () => {
-    em.findOne.mockResolvedValue(verificationEntity());
-    const result = await repo.reviewVerification('tenant-1', 'v-1', 'verified', 'admin-1');
+    const verification = verificationEntity();
+    em.findOne.mockImplementation((entity: unknown) =>
+      Promise.resolve(String(entity).includes('MarketplaceCommerceOperation') ? null : verification),
+    );
+    const result = await repo.reviewVerification(
+      'tenant-1',
+      verification.id,
+      'verified',
+      'admin-1',
+      0,
+      'verification-review-0001',
+    );
     expect(em.flush).toHaveBeenCalled();
     expect(result.status).toBe('ok');
     if (result.status === 'ok') {
@@ -124,9 +302,363 @@ describe('PostgresMarketplaceRepository — verification', () => {
     }
   });
 
+  it('creates a real persisted verification case in the editable none state', async () => {
+    em.findOne.mockResolvedValue(null);
+
+    const result = await repo.createVerification(owner, 'farmer', 0, 'verification-create-0001');
+
+    expect(result).toMatchObject({ status: 'ok', value: { role: 'farmer', status: 'none' } });
+    expect(em.persist).toHaveBeenCalledWith(
+      expect.objectContaining({
+        identityAssurance: 'none',
+        oneIdLinked: false,
+        providerMode: 'none',
+        tenantId: owner.tenantId,
+        userId: owner.userId,
+      }),
+    );
+  });
+
+  it('increments the case revision when a rejected verification is resumed', async () => {
+    const rejected = verificationEntity({
+      caseRevision: 2,
+      rejectionReason: 'documents_unreadable',
+      status: 'rejected',
+    });
+    em.findOne.mockImplementation((entity: unknown) =>
+      Promise.resolve(String(entity).includes('MarketplaceCommerceOperation') ? null : rejected),
+    );
+
+    await expect(repo.createVerification(owner, 'farmer', 0, 'verification-create-0001')).resolves.toMatchObject({
+      status: 'ok',
+      value: { caseRevision: 3, status: 'none' },
+    });
+    expect(rejected.caseRevision).toBe(3);
+  });
+
+  it.each(['oneid_link', 'verification_documents'] as const)(
+    'rejects an old %s key after a rejected case is resumed',
+    async (capability) => {
+      const resumed = verificationEntity({
+        caseRevision: 1,
+        documents: [],
+        identityAssurance: 'none',
+        oneIdLinked: false,
+        providerMode: 'none',
+        status: 'none',
+      });
+      const preparation =
+        capability === 'oneid_link'
+          ? oneIdPreparation(resumed.id, 0, `old-${capability}-key`)
+          : documentPreparation(resumed.id, 0, `old-${capability}-key`, {
+              fileName: 'old.pdf',
+              kind: 'farm',
+              mimeType: 'application/pdf',
+              sha256: 'a'.repeat(64),
+              sizeBytes: 10,
+            });
+      const oldOperation = {
+        ...preparation,
+        attempt: 1,
+        id: `old-${capability}`,
+        resultSnapshot: null,
+        status: 'succeeded',
+        tenantId: owner.tenantId,
+        userId: owner.userId,
+      };
+      em.findOne.mockImplementation(async (entity: unknown) =>
+        String(entity).includes('VerificationEntity') ? resumed : oldOperation,
+      );
+
+      await expect(
+        repo.prepareProviderOperation(
+          owner,
+          capability === 'oneid_link'
+            ? oneIdPreparation(resumed.id, resumed.caseRevision, oldOperation.idempotencyKey)
+            : documentPreparation(resumed.id, resumed.caseRevision, oldOperation.idempotencyKey, {
+                fileName: 'new.pdf',
+                kind: 'farm',
+                mimeType: 'application/pdf',
+                sha256: 'b'.repeat(64),
+                sizeBytes: 10,
+              }),
+        ),
+      ).resolves.toEqual({ status: 'conflict', field: 'idempotencyKey' });
+    },
+  );
+
+  it('persists an idempotent provider operation scoped to the real verification resource', async () => {
+    const verification = verificationEntity({
+      oneIdLinked: false,
+      providerMode: 'none',
+      identityAssurance: 'none',
+      status: 'none',
+    });
+    em.findOne.mockImplementation(async (entity: unknown) =>
+      String(entity).includes('VerificationEntity') ? verification : null,
+    );
+
+    const result = await repo.prepareProviderOperation(owner, oneIdPreparation(verification.id));
+
+    expect(result).toMatchObject({ status: 'ok', value: { execute: true } });
+    expect(em.getConnection().execute).toHaveBeenCalledWith(
+      expect.stringContaining('insert into marketplace_provider_operations'),
+      expect.arrayContaining([
+        owner.tenantId,
+        owner.userId,
+        'verification_subject',
+        'oneid_link',
+        'verification',
+        verification.id,
+        0,
+        'oneid-key-0001',
+      ]),
+    );
+    expect(em.getConnection().execute).toHaveBeenCalledWith('select pg_advisory_xact_lock(hashtext(?))', [
+      `marketplace-provider-operation:${owner.tenantId}:${owner.userId}:verification_subject:oneid_link:verification:${verification.id}:0:oneid-key-0001`,
+    ]);
+  });
+
+  it('rejects a provider command whose resource is not the actor verification', async () => {
+    em.findOne.mockResolvedValue(
+      verificationEntity({ oneIdLinked: false, providerMode: 'none', identityAssurance: 'none', status: 'none' }),
+    );
+
+    await expect(
+      repo.prepareProviderOperation(owner, oneIdPreparation('22222222-2222-4222-8222-222222222222')),
+    ).resolves.toEqual({ status: 'not_found', field: 'resource' });
+    expect(em.persist).not.toHaveBeenCalled();
+  });
+
+  it('replays the original persisted snapshot and rejects altered input for the same scoped key', async () => {
+    const source = verificationEntity({
+      oneIdLinked: true,
+      providerMode: 'mock',
+      identityAssurance: 'mock',
+      status: 'pending',
+    });
+    const original = {
+      ...source,
+      createdAt: now.toISOString(),
+      identityAssurance: 'mock',
+      oneIdLinked: true,
+      providerMode: 'mock',
+      providerReceiptId: 'original-receipt',
+      status: 'none',
+      updatedAt: now.toISOString(),
+    };
+    const base = oneIdPreparation(source.id);
+    const operation = {
+      ...base,
+      id: 'operation-1',
+      attempt: 1,
+      resultSnapshot: original,
+      status: 'succeeded',
+      tenantId: owner.tenantId,
+      userId: owner.userId,
+    };
+    em.findOne.mockImplementation(async (entity: unknown) =>
+      String(entity).includes('VerificationEntity') ? source : operation,
+    );
+    await expect(repo.prepareProviderOperation(owner, base)).resolves.toMatchObject({
+      status: 'ok',
+      value: {
+        execute: false,
+        replay: { providerReceiptId: 'original-receipt' },
+      },
+    });
+    await expect(
+      repo.prepareProviderOperation(owner, { ...base, providerName: 'different-provider' }),
+    ).resolves.toEqual({
+      status: 'conflict',
+      field: 'idempotencyKey',
+    });
+  });
+
+  it('does not execute a concurrent retry while its scoped provider operation is in progress', async () => {
+    const source = verificationEntity({
+      oneIdLinked: false,
+      providerMode: 'none',
+      identityAssurance: 'none',
+      status: 'none',
+    });
+    const preparation = oneIdPreparation(source.id);
+    const operation = {
+      ...preparation,
+      id: 'operation-in-progress',
+      attempt: 1,
+      capability: 'oneid_link',
+      idempotencyKey: 'oneid-key-0001',
+      providerMode: 'mock',
+      providerName: 'mock-oneid',
+      leaseExpiresAt: new Date(Date.now() + 60_000),
+      status: 'started',
+      tenantId: owner.tenantId,
+      userId: owner.userId,
+    };
+    em.findOne.mockImplementation(async (entity: unknown) =>
+      String(entity).includes('VerificationEntity') ? source : operation,
+    );
+
+    await expect(repo.prepareProviderOperation(owner, preparation)).resolves.toEqual({
+      status: 'conflict',
+      field: 'operationInProgress',
+    });
+  });
+
+  it('prevents a different OneID operation from overwriting an established link', async () => {
+    const preparation = oneIdPreparation(verificationEntity().id, 0, 'different-key');
+    const operation = {
+      ...preparation,
+      id: 'operation-2',
+      attempt: 1,
+      capability: 'oneid_link',
+      leaseExpiresAt: new Date(Date.now() + 60_000),
+      status: 'started',
+    };
+    const linked = verificationEntity({
+      identityAssurance: 'mock',
+      oneIdLinked: true,
+      providerMode: 'mock',
+      providerName: 'mock-oneid',
+      providerSubjectKey: 'a'.repeat(64),
+    });
+    em.findOne.mockImplementation(async (entity: unknown) =>
+      String(entity).includes('MarketplaceProviderOperationEntity') ? operation : linked,
+    );
+
+    await expect(
+      repo.completeIdentityLink(owner, operation.id, operation.attempt, {
+        identityAssurance: 'mock',
+        linkedAt: now,
+        providerMode: 'mock',
+        providerName: 'mock-oneid',
+        receiptId: 'second-receipt',
+        subjectKey: 'b'.repeat(64),
+      }),
+    ).resolves.toEqual({ status: 'conflict', field: 'status' });
+    expect(linked.providerSubjectKey).toBe('a'.repeat(64));
+    expect(em.flush).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    { receiptId: '', subjectKey: 'b'.repeat(64), identityAssurance: 'mock' as const },
+    { receiptId: 'receipt', subjectKey: 'not-an-opaque-subject', identityAssurance: 'mock' as const },
+    { receiptId: 'receipt', subjectKey: 'b'.repeat(64), identityAssurance: 'provider_verified' as const },
+  ])('rejects malformed identity-provider provenance without mutating the case', async (providerFields) => {
+    const preparation = oneIdPreparation(verificationEntity().id);
+    const operation = {
+      ...preparation,
+      id: 'operation-invalid-provider-result',
+      attempt: 1,
+      capability: 'oneid_link',
+      leaseExpiresAt: new Date(Date.now() + 60_000),
+      status: 'started',
+    };
+    const pending = verificationEntity({
+      identityAssurance: 'none',
+      oneIdLinked: false,
+      providerMode: 'none',
+      status: 'none',
+    });
+    em.findOne.mockImplementation(async (entity: unknown) =>
+      String(entity).includes('MarketplaceProviderOperationEntity') ? operation : pending,
+    );
+
+    await expect(
+      repo.completeIdentityLink(owner, operation.id, operation.attempt, {
+        ...providerFields,
+        linkedAt: new Date(),
+        providerMode: 'mock',
+        providerName: 'mock-oneid',
+      }),
+    ).resolves.toEqual({ status: 'conflict', field: 'status' });
+    expect(pending).toMatchObject({ identityAssurance: 'none', oneIdLinked: false, providerMode: 'none' });
+    expect(em.flush).not.toHaveBeenCalled();
+  });
+
+  it('persists immutable safe document metadata and a server-verified checksum behind a private evidence reference', async () => {
+    const content = Uint8Array.from(Buffer.from('%PDF-persisted-evidence'));
+    const sha256 = createHash('sha256').update(content).digest('hex');
+    const preparation = documentPreparation(verificationEntity().id, 0, 'document-key', {
+      fileName: 'farm.pdf',
+      kind: 'farm',
+      mimeType: 'application/pdf',
+      sha256,
+      sizeBytes: content.byteLength,
+    });
+    const operation = {
+      ...preparation,
+      id: 'operation-3',
+      attempt: 1,
+      capability: 'verification_documents',
+      leaseExpiresAt: new Date(Date.now() + 60_000),
+      status: 'started',
+    };
+    const linked = verificationEntity({
+      documents: [],
+      identityAssurance: 'mock',
+      oneIdLinked: true,
+      providerMode: 'mock',
+      providerName: 'mock-oneid',
+      providerSubjectKey: 'a'.repeat(64),
+      status: 'none',
+    });
+    em.findOne.mockImplementation(async (entity: unknown) =>
+      String(entity).includes('MarketplaceProviderOperationEntity') ? operation : linked,
+    );
+
+    const result = await repo.completeVerificationDocuments(owner, operation.id, operation.attempt, {
+      evidence: [
+        {
+          document: {
+            fileName: 'farm.pdf',
+            kind: 'farm',
+            mimeType: 'application/pdf',
+            optional: false,
+            providerMode: 'mock',
+            providerName: 'mock-document-storage',
+            providerReceiptId: 'document-receipt',
+            sha256,
+            sizeBytes: content.byteLength,
+            storedAt: now.toISOString(),
+          },
+        },
+      ],
+      providerMode: 'mock',
+      providerName: 'mock-document-storage',
+      receiptId: 'document-receipt',
+      storedAt: now,
+    });
+
+    expect(result).toMatchObject({ status: 'ok', value: { documents: [{ kind: 'farm', sha256 }] } });
+    expect(em.persist).toHaveBeenCalledWith(
+      expect.objectContaining({
+        caseRevision: 0,
+        sha256,
+        sizeBytes: content.byteLength,
+        tenantId: owner.tenantId,
+        userId: owner.userId,
+        verificationId: linked.id,
+      }),
+    );
+    expect(linked.documents[0]).toMatchObject({ evidenceId: expect.any(String) });
+    expect(linked.documents[0]).not.toHaveProperty('storageKey');
+  });
+
   it('rejects review of a non-pending verification', async () => {
-    em.findOne.mockResolvedValue(verificationEntity({ status: 'verified' }));
-    const result = await repo.reviewVerification('tenant-1', 'v-1', 'verified', 'admin-1');
+    const verification = verificationEntity({ status: 'verified' });
+    em.findOne.mockImplementation((entity: unknown) =>
+      Promise.resolve(String(entity).includes('MarketplaceCommerceOperation') ? null : verification),
+    );
+    const result = await repo.reviewVerification(
+      'tenant-1',
+      'v-1',
+      'verified',
+      'admin-1',
+      0,
+      'verification-review-0001',
+    );
     expect(result).toMatchObject({ status: 'conflict', field: 'status' });
   });
 
@@ -134,9 +666,180 @@ describe('PostgresMarketplaceRepository — verification', () => {
     ['rejected', undefined],
     ['verified', 'criteria_not_met'],
   ] as const)('rejects invalid verification reason provenance for %s', async (decision, reason) => {
-    const result = await repo.reviewVerification('tenant-1', 'v-1', decision, 'admin-1', reason);
+    const result = await repo.reviewVerification(
+      'tenant-1',
+      'v-1',
+      decision,
+      'admin-1',
+      0,
+      'verification-review-0001',
+      reason,
+    );
     expect(result).toMatchObject({ status: 'invalid_state', field: 'reason' });
     expect(em.transactional).not.toHaveBeenCalled();
+  });
+});
+
+describe('PostgresMarketplaceRepository — provider operations', () => {
+  let em: ReturnType<typeof makeEm>;
+  let repo: PostgresMarketplaceRepository;
+
+  beforeEach(() => {
+    em = makeEm();
+    repo = new PostgresMarketplaceRepository(em as unknown as EntityManager);
+  });
+
+  it('anchors a prepared contract operation to the exact resolved buyer party', async () => {
+    const preparation = directPaymentPreparation();
+    em.execute.mockImplementation((sql: string) => {
+      if (sql.includes('from marketplace_contracts')) {
+        return Promise.resolve([{ id: preparation.resourceId }]);
+      }
+      if (sql.includes('insert into marketplace_provider_operations')) {
+        return Promise.resolve([{ id: 'operation-created' }]);
+      }
+      return Promise.resolve([]);
+    });
+
+    await expect(repo.prepareProviderOperation(owner, preparation)).resolves.toMatchObject({
+      status: 'ok',
+      value: { attempt: 1, execute: true },
+    });
+    expect(em.execute).toHaveBeenCalledWith(expect.stringContaining("binding_status = 'resolved'"), [
+      preparation.resourceId,
+      owner.tenantId,
+      owner.userId,
+    ]);
+    expect(em.execute).toHaveBeenCalledWith(
+      expect.stringContaining('insert into marketplace_provider_operations'),
+      expect.arrayContaining([
+        owner.tenantId,
+        owner.userId,
+        'contract_buyer',
+        'direct_payment',
+        'contract',
+        preparation.resourceId,
+      ]),
+    );
+  });
+
+  it('rejects an actor or capability descriptor mismatch before persistence', async () => {
+    const preparation = directPaymentPreparation();
+
+    await expect(
+      repo.prepareProviderOperation(owner, { ...preparation, actorType: 'promotion_owner' }),
+    ).resolves.toEqual({ status: 'invalid_state', field: 'requestDescriptor' });
+    expect(em.transactional).not.toHaveBeenCalled();
+  });
+
+  it('stores only a safe receipt, immutable result fingerprint, and provider event for payment completion', async () => {
+    const preparation = directPaymentPreparation();
+    const operation = {
+      ...preparation,
+      attempt: 1,
+      errorCode: null,
+      id: 'operation-payment-1',
+      leaseExpiresAt: new Date(Date.now() + 60_000),
+      providerEventId: null,
+      providerReference: null,
+      receipt: null,
+      reconciliationReason: null,
+      reconciliationRequired: false,
+      resultFingerprint: null,
+      resultSnapshot: null,
+      status: 'started',
+      tenantId: owner.tenantId,
+      userId: owner.userId,
+    };
+    em.findOne.mockResolvedValueOnce(operation).mockResolvedValueOnce(null);
+    em.execute.mockImplementation((sql: string) =>
+      Promise.resolve(sql.includes('from marketplace_contracts') ? [{ id: preparation.resourceId }] : []),
+    );
+    const resultDescriptor = {
+      completedAt: new Date().toISOString(),
+      outcome: 'authorized',
+      resourceId: preparation.resourceId,
+      resourceRevision: preparation.resourceRevision,
+      resourceType: 'contract' as const,
+    };
+
+    await expect(
+      repo.completeProviderOperation(owner, operation.id, operation.attempt, {
+        providerEventId: 'payment-event-0001',
+        providerMode: 'mock',
+        providerName: 'mock-direct-payment',
+        providerReference: 'payment-reference-0001',
+        resultDescriptor,
+        safeReceipt: { amountUzs: 1_000_000, currency: 'UZS', simulated: true },
+      }),
+    ).resolves.toMatchObject({
+      status: 'ok',
+      value: {
+        providerEventId: 'payment-event-0001',
+        reconciliationRequired: false,
+        resultFingerprint: marketplaceProviderFingerprint(resultDescriptor),
+      },
+    });
+    expect(operation).toMatchObject({
+      leaseExpiresAt: null,
+      providerEventId: 'payment-event-0001',
+      receipt: { amountUzs: 1_000_000, currency: 'UZS', simulated: true },
+      resultFingerprint: marketplaceProviderFingerprint(resultDescriptor),
+      status: 'succeeded',
+    });
+  });
+
+  it('rejects raw provider payloads and duplicate provider events without completing the operation', async () => {
+    const preparation = directPaymentPreparation();
+    const operation = {
+      ...preparation,
+      attempt: 1,
+      id: 'operation-payment-2',
+      leaseExpiresAt: new Date(Date.now() + 60_000),
+      providerEventId: null,
+      providerReference: null,
+      receipt: null,
+      reconciliationRequired: false,
+      resultFingerprint: null,
+      resultSnapshot: null,
+      status: 'started',
+      tenantId: owner.tenantId,
+      userId: owner.userId,
+    };
+    const completion = {
+      providerEventId: 'payment-event-0002',
+      providerMode: 'mock' as const,
+      providerName: 'mock-direct-payment',
+      providerReference: 'payment-reference-0002',
+      resultDescriptor: {
+        completedAt: new Date().toISOString(),
+        outcome: 'authorized',
+        resourceId: preparation.resourceId,
+        resourceRevision: preparation.resourceRevision,
+        resourceType: 'contract' as const,
+      },
+      safeReceipt: { simulated: true },
+    };
+
+    em.findOne.mockResolvedValue(operation);
+    await expect(
+      repo.completeProviderOperation(owner, operation.id, operation.attempt, {
+        ...completion,
+        safeReceipt: { rawPayload: 'must-not-persist' },
+      }),
+    ).resolves.toEqual({ status: 'conflict', field: 'status' });
+    expect(em.flush).not.toHaveBeenCalled();
+
+    em.findOne.mockReset();
+    em.findOne.mockResolvedValueOnce(operation).mockResolvedValueOnce({ id: 'earlier-operation' });
+    em.execute.mockImplementation((sql: string) =>
+      Promise.resolve(sql.includes('from marketplace_contracts') ? [{ id: preparation.resourceId }] : []),
+    );
+    await expect(repo.completeProviderOperation(owner, operation.id, operation.attempt, completion)).resolves.toEqual({
+      status: 'conflict',
+      field: 'providerEventId',
+    });
+    expect(operation.status).toBe('started');
   });
 });
 
@@ -149,432 +852,190 @@ describe('PostgresMarketplaceRepository — cart', () => {
     repo = new PostgresMarketplaceRepository(em as unknown as EntityManager);
   });
 
-  it('creates a new cart for a new seller', async () => {
-    em.findOne.mockImplementation(async (entity: unknown, where: { id?: string }) => {
-      if (String(entity).includes('Product')) {
-        return productEntity();
+  it('resolves an opaque publication and binds a new cart to exact cross-tenant parties', async () => {
+    em.findOne.mockImplementation(async (entity: unknown, where: Record<string, unknown>) => {
+      const party = commercePartyLookup(entity, where);
+      if (party !== undefined) {
+        return party;
+      }
+      const listing = commerceListingLookup(entity);
+      if (listing !== undefined) {
+        return listing;
       }
       return null;
     });
-    const result = await repo.addToCart(owner, { productId: 'p-1', quantity: 2 });
-    expect(em.persist).toHaveBeenCalled();
-    expect(em.flush).toHaveBeenCalled();
-    expect(em.transactional).toHaveBeenCalledOnce();
-    expect(em.getConnection().execute).toHaveBeenCalledWith('select pg_advisory_xact_lock(hashtext(?))', [
-      `marketplace-cart:tenant-1:user-1:${sellerPartnerId}`,
-    ]);
-    expect(result.status).toBe('ok');
-    if (result.status === 'ok') {
-      expect(result.value.sellerId).toBe(sellerPartnerId);
-      expect(result.value.items).toEqual([{ productId: 'p-1', quantity: 2 }]);
-    }
-    expect(em.findOne).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ tenantId: 'tenant-1', id: 'p-1', status: 'active' }),
+
+    const result = await repo.addToCart(
+      owner,
+      { actingPartnerId: buyerPartnerId, listingPublicationId: 'listing-public-1', quantity: 2 },
+      'cart-add-unit-0001',
     );
-  });
 
-  it('appends to an existing open cart from the same seller', async () => {
-    em.findOne.mockImplementation(async (entity: unknown, where: { id?: string; status?: string }) => {
-      if (String(entity).includes('Product')) {
-        return productEntity();
-      }
-      return {
-        id: 'c-1',
-        tenantId: 'tenant-1',
-        userId: 'user-1',
-        sellerId: sellerPartnerId,
-        items: [{ productId: 'p-1', quantity: 1 }],
-        status: 'open',
-        createdAt: now,
-        updatedAt: now,
-      };
+    expect(result).toMatchObject({
+      status: 'ok',
+      value: {
+        buyerPartnerId,
+        buyerTenantId: owner.tenantId,
+        buyerUserId: owner.userId,
+        sellerPartnerId,
+        sellerTenantId,
+        sellerUserId: sellerOwnerUserId,
+        items: [
+          {
+            listingPublicationId: 'listing-public-1',
+            quantity: 2,
+            sourceId: 'p-1',
+            sourceKind: 'product',
+          },
+        ],
+      },
     });
-    const result = await repo.addToCart(owner, { productId: 'p-1', quantity: 3 });
-    if (result.status === 'ok') {
-      const first = result.value.items[0] as { quantity: number };
-      expect(first.quantity).toBe(4);
-    }
-  });
-
-  it('returns not_found when the product does not exist', async () => {
-    em.findOne.mockResolvedValue(null);
-    const result = await repo.addToCart(owner, { productId: 'p-x', quantity: 1 });
-    expect(result.status).toBe('not_found');
-  });
-
-  it('does not schedule an empty cart when the first item exceeds stock', async () => {
-    em.findOne.mockImplementation(async (entity: unknown) => {
-      if (String(entity).includes('Product')) {
-        return productEntity({ stockQuantity: 1 });
-      }
-      return null;
-    });
-
-    await expect(repo.addToCart(owner, { productId: 'p-1', quantity: 2 })).resolves.toMatchObject({
-      status: 'conflict',
-      field: 'stockQuantity',
-    });
-    expect(em.persist).not.toHaveBeenCalled();
-    expect(em.flush).not.toHaveBeenCalled();
-  });
-
-  it('removes an item when quantity is zero', async () => {
-    const cart = {
-      id: 'c-1',
-      tenantId: 'tenant-1',
-      userId: 'user-1',
-      sellerId: sellerPartnerId,
-      items: [{ productId: 'p-1', quantity: 1 }],
-      status: 'open',
-      createdAt: now,
-      updatedAt: now,
-    };
-    em.findOne.mockResolvedValue(cart);
-    const result = await repo.updateCartItem(owner, 'c-1', 'p-1', 0);
-    if (result.status === 'ok') {
-      expect(result.value.items).toEqual([]);
-    }
-  });
-
-  it('atomically closes an open cart and persists server-priced contract terms', async () => {
-    const cart = {
-      id: 'c-1',
-      tenantId: 'tenant-1',
-      userId: 'user-1',
-      sellerId: sellerPartnerId,
-      items: [{ productId: 'p-1', quantity: 2 }],
-      status: 'open',
-      createdAt: now,
-      updatedAt: now,
-    };
-    em.findOne.mockImplementation(async (entity: unknown) => {
-      const name = String(entity);
-      if (name.includes('Cart')) {
-        return cart;
-      }
-      if (name.includes('AgriTechPartner')) {
-        return partnerEntity();
-      }
-      if (name.includes('Verification')) {
-        return verificationEntity({ userId: sellerOwnerUserId, role: 'seller', status: 'verified' });
-      }
-      return null;
-    });
-    em.find.mockResolvedValue([productEntity()]);
-    const result = await repo.checkoutCart(owner, 'c-1', {
-      deliveryTerms: 'seller_delivery',
-    });
-    expect(result.status).toBe('ok');
-    if (result.status === 'ok') {
-      expect(result.value.cartId).toBe('c-1');
-      expect(result.value.contractId).toBeTruthy();
-    }
-    expect(cart.status).toBe('ordered');
-    expect(em.transactional).toHaveBeenCalledOnce();
-    expect(em.find).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ tenantId: 'tenant-1', supplierId: sellerPartnerId, status: 'active' }),
-      expect.objectContaining({ lockMode: expect.anything() }),
-    );
     expect(em.persist).toHaveBeenCalledWith(
       expect.objectContaining({
-        tenantId: 'tenant-1',
-        buyerUserId: 'user-1',
-        sellerUserId: sellerOwnerUserId,
-        sourceType: 'cart_checkout',
-        sourceId: 'c-1',
-        amountUzs: 1_000_000,
-        deliveryTerms: 'seller_delivery',
-        deliveryPriceUzs: null,
-        factoringEnabled: false,
-        status: 'draft',
-        lines: [
-          expect.objectContaining({ productId: 'p-1', quantity: 2, unitPriceUzs: 500_000, lineTotalUzs: 1_000_000 }),
-        ],
+        bindingStatus: 'resolved',
+        buyerPartnerId,
+        sellerPartnerId,
+        sellerTenantId,
       }),
     );
+    expect(em.flush).toHaveBeenCalled();
   });
 
-  it('rejects checkout of an empty cart', async () => {
-    em.findOne.mockResolvedValue({
-      id: 'c-1',
-      tenantId: 'tenant-1',
-      userId: 'user-1',
-      sellerId: sellerPartnerId,
-      items: [],
-      status: 'open',
-      createdAt: now,
-      updatedAt: now,
-    });
-    const result = await repo.checkoutCart(owner, 'c-1', { deliveryTerms: 'pickup' });
-    expect(result.status).toBe('invalid_state');
-  });
+  it('rejects an invalid idempotency key before any organization or publication lookup', async () => {
+    await expect(
+      repo.addToCart(
+        owner,
+        { actingPartnerId: buyerPartnerId, listingPublicationId: 'listing-public-1', quantity: 1 },
+        'short',
+      ),
+    ).resolves.toEqual({ status: 'invalid_state', field: 'idempotencyKey' });
 
-  it('rejects checkout when the derived seller is no longer verified', async () => {
-    em.findOne.mockImplementation(async (entity: unknown) => {
-      if (String(entity).includes('Cart')) {
-        return {
-          id: 'c-1',
-          tenantId: 'tenant-1',
-          userId: 'user-1',
-          sellerId: sellerPartnerId,
-          items: [{ productId: 'p-1', quantity: 1 }],
-          status: 'open',
-          createdAt: now,
-          updatedAt: now,
-        };
-      }
-      if (String(entity).includes('AgriTechPartner')) {
-        return partnerEntity();
-      }
-      return null;
-    });
-
-    await expect(repo.checkoutCart(owner, 'c-1', { deliveryTerms: 'pickup' })).resolves.toMatchObject({
-      status: 'forbidden',
-      field: 'sellerId',
-    });
-    expect(em.find).not.toHaveBeenCalled();
+    expect(em.findOne).not.toHaveBeenCalled();
     expect(em.persist).not.toHaveBeenCalled();
   });
 
-  it('rejects self-checkout through a distinct supplier partner identity', async () => {
-    em.findOne.mockImplementation(async (entity: unknown) => {
-      if (String(entity).includes('Cart')) {
-        return {
-          id: 'c-1',
-          tenantId: 'tenant-1',
-          userId: owner.userId,
-          sellerId: sellerPartnerId,
-          items: [{ productId: 'p-1', quantity: 1 }],
-          status: 'open',
-          createdAt: now,
-          updatedAt: now,
-        };
-      }
-      if (String(entity).includes('AgriTechPartner')) {
-        return partnerEntity({ ownerUserId: owner.userId });
-      }
-      return null;
+  it('does not resolve a private source identifier as a public listing', async () => {
+    em.findOne.mockImplementation(async (entity: unknown, where: Record<string, unknown>) => {
+      const party = commercePartyLookup(entity, where);
+      return party === undefined ? null : party;
     });
 
-    await expect(repo.checkoutCart(owner, 'c-1', { deliveryTerms: 'pickup' })).resolves.toMatchObject({
-      status: 'forbidden',
-      field: 'sellerId',
-    });
-    expect(em.find).not.toHaveBeenCalled();
+    await expect(
+      repo.addToCart(
+        owner,
+        { actingPartnerId: buyerPartnerId, listingPublicationId: 'private-product-1', quantity: 1 },
+        'cart-private-unit-0001',
+      ),
+    ).resolves.toEqual({ status: 'not_found', field: 'listingPublicationId' });
     expect(em.persist).not.toHaveBeenCalled();
   });
 
-  it('rejects checkout when a server-priced catalog line is not positive', async () => {
+  it('freezes server-owned line and party snapshots when checking out a resolved cart', async () => {
     const cart = {
-      id: 'c-1',
-      tenantId: 'tenant-1',
-      userId: 'user-1',
-      sellerId: sellerPartnerId,
-      items: [{ productId: 'p-1', quantity: 1 }],
-      status: 'open',
+      bindingStatus: 'resolved',
+      buyerPartnerId,
       createdAt: now,
+      id: 'cart-cross-tenant-1',
+      items: [
+        {
+          listingPublicationId: 'listing-public-1',
+          quantity: 2,
+          sourceId: 'p-1',
+          sourceKind: 'product',
+        },
+      ],
+      sellerId: sellerPartnerId,
+      sellerPartnerId,
+      sellerTenantId,
+      sellerUserId: sellerOwnerUserId,
+      status: 'open',
+      tenantId: owner.tenantId,
       updatedAt: now,
-    };
-    em.findOne.mockImplementation(async (entity: unknown) => {
-      const name = String(entity);
-      if (name.includes('Cart')) {
-        return cart;
-      }
-      if (name.includes('AgriTechPartner')) {
-        return partnerEntity();
-      }
-      if (name.includes('Verification')) {
-        return verificationEntity({ userId: sellerOwnerUserId, role: 'seller', status: 'verified' });
-      }
-      return null;
-    });
-    em.find.mockResolvedValue([productEntity({ priceUzs: 0 })]);
-
-    await expect(repo.checkoutCart(owner, 'c-1', { deliveryTerms: 'pickup' })).resolves.toMatchObject({
-      status: 'invalid_state',
-      field: 'priceUzs',
-    });
-    expect(cart.status).toBe('open');
-    expect(em.persist).not.toHaveBeenCalled();
-  });
-
-  it('rejects a fractional server-priced catalog line even when its aggregate is an integer', async () => {
-    const cart = {
-      id: 'c-fractional-price',
-      tenantId: 'tenant-1',
       userId: owner.userId,
-      sellerId: sellerPartnerId,
-      items: [{ productId: 'p-1', quantity: 2 }],
-      status: 'open',
-      createdAt: now,
-      updatedAt: now,
     };
-    em.findOne.mockImplementation(async (entity: unknown) => {
+    em.findOne.mockImplementation(async (entity: unknown, where: Record<string, unknown>) => {
       const name = String(entity);
       if (name.includes('Cart')) {
         return cart;
       }
-      if (name.includes('AgriTechPartner')) {
-        return partnerEntity();
+      const party = commercePartyLookup(entity, where);
+      if (party !== undefined) {
+        return party;
       }
-      if (name.includes('Verification')) {
-        return verificationEntity({ userId: sellerOwnerUserId, role: 'seller', status: 'verified' });
-      }
-      return null;
+      const listing = commerceListingLookup(entity);
+      return listing === undefined ? null : listing;
     });
-    em.find.mockResolvedValue([productEntity({ priceUzs: 500_000.5 })]);
 
-    await expect(repo.checkoutCart(owner, cart.id, { deliveryTerms: 'pickup' })).resolves.toMatchObject({
-      status: 'invalid_state',
-      field: 'priceUzs',
-    });
-    expect(cart.status).toBe('open');
-    expect(em.persist).not.toHaveBeenCalled();
-  });
+    const result = await repo.checkoutCart(owner, cart.id, { deliveryTerms: 'pickup' }, 'checkout-unit-0001');
 
-  it('rejects a server-priced checkout total beyond the database money range', async () => {
-    const cart = {
-      id: 'c-overflow',
-      tenantId: 'tenant-1',
-      userId: owner.userId,
-      sellerId: sellerPartnerId,
-      items: [{ productId: 'p-1', quantity: 2 }],
-      status: 'open',
-      createdAt: now,
-      updatedAt: now,
-    };
-    em.findOne.mockImplementation(async (entity: unknown) => {
-      const name = String(entity);
-      if (name.includes('Cart')) {
-        return cart;
-      }
-      if (name.includes('AgriTechPartner')) {
-        return partnerEntity();
-      }
-      if (name.includes('Verification')) {
-        return verificationEntity({ userId: sellerOwnerUserId, role: 'seller', status: 'verified' });
-      }
-      return null;
-    });
-    em.find.mockResolvedValue([productEntity({ priceUzs: 5_000_000_000_000 })]);
-
-    await expect(repo.checkoutCart(owner, cart.id, { deliveryTerms: 'pickup' })).resolves.toMatchObject({
-      status: 'invalid_state',
-      field: 'amountUzs',
-    });
-    expect(cart.status).toBe('open');
-    expect(em.persist).not.toHaveBeenCalled();
-  });
-
-  it('rejects a cart line when the product belongs to another tenant', async () => {
-    const cart = {
-      id: 'c-1',
-      tenantId: 'tenant-1',
-      userId: 'user-1',
-      sellerId: sellerPartnerId,
-      items: [{ productId: 'foreign-product', quantity: 1 }],
-      status: 'open',
-      createdAt: now,
-      updatedAt: now,
-    };
-    em.findOne.mockImplementation(async (entity: unknown) => {
-      const name = String(entity);
-      if (name.includes('Cart')) {
-        return cart;
-      }
-      if (name.includes('AgriTechPartner')) {
-        return partnerEntity();
-      }
-      if (name.includes('Verification')) {
-        return verificationEntity({ userId: sellerOwnerUserId, role: 'seller', status: 'verified' });
-      }
-      return null;
-    });
-    em.find.mockResolvedValue([]);
-
-    await expect(repo.checkoutCart(owner, 'c-1', { deliveryTerms: 'pickup' })).resolves.toMatchObject({
-      status: 'not_found',
-      field: 'productId',
-    });
-    expect(em.persist).not.toHaveBeenCalled();
-  });
-});
-
-describe('PostgresMarketplaceRepository — samples', () => {
-  let em: ReturnType<typeof makeEm>;
-  let repo: PostgresMarketplaceRepository;
-
-  beforeEach(() => {
-    em = makeEm();
-    repo = new PostgresMarketplaceRepository(em as unknown as EntityManager);
-  });
-
-  it('creates a sample request for a real product', async () => {
-    em.findOne.mockImplementation(async (entity: unknown) => {
-      if (String(entity).includes('Verification')) {
-        return verificationEntity({ status: 'verified' });
-      }
-      if (String(entity).includes('Product')) {
-        return productEntity();
-      }
-      if (String(entity).includes('AgriTechPartner')) {
-        return partnerEntity();
-      }
-      return null;
-    });
-    const result = await repo.requestSample(owner, 'p-1');
-    expect(em.persist).toHaveBeenCalled();
-    expect(result.status).toBe('ok');
-    if (result.status === 'ok') {
-      expect(result.value.status).toBe('pending');
-      expect(result.value.productId).toBe('p-1');
-      expect(result.value.sellerId).toBe(sellerPartnerId);
-    }
-    expect(em.findOne).toHaveBeenCalledWith(
-      expect.anything(),
+    expect(result).toMatchObject({ status: 'ok', value: { cartId: cart.id } });
+    expect(cart.status).toBe('ordered');
+    expect(em.persist).toHaveBeenCalledWith(
       expect.objectContaining({
-        tenantId: 'tenant-1',
-        id: sellerPartnerId,
-        kind: 'supplier',
-        status: 'approved',
+        amountUzs: 1_000_000,
+        bindingStatus: 'resolved',
+        buyerPartnerId,
+        buyerPartySnapshot: expect.objectContaining({
+          partnerId: buyerPartnerId,
+          tenantId: owner.tenantId,
+          userId: owner.userId,
+        }),
+        lines: [
+          expect.objectContaining({
+            lineTotalUzs: 1_000_000,
+            sourceId: 'p-1',
+            sourcePublicationId: 'listing-public-1',
+            sourceRevision: 1,
+            unitPriceUzs: 500_000,
+          }),
+        ],
+        sellerPartnerId,
+        sellerPartySnapshot: expect.objectContaining({
+          partnerId: sellerPartnerId,
+          tenantId: sellerTenantId,
+          userId: sellerOwnerUserId,
+        }),
+        sellerTenantId,
+        sourceId: cart.id,
+        sourceType: 'cart_checkout',
       }),
     );
   });
 
-  it('rejects a sample for a missing product', async () => {
-    em.findOne.mockImplementation(async (entity: unknown) => {
+  it('fails checkout closed when the bound buyer membership is unavailable', async () => {
+    const cart = {
+      bindingStatus: 'resolved',
+      buyerPartnerId,
+      createdAt: now,
+      id: 'cart-revoked-1',
+      items: [{ listingPublicationId: 'listing-public-1', quantity: 1, sourceId: 'p-1', sourceKind: 'product' }],
+      sellerId: sellerPartnerId,
+      sellerPartnerId,
+      sellerTenantId,
+      sellerUserId: sellerOwnerUserId,
+      status: 'open',
+      tenantId: owner.tenantId,
+      updatedAt: now,
+      userId: owner.userId,
+    };
+    em.findOne.mockImplementation(async (entity: unknown, where: Record<string, unknown>) => {
       const name = String(entity);
-      if (name.includes('AgriTechPartner')) {
-        return partnerEntity({ id: 'buyer-partner', ownerUserId: owner.userId, kind: 'buyer' });
+      if (name.includes('Cart')) {
+        return cart;
       }
-      return name.includes('Verification') ? verificationEntity({ status: 'verified' }) : null;
+      if (name.includes('MarketplaceCommerceOperation')) {
+        return null;
+      }
+      if (name.includes('MarketplacePartnerMembership') && where.capability === 'buyer') {
+        return null;
+      }
+      return commercePartyLookup(entity, where) ?? null;
     });
-    const result = await repo.requestSample(owner, 'p-x');
-    expect(result.status).toBe('not_found');
-  });
 
-  it('serializes and enforces the persisted monthly sample allowance', async () => {
-    em.findOne.mockResolvedValue(verificationEntity({ status: 'verified' }));
-    em.count.mockResolvedValue(5);
-
-    await expect(repo.requestSample(owner, 'p-1')).resolves.toMatchObject({
-      status: 'invalid_state',
-      field: 'samples',
-    });
-    expect(em.findOne).toHaveBeenCalledWith(
-      expect.anything(),
-      { tenantId: 'tenant-1', userId: 'user-1', status: 'verified' },
-      expect.objectContaining({ lockMode: expect.anything() }),
-    );
+    await expect(
+      repo.checkoutCart(owner, cart.id, { deliveryTerms: 'pickup' }, 'checkout-revoked-0001'),
+    ).resolves.toEqual({ status: 'forbidden', field: 'organization' });
     expect(em.persist).not.toHaveBeenCalled();
-  });
-
-  it('counts samples created this month', async () => {
-    em.count.mockResolvedValue(3);
-    expect(await repo.sampleUsageThisMonth(owner)).toBe(3);
   });
 });
 
@@ -587,264 +1048,276 @@ describe('PostgresMarketplaceRepository — requests and offers', () => {
     repo = new PostgresMarketplaceRepository(em as unknown as EntityManager);
   });
 
-  it('creates a buyer request', async () => {
-    em.findOne.mockResolvedValue(partnerEntity({ id: 'buyer-partner', ownerUserId: owner.userId, kind: 'buyer' }));
-    const result = await repo.createRequest(owner, {
-      title: 'Corn seeds',
-      product: 'corn',
-      volume: '10 t',
-      region: 'Samarkand',
-      deadline: '2026-08-20',
-      budgetUzs: 5000000,
-      requirements: 'certified',
+  it('creates a request only after locking the selected active buyer membership', async () => {
+    em.findOne.mockImplementation(async (entity: unknown, where: Record<string, unknown>) => {
+      return commercePartyLookup(entity, where) ?? null;
     });
-    expect(em.transactional).toHaveBeenCalledOnce();
-    expect(em.findOne).toHaveBeenCalledWith(
-      expect.anything(),
-      {
-        tenantId: owner.tenantId,
-        ownerUserId: owner.userId,
-        kind: 'buyer',
-        status: 'approved',
-      },
-      expect.objectContaining({ lockMode: expect.anything() }),
+    const input = {
+      actingPartnerId: buyerPartnerId,
+      budgetUzs: 5_000_000,
+      deadline: '2026-08-20',
+      product: 'corn',
+      region: 'Samarkand',
+      requirements: 'certified',
+      title: 'Corn seeds',
+      volume: '10 t',
+    };
+
+    const result = await repo.createRequest(owner, input, 'request-unit-0001');
+
+    expect(result).toMatchObject({
+      status: 'ok',
+      value: { buyerPartnerId, buyerUserId: owner.userId, status: 'open' },
+    });
+    expect(em.persist).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        expect.objectContaining({
+          bindingStatus: 'review_required',
+          buyerPartnerId,
+          buyerUserId: owner.userId,
+          tenantId: owner.tenantId,
+        }),
+        expect.objectContaining({
+          buyerPartnerId,
+          buyerUserId: owner.userId,
+          tenantId: owner.tenantId,
+        }),
+      ]),
     );
-    expect(em.persist).toHaveBeenCalled();
-    expect(result.status).toBe('ok');
-    if (result.status === 'ok') {
-      expect(result.value.status).toBe('open');
-      expect(result.value.region).toBe('Samarkand');
-      expect(result.value.deadline).toBe('2026-08-20');
-    }
   });
 
-  it('does not persist a buyer request when the transaction cannot lock an approved organization', async () => {
+  it('fails request creation closed when the selected organization is not an active membership', async () => {
     em.findOne.mockResolvedValue(null);
 
     await expect(
-      repo.createRequest(owner, {
-        title: 'Corn seeds',
-        region: 'Samarkand',
-      }),
+      repo.createRequest(
+        owner,
+        { actingPartnerId: 'foreign-buyer-partner', region: 'Samarkand', title: 'Corn seeds' },
+        'request-foreign-0001',
+      ),
     ).resolves.toEqual({ status: 'forbidden', field: 'organization' });
-
-    expect(em.transactional).toHaveBeenCalledOnce();
-    expect(em.persist).not.toHaveBeenCalled();
-    expect(em.flush).not.toHaveBeenCalled();
-  });
-
-  it('makes an offer on an open request', async () => {
-    em.findOne.mockImplementation(async (entity: unknown, where: { id?: string }) => {
-      if (String(entity).includes('AgriTechPartner')) {
-        return partnerEntity({ ownerUserId: owner.userId });
-      }
-      if (where.id === 'r-1') {
-        return { id: 'r-1', status: 'open' };
-      }
-      return null;
-    });
-    const result = await repo.makeOffer(owner, 'r-1', 4500000, 'seller_delivery', 250_000, 'delivery in 5 days', 5);
-    expect(result.status).toBe('ok');
-    expect(em.transactional).toHaveBeenCalledOnce();
-  });
-
-  it('rejects an offer when price is not positive', async () => {
-    em.findOne.mockResolvedValue({ id: 'r-1', status: 'open', buyerUserId: 'buyer-2' });
-    const result = await repo.makeOffer(owner, 'r-1', 0, 'pickup');
-    expect(result.status).toBe('invalid_state');
-  });
-
-  it('rejects an offer when delivery duration is not positive', async () => {
-    em.findOne.mockResolvedValue({ id: 'r-1', status: 'open', buyerUserId: 'buyer-2' });
-    await expect(repo.makeOffer(owner, 'r-1', 4_500_000, 'pickup', undefined, undefined, 0)).resolves.toMatchObject({
-      status: 'invalid_state',
-      field: 'deliveryDays',
-    });
     expect(em.persist).not.toHaveBeenCalled();
   });
 
-  it('requires a seller-authored positive delivery price only for seller delivery', async () => {
-    em.findOne.mockResolvedValue({ id: 'r-1', status: 'open', buyerUserId: 'buyer-2' });
+  it('rejects invalid seller-authored monetary and delivery terms before persistence', async () => {
+    const seller = { tenantId: sellerTenantId, userId: sellerOwnerUserId };
 
-    await expect(repo.makeOffer(owner, 'r-1', 4_500_000, 'seller_delivery')).resolves.toMatchObject({
-      status: 'invalid_state',
-      field: 'deliveryPriceUzs',
-    });
-    await expect(repo.makeOffer(owner, 'r-1', 4_500_000, 'pickup', 10)).resolves.toMatchObject({
-      status: 'invalid_state',
-      field: 'deliveryPriceUzs',
-    });
-    expect(em.persist).not.toHaveBeenCalled();
+    await expect(
+      repo.makeOffer(
+        seller,
+        'request-public-1',
+        { actingPartnerId: sellerPartnerId, deliveryTerms: 'pickup', priceUzs: 0 },
+        'offer-price-unit-0001',
+      ),
+    ).resolves.toEqual({ status: 'invalid_state', field: 'priceUzs' });
+    await expect(
+      repo.makeOffer(
+        seller,
+        'request-public-1',
+        {
+          actingPartnerId: sellerPartnerId,
+          deliveryTerms: 'seller_delivery',
+          priceUzs: 4_500_000,
+        },
+        'offer-delivery-unit-0001',
+      ),
+    ).resolves.toEqual({ status: 'invalid_state', field: 'deliveryPriceUzs' });
+    expect(em.findOne).not.toHaveBeenCalled();
   });
 
-  it('rejects an offer from the request owner', async () => {
-    em.findOne.mockResolvedValue({ id: 'r-1', status: 'open', buyerUserId: 'user-1' });
-    await expect(repo.makeOffer(owner, 'r-1', 4_500_000, 'pickup')).resolves.toMatchObject({
-      status: 'forbidden',
-    });
-    expect(em.persist).not.toHaveBeenCalled();
-  });
-
-  it('lists offers only for the owning buyer request', async () => {
-    em.findOne.mockResolvedValue(null);
-    await expect(repo.listOffers(owner, 'foreign-request')).resolves.toMatchObject({ status: 'not_found' });
-    expect(em.find).not.toHaveBeenCalled();
-
-    em.findOne.mockResolvedValue({ id: 'r-1', tenantId: 'tenant-1', buyerUserId: 'user-1' });
-    em.find.mockResolvedValue([]);
-    await expect(repo.listOffers(owner, 'r-1')).resolves.toEqual({ status: 'ok', value: [] });
-  });
-
-  it('atomically selects one offer, declines alternatives, and creates a draft contract', async () => {
+  it('creates an offer only through an approved opaque request publication', async () => {
+    const seller = { tenantId: sellerTenantId, userId: sellerOwnerUserId };
+    const publication = {
+      buyerPartnerId,
+      buyerUserId: owner.userId,
+      contentRevision: 1,
+      id: 'request-public-1',
+      moderationStatus: 'approved',
+      requestId: 'request-private-1',
+      status: 'published',
+      tenantId: owner.tenantId,
+    };
     const request = {
-      id: 'r-1',
-      tenantId: 'tenant-1',
-      status: 'offering',
-      buyerUserId: 'user-1',
+      bindingStatus: 'resolved',
+      buyerPartnerId,
+      buyerUserId: owner.userId,
+      id: publication.requestId,
+      region: 'Samarkand',
+      status: 'open',
+      tenantId: owner.tenantId,
       title: 'Corn seeds',
-      volume: '10 t',
       updatedAt: now,
     };
-    const selected = {
-      id: 'o-1',
-      requestId: 'r-1',
-      tenantId: 'tenant-1',
-      status: 'pending',
-      sellerUserId: 's-1',
-      priceUzs: 4_500_000,
-      deliveryNote: 'Seller delivery',
-      deliveryDays: 5,
-      createdAt: now,
-    };
-    const alternative = { ...selected, id: 'o-2', sellerUserId: 's-2' };
-    em.findOne.mockImplementation(async (entity: unknown, where: { id?: string }) => {
+    em.findOne.mockImplementation(async (entity: unknown, where: Record<string, unknown>) => {
       const name = String(entity);
-      if (name.includes('AgriTechPartner')) {
-        return partnerEntity({
-          id: where.id ?? 'approved-partner',
-          ownerUserId: String((where as { ownerUserId?: string }).ownerUserId ?? owner.userId),
-          kind: (where as { kind?: string }).kind ?? 'buyer',
-        });
+      const party = commercePartyLookup(entity, where);
+      if (party !== undefined) {
+        return party;
+      }
+      if (name.includes('MarketplaceRequestPublication')) {
+        return where.id === publication.id ? publication : null;
       }
       if (name.includes('BuyerRequest')) {
         return request;
       }
-      if (name.includes('RequestOffer') && where.id === 'o-1') {
-        return selected;
-      }
-      if (name.includes('Verification')) {
-        return verificationEntity({ userId: 's-1', role: 'seller', status: 'verified' });
+      if (name.includes('MarketplaceRequestOrganizationBinding')) {
+        return { id: 'binding-1' };
       }
       return null;
     });
-    em.find.mockResolvedValue([selected, alternative]);
-    const result = await repo.chooseOffer(owner, 'r-1', 'o-1');
-    expect(result.status).toBe('ok');
-    if (result.status === 'ok') {
-      expect(result.value.sellerUserId).toBe('s-1');
-      expect(result.value.contractId).toBeTruthy();
-    }
-    expect(selected.status).toBe('accepted');
-    expect(alternative.status).toBe('declined');
-    expect(request.status).toBe('selected');
-    expect(em.transactional).toHaveBeenCalledOnce();
-    expect(em.persist).toHaveBeenCalledWith(
-      expect.objectContaining({
-        buyerUserId: 'user-1',
-        sellerUserId: 's-1',
-        sourceType: 'offer_selection',
-        sourceId: 'o-1',
-        amountUzs: 4_500_000,
-        deliveryNote: 'Seller delivery',
+
+    await expect(
+      repo.makeOffer(
+        seller,
+        request.id,
+        { actingPartnerId: sellerPartnerId, deliveryTerms: 'pickup', priceUzs: 4_500_000 },
+        'offer-private-unit-0001',
+      ),
+    ).resolves.toEqual({ status: 'not_found' });
+
+    const result = await repo.makeOffer(
+      seller,
+      publication.id,
+      {
+        actingPartnerId: sellerPartnerId,
         deliveryDays: 5,
-        status: 'draft',
-      }),
+        deliveryPriceUzs: 250_000,
+        deliveryTerms: 'seller_delivery',
+        priceUzs: 4_500_000,
+      },
+      'offer-public-unit-0001',
     );
+    expect(result).toMatchObject({
+      status: 'ok',
+      value: {
+        buyerPartnerId,
+        buyerTenantId: owner.tenantId,
+        requestPublicId: publication.id,
+        sellerPartnerId,
+        sellerTenantId,
+      },
+    });
+    expect(request.status).toBe('offering');
   });
 
-  it('returns a status conflict for an already-decided request before reading its offers', async () => {
-    em.findOne.mockImplementation(async (entity: unknown) => {
-      const name = String(entity);
-      if (name.includes('AgriTechPartner')) {
-        return partnerEntity({ id: 'buyer-partner', ownerUserId: owner.userId, kind: 'buyer' });
-      }
-      if (name.includes('BuyerRequest')) {
-        return { id: 'r-selected', tenantId: owner.tenantId, buyerUserId: owner.userId, status: 'selected' };
-      }
-      throw new Error(`Unexpected lookup for ${name}`);
-    });
-
-    await expect(repo.chooseOffer(owner, 'r-selected', 'o-accepted')).resolves.toEqual({
-      status: 'conflict',
-      field: 'status',
-    });
-    expect(em.findOne).not.toHaveBeenCalledWith(
-      expect.objectContaining({ name: 'RequestOfferEntity' }),
-      expect.anything(),
-      expect.anything(),
-    );
-    expect(em.persist).not.toHaveBeenCalled();
-  });
-
-  it('distinguishes an already-decided offer from an absent offer', async () => {
-    const request = {
-      id: 'r-1',
-      tenantId: owner.tenantId,
+  it('lists offers only through the owning approved publication', async () => {
+    const publication = {
+      buyerPartnerId,
       buyerUserId: owner.userId,
-      status: 'offering',
+      id: 'request-public-1',
+      moderationStatus: 'approved',
+      requestId: 'request-private-1',
+      status: 'published',
+      tenantId: owner.tenantId,
     };
-    em.findOne.mockImplementation(async (entity: unknown, where: { id?: string }) => {
+    const request = {
+      bindingStatus: 'resolved',
+      buyerPartnerId,
+      buyerUserId: owner.userId,
+      id: publication.requestId,
+      tenantId: owner.tenantId,
+    };
+    em.findOne.mockImplementation(async (entity: unknown, where: Record<string, unknown>) => {
       const name = String(entity);
-      if (name.includes('AgriTechPartner')) {
-        return partnerEntity({ id: 'buyer-partner', ownerUserId: owner.userId, kind: 'buyer' });
+      if (name.includes('MarketplaceRequestPublication')) {
+        return where.id === publication.id ? publication : null;
       }
       if (name.includes('BuyerRequest')) {
         return request;
       }
-      if (name.includes('RequestOffer') && where.id === 'o-accepted') {
-        return { id: 'o-accepted', requestId: request.id, tenantId: owner.tenantId, status: 'accepted' };
-      }
-      return null;
+      return commercePartyLookup(entity, where) ?? null;
     });
+    em.find.mockResolvedValue([]);
 
-    await expect(repo.chooseOffer(owner, request.id, 'o-accepted')).resolves.toEqual({
-      status: 'conflict',
-      field: 'status',
-    });
-    await expect(repo.chooseOffer(owner, request.id, 'o-missing')).resolves.toEqual({
-      status: 'not_found',
-      field: 'offerId',
-    });
-    expect(em.persist).not.toHaveBeenCalled();
+    await expect(repo.listOffers(owner, request.id)).resolves.toEqual({ status: 'not_found' });
+    await expect(repo.listOffers(owner, publication.id)).resolves.toEqual({ status: 'ok', value: [] });
   });
 
-  it('rejects selection when the offer seller is no longer verified', async () => {
-    em.findOne.mockImplementation(async (entity: unknown, where: { ownerUserId?: string }) => {
+  it('freezes request publication and exact parties when selecting an offer', async () => {
+    const publication = {
+      buyerPartnerId,
+      buyerUserId: owner.userId,
+      contentRevision: 3,
+      id: 'request-public-1',
+      moderationStatus: 'approved',
+      requestId: 'request-private-1',
+      status: 'published',
+      tenantId: owner.tenantId,
+    };
+    const request = {
+      bindingStatus: 'resolved',
+      buyerPartnerId,
+      buyerUserId: owner.userId,
+      id: publication.requestId,
+      region: 'Samarkand',
+      status: 'offering',
+      tenantId: owner.tenantId,
+      title: 'Corn seeds',
+      updatedAt: now,
+      volume: '10 t',
+    };
+    const offer = {
+      bindingStatus: 'resolved',
+      buyerPartnerId,
+      buyerUserId: owner.userId,
+      createdAt: now,
+      deliveryDays: null,
+      deliveryNote: null,
+      deliveryPriceUzs: 0,
+      deliveryTerms: 'pickup',
+      id: 'offer-1',
+      priceUzs: 4_500_000,
+      requestId: request.id,
+      requestPublicId: publication.id,
+      sellerPartnerId,
+      sellerTenantId,
+      sellerUserId: sellerOwnerUserId,
+      status: 'pending',
+      tenantId: owner.tenantId,
+    };
+    em.findOne.mockImplementation(async (entity: unknown, where: Record<string, unknown>) => {
       const name = String(entity);
-      if (name.includes('AgriTechPartner') && where.ownerUserId === owner.userId) {
-        return partnerEntity({ id: 'buyer-partner', ownerUserId: owner.userId, kind: 'buyer' });
+      const party = commercePartyLookup(entity, where);
+      if (party !== undefined) {
+        return party;
+      }
+      if (name.includes('MarketplaceRequestPublication')) {
+        return publication;
       }
       if (name.includes('BuyerRequest')) {
-        return { id: 'r-1', tenantId: 'tenant-1', status: 'offering', buyerUserId: 'user-1' };
+        return request;
       }
       if (name.includes('RequestOffer')) {
-        return {
-          id: 'o-1',
-          requestId: 'r-1',
-          tenantId: 'tenant-1',
-          status: 'pending',
-          sellerUserId: 's-1',
-        };
+        return offer;
       }
       return null;
     });
+    em.find.mockResolvedValue([offer]);
 
-    await expect(repo.chooseOffer(owner, 'r-1', 'o-1')).resolves.toMatchObject({
-      status: 'forbidden',
-      field: 'sellerUserId',
+    const result = await repo.chooseOffer(owner, publication.id, offer.id, 'choose-unit-0001');
+
+    expect(result).toMatchObject({
+      status: 'ok',
+      value: { offerId: offer.id, requestPublicId: publication.id, sellerUserId: sellerOwnerUserId },
     });
-    expect(em.find).not.toHaveBeenCalled();
-    expect(em.persist).not.toHaveBeenCalled();
+    expect(em.persist).toHaveBeenCalledWith(
+      expect.objectContaining({
+        buyerPartnerId,
+        lines: [
+          expect.objectContaining({
+            sourceId: request.id,
+            sourceKind: 'request',
+            sourcePublicationId: publication.id,
+            sourceRevision: 3,
+            unitPriceUzs: 4_500_000,
+          }),
+        ],
+        sellerPartnerId,
+        sellerTenantId,
+        sourceId: offer.id,
+        sourceType: 'offer_selection',
+      }),
+    );
   });
 });
 
@@ -857,633 +1330,102 @@ describe('PostgresMarketplaceRepository — contracts, reviews, ai', () => {
     repo = new PostgresMarketplaceRepository(em as unknown as EntityManager);
   });
 
-  it('lets only the seller quote an unsigned seller-delivery contract', async () => {
+  it('lets the exact bound seller quote only an unsigned cart delivery contract while both parties remain authorized', async () => {
     const contract = {
-      id: 'c-delivery',
-      tenantId: 'tenant-1',
-      buyerUserId: 'user-1',
-      sellerUserId: sellerOwnerUserId,
-      sourceType: 'cart_checkout',
-      deliveryTerms: 'seller_delivery',
-      deliveryPriceUzs: null,
-      deliveryNote: null,
-      deliveryDays: null,
-      status: 'draft',
-      buyerSignedAt: null,
-      sellerSignedAt: null,
-      updatedAt: now,
-    };
-    em.findOne.mockImplementation(async (entity: unknown) =>
-      String(entity).includes('AgriTechPartner') ? partnerEntity() : contract,
-    );
-
-    await expect(
-      repo.updateContractDeliveryQuote(owner, contract.id, { deliveryPriceUzs: 250_000 }),
-    ).resolves.toMatchObject({ status: 'forbidden' });
-    await expect(
-      repo.updateContractDeliveryQuote({ tenantId: 'tenant-1', userId: sellerOwnerUserId }, contract.id, {
-        deliveryPriceUzs: 250_000,
-        deliveryDays: 2,
-        deliveryNote: 'Delivered to the farm gate',
-      }),
-    ).resolves.toMatchObject({
-      status: 'ok',
-      value: { deliveryPriceUzs: 250_000, deliveryDays: 2 },
-    });
-    expect(contract.deliveryPriceUzs).toBe(250_000);
-
-    await expect(
-      repo.updateContractDeliveryQuote({ tenantId: 'tenant-1', userId: sellerOwnerUserId }, contract.id, {
-        deliveryPriceUzs: 300_000,
-      }),
-    ).resolves.toMatchObject({ status: 'invalid_state' });
-
-    contract.sourceType = 'offer_selection';
-    contract.deliveryPriceUzs = null;
-    await expect(
-      repo.updateContractDeliveryQuote({ tenantId: 'tenant-1', userId: sellerOwnerUserId }, contract.id, {
-        deliveryPriceUzs: 300_000,
-      }),
-    ).resolves.toMatchObject({ status: 'invalid_state' });
-  });
-
-  it('blocks consent until seller delivery has an authorized quote', async () => {
-    const contract = {
-      id: 'c-unquoted',
-      tenantId: 'tenant-1',
-      buyerUserId: 'user-1',
-      sellerUserId: sellerOwnerUserId,
-      sourceType: 'cart_checkout',
-      sourceId: 'cart-1',
-      subject: 'Corn seed',
       amountUzs: 1_000_000,
-      lines: [],
-      deliveryTerms: 'seller_delivery',
-      deliveryPriceUzs: null,
-      deliveryNote: null,
-      deliveryDays: null,
-      factoringEnabled: false,
-      status: 'draft',
+      bindingStatus: 'resolved',
+      buyerPartnerId,
+      buyerPartySnapshot: {},
       buyerSignedAt: null,
-      sellerSignedAt: null,
-      signedAt: null,
-      createdAt: now,
-      updatedAt: now,
-    };
-    em.findOne.mockResolvedValue(contract);
-
-    await expect(repo.signContract(owner, contract.id)).resolves.toMatchObject({
-      status: 'invalid_state',
-      field: 'deliveryPriceUzs',
-    });
-    expect(contract.buyerSignedAt).toBeNull();
-    expect(em.flush).not.toHaveBeenCalled();
-  });
-
-  it('blocks a verified contract party without an approved organization', async () => {
-    const contract = {
-      id: 'c-unapproved-buyer',
-      tenantId: 'tenant-1',
       buyerUserId: owner.userId,
+      createdAt: now,
+      deliveryDays: null,
+      deliveryNote: null,
+      deliveryPriceUzs: null,
+      deliveryTerms: 'seller_delivery',
+      factoringEnabled: false,
+      id: 'contract-delivery-1',
+      lines: [],
+      sellerPartnerId,
+      sellerPartySnapshot: {},
+      sellerSignedAt: null,
+      sellerTenantId,
       sellerUserId: sellerOwnerUserId,
-      sourceType: 'offer_selection',
-      sourceId: 'offer-1',
-      subject: 'Corn seed',
-      amountUzs: 1_000_000,
-      lines: [],
-      deliveryTerms: 'pickup',
-      deliveryPriceUzs: 0,
-      deliveryNote: null,
-      deliveryDays: null,
-      factoringEnabled: false,
-      status: 'draft',
-      buyerSignedAt: null,
-      sellerSignedAt: null,
       signedAt: null,
-      createdAt: now,
-      updatedAt: now,
-    };
-    em.findOne.mockImplementation(async (entity: unknown) => (String(entity).includes('Contract') ? contract : null));
-
-    await expect(repo.signContract(owner, contract.id)).resolves.toMatchObject({
-      status: 'forbidden',
-      field: 'organization',
-    });
-    expect(contract.buyerSignedAt).toBeNull();
-    expect(em.flush).not.toHaveBeenCalled();
-  });
-
-  it('records each party consent and activates only after both signatures', async () => {
-    const contract = {
-      id: 'c-1',
-      tenantId: 'tenant-1',
-      buyerUserId: 'user-1',
-      sellerUserId: 'seller-1',
-      sourceType: 'offer_selection',
-      sourceId: 'offer-1',
+      sourceId: 'cart-1',
+      sourceType: 'cart_checkout',
+      status: 'draft',
       subject: 'Corn seed',
-      amountUzs: 1_000_000,
-      lines: [],
-      deliveryTerms: 'pickup',
-      deliveryPriceUzs: 0,
-      deliveryNote: null,
-      deliveryDays: null,
-      factoringEnabled: false,
-      status: 'draft',
-      buyerSignedAt: null,
-      sellerSignedAt: null,
-      signedAt: null,
-      createdAt: now,
+      tenantId: owner.tenantId,
       updatedAt: now,
+      version: 0,
     };
-    em.findOne.mockResolvedValue(contract);
-
-    const buyerResult = await repo.signContract(owner, 'c-1');
-    expect(buyerResult.status).toBe('ok');
-    expect(contract.status).toBe('signed');
-    expect(contract.buyerSignedAt).toBeInstanceOf(Date);
-    expect(contract.sellerSignedAt).toBeNull();
-    expect(contract.signedAt).toBeNull();
-
-    em.flush.mockClear();
-    await expect(repo.signContract(owner, 'c-1')).resolves.toMatchObject({ status: 'ok' });
-    expect(em.flush).not.toHaveBeenCalled();
-
-    const sellerResult = await repo.signContract({ tenantId: 'tenant-1', userId: 'seller-1' }, 'c-1');
-    expect(sellerResult.status).toBe('ok');
-    expect(contract.status).toBe('active');
-    expect(contract.sellerSignedAt).toBeInstanceOf(Date);
-    expect(contract.signedAt).toBeInstanceOf(Date);
-    expect(em.transactional).toHaveBeenCalledTimes(3);
-  });
-
-  it('rejects a signature from a foreign tenant party', async () => {
-    em.findOne.mockResolvedValue({
-      id: 'c-1',
-      tenantId: 'tenant-1',
-      buyerUserId: 'buyer-1',
-      sellerUserId: 'seller-1',
-      status: 'draft',
-      buyerSignedAt: null,
-      sellerSignedAt: null,
-    });
-    await expect(repo.signContract(owner, 'c-1')).resolves.toMatchObject({ status: 'forbidden' });
-    expect(em.flush).not.toHaveBeenCalled();
-  });
-
-  it('keeps a fully consented active contract stable when a party retries signing', async () => {
-    const contract = {
-      id: 'c-active',
-      tenantId: 'tenant-1',
-      buyerUserId: 'user-1',
-      sellerUserId: 'seller-1',
-      sourceType: 'offer_selection',
-      sourceId: 'offer-1',
-      subject: 'Active contract',
-      amountUzs: 1_000_000,
-      lines: [],
-      deliveryTerms: 'pickup',
-      deliveryPriceUzs: 0,
-      deliveryNote: null,
-      deliveryDays: null,
-      factoringEnabled: false,
-      status: 'active',
-      buyerSignedAt: now,
-      sellerSignedAt: now,
-      signedAt: now,
-      createdAt: now,
-      updatedAt: now,
-    };
-    em.findOne.mockResolvedValue(contract);
-
-    const result = await repo.signContract(owner, 'c-active');
-
-    expect(result).toMatchObject({ status: 'ok', value: { status: 'active', factoringEnabled: false } });
-    expect(contract.status).toBe('active');
-    expect(contract.buyerSignedAt).toBe(now);
-    expect(em.flush).not.toHaveBeenCalled();
-  });
-
-  // The contract document has to name who is signing with whom; it used to print
-  // the two party uuids, which told a reader nothing.
-  it('names both parties from their oldest approved organization', async () => {
-    const contract = {
-      id: 'c-named',
-      tenantId: 'tenant-1',
-      buyerUserId: 'user-1',
-      sellerUserId: 'seller-1',
-      sourceType: 'offer_selection',
-      sourceId: 'offer-1',
-      subject: 'Named contract',
-      amountUzs: 1_000_000,
-      lines: [],
-      deliveryTerms: 'pickup',
-      deliveryPriceUzs: 0,
-      deliveryNote: null,
-      deliveryDays: null,
-      factoringEnabled: false,
-      status: 'active',
-      buyerSignedAt: now,
-      sellerSignedAt: now,
-      signedAt: now,
-      createdAt: now,
-      updatedAt: now,
-    };
-    em.findOne.mockResolvedValue(contract);
-    em.find.mockImplementation(async (entity: unknown) =>
-      String(entity).includes('AgriTechPartner')
-        ? [
-            partnerEntity({ id: 'p-buyer-1', kind: 'buyer', legalName: 'Xaridor Demo Savdo', ownerUserId: 'user-1' }),
-            partnerEntity({ id: 'p-buyer-2', kind: 'buyer', legalName: 'A later registration', ownerUserId: 'user-1' }),
-            partnerEntity({ id: 'p-seller-1', legalName: 'Dehqon Bozori Kooperativi', ownerUserId: 'seller-1' }),
-            partnerEntity({ id: 'p-other', kind: 'buyer', legalName: 'Someone else', ownerUserId: 'stranger' }),
-          ]
-        : [],
-    );
-
-    await expect(repo.signContract(owner, 'c-named')).resolves.toMatchObject({
-      status: 'ok',
-      value: { buyerName: 'Xaridor Demo Savdo', sellerName: 'Dehqon Bozori Kooperativi' },
-    });
-    await expect(repo.listContracts(owner)).resolves.toEqual([]);
-    await expect(repo.listTenantContracts('tenant-1')).resolves.toEqual([]);
-  });
-
-  it('leaves a party unnamed when no approved organization answers for it', async () => {
-    const contract = {
-      id: 'c-unnamed',
-      tenantId: 'tenant-1',
-      buyerUserId: 'user-1',
-      sellerUserId: 'seller-1',
-      sourceType: 'offer_selection',
-      sourceId: 'offer-1',
-      subject: 'Unnamed contract',
-      amountUzs: 1_000_000,
-      lines: [],
-      deliveryTerms: 'pickup',
-      deliveryPriceUzs: 0,
-      deliveryNote: null,
-      deliveryDays: null,
-      factoringEnabled: false,
-      status: 'active',
-      buyerSignedAt: now,
-      sellerSignedAt: now,
-      signedAt: now,
-      createdAt: now,
-      updatedAt: now,
-    };
-    em.findOne.mockResolvedValue(contract);
-    em.find.mockImplementation(async (entity: unknown) =>
-      String(entity).includes('AgriTechPartner')
-        ? [partnerEntity({ legalName: 'Only the seller', ownerUserId: 'seller-1' })]
-        : [],
-    );
-
-    const result = await repo.signContract(owner, 'c-unnamed');
-
-    expect(result).toMatchObject({ status: 'ok', value: { sellerName: 'Only the seller' } });
-    expect(result.status === 'ok' && result.value.buyerName).toBeUndefined();
-  });
-
-  // One login can run several approved supplier organizations — the demo seller
-  // sells through six — and the owner lookup can only offer the oldest of them,
-  // which named a supplier that sells none of the contracted goods.
-  it('names the selling organization the cart was opened against', async () => {
-    const contract = {
-      ...cartSourcedContract,
-      sourceId: '5f3b0e2c-7a41-4c7a-9f52-2f8ad0f4c111',
-    };
-    em.findOne.mockResolvedValue(contract);
-    em.find.mockImplementation(async (entity: unknown) => {
-      if (String(entity).includes('Cart')) {
-        return [
-          {
-            id: '5f3b0e2c-7a41-4c7a-9f52-2f8ad0f4c111',
-            tenantId: 'tenant-1',
-            sellerId: '9a0c1d2e-3f45-4a6b-8c7d-0e1f2a3b4c5d',
-          },
-        ];
-      }
-      return String(entity).includes('AgriTechPartner')
-        ? [
-            partnerEntity({ id: 'p-oldest', legalName: 'The first organization', ownerUserId: sellerOwnerUserId }),
-            partnerEntity({
-              id: '9a0c1d2e-3f45-4a6b-8c7d-0e1f2a3b4c5d',
-              legalName: 'Agro Kimyo Servis',
-              ownerUserId: sellerOwnerUserId,
-            }),
-          ]
-        : [];
-    });
-
-    await expect(repo.signContract(owner, contract.id)).resolves.toMatchObject({
-      status: 'ok',
-      value: { sellerName: 'Agro Kimyo Servis' },
-    });
-  });
-
-  // Every way the cart can fail to answer, in one listing: a cart id that is a
-  // memory-adapter handle rather than a uuid, a cart no longer in the database,
-  // one holding a demo catalog slug, and one whose organization is not approved.
-  it.each([
-    ['carries a memory adapter handle', 'memory-cart-1', undefined],
-    ['is no longer stored', '11111111-1111-4111-8111-111111111111', undefined],
-    [
-      'holds a demo catalog slug',
-      '22222222-2222-4222-8222-222222222222',
-      { sellerId: 'demo-supplier-agro-kimyo-servis' },
-    ],
-    [
-      'names an organization that is not approved',
-      '33333333-3333-4333-8333-333333333333',
-      { sellerId: '44444444-4444-4444-8444-444444444444' },
-    ],
-  ] as const)('keeps the seller organization when the cart %s', async (_case, sourceId, cart) => {
-    const contract = { ...cartSourcedContract, sourceId };
-    em.find.mockImplementation(async (entity: unknown) => {
-      if (String(entity).includes('Cart')) {
-        return cart === undefined ? [] : [{ id: sourceId, tenantId: 'tenant-1', ...cart }];
-      }
-      return String(entity).includes('Contract')
-        ? [contract]
-        : [partnerEntity({ legalName: 'The first organization', ownerUserId: sellerOwnerUserId })];
-    });
-
-    await expect(repo.listContracts(owner)).resolves.toMatchObject([{ sellerName: 'The first organization' }]);
-  });
-
-  it('names a cart checkout with no source recorded from the party organization', async () => {
-    em.find.mockImplementation(async (entity: unknown) => {
+    em.findOne.mockImplementation(async (entity: unknown, where: Record<string, unknown>) => {
       if (String(entity).includes('Contract')) {
-        return [{ ...cartSourcedContract, sourceId: null }];
+        return contract;
       }
-      return String(entity).includes('AgriTechPartner')
-        ? [partnerEntity({ legalName: 'The first organization', ownerUserId: sellerOwnerUserId })]
-        : [];
+      return commercePartyLookup(entity, where) ?? null;
     });
 
-    await expect(repo.listContracts(owner)).resolves.toMatchObject([{ sellerName: 'The first organization' }]);
-  });
-
-  it('commits frozen cart quantities exactly when the second party activates the contract', async () => {
-    const product = productEntity({ stockQuantity: 3 });
-    const contract = {
-      id: 'c-cart',
-      tenantId: 'tenant-1',
-      buyerUserId: 'user-1',
-      sellerUserId: sellerOwnerUserId,
-      sourceType: 'cart_checkout',
-      sourceId: 'cart-1',
-      subject: 'Corn seed',
-      amountUzs: 1_000_000,
-      lines: [
-        {
-          productId: 'p-1',
-          name: 'Corn seed',
-          unit: 'kg',
-          unitPriceUzs: 500_000,
-          quantity: 2,
-          lineTotalUzs: 1_000_000,
-        },
-      ],
-      deliveryTerms: 'pickup',
-      deliveryPriceUzs: 0,
-      deliveryNote: null,
-      deliveryDays: null,
-      factoringEnabled: false,
-      status: 'signed',
-      buyerSignedAt: now,
-      sellerSignedAt: null,
-      signedAt: null,
-      createdAt: now,
-      updatedAt: now,
-    };
-    em.findOne.mockResolvedValue(contract);
-    em.find.mockImplementation(async (entity: unknown) =>
-      String(entity).includes('AgriTechPartner') ? [partnerEntity()] : [product],
+    const result = await repo.updateContractDeliveryQuote(
+      { tenantId: sellerTenantId, userId: sellerOwnerUserId },
+      contract.id,
+      { deliveryDays: 2, deliveryNote: 'Farm gate', deliveryPriceUzs: 250_000, expectedRevision: 0 },
+      'delivery-quote-0001',
     );
-
-    const result = await repo.signContract({ tenantId: 'tenant-1', userId: sellerOwnerUserId }, contract.id);
-
-    expect(result).toMatchObject({ status: 'ok', value: { status: 'active' } });
-    expect(product.stockQuantity).toBe(1);
-    expect(contract.sellerSignedAt).toBeInstanceOf(Date);
-    expect(contract.signedAt).toBeInstanceOf(Date);
-    expect(em.flush).toHaveBeenCalledOnce();
-  });
-
-  it('preserves consent and stock when activation cannot satisfy a frozen cart line', async () => {
-    const product = productEntity({ stockQuantity: 1 });
-    const contract = {
-      id: 'c-cart',
-      tenantId: 'tenant-1',
-      buyerUserId: 'user-1',
-      sellerUserId: sellerOwnerUserId,
-      sourceType: 'cart_checkout',
-      sourceId: 'cart-1',
-      subject: 'Corn seed',
-      amountUzs: 1_000_000,
-      lines: [
-        {
-          productId: 'p-1',
-          name: 'Corn seed',
-          unit: 'kg',
-          unitPriceUzs: 500_000,
-          quantity: 2,
-          lineTotalUzs: 1_000_000,
-        },
-      ],
-      deliveryTerms: 'pickup',
-      deliveryPriceUzs: 0,
-      deliveryNote: null,
-      deliveryDays: null,
-      factoringEnabled: false,
-      status: 'signed',
-      buyerSignedAt: now,
-      sellerSignedAt: null,
-      signedAt: null,
-      createdAt: now,
-      updatedAt: now,
-    };
-    em.findOne.mockResolvedValue(contract);
-    em.find.mockImplementation(async (entity: unknown) =>
-      String(entity).includes('AgriTechPartner') ? [partnerEntity()] : [product],
-    );
-
-    await expect(
-      repo.signContract({ tenantId: 'tenant-1', userId: sellerOwnerUserId }, contract.id),
-    ).resolves.toMatchObject({ status: 'conflict', field: 'stockQuantity' });
-    expect(product.stockQuantity).toBe(1);
-    expect(contract.status).toBe('signed');
-    expect(contract.sellerSignedAt).toBeNull();
-    expect(em.flush).not.toHaveBeenCalled();
-  });
-
-  it('rejects a review with out-of-range rating', async () => {
-    const result = await repo.addReview(owner, 'p-1', 6);
-    expect(result.status).toBe('invalid_state');
-  });
-
-  it('returns not_found without deleting when a favorite product is outside the tenant', async () => {
-    em.findOne.mockResolvedValue(null);
-
-    await expect(repo.removeFavorite(owner, 'foreign-product')).resolves.toMatchObject({
-      status: 'not_found',
-      field: 'productId',
-    });
-    expect(em.findOne).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ tenantId: owner.tenantId, id: 'foreign-product' }),
-    );
-    expect(em.nativeDelete).not.toHaveBeenCalled();
-  });
-
-  it('removes a tenant-owned favorite idempotently', async () => {
-    em.findOne.mockResolvedValue(productEntity({ status: 'inactive' }));
-
-    await expect(repo.removeFavorite(owner, 'p-1')).resolves.toMatchObject({
-      status: 'ok',
-      value: { productId: 'p-1' },
-    });
-    expect(em.nativeDelete).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ tenantId: owner.tenantId, userId: owner.userId, productId: 'p-1' }),
-    );
-  });
-
-  it('adds a valid review', async () => {
-    em.findOne.mockImplementation(async (entity: unknown) => {
-      const name = String(entity);
-      if (name.includes('AgriTechPartner')) {
-        return partnerEntity({ id: 'buyer-partner', ownerUserId: owner.userId, kind: 'buyer' });
-      }
-      return name.includes('Product') ? productEntity() : null;
-    });
-    em.find.mockResolvedValue([
-      {
-        buyerUserId: owner.userId,
-        lines: [{ productId: 'p-1' }],
-        status: 'active',
-        tenantId: owner.tenantId,
-      },
-    ]);
-    const result = await repo.addReview(owner, 'p-1', 4, 'Good quality');
-    expect(em.persist).toHaveBeenCalled();
-    expect(result.status).toBe('ok');
-    if (result.status === 'ok') {
-      expect(result.value.rating).toBe(4);
-    }
-    expect(em.findOne).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({ tenantId: 'tenant-1', id: 'p-1' }),
-    );
-    expect(em.transactional).toHaveBeenCalledOnce();
-  });
-
-  it('rejects a review without a completed marketplace purchase', async () => {
-    em.findOne.mockResolvedValue(productEntity());
-    em.find.mockResolvedValue([]);
-
-    await expect(repo.addReview(owner, 'p-1', 4, 'Unverified claim')).resolves.toMatchObject({
-      status: 'forbidden',
-      field: 'purchase',
-    });
-    expect(em.persist).not.toHaveBeenCalled();
-  });
-
-  it('answers an AI find-cheaper consultation from the catalog', async () => {
-    em.find.mockResolvedValue([productEntity({ priceUzs: 300000 }), productEntity({ id: 'p-2', priceUzs: 500000 })]);
-    const result = await repo.askAi(owner, 'find_cheaper', 'find me the cheapest corn seed');
-    expect(em.persist).toHaveBeenCalled();
-    expect(result.status).toBe('ok');
-    if (result.status === 'ok') {
-      expect(result.value.answer).toBe('catalog_match');
-      expect(result.value.kind).toBe('find_cheaper');
-      expect(result.value.productIds).toEqual(['p-1', 'p-2']);
-    }
-    expect(em.find).toHaveBeenCalledWith(
-      expect.anything(),
-      expect.objectContaining({
-        tenantId: 'tenant-1',
-        status: 'active',
-        $and: expect.arrayContaining([
-          expect.objectContaining({
-            $or: expect.arrayContaining([expect.objectContaining({ name: { $ilike: '%corn%' } })]),
-          }),
-        ]),
-      }),
-      { limit: 50, orderBy: { id: 'ASC', priceUzs: 'ASC' } },
-    );
-  });
-
-  // Questions arrive as sentences, and requiring every word of one to appear in a
-  // listing answered "nothing matches" for anything but a bare product name.
-  it('widens a conversational question to any of its terms when every term together matches nothing', async () => {
-    const match = productEntity({ id: 'p-9' });
-    em.find.mockResolvedValueOnce([]).mockResolvedValueOnce([match]);
-
-    await expect(repo.askAi(owner, 'recommendation', 'Menga karbamid kerak, qancha turadi?')).resolves.toMatchObject({
-      status: 'ok',
-      value: { answer: 'catalog_match', productIds: ['p-9'] },
-    });
-    expect(em.find).toHaveBeenNthCalledWith(
-      1,
-      expect.anything(),
-      expect.objectContaining({ $and: expect.any(Array) }),
-      { limit: 50, orderBy: { id: 'ASC', priceUzs: 'ASC' } },
-    );
-    expect(em.find).toHaveBeenNthCalledWith(
-      2,
-      expect.anything(),
-      expect.objectContaining({
-        tenantId: 'tenant-1',
-        status: 'active',
-        $or: expect.arrayContaining([
-          expect.objectContaining({
-            $or: expect.arrayContaining([expect.objectContaining({ name: { $ilike: '%karbamid%' } })]),
-          }),
-        ]),
-      }),
-      { limit: 50, orderBy: { id: 'ASC', priceUzs: 'ASC' } },
-    );
-  });
-
-  it('asks the catalog nothing when a question carries no searchable term', async () => {
-    await expect(repo.askAi(owner, 'generic', 'Ok, da?')).resolves.toMatchObject({
-      status: 'ok',
-      value: { answer: 'no_catalog_match', productIds: [] },
-    });
-    expect(em.find).not.toHaveBeenCalled();
-  });
-
-  it('fails closed without persisting unsupported agronomy advice', async () => {
-    em.find.mockResolvedValue([productEntity()]);
-
-    const result = await repo.askAi(owner, 'season_advice', 'When should I sow cotton?');
 
     expect(result).toMatchObject({
       status: 'ok',
-      value: {
-        answer: 'no_catalog_match',
-        productIds: [],
-      },
+      value: { deliveryDays: 2, deliveryPriceUzs: 250_000, sellerPartnerId, sellerTenantId },
     });
-    expect(em.persist).toHaveBeenCalledWith(
-      expect.objectContaining({
-        answer: 'no_catalog_match',
-        productIds: [],
-      }),
-    );
-    expect(em.find).not.toHaveBeenCalled();
-    expect(JSON.stringify(em.persist.mock.calls)).not.toMatch(/Feb|Apr|Aug|Oct|certified|winter wheat/i);
+    expect(contract.deliveryPriceUzs).toBe(250_000);
+    expect(em.flush).toHaveBeenCalledTimes(2);
   });
 
-  it('returns no catalog identity when a recommendation has no factual match', async () => {
-    em.find.mockResolvedValue([]);
-
-    await expect(repo.askAi(owner, 'recommendation', 'tractor hydraulic pump')).resolves.toMatchObject({
-      status: 'ok',
-      value: { answer: 'no_catalog_match', productIds: [] },
+  it('fails a seller delivery quote closed when the bound buyer membership is revoked', async () => {
+    const contract = {
+      bindingStatus: 'resolved',
+      buyerPartnerId,
+      buyerSignedAt: null,
+      buyerUserId: owner.userId,
+      deliveryPriceUzs: null,
+      deliveryTerms: 'seller_delivery',
+      id: 'contract-revoked-buyer',
+      sellerPartnerId,
+      sellerSignedAt: null,
+      sellerTenantId,
+      sellerUserId: sellerOwnerUserId,
+      sourceType: 'cart_checkout',
+      status: 'draft',
+      tenantId: owner.tenantId,
+      version: 0,
+    };
+    em.findOne.mockImplementation(async (entity: unknown, where: Record<string, unknown>) => {
+      const name = String(entity);
+      if (name.includes('Contract')) {
+        return contract;
+      }
+      if (name.includes('MarketplacePartnerMembership') && where.capability === 'buyer') {
+        return null;
+      }
+      return commercePartyLookup(entity, where) ?? null;
     });
+
+    await expect(
+      repo.updateContractDeliveryQuote(
+        { tenantId: sellerTenantId, userId: sellerOwnerUserId },
+        contract.id,
+        {
+          deliveryPriceUzs: 250_000,
+          expectedRevision: 0,
+        },
+        'delivery-quote-0001',
+      ),
+    ).resolves.toEqual({ status: 'forbidden', field: 'organization' });
+    expect(em.flush).not.toHaveBeenCalled();
+  });
+
+  it('does not expose the removed internal contract-signing bypass', () => {
+    expect('signContract' in repo).toBe(false);
   });
 });

@@ -27,6 +27,7 @@ const templates: Record<AgriTechTemplateCode, NotificationTemplateChannelContent
       en: '{legalName}: partner status changed to {status}.',
       ru: '{legalName}: статус партнера изменен на {status}.',
       uz: '{legalName}: hamkor holati {status} holatiga o\u2018zgartirildi.',
+      'uz-cyrl': '{legalName}: ҳамкор ҳолати {status} ҳолатига ўзгартирилди.',
     },
   },
   'agritech.farmer-assigned': {
@@ -34,6 +35,7 @@ const templates: Record<AgriTechTemplateCode, NotificationTemplateChannelContent
       en: 'Farmer {farmerName} was assigned to you for field support.',
       ru: 'Фермер {farmerName} назначен вам для полевого сопровождения.',
       uz: 'Fermer {farmerName} dala yordami uchun sizga biriktirildi.',
+      'uz-cyrl': 'Фермер {farmerName} дала ёрдами учун сизга бириктирилди.',
     },
   },
   'agritech.advisory-published': {
@@ -41,6 +43,7 @@ const templates: Record<AgriTechTemplateCode, NotificationTemplateChannelContent
       en: '{kind} advisory: {summary}. Source: {source}.',
       ru: 'Рекомендация ({kind}): {summary}. Источник: {source}.',
       uz: '{kind} tavsiyasi: {summary}. Manba: {source}.',
+      'uz-cyrl': '{kind} тавсияси: {summary}. Манба: {source}.',
     },
   },
   'agritech.delivery-scheduled': {
@@ -48,6 +51,7 @@ const templates: Record<AgriTechTemplateCode, NotificationTemplateChannelContent
       en: 'Delivery {deliveryId} is scheduled for {scheduledAt}.',
       ru: 'Доставка {deliveryId} запланирована на {scheduledAt}.',
       uz: '{deliveryId} yetkazib berish {scheduledAt} vaqtiga rejalashtirildi.',
+      'uz-cyrl': '{deliveryId} етказиб бериш {scheduledAt} вақтига режалаштирилди.',
     },
   },
   'agritech.produce-reserved': {
@@ -55,6 +59,7 @@ const templates: Record<AgriTechTemplateCode, NotificationTemplateChannelContent
       en: 'Produce reservation order {orderId} was created successfully.',
       ru: 'Заказ {orderId} на партию продукции успешно создан.',
       uz: 'Mahsulotni band qilish uchun {orderId} buyurtmasi muvaffaqiyatli yaratildi.',
+      'uz-cyrl': 'Маҳсулотни банд қилиш учун {orderId} буюртмаси муваффақиятли яратилди.',
     },
   },
 };

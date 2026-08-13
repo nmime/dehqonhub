@@ -1,4 +1,4 @@
-// @requirements REQ-SCAFFOLD-TOOLING-005
+// @requirements REQ-SCAFFOLD-TOOLING-005 REQ-AGRITECH-I18N-012
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -1324,7 +1324,14 @@ describe("static-check thin locale catalog guard", () => {
         writeText(
           workspaceRoot,
           `i18n/${locale}/${fileName}`,
-          JSON.stringify({ [`${fileName}.key`]: `${locale}:${fileName}` }, null, 2),
+          JSON.stringify(
+            {
+              [`${fileName}.key`]:
+                locale === 'uz-cyrl' ? 'Намунавий матн' : locale === 'uz' ? 'Namunaviy matn' : 'Sample text',
+            },
+            null,
+            2,
+          ),
         );
       }
       for (const scope of ["admin", "bots", "common", "landing", "user"]) {
@@ -1344,6 +1351,110 @@ describe("static-check thin locale catalog guard", () => {
       writeThinLocaleWorkspace(workspaceRoot);
 
       assert.deepEqual(checkThinLocaleCatalogs(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("rejects locale values with missing or extra interpolation placeholders", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      writeText(
+        workspaceRoot,
+        "i18n/en/common/shared.json",
+        JSON.stringify({ greeting: "Hello {{name}}" }, null, 2),
+      );
+      writeText(
+        workspaceRoot,
+        "i18n/uz-cyrl/common/shared.json",
+        JSON.stringify({ greeting: "Салом {{account}}" }, null, 2),
+      );
+
+      const failures = checkThinLocaleCatalogs(workspaceRoot);
+      assert.ok(
+        failures.some((failure) =>
+          failure.stderr.includes("placeholder mismatch for greeting: expected [name], received [account]"),
+        ),
+      );
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("tracks English fallbacks explicitly and rejects Cyrillic transliteration residue", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      for (const locale of ['en', 'uz', 'uz-cyrl']) {
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/common/shared.json`,
+          JSON.stringify(
+            {
+              fallback: 'English fallback',
+              announcement: locale === 'en' ? 'Announcement' : locale === 'uz' ? "E'lon" : 'Еълон',
+              mixed: locale === 'en' ? 'Profile action' : locale === 'uz' ? 'Profil amali' : 'Профил action',
+              ordinary:
+                locale === 'en'
+                  ? 'Save settings'
+                  : locale === 'uz'
+                    ? 'Please save these settings now'
+                    : 'Созламаларни сақланг',
+              schema: locale === 'en' ? 'Variables schema' : locale === 'uz' ? 'Oʻzgaruvchilar sxemasi' : 'Ўзгарувчилар схемаси',
+              absent: locale === 'en' ? 'Absent' : locale === 'uz' ? "Yo'q" : 'Ёъқ',
+              dark: locale === 'en' ? 'Dark' : locale === 'uz' ? "Qorong'i" : 'Қоронгъи',
+              denied: locale === 'en' ? 'Unauthorized' : locale === 'uz' ? 'Ruxsatsiz' : 'Рухсациз',
+            },
+            null,
+            2,
+          ),
+        );
+      }
+      writeText(
+        workspaceRoot,
+        'i18n/uz-cyrl/untranslated-allowlist.json',
+        JSON.stringify({ categories: { acceptedLoanwords: ['fallback'] }, keys: ['fallback'] }, null, 2),
+      );
+
+      const failures = checkThinLocaleCatalogs(workspaceRoot);
+      const stderr = failures.map((failure) => failure.stderr).join('\n');
+      assert.doesNotMatch(stderr, /fallback keys missing from untranslated allowlist/u);
+      assert.match(stderr, /announcement contains еълон transliteration/u);
+      assert.match(stderr, /mixed contains unreviewed Latin fragment\(s\): action/u);
+      assert.match(stderr, /ordinary contains probable English prose/u);
+      assert.doesNotMatch(stderr, /schema contains емас transliteration/u);
+      assert.match(stderr, /absent contains ёъқ transliteration/u);
+      assert.match(stderr, /dark contains гъ transliteration/u);
+      assert.match(stderr, /denied contains ц across an Uzbek suffix boundary/u);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("removes nested reviewed placeholders to a fixed point before inspecting Latin residue", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeThinLocaleWorkspace(workspaceRoot);
+      for (const [locale, value] of [
+        ["en", "Nested {{outer{inner}tail}} value"],
+        ["uz", "Ichki {{outer{inner}tail}} qiymat"],
+        ["uz-cyrl", "Ички {{outer{inner}tail}} қиймат"],
+      ] as const) {
+        writeText(
+          workspaceRoot,
+          `i18n/${locale}/common/shared.json`,
+          JSON.stringify({ nested: value }, null, 2),
+        );
+      }
+
+      const stderr = checkThinLocaleCatalogs(workspaceRoot)
+        .map((failure) => failure.stderr)
+        .join("\n");
+      assert.doesNotMatch(stderr, /nested contains unreviewed Latin fragment/u);
     } finally {
       removeWorkspace(workspaceRoot);
     }

@@ -1,16 +1,12 @@
 import type {
   ContractStatus,
   RequestStatus,
-  SampleStatus,
   VerificationLevel,
+  VerificationDocument,
   VerificationRejectionReason,
   VerificationRole,
   VerificationStatus,
 } from './marketplace.types';
-
-const monthlySampleLimit = 5;
-
-export const maxMonthlySamples = monthlySampleLimit;
 
 export const verificationRoles: readonly VerificationRole[] = ['farmer', 'seller', 'buyer'];
 
@@ -26,19 +22,19 @@ export const canBuyInMarketplace = (role: VerificationRole | undefined): boolean
 export const canOfferInMarketplace = (role: VerificationRole | undefined): boolean =>
   role !== undefined && marketplaceSellerRoles.includes(role);
 
-export const samplesRemainingThisMonth = (requestsInMonth: number): number =>
-  Math.max(0, monthlySampleLimit - requestsInMonth);
-
-export const isSampleRequestAllowed = ({
-  verified,
-  requestsThisMonth,
-}: {
-  verified: boolean;
-  requestsThisMonth: number;
-}): boolean => verified && requestsThisMonth < monthlySampleLimit;
-
 export const isVerificationAllowed = (status: VerificationStatus): boolean =>
   status === 'none' || status === 'rejected';
+
+export const hasRequiredVerificationDocuments = (
+  role: VerificationRole,
+  documents: readonly Pick<VerificationDocument, 'kind'>[],
+): boolean => {
+  const kinds = new Set(documents.map((document) => document.kind));
+  if (role === 'farmer') {
+    return kinds.has('farm') && (kinds.has('land') || kinds.has('lease'));
+  }
+  return kinds.has('business');
+};
 
 const verificationRejectionReasons: readonly VerificationRejectionReason[] = [
   'criteria_not_met',
@@ -70,13 +66,3 @@ export const requestTransitions: Readonly<Record<RequestStatus, readonly Request
 
 export const isRequestTransitionAllowed = (current: RequestStatus, next: RequestStatus): boolean =>
   current === next || requestTransitions[current].includes(next);
-
-export const sampleTransitions: Readonly<Record<SampleStatus, readonly SampleStatus[]>> = {
-  pending: ['shipped', 'cancelled'],
-  shipped: ['delivered', 'cancelled'],
-  delivered: [],
-  cancelled: [],
-};
-
-export const isSampleTransitionAllowed = (current: SampleStatus, next: SampleStatus): boolean =>
-  current === next || sampleTransitions[current].includes(next);

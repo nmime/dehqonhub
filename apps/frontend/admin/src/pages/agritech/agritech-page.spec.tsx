@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006
+// @requirements REQ-AGRITECH-ANALYTICS-011
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { adminApi } from '@app/frontend-api-client';
@@ -172,7 +172,7 @@ describe('AgriTech admin page', () => {
     renderPage();
 
     expect(await screen.findByRole('heading', { name: 'AgriTech control center' })).toBeTruthy();
-    expect(screen.getByRole('button', { name: 'Schedule delivery' })).toBeTruthy();
+    expect(await screen.findByRole('button', { name: 'Schedule delivery' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Publish advisory' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Create pilot' })).toBeTruthy();
   });

@@ -52,6 +52,47 @@ describe("native secret scan policy", () => {
     );
   });
 
+  it("allows generated Nest operation identifiers only in generated API and toast artifacts", () => {
+    const operationId = ["AgriTechAdminController", "reviewMarketplaceRequestPublication"].join("_");
+
+    assert.equal(
+      isAllowedSecretScanValue(operationId, "apps/backend/admin/admin-app-api/contracts/openapi/admin-app-api.json"),
+      true,
+    );
+    assert.equal(
+      isAllowedSecretScanValue(operationId, "libs/common/api-contracts/lib/src/generated/admin-app-api.ts"),
+      true,
+    );
+    assert.equal(
+      isAllowedSecretScanValue(
+        operationId,
+        "apps/backend/admin/admin-app-api/contracts/toast/admin-app-api.toast-rules.generated.json",
+      ),
+      true,
+    );
+    assert.equal(
+      isAllowedSecretScanValue(
+        operationId,
+        "libs/frontend/api-client/lib/src/generated/toast/admin-app-api.toast-rules.frontend.generated.json",
+      ),
+      true,
+    );
+    assert.equal(isAllowedSecretScanValue(operationId, "src/runtime-config.ts"), false);
+  });
+
+  it("allows migration class identifiers only in component evidence", () => {
+    const migration = ["Migration20260810138000", "AddMarketplaceEngagement"].join("");
+
+    assert.equal(
+      isAllowedSecretScanValue(
+        migration,
+        "libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-engagement.component-spec.ts",
+      ),
+      true,
+    );
+    assert.equal(isAllowedSecretScanValue(migration, "src/runtime-config.ts"), false);
+  });
+
   it("calculates entropy for the native high-entropy rule", () => {
     assert.equal(secretValueEntropy("aaaaaaaa"), 0);
     assert.ok(secretValueEntropy("abcdefghijklmnopqrstuvwxyz0123456789") > 4.4);

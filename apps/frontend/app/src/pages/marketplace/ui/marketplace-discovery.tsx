@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { Locale } from '@app/frontend-runtime';
-import type { ProductViewDto, ReviewViewDto, SampleUsageViewDto } from '@app/frontend-api-client';
+import type { MarketplaceReviewDto, MarketplaceSampleUsageDto, ProductViewDto } from '@app/frontend-api-client';
 import type { Resource, ResourceStatus } from '../model/use-marketplace-data';
 import { MarketplaceIcon, type MarketplaceIconName } from './marketplace-icon';
 import { MarketplaceProductCard, ProductMedia } from './marketplace-product-card';
@@ -480,8 +480,8 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
 interface ProductDetailProps extends Omit<SharedDiscoveryProps, 'products'> {
   canReview: boolean;
   product?: ProductViewDto;
-  reviews: Resource<ReviewViewDto[]>;
-  sampleUsage: Resource<SampleUsageViewDto>;
+  reviews: Resource<MarketplaceReviewDto[]>;
+  sampleUsage: Resource<MarketplaceSampleUsageDto>;
   similar: ProductViewDto[];
   onReview: (product: ProductViewDto, rating: number, comment?: string) => Promise<boolean>;
   onRetry: () => void;
@@ -599,7 +599,18 @@ export function MarketplaceProductDetail({
           <dl className="dh-facts">
             <div>
               <dt>{t('agritech.marketplace.product.seller')}</dt>
-              <dd>{product.supplierName}</dd>
+              <dd>
+                <button
+                  className="dh-text-button"
+                  onClick={() => {
+                    navigate(`/sellers/${encodeURIComponent(product.supplierId)}`);
+                  }}
+                  type="button"
+                >
+                  {product.supplierName}
+                  <MarketplaceIcon name="arrow" />
+                </button>
+              </dd>
             </div>
             <div>
               <dt>{t('agritech.marketplace.filter.region')}</dt>
@@ -749,6 +760,105 @@ export function MarketplaceProductDetail({
           </div>
         </section>
       )}
+    </div>
+  );
+}
+
+interface SellerProps extends SharedDiscoveryProps {
+  sellerId?: string;
+  status: ResourceStatus;
+}
+
+/**
+ * One seller's storefront, assembled from the catalog the chrome already loaded.
+ * Everything the page shows about a seller — their name, region and what they
+ * publish — travels on the catalog rows themselves, so a storefront costs no
+ * extra request and works for a visitor with no account and for the API's demo
+ * dataset alike.
+ */
+export function MarketplaceSellerStorefront({ sellerId, status, ...props }: Readonly<SellerProps>) {
+  const listings = props.products.filter((product) => product.supplierId === sellerId);
+  const seller = listings[0];
+  if (status === 'loading' || status === 'idle') {
+    return <MarketplaceSkeleton count={4} />;
+  }
+  if (status === 'error') {
+    return (
+      <MarketplaceEmpty
+        actionLabel={props.t('ui.runtime.retry')}
+        headingLevel={1}
+        icon="search"
+        message={props.t('agritech.marketplace.demo.unavailable')}
+        onAction={() => {
+          globalThis.location.reload();
+        }}
+        title={props.t('agritech.marketplace.seller.notFound')}
+      />
+    );
+  }
+  if (!seller) {
+    return (
+      <MarketplaceEmpty
+        actionLabel={props.t('agritech.marketplace.hero.cta')}
+        headingLevel={1}
+        icon="search"
+        message={props.t('agritech.marketplace.seller.notFoundDescription')}
+        onAction={() => {
+          props.navigate('/catalog');
+        }}
+        title={props.t('agritech.marketplace.seller.notFound')}
+      />
+    );
+  }
+
+  return (
+    <div className="dh-page-stack">
+      <button
+        className="dh-text-button"
+        onClick={() => {
+          props.navigate('/catalog');
+        }}
+        type="button"
+      >
+        <MarketplaceIcon name="arrow" />
+        {props.t('agritech.marketplace.back')}
+      </button>
+      <div className="dh-page-heading">
+        <div>
+          <p className="dh-eyebrow">{props.t('agritech.marketplace.seller.title')}</p>
+          <h1>{seller.supplierName}</h1>
+          <p>
+            {seller.region} · {props.t('agritech.marketplace.catalog.resultCount', { count: listings.length })}
+          </p>
+        </div>
+        <span className="dh-badge dh-badge--soft">
+          <MarketplaceIcon name="shield" />
+          {props.t('agritech.marketplace.seller.verified')}
+        </span>
+      </div>
+      <section aria-labelledby="dh-seller-catalog" className="dh-section">
+        <div className="dh-section__head">
+          <div>
+            <p className="dh-eyebrow">{props.t('agritech.marketplace.catalog')}</p>
+            <h2 id="dh-seller-catalog">{props.t('agritech.marketplace.seller.catalog')}</h2>
+          </div>
+        </div>
+        <div className="dh-product-grid">
+          {listings.map((product) => (
+            <MarketplaceProductCard
+              favorite={props.favoriteIds.has(product.id)}
+              key={product.id}
+              locale={props.locale}
+              onAdd={props.onAdd}
+              onFavorite={props.onFavorite}
+              onOpen={props.onOpen}
+              pendingAction={props.pendingAction}
+              product={product}
+              t={props.t}
+            />
+          ))}
+        </div>
+      </section>
     </div>
   );
 }

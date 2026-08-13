@@ -60,6 +60,7 @@ export class ProduceListingEntity {
   grade!: ProduceGrade;
   quantityKg!: number;
   availableQuantityKg!: number;
+  sampleAvailable = false;
   pricePerKgUzs!: number;
   region!: string;
   availableFrom!: Date;
@@ -80,6 +81,7 @@ export const ProduceListingEntitySchema = new EntitySchema<ProduceListingEntity>
     grade: { type: 'varchar', length: 1 },
     quantityKg: { type: 'int', fieldName: 'quantity_kg' },
     availableQuantityKg: { type: 'int', fieldName: 'available_quantity_kg' },
+    sampleAvailable: { type: 'boolean', fieldName: 'sample_available', default: false },
     pricePerKgUzs: { type: 'decimal', precision: 15, scale: 2, fieldName: 'price_per_kg_uzs' },
     region: { type: 'varchar', length: 100 },
     availableFrom: { type: 'timestamptz', fieldName: 'available_from' },
@@ -94,6 +96,12 @@ export const ProduceListingEntitySchema = new EntitySchema<ProduceListingEntity>
       properties: ['tenantId', 'status', 'crop', 'region', 'grade'],
     },
     { name: 'ix__produce_listings__farmer_id', properties: ['farmerId'] },
+  ],
+  checks: [
+    {
+      name: 'ck__produce_listings__price_per_kg_uzs_integer',
+      expression: `"price_per_kg_uzs" between 1 and 9999999999999 and "price_per_kg_uzs" = trunc("price_per_kg_uzs")`,
+    },
   ],
 });
 

@@ -26,7 +26,7 @@ own source or executable evidence:
 `acceptance-e2e`, and `fullstack-e2e`.
 
 Its Cucumber disposition is `acceptance`. The mapped acceptance scenarios are
-`SCN-AGRITECH-MARKETPLACE-01` through `SCN-AGRITECH-MARKETPLACE-05`; direct
+`SCN-AGRITECH-MARKETPLACE-01` through `SCN-AGRITECH-MARKETPLACE-06`; direct
 tests remain mandatory alternative/challenging evidence rather than substitutes
 for the stakeholder examples.
 

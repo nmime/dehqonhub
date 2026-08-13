@@ -1,4 +1,4 @@
-// @requirements REQ-SCAFFOLD-INIT-004
+// @requirements REQ-SCAFFOLD-INIT-004 REQ-AGRITECH-NOTIFICATION-022
 // Evidence for: REQ-SCAFFOLD-SELECTION-002
 /**
  * Planner evidence for REQ-SCAFFOLD-SELECTION-002.
@@ -751,6 +751,23 @@ describe('planner — concrete capability activation', () => {
     assert.match(consumer, /enableConsumer: true/);
     assert.match(scheduler, /enableScheduler: true/);
     assert.doesNotMatch(scheduler, /TelegramBotModule/);
+  });
+
+  it('composes AgriTech lifecycle delivery through generated scheduler capabilities', () => {
+    const agritechSummary = planSummaryFixture({
+      apps: ['admin-app-api', 'notification-scheduler', 'user-app-api'],
+      capabilities: ['agritech', 'notifications', 'postgres'],
+      configHash: 'agritech-notification-delivery',
+    });
+    const scheduler = generateBackendCapabilityModule('notification-scheduler', agritechSummary).content;
+    const manifest = JSON.parse(generateCapabilitiesManifest(agritechSummary).content);
+    const agritech = manifest.capabilities.find((entry: { id: string }) => entry.id === 'agritech');
+
+    assert.match(scheduler, /AgriTechPostgresModule/);
+    assert.match(scheduler, /MarketplaceContractNotificationDeliveryModule/);
+    assert.match(scheduler, /@app\/backend-postgres-main-agritech/);
+    assert.match(scheduler, /@app\/backend-feature-agritech-main/);
+    assert.deepEqual(agritech.runtimeExternalPackages, ['@fontsource/noto-sans']);
   });
 
   it('keeps generated module lists within the repository print width', () => {

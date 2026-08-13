@@ -14,6 +14,17 @@ const domainModes = new Set(['external-proxy', 'single-domain', 'per-app-domains
 const publicDomainModes = new Set(['single-domain', 'per-app-domains']);
 const frontendApiBaseUrlModes = new Set(['same-origin', 'split-origin']);
 const frontendApiBaseUrlKeys = ['VITE_AUTH_API_BASE_URL', 'VITE_USER_API_BASE_URL', 'VITE_ADMIN_API_BASE_URL'];
+const marketplaceProviderModeKeys = [
+  'MARKETPLACE_ONEID_PROVIDER_MODE',
+  'MARKETPLACE_DOCUMENT_PROVIDER_MODE',
+  'MARKETPLACE_CONTRACT_ARTIFACT_STORAGE_PROVIDER_MODE',
+  'MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_MODE',
+  'MARKETPLACE_QUALIFIED_SIGNATURE_PROVIDER_MODE',
+  'MARKETPLACE_PROMOTION_BILLING_PROVIDER_MODE',
+  'MARKETPLACE_DIRECT_PAYMENT_PROVIDER_MODE',
+  'MARKETPLACE_FACTORING_PROVIDER_MODE',
+  'MARKETPLACE_NOTIFICATION_PROVIDER_MODE',
+];
 const tlsModes = new Set(['automatic', 'provided', 'external']);
 const imageSources = new Set(['local', 'registry']);
 const supportedProfiles = new Set(['discord', 'notification-consumer', 'notification-scheduler', 'telegram']);
@@ -88,6 +99,14 @@ export function composeExecutionStatus(result, reportFailure = (message) => cons
 const fail = (message) => {
   throw new Error(message);
 };
+
+export function validateProductionMarketplaceProviderModes(environment) {
+  for (const key of marketplaceProviderModeKeys) {
+    if (environment[key]?.trim().toLowerCase() === 'mock') {
+      fail(`${key}=mock is forbidden in production deployment configuration.`);
+    }
+  }
+}
 
 export function parseEnvFile(content) {
   const result = {};
@@ -347,6 +366,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
   }
   const fileEnvironment = parseEnvFile(readFileSync(envPath, 'utf8'));
   const effectiveEnvironment = { ...fileEnvironment, ...processEnvironment };
+  validateProductionMarketplaceProviderModes(effectiveEnvironment);
   const closure = (dependencies.readProductionClosure ?? readProductionClosure)(
     rootDir,
     effectiveEnvironment.NRB_CLOSURE_MANIFEST,

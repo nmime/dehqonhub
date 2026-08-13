@@ -426,6 +426,37 @@ assert.ok(
 const envExample = read('.env.example');
 assert.ok(/^SESSION_SECRET=/m.test(envExample), 'Missing .env.example SESSION_SECRET setting');
 const productionEnvExample = read('.env.production.example');
+const singleServerProductionEnvExample = read('deploy/single-server/production.env.example');
+const marketplaceProviderModeVariables = [
+  'MARKETPLACE_ONEID_PROVIDER_MODE',
+  'MARKETPLACE_DOCUMENT_PROVIDER_MODE',
+  'MARKETPLACE_CONTRACT_ARTIFACT_STORAGE_PROVIDER_MODE',
+  'MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_MODE',
+  'MARKETPLACE_QUALIFIED_SIGNATURE_PROVIDER_MODE',
+  'MARKETPLACE_PROMOTION_BILLING_PROVIDER_MODE',
+  'MARKETPLACE_DIRECT_PAYMENT_PROVIDER_MODE',
+  'MARKETPLACE_FACTORING_PROVIDER_MODE',
+  'MARKETPLACE_NOTIFICATION_PROVIDER_MODE',
+];
+const marketplaceProviderTimeoutVariables = [
+  'MARKETPLACE_ONEID_PROVIDER_TIMEOUT_MS',
+  'MARKETPLACE_DOCUMENT_PROVIDER_TIMEOUT_MS',
+  'MARKETPLACE_CONTRACT_ARTIFACT_STORAGE_PROVIDER_TIMEOUT_MS',
+  'MARKETPLACE_DISPUTE_EVIDENCE_STORAGE_PROVIDER_TIMEOUT_MS',
+  'MARKETPLACE_QUALIFIED_SIGNATURE_PROVIDER_TIMEOUT_MS',
+  'MARKETPLACE_PROMOTION_BILLING_PROVIDER_TIMEOUT_MS',
+  'MARKETPLACE_DIRECT_PAYMENT_PROVIDER_TIMEOUT_MS',
+  'MARKETPLACE_FACTORING_PROVIDER_TIMEOUT_MS',
+  'MARKETPLACE_NOTIFICATION_PROVIDER_TIMEOUT_MS',
+];
+for (const variable of marketplaceProviderModeVariables) {
+  has(productionEnvExample, `${variable}=disabled`, `production env disables ${variable}`);
+  has(singleServerProductionEnvExample, `${variable}=disabled`, `single-server production env disables ${variable}`);
+}
+for (const variable of marketplaceProviderTimeoutVariables) {
+  has(productionEnvExample, `${variable}=10000`, `production env bounds ${variable}`);
+  has(singleServerProductionEnvExample, `${variable}=10000`, `single-server production env bounds ${variable}`);
+}
 const servicePortAssignments = {
   ADMIN_APP_API_PORT: 3001,
   USER_APP_API_PORT: 3002,
@@ -561,6 +592,13 @@ has(
 );
 const prodBackendEnv = section(prodCompose, 'x-backend-env:', '\nx-backend-command:');
 has(prodBackendEnv, 'PORT: 80', 'production Compose explicitly assigns backend container port 80');
+has(prodBackendEnv, 'NODE_ENV: production', 'production Compose fixes NODE_ENV before provider resolution');
+for (const variable of marketplaceProviderModeVariables) {
+  has(prodBackendEnv, `${variable}: \${${variable}:-disabled}`, `production Compose fails closed for ${variable}`);
+}
+for (const variable of marketplaceProviderTimeoutVariables) {
+  has(prodBackendEnv, `${variable}: \${${variable}:-10000}`, `production Compose passes ${variable}`);
+}
 assert.ok(!prodCompose.includes(':-0}'), 'Production Compose must not request random host ports.');
 has(prodBackendEnv, 'RATE_LIMIT_STORE: ${RATE_LIMIT_STORE:-auto}', 'production Compose keeps Redis optional');
 has(prodBackendEnv, 'REDIS_URL: ${REDIS_URL:-}', 'production Compose has no implicit Redis endpoint');

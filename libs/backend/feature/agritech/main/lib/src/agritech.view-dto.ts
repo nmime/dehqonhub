@@ -34,11 +34,13 @@ export class SupplierProductViewDto {
   @ApiProperty() name!: string;
   @ApiPropertyOptional() nameRu?: string;
   @ApiPropertyOptional() nameUz?: string;
+  @ApiPropertyOptional() nameUzCyrl?: string;
   @ApiProperty({ enum: productCategories }) category!: string;
   @ApiProperty() description!: string;
   @ApiProperty({ type: 'integer', minimum: 1, maximum: maximumSupplierPriceUzs }) priceUzs!: number;
   @ApiProperty() unit!: string;
   @ApiProperty({ type: 'integer', minimum: 0, maximum: 2_147_483_647 }) stockQuantity!: number;
+  @ApiProperty() sampleAvailable!: boolean;
   @ApiProperty() region!: string;
   @ApiProperty({ enum: ['active', 'inactive', 'out_of_stock'] }) status!: string;
 }
@@ -59,6 +61,7 @@ export class ProduceListingViewDto {
   @ApiProperty({ enum: produceGrades }) grade!: string;
   @ApiProperty() quantityKg!: number;
   @ApiProperty() availableQuantityKg!: number;
+  @ApiProperty() sampleAvailable!: boolean;
   @ApiProperty() pricePerKgUzs!: number;
   @ApiProperty() region!: string;
   @ApiProperty({ format: 'date-time' }) availableFrom!: Date;

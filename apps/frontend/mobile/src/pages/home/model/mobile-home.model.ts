@@ -25,7 +25,14 @@ export type MobileCapabilityCard = (typeof mobileCapabilityCards)[number];
  * model). Derived from the single-source `supportedLocales` list rather than a
  * hand-maintained enumeration, so a new locale surfaces here automatically.
  */
+const mobileLocaleLabels: Record<Locale, string> = {
+  en: 'English',
+  ru: 'Русский',
+  uz: 'O‘zbekcha (lotin)',
+  'uz-cyrl': 'Ўзбекча (кирилл)',
+};
+
 export const mobileLocaleOptions: ReadonlyArray<{ locale: Locale; label: string }> = supportedLocales.map((locale) => ({
   locale,
-  label: locale.toUpperCase(),
+  label: mobileLocaleLabels[locale],
 }));

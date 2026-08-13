@@ -5364,7 +5364,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru", "uz"]
+            "enum": ["en", "ru", "uz", "uz-cyrl"]
           },
           "theme": {
             "type": "string",
@@ -5448,7 +5448,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru", "uz"]
+            "enum": ["en", "ru", "uz", "uz-cyrl"]
           }
         },
         "required": ["email", "password"]
@@ -5781,7 +5781,7 @@
           },
           "locale": {
             "type": "string",
-            "enum": ["en", "ru", "uz"]
+            "enum": ["en", "ru", "uz", "uz-cyrl"]
           },
           "theme": {
             "type": "string",
@@ -5825,7 +5825,7 @@
         "properties": {
           "locale": {
             "type": "string",
-            "enum": ["en", "ru", "uz"]
+            "enum": ["en", "ru", "uz", "uz-cyrl"]
           }
         },
         "required": ["locale"]
@@ -5835,7 +5835,7 @@
         "properties": {
           "locale": {
             "type": "string",
-            "enum": ["en", "ru", "uz"]
+            "enum": ["en", "ru", "uz", "uz-cyrl"]
           },
           "theme": {
             "type": "string",
@@ -5850,7 +5850,7 @@
             "type": "array",
             "items": {
               "type": "string",
-              "enum": ["en", "ru", "uz"]
+              "enum": ["en", "ru", "uz", "uz-cyrl"]
             }
           }
         },

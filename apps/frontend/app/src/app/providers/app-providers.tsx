@@ -1,6 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
 import { observer } from 'mobx-react-lite';
-import { designColors } from '@app/common-design-tokens';
 import { ApiClientProvider, authApiToastRules, userApiToastRules } from '@app/frontend-api-client';
 import {
   configureApiLocale,
@@ -25,6 +24,12 @@ import { MiniAppProvider } from '../../shared/mini-app';
 import { UiErrorBoundary } from '../../shared/ui';
 import { AuthRedirectBridge } from './auth-redirect-bridge';
 import { UserRouter } from '../router/user-router';
+
+const dehqonHubChrome = {
+  background: '#fbf3e3',
+  bottomBar: '#203128',
+  header: '#0b7138',
+} as const;
 
 const ApiClientLocaleBridge = ({ children }: Readonly<{ children: ReactNode }>) => {
   const { locale } = useI18n();
@@ -125,9 +130,9 @@ const UserAppRouterProviders = observer(function UserAppRouterProviders() {
 export function AppProviders({ children }: Readonly<{ children?: ReactNode }> = {}) {
   return (
     <MiniAppProvider
-      backgroundColor={designColors.light.background}
-      bottomBarColor={designColors.light.foreground}
-      headerColor={designColors.light.ring}
+      backgroundColor={dehqonHubChrome.background}
+      bottomBarColor={dehqonHubChrome.bottomBar}
+      headerColor={dehqonHubChrome.header}
     >
       {/* `light` is passed explicitly rather than left at `system`: the default
           resolves the document theme from `prefers-color-scheme`, which painted

@@ -41,11 +41,13 @@ export interface SupplierProductInput {
   name: string;
   nameRu?: string;
   nameUz?: string;
+  nameUzCyrl?: string;
   category: 'fertilizer' | 'seed' | 'pesticide' | 'equipment' | 'irrigation' | 'other';
   description: string;
   priceUzs: number;
   unit: string;
   stockQuantity: number;
+  sampleAvailable?: boolean;
   region: string;
 }
 
@@ -55,18 +57,25 @@ export interface SupplierProduct {
   name: string;
   nameRu?: string;
   nameUz?: string;
+  nameUzCyrl?: string;
   category: SupplierProductInput['category'];
   description: string;
   priceUzs: number;
   unit: string;
   stockQuantity: number;
+  sampleAvailable: boolean;
   region: string;
   status: 'active' | 'inactive' | 'out_of_stock';
 }
 
 export interface UpdateSupplierProductInput {
+  name?: string;
+  nameRu?: string;
+  nameUz?: string;
+  nameUzCyrl?: string;
   priceUzs: number;
   stockQuantity: number;
+  sampleAvailable?: boolean;
   status: 'active' | 'inactive' | 'out_of_stock';
 }
 
@@ -91,6 +100,7 @@ export interface ProduceListing {
   grade: ProduceGrade;
   quantityKg: number;
   availableQuantityKg: number;
+  sampleAvailable: boolean;
   pricePerKgUzs: number;
   region: string;
   availableFrom: Date;
@@ -101,9 +111,11 @@ export interface ProduceListing {
 }
 
 export interface CreateProduceListingInput {
+  supplierPartnerId: string;
   crop: string;
   grade: ProduceGrade;
   quantityKg: number;
+  sampleAvailable?: boolean;
   pricePerKgUzs: number;
   region: string;
   availableFrom: Date;

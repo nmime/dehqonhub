@@ -299,6 +299,14 @@ const produce: readonly DemoProductSeed[] = [
 
 const supplierId = (name: string): string => `demo-supplier-${name.toLowerCase().replaceAll(/[^a-z0-9]+/gu, '-')}`;
 
+/**
+ * Whether a demo listing offers a sample. A buyer can ask for a handful of seed
+ * or a sack of fertilizer before committing to a truckload, but nobody samples a
+ * tractor, so machinery and irrigation kits offer none.
+ */
+const sampleAvailableFor = (category: ProductCategory): boolean =>
+  category !== 'equipment' && category !== 'irrigation';
+
 const toProduct = (seed: DemoProductSeed, index: number): Product => ({
   category: seed.category,
   createdAt,
@@ -310,6 +318,7 @@ const toProduct = (seed: DemoProductSeed, index: number): Product => ({
   nameUz: seed.nameUz,
   priceUzs: seed.priceUzs,
   region: seed.region,
+  sampleAvailable: sampleAvailableFor(seed.category),
   status: 'active',
   stockQuantity: seed.stockQuantity,
   supplierId: supplierId(seed.supplier),

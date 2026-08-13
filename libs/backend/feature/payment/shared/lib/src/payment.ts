@@ -1,3 +1,5 @@
+import type { Locale } from '@app/common-i18n-runtime';
+
 export const PaymentProviders = ['click', 'payme', 'bnpl'] as const;
 export type PaymentProvider = (typeof PaymentProviders)[number];
 export type PaymentState = 'created' | 'pending' | 'paid' | 'cancelled' | 'failed' | 'refunded';
@@ -12,7 +14,7 @@ export interface CreatePaymentDto {
   provider: PaymentProvider;
   returnUrl: string;
   idempotencyKey: string;
-  locale: 'en' | 'ru' | 'uz';
+  locale: Locale;
 }
 
 export interface PaymentTransaction {

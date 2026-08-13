@@ -24,7 +24,7 @@ export default async function globalSetup(): Promise<void> {
     ['auth-app-api', () => waitForText('auth api', `${urls.authApi}/health`, 'auth-app-api')],
     ['user-app-api', () => waitForText('user api', `${urls.userApi}/health`, 'user-app-api')],
     ['admin-app-api', () => waitForText('admin api', `${urls.adminApi}/health`, 'admin-app-api')],
-    ['user-app', () => waitForText('user app', `${urls.userApp}/`, 'User App')],
+    ['user-app', () => waitForText('user app', `${urls.userApp}/`, 'DehqonHub')],
     ['admin-app', () => waitForText('admin app', `${urls.adminApp}/`, 'Admin App')],
     ['landing-app', () => waitForText('landing app', `${urls.landingApp}/`, 'Nest React Boilerplate')],
     ['site-app', () => waitForText('site app', `${urls.siteApp}/ready`, 'site-app')],

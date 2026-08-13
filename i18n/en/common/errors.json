@@ -22,6 +22,8 @@
   "errors.step-up-required.detail": "Authenticate again before performing this security-sensitive action.",
   "errors.last-auth-method-unlink-forbidden.title": "Last Authentication Method Cannot Be Unlinked",
   "errors.last-auth-method-unlink-forbidden.detail": "Link another authentication method before unlinking this one.",
+  "errors.marketplace-provider-unavailable.title": "Marketplace Provider Unavailable",
+  "errors.marketplace-provider-unavailable.detail": "The requested marketplace provider capability is temporarily unavailable or disabled.",
   "errors.validation-error.title": "Validation failed",
   "errors.validation-error.detail": "Request validation failed.",
   "errors.api.requestFailed": "Request failed with {{status}}.",

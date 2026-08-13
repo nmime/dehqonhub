@@ -5067,6 +5067,1392 @@
       "enabled": true
     },
     {
+      "id": "admin-app-api:GET:/admin/marketplace/notifications:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/notifications",
+        "operationId": "MarketplaceContractNotificationAdminController_list",
+        "tags": ["admin-marketplace-contract-notifications"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractnotificationadmincontroller-list.get.200",
+          "default": "Marketplace Contract Notification Admin list completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/notifications:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/notifications",
+        "operationId": "MarketplaceContractNotificationAdminController_list",
+        "tags": ["admin-marketplace-contract-notifications"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractnotificationadmincontroller-list.get.401",
+          "default": "Marketplace Contract Notification Admin list failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/notifications:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/notifications",
+        "operationId": "MarketplaceContractNotificationAdminController_list",
+        "tags": ["admin-marketplace-contract-notifications"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_403",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractnotificationadmincontroller-list.get.403",
+          "default": "Marketplace Contract Notification Admin list failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/notifications:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/notifications",
+        "operationId": "MarketplaceContractNotificationAdminController_list",
+        "tags": ["admin-marketplace-contract-notifications"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractnotificationadmincontroller-list.get.500",
+          "default": "Marketplace Contract Notification Admin list failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/notifications:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/notifications",
+        "operationId": "MarketplaceContractNotificationAdminController_list",
+        "tags": ["admin-marketplace-contract-notifications"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractnotificationadmincontroller-list.get.err",
+          "default": "Marketplace Contract Notification Admin list failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/notifications:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/notifications",
+        "operationId": "MarketplaceContractNotificationAdminController_list",
+        "tags": ["admin-marketplace-contract-notifications"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractnotificationadmincontroller-list.get.net",
+          "default": "Marketplace Contract Notification Admin list could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/listings/{id}:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/listings/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceListingPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_200",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacelistingpublication.patch.200",
+          "default": "Agri Tech Admin review Marketplace Listing Publication completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/listings/{id}:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/listings/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceListingPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_400",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacelistingpublication.patch.400",
+          "default": "Agri Tech Admin review Marketplace Listing Publication failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/listings/{id}:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/listings/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceListingPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_401",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacelistingpublication.patch.401",
+          "default": "Agri Tech Admin review Marketplace Listing Publication failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/listings/{id}:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/listings/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceListingPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_403",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacelistingpublication.patch.403",
+          "default": "Agri Tech Admin review Marketplace Listing Publication failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/listings/{id}:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/listings/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceListingPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_404",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacelistingpublication.patch.404",
+          "default": "Agri Tech Admin review Marketplace Listing Publication failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/listings/{id}:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/listings/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceListingPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_409",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacelistingpublication.patch.409",
+          "default": "Agri Tech Admin review Marketplace Listing Publication failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/listings/{id}:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/listings/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceListingPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_500",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacelistingpublication.patch.500",
+          "default": "Agri Tech Admin review Marketplace Listing Publication failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/listings/{id}:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/listings/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceListingPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacelistingpublication.patch.err",
+          "default": "Agri Tech Admin review Marketplace Listing Publication failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/listings/{id}:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/listings/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceListingPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacelistingpublication.patch.net",
+          "default": "Agri Tech Admin review Marketplace Listing Publication could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/publications/pending:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/publications/pending",
+        "operationId": "AgriTechAdminController_listPendingMarketplacePublications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listpendingmarketplacepublications.get.200",
+          "default": "Agri Tech Admin list Pending Marketplace Publications completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/publications/pending:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/publications/pending",
+        "operationId": "AgriTechAdminController_listPendingMarketplacePublications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listpendingmarketplacepublications.get.400",
+          "default": "Agri Tech Admin list Pending Marketplace Publications failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/publications/pending:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/publications/pending",
+        "operationId": "AgriTechAdminController_listPendingMarketplacePublications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listpendingmarketplacepublications.get.401",
+          "default": "Agri Tech Admin list Pending Marketplace Publications failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/publications/pending:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/publications/pending",
+        "operationId": "AgriTechAdminController_listPendingMarketplacePublications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_403",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listpendingmarketplacepublications.get.403",
+          "default": "Agri Tech Admin list Pending Marketplace Publications failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/publications/pending:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/publications/pending",
+        "operationId": "AgriTechAdminController_listPendingMarketplacePublications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listpendingmarketplacepublications.get.404",
+          "default": "Agri Tech Admin list Pending Marketplace Publications failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/publications/pending:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/publications/pending",
+        "operationId": "AgriTechAdminController_listPendingMarketplacePublications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_409",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listpendingmarketplacepublications.get.409",
+          "default": "Agri Tech Admin list Pending Marketplace Publications failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/publications/pending:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/publications/pending",
+        "operationId": "AgriTechAdminController_listPendingMarketplacePublications",
+        "tags": ["admin-agritech"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listpendingmarketplacepublications.get.500",
+          "default": "Agri Tech Admin list Pending Marketplace Publications failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/publications/pending:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/publications/pending",
+        "operationId": "AgriTechAdminController_listPendingMarketplacePublications",
+        "tags": ["admin-agritech"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listpendingmarketplacepublications.get.err",
+          "default": "Agri Tech Admin list Pending Marketplace Publications failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/admin/marketplace/publications/pending:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/admin/marketplace/publications/pending",
+        "operationId": "AgriTechAdminController_listPendingMarketplacePublications",
+        "tags": ["admin-agritech"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-listpendingmarketplacepublications.get.net",
+          "default": "Agri Tech Admin list Pending Marketplace Publications could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/requests/{id}:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/requests/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceRequestPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_200",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacerequestpublication.patch.200",
+          "default": "Agri Tech Admin review Marketplace Request Publication completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/requests/{id}:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/requests/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceRequestPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_400",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacerequestpublication.patch.400",
+          "default": "Agri Tech Admin review Marketplace Request Publication failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/requests/{id}:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/requests/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceRequestPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_401",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacerequestpublication.patch.401",
+          "default": "Agri Tech Admin review Marketplace Request Publication failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/requests/{id}:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/requests/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceRequestPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_403",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacerequestpublication.patch.403",
+          "default": "Agri Tech Admin review Marketplace Request Publication failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/requests/{id}:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/requests/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceRequestPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_404",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacerequestpublication.patch.404",
+          "default": "Agri Tech Admin review Marketplace Request Publication failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/requests/{id}:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/requests/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceRequestPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_409",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacerequestpublication.patch.409",
+          "default": "Agri Tech Admin review Marketplace Request Publication failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/requests/{id}:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/requests/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceRequestPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_500",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacerequestpublication.patch.500",
+          "default": "Agri Tech Admin review Marketplace Request Publication failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/requests/{id}:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/requests/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceRequestPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacerequestpublication.patch.err",
+          "default": "Agri Tech Admin review Marketplace Request Publication failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/requests/{id}:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/requests/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceRequestPublication",
+        "tags": ["admin-agritech"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacerequestpublication.patch.net",
+          "default": "Agri Tech Admin review Marketplace Request Publication could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/sellers/{id}:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/sellers/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceSellerProfile",
+        "tags": ["admin-agritech"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_200",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacesellerprofile.patch.200",
+          "default": "Agri Tech Admin review Marketplace Seller Profile completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/sellers/{id}:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/sellers/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceSellerProfile",
+        "tags": ["admin-agritech"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_400",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacesellerprofile.patch.400",
+          "default": "Agri Tech Admin review Marketplace Seller Profile failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/sellers/{id}:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/sellers/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceSellerProfile",
+        "tags": ["admin-agritech"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_401",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacesellerprofile.patch.401",
+          "default": "Agri Tech Admin review Marketplace Seller Profile failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/sellers/{id}:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/sellers/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceSellerProfile",
+        "tags": ["admin-agritech"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_403",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacesellerprofile.patch.403",
+          "default": "Agri Tech Admin review Marketplace Seller Profile failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/sellers/{id}:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/sellers/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceSellerProfile",
+        "tags": ["admin-agritech"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_404",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacesellerprofile.patch.404",
+          "default": "Agri Tech Admin review Marketplace Seller Profile failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/sellers/{id}:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/sellers/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceSellerProfile",
+        "tags": ["admin-agritech"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_409",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacesellerprofile.patch.409",
+          "default": "Agri Tech Admin review Marketplace Seller Profile failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/sellers/{id}:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/sellers/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceSellerProfile",
+        "tags": ["admin-agritech"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_500",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacesellerprofile.patch.500",
+          "default": "Agri Tech Admin review Marketplace Seller Profile failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/sellers/{id}:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/sellers/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceSellerProfile",
+        "tags": ["admin-agritech"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacesellerprofile.patch.err",
+          "default": "Agri Tech Admin review Marketplace Seller Profile failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/admin/marketplace/publications/sellers/{id}:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/admin/marketplace/publications/sellers/{id}",
+        "operationId": "AgriTechAdminController_reviewMarketplaceSellerProfile",
+        "tags": ["admin-agritech"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.agritechadmincontroller-reviewmarketplacesellerprofile.patch.net",
+          "default": "Agri Tech Admin review Marketplace Seller Profile could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
       "id": "admin-app-api:GET:/admin/notification-broadcasts:200",
       "endpoint": {
         "app": "admin-app-api",
@@ -20862,6 +22248,2085 @@
         "text": {
           "key": "api.toast.admin-app-api.agritechadmincontroller-reviewverification.patch.net",
           "default": "Agri Tech Admin review Verification could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-listcommissionpolicies.get.200",
+          "default": "Marketplace Contract Lifecycle Admin list Commission Policies completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-listcommissionpolicies.get.400",
+          "default": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-listcommissionpolicies.get.401",
+          "default": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_403",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-listcommissionpolicies.get.403",
+          "default": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-listcommissionpolicies.get.404",
+          "default": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_409",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-listcommissionpolicies.get.409",
+          "default": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-listcommissionpolicies.get.500",
+          "default": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-listcommissionpolicies.get.err",
+          "default": "Marketplace Contract Lifecycle Admin list Commission Policies failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-listcommissionpolicies.get.net",
+          "default": "Marketplace Contract Lifecycle Admin list Commission Policies could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-activatecommissionpolicy.post.200",
+          "default": "Marketplace Contract Lifecycle Admin activate Commission Policy completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-activatecommissionpolicy.post.400",
+          "default": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_401",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-activatecommissionpolicy.post.401",
+          "default": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_403",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-activatecommissionpolicy.post.403",
+          "default": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_404",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-activatecommissionpolicy.post.404",
+          "default": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-activatecommissionpolicy.post.409",
+          "default": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_500",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-activatecommissionpolicy.post.500",
+          "default": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-activatecommissionpolicy.post.err",
+          "default": "Marketplace Contract Lifecycle Admin activate Commission Policy failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/commission-policies",
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-activatecommissionpolicy.post.net",
+          "default": "Marketplace Contract Lifecycle Admin activate Commission Policy could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-resolvedispute.post.200",
+          "default": "Marketplace Contract Lifecycle Admin resolve Dispute completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-resolvedispute.post.400",
+          "default": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_401",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-resolvedispute.post.401",
+          "default": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_403",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-resolvedispute.post.403",
+          "default": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_404",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-resolvedispute.post.404",
+          "default": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-resolvedispute.post.409",
+          "default": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_500",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-resolvedispute.post.500",
+          "default": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-resolvedispute.post.err",
+          "default": "Marketplace Contract Lifecycle Admin resolve Dispute failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "tags": ["admin-marketplace-contract-lifecycle"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplacecontractlifecycleadmincontroller-resolvedispute.post.net",
+          "default": "Marketplace Contract Lifecycle Admin resolve Dispute could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-listreviewreports.get.200",
+          "default": "Marketplace Engagement Admin list Review Reports completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-listreviewreports.get.400",
+          "default": "Marketplace Engagement Admin list Review Reports failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-listreviewreports.get.401",
+          "default": "Marketplace Engagement Admin list Review Reports failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_403",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-listreviewreports.get.403",
+          "default": "Marketplace Engagement Admin list Review Reports failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-listreviewreports.get.404",
+          "default": "Marketplace Engagement Admin list Review Reports failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_409",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-listreviewreports.get.409",
+          "default": "Marketplace Engagement Admin list Review Reports failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-listreviewreports.get.500",
+          "default": "Marketplace Engagement Admin list Review Reports failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-listreviewreports.get.err",
+          "default": "Marketplace Engagement Admin list Review Reports failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-listreviewreports.get.net",
+          "default": "Marketplace Engagement Admin list Review Reports could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_200",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-moderatereviewreport.patch.200",
+          "default": "Marketplace Engagement Admin moderate Review Report completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_400",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-moderatereviewreport.patch.400",
+          "default": "Marketplace Engagement Admin moderate Review Report failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_401",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-moderatereviewreport.patch.401",
+          "default": "Marketplace Engagement Admin moderate Review Report failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_403",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-moderatereviewreport.patch.403",
+          "default": "Marketplace Engagement Admin moderate Review Report failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_404",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-moderatereviewreport.patch.404",
+          "default": "Marketplace Engagement Admin moderate Review Report failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_409",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-moderatereviewreport.patch.409",
+          "default": "Marketplace Engagement Admin moderate Review Report failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_500",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-moderatereviewreport.patch.500",
+          "default": "Marketplace Engagement Admin moderate Review Report failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_ERR",
+        "fallbackVariant": "PATCH_ERR",
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-moderatereviewreport.patch.err",
+          "default": "Marketplace Engagement Admin moderate Review Report failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "PATCH",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "PATCH_NET",
+        "fallbackVariant": null,
+        "networkVariant": "PATCH_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-moderatereviewreport.patch.net",
+          "default": "Marketplace Engagement Admin moderate Review Report could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_200",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-getsamplepolicy.get.200",
+          "default": "Marketplace Engagement Admin get Sample Policy completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_400",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-getsamplepolicy.get.400",
+          "default": "Marketplace Engagement Admin get Sample Policy failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_401",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-getsamplepolicy.get.401",
+          "default": "Marketplace Engagement Admin get Sample Policy failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_403",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-getsamplepolicy.get.403",
+          "default": "Marketplace Engagement Admin get Sample Policy failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_404",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-getsamplepolicy.get.404",
+          "default": "Marketplace Engagement Admin get Sample Policy failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_409",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-getsamplepolicy.get.409",
+          "default": "Marketplace Engagement Admin get Sample Policy failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "GET_500",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-getsamplepolicy.get.500",
+          "default": "Marketplace Engagement Admin get Sample Policy failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_ERR",
+        "fallbackVariant": "GET_ERR",
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-getsamplepolicy.get.err",
+          "default": "Marketplace Engagement Admin get Sample Policy failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "GET",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "GET_NET",
+        "fallbackVariant": null,
+        "networkVariant": "GET_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-getsamplepolicy.get.net",
+          "default": "Marketplace Engagement Admin get Sample Policy could not reach the service."
+        },
+        "icon": "alert-triangle",
+        "color": "amber",
+        "durationMs": 6000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:200",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 200,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_200",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "success",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-activatesamplepolicy.post.200",
+          "default": "Marketplace Engagement Admin activate Sample Policy completed successfully."
+        },
+        "icon": "check-circle",
+        "color": "green",
+        "durationMs": 4000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": false
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:400",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 400,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_400",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-activatesamplepolicy.post.400",
+          "default": "Marketplace Engagement Admin activate Sample Policy failed: Bad Request."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:401",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 401,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_401",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "silent",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-activatesamplepolicy.post.401",
+          "default": "Marketplace Engagement Admin activate Sample Policy failed: Unauthorized."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:403",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 403,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_403",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-activatesamplepolicy.post.403",
+          "default": "Marketplace Engagement Admin activate Sample Policy failed: Forbidden."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:404",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 404,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_404",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-activatesamplepolicy.post.404",
+          "default": "Marketplace Engagement Admin activate Sample Policy failed: Not Found."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:409",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 409,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_409",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-activatesamplepolicy.post.409",
+          "default": "Marketplace Engagement Admin activate Sample Policy failed: Conflict."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:500",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": 500,
+      "errorCode": null,
+      "match": {
+        "variant": "POST_500",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-activatesamplepolicy.post.500",
+          "default": "Marketplace Engagement Admin activate Sample Policy failed: Internal Server Error."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:ERR",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": "ERR",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_ERR",
+        "fallbackVariant": "POST_ERR",
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "error",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-activatesamplepolicy.post.err",
+          "default": "Marketplace Engagement Admin activate Sample Policy failed before an HTTP response was available."
+        },
+        "icon": "alert-circle",
+        "color": "red",
+        "durationMs": 8000,
+        "options": {
+          "dismissible": true,
+          "position": "top-right"
+        }
+      },
+      "enabled": true
+    },
+    {
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:NET",
+      "endpoint": {
+        "app": "admin-app-api",
+        "method": "POST",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "tags": ["admin-marketplace-engagement"]
+      },
+      "status": "NET",
+      "errorCode": null,
+      "match": {
+        "variant": "POST_NET",
+        "fallbackVariant": null,
+        "networkVariant": "POST_NET"
+      },
+      "display": {
+        "mode": "toast",
+        "category": "warning",
+        "text": {
+          "key": "api.toast.admin-app-api.marketplaceengagementadmincontroller-activatesamplepolicy.post.net",
+          "default": "Marketplace Engagement Admin activate Sample Policy could not reach the service."
         },
         "icon": "alert-triangle",
         "color": "amber",
