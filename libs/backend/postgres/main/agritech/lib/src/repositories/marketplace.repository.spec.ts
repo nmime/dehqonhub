@@ -75,6 +75,30 @@ function partnerEntity(overrides: Record<string, unknown> = {}) {
   };
 }
 
+/** A settled contract drawn by a cart checkout, which is where its seller name comes from. */
+const cartSourcedContract = {
+  id: 'c-cart-sourced',
+  tenantId: 'tenant-1',
+  buyerUserId: 'user-1',
+  sellerUserId: sellerOwnerUserId,
+  sourceType: 'cart_checkout',
+  sourceId: null as string | null,
+  subject: 'Cart contract',
+  amountUzs: 1_000_000,
+  lines: [],
+  deliveryTerms: 'pickup',
+  deliveryPriceUzs: 0,
+  deliveryNote: null,
+  deliveryDays: null,
+  factoringEnabled: false,
+  status: 'active',
+  buyerSignedAt: now,
+  sellerSignedAt: now,
+  signedAt: now,
+  createdAt: now,
+  updatedAt: now,
+};
+
 describe('PostgresMarketplaceRepository — verification', () => {
   let em: ReturnType<typeof makeEm>;
   let repo: PostgresMarketplaceRepository;
@@ -1119,6 +1143,86 @@ describe('PostgresMarketplaceRepository — contracts, reviews, ai', () => {
 
     expect(result).toMatchObject({ status: 'ok', value: { sellerName: 'Only the seller' } });
     expect(result.status === 'ok' && result.value.buyerName).toBeUndefined();
+  });
+
+  // One login can run several approved supplier organizations — the demo seller
+  // sells through six — and the owner lookup can only offer the oldest of them,
+  // which named a supplier that sells none of the contracted goods.
+  it('names the selling organization the cart was opened against', async () => {
+    const contract = {
+      ...cartSourcedContract,
+      sourceId: '5f3b0e2c-7a41-4c7a-9f52-2f8ad0f4c111',
+    };
+    em.findOne.mockResolvedValue(contract);
+    em.find.mockImplementation(async (entity: unknown) => {
+      if (String(entity).includes('Cart')) {
+        return [
+          {
+            id: '5f3b0e2c-7a41-4c7a-9f52-2f8ad0f4c111',
+            tenantId: 'tenant-1',
+            sellerId: '9a0c1d2e-3f45-4a6b-8c7d-0e1f2a3b4c5d',
+          },
+        ];
+      }
+      return String(entity).includes('AgriTechPartner')
+        ? [
+            partnerEntity({ id: 'p-oldest', legalName: 'The first organization', ownerUserId: sellerOwnerUserId }),
+            partnerEntity({
+              id: '9a0c1d2e-3f45-4a6b-8c7d-0e1f2a3b4c5d',
+              legalName: 'Agro Kimyo Servis',
+              ownerUserId: sellerOwnerUserId,
+            }),
+          ]
+        : [];
+    });
+
+    await expect(repo.signContract(owner, contract.id)).resolves.toMatchObject({
+      status: 'ok',
+      value: { sellerName: 'Agro Kimyo Servis' },
+    });
+  });
+
+  // Every way the cart can fail to answer, in one listing: a cart id that is a
+  // memory-adapter handle rather than a uuid, a cart no longer in the database,
+  // one holding a demo catalog slug, and one whose organization is not approved.
+  it.each([
+    ['carries a memory adapter handle', 'memory-cart-1', undefined],
+    ['is no longer stored', '11111111-1111-4111-8111-111111111111', undefined],
+    [
+      'holds a demo catalog slug',
+      '22222222-2222-4222-8222-222222222222',
+      { sellerId: 'demo-supplier-agro-kimyo-servis' },
+    ],
+    [
+      'names an organization that is not approved',
+      '33333333-3333-4333-8333-333333333333',
+      { sellerId: '44444444-4444-4444-8444-444444444444' },
+    ],
+  ] as const)('keeps the seller organization when the cart %s', async (_case, sourceId, cart) => {
+    const contract = { ...cartSourcedContract, sourceId };
+    em.find.mockImplementation(async (entity: unknown) => {
+      if (String(entity).includes('Cart')) {
+        return cart === undefined ? [] : [{ id: sourceId, tenantId: 'tenant-1', ...cart }];
+      }
+      return String(entity).includes('Contract')
+        ? [contract]
+        : [partnerEntity({ legalName: 'The first organization', ownerUserId: sellerOwnerUserId })];
+    });
+
+    await expect(repo.listContracts(owner)).resolves.toMatchObject([{ sellerName: 'The first organization' }]);
+  });
+
+  it('names a cart checkout with no source recorded from the party organization', async () => {
+    em.find.mockImplementation(async (entity: unknown) => {
+      if (String(entity).includes('Contract')) {
+        return [{ ...cartSourcedContract, sourceId: null }];
+      }
+      return String(entity).includes('AgriTechPartner')
+        ? [partnerEntity({ legalName: 'The first organization', ownerUserId: sellerOwnerUserId })]
+        : [];
+    });
+
+    await expect(repo.listContracts(owner)).resolves.toMatchObject([{ sellerName: 'The first organization' }]);
   });
 
   it('commits frozen cart quantities exactly when the second party activates the contract', async () => {

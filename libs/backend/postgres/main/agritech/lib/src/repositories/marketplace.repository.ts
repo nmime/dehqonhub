@@ -218,24 +218,93 @@ const partyNamesOf = async (em: EntityManager, contracts: readonly Contract[]): 
   return nameByParty;
 };
 
+/** Guards the uuid columns below: a slug reaching one of them is a query error. */
+const uuidShaped = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/iu;
+
+/**
+ * The selling organization behind each cart checkout, keyed by contract id.
+ *
+ * One login may run several approved organizations — the demo catalog alone
+ * sells through six behind one account — and the owner lookup above cannot tell
+ * which of them a contract was drawn with, so it printed whichever registered
+ * first: a supplier that sells none of the contracted goods. A cart records the
+ * organization its listings belong to, which is the answer for every contract a
+ * checkout produced. An offer selection carries no organization of its own, so
+ * those contracts keep the owner lookup.
+ */
+const cartSellerNamesOf = async (em: EntityManager, contracts: readonly Contract[]): Promise<Map<string, string>> => {
+  const checkouts = contracts.flatMap((contract) =>
+    contract.sourceType === 'cart_checkout' && contract.sourceId !== undefined && uuidShaped.test(contract.sourceId)
+      ? [{ cartId: contract.sourceId, contractId: contract.id, tenantId: contract.tenantId }]
+      : [],
+  );
+  const nameByContract = new Map<string, string>();
+  if (checkouts.length === 0) {
+    return nameByContract;
+  }
+  const tenantIds = [...new Set(checkouts.map((checkout) => checkout.tenantId))];
+  const carts = await em.find(CartEntity, {
+    tenantId: { $in: tenantIds },
+    id: { $in: [...new Set(checkouts.map((checkout) => checkout.cartId))] },
+  });
+  const sellerIdByCart = new Map(carts.map((cart) => [`${cart.tenantId}:${cart.id}`, cart.sellerId]));
+  // A cart opened against the in-memory demo catalog carries a supplier slug
+  // instead of a partner id, and a slug in a uuid comparison is a query error.
+  const sellerIds = [...new Set(sellerIdByCart.values())].filter((sellerId) => uuidShaped.test(sellerId));
+  if (sellerIds.length === 0) {
+    return nameByContract;
+  }
+  const partners = await em.find(AgriTechPartnerEntity, {
+    tenantId: { $in: tenantIds },
+    id: { $in: sellerIds },
+    kind: 'supplier',
+    status: 'approved',
+  });
+  const legalNameByPartner = new Map(
+    partners.map((partner) => [`${partner.tenantId}:${partner.id}`, partner.legalName]),
+  );
+  for (const checkout of checkouts) {
+    const sellerId = sellerIdByCart.get(`${checkout.tenantId}:${checkout.cartId}`);
+    const legalName = sellerId === undefined ? undefined : legalNameByPartner.get(`${checkout.tenantId}:${sellerId}`);
+    if (legalName !== undefined) {
+      nameByContract.set(checkout.contractId, legalName);
+    }
+  }
+  return nameByContract;
+};
+
 /** Applies resolved names to one contract. A party without one stays unnamed. */
-const namedParties = (contract: Contract, names: Map<string, string>): Contract => ({
+const namedParties = (
+  contract: Contract,
+  names: Map<string, string>,
+  cartSellerNames: Map<string, string>,
+): Contract => ({
   ...contract,
   buyerName: names.get(`${contract.tenantId}:buyer:${contract.buyerUserId}`),
-  sellerName: names.get(`${contract.tenantId}:supplier:${contract.sellerUserId}`),
+  sellerName: cartSellerNames.get(contract.id) ?? names.get(`${contract.tenantId}:supplier:${contract.sellerUserId}`),
 });
 
+// Awaited one after another rather than concurrently: signing resolves its names
+// inside a transaction holding a row lock, and one connection runs one statement
+// at a time there anyway.
 const withPartyNames = async (em: EntityManager, contracts: Contract[]): Promise<Contract[]> => {
   const names = await partyNamesOf(em, contracts);
-  return contracts.map((contract) => namedParties(contract, names));
+  const cartSellerNames = await cartSellerNamesOf(em, contracts);
+  return contracts.map((contract) => namedParties(contract, names, cartSellerNames));
 };
 
 /** The single-contract form of {@link withPartyNames}, applied to a command result. */
 const withPartyNamesOf = async (
   em: EntityManager,
   result: OperationResult<Contract>,
-): Promise<OperationResult<Contract>> =>
-  result.status === 'ok' ? ok(namedParties(result.value, await partyNamesOf(em, [result.value]))) : result;
+): Promise<OperationResult<Contract>> => {
+  if (result.status !== 'ok') {
+    return result;
+  }
+  const names = await partyNamesOf(em, [result.value]);
+  const cartSellerNames = await cartSellerNamesOf(em, [result.value]);
+  return ok(namedParties(result.value, names, cartSellerNames));
+};
 
 const toAi = (e: AiConsultationEntity): AiConsultation => ({
   id: e.id,
