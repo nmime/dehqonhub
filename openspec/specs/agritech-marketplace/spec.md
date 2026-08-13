@@ -354,6 +354,9 @@ browser journey evidence.
   normal-text contrast without horizontal overflow. DehqonHub ships one light
   palette: a stored dark preference or a dark-mode machine MUST NOT repaint the
   marketplace in a palette it has no design for.
+- The display-language control MUST be reachable from the marketplace header at
+  every width without scrolling: a visitor who cannot read the current language
+  cannot be asked to read their way down the page to change it.
 
 **Failure behavior:**
 

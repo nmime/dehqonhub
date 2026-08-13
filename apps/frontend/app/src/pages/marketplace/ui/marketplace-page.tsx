@@ -625,12 +625,6 @@ export const MarketplacePage = observer(function MarketplacePage({
         {view === 'home' ? null : demoBanner}
         {content}
       </main>
-      {/* The phone's only language control, since the header's is desktop-only.
-          Compact like the header's: a chip that reads as a deliberate control
-          rather than a lone wide button, with the full names in the menu. */}
-      <div className="dh-mobile-preferences">
-        <LanguageSwitcher compact variant="menu" />
-      </div>
       <MarketplaceFooter navigate={navigate} t={translate} />
       {data.auth === 'signed-in' && (
         <MarketplaceAi

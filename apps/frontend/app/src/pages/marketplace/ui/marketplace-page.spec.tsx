@@ -71,7 +71,9 @@ vi.mock('../model/use-marketplace-data', () => ({
 }));
 
 vi.mock('../../../shared/ui', () => ({
-  LanguageSwitcher: () => null,
+  // A stand-in with an identity, so a test can say where the control is rendered
+  // without reaching into the shared component's own markup.
+  LanguageSwitcher: () => <span data-testid="language-switcher" />,
 }));
 
 const product = {
@@ -268,6 +270,17 @@ describe('MarketplacePage mutations', () => {
     expect(navigate).toHaveBeenLastCalledWith('/catalog?section=seeds');
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.section.all' }));
     expect(navigate).toHaveBeenLastCalledWith('/catalog');
+  });
+
+  it('offers the display language in the header and nowhere else', () => {
+    render(<MarketplacePage navigate={vi.fn()} />);
+
+    // Reachable without scrolling, in the row a visitor who cannot read the page
+    // looks at first. It used to sit above the footer, where finding it meant
+    // scrolling the whole page in a language the visitor could not read.
+    const switchers = screen.getAllByTestId('language-switcher');
+    expect(switchers).toHaveLength(1);
+    expect(within(screen.getByRole('banner')).getByTestId('language-switcher')).toBe(switchers[0]);
   });
 
   it('reaches every site area from one header, and sends unverified accounts to identity first', () => {

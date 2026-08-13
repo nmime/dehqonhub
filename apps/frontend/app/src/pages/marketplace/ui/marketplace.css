@@ -439,10 +439,6 @@
   color: var(--dh-green-strong);
 }
 
-.dh-mobile-preferences {
-  display: none;
-}
-
 .dh-header__categories {
   display: flex;
   gap: 0.45rem;
@@ -2439,25 +2435,14 @@
 
 @media (max-width: 70rem) {
   .dh-header__main {
-    grid-template-columns: auto auto minmax(11rem, 1fr) auto;
+    grid-template-columns: auto minmax(11rem, 1fr) auto auto;
   }
 
-  .dh-header__preferences {
+  /* Below a full desktop the row cannot hold six things without starving the
+     search field, and this is the one with a twin: the category strip right under
+     it opens on "All", which is the catalog. */
+  .dh-button--catalog {
     display: none;
-  }
-
-  /* A row that centres the language chip, and nothing more. Painted as a card of
-     its own it left the control alone against a wide empty white field — a chip
-     inside a chip — which read like a section that had failed to load. */
-  .dh-mobile-preferences {
-    align-items: center;
-    display: flex;
-    gap: 0.5rem;
-    justify-content: center;
-    /* The shell already reserves the bottom nav's height, so this only needs to
-       part the chip from the footer rule below it. */
-    margin: 0 auto 1.75rem;
-    max-width: min(100% - 2rem, var(--dh-content));
   }
 
   .dh-category-grid,
@@ -2473,7 +2458,7 @@
 
 @media (max-width: 56rem) {
   .dh-header__main {
-    grid-template-columns: auto auto minmax(9rem, 1fr);
+    grid-template-columns: auto minmax(9rem, 1fr) auto;
   }
 
   .dh-header__nav {
@@ -2563,11 +2548,19 @@
 
   .dh-header__main {
     gap: 0.5rem;
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
     min-height: 4.3rem;
   }
 
-  .dh-button--catalog {
+  /* The language chip stays in the phone header rather than moving to the foot of
+     the page: parked down there it was three screens of scrolling away from the
+     visitor who could not read the page. Icon and code only — the chevron is the
+     first thing to go when the row also has to hold a brand and a search field. */
+  .dh-header__preferences .xr-language-menu-trigger.xr-button {
+    padding-inline: 0.4rem;
+  }
+
+  .dh-header__preferences .xr-language-menu-trigger.xr-button > svg:last-of-type {
     display: none;
   }
 
@@ -2575,8 +2568,12 @@
     font-size: 1.16rem;
   }
 
+  /* 16px exactly: iOS Safari zooms the whole page in when a focused field is set
+     any smaller, and the header is sticky, so the zoom stayed for the rest of the
+     visit. The wordmark below gives the field the width to hold its prompt at
+     this size in all three languages. */
   .dh-search input {
-    font-size: 0.82rem;
+    font-size: 1rem;
   }
 
   .dh-header__categories {
@@ -2771,6 +2768,17 @@
 
   .dh-notice {
     top: 4.8rem;
+  }
+}
+
+/* Phone widths, where the header row holds a brand, a search field and the
+   language chip and something has to give. The wordmark goes: it costs 109px, and
+   spending them on it left the prompt cut off mid-word ("Search p…") in every
+   language while the leaf mark alone still reads as the brand — the wordmark is
+   two lines below in the hero and again in the footer. */
+@media (max-width: 30rem) {
+  .dh-brand__word {
+    display: none;
   }
 }
 
