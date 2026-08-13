@@ -628,9 +628,12 @@ describe('bootstrapNestApi', () => {
       port: 3010,
     });
 
+    // The method list is explicit because the plugin's own default stops at
+    // POST, which fails the preflight of every PATCH, PUT and DELETE route.
     expect(mocks.app.enableCors).toHaveBeenCalledWith({
       origin: ['https://a.example', 'https://b.example'],
       credentials: true,
+      methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
     });
 
     const listeners: Array<() => void> = [];
@@ -692,6 +695,7 @@ describe('bootstrapNestApi', () => {
     expect(mocks.app.enableCors).toHaveBeenCalledWith({
       origin: ['https://direct.example'],
       credentials: true,
+      methods: ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'],
     });
 
     vi.clearAllMocks();

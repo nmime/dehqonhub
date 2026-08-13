@@ -192,6 +192,17 @@ export class RedisRateLimitStore implements RateLimitStore {
   }
 }
 
+/**
+ * Left unset, the Fastify CORS plugin answers a preflight with
+ * `Access-Control-Allow-Methods: GET,HEAD,POST`, so a browser refused every
+ * PATCH, PUT and DELETE this workspace exposes before the request left it — and
+ * each web app is served from an origin of its own. Saving a display language
+ * failed that way in silence, then the stale stored preference overwrote the
+ * visitor's choice on the next page that read it. Unlinking a provider identity
+ * and every admin console edit answered the same.
+ */
+const CorsMethods = ['GET', 'HEAD', 'OPTIONS', 'POST', 'PUT', 'PATCH', 'DELETE'] as const;
+
 function parseCorsOrigins(value: string | undefined): string[] {
   return (value ?? '')
     .split(',')
@@ -824,11 +835,13 @@ async function createAndStartNestApi(
       app.enableCors({
         origin: config.corsOrigins,
         credentials: true,
+        methods: [...CorsMethods],
       });
     } else if (!config.isProduction) {
       app.enableCors({
         origin: true,
         credentials: true,
+        methods: [...CorsMethods],
       });
     }
   }
