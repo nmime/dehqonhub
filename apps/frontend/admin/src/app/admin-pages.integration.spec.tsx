@@ -621,7 +621,7 @@ describe('admin pages integration', () => {
         permissions: [],
       },
       error: undefined,
-      response: new Response(null, { status: 201 }),
+      response: new Response(null, { status: 200 }),
     });
 
     renderAdminRouteForTest(

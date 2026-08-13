@@ -1,5 +1,5 @@
 // @requirements REQ-AGRITECH-PAYMENT-004 REQ-AGRITECH-ROUTING-015
-import { Body, Controller, Headers, Post } from '@nestjs/common';
+import { Body, Controller, Headers, HttpCode, HttpStatus, Post } from '@nestjs/common';
 import { ApiProperty, ApiTags } from '@nestjs/swagger';
 import { IsIn, IsString, IsUrl, Matches } from 'class-validator';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
@@ -57,6 +57,7 @@ export class PaymentController {
   ) {}
 
   @Post()
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(PaymentHandoffViewDto)
   @ApiExceptions(400, 401, 403, 404, 409, 503)
   @ApiSessionCookieAuth()

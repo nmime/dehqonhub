@@ -5,6 +5,8 @@ import {
   Controller,
   ForbiddenException,
   Get,
+  HttpCode,
+  HttpStatus,
   Headers,
   Inject,
   InternalServerErrorException,
@@ -91,6 +93,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-templates')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdminNotificationTemplateViewDto)
   @RequirePermissions(AdminNotificationTemplatesWritePermission)
   async createTemplate(
@@ -142,6 +145,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-templates/:id/publish')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdminNotificationTemplateViewDto)
   @RequirePermissions(AdminNotificationTemplatesWritePermission)
   publishTemplate(@CurrentUser() principal: AuthenticatedPrincipal, @Param('id') id: string) {
@@ -149,6 +153,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-templates/:id/archive')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdminNotificationTemplateViewDto)
   @RequirePermissions(AdminNotificationTemplatesWritePermission)
   archiveTemplate(@CurrentUser() principal: AuthenticatedPrincipal, @Param('id') id: string) {
@@ -156,6 +161,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-templates/:id/preview')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdminNotificationPreviewDto)
   @RequirePermissions(AdminNotificationTemplatesReadPermission)
   async previewTemplate(
@@ -177,6 +183,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-templates/:id/test-send')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdminNotificationPreviewDto)
   @RequirePermissions(AdminNotificationTemplatesTestPermission)
   async testSend(
@@ -223,6 +230,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-segments')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdminNotificationSegmentViewDto)
   @RequirePermissions(AdminNotificationSegmentsWritePermission)
   async createSegment(
@@ -271,6 +279,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-segments/:id/estimate')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdminNotificationEstimateDto)
   @RequirePermissions(AdminNotificationSegmentsReadPermission)
   estimateSegment(@CurrentUser() principal: AuthenticatedPrincipal, @Param('id') id: string) {
@@ -278,6 +287,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-segments/:id/uploads')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdminNotificationSegmentUploadViewDto)
   @RequirePermissions(AdminNotificationSegmentsWritePermission)
   async uploadSegment(
@@ -305,6 +315,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-segments/:id/archive')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdminNotificationSegmentViewDto)
   @RequirePermissions(AdminNotificationSegmentsWritePermission)
   async archiveSegment(@CurrentUser() principal: AuthenticatedPrincipal, @Param('id') id: string) {
@@ -328,6 +339,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-broadcasts')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdminNotificationBroadcastViewDto)
   @RequirePermissions(AdminNotificationBroadcastsWritePermission)
   async createBroadcast(
@@ -375,6 +387,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-broadcasts/:id/collect-audience')
+  @HttpCode(HttpStatus.OK)
   @ApiHeader({ name: 'idempotency-key', required: true })
   @ApiOkDataResponse(AdminNotificationBroadcastViewDto)
   @RequirePermissions(AdminNotificationBroadcastsWritePermission)
@@ -387,6 +400,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-broadcasts/:id/approve')
+  @HttpCode(HttpStatus.OK)
   @ApiHeader({ name: 'idempotency-key', required: true })
   @ApiOkDataResponse(AdminNotificationBroadcastViewDto)
   @RequirePermissions(AdminNotificationBroadcastsApprovePermission)
@@ -399,6 +413,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-broadcasts/:id/send')
+  @HttpCode(HttpStatus.OK)
   @ApiHeader({ name: 'idempotency-key', required: true })
   @ApiOkDataResponse(AdminNotificationBroadcastViewDto)
   @RequirePermissions(AdminNotificationBroadcastsSendPermission)
@@ -411,6 +426,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-broadcasts/:id/schedule')
+  @HttpCode(HttpStatus.OK)
   @ApiHeader({ name: 'idempotency-key', required: true })
   @ApiOkDataResponse(AdminNotificationBroadcastViewDto)
   @RequirePermissions(AdminNotificationBroadcastsSendPermission)
@@ -424,6 +440,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-broadcasts/:id/pause')
+  @HttpCode(HttpStatus.OK)
   @ApiHeader({ name: 'idempotency-key', required: true })
   @ApiOkDataResponse(AdminNotificationBroadcastViewDto)
   @RequirePermissions(AdminNotificationBroadcastsSendPermission)
@@ -436,6 +453,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-broadcasts/:id/resume')
+  @HttpCode(HttpStatus.OK)
   @ApiHeader({ name: 'idempotency-key', required: true })
   @ApiOkDataResponse(AdminNotificationBroadcastViewDto)
   @RequirePermissions(AdminNotificationBroadcastsSendPermission)
@@ -448,6 +466,7 @@ export class AdminNotificationsController {
   }
 
   @Post('notification-broadcasts/:id/cancel')
+  @HttpCode(HttpStatus.OK)
   @ApiHeader({ name: 'idempotency-key', required: true })
   @ApiOkDataResponse(AdminNotificationBroadcastViewDto)
   @RequirePermissions(AdminNotificationBroadcastsSendPermission)

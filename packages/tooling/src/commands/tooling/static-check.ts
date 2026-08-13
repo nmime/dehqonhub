@@ -101,6 +101,12 @@ const duplicatedLibrarySourceLibPath =
   /libs\/[A-Za-z0-9_./-]+\/lib\/src\/lib(?:\/|\b)/u;
 const staleSlashStyleAppAliasImport =
   /(?:from\s+["']|import\s+(?:type\s+)?["']|import\s*\(["']|require\(["'])(@app\/(?:backend|common|frontend)\/[A-Za-z0-9_./-]+)["']/u;
+const postRouteDecorator = /@Post\s*\(/u;
+const declaredOkResponseDecorator =
+  /@(?:ApiOkDataResponse|ApiOkResponse|ApiReadinessResponses)\s*\(|status:\s*(?:HttpStatus\.OK|200)\b/u;
+const httpCodeDecorator = /@HttpCode\s*\(/u;
+const methodSignature =
+  /^\s*(?:public\s+|private\s+|protected\s+)?(?:async\s+)?([A-Za-z_$][\w$]*)\s*\(/u;
 
 interface StaleReferencePattern {
   label: string;
@@ -451,6 +457,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkLocalBarrelExportConventions(workspaceRoot),
     ...checkDuplicatedLibrarySourceLibPaths(workspaceRoot),
     ...checkFrontendUiOwnership(workspaceRoot),
+    ...checkPostHandlerStatusCodes(workspaceRoot),
     ...checkGeneratedContractImports(workspaceRoot),
     ...checkStaleSlashStyleAliasImports(workspaceRoot),
     ...checkForbiddenSocialAuthImports(workspaceRoot),
@@ -479,6 +486,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
       importSmoke: smokeCommands.length,
       frontendFsdSelfTest: "ok",
       frontendFsdWorkspaceCheck: "ok",
+      postHandlerStatusParity: "ok",
       workspaceMetadata: "ok",
       generatedContractImportPatterns: generatedContractImportPatterns.length,
       staleReferenceDenylist: staleReferencePatterns.length,
@@ -1227,6 +1235,89 @@ export function checkDuplicatedLibrarySourceLibPaths(
   }
 
   return failures;
+}
+
+// Nest answers POST with 201 unless the handler says otherwise, but every
+// endpoint here documents 200 through ApiOkDataResponse. Thirty-eight handlers
+// had silently drifted apart from their own contract before this guard existed:
+// the generated clients only branch on response.ok, so nothing failed loudly.
+export function checkPostHandlerStatusCodes(workspaceRoot: string): CheckFailure[] {
+  const roots = ["apps/backend", "libs/backend"]
+    .map((root) => resolve(workspaceRoot, root))
+    .filter((root) => existsSync(root));
+
+  return roots.flatMap((root) =>
+    walk(root)
+      .filter((file) => file.endsWith(".controller.ts"))
+      .flatMap((file) => {
+        const relativeFile = relativeToWorkspace(workspaceRoot, file);
+        return collectDecoratedHandlers(readFileSync(file, "utf8"))
+          .filter(
+            (handler) =>
+              postRouteDecorator.test(handler.decorators) &&
+              declaredOkResponseDecorator.test(handler.decorators) &&
+              !httpCodeDecorator.test(handler.decorators),
+          )
+          .map((handler) => ({
+            command: "post handler declared status parity",
+            file: `${relativeFile}:${handler.line}`,
+            status: 1,
+            stdout: "",
+            stderr: `${handler.name} documents 200 but answers 201, because Nest defaults POST to Created. Add @HttpCode(HttpStatus.OK) next to the @Post decorator.`,
+          }));
+      }),
+  );
+}
+
+interface DecoratedHandler {
+  decorators: string;
+  line: number;
+  name: string;
+}
+
+// A handler is the run of decorator lines directly above a method signature.
+// Decorator arguments span lines, so the parenthesis depth decides where the
+// run ends rather than a line-shape guess.
+function collectDecoratedHandlers(source: string): DecoratedHandler[] {
+  const lines = source.split(/\r?\n/u);
+  const handlers: DecoratedHandler[] = [];
+  let pending: string[] = [];
+  let pendingLine = 0;
+  let depth = 0;
+
+  lines.forEach((line, index) => {
+    const trimmed = line.trim();
+
+    if (depth > 0) {
+      pending.push(line);
+      depth += countUnbalancedParentheses(line);
+      return;
+    }
+
+    if (trimmed.startsWith("@")) {
+      if (pending.length === 0) pendingLine = index + 1;
+      pending.push(line);
+      depth = Math.max(0, countUnbalancedParentheses(line));
+      return;
+    }
+
+    const name = methodSignature.exec(line)?.[1];
+    if (name && pending.length > 0) {
+      handlers.push({ decorators: pending.join("\n"), line: pendingLine, name });
+      pending = [];
+      return;
+    }
+
+    if (trimmed.length > 0 && !trimmed.startsWith("//") && !trimmed.startsWith("*")) {
+      pending = [];
+    }
+  });
+
+  return handlers;
+}
+
+function countUnbalancedParentheses(line: string): number {
+  return line.split("(").length - line.split(")").length;
 }
 
 export function checkFrontendUiOwnership(workspaceRoot: string): CheckFailure[] {

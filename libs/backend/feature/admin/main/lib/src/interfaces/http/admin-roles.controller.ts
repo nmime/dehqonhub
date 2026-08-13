@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Patch, Post, Put, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, Patch, Post, Put, Req, UseGuards } from '@nestjs/common';
 import { createOkResponse, type OkResponse } from '@app/backend-common-response';
 import { ApiOkDataResponse, ApiExceptions, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import {
@@ -42,6 +42,7 @@ export class AdminRolesController {
   }
 
   @Post('roles')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdminRoleViewDto)
   @RequirePermissions(AdminRolesWritePermission)
   async createRole(

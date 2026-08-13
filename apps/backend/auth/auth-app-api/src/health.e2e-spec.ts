@@ -232,7 +232,7 @@ describe('auth-app-api e2e', () => {
         displayName: 'E2E User',
       }),
     });
-    expect(register.statusCode).toBe(201);
+    expect(register.statusCode).toBe(200);
     const registerBody = register.json<AuthSessionResponse>();
     let registerCookieHeader = sessionCookieHeader(register);
     expect(registerCookieHeader).toContain('nrb.sid=');
@@ -394,7 +394,7 @@ describe('auth-app-api e2e', () => {
       url: '/auth/logout',
       headers: { cookie: registerCookieHeader },
     });
-    expect(sessionOnlyLogout.statusCode).toBe(201);
+    expect(sessionOnlyLogout.statusCode).toBe(200);
     expect(sessionOnlyLogout.json()).toEqual({ data: { loggedOut: true } });
 
     const sessionAfterLogout = await app.inject({

@@ -20,6 +20,7 @@ import {
   checkLocalBarrelExportConventions,
   checkThinLocaleCatalogs,
   checkPackageProjectReferences,
+  checkPostHandlerStatusCodes,
   checkProviderScopedRuntimeImports,
   checkStaleReferences,
   checkStaleSlashStyleAliasImports,
@@ -126,6 +127,97 @@ describe("static-check frontend UI ownership guard", () => {
       writeText(workspaceRoot, "libs/frontend/ui-web/lib/src/component/button.tsx", "export const Button = 1;\n");
       writeText(workspaceRoot, "apps/frontend/admin/src/features/users/ui/user-card.tsx", "export const UserCard = 1;\n");
       assert.deepEqual(checkFrontendUiOwnership(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
+
+describe("static-check POST handler declared status parity", () => {
+  it("rejects a POST handler that documents 200 without pinning the status", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "libs/backend/feature/demo/main/lib/src/demo.controller.ts",
+        [
+          "@Controller('demo')",
+          "export class DemoController {",
+          "  @Post('widgets')",
+          "  @ApiOkDataResponse(WidgetDto)",
+          "  async createWidget(@Body() input: CreateWidgetDto) {",
+          "    return createOkResponse(await this.service.create(input));",
+          "  }",
+          "}",
+          "",
+        ].join("\n"),
+      );
+
+      const failures = checkPostHandlerStatusCodes(workspaceRoot);
+      assert.equal(failures.length, 1);
+      assert.equal(failures[0]?.command, "post handler declared status parity");
+      assert.equal(failures[0]?.file, "libs/backend/feature/demo/main/lib/src/demo.controller.ts:3");
+      assert.match(failures[0]?.stderr ?? "", /createWidget documents 200 but answers 201/u);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  // The decorator run has to be read by parenthesis depth: ApiExceptions wraps
+  // across lines, and a blank line or a field between two handlers must not let
+  // one handler's decorators leak onto the next handler's signature.
+  it("accepts pinned handlers and ignores everything that is not a documented POST", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      writeText(
+        workspaceRoot,
+        "apps/backend/demo/demo-app-api/src/demo.controller.ts",
+        [
+          "@Controller('demo')",
+          "export class DemoController {",
+          "  constructor(private readonly service: DemoService) {}",
+          "",
+          "  @Post('widgets')",
+          "  @HttpCode(HttpStatus.OK)",
+          "  @ApiExceptions(",
+          "    400,",
+          "    409,",
+          "  )",
+          "  @ApiOkDataResponse(WidgetDto)",
+          "  async createWidget(@Body() input: CreateWidgetDto) {",
+          "    return createOkResponse(await this.service.create(input));",
+          "  }",
+          "",
+          "  // A GET never defaults to Created, so the guard leaves it alone.",
+          "  @Get('widgets')",
+          "  @ApiOkDataResponse(WidgetDto)",
+          "  async listWidgets() {",
+          "    return createOkResponse(await this.service.list());",
+          "  }",
+          "",
+          "  @Post('callbacks')",
+          "  async callback(@Body() input: CallbackDto) {",
+          "    return this.service.callback(input);",
+          "  }",
+          "}",
+          "",
+        ].join("\n"),
+      );
+      writeText(workspaceRoot, "libs/backend/feature/demo/main/lib/src/demo.service.ts", "export const service = 1;\n");
+
+      assert.deepEqual(checkPostHandlerStatusCodes(workspaceRoot), []);
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+
+  it("returns no failures when the workspace has no backend tree", () => {
+    const workspaceRoot = createWorkspace();
+
+    try {
+      assert.deepEqual(checkPostHandlerStatusCodes(workspaceRoot), []);
     } finally {
       removeWorkspace(workspaceRoot);
     }

@@ -1,5 +1,5 @@
 // @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ROUTING-015
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patch, Post, Query } from '@nestjs/common';
 import { ApiParam, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import { IsDate, IsIn, IsInt, IsNumber, IsOptional, IsString, IsUUID, Max, Min } from 'class-validator';
@@ -125,6 +125,7 @@ export class AgriTechOperationsController {
   constructor(private readonly service: AgriTechOperationsService) {}
 
   @Post('partners')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(PartnerViewDto)
   async createPartner(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreatePartnerDto) {
     return createOkResponse(await this.service.createPartner(ownerFrom(principal), input));
@@ -137,6 +138,7 @@ export class AgriTechOperationsController {
   }
 
   @Post('supplier/products')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(CreatedResourceDto)
   async createSupplierProduct(
     @CurrentUser() principal: AuthenticatedPrincipal,
@@ -163,6 +165,7 @@ export class AgriTechOperationsController {
   }
 
   @Post('produce')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(ProduceListingViewDto)
   async createProduce(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreateProduceDto) {
     return createOkResponse(await this.service.createProduceListing(ownerFrom(principal), input));
@@ -181,6 +184,7 @@ export class AgriTechOperationsController {
   }
 
   @Post('produce/:id/reservations')
+  @HttpCode(HttpStatus.OK)
   @ApiParam({ format: 'uuid', name: 'id' })
   @ApiOkDataResponse(ProduceReservationViewDto)
   async reserveProduce(
@@ -222,6 +226,7 @@ export class AgriTechOperationsController {
   }
 
   @Post('field-visits')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(FieldVisitViewDto)
   async recordFieldVisit(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreateFieldVisitDto) {
     return createOkResponse(await this.service.recordFieldVisit(ownerFrom(principal), input));

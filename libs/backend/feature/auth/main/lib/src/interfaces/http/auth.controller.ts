@@ -93,6 +93,7 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOkDataResponse(AuthSessionViewDto)
   async register(
@@ -165,6 +166,7 @@ export class AuthController {
   }
 
   @Post('telegram/tma')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOkDataResponse(ExternalAuthResultDto)
   async telegramTma(
@@ -190,6 +192,7 @@ export class AuthController {
   }
 
   @Post('telegram/oidc/session')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOkDataResponse(ExternalAuthResultDto)
   async telegramOidcSession(
@@ -215,6 +218,7 @@ export class AuthController {
   }
 
   @Post('telegram/bot-link')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOkDataResponse(ExternalAuthResultDto)
   async telegramBotLink(@Body() input: TelegramBotLinkDto): Promise<OkResponse<ExternalAuthLoginResult>> {
@@ -222,6 +226,7 @@ export class AuthController {
   }
 
   @Post('discord/authorization-request')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOkDataResponse(DiscordAuthorizationRequestResultDto)
   discordAuthorizationRequest(
@@ -289,6 +294,7 @@ export class AuthController {
   }
 
   @Post('link-tokens')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(LinkTokenResultDto)
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())
@@ -310,6 +316,7 @@ export class AuthController {
   }
 
   @Post('email-verification-token')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOkDataResponse(UserActionTokenPayloadDto)
   async requestEmailVerification(
@@ -320,6 +327,7 @@ export class AuthController {
   }
 
   @Post('password-reset-token')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOkDataResponse(UserActionTokenPayloadDto)
   async requestPasswordReset(@Body() input: UserActionTokenRequestDto): Promise<OkResponse<UserActionTokenPayload>> {
@@ -390,6 +398,7 @@ export class AuthController {
   }
 
   @Post('logout')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(LogoutPayloadDto)
   @ApiSessionCookieAuth()
   @UseGuards(new SessionAuthGuard())

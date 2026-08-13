@@ -1,5 +1,16 @@
 // @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-MARKETPLACE-016
-import { Body, Controller, Get, Param, ParseUUIDPipe, Patch, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiParam, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -228,6 +239,7 @@ export class AgriTechAdminController {
   }
 
   @Post('deliveries')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(DeliveryViewDto)
   @RequirePermissions(AdminAgriTechWritePermission)
   async scheduleDelivery(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: ScheduleDeliveryDto) {
@@ -235,6 +247,7 @@ export class AgriTechAdminController {
   }
 
   @Post('advisories')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(AdvisoryViewDto)
   @RequirePermissions(AdminAgriTechWritePermission)
   async publishAdvisory(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: PublishAdvisoryDto) {
@@ -249,6 +262,7 @@ export class AgriTechAdminController {
   }
 
   @Post('pilots')
+  @HttpCode(HttpStatus.OK)
   @ApiOkDataResponse(PilotViewDto)
   @RequirePermissions(AdminAgriTechWritePermission)
   async createPilot(@CurrentUser() principal: AuthenticatedPrincipal, @Body() input: CreatePilotDto) {
