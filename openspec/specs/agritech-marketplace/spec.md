@@ -324,7 +324,9 @@ browser journey evidence.
 - Product seller identity, request ownership, offer authorship, verification,
   approved buyer/supplier organization membership, contract parties, and
   signing actor MUST be derived from authenticated and persisted state, never a
-  display label or caller-selected authority field.
+  display label or caller-selected authority field. The organization named on a
+  contract MUST be the one the contracted goods are sold by, not another
+  organization the same party happens to own.
 - An open cart MUST contain products from exactly one server-derived seller;
   adding a different seller's product creates or updates another cart.
 - Catalog checkout and selected offers MUST resolve to persisted, reviewable
