@@ -73,6 +73,15 @@ describe('useSessionPreferenceControls', () => {
     await waitFor(() => {
       expect(authControllerUpdatePreferences).toHaveBeenCalledTimes(2);
     });
+
+    // The value the server refused to store is the value it still serves, so a
+    // later server-derived apply must not undo the visitor's choice for them.
+    act(() => {
+      result.current.applyUserLocale('ru');
+      result.current.applyUserTheme('dark');
+    });
+    expect(result.current.userLocale).not.toBe('ru');
+    expect(result.current.userTheme).not.toBe('dark');
   });
 
   describe('with guardExplicitOverrides', () => {

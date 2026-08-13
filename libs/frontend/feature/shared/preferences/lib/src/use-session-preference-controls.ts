@@ -16,10 +16,10 @@ export interface UserPreferenceControls {
 }
 
 export interface UserPreferenceControlsOptions {
-  // When true, once the user has explicitly persisted a preference, later
+  // When true, a *successful* explicit write latches the choice, so later
   // server-derived `apply*` calls stop overriding it (the admin console's
   // behavior). The mini-app leaves this off so it always tracks the latest
-  // server value.
+  // server value. A write that *fails* latches either way — see `applyUserLocale`.
   guardExplicitOverrides?: boolean;
   // Query keys to invalidate after a successful preference write, on top of the
   // auth/me query the hook always refreshes. Each consumer supplies its own
@@ -64,24 +64,25 @@ export function useSessionPreferenceControls(options: UserPreferenceControlsOpti
     retry: false,
   });
 
-  const applyUserLocale = useCallback(
-    (nextLocale: Locale) => {
-      if (guardExplicitOverrides && explicitLocale.current) {
-        return;
-      }
-      setUserLocale(nextLocale);
-    },
-    [guardExplicitOverrides],
-  );
-  const applyUserTheme = useCallback(
-    (nextTheme: UiTheme) => {
-      if (guardExplicitOverrides && explicitTheme.current) {
-        return;
-      }
-      setUserTheme(nextTheme);
-    },
-    [guardExplicitOverrides],
-  );
+  // The latch is consulted whenever it holds a value, not only under
+  // `guardExplicitOverrides`: without the option a latch is set solely by a
+  // failed write, and the value the server refused to store is exactly the value
+  // it would hand back on the next read. Letting that through turned a failed
+  // save into a visible undo — pick Russian, the write fails, and the next page
+  // that reads the profile puts the interface back into a language the visitor
+  // said they could not read.
+  const applyUserLocale = useCallback((nextLocale: Locale) => {
+    if (explicitLocale.current) {
+      return;
+    }
+    setUserLocale(nextLocale);
+  }, []);
+  const applyUserTheme = useCallback((nextTheme: UiTheme) => {
+    if (explicitTheme.current) {
+      return;
+    }
+    setUserTheme(nextTheme);
+  }, []);
 
   const persistUserLocale = useCallback(
     async (nextLocale: Locale) => {
@@ -92,7 +93,10 @@ export function useSessionPreferenceControls(options: UserPreferenceControlsOpti
       try {
         await preferencesMutation.mutateAsync({ locale: nextLocale });
       } catch {
-        // Locale is still persisted locally; retry on the next explicit change.
+        // The choice stays in local storage and on the document, so hold the
+        // latch too: the stale server value must not travel back through a later
+        // `applyUserLocale`. A further explicit change replaces it and retries.
+        explicitLocale.current = nextLocale;
       }
     },
     [guardExplicitOverrides, preferencesMutation],
@@ -106,7 +110,8 @@ export function useSessionPreferenceControls(options: UserPreferenceControlsOpti
       try {
         await preferencesMutation.mutateAsync({ theme: nextTheme });
       } catch {
-        // Theme is still persisted locally; retry on the next explicit change.
+        // Held for the same reason as the locale above.
+        explicitTheme.current = nextTheme;
       }
     },
     [guardExplicitOverrides, preferencesMutation],
