@@ -350,8 +350,10 @@ browser journey evidence.
 - AI recommendations MUST be limited to current active products in the user's
   tenant and MUST require a separate explicit action before any mutation.
 - English, Russian, and Uzbek MUST expose the same semantic states. The UI MUST
-  work at 320 px, Russian at 375 px, keyboard only, reduced motion, light and
-  dark themes, and WCAG AA normal-text contrast without horizontal overflow.
+  work at 320 px, Russian at 375 px, keyboard only, reduced motion, and WCAG AA
+  normal-text contrast without horizontal overflow. DehqonHub ships one light
+  palette: a stored dark preference or a dark-mode machine MUST NOT repaint the
+  marketplace in a palette it has no design for.
 
 **Failure behavior:**
 
