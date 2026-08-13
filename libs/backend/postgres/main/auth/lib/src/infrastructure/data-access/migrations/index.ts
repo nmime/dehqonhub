@@ -27,7 +27,6 @@ import { Migration20260722092000CreateCanonicalSessions } from './Migration20260
 import { Migration20260722100000GrantFeatureFlagPermissions } from './Migration20260722100000GrantFeatureFlagPermissions';
 import { Migration20260802170000AddUzbekLocale } from './Migration20260802170000AddUzbekLocale';
 import { Migration20260810120000AddUzbekCyrillicLocale } from './Migration20260810120000AddUzbekCyrillicLocale';
-import { Migration20260811100000AddAuthAccountAssurance } from './Migration20260811100000AddAuthAccountAssurance';
 
 export const AuthMigrationsTableName = 'mikro_orm_migrations';
 
@@ -60,7 +59,6 @@ export const authMigrations = [
   Migration20260722100000GrantFeatureFlagPermissions,
   Migration20260802170000AddUzbekLocale,
   Migration20260810120000AddUzbekCyrillicLocale,
-  Migration20260811100000AddAuthAccountAssurance,
 ] as const;
 
 export const authMigrationOptions: MigrationsOptions = {
@@ -100,4 +98,3 @@ export * from './Migration20260722092000CreateCanonicalSessions';
 export * from './Migration20260722100000GrantFeatureFlagPermissions';
 export * from './Migration20260802170000AddUzbekLocale';
 export * from './Migration20260810120000AddUzbekCyrillicLocale';
-export * from './Migration20260811100000AddAuthAccountAssurance';

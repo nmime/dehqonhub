@@ -76,15 +76,17 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
     await insertAuthorizedSeller(database.em, owner, partnerId);
     await insertProduct(database.em, { id: productId, supplierId: partnerId, tenantId: owner.tenantId });
     const publication = await publishAndApproveProduct(database, owner, partnerId, productId, 'idempotency');
-    const activationInput = {
-      actingPartnerId: partnerId,
-      listingPublicId: publication.id,
-      planCode: 'catalog_7d' as const,
-      startsAt: new Date(Date.now() + 60_000),
-    };
     const [firstResult, replayResult] = await Promise.all([
-      activatePromotion(promotionRepository(database), owner, 'promotion-command-0001', activationInput),
-      activatePromotion(promotionRepository(database), owner, 'promotion-command-0001', activationInput),
+      activatePromotion(promotionRepository(database), owner, 'promotion-command-0001', {
+        actingPartnerId: partnerId,
+        listingPublicId: publication.id,
+        planCode: 'catalog_7d',
+      }),
+      activatePromotion(promotionRepository(database), owner, 'promotion-command-0001', {
+        actingPartnerId: partnerId,
+        listingPublicId: publication.id,
+        planCode: 'catalog_7d',
+      }),
     ]);
     const first = valueOf(firstResult);
     const replay = valueOf(replayResult);
@@ -97,14 +99,13 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
       listingPublicId: publication.id,
       planCode: 'catalog_7d',
       priceUzs: 150_000,
-      status: 'scheduled',
+      status: 'active',
     });
     await expect(
       activatePromotion(repository, owner, 'promotion-command-0001', {
         actingPartnerId: partnerId,
         listingPublicId: publication.id,
         planCode: 'catalog_14d',
-        startsAt: activationInput.startsAt,
       }),
     ).resolves.toMatchObject({ field: 'idempotencyKey', status: 'conflict' });
     await expect(
@@ -112,7 +113,6 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
         actingPartnerId: partnerId,
         listingPublicId: publication.id,
         planCode: 'catalog_7d',
-        startsAt: activationInput.startsAt,
       }),
     ).resolves.toMatchObject({ field: 'listingPublicId', status: 'conflict' });
 

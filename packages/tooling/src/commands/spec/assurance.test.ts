@@ -539,13 +539,13 @@ test('keeps the complete repository disposition inventory synchronized', () => {
 
   assert.deepEqual(model.errors, []);
   const expectedInventory = {
-    projects: 111,
-    behaviorTests: 552,
-    features: 6,
-    scenarios: 19,
-    requirements: 74,
-    acceptanceRequirements: 9,
-    evidence: 241,
+    projects: 116,
+    behaviorTests: 590,
+    features: 7,
+    scenarios: 33,
+    requirements: 79,
+    acceptanceRequirements: 13,
+    evidence: 327,
   };
   assert.deepEqual(report.totals, {
     ...expectedInventory,

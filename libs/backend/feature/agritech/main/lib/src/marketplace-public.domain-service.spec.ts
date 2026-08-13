@@ -1,6 +1,11 @@
-// @requirements REQ-AGRITECH-PUBLIC-018 REQ-AGRITECH-DEMO-024
-/* eslint-disable no-await-in-loop -- table-driven cases mutate stateful mocks and must remain ordered */
+// @requirements REQ-AGRITECH-PUBLIC-018
 import { describe, expect, it, vi } from 'vitest';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  ResourceNotFoundException,
+} from '@app/backend-common-exception';
 import type {
   MarketplacePublicRepository,
   MarketplacePublishedListingRecord,
@@ -8,19 +13,6 @@ import type {
   MarketplacePublishedSellerRecord,
 } from '@app/backend-feature-agritech-shared';
 import { MarketplacePublicDomainService } from './marketplace-public.domain-service';
-import {
-  findMarketplaceDemoListing,
-  findMarketplaceDemoSeller,
-  listMarketplaceDemoListings,
-  listMarketplaceDemoSellerListings,
-  listMarketplaceDemoSuggestions,
-} from './marketplace-demo-catalog';
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  ResourceNotFoundException,
-} from '@app/backend-common-exception';
 
 const productRecord: MarketplacePublishedListingRecord = {
   availableQuantity: 20,
@@ -82,7 +74,6 @@ const listingPublication = {
 };
 
 const repository = (): MarketplacePublicRepository => ({
-  isDemoCatalogEnabled: vi.fn().mockResolvedValue(false),
   findPublishedListing: vi.fn(() => Promise.resolve(productRecord)),
   findPublishedSeller: vi.fn(() => Promise.resolve(sellerRecord)),
   listPublishedListings: vi.fn(() =>
@@ -192,7 +183,6 @@ describe('MarketplacePublicDomainService', () => {
           kind: 'product',
           priceUzs: 4_200_000,
           promoted: false,
-          provenance: 'live',
           publishedAt: productRecord.publishedAt,
           region: 'Samarkand',
           sampleAvailable: false,
@@ -200,7 +190,6 @@ describe('MarketplacePublicDomainService', () => {
           seller: {
             displayName: 'Zarafshon Agro',
             id: productRecord.sellerPublicId,
-            provenance: 'live',
             region: 'Samarkand',
             verified: true,
           },
@@ -209,7 +198,6 @@ describe('MarketplacePublicDomainService', () => {
           titleUz: "Makkajo'xori F1",
           titleUzCyrl: 'Маккажўхори F1',
           unit: 't',
-          transactional: true,
           updatedAt: productRecord.updatedAt,
         },
       ],
@@ -242,7 +230,6 @@ describe('MarketplacePublicDomainService', () => {
       description: 'Verified seed supplier',
       displayName: 'Zarafshon Agro',
       id: sellerRecord.publicId,
-      provenance: 'live',
       region: 'Samarkand',
       verified: true,
     });
@@ -287,102 +274,6 @@ describe('MarketplacePublicDomainService', () => {
       },
     ]);
     expect(JSON.stringify(suggestions)).not.toMatch(/tenantId|sourceId/u);
-  });
-
-  it('adds clearly non-transactional demo listings only when the governed flag is enabled', async () => {
-    const repo = repository();
-    vi.mocked(repo.isDemoCatalogEnabled).mockResolvedValue(true);
-    vi.mocked(repo.listPublishedListings).mockResolvedValue({ items: [] });
-    vi.mocked(repo.findPublishedListing).mockResolvedValue(undefined);
-    vi.mocked(repo.findPublishedSeller).mockResolvedValue(undefined);
-    vi.mocked(repo.listPublishedSuggestions).mockResolvedValue([]);
-    const service = new MarketplacePublicDomainService(repo);
-
-    const page = await service.listCatalog({ limit: 10, sampleAvailable: true, section: 'seeds' });
-    expect(page.items).toHaveLength(1);
-    expect(page.items[0]).toMatchObject({
-      provenance: 'demo',
-      title: 'Premium cotton seed',
-      transactional: false,
-      seller: { provenance: 'demo', verified: false },
-    });
-    const listingId = page.items[0]?.id ?? '';
-    await expect(service.getListing(listingId)).resolves.toMatchObject({ provenance: 'demo' });
-    await expect(service.getSeller(page.items[0]?.seller.id ?? '')).resolves.toMatchObject({
-      provenance: 'demo',
-      verified: false,
-    });
-    await expect(service.listSuggestions('cotton', 8)).resolves.toEqual([
-      expect.objectContaining({ id: listingId, kind: 'listing' }),
-    ]);
-    vi.mocked(repo.listPublishedSuggestions).mockResolvedValueOnce([
-      { id: '9d000000-0000-4000-8000-000000000001', kind: 'seller', label: 'Existing demo seller' },
-    ]);
-    await expect(service.listSuggestions('demo', 8)).resolves.toHaveLength(7);
-    vi.mocked(repo.listPublishedSuggestions).mockResolvedValueOnce([
-      { id: productRecord.publicId, kind: 'listing', label: productRecord.title, section: productRecord.section },
-    ]);
-    await expect(service.listSuggestions('demo', 2)).resolves.toHaveLength(2);
-
-    vi.mocked(repo.listPublishedListings).mockResolvedValueOnce({ items: [productRecord] });
-    await expect(service.listCatalog({ limit: 2 })).resolves.toHaveProperty('items', [
-      expect.objectContaining({ id: productRecord.publicId, provenance: 'live' }),
-      expect.objectContaining({ provenance: 'demo' }),
-    ]);
-    vi.mocked(repo.listPublishedListings).mockResolvedValueOnce({
-      items: [{ ...productRecord, publicId: listingId }],
-    });
-    await expect(service.listCatalog({ limit: 10 })).resolves.toHaveProperty('items.length', 6);
-
-    vi.mocked(repo.listPublishedSellerListings).mockResolvedValue({ items: [] });
-    const sellerCatalog = await service.listSellerCatalog('9d000000-0000-4000-8000-000000000001');
-    expect(sellerCatalog.items).toHaveLength(6);
-    expect(sellerCatalog.items.every((item) => item.provenance === 'demo')).toBe(true);
-
-    expect(
-      listMarketplaceDemoListings({
-        crop: 'apple',
-        limit: 10,
-        maxPriceUzs: 20_000,
-        minAvailableQuantity: 5_000,
-        minPriceUzs: 10_000,
-        region: 'Namangan',
-        sampleAvailable: false,
-        section: 'produce',
-        sort: 'price_asc',
-      }),
-    ).toEqual([expect.objectContaining({ crop: 'Apple', region: 'Namangan' })]);
-    expect(listMarketplaceDemoListings({ category: 'equipment', limit: 10, sort: 'price_desc' })).toEqual([
-      expect.objectContaining({ title: 'Precision seed drill' }),
-    ]);
-    expect(listMarketplaceDemoListings({ limit: 10, sort: 'price_asc' })[0]).toMatchObject({
-      title: 'Fresh orchard apples',
-    });
-    expect(listMarketplaceDemoListings({ limit: 10, sort: 'price_desc' })[0]).toMatchObject({
-      title: 'Precision seed drill',
-    });
-    expect(listMarketplaceDemoListings({ limit: 10, query: 'tomato', sort: 'newest' })).toEqual([
-      expect.objectContaining({ kind: 'produce' }),
-    ]);
-    expect(findMarketplaceDemoListing('missing')).toBeUndefined();
-    expect(findMarketplaceDemoSeller('missing')).toBeUndefined();
-    expect(listMarketplaceDemoSellerListings('missing', { limit: 10, sort: 'newest' })).toEqual([]);
-    expect(listMarketplaceDemoSuggestions('demo', 1)).toEqual([expect.objectContaining({ kind: 'seller' })]);
-
-    vi.mocked(repo.isDemoCatalogEnabled).mockResolvedValue(false);
-    await expect(service.getListing(listingId)).resolves.toBeUndefined();
-  });
-
-  it('fails closed to authoritative records when demo governance is unreadable', async () => {
-    const repo = repository();
-    vi.mocked(repo.isDemoCatalogEnabled).mockRejectedValue(new Error('feature flag storage unavailable'));
-    const service = new MarketplacePublicDomainService(repo);
-
-    await expect(service.listCatalog()).resolves.toMatchObject({
-      items: [{ id: productRecord.publicId, provenance: 'live', transactional: true }],
-    });
-    vi.mocked(repo.findPublishedListing).mockResolvedValueOnce(undefined);
-    await expect(service.getListing('9d000000-0000-4000-8000-000000000101')).resolves.toBeUndefined();
   });
 
   it('rejects malformed opaque cursors before reaching persistence', async () => {
@@ -479,273 +370,437 @@ describe('MarketplacePublicDomainService', () => {
     vi.mocked(repo.publishListing).mockResolvedValueOnce({ status: 'conflict', field: 'idempotencyKey' });
     await expect(service.publishListing(owner, 'publish-listing-1', input)).rejects.toBeInstanceOf(Error);
   });
+});
 
-  it('covers every public projection, cursor, bounded query, and authenticated publication result boundary', async () => {
+const encode = (payload: unknown): string => Buffer.from(JSON.stringify(payload), 'utf8').toString('base64url');
+const publishedAt = productRecord.publishedAt.toISOString();
+
+describe('MarketplacePublicDomainService opaque cursors', () => {
+  it.each([
+    ['an empty cursor', ''],
+    ['a cursor beyond the accepted length', 'a'.repeat(513)],
+    ['a padded cursor', ' YWJj'],
+    ['a cursor outside the base64url alphabet', 'not*a*cursor'],
+    ['a cursor that is not canonically encoded', 'QR'],
+    ['a cursor that is not JSON', Buffer.from('not json', 'utf8').toString('base64url')],
+    ['a cursor holding an array', encode([1, 2])],
+    ['a cursor holding a scalar', encode('catalog')],
+    ['a cursor for another page kind', encode({ id: productRecord.publicId, kind: 'request', sort: 'newest' })],
+    ['a cursor for another sort', encode({ id: productRecord.publicId, kind: 'catalog', sort: 'price_asc' })],
+    ['a cursor without a listing UUID', encode({ id: 'listing-1', kind: 'catalog', sort: 'newest' })],
+    [
+      'a newest cursor missing a key',
+      encode({ id: productRecord.publicId, kind: 'catalog', publishedAt, sort: 'newest' }),
+    ],
+    [
+      'a newest cursor whose promotion flag is not boolean',
+      encode({ id: productRecord.publicId, kind: 'catalog', promoted: 'yes', publishedAt, sort: 'newest' }),
+    ],
+    [
+      'a newest cursor whose timestamp is not canonical',
+      encode({ id: productRecord.publicId, kind: 'catalog', promoted: false, publishedAt: '2030-01-01', sort: 'newest' }),
+    ],
+    [
+      'a newest cursor whose timestamp is not a string',
+      encode({ id: productRecord.publicId, kind: 'catalog', promoted: false, publishedAt: 1, sort: 'newest' }),
+    ],
+    [
+      'a newest cursor whose timestamp is unparseable',
+      encode({
+        id: productRecord.publicId,
+        kind: 'catalog',
+        promoted: false,
+        publishedAt: 'not-a-timestamp',
+        sort: 'newest',
+      }),
+    ],
+  ])('refuses %s before reaching persistence', async (_label, cursor) => {
     const repo = repository();
     const service = new MarketplacePublicDomainService(repo);
-    const encode = (value: unknown) => Buffer.from(JSON.stringify(value), 'utf8').toString('base64url');
-    const produceRecord: MarketplacePublishedListingRecord = {
-      ...productRecord,
-      description: undefined,
-      productCategory: undefined,
-      produceCrop: 'corn',
-      produceGrade: 'A',
-      sampleAvailable: true,
-      section: 'produce',
-      sourceKind: 'produce',
-      titleRu: undefined,
-      titleUz: undefined,
-      titleUzCyrl: undefined,
-    };
-    vi.mocked(repo.findPublishedListing).mockResolvedValueOnce(undefined).mockResolvedValueOnce(produceRecord);
-    vi.mocked(repo.findPublishedSeller)
-      .mockResolvedValueOnce(undefined)
-      .mockResolvedValueOnce({
-        ...sellerRecord,
-        description: undefined,
-      });
-    await expect(service.getListing('missing')).resolves.toBeUndefined();
-    await expect(service.getListing(produceRecord.publicId)).resolves.toMatchObject({
-      crop: 'corn',
-      grade: 'A',
-      kind: 'produce',
-    });
-    await expect(service.getSeller('missing')).resolves.toBeUndefined();
-    await expect(service.getSeller(sellerRecord.publicId)).resolves.not.toHaveProperty('description');
 
-    for (const invalidProduce of [
-      { ...produceRecord, produceCrop: undefined },
-      { ...produceRecord, produceGrade: undefined },
-      { ...produceRecord, section: 'seeds' as const },
-    ]) {
-      vi.mocked(repo.findPublishedListing).mockResolvedValueOnce(invalidProduce);
-      await expect(service.getListing(invalidProduce.publicId)).rejects.toThrow('Invalid published produce projection');
-    }
-    vi.mocked(repo.findPublishedListing).mockResolvedValueOnce({ ...productRecord, productCategory: undefined });
-    await expect(service.getListing(productRecord.publicId)).rejects.toThrow('Invalid published product projection');
+    await expect(service.listCatalog({ cursor })).rejects.toBeInstanceOf(Error);
+    expect(repo.listPublishedListings).not.toHaveBeenCalled();
+  });
 
-    vi.mocked(repo.listPublishedSellerListings).mockResolvedValueOnce({
-      items: [produceRecord],
-      nextCursor: {
-        id: produceRecord.publicId,
-        kind: 'catalog',
-        promoted: false,
-        publishedAt: produceRecord.publishedAt.toISOString(),
-        sort: 'newest',
-      },
-    });
-    await expect(service.listSellerCatalog(sellerRecord.publicId)).resolves.toMatchObject({
-      items: [{ kind: 'produce' }],
-      nextCursor: expect.any(String),
-    });
-    await expect(service.listSellerCatalog(sellerRecord.publicId)).resolves.not.toHaveProperty('nextCursor');
+  it.each([
+    ['a price cursor carrying an extra key', { extra: 1, id: productRecord.publicId, kind: 'catalog', priceUzs: 1, sort: 'price_asc' }],
+    ['a fractional price cursor', { id: productRecord.publicId, kind: 'catalog', priceUzs: 1.5, sort: 'price_asc' }],
+    ['a negative price cursor', { id: productRecord.publicId, kind: 'catalog', priceUzs: -1, sort: 'price_asc' }],
+    [
+      'a price cursor above the accepted amount',
+      { id: productRecord.publicId, kind: 'catalog', priceUzs: 10_000_000_000_000, sort: 'price_asc' },
+    ],
+  ])('refuses %s', async (_label, payload) => {
+    const repo = repository();
+    const service = new MarketplacePublicDomainService(repo);
 
-    vi.mocked(repo.listPublishedRequests).mockResolvedValueOnce({
-      items: [
-        {
-          ...requestRecord,
-          budgetUzs: undefined,
-          deadline: undefined,
-          product: undefined,
-          requirements: undefined,
-          volume: undefined,
-        },
-      ],
-      nextCursor: {
-        id: requestRecord.publicId,
-        kind: 'request',
-        publishedAt: requestRecord.createdAt.toISOString(),
-      },
-    });
-    const requestCursor = encode({
-      id: requestRecord.publicId,
-      kind: 'request',
-      publishedAt: requestRecord.createdAt.toISOString(),
-    });
-    await expect(
-      service.listRequests({ cursor: requestCursor, limit: 0, query: ' ', region: ' ' }),
-    ).resolves.toMatchObject({ items: [{ id: requestRecord.publicId }], nextCursor: expect.any(String) });
-    await service.listRequests({ query: ' corn ' });
-    expect(repo.listPublishedRequests).toHaveBeenLastCalledWith(expect.objectContaining({ query: 'corn' }));
+    await expect(service.listCatalog({ cursor: encode(payload), sort: 'price_asc' })).rejects.toBeInstanceOf(Error);
+    expect(repo.listPublishedListings).not.toHaveBeenCalled();
+  });
 
-    vi.mocked(repo.listPublishedSuggestions).mockResolvedValueOnce([
-      { id: 'suggestion-1', kind: 'seller', label: 'Seller' },
-    ]);
-    await expect(service.listSuggestions('   ')).resolves.toEqual([]);
-    await expect(service.listSuggestions('seller', -5)).resolves.toEqual([
-      { id: 'suggestion-1', kind: 'seller', label: 'Seller' },
-    ]);
+  it.each([
+    ['another page kind', { id: productRecord.publicId, kind: 'catalog', publishedAt }],
+    ['an extra key', { extra: 1, id: productRecord.publicId, kind: 'request', publishedAt }],
+    ['a non-UUID id', { id: 'request-1', kind: 'request', publishedAt }],
+    ['a non-canonical timestamp', { id: productRecord.publicId, kind: 'request', publishedAt: '2030-01-01' }],
+  ])('refuses a request cursor carrying %s', async (_label, payload) => {
+    const repo = repository();
+    const service = new MarketplacePublicDomainService(repo);
 
+    await expect(service.listRequests({ cursor: encode(payload) })).rejects.toBeInstanceOf(Error);
+    expect(repo.listPublishedRequests).not.toHaveBeenCalled();
+  });
+
+  it('accepts a well-formed request cursor and a newest catalog cursor', async () => {
+    const repo = repository();
+    const service = new MarketplacePublicDomainService(repo);
+
+    await service.listRequests({
+      cursor: encode({ id: productRecord.publicId, kind: 'request', publishedAt }),
+      limit: 5,
+      query: ' corn ',
+    });
     await service.listCatalog({
-      crop: ' corn ',
-      limit: 0,
-      maxPriceUzs: 10,
-      minAvailableQuantity: 1,
-      minPriceUzs: 0,
-      query: ' ',
-      region: ' region ',
-      sampleAvailable: false,
-      section: 'produce',
+      cursor: encode({ id: productRecord.publicId, kind: 'catalog', promoted: true, publishedAt, sort: 'newest' }),
     });
-    expect(repo.listPublishedListings).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        crop: 'corn',
-        limit: 1,
-        maxPriceUzs: 10,
-        minAvailableQuantity: 1,
-        minPriceUzs: 0,
-        region: 'region',
-        sampleAvailable: false,
-      }),
-    );
-    await service.listCatalog({ limit: 1.5 });
-    expect(repo.listPublishedListings).toHaveBeenLastCalledWith(expect.objectContaining({ limit: 20 }));
-    vi.mocked(repo.listPublishedListings).mockResolvedValueOnce({ items: [] });
-    await expect(service.listCatalog()).resolves.toEqual({ items: [] });
 
-    const newestCursor = encode({
-      id: productRecord.publicId,
-      kind: 'catalog',
-      promoted: false,
-      publishedAt: productRecord.publishedAt.toISOString(),
+    expect(repo.listPublishedRequests).toHaveBeenCalledWith({
+      cursor: { id: productRecord.publicId, kind: 'request', publishedAt },
+      limit: 5,
+      query: 'corn',
+    });
+    expect(repo.listPublishedListings).toHaveBeenCalledWith({
+      cursor: { id: productRecord.publicId, kind: 'catalog', promoted: true, publishedAt, sort: 'newest' },
+      limit: 20,
       sort: 'newest',
     });
-    await service.listCatalog({ cursor: newestCursor });
-    expect(repo.listPublishedListings).toHaveBeenLastCalledWith(
-      expect.objectContaining({ cursor: expect.objectContaining({ sort: 'newest' }) }),
-    );
+  });
 
-    const malformedPayloadCursors = [
-      '',
-      'a'.repeat(513),
-      ' e30 ',
-      'abc=',
-      'a',
-      encode(null),
-      encode([]),
-      encode('value'),
-    ];
-    for (const cursor of malformedPayloadCursors) {
-      await expect(service.listCatalog({ cursor })).rejects.toBeInstanceOf(BadRequestException);
-    }
+  it.each([
+    ['a fractional minimum price', { minPriceUzs: 1.5 }],
+    ['a minimum price below zero', { minPriceUzs: -1 }],
+    ['a maximum price above the accepted amount', { maxPriceUzs: 10_000_000_000_000 }],
+    ['a zero minimum quantity', { minAvailableQuantity: 0 }],
+    ['a category combined with a crop', { category: 'seed' as const, crop: 'corn', section: 'produce' as const }],
+    ['a category inside the produce section', { category: 'seed' as const, section: 'produce' as const }],
+  ])('refuses %s', async (_label, input) => {
+    const repo = repository();
+    const service = new MarketplacePublicDomainService(repo);
 
-    const invalidNewestValues = [
-      {
-        id: productRecord.publicId,
-        kind: 'wrong',
-        promoted: false,
-        publishedAt: productRecord.publishedAt.toISOString(),
-        sort: 'newest',
+    await expect(service.listCatalog(input)).rejects.toBeInstanceOf(Error);
+    expect(repo.listPublishedListings).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    [0, 1],
+    [-5, 1],
+    [1.5, 20],
+    [50, 50],
+  ])('clamps a page size of %p to %p', async (limit, expected) => {
+    const repo = repository();
+    const service = new MarketplacePublicDomainService(repo);
+
+    await service.listCatalog({ crop: ' corn ', limit, sampleAvailable: true, section: 'produce' });
+
+    expect(repo.listPublishedListings).toHaveBeenCalledWith({
+      crop: 'corn',
+      limit: expected,
+      sampleAvailable: true,
+      section: 'produce',
+      sort: 'newest',
+    });
+  });
+});
+
+describe('MarketplacePublicDomainService paging', () => {
+  it('omits the next cursor on the last catalogue page and forwards a region filter', async () => {
+    const repo = repository();
+    vi.mocked(repo.listPublishedListings).mockResolvedValue({ items: [] });
+    const service = new MarketplacePublicDomainService(repo);
+
+    await expect(service.listCatalog({ region: ' Samarkand ' })).resolves.toEqual({ items: [] });
+    expect(repo.listPublishedListings).toHaveBeenCalledWith({ limit: 20, region: 'Samarkand', sort: 'newest' });
+  });
+
+  it('encodes the next cursor of a request page', async () => {
+    const repo = repository();
+    vi.mocked(repo.listPublishedRequests).mockResolvedValue({
+      items: [requestRecord],
+      nextCursor: { id: requestRecord.publicId, kind: 'request', publishedAt },
+    });
+    const service = new MarketplacePublicDomainService(repo);
+
+    await expect(service.listRequests()).resolves.toMatchObject({
+      nextCursor: encode({ id: requestRecord.publicId, kind: 'request', publishedAt }),
+    });
+  });
+});
+
+describe('MarketplacePublicDomainService projections', () => {
+  const produceRecord: MarketplacePublishedListingRecord = {
+    availableQuantity: 12,
+    images: [],
+    priceUzs: 1_500_000,
+    produceCrop: 'corn',
+    produceGrade: 'A',
+    promoted: true,
+    publicId: '77777777-7777-4777-8777-777777777777',
+    publishedAt: productRecord.publishedAt,
+    region: 'Fergana',
+    sampleAvailable: true,
+    section: 'produce',
+    sellerDisplayName: 'Fergana Seeds',
+    sellerPublicId: productRecord.sellerPublicId,
+    sellerRegion: 'Fergana',
+    sourceKind: 'produce',
+    title: 'Corn, grade A',
+    unit: 'kg',
+    updatedAt: productRecord.updatedAt,
+  };
+
+  it('maps a produce listing without inventing optional translations or a description', async () => {
+    const repo = repository();
+    vi.mocked(repo.findPublishedListing).mockResolvedValue(produceRecord);
+    const service = new MarketplacePublicDomainService(repo);
+
+    await expect(service.getListing(produceRecord.publicId)).resolves.toEqual({
+      availableQuantity: 12,
+      crop: 'corn',
+      grade: 'A',
+      id: produceRecord.publicId,
+      images: [],
+      kind: 'produce',
+      priceUzs: 1_500_000,
+      promoted: true,
+      publishedAt: produceRecord.publishedAt,
+      region: 'Fergana',
+      sampleAvailable: true,
+      section: 'produce',
+      seller: {
+        displayName: 'Fergana Seeds',
+        id: produceRecord.sellerPublicId,
+        region: 'Fergana',
+        verified: true,
       },
-      {
+      title: 'Corn, grade A',
+      unit: 'kg',
+      updatedAt: produceRecord.updatedAt,
+    });
+  });
+
+  it.each([
+    ['a missing crop', { ...produceRecord, produceCrop: undefined }],
+    ['a missing grade', { ...produceRecord, produceGrade: undefined }],
+    ['a section that is not produce', { ...produceRecord, section: 'seeds' as const }],
+  ])('refuses a produce projection with %s', async (_label, record) => {
+    const repo = repository();
+    vi.mocked(repo.findPublishedListing).mockResolvedValue(record);
+    const service = new MarketplacePublicDomainService(repo);
+
+    await expect(service.getListing(record.publicId)).rejects.toThrow('Invalid published produce projection.');
+  });
+
+  it('omits every absent optional field of a request, a seller, and a suggestion', async () => {
+    const repo = repository();
+    vi.mocked(repo.listPublishedRequests).mockResolvedValue({
+      items: [
+        {
+          buyerDisplayName: 'Bahor Farm',
+          createdAt: requestRecord.createdAt,
+          publicId: requestRecord.publicId,
+          region: 'Samarkand',
+          title: 'Corn seeds, 10 tons',
+          updatedAt: requestRecord.updatedAt,
+        },
+      ],
+    });
+    vi.mocked(repo.findPublishedSeller).mockResolvedValue({
+      displayName: 'Zarafshon Agro',
+      publicId: sellerRecord.publicId,
+      region: 'Samarkand',
+      verified: true,
+    });
+    vi.mocked(repo.listPublishedSuggestions).mockResolvedValue([
+      { id: sellerRecord.publicId, kind: 'seller', label: 'Zarafshon Agro' },
+    ]);
+    const service = new MarketplacePublicDomainService(repo);
+
+    await expect(service.listRequests()).resolves.toEqual({
+      items: [
+        {
+          buyerDisplayName: 'Bahor Farm',
+          createdAt: requestRecord.createdAt,
+          id: requestRecord.publicId,
+          region: 'Samarkand',
+          title: 'Corn seeds, 10 tons',
+          updatedAt: requestRecord.updatedAt,
+        },
+      ],
+    });
+    await expect(service.getSeller(sellerRecord.publicId)).resolves.toEqual({
+      displayName: 'Zarafshon Agro',
+      id: sellerRecord.publicId,
+      region: 'Samarkand',
+      verified: true,
+    });
+    await expect(service.listSuggestions('agro')).resolves.toEqual([
+      { id: sellerRecord.publicId, kind: 'seller', label: 'Zarafshon Agro' },
+    ]);
+  });
+
+  it('reports a missing listing or seller as absent rather than empty', async () => {
+    const repo = repository();
+    vi.mocked(repo.findPublishedListing).mockResolvedValue(undefined);
+    vi.mocked(repo.findPublishedSeller).mockResolvedValue(undefined);
+    const service = new MarketplacePublicDomainService(repo);
+
+    await expect(service.getListing(productRecord.publicId)).resolves.toBeUndefined();
+    await expect(service.getSeller(sellerRecord.publicId)).resolves.toBeUndefined();
+  });
+
+  it('answers a blank suggestion query without touching persistence', async () => {
+    const repo = repository();
+    const service = new MarketplacePublicDomainService(repo);
+
+    await expect(service.listSuggestions('   ')).resolves.toEqual([]);
+    expect(repo.listPublishedSuggestions).not.toHaveBeenCalled();
+  });
+
+  it('scopes a seller catalogue to that seller and forwards its keyset cursor', async () => {
+    const repo = repository();
+    vi.mocked(repo.listPublishedSellerListings).mockResolvedValue({
+      items: [productRecord],
+      nextCursor: {
         id: productRecord.publicId,
         kind: 'catalog',
-        promoted: false,
-        publishedAt: productRecord.publishedAt.toISOString(),
+        priceUzs: productRecord.priceUzs,
         sort: 'price_asc',
       },
-      {
-        id: 'not-a-uuid',
-        kind: 'catalog',
-        promoted: false,
-        publishedAt: productRecord.publishedAt.toISOString(),
-        sort: 'newest',
-      },
-      {
-        id: productRecord.publicId,
-        kind: 'catalog',
-        promoted: false,
-        publishedAt: productRecord.publishedAt.toISOString(),
-        sort: 'newest',
-        extra: true,
-      },
-      {
-        id: productRecord.publicId,
-        kind: 'catalog',
-        promoted: 'false',
-        publishedAt: productRecord.publishedAt.toISOString(),
-        sort: 'newest',
-      },
-      { id: productRecord.publicId, kind: 'catalog', promoted: false, publishedAt: 1, sort: 'newest' },
-      { id: productRecord.publicId, kind: 'catalog', promoted: false, publishedAt: 'invalid', sort: 'newest' },
-      { id: productRecord.publicId, kind: 'catalog', promoted: false, publishedAt: '2030-01-01', sort: 'newest' },
-    ];
-    for (const value of invalidNewestValues) {
-      await expect(service.listCatalog({ cursor: encode(value) })).rejects.toBeInstanceOf(BadRequestException);
-    }
+    });
+    const service = new MarketplacePublicDomainService(repo);
 
-    const invalidPriceValues = [
-      { id: productRecord.publicId, kind: 'catalog', priceUzs: 1, sort: 'price_asc', extra: true },
-      { id: productRecord.publicId, kind: 'catalog', priceUzs: 1.5, sort: 'price_asc' },
-      { id: productRecord.publicId, kind: 'catalog', priceUzs: -1, sort: 'price_asc' },
-      { id: productRecord.publicId, kind: 'catalog', priceUzs: 10_000_000_000_000, sort: 'price_asc' },
-    ];
-    for (const value of invalidPriceValues) {
-      await expect(service.listCatalog({ cursor: encode(value), sort: 'price_asc' })).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
-    }
+    const page = await service.listSellerCatalog(sellerRecord.publicId, { sort: 'price_asc' });
 
-    const invalidRequestValues = [
-      { id: requestRecord.publicId, kind: 'request', publishedAt: requestRecord.createdAt.toISOString(), extra: true },
-      { id: requestRecord.publicId, kind: 'catalog', publishedAt: requestRecord.createdAt.toISOString() },
-      { id: 'bad', kind: 'request', publishedAt: requestRecord.createdAt.toISOString() },
-      { id: requestRecord.publicId, kind: 'request', publishedAt: 'invalid' },
-    ];
-    for (const value of invalidRequestValues) {
-      await expect(service.listRequests({ cursor: encode(value) })).rejects.toBeInstanceOf(BadRequestException);
-    }
+    expect(repo.listPublishedSellerListings).toHaveBeenCalledWith(sellerRecord.publicId, {
+      limit: 20,
+      sort: 'price_asc',
+    });
+    expect(page.nextCursor).toBe(
+      encode({ id: productRecord.publicId, kind: 'catalog', priceUzs: productRecord.priceUzs, sort: 'price_asc' }),
+    );
 
-    for (const input of [
-      { minPriceUzs: 0.5 },
-      { minPriceUzs: -1 },
-      { maxPriceUzs: 10_000_000_000_000 },
-      { minAvailableQuantity: 0 },
-      { minAvailableQuantity: 2_147_483_648 },
-      { category: 'seed' as const, crop: 'corn', section: 'produce' as const },
-      { category: 'seed' as const, section: 'produce' as const },
-      { crop: 'corn', section: 'seeds' as const },
-    ]) {
-      await expect(service.listCatalog(input)).rejects.toBeInstanceOf(BadRequestException);
-    }
+    vi.mocked(repo.listPublishedSellerListings).mockResolvedValue({ items: [] });
+    await expect(service.listSellerCatalog(sellerRecord.publicId)).resolves.toEqual({ items: [] });
+  });
+});
 
-    const owner = { tenantId: 'seller-tenant', userId: 'seller-user' };
-    const requestPublication = {
-      id: requestRecord.publicId,
-      moderationStatus: 'pending' as const,
-      publishedAt: requestRecord.createdAt,
-      requestId: requestRecord.publicId,
-      revision: 0,
-      status: 'published' as const,
-      updatedAt: requestRecord.updatedAt,
+describe('MarketplacePublicDomainService moderation commands', () => {
+  const owner = { tenantId: 'seller-tenant', userId: 'seller-user' };
+  const reviewer = 'moderator-user';
+
+  it('delegates every publication and moderation command with its exact arguments', async () => {
+    const repo = repository();
+    const service = new MarketplacePublicDomainService(repo);
+    const requestInput = { buyerPartnerId: '22222222-2222-4222-8222-222222222222', requestId: requestRecord.publicId };
+    const listingReview = {
+      decision: 'approved' as const,
+      expectedRevision: 0,
+      expectedSellerContentFingerprint: 'a'.repeat(64),
+      expectedSellerContentRevision: 1,
+      idempotencyKey: 'review-listing-1',
     };
-    await expect(service.publishRequest(owner, 'publish-request-1', {} as never)).resolves.toEqual(requestPublication);
+    const sellerReview = {
+      decision: 'approved' as const,
+      expectedContentFingerprint: 'a'.repeat(64),
+      expectedContentRevision: 1,
+      idempotencyKey: 'review-seller-01',
+    };
+    const requestReview = { decision: 'rejected' as const, expectedRevision: 0, idempotencyKey: 'review-request-1' };
+
+    await expect(service.publishRequest(owner, 'publish-request-1', requestInput)).resolves.toMatchObject({
+      moderationStatus: 'pending',
+    });
     await expect(service.listPendingModeration(owner.tenantId)).resolves.toEqual({
       listings: [],
       requests: [],
       sellerProfiles: [],
     });
     await expect(
-      service.reviewListingPublication(owner.tenantId, listingPublication.id, owner.userId, {} as never),
+      service.reviewListingPublication(owner.tenantId, listingPublication.id, reviewer, listingReview),
     ).resolves.toEqual(listingPublication);
     await expect(
-      service.reviewSellerProfile(owner.tenantId, sellerRecord.publicId, owner.userId, {} as never),
-    ).resolves.toMatchObject({ sellerPublicId: sellerRecord.publicId });
+      service.reviewSellerProfile(owner.tenantId, productRecord.sellerPublicId, reviewer, sellerReview),
+    ).resolves.toMatchObject({ moderationStatus: 'approved' });
     await expect(
-      service.reviewRequestPublication(owner.tenantId, requestPublication.id, owner.userId, {} as never),
-    ).resolves.toMatchObject({ id: requestPublication.id });
+      service.reviewRequestPublication(owner.tenantId, requestRecord.publicId, reviewer, requestReview),
+    ).resolves.toMatchObject({ moderationStatus: 'approved' });
 
-    for (const [result, ErrorType] of [
-      [{ status: 'not_found' }, ResourceNotFoundException],
-      [{ status: 'forbidden' }, ForbiddenException],
-      [{ status: 'partner_unapproved' }, ForbiddenException],
-      [{ status: 'conflict' }, ConflictException],
-      [{ status: 'invalid_state', field: 'status' }, BadRequestException],
-    ] as const) {
-      vi.mocked(repo.publishRequest).mockResolvedValueOnce(result);
-      await expect(service.publishRequest(owner, `publish-${result.status}-key`, {} as never)).rejects.toBeInstanceOf(
-        ErrorType,
-      );
-    }
+    expect(repo.publishRequest).toHaveBeenCalledWith(owner, 'publish-request-1', requestInput);
+    expect(repo.listPendingModeration).toHaveBeenCalledWith(owner.tenantId);
+    expect(repo.reviewListingPublication).toHaveBeenCalledWith(
+      owner.tenantId,
+      listingPublication.id,
+      reviewer,
+      listingReview,
+    );
+    expect(repo.reviewSellerProfile).toHaveBeenCalledWith(
+      owner.tenantId,
+      productRecord.sellerPublicId,
+      reviewer,
+      sellerReview,
+    );
+    expect(repo.reviewRequestPublication).toHaveBeenCalledWith(
+      owner.tenantId,
+      requestRecord.publicId,
+      reviewer,
+      requestReview,
+    );
+  });
+
+  it.each([
+    ['not_found', ResourceNotFoundException],
+    ['forbidden', ForbiddenException],
+    ['partner_unapproved', ForbiddenException],
+    ['conflict', ConflictException],
+    ['invalid_state', BadRequestException],
+  ] as const)('translates a %s publication outcome into its typed failure', async (status, expected) => {
+    const repo = repository();
+    const service = new MarketplacePublicDomainService(repo);
+    const outcome = { field: 'requestId', status } as never;
+    vi.mocked(repo.publishRequest).mockResolvedValue(outcome);
+    vi.mocked(repo.reviewListingPublication).mockResolvedValue(outcome);
+    vi.mocked(repo.reviewSellerProfile).mockResolvedValue(outcome);
+    vi.mocked(repo.reviewRequestPublication).mockResolvedValue(outcome);
+
+    await expect(
+      service.publishRequest(owner, 'publish-request-2', {
+        buyerPartnerId: '22222222-2222-4222-8222-222222222222',
+        requestId: requestRecord.publicId,
+      }),
+    ).rejects.toBeInstanceOf(expected);
+    await expect(
+      service.reviewListingPublication(owner.tenantId, listingPublication.id, reviewer, {
+        decision: 'approved',
+        expectedRevision: 0,
+        expectedSellerContentFingerprint: 'a'.repeat(64),
+        expectedSellerContentRevision: 1,
+        idempotencyKey: 'review-listing-2',
+      }),
+    ).rejects.toBeInstanceOf(expected);
+    await expect(
+      service.reviewSellerProfile(owner.tenantId, productRecord.sellerPublicId, reviewer, {
+        decision: 'approved',
+        expectedContentFingerprint: 'a'.repeat(64),
+        expectedContentRevision: 1,
+        idempotencyKey: 'review-seller-02',
+      }),
+    ).rejects.toBeInstanceOf(expected);
+    await expect(
+      service.reviewRequestPublication(owner.tenantId, requestRecord.publicId, reviewer, {
+        decision: 'approved',
+        expectedRevision: 0,
+        idempotencyKey: 'review-request-2',
+      }),
+    ).rejects.toBeInstanceOf(expected);
   });
 });

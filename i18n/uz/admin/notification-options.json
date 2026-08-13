@@ -3,11 +3,11 @@
   "admin.notification.option.channel.email": "Elektron pochta",
   "admin.notification.option.channel.push": "Push bildirishnoma",
   "admin.notification.option.provider.appleApns": "Apple APNs",
-  "admin.notification.option.provider.discordBot": "Discord Bot",
+  "admin.notification.option.provider.discordBot": "Discord boti",
   "admin.notification.option.provider.googleFcm": "Google FCM",
   "admin.notification.option.provider.mailPace": "MailPace",
   "admin.notification.option.provider.resend": "Resend",
-  "admin.notification.option.provider.telegramBot": "Telegram Bot",
+  "admin.notification.option.provider.telegramBot": "Telegram boti",
   "admin.notification.option.segment.authUsers": "Ro'yxatdan o'tgan foydalanuvchilar",
   "admin.notification.option.segment.dynamic": "Dinamik",
   "admin.notification.option.segment.static": "Statik"

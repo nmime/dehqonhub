@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-PARTNER-007
+// @requirements REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013
 import { useCallback, useEffect, useState, type SubmitEvent } from 'react';
 import { adminApi, throwOnOpenApiErrorData, type ApiClientRequestOptions } from '@app/frontend-api-client';
 import { useI18n } from '@app/frontend-runtime';

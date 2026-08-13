@@ -3987,1878 +3987,6 @@
     },
     {
       "display": "silent",
-      "id": "admin-app-api:GET:/admin/marketplace/commission-policies:200",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 200,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/commission-policies:400",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 400,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/marketplace/commission-policies:401",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 401,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/commission-policies:403",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 403,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/commission-policies:404",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 404,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/commission-policies:409",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 409,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/commission-policies:500",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": 500,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/commission-policies:ERR",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": "ERR",
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/commission-policies:NET",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "GET",
-        "status": "NET",
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:POST:/admin/marketplace/commission-policies:200",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 200,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/commission-policies:400",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 400,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:POST:/admin/marketplace/commission-policies:401",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 401,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/commission-policies:403",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 403,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/commission-policies:404",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 404,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/commission-policies:409",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 409,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/commission-policies:500",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": 500,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/commission-policies:ERR",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": "ERR",
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/commission-policies:NET",
-      "match": {
-        "endpoint": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
-        "path": "/admin/marketplace/commission-policies",
-        "method": "POST",
-        "status": "NET",
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:POST:/admin/marketplace/contracts/{id}/dispute-resolution:200",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
-        "path": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 200,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/contracts/{id}/dispute-resolution:400",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
-        "path": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 400,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:POST:/admin/marketplace/contracts/{id}/dispute-resolution:401",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
-        "path": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 401,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/contracts/{id}/dispute-resolution:403",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
-        "path": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 403,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/contracts/{id}/dispute-resolution:404",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
-        "path": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 404,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/contracts/{id}/dispute-resolution:409",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
-        "path": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 409,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/contracts/{id}/dispute-resolution:500",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
-        "path": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": 500,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/contracts/{id}/dispute-resolution:ERR",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
-        "path": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": "ERR",
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/contracts/{id}/dispute-resolution:NET",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
-        "path": "/admin/marketplace/contracts/{id}/dispute-resolution",
-        "method": "POST",
-        "status": "NET",
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/marketplace/contracts/{id}/lifecycle:200",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_getContractLifecycle",
-        "path": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 200,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin get Contract Lifecycle completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/contracts/{id}/lifecycle:400",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_getContractLifecycle",
-        "path": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 400,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin get Contract Lifecycle failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/marketplace/contracts/{id}/lifecycle:401",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_getContractLifecycle",
-        "path": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 401,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin get Contract Lifecycle failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/contracts/{id}/lifecycle:403",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_getContractLifecycle",
-        "path": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 403,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin get Contract Lifecycle failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/contracts/{id}/lifecycle:404",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_getContractLifecycle",
-        "path": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 404,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin get Contract Lifecycle failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/contracts/{id}/lifecycle:409",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_getContractLifecycle",
-        "path": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 409,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin get Contract Lifecycle failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/contracts/{id}/lifecycle:500",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_getContractLifecycle",
-        "path": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": 500,
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin get Contract Lifecycle failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/contracts/{id}/lifecycle:ERR",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_getContractLifecycle",
-        "path": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": "ERR",
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin get Contract Lifecycle failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/contracts/{id}/lifecycle:NET",
-      "match": {
-        "endpoint": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceContractLifecycleAdminController_getContractLifecycle",
-        "path": "/admin/marketplace/contracts/{id}/lifecycle",
-        "method": "GET",
-        "status": "NET",
-        "tags": ["admin-marketplace-contract-lifecycle"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Contract Lifecycle Admin get Contract Lifecycle could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/review-reports:200",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
-        "path": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 200,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Engagement Admin list Review Reports completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/review-reports:400",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
-        "path": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 400,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/review-reports:401",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
-        "path": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 401,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/review-reports:403",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
-        "path": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 403,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/review-reports:404",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
-        "path": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 404,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/review-reports:409",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
-        "path": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 409,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/review-reports:500",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
-        "path": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": 500,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/review-reports:ERR",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
-        "path": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": "ERR",
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/review-reports:NET",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
-        "path": "/admin/marketplace/engagement/review-reports",
-        "method": "GET",
-        "status": "NET",
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin list Review Reports could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PATCH:/admin/marketplace/engagement/review-reports/{reportId}:200",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
-        "path": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 200,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Engagement Admin moderate Review Report completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/marketplace/engagement/review-reports/{reportId}:400",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
-        "path": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 400,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:PATCH:/admin/marketplace/engagement/review-reports/{reportId}:401",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
-        "path": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 401,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/marketplace/engagement/review-reports/{reportId}:403",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
-        "path": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 403,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/marketplace/engagement/review-reports/{reportId}:404",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
-        "path": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 404,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/marketplace/engagement/review-reports/{reportId}:409",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
-        "path": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 409,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/marketplace/engagement/review-reports/{reportId}:500",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
-        "path": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": 500,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/marketplace/engagement/review-reports/{reportId}:ERR",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
-        "path": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": "ERR",
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:PATCH:/admin/marketplace/engagement/review-reports/{reportId}:NET",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
-        "path": "/admin/marketplace/engagement/review-reports/{reportId}",
-        "method": "PATCH",
-        "status": "NET",
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin moderate Review Report could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/sample-policy:200",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 200,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Engagement Admin get Sample Policy completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/sample-policy:400",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 400,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/sample-policy:401",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 401,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/sample-policy:403",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 403,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/sample-policy:404",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 404,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/sample-policy:409",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 409,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/sample-policy:500",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": 500,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/sample-policy:ERR",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": "ERR",
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:GET:/admin/marketplace/engagement/sample-policy:NET",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "GET",
-        "status": "NET",
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin get Sample Policy could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:POST:/admin/marketplace/engagement/sample-policy:200",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 200
-      },
-      "toast": {
-        "category": "success",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 200,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy completed successfully.",
-        "defaultSeverity": "success"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/engagement/sample-policy:400",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 400
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 400,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "admin-app-api:POST:/admin/marketplace/engagement/sample-policy:401",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 401,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/engagement/sample-policy:403",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 403
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 403,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Forbidden.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/engagement/sample-policy:404",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 404
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 404,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Not Found.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/engagement/sample-policy:409",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 409
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 409,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Conflict.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/engagement/sample-policy:500",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 500
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.serverUnavailable.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": 500,
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Internal Server Error.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/engagement/sample-policy:ERR",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "kind": "unknown"
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": "ERR",
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed before an HTTP response was available.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "toast",
-      "id": "admin-app-api:POST:/admin/marketplace/engagement/sample-policy:NET",
-      "match": {
-        "endpoint": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "kind": "network"
-      },
-      "toast": {
-        "category": "warning",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "admin-app-api",
-        "errorCode": null,
-        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
-        "path": "/admin/marketplace/engagement/sample-policy",
-        "method": "POST",
-        "status": "NET",
-        "tags": ["admin-marketplace-engagement"],
-        "defaultDisplay": "toast",
-        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy could not reach the service.",
-        "defaultSeverity": "warning"
-      }
-    },
-    {
-      "display": "silent",
       "id": "admin-app-api:GET:/admin/marketplace/notifications:200",
       "match": {
         "endpoint": "/admin/marketplace/notifications",
@@ -19400,6 +17528,1644 @@
         "tags": ["admin-agritech"],
         "defaultDisplay": "toast",
         "defaultMessage": "Agri Tech Admin review Verification could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:200",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 200,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:400",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 400,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:401",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 401,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:403",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 403,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:404",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 404,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:409",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 409,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:500",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": 500,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:ERR",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/commission-policies:NET",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_listCommissionPolicies",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin list Commission Policies could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:200",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 200,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:400",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 400,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:401",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 401,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:403",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 403,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:404",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 404,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:409",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 409,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:500",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": 500,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:ERR",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/commission-policies:NET",
+      "match": {
+        "endpoint": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_activateCommissionPolicy",
+        "path": "/agritech/marketplace/commission-policies",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin activate Commission Policy could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:200",
+      "match": {
+        "endpoint": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 200,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:400",
+      "match": {
+        "endpoint": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 400,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:401",
+      "match": {
+        "endpoint": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 401,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:403",
+      "match": {
+        "endpoint": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 403,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:404",
+      "match": {
+        "endpoint": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 404,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:409",
+      "match": {
+        "endpoint": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 409,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:500",
+      "match": {
+        "endpoint": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": 500,
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:ERR",
+      "match": {
+        "endpoint": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/contracts/{id}/dispute-resolution:NET",
+      "match": {
+        "endpoint": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceContractLifecycleAdminController_resolveDispute",
+        "path": "/agritech/marketplace/contracts/{id}/dispute-resolution",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["admin-marketplace-contract-lifecycle"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Contract Lifecycle Admin resolve Dispute could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:200",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 200,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Engagement Admin list Review Reports completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:400",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 400,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:401",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 401,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:403",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 403,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:404",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 404,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:409",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 409,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:500",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": 500,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:ERR",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin list Review Reports failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/review-reports:NET",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_listReviewReports",
+        "path": "/agritech/marketplace/engagement/review-reports",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin list Review Reports could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:200",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 200,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Engagement Admin moderate Review Report completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:400",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 400,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:401",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 401,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:403",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 403,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:404",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 404,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:409",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 409,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:500",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": 500,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:ERR",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": "ERR",
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin moderate Review Report failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:PATCH:/agritech/marketplace/engagement/review-reports/{reportId}:NET",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_moderateReviewReport",
+        "path": "/agritech/marketplace/engagement/review-reports/{reportId}",
+        "method": "PATCH",
+        "status": "NET",
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin moderate Review Report could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:200",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 200,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Engagement Admin get Sample Policy completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:400",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 400,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:401",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 401,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:403",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 403,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:404",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 404,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:409",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 409,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:500",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": 500,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:ERR",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": "ERR",
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin get Sample Policy failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:GET:/agritech/marketplace/engagement/sample-policy:NET",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_getSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "GET",
+        "status": "NET",
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin get Sample Policy could not reach the service.",
+        "defaultSeverity": "warning"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:200",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 200
+      },
+      "toast": {
+        "category": "success",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 200,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy completed successfully.",
+        "defaultSeverity": "success"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:400",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 400
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 400,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Bad Request.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "silent",
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:401",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 401
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 401,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "silent",
+        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Unauthorized.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:403",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 403
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 403,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Forbidden.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:404",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 404
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 404,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Not Found.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:409",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 409
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 409,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Conflict.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:500",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 500
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.serverUnavailable.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": 500,
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed: Internal Server Error.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:ERR",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "kind": "unknown"
+      },
+      "toast": {
+        "category": "error",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": "ERR",
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy failed before an HTTP response was available.",
+        "defaultSeverity": "error"
+      }
+    },
+    {
+      "display": "toast",
+      "id": "admin-app-api:POST:/agritech/marketplace/engagement/sample-policy:NET",
+      "match": {
+        "endpoint": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "kind": "network"
+      },
+      "toast": {
+        "category": "warning",
+        "messageSource": "problem",
+        "titleKey": "ui.runtime.requestFailed.title"
+      },
+      "catalog": {
+        "app": "admin-app-api",
+        "errorCode": null,
+        "operationId": "MarketplaceEngagementAdminController_activateSamplePolicy",
+        "path": "/agritech/marketplace/engagement/sample-policy",
+        "method": "POST",
+        "status": "NET",
+        "tags": ["admin-marketplace-engagement"],
+        "defaultDisplay": "toast",
+        "defaultMessage": "Marketplace Engagement Admin activate Sample Policy could not reach the service.",
         "defaultSeverity": "warning"
       }
     },

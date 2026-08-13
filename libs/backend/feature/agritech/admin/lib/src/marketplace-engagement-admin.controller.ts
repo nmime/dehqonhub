@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ROUTING-015
+// @requirements REQ-AGRITECH-ENGAGEMENT-019
 import {
   Body,
   Controller,
@@ -64,7 +64,7 @@ class ModerateMarketplaceReviewDto {
 @ApiExceptions(400, 401, 403, 404, 409, 500)
 @ApiSessionCookieAuth()
 @UseGuards(AdminRbacGuard)
-@Controller('admin/marketplace/engagement')
+@Controller('agritech/marketplace/engagement')
 export class MarketplaceEngagementAdminController {
   constructor(private readonly engagement: MarketplaceEngagementService) {}
 

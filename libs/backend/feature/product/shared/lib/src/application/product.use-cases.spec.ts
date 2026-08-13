@@ -14,7 +14,7 @@ const product: Product = {
   priceUzs: 25_000,
   unit: 'kg',
   stockQuantity: 50,
-  sampleAvailable: false,
+  sampleAvailable: true,
   region: 'Toshkent viloyati',
   status: 'active',
   images: [],

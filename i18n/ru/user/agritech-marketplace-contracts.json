@@ -31,6 +31,7 @@
   "agritech.marketplace.contract.notFound": "Договор недоступен",
   "agritech.marketplace.contract.notFoundDescription": "Договор не найден или недоступен вашему аккаунту.",
   "agritech.marketplace.contract.notYourContract": "Зафиксировать согласие может только указанная сторона договора.",
+  "agritech.marketplace.contract.consentClosed": "Эта версия договора закрыта для согласования.",
   "agritech.marketplace.contract.signConfirmation": "Подтвердите, что проверили эту версию договора. Это фиксирует согласие только вашей стороны и не проводит платёж.",
   "agritech.marketplace.contract.signOwnParty": "Зафиксировать согласие моей стороны",
   "agritech.marketplace.contract.signatureRecorded": "Согласие вашей стороны зафиксировано",

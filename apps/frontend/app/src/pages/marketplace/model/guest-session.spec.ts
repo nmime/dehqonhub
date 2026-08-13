@@ -14,6 +14,14 @@ import {
 const favoritesKey = 'dehqonhub.guest.favorites';
 const cartsKey = 'dehqonhub.guest.carts';
 
+/** The seller fields every stored cart line carries alongside its quantity. */
+const sellerFields = {
+  sellerId: 's-1',
+  sellerName: 'Seller One',
+  sellerRegion: 'tashkent',
+  sourceKind: 'product',
+};
+
 const product = (id: string, supplierId: string): ProductViewDto => ({
   category: 'seed',
   createdAt: '2026-08-01T00:00:00.000Z',
@@ -23,6 +31,7 @@ const product = (id: string, supplierId: string): ProductViewDto => ({
   name: id,
   priceUzs: 1000,
   region: 'tashkent',
+  sampleAvailable: true,
   status: 'active',
   stockQuantity: 10,
   supplierId,
@@ -75,7 +84,7 @@ describe('marketplace guest session', () => {
     expect(readGuestFavoriteIds()).toEqual([]);
     expect(readGuestCarts()).toEqual([]);
     // A write must stay silent as well: the caller still renders its own result.
-    expect(() => toggleGuestFavorite('product-1')).not.toThrow();
+    expect(() => toggleGuestFavorite(product('product-1', 's-1'))).not.toThrow();
   });
 
   it('starts empty when nothing has been stored yet', () => {
@@ -101,8 +110,8 @@ describe('marketplace guest session', () => {
         [cartsKey]: JSON.stringify([
           null,
           'line',
-          { productId: 'p-1', quantity: 'two', sellerId: 's-1' },
-          { productId: 'p-2', quantity: 2, sellerId: 's-1' },
+          { productId: 'p-1', quantity: 'two', ...sellerFields },
+          { productId: 'p-2', quantity: 2, ...sellerFields },
         ]),
         [favoritesKey]: JSON.stringify(['product-1', 7]),
       }),
@@ -110,7 +119,10 @@ describe('marketplace guest session', () => {
 
     expect(readGuestFavoriteIds()).toEqual([]);
     expect(readGuestCarts()).toEqual([
-      expect.objectContaining({ items: [{ productId: 'p-2', quantity: 2 }], sellerId: 's-1' }),
+      expect.objectContaining({
+        items: [{ listingPublicationId: 'p-2', quantity: 2, sourceKind: 'product' }],
+        seller: { displayName: 'Seller One', region: 'tashkent' },
+      }),
     ]);
   });
 
@@ -122,18 +134,31 @@ describe('marketplace guest session', () => {
       }),
     });
 
-    expect(toggleGuestFavorite('product-1')).toEqual([expect.objectContaining({ productId: 'product-1' })]);
+    expect(toggleGuestFavorite(product('product-1', 's-1'))).toEqual([
+      expect.objectContaining({ listing: expect.objectContaining({ id: 'product-1' }) }),
+    ]);
   });
 
   it('toggles a favourite on and off', () => {
     Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: memoryStorage() });
 
-    expect(toggleGuestFavorite('product-1')).toEqual([
-      expect.objectContaining({ productId: 'product-1', userId: 'guest' }),
+    // The stored favourite carries the listing summary the API would have sent,
+    // so the favourites view can name what was saved without re-reading it.
+    expect(toggleGuestFavorite(product('product-1', 's-1'))).toEqual([
+      {
+        createdAt: '2026-08-01T00:00:00.000Z',
+        listing: {
+          id: 'product-1',
+          kind: 'product',
+          sampleAvailable: true,
+          seller: { displayName: 's-1', id: 's-1' },
+          title: 'product-1',
+        },
+      },
     ]);
     expect(readGuestFavoriteIds()).toEqual(['product-1']);
 
-    expect(toggleGuestFavorite('product-1')).toEqual([]);
+    expect(toggleGuestFavorite(product('product-1', 's-1'))).toEqual([]);
     expect(readGuestFavoriteIds()).toEqual([]);
   });
 
@@ -145,8 +170,14 @@ describe('marketplace guest session', () => {
     const carts = addGuestCartItem(product('p-2', 's-2'), 1);
 
     expect(carts).toEqual([
-      expect.objectContaining({ id: 'guest-cart-s-1', items: [{ productId: 'p-1', quantity: 5 }] }),
-      expect.objectContaining({ id: 'guest-cart-s-2', items: [{ productId: 'p-2', quantity: 1 }] }),
+      expect.objectContaining({
+        id: 'guest-cart-s-1',
+        items: [{ listingPublicationId: 'p-1', quantity: 5, sourceKind: 'product' }],
+      }),
+      expect.objectContaining({
+        id: 'guest-cart-s-2',
+        items: [{ listingPublicationId: 'p-2', quantity: 1, sourceKind: 'product' }],
+      }),
     ]);
   });
 
@@ -159,13 +190,13 @@ describe('marketplace guest session', () => {
     expect(updateGuestCartItem('p-2', 1)).toEqual([
       expect.objectContaining({
         items: [
-          { productId: 'p-1', quantity: 2 },
-          { productId: 'p-2', quantity: 1 },
+          { listingPublicationId: 'p-1', quantity: 2, sourceKind: 'product' },
+          { listingPublicationId: 'p-2', quantity: 1, sourceKind: 'product' },
         ],
       }),
     ]);
     expect(updateGuestCartItem('p-1', 0)).toEqual([
-      expect.objectContaining({ items: [{ productId: 'p-2', quantity: 1 }] }),
+      expect.objectContaining({ items: [{ listingPublicationId: 'p-2', quantity: 1, sourceKind: 'product' }] }),
     ]);
   });
 

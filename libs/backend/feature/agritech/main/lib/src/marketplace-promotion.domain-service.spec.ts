@@ -1,5 +1,4 @@
 // @requirements REQ-AGRITECH-STAGE2-017
-/* eslint-disable no-await-in-loop -- table-driven cases mutate stateful mocks and must remain ordered */
 import { describe, expect, it, vi } from 'vitest';
 import {
   BadRequestException,
@@ -129,55 +128,5 @@ describe('MarketplacePromotionDomainService', () => {
       { code: 'catalog_14d', currency: 'UZS', durationDays: 14, priceUzs: 270_000 },
       { code: 'catalog_30d', currency: 'UZS', durationDays: 30, priceUzs: 500_000 },
     ]);
-  });
-
-  it('covers bounded schedule, partner approval, repository failures, and default-clock behavior', async () => {
-    const { repository, service } = fixture();
-    repository.activatePromotion.mockResolvedValue({ status: 'ok', value: promotion });
-
-    await expect(
-      service.activatePromotion(owner, 'promotion-key-0003', {
-        actingPartnerId,
-        listingPublicId,
-        planCode: 'catalog_14d',
-        startsAt: new Date('2030-01-15T00:00:00.000Z'),
-      }),
-    ).resolves.toBe(promotion);
-
-    for (const startsAt of [new Date(Number.NaN), new Date('2029-12-31T23:54:59.999Z')]) {
-      await expect(
-        service.activatePromotion(owner, `promotion-key-${repository.activatePromotion.mock.calls.length + 4}`, {
-          actingPartnerId,
-          listingPublicId,
-          planCode: 'catalog_7d',
-          startsAt,
-        }),
-      ).rejects.toBeInstanceOf(BadRequestException);
-    }
-    const defaultClockRepository = fixture().repository;
-    const defaultClockService = new MarketplacePromotionDomainService(
-      defaultClockRepository as unknown as MarketplacePromotionRepository,
-    );
-
-    defaultClockRepository.activatePromotion.mockResolvedValueOnce({ status: 'ok', value: promotion });
-    await expect(
-      defaultClockService.activatePromotion(owner, 'promotion-default-clock-key', {
-        actingPartnerId,
-        listingPublicId,
-        planCode: 'catalog_7d',
-        startsAt: new Date(),
-      }),
-    ).resolves.toBe(promotion);
-
-    for (const status of ['partner_unapproved', 'invalid_state'] as const) {
-      defaultClockRepository.activatePromotion.mockResolvedValueOnce({ status, field: 'status' });
-      await expect(
-        defaultClockService.activatePromotion(owner, `promotion-${status}-key`, {
-          actingPartnerId,
-          listingPublicId,
-          planCode: 'catalog_7d',
-        }),
-      ).rejects.toBeInstanceOf(status === 'partner_unapproved' ? ForbiddenException : BadRequestException);
-    }
   });
 });

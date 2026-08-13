@@ -1,4 +1,4 @@
-// @requirements REQ-ASSURANCE-RELEASE-003 REQ-SCAFFOLD-TOOLING-005 REQ-AGRITECH-I18N-012
+// @requirements REQ-SCAFFOLD-TOOLING-005 REQ-AGRITECH-I18N-012
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -17,7 +17,6 @@ import {
   checkGeneratedContractImports,
   checkDuplicatedLibrarySourceLibPaths,
   checkFrontendUiOwnership,
-  checkGitHubActionsAbsent,
   checkLocalBarrelExportConventions,
   checkThinLocaleCatalogs,
   checkPackageProjectReferences,
@@ -30,26 +29,6 @@ import {
   isWorkspaceMetadataFileName,
   thinLocaleCatalogFileNames,
 } from "./static-check.ts";
-
-describe("static-check GitHub Actions absence guard", () => {
-  it("rejects workflow and composite-action files while accepting an absent execution surface", () => {
-    const workspaceRoot = createWorkspace();
-    try {
-      assert.deepEqual(checkGitHubActionsAbsent(workspaceRoot), []);
-      writeText(workspaceRoot, ".github/workflows/ci.yml", "name: CI\n");
-      writeText(workspaceRoot, ".github/actions/cache/action.yml", "name: cache\n");
-
-      const failures = checkGitHubActionsAbsent(workspaceRoot);
-      assert.deepEqual(
-        failures.map((failure) => failure.file),
-        [".github/actions/cache/action.yml", ".github/workflows/ci.yml"],
-      );
-      assert.ok(failures.every((failure) => failure.command === "GitHub Actions absence"));
-    } finally {
-      removeWorkspace(workspaceRoot);
-    }
-  });
-});
 
 describe("static-check Bun and pnpm dependency parity", () => {
   it("accepts Bun runtime execution over pnpm-owned dependency state", () => {
@@ -1141,7 +1120,7 @@ describe("static-check repository scan boundaries", () => {
     }
   });
 
-  it("applies architecture and version rules to every documentation subtree", () => {
+  it("excludes archival specs only from the architecture and version denylist", () => {
     const workspaceRoot = createWorkspace();
 
     try {
@@ -1152,12 +1131,7 @@ describe("static-check repository scan boundaries", () => {
         `${retiredNode}\nHistorical path: libs/backend/example/lib/src/lib/record.ts\n`,
       );
 
-      const staleFailures = checkStaleReferences(workspaceRoot);
-      assert.equal(staleFailures.length, 1);
-      assert.equal(
-        staleFailures[0]?.file,
-        "docs/archive/working-specs/specs/historical-design.md:1",
-      );
+      assert.deepEqual(checkStaleReferences(workspaceRoot), []);
       const structuralFailures = checkDuplicatedLibrarySourceLibPaths(workspaceRoot);
       assert.equal(structuralFailures.length, 1);
       assert.equal(

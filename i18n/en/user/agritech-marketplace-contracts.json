@@ -31,6 +31,7 @@
   "agritech.marketplace.contract.notFound": "Contract unavailable",
   "agritech.marketplace.contract.notFoundDescription": "This contract was not found or is not visible to your account.",
   "agritech.marketplace.contract.notYourContract": "Only a listed contract party can record consent.",
+  "agritech.marketplace.contract.consentClosed": "This contract version is not open for consent.",
   "agritech.marketplace.contract.signConfirmation": "Confirm that you reviewed this contract version. This records consent for your party only and does not process payment.",
   "agritech.marketplace.contract.signOwnParty": "Record my party consent",
   "agritech.marketplace.contract.signatureRecorded": "Your party consent was recorded",

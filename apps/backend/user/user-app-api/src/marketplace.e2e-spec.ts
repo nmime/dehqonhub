@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017 REQ-AGRITECH-PUBLIC-018 REQ-AGRITECH-ONBOARDING-023
+// @requirements REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017 REQ-AGRITECH-PUBLIC-018
 import { FastifyAdapter, type NestFastifyApplication } from '@nestjs/platform-fastify';
 import { Test } from '@nestjs/testing';
 import { APP_GUARD } from '@nestjs/core';
@@ -532,7 +532,6 @@ describe('marketplace HTTP contract', () => {
         description: 'Verified seed cooperative',
         displayName: 'Zarafshon Agro',
         id: publicSellerId,
-        provenance: 'live',
         region: 'Samarkand',
         verified: true,
       },

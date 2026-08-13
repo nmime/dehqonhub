@@ -74,9 +74,7 @@ async function callProvider<T>(timeoutMs: number, invoke: (signal: AbortSignal) 
   try {
     return await Promise.race([invoke(controller.signal), timeout]);
   } finally {
-    if (timer) {
-      clearTimeout(timer);
-    }
+    clearTimeout(timer);
   }
 }
 
@@ -186,30 +184,21 @@ export class MarketplaceVerificationDomainService {
     idempotencyKey: string,
   ): Promise<Verification> {
     this.requireProvider(this.documentProvider, 'verification_documents');
+    const document = documents.length === 1 ? documents[0] : undefined;
     if (
-      documents.length !== 1 ||
-      documents.some(
-        (document) =>
-          document.content.byteLength === 0 ||
-          document.content.byteLength > maximumVerificationDocumentBytes ||
-          !hasExpectedMagic(document),
-      )
+      !document ||
+      document.content.byteLength === 0 ||
+      document.content.byteLength > maximumVerificationDocumentBytes ||
+      !hasExpectedMagic(document)
     ) {
       throw new BadRequestException({ meta: { field: 'documents', resourceType: 'verification' } });
     }
-    const normalized = [...documents].sort((left, right) =>
-      `${left.kind}:${left.fileName}`.localeCompare(`${right.kind}:${right.fileName}`),
-    );
     const verification = await this.requireVerification(owner);
     const scope = {
       resourceId: verification.id,
       resourceRevision: verification.caseRevision,
       resourceType: 'verification' as const,
     };
-    const document = normalized[0];
-    if (!document) {
-      throw new BadRequestException({ meta: { field: 'documents', resourceType: 'verification' } });
-    }
     const requestDescriptor = {
       action: 'store-verification-document' as const,
       document: {
@@ -240,7 +229,7 @@ export class MarketplaceVerificationDomainService {
     try {
       const result = await callProvider(this.providerTimeouts.documentsTimeoutMs, (signal) =>
         this.documentProvider.storeVerificationDocuments({
-          documents: normalized,
+          documents: [document],
           operationAttempt: prepared.attempt,
           operationId: prepared.operationId,
           signal,

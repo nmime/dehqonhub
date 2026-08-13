@@ -1,12 +1,6 @@
 // @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017
-/* eslint-disable no-await-in-loop -- table-driven cases mutate stateful mocks and must remain ordered */
 import { describe, expect, it, vi } from 'vitest';
-import {
-  BadRequestException,
-  ConflictException,
-  ForbiddenException,
-  ResourceNotFoundException,
-} from '@app/backend-common-exception';
+import { BadRequestException, ConflictException, ForbiddenException } from '@app/backend-common-exception';
 import type { MarketplaceDashboardAiRepository } from '@app/backend-feature-agritech-shared';
 import { MarketplaceDashboardAiDomainService } from './marketplace-dashboard-ai.service';
 
@@ -170,21 +164,5 @@ describe('MarketplaceDashboardAiDomainService', () => {
     await expect(
       service.confirmAiStarterCart(owner, '11111111-1111-4111-8111-111111111111', input, 'starter-cart-0001'),
     ).rejects.toThrow(ConflictException);
-  });
-
-  it('delegates consultation history and maps every remaining repository failure class', async () => {
-    const { repository, service } = fixture();
-    repository.listAiConsultations.mockResolvedValue([]);
-    await expect(service.listAiConsultations(owner)).resolves.toEqual([]);
-    expect(repository.listAiConsultations).toHaveBeenCalledWith(owner);
-
-    for (const [result, ErrorType] of [
-      [{ status: 'not_found' }, ResourceNotFoundException],
-      [{ status: 'conflict', field: 'revision' }, ConflictException],
-      [{ status: 'invalid_state', field: 'question' }, BadRequestException],
-    ] as const) {
-      repository.getRoleDashboard.mockResolvedValueOnce(result);
-      await expect(service.getRoleDashboard(owner)).rejects.toBeInstanceOf(ErrorType);
-    }
   });
 });

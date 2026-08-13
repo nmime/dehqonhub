@@ -349,10 +349,6 @@ describe('bootstrapNestApi', () => {
       ((options: { bodyLimit?: number; config?: { bodyLimit?: unknown } }) => void) | undefined;
     expect(hook).toBeTypeOf('function');
 
-    const unconfigured = {};
-    hook?.(unconfigured);
-    expect(unconfigured).not.toHaveProperty('bodyLimit');
-
     const configured = { config: { bodyLimit: maximumConfiguredRouteBodyLimit } };
     hook?.(configured);
     expect(configured).toMatchObject({ bodyLimit: maximumConfiguredRouteBodyLimit });
@@ -361,7 +357,17 @@ describe('bootstrapNestApi', () => {
       'Route bodyLimit must be an integer',
     );
     expect(() => hook?.({ config: { bodyLimit: 1.5 } })).toThrow('Route bodyLimit must be an integer');
+    expect(() => hook?.({ config: { bodyLimit: 0 } })).toThrow('Route bodyLimit must be an integer');
     expect(() => hook?.({ config: { bodyLimit: 'unbounded' } })).toThrow('Route bodyLimit must be an integer');
+
+    // Routes that declare no limit — the overwhelming majority — must be left on
+    // Fastify's own default rather than pinned to an invented one.
+    const withoutConfig = {};
+    hook?.(withoutConfig);
+    expect(withoutConfig).not.toHaveProperty('bodyLimit');
+    const withoutLimit = { config: {} };
+    hook?.(withoutLimit);
+    expect(withoutLimit).not.toHaveProperty('bodyLimit');
   });
 
   it('creates a Fastify app with trust proxy disabled by default', async () => {

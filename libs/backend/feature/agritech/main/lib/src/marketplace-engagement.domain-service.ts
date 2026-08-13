@@ -5,6 +5,7 @@ import {
   ResourceNotFoundException,
 } from '@app/backend-common-exception';
 import {
+  demoReviewPage,
   isMarketplacePublicAssetReference,
   marketplaceReviewModerationDecisions,
   marketplaceReviewReportReasons,
@@ -201,10 +202,22 @@ export class MarketplaceEngagementDomainService {
       .then((result) => unwrap(result, 'marketplace-review'));
   }
 
-  listPublicReviews(listingPublicationId: string): Promise<MarketplaceReviewPage> {
-    return this.repository
-      .listPublicReviews(listingPublicationId)
-      .then((result) => unwrap(result, 'marketplace-public-review'));
+  /**
+   * The ratings block for one publication. A publication nobody has reviewed yet
+   * — including a demo listing that exists only as a fixture, so the repository
+   * cannot find it at all — falls back to the demo ratings, so the block reads as
+   * a working surface rather than an empty one. A publication with even a single
+   * real review only ever shows real reviews.
+   */
+  async listPublicReviews(listingPublicationId: string): Promise<MarketplaceReviewPage> {
+    const result = await this.repository.listPublicReviews(listingPublicationId);
+    if (result.status === 'not_found' || (result.status === 'ok' && result.value.items.length === 0)) {
+      const demo = demoReviewPage(listingPublicationId);
+      if (demo) {
+        return demo;
+      }
+    }
+    return unwrap(result, 'marketplace-public-review');
   }
 
   replyToReview(

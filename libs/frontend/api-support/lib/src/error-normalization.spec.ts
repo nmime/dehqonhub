@@ -96,19 +96,19 @@ describe('normalizeApiError', () => {
     expect(
       normalizeApiError({
         body: {
-          type: 'https://dehqonhub.uz/problems#resource-conflict',
+          type: 'https://example.com/problems#resource-conflict',
           code: 'spoofed',
         },
         response: { status: 409, statusText: '' },
       }),
     ).toMatchObject({
       code: 'resource-conflict',
-      type: 'https://dehqonhub.uz/problems#resource-conflict',
+      type: 'https://example.com/problems#resource-conflict',
     });
 
     expect(
       normalizeApiError({
-        body: { type: 'https://dehqonhub.uz/problems#resource-not-found' },
+        body: { type: 'https://example.com/problems#resource-not-found' },
         response: { status: 404, statusText: '' },
       }).code,
     ).toBe('resource-not-found');
@@ -144,7 +144,7 @@ describe('normalizeApiError', () => {
 
   it('translates registered problem details locally instead of trusting server prose', () => {
     const body = {
-      type: 'https://dehqonhub.uz/problems#step-up-required',
+      type: 'https://example.com/problems#step-up-required',
       detail: 'Server-side English copy',
     };
 
@@ -162,7 +162,7 @@ describe('normalizeApiError', () => {
       normalizeApiError({
         body: {
           detail: 'Untrusted provider text',
-          type: 'https://dehqonhub.uz/problems#marketplace-provider-unavailable',
+          type: 'https://example.com/problems#marketplace-provider-unavailable',
         },
         response: { status: 503, statusText: '' },
       }).message,

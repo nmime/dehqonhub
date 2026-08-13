@@ -2,6 +2,7 @@
   "agritech.marketplace.brand": "DehqonHub",
   "agritech.marketplace.title": "DehqonHub маркетплейси",
   "agritech.marketplace.search": "Маҳсулот, сотувчи ва харид сўровларини қидириш…",
+  "agritech.marketplace.search.placeholder": "Маҳсулот қидириш…",
   "agritech.marketplace.verification": "Тасдиқлаш",
   "agritech.marketplace.signIn": "Кириш",
   "agritech.marketplace.home": "Бош саҳифа",
@@ -25,17 +26,5 @@
   "agritech.marketplace.auth.required": "Давом этиш учун тизимга киринг.",
   "agritech.marketplace.auth.title": "DehqonHub тизимига кириш",
   "agritech.marketplace.footer.description": "DehqonHub жорий маркетплейс маълумотлари ва битим жараёнларини тартибга солади.",
-  "agritech.marketplace.footer.providerBoundary": "Тўлов, молиялаштириш ва шахсни текшириш провайдери уланган деб аниқ кўрсатилмагунча мавжуд эмас.",
-  "agritech.marketplace.access.demoBadge": "Намуна",
-  "agritech.marketplace.access.demo": "Бу танишиш учун сунъий маълумот. Уни эркин кўринг; битим ва ўзаро амаллар ўчирилган.",
-  "agritech.marketplace.access.signIn": "Бу маркетплейс амалидан фойдаланиш учун тизимга киринг.",
-  "agritech.marketplace.access.checking": "Маркетплейсга кириш ҳуқуқингиз текширилмоқда…",
-  "agritech.marketplace.access.verify": "Бу амал учун маркетплейс текширувини якунланг.",
-  "agritech.marketplace.access.buyerRole": "Тасдиқланган ролингиз харид қилишга рухсат бермайди. Харидор ёки фермер сифатида текширувдан ўтинг.",
-  "agritech.marketplace.access.sellerRole": "Тасдиқланган ролингиз сотишга рухсат бермайди. Сотувчи ёки фермер сифатида текширувдан ўтинг.",
-  "agritech.marketplace.access.organization": "Бу амал учун тасдиқланган харидор ташкилоти керак.",
-  "agritech.marketplace.access.sellerOrganization": "Бу амал учун тасдиқланган сотувчи ташкилоти керак.",
-  "agritech.marketplace.access.action.signIn": "Тизимга кириш",
-  "agritech.marketplace.access.action.verify": "Текширувни очиш",
-  "agritech.marketplace.access.action.organization": "Ташкилот профилини очиш"
+  "agritech.marketplace.footer.providerBoundary": "Тўлов, молиялаштириш ва шахсни текшириш провайдери уланган деб аниқ кўрсатилмагунча мавжуд эмас."
 }

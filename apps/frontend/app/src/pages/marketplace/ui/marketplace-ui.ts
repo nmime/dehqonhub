@@ -1,5 +1,30 @@
 import type { Locale } from '@app/frontend-runtime';
-import type { ProductViewDto } from '@app/frontend-api-client';
+import type {
+  ContractDeliveryQuoteDto,
+  CreateRequestDto,
+  MarketplaceFavoriteDto,
+  ProductViewDto,
+  RequestOfferDto,
+} from '@app/frontend-api-client';
+
+/**
+ * What a form composes, versus what the API is sent. Every commerce command also
+ * names the organization it is issued for, and that is the page's business rather
+ * than the form's: a form collects what someone typed, and only the page knows
+ * which of their organizations is acting.
+ */
+export type MarketplaceRequestDraft = Omit<CreateRequestDto, 'actingPartnerId'>;
+export type MarketplaceOfferDraft = Omit<RequestOfferDto, 'actingPartnerId'>;
+
+/**
+ * A delivery quote without the revision it is written against. The revision comes
+ * from the contract on screen, not from the form: it is how the API rejects a
+ * quote composed against terms the other party has since changed.
+ */
+export type MarketplaceDeliveryQuoteDraft = Omit<ContractDeliveryQuoteDto, 'expectedRevision'>;
+
+/** The listing summary every engagement record (favourite, sample, review) carries. */
+export type MarketplaceListingSummary = MarketplaceFavoriteDto['listing'];
 
 /**
  * `embedded` is the view every non-marketplace route uses: the page renders the
@@ -17,6 +42,7 @@ export type MarketplaceView =
   | 'home'
   | 'product'
   | 'requests'
+  | 'seller'
   | 'verification';
 
 export type MarketplaceSection = 'all' | 'equipment' | 'produce' | 'seeds';
@@ -36,6 +62,7 @@ const intlLocaleByLocale: Record<Locale, string> = {
   en: 'en-US',
   ru: 'ru-RU',
   uz: 'uz-UZ',
+  'uz-cyrl': 'uz-Cyrl-UZ',
 };
 
 /**
@@ -59,6 +86,28 @@ export const sectionForProduct = (product: ProductViewDto): MarketplaceProductSe
     }
     default: {
       return 'produce';
+    }
+  }
+};
+
+/**
+ * The title carried by an engagement listing summary — what a sample request or a
+ * saved favourite refers to. Falls back through the base title so a catalog row
+ * that was never translated still reads as its own name rather than an id.
+ */
+export const localizedListingTitle = (listing: MarketplaceListingSummary, locale: Locale): string => {
+  switch (locale) {
+    case 'ru': {
+      return listing.titleRu ?? listing.title;
+    }
+    case 'uz': {
+      return listing.titleUz ?? listing.title;
+    }
+    case 'uz-cyrl': {
+      return listing.titleUzCyrl ?? listing.title;
+    }
+    default: {
+      return listing.title;
     }
   }
 };

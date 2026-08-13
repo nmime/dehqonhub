@@ -6,11 +6,12 @@ import {
   type BuyerRequestViewDto,
   type CartViewDto,
   type ContractViewDto,
-  type FavoriteViewDto,
+  type MarketplaceFavoriteDto,
+  type MarketplaceSampleDto,
+  type MarketplaceSampleUsageDto,
   type OfferViewDto,
+  type PartnerViewDto,
   type ProductViewDto,
-  type SampleUsageViewDto,
-  type SampleViewDto,
   type VerificationViewDto,
 } from '@app/frontend-api-client';
 import {
@@ -44,7 +45,19 @@ export interface Resource<T> {
 
 const listResource = <T>(): Resource<T[]> => ({ data: [], status: 'idle' });
 
-const initialUsage: SampleUsageViewDto = { limit: 5, remaining: 5, used: 0 };
+/**
+ * The sample allowance shown before the account read lands, and the whole of it
+ * for a visitor with no account: browsing costs nobody a sample. The period is
+ * this month rather than a fixed literal, so a placeholder never claims to
+ * describe a month that is not the one being browsed.
+ */
+const initialUsage = (): MarketplaceSampleUsageDto => ({
+  limit: 5,
+  period: new Date().toISOString().slice(0, 7),
+  policyVersion: 1,
+  remaining: 5,
+  used: 0,
+});
 
 /**
  * Cart and favourite writes for a visitor without a session. They persist to
@@ -55,7 +68,7 @@ const initialUsage: SampleUsageViewDto = { limit: 5, remaining: 5, used: 0 };
 export interface MarketplaceLocalActions {
   addToCart: (product: ProductViewDto, quantity: number) => void;
   checkout: (cartId: string) => void;
-  toggleFavorite: (productId: string) => void;
+  toggleFavorite: (product: ProductViewDto) => void;
   updateCart: (productId: string, quantity: number) => void;
 }
 
@@ -66,16 +79,22 @@ export interface MarketplaceData {
   contracts: Resource<ContractViewDto[]>;
   /** What the banner should disclose about the data on screen. */
   demo: DemoReason;
-  favorites: Resource<FavoriteViewDto[]>;
+  favorites: Resource<MarketplaceFavoriteDto[]>;
   /** True while cart and favourite writes stay in this browser: no session. */
   local: boolean;
   localActions: MarketplaceLocalActions;
   myRequests: Resource<BuyerRequestViewDto[]>;
   offersByRequest: Resource<Record<string, OfferViewDto[]>>;
+  /**
+   * The organizations this account may act for. Every commerce command names the
+   * partner it is issued on behalf of, so a basket, a purchase request or an
+   * offer is impossible until an approved one exists.
+   */
+  partners: Resource<PartnerViewDto[]>;
   refresh: () => void;
   requests: Resource<BuyerRequestViewDto[]>;
-  sampleUsage: Resource<SampleUsageViewDto>;
-  samples: Resource<SampleViewDto[]>;
+  sampleUsage: Resource<MarketplaceSampleUsageDto>;
+  samples: Resource<MarketplaceSampleDto[]>;
   verification: Resource<VerificationViewDto | null>;
 }
 
@@ -105,7 +124,7 @@ export function useMarketplaceData(): MarketplaceData {
     status: 'idle',
   });
   const [carts, setCarts] = useState<Resource<CartViewDto[]>>(listResource);
-  const [favorites, setFavorites] = useState<Resource<FavoriteViewDto[]>>(listResource);
+  const [favorites, setFavorites] = useState<Resource<MarketplaceFavoriteDto[]>>(listResource);
   const [requests, setRequests] = useState<Resource<BuyerRequestViewDto[]>>(listResource);
   const [myRequests, setMyRequests] = useState<Resource<BuyerRequestViewDto[]>>(listResource);
   const [offersByRequest, setOffersByRequest] = useState<Resource<Record<string, OfferViewDto[]>>>({
@@ -113,9 +132,10 @@ export function useMarketplaceData(): MarketplaceData {
     status: 'idle',
   });
   const [contracts, setContracts] = useState<Resource<ContractViewDto[]>>(listResource);
-  const [samples, setSamples] = useState<Resource<SampleViewDto[]>>(listResource);
-  const [sampleUsage, setSampleUsage] = useState<Resource<SampleUsageViewDto>>({
-    data: initialUsage,
+  const [partners, setPartners] = useState<Resource<PartnerViewDto[]>>(listResource);
+  const [samples, setSamples] = useState<Resource<MarketplaceSampleDto[]>>(listResource);
+  const [sampleUsage, setSampleUsage] = useState<Resource<MarketplaceSampleUsageDto>>({
+    data: initialUsage(),
     status: 'idle',
   });
 
@@ -133,8 +153,9 @@ export function useMarketplaceData(): MarketplaceData {
     setMyRequests({ data: [], status: 'empty' });
     setOffersByRequest({ data: {}, status: 'empty' });
     setContracts({ data: [], status: 'empty' });
+    setPartners({ data: [], status: 'empty' });
     setSamples({ data: [], status: 'empty' });
-    setSampleUsage({ data: initialUsage, status: 'ready' });
+    setSampleUsage({ data: initialUsage(), status: 'ready' });
   }, []);
 
   const load = useCallback(async () => {
@@ -295,6 +316,19 @@ export function useMarketplaceData(): MarketplaceData {
       }
     };
 
+    const loadPartners = async () => {
+      try {
+        const data = await throwOnOpenApiErrorData(api.agriTechOperationsControllerListPartners(requestOptions));
+        if (current()) {
+          setPartners({ data: data.items, status: statusForList(data.items) });
+        }
+      } catch {
+        if (current()) {
+          setPartners({ data: [], status: 'error' });
+        }
+      }
+    };
+
     const loadSamples = async () => {
       try {
         const data = await throwOnOpenApiErrorData(api.marketplaceControllerListSamples(requestOptions));
@@ -316,7 +350,7 @@ export function useMarketplaceData(): MarketplaceData {
         }
       } catch {
         if (current()) {
-          setSampleUsage({ data: initialUsage, status: 'error' });
+          setSampleUsage({ data: initialUsage(), status: 'error' });
         }
       }
     };
@@ -333,6 +367,7 @@ export function useMarketplaceData(): MarketplaceData {
         loadFavorites(),
         loadMyRequestsAndOffers(),
         loadContracts(),
+        loadPartners(),
         loadSamples(),
         loadUsage(),
       ]);
@@ -358,8 +393,8 @@ export function useMarketplaceData(): MarketplaceData {
         const next = clearGuestCart(cartId);
         setCarts({ data: next, status: statusForList(next) });
       },
-      toggleFavorite: (productId) => {
-        const next = toggleGuestFavorite(productId);
+      toggleFavorite: (product) => {
+        const next = toggleGuestFavorite(product);
         setFavorites({ data: next, status: statusForList(next) });
       },
       updateCart: (productId, quantity) => {
@@ -381,6 +416,7 @@ export function useMarketplaceData(): MarketplaceData {
     localActions,
     myRequests,
     offersByRequest,
+    partners,
     refresh: () => void load(),
     requests,
     sampleUsage,

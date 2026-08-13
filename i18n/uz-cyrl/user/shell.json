@@ -1,5 +1,5 @@
 {
-  "user.appName": "DehqonHub",
+  "user.appName": "AgriTech",
   "user.eyebrow": "Даладан бозоргача",
   "user.title": "Қишлоқ хўжалиги — ягона тизимда.",
   "user.description": "Ҳамкорлар, ресурслар, ҳосил, буюртмалар, етказиб бериш, тўловлар ва дала ишларини бошқаринг.",
@@ -8,7 +8,7 @@
   "user.action.signOut": "Тизимдан чиқиш",
   "user.action.signingOut": "Чиқиш…",
   "user.auth.eyebrow": "Аутентификация",
-  "user.auth.title": "DehqonHubʼга кириш",
+  "user.auth.title": "Тизимга қандай киришни танланг",
   "user.auth.description": "Электрон почтангиз ва паролингиздан фойдаланинг ёки уланган ҳисоб билан давом этинг.",
   "user.auth.social.title": "Уланган ҳисоблар",
   "user.auth.social.description": "Сизнинг муҳитингиз учун ушбу провайдерлар ёқилган бўлса, Telegram ёки Discord билан давом этинг.",
@@ -36,6 +36,8 @@
   "user.state.forbidden": "Тақиқланган: {{reason}}",
   "user.loadingProfile": "Профил юкланмоқда...",
   "user.profile.unknown": "номаълум",
+  "user.profile.subject": "Ҳисоб идентификатори",
+  "user.profile.guestTitle": "Ҳисобга кирилмаган",
   "user.nav.home": "Уй",
   "user.nav.auth": "Кириш",
   "user.nav.profile": "Профил",
@@ -51,5 +53,5 @@
   "user.notFound.eyebrow": "Навигация",
   "user.notFound.sectionTitle": "Саҳифа топилмади",
   "user.notFound.title": "Бу йўналиш мавжуд эмас.",
-  "user.notFound.description": "DehqonHub бош саҳифасига қайтинг ва мавжуд жараённи танланг."
+  "user.notFound.description": "AgriTech бош саҳифасига қайтинг ва мавжуд жараённи танланг."
 }

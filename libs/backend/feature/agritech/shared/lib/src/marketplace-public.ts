@@ -79,14 +79,11 @@ export interface ReviewMarketplaceRequestPublicationInput {
   idempotencyKey: string;
 }
 
-export type MarketplacePublicProvenance = 'live' | 'demo';
-
 export interface MarketplacePublicSeller {
   id: string;
   displayName: string;
   region: string;
-  verified: boolean;
-  provenance: MarketplacePublicProvenance;
+  verified: true;
 }
 
 interface MarketplacePublicListingBase {
@@ -104,8 +101,6 @@ interface MarketplacePublicListingBase {
   region: string;
   images: string[];
   promoted: boolean;
-  provenance: MarketplacePublicProvenance;
-  transactional: boolean;
   seller: MarketplacePublicSeller;
   publishedAt: Date;
   updatedAt: Date;
@@ -313,7 +308,6 @@ export interface MarketplacePublishedRequestRecord {
 export type MarketplacePublishedSuggestionRecord = MarketplacePublicSuggestion;
 
 export interface MarketplacePublicRepository {
-  isDemoCatalogEnabled(): Promise<boolean>;
   findPublishedListing(publicId: string): Promise<MarketplacePublishedListingRecord | undefined>;
   findPublishedSeller(publicId: string): Promise<MarketplacePublishedSellerRecord | undefined>;
   listPublishedListings(

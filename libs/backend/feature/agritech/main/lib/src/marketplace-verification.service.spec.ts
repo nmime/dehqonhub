@@ -1,5 +1,4 @@
 // @requirements REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017
-/* eslint-disable no-await-in-loop -- table-driven cases mutate stateful mocks and must remain ordered */
 import { createHash } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { BadRequestException, ConflictException, ResourceNotFoundException } from '@app/backend-common-exception';
@@ -12,12 +11,25 @@ import type {
 } from '@app/backend-feature-agritech-shared';
 import {
   MarketplaceProviderUnavailableException,
-  MarketplaceVerificationDomainService,
   MarketplaceVerificationService,
 } from './marketplace-verification.service';
 
 const owner = { tenantId: 'tenant-1', userId: 'user-1' };
 const timestamp = new Date('2030-01-01T00:00:00.000Z');
+
+const pdfDocument = (): VerificationDocumentInput => ({
+  content: Uint8Array.from(Buffer.from('%PDF-farm-registry')),
+  fileName: 'farm.pdf',
+  kind: 'farm',
+  mimeType: 'application/pdf',
+});
+
+const jpegDocument = (): VerificationDocumentInput => ({
+  content: Uint8Array.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]),
+  fileName: 'passport.jpg',
+  kind: 'id',
+  mimeType: 'image/jpeg',
+});
 
 const verification = (overrides: Partial<Verification> = {}): Verification => ({
   caseRevision: 0,
@@ -326,227 +338,256 @@ describe('MarketplaceVerificationService', () => {
     expect(repository.submitVerification).toHaveBeenCalledWith(owner, 0, 'verification-submit-0001');
   });
 
-  it('covers all verification validation, replay, provider-failure, media, and repository-result boundaries', async () => {
-    const { documentProvider, identityProvider, repository, service } = fixture();
+  describe('repository refusals', () => {
+    it.each([
+      { expected: ResourceNotFoundException, label: 'no case to advance', result: { status: 'not_found' as const } },
+      { expected: ConflictException, label: 'a stale revision', result: { status: 'conflict' as const } },
+      {
+        expected: BadRequestException,
+        label: 'an unusable role',
+        result: { field: 'role', status: 'invalid_state' as const },
+      },
+    ])('turns $label into the matching client error', async ({ expected, result }) => {
+      const { repository, service } = fixture();
+      repository.createVerification.mockResolvedValue(result);
+      repository.submitVerification.mockResolvedValue(result);
 
-    for (const expectedRevision of [-1, 0.5]) {
-      await expect(
-        service.createVerification(owner, 'farmer', expectedRevision, `create-${String(expectedRevision)}-key`),
-      ).rejects.toBeInstanceOf(BadRequestException);
-      await expect(
-        service.submitVerification(owner, expectedRevision, `submit-${String(expectedRevision)}-key`),
-      ).rejects.toBeInstanceOf(BadRequestException);
-    }
-    for (const [result, ErrorType] of [
-      [{ status: 'not_found' }, ResourceNotFoundException],
-      [{ status: 'conflict' }, ConflictException],
-      [{ status: 'invalid_state', field: 'role' }, BadRequestException],
-    ] as const) {
-      repository.createVerification.mockResolvedValueOnce(result);
-      await expect(
-        service.createVerification(owner, 'farmer', 0, `create-${result.status}-key`),
-      ).rejects.toBeInstanceOf(ErrorType);
-    }
-
-    repository.getVerification.mockResolvedValueOnce(undefined);
-    await expect(service.linkOneId(owner, 'oneid-missing-key')).rejects.toBeInstanceOf(ResourceNotFoundException);
-    repository.prepareProviderOperation.mockResolvedValueOnce({
-      status: 'ok',
-      value: { attempt: 1, execute: false, operationId: 'operation-no-replay' },
+      await expect(service.createVerification(owner, 'farmer', 0, 'verification-create-0001')).rejects.toBeInstanceOf(
+        expected,
+      );
+      await expect(service.submitVerification(owner, 0, 'verification-submit-0001')).rejects.toBeInstanceOf(expected);
     });
-    await expect(service.linkOneId(owner, 'oneid-replay-key')).rejects.toBeInstanceOf(BadRequestException);
 
-    for (const providerError of [new BadRequestException(), new ConflictException('verification'), 'opaque failure']) {
-      repository.prepareProviderOperation.mockResolvedValueOnce({
-        status: 'ok',
-        value: { attempt: 1, execute: true, operationId: `operation-${typeof providerError}` },
-      });
-      repository.failProviderOperation.mockRejectedValueOnce(new Error('failure ledger unavailable'));
-      identityProvider.linkIdentity.mockRejectedValueOnce(providerError);
-      const result = service.linkOneId(owner, `oneid-error-${typeof providerError}-key`);
-      if (providerError instanceof BadRequestException || providerError instanceof ConflictException) {
-        await expect(result).rejects.toBe(providerError);
-      } else {
-        await expect(result).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
-      }
-    }
+    it.each([1.5, -1])('refuses the non-integer or negative expected revision %s', async (expectedRevision) => {
+      const { repository, service } = fixture();
 
-    const png = Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
-    const jpeg = Uint8Array.from([0xff, 0xd8, 0xff, 0x00]);
-    const documentResult = {
-      evidence: [],
-      providerMode: 'mock' as const,
-      providerName: 'mock-document-storage',
-      receiptId: 'receipt-media',
-      storedAt: timestamp,
-    };
-    for (const [content, mimeType] of [
-      [png, 'image/png'],
-      [jpeg, 'image/jpeg'],
-    ] as const) {
-      repository.prepareProviderOperation.mockResolvedValueOnce({
-        status: 'ok',
-        value: { attempt: 1, execute: true, operationId: `operation-${mimeType}` },
-      });
-      documentProvider.storeVerificationDocuments.mockResolvedValueOnce(documentResult);
-      repository.completeVerificationDocuments.mockResolvedValueOnce({ status: 'ok', value: verification() });
       await expect(
-        service.storeDocuments(
-          owner,
-          [{ content, fileName: `proof.${mimeType === 'image/png' ? 'png' : 'jpg'}`, kind: 'farm', mimeType }],
-          `documents-${mimeType.replace('/', '-')}-key`,
-        ),
-      ).resolves.toMatchObject({ id: verification().id });
-    }
-    for (const documents of [
-      [],
-      [
-        { content: png, fileName: 'one.png', kind: 'farm' as const, mimeType: 'image/png' as const },
-        { content: png, fileName: 'two.png', kind: 'farm' as const, mimeType: 'image/png' as const },
-      ],
-      [{ content: new Uint8Array(), fileName: 'empty.png', kind: 'farm' as const, mimeType: 'image/png' as const }],
-      [
-        {
-          content: Uint8Array.from([0xff, 0x00, 0x00]),
-          fileName: 'bad.jpg',
-          kind: 'farm' as const,
-          mimeType: 'image/jpeg' as const,
-        },
-      ],
-    ]) {
-      await expect(service.storeDocuments(owner, documents, 'documents-invalid-key')).rejects.toBeInstanceOf(
+        service.createVerification(owner, 'farmer', expectedRevision, 'verification-create-0001'),
+      ).rejects.toBeInstanceOf(BadRequestException);
+      await expect(service.submitVerification(owner, expectedRevision, 'verification-submit-0001')).rejects.toBeInstanceOf(
         BadRequestException,
       );
-    }
+      expect(repository.createVerification).not.toHaveBeenCalled();
+      expect(repository.submitVerification).not.toHaveBeenCalled();
+    });
 
-    const sortable = [{ content: png, fileName: 'z.png', kind: 'farm' as const, mimeType: 'image/png' as const }];
-    Object.defineProperty(sortable, Symbol.iterator, {
-      *value() {
-        yield { content: png, fileName: 'z.png', kind: 'farm' as const, mimeType: 'image/png' as const };
-        yield { content: png, fileName: 'a.png', kind: 'identity' as const, mimeType: 'image/png' as const };
+    it('refuses a OneID link before the subject has any verification case', async () => {
+      const { repository, service } = fixture();
+      repository.getVerification.mockResolvedValue(undefined);
+
+      await expect(service.linkOneId(owner, 'oneid-key-0001')).rejects.toBeInstanceOf(ResourceNotFoundException);
+      expect(repository.prepareProviderOperation).not.toHaveBeenCalled();
+    });
+
+    it('refuses to replay a prepared operation that stored no result snapshot', async () => {
+      const { identityProvider, repository, service } = fixture();
+      repository.prepareProviderOperation.mockResolvedValue({
+        status: 'ok',
+        value: { attempt: 2, execute: false, operationId: 'operation-1' },
+      });
+
+      await expect(service.linkOneId(owner, 'oneid-key-0001')).rejects.toBeInstanceOf(BadRequestException);
+      expect(identityProvider.linkIdentity).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('document uploads', () => {
+    it.each([
+      { documents: [], label: 'an upload with no document at all' },
+      { documents: [pdfDocument(), pdfDocument()], label: 'a batch of two documents' },
+      { documents: [{ ...pdfDocument(), content: new Uint8Array(0) }], label: 'an empty file' },
+      {
+        documents: [{ ...jpegDocument(), content: Uint8Array.from([0xff, 0xd8, 0x00]) }],
+        label: 'a JPEG that carries no JPEG signature',
       },
-    });
-    repository.prepareProviderOperation.mockResolvedValueOnce({
-      status: 'ok',
-      value: { attempt: 1, execute: true, operationId: 'operation-sorted' },
-    });
-    documentProvider.storeVerificationDocuments.mockResolvedValueOnce(documentResult);
-    repository.completeVerificationDocuments.mockResolvedValueOnce({ status: 'ok', value: verification() });
-    await service.storeDocuments(owner, sortable, 'documents-sorted-key');
-    expect(documentProvider.storeVerificationDocuments).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        documents: [expect.objectContaining({ fileName: 'z.png' }), expect.objectContaining({ fileName: 'a.png' })],
-      }),
-    );
+      {
+        documents: [{ ...pdfDocument(), content: Uint8Array.from(Buffer.from('PKzip')) }],
+        label: 'a PDF that carries no PDF signature',
+      },
+    ])('rejects $label before any persistence or provider call', async ({ documents }) => {
+      const { documentProvider, repository, service } = fixture();
 
-    const emptySpread = [
-      { content: png, fileName: 'proof.png', kind: 'farm' as const, mimeType: 'image/png' as const },
-    ];
-    Object.defineProperty(emptySpread, Symbol.iterator, { *value() {} });
-    await expect(service.storeDocuments(owner, emptySpread, 'documents-empty-spread-key')).rejects.toBeInstanceOf(
-      BadRequestException,
-    );
-
-    repository.prepareProviderOperation.mockResolvedValueOnce({
-      status: 'ok',
-      value: { attempt: 1, execute: false, operationId: 'operation-document-no-replay' },
-    });
-    await expect(
-      service.storeDocuments(
-        owner,
-        [{ content: png, fileName: 'proof.png', kind: 'farm', mimeType: 'image/png' }],
-        'documents-no-replay-key',
-      ),
-    ).rejects.toBeInstanceOf(BadRequestException);
-
-    for (const providerError of [new BadRequestException(), new ConflictException('verification'), 42]) {
-      repository.prepareProviderOperation.mockResolvedValueOnce({
-        status: 'ok',
-        value: { attempt: 1, execute: true, operationId: `document-operation-${String(providerError)}` },
-      });
-      repository.failProviderOperation.mockRejectedValueOnce(new Error('failure ledger unavailable'));
-      documentProvider.storeVerificationDocuments.mockRejectedValueOnce(providerError);
-      const result = service.storeDocuments(
-        owner,
-        [{ content: png, fileName: 'proof.png', kind: 'farm', mimeType: 'image/png' }],
-        `documents-error-${typeof providerError}-key`,
+      await expect(service.storeDocuments(owner, documents, 'document-key-0001')).rejects.toBeInstanceOf(
+        BadRequestException,
       );
-      if (providerError instanceof BadRequestException || providerError instanceof ConflictException) {
-        await expect(result).rejects.toBe(providerError);
-      } else {
-        await expect(result).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
-      }
-    }
+      expect(repository.getVerification).not.toHaveBeenCalled();
+      expect(documentProvider.storeVerificationDocuments).not.toHaveBeenCalled();
+    });
 
-    vi.useFakeTimers();
-    try {
-      const timeoutFixture = fixture();
-      timeoutFixture.repository.prepareProviderOperation.mockResolvedValueOnce({
+    it('accepts a JPEG scan and forwards exactly that document to the provider', async () => {
+      const { documentProvider, repository, service } = fixture();
+      const document = jpegDocument();
+      repository.prepareProviderOperation.mockResolvedValue({
         status: 'ok',
-        value: { attempt: 1, execute: true, operationId: 'document-timeout-operation' },
+        value: { attempt: 1, execute: true, operationId: 'operation-jpeg' },
       });
-      timeoutFixture.documentProvider.storeVerificationDocuments.mockImplementation(() => new Promise(() => undefined));
-      const timeoutResult = timeoutFixture.service.storeDocuments(
-        owner,
-        [{ content: png, fileName: 'proof.png', kind: 'farm', mimeType: 'image/png' }],
-        'documents-timeout-key',
-      );
-      const timeoutRejection = expect(timeoutResult).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
-      await vi.advanceTimersByTimeAsync(101);
-      await timeoutRejection;
-      expect(timeoutFixture.repository.failProviderOperation).toHaveBeenCalledWith(
-        owner,
-        'document-timeout-operation',
-        1,
-        'document_provider_timeout',
-      );
-    } finally {
-      vi.useRealTimers();
-    }
+      documentProvider.storeVerificationDocuments.mockResolvedValue({
+        evidence: [],
+        providerMode: 'mock' as const,
+        providerName: 'mock-document-storage',
+        receiptId: 'receipt-jpeg',
+        storedAt: timestamp,
+      });
+      repository.completeVerificationDocuments.mockResolvedValue({ status: 'ok', value: verification() });
 
-    vi.stubGlobal(
-      'setTimeout',
-      vi.fn(() => undefined),
-    );
-    try {
-      repository.prepareProviderOperation.mockResolvedValueOnce({
-        status: 'ok',
-        value: { attempt: 1, execute: true, operationId: 'operation-without-timer-handle' },
-      });
-      identityProvider.linkIdentity.mockResolvedValueOnce({
-        identityAssurance: 'mock',
-        linkedAt: timestamp,
-        providerMode: 'mock',
-        providerName: 'mock-oneid',
-        receiptId: 'receipt-without-timer-handle',
-        subjectKey: createHash('sha256').update('subject-without-timer').digest('hex'),
-      });
-      repository.completeIdentityLink.mockResolvedValueOnce({ status: 'ok', value: verification() });
-      await expect(service.linkOneId(owner, 'oneid-no-timer-handle-key')).resolves.toMatchObject({
+      await expect(service.storeDocuments(owner, [document], 'document-key-0002')).resolves.toMatchObject({
         id: verification().id,
       });
-    } finally {
-      vi.unstubAllGlobals();
-    }
+      expect(documentProvider.storeVerificationDocuments).toHaveBeenCalledWith({
+        documents: [document],
+        operationAttempt: 1,
+        operationId: 'operation-jpeg',
+        signal: expect.any(AbortSignal),
+      });
+    });
 
-    const disabled = fixture({ documentMode: 'disabled' });
-    await expect(
-      disabled.service.storeDocuments(
+    it('replays a stored document result without touching the storage provider', async () => {
+      const original = verification({ version: 3 });
+      const { documentProvider, repository, service } = fixture();
+      repository.prepareProviderOperation.mockResolvedValue({
+        status: 'ok',
+        value: { attempt: 1, execute: false, operationId: 'operation-3', replay: original },
+      });
+
+      await expect(service.storeDocuments(owner, [pdfDocument()], 'document-key-0001')).resolves.toBe(original);
+      expect(documentProvider.storeVerificationDocuments).not.toHaveBeenCalled();
+      expect(repository.completeVerificationDocuments).not.toHaveBeenCalled();
+    });
+
+    it('fails closed when the document provider is disabled', async () => {
+      const { repository, service } = fixture({ documentMode: 'disabled' });
+
+      await expect(service.storeDocuments(owner, [pdfDocument()], 'document-key-0001')).rejects.toMatchObject({
+        extensions: { capability: 'verification_documents', providerMode: 'disabled', retryable: false },
+      });
+      expect(repository.getVerification).not.toHaveBeenCalled();
+    });
+
+    it('marks a crashed document attempt failed and reports it as retryable', async () => {
+      const { documentProvider, repository, service } = fixture();
+      repository.prepareProviderOperation.mockResolvedValue({
+        status: 'ok',
+        value: { attempt: 2, execute: true, operationId: 'operation-4' },
+      });
+      documentProvider.storeVerificationDocuments.mockRejectedValue(new Error('storage bucket offline'));
+
+      await expect(service.storeDocuments(owner, [pdfDocument()], 'document-key-0001')).rejects.toMatchObject({
+        extensions: { capability: 'verification_documents', providerMode: 'mock', retryable: true },
+      });
+      expect(repository.failProviderOperation).toHaveBeenCalledWith(
         owner,
-        [{ content: png, fileName: 'proof.png', kind: 'farm', mimeType: 'image/png' }],
-        'documents-disabled-key',
-      ),
-    ).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
-    expect(service.getProviderReadiness()).toMatchObject({ oneId: expect.any(Object) });
+        'operation-4',
+        2,
+        'document_provider_failed',
+      );
+    });
 
-    const directDomain = new MarketplaceVerificationDomainService(
-      repository as unknown as MarketplaceVerificationRepository,
-      identityProvider as MarketplaceIdentityProvider,
-      documentProvider as MarketplaceDocumentProvider,
-    );
-    repository.submitVerification.mockResolvedValueOnce({ status: 'not_found' });
-    await expect(directDomain.submitVerification(owner, 0, 'submit-default-timeout-key')).rejects.toBeInstanceOf(
-      ResourceNotFoundException,
-    );
+    it('aborts a timed-out document attempt and records the timeout reason', async () => {
+      vi.useFakeTimers();
+      try {
+        const { documentProvider, repository, service } = fixture();
+        repository.prepareProviderOperation.mockResolvedValue({
+          status: 'ok',
+          value: { attempt: 1, execute: true, operationId: 'operation-5' },
+        });
+        documentProvider.storeVerificationDocuments.mockImplementation(() => new Promise(() => undefined));
+
+        const result = service.storeDocuments(owner, [pdfDocument()], 'document-key-0001');
+        const rejection = expect(result).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
+        await vi.advanceTimersByTimeAsync(101);
+        await rejection;
+
+        expect(repository.failProviderOperation).toHaveBeenCalledWith(
+          owner,
+          'operation-5',
+          1,
+          'document_provider_timeout',
+        );
+      } finally {
+        vi.useRealTimers();
+      }
+    });
+
+    it.each([
+      { error: new BadRequestException({ meta: { field: 'documents' } }), label: 'a rejected upload' },
+      { error: new ConflictException('verification-document'), label: 'a duplicate upload' },
+    ])('rethrows $label reported by the document provider verbatim', async ({ error }) => {
+      const { documentProvider, repository, service } = fixture();
+      repository.prepareProviderOperation.mockResolvedValue({
+        status: 'ok',
+        value: { attempt: 1, execute: true, operationId: 'operation-6' },
+      });
+      documentProvider.storeVerificationDocuments.mockRejectedValue(error);
+
+      await expect(service.storeDocuments(owner, [pdfDocument()], 'document-key-0001')).rejects.toBe(error);
+      expect(repository.failProviderOperation).toHaveBeenCalledWith(
+        owner,
+        'operation-6',
+        1,
+        'document_provider_failed',
+      );
+    });
+  });
+
+  describe('provider crash bookkeeping', () => {
+    it.each([
+      { error: new BadRequestException({ meta: { field: 'subjectKey' } }), label: 'a rejected subject' },
+      { error: new ConflictException('verification'), label: 'an already linked subject' },
+    ])('rethrows $label reported by the identity provider verbatim', async ({ error }) => {
+      const { identityProvider, repository, service } = fixture();
+      repository.prepareProviderOperation.mockResolvedValue({
+        status: 'ok',
+        value: { attempt: 1, execute: true, operationId: 'operation-7' },
+      });
+      identityProvider.linkIdentity.mockRejectedValue(error);
+
+      await expect(service.linkOneId(owner, 'oneid-key-0001')).rejects.toBe(error);
+      expect(repository.completeIdentityLink).not.toHaveBeenCalled();
+    });
+
+    it.each([
+      { call: 'linkOneId' as const, capability: 'oneid_link' },
+      { call: 'storeDocuments' as const, capability: 'verification_documents' },
+    ])('wraps a non-Error $call rejection in a synthetic cause', async ({ call, capability }) => {
+      const { documentProvider, identityProvider, repository, service } = fixture();
+      repository.prepareProviderOperation.mockResolvedValue({
+        status: 'ok',
+        value: { attempt: 1, execute: true, operationId: 'operation-8' },
+      });
+      identityProvider.linkIdentity.mockRejectedValue('socket hang up');
+      documentProvider.storeVerificationDocuments.mockRejectedValue('socket hang up');
+
+      const rejected =
+        call === 'linkOneId'
+          ? service.linkOneId(owner, 'oneid-key-0001')
+          : service.storeDocuments(owner, [pdfDocument()], 'document-key-0001');
+
+      await expect(rejected).rejects.toMatchObject({
+        cause: expect.any(Error),
+        extensions: { capability, retryable: true },
+      });
+    });
+
+    it('still reports the provider outage when the failure ledger write itself fails', async () => {
+      const { identityProvider, repository, service } = fixture();
+      repository.prepareProviderOperation.mockResolvedValue({
+        status: 'ok',
+        value: { attempt: 1, execute: true, operationId: 'operation-9' },
+      });
+      identityProvider.linkIdentity.mockRejectedValue(new Error('provider unavailable'));
+      repository.failProviderOperation.mockRejectedValue(new Error('ledger unavailable'));
+
+      await expect(service.linkOneId(owner, 'oneid-key-0001')).rejects.toBeInstanceOf(
+        MarketplaceProviderUnavailableException,
+      );
+    });
+
+    it('turns a refused provider operation record into the matching client error', async () => {
+      const { identityProvider, repository, service } = fixture();
+      repository.prepareProviderOperation.mockResolvedValue({ status: 'not_found' });
+
+      await expect(service.linkOneId(owner, 'oneid-key-0001')).rejects.toBeInstanceOf(ResourceNotFoundException);
+      expect(identityProvider.linkIdentity).not.toHaveBeenCalled();
+    });
   });
 });

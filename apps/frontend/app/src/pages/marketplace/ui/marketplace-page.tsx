@@ -6,16 +6,13 @@ import {
   isApiClientError,
   throwOnOpenApiErrorData,
   useUserApiClient,
-  type AiConsultationViewDto,
   type BuyerRequestViewDto,
   type CartViewDto,
-  type ContractDeliveryQuoteDto,
   type ContractViewDto,
-  type CreateRequestDto,
+  type MarketplaceAiConsultationDto,
+  type MarketplaceReviewDto,
   type OfferViewDto,
   type ProductViewDto,
-  type RequestOfferDto,
-  type ReviewViewDto,
 } from '@app/frontend-api-client';
 import { LanguageSwitcher } from '../../../shared/ui';
 import { useMarketplaceData, type Resource } from '../model/use-marketplace-data';
@@ -34,12 +31,16 @@ import {
   MarketplaceFavorites,
   MarketplaceHome,
   MarketplaceProductDetail,
+  MarketplaceSellerStorefront,
   MarketplaceSkeleton,
 } from './marketplace-discovery';
 import { MarketplaceIcon } from './marketplace-icon';
 import {
   type MarketplaceNavigate,
+  type MarketplaceDeliveryQuoteDraft,
   type MarketplaceNotice,
+  type MarketplaceOfferDraft,
+  type MarketplaceRequestDraft,
   type MarketplaceTranslate,
   type MarketplaceView,
 } from './marketplace-ui';
@@ -51,6 +52,7 @@ export interface MarketplacePageProps {
   locationSearch?: string;
   navigate?: MarketplaceNavigate;
   productId?: string;
+  sellerId?: string;
   view?: MarketplaceView;
 }
 
@@ -82,6 +84,7 @@ export const MarketplacePage = observer(function MarketplacePage({
   locationSearch = '',
   navigate = defaultNavigate,
   productId,
+  sellerId,
   view = 'home',
 }: Readonly<MarketplacePageProps>) {
   const { locale, t } = useI18n();
@@ -95,7 +98,13 @@ export const MarketplacePage = observer(function MarketplacePage({
   const [pendingAction, setPendingAction] = useState<string>();
   const [search, setSearch] = useState('');
   const [confirmation, setConfirmation] = useState<Confirmation>();
-  const [reviews, setReviews] = useState<Resource<ReviewViewDto[]>>({ data: [], status: 'idle' });
+  const [reviews, setReviews] = useState<Resource<MarketplaceReviewDto[]>>({ data: [], status: 'idle' });
+  /**
+   * The key each in-flight command was issued under, kept until it is answered.
+   * Pressing the same button again after a timeout has to reach the API as the
+   * same command, or a lost response turns one basket line into two.
+   */
+  const commandKeysRef = useRef(new Map<string, { actionKey: string; idempotencyKey: string }>());
   const noticeTimer = useRef<ReturnType<typeof globalThis.setTimeout> | undefined>(undefined);
   const closeConfirmation = useCallback(() => {
     setConfirmation(undefined);
@@ -137,7 +146,7 @@ export const MarketplacePage = observer(function MarketplacePage({
     // nobody decides to register in order to find out whether a seller is any good.
     let active = true;
     setReviews((resource) => ({ ...resource, status: 'loading' }));
-    void throwOnOpenApiErrorData(api.marketplaceControllerListReviews(productId, requestOptions))
+    void throwOnOpenApiErrorData(api.marketplacePublicControllerListReviews(productId, requestOptions))
       .then((response) => {
         if (active) {
           setReviews({ data: response.items, status: response.items.length > 0 ? 'ready' : 'empty' });
@@ -154,12 +163,21 @@ export const MarketplacePage = observer(function MarketplacePage({
   }, [api, productId, requestOptions, view]);
 
   const favoriteIds = useMemo(
-    () => new Set(data.favorites.data.map((favorite) => favorite.productId)),
+    () => new Set(data.favorites.data.map((favorite) => favorite.listing.id)),
     [data.favorites.data],
   );
   const selectedProduct = data.catalog.data.find((product) => product.id === productId);
   const selectedContract = data.contracts.data.find((contract) => contract.id === contractId);
-  const currentUserId = data.verification.data?.userId;
+  /**
+   * The organization a basket, a purchase request or an offer is issued for. Every
+   * commerce command names it, so an account with no approved organization yet is
+   * sent to verification instead of being allowed to compose a command the API
+   * would reject.
+   */
+  const buyerPartner = data.partners.data.find((partner) => partner.kind === 'buyer' && partner.status === 'approved');
+  const sellerPartner = data.partners.data.find(
+    (partner) => partner.kind === 'supplier' && partner.status === 'approved',
+  );
   const isVerified = data.verification.data?.status === 'verified';
   /** No session behind the page: writes that need one are explained, not attempted. */
   const guestOnly = data.local;
@@ -172,15 +190,18 @@ export const MarketplacePage = observer(function MarketplacePage({
     flash(translate('agritech.marketplace.demo.signInRequired'), 'info');
     return true;
   }, [guestOnly, flash, translate]);
+  /**
+   * Only a buyer who actually took delivery may rate a listing, which the API
+   * enforces and the page mirrors: the contract says which side of it this account
+   * is on, so no separate identity read is needed to work it out.
+   */
   const canReviewSelectedProduct = Boolean(
     selectedProduct &&
-    currentUserId &&
-    !reviews.data.some((review) => review.userId === currentUserId) &&
     data.contracts.data.some(
       (contract) =>
-        contract.buyerUserId === currentUserId &&
+        contract.actorParty === 'buyer' &&
         (contract.status === 'active' || contract.status === 'completed') &&
-        contract.lines.some((line) => line.productId === selectedProduct.id),
+        contract.lines.some((line) => line.sourcePublicationId === selectedProduct.id),
     ),
   );
 
@@ -205,21 +226,46 @@ export const MarketplacePage = observer(function MarketplacePage({
     [translate],
   );
 
+  /**
+   * Runs one marketplace command under an idempotency key.
+   *
+   * `commandIdentity` is what makes two presses the same command: it defaults to
+   * the pending-action key, and a caller whose intent changes between presses —
+   * a different quantity, say — passes an identity that carries that change. The
+   * key is retained while the outcome is unknown, so a retry after a dropped
+   * response is a replay rather than a second order, and released as soon as the
+   * API has answered either way.
+   */
   const runMutation = useCallback(
     async function runMarketplaceMutation<T>(
       key: string,
-      action: () => Promise<T>,
+      action: (idempotencyKey: string) => Promise<T>,
       success: string,
       after?: (result: T) => void,
+      commandIdentity = key,
     ): Promise<boolean> {
+      for (const [identity, command] of commandKeysRef.current) {
+        if (command.actionKey === key && identity !== commandIdentity) {
+          commandKeysRef.current.delete(identity);
+        }
+      }
+      const retained = commandKeysRef.current.get(commandIdentity);
+      const idempotencyKey = retained?.idempotencyKey ?? globalThis.crypto.randomUUID();
+      commandKeysRef.current.set(commandIdentity, { actionKey: key, idempotencyKey });
       setPendingAction(key);
       try {
-        const result = await action();
+        const result = await action(idempotencyKey);
+        commandKeysRef.current.delete(commandIdentity);
         flash(success);
         after?.(result);
         data.refresh();
         return true;
       } catch (error) {
+        // A 4xx is a verdict, not a lost answer: the command will never succeed
+        // under this key, so the next press has to be a new command.
+        if (isApiClientError(error) && Math.floor(error.status / 100) === 4) {
+          commandKeysRef.current.delete(commandIdentity);
+        }
         if (isApiClientError(error) && (error.status === 404 || error.status === 409)) {
           data.refresh();
         }
@@ -243,13 +289,24 @@ export const MarketplacePage = observer(function MarketplacePage({
       flash(success);
       return;
     }
+    if (!buyerPartner) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
+      return;
+    }
     void runMutation(
       `cart:${product.id}`,
-      () =>
+      (idempotencyKey) =>
         throwOnOpenApiErrorData(
-          api.marketplaceControllerAddToCart({ productId: product.id, quantity }, requestOptions),
+          api.marketplaceControllerAddToCart(
+            { actingPartnerId: buyerPartner.id, listingPublicationId: product.id, quantity },
+            idempotencyKey,
+            requestOptions,
+          ),
         ),
       success,
+      undefined,
+      `cart:${product.id}:${buyerPartner.id}:${quantity}`,
     );
   };
 
@@ -259,19 +316,22 @@ export const MarketplacePage = observer(function MarketplacePage({
       ? translate('agritech.marketplace.favorites.removed')
       : translate('agritech.marketplace.favorites.added');
     if (data.local) {
-      data.localActions.toggleFavorite(product.id);
+      data.localActions.toggleFavorite(product);
       flash(success);
       return;
     }
     void runMutation(
       `favorite:${product.id}`,
-      () =>
+      (idempotencyKey) =>
         throwOnOpenApiErrorData(
           favorite
-            ? api.marketplaceControllerRemoveFavorite(product.id, requestOptions)
-            : api.marketplaceControllerAddFavorite(product.id, requestOptions),
+            ? api.marketplaceControllerRemoveFavorite(product.id, idempotencyKey, requestOptions)
+            : api.marketplaceControllerAddFavorite(product.id, idempotencyKey, requestOptions),
         ),
       success,
+      undefined,
+      // Saving and unsaving are opposite commands, so they must never share a key.
+      `favorite:${product.id}:${favorite ? 'remove' : 'add'}`,
     );
   };
 
@@ -281,14 +341,16 @@ export const MarketplacePage = observer(function MarketplacePage({
     }
     return runMutation(
       `review:${product.id}`,
-      () =>
+      (idempotencyKey) =>
         throwOnOpenApiErrorData(
           api.marketplaceControllerAddReview(
-            product.id,
             {
+              assetReferences: [],
               ...(comment ? { comment } : {}),
+              listingPublicationId: product.id,
               rating,
             },
+            idempotencyKey,
             requestOptions,
           ),
         ),
@@ -296,6 +358,7 @@ export const MarketplacePage = observer(function MarketplacePage({
       (result) => {
         setReviews((resource) => ({ data: [result, ...resource.data], status: 'ready' }));
       },
+      `review:${product.id}:${rating}:${comment ?? ''}`,
     );
   };
 
@@ -307,13 +370,21 @@ export const MarketplacePage = observer(function MarketplacePage({
     }
     void runMutation(
       `cart-update:${productIdToUpdate}`,
-      () =>
+      (idempotencyKey) =>
         throwOnOpenApiErrorData(
           quantity <= 0
-            ? api.marketplaceControllerRemoveCartItem(cart.id, productIdToUpdate, requestOptions)
-            : api.marketplaceControllerUpdateCartItem(cart.id, productIdToUpdate, { quantity }, requestOptions),
+            ? api.marketplaceControllerRemoveCartItem(cart.id, productIdToUpdate, idempotencyKey, requestOptions)
+            : api.marketplaceControllerUpdateCartItem(
+                cart.id,
+                productIdToUpdate,
+                { quantity },
+                idempotencyKey,
+                requestOptions,
+              ),
         ),
       translate('agritech.marketplace.cart.updated'),
+      undefined,
+      `cart-update:${cart.id}:${productIdToUpdate}:${quantity}`,
     );
   };
 
@@ -332,8 +403,17 @@ export const MarketplacePage = observer(function MarketplacePage({
       onConfirm: async () => {
         await runMutation(
           `sample:${product.id}`,
-          () =>
-            throwOnOpenApiErrorData(api.marketplaceControllerRequestSample({ productId: product.id }, requestOptions)),
+          (idempotencyKey) =>
+            throwOnOpenApiErrorData(
+              api.marketplaceControllerRequestSample(
+                // Collection is the only method this dialog can promise: it already
+                // says delivery terms and any charge are agreed with the seller
+                // afterwards, so recording a paid delivery here would pre-empt them.
+                { deliveryMethod: 'pickup', listingPublicationId: product.id },
+                idempotencyKey,
+                requestOptions,
+              ),
+            ),
           translate('agritech.marketplace.samples.requested'),
         );
       },
@@ -350,10 +430,7 @@ export const MarketplacePage = observer(function MarketplacePage({
       navigate('/verification');
       return;
     }
-    const sellerName =
-      cart.items
-        .map((item) => data.catalog.data.find((product) => product.id === item.productId))
-        .find((product) => product?.supplierId === cart.sellerId)?.supplierName ?? cart.sellerId;
+    const sellerName = cart.seller.displayName;
     setConfirmation({
       confirmLabel: translate('agritech.marketplace.cart.reviewContract'),
       description: translate('agritech.marketplace.cart.checkoutConfirmation', { seller: sellerName }),
@@ -367,37 +444,69 @@ export const MarketplacePage = observer(function MarketplacePage({
         }
         await runMutation(
           `checkout:${cart.id}`,
-          () =>
-            throwOnOpenApiErrorData(api.marketplaceControllerCheckoutCart(cart.id, { deliveryTerms }, requestOptions)),
+          (idempotencyKey) =>
+            throwOnOpenApiErrorData(
+              api.marketplaceControllerCheckoutCart(cart.id, { deliveryTerms }, idempotencyKey, requestOptions),
+            ),
           translate('agritech.marketplace.contract.draftCreated'),
           (result) => {
             navigate(`/contracts/${result.contractId}`);
           },
+          `checkout:${cart.id}:${deliveryTerms}`,
         );
       },
       title: translate('agritech.marketplace.cart.checkout'),
     });
   };
 
-  const createRequest = (input: CreateRequestDto) => {
+  const createRequest = (input: MarketplaceRequestDraft) => {
     if (requiresAccount()) {
+      return;
+    }
+    if (!buyerPartner) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
       return;
     }
     void runMutation(
       'request:create',
-      () => throwOnOpenApiErrorData(api.marketplaceControllerCreateRequest(input, requestOptions)),
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerCreateRequest(
+            { ...input, actingPartnerId: buyerPartner.id },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
       translate('agritech.marketplace.orders.created'),
+      undefined,
+      `request:create:${JSON.stringify(input)}`,
     );
   };
 
-  const makeOffer = (request: BuyerRequestViewDto, input: RequestOfferDto) => {
+  const makeOffer = (request: BuyerRequestViewDto, input: MarketplaceOfferDraft) => {
     if (requiresAccount()) {
+      return;
+    }
+    if (!sellerPartner) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
       return;
     }
     void runMutation(
       `offer:${request.id}`,
-      () => throwOnOpenApiErrorData(api.marketplaceControllerMakeOffer(request.id, input, requestOptions)),
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerMakeOffer(
+            request.id,
+            { ...input, actingPartnerId: sellerPartner.id },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
       translate('agritech.marketplace.orders.offerSent'),
+      undefined,
+      `offer:${request.id}:${JSON.stringify(input)}`,
     );
   };
 
@@ -411,7 +520,10 @@ export const MarketplacePage = observer(function MarketplacePage({
       onConfirm: async () => {
         await runMutation(
           `choose:${offer.id}`,
-          () => throwOnOpenApiErrorData(api.marketplaceControllerChooseOffer(request.id, offer.id, requestOptions)),
+          (idempotencyKey) =>
+            throwOnOpenApiErrorData(
+              api.marketplaceControllerChooseOffer(request.id, offer.id, idempotencyKey, requestOptions),
+            ),
           translate('agritech.marketplace.contract.draftCreated'),
           (result) => {
             navigate(`/contracts/${result.contractId}`);
@@ -429,7 +541,8 @@ export const MarketplacePage = observer(function MarketplacePage({
       onConfirm: async () => {
         await runMutation(
           `sign:${contract.id}`,
-          () => throwOnOpenApiErrorData(api.marketplaceControllerSignContract(contract.id, requestOptions)),
+          (idempotencyKey) =>
+            throwOnOpenApiErrorData(api.marketplaceControllerSignContract(contract.id, idempotencyKey, requestOptions)),
           translate('agritech.marketplace.contract.signatureRecorded'),
         );
       },
@@ -437,19 +550,28 @@ export const MarketplacePage = observer(function MarketplacePage({
     });
   };
 
-  const quoteContractDelivery = (contract: ContractViewDto, input: ContractDeliveryQuoteDto) => {
+  const quoteContractDelivery = (contract: ContractViewDto, input: MarketplaceDeliveryQuoteDraft) => {
     void runMutation(
       `quote:${contract.id}`,
-      () =>
+      (idempotencyKey) =>
         throwOnOpenApiErrorData(
-          api.marketplaceControllerUpdateContractDeliveryQuote(contract.id, input, requestOptions),
+          api.marketplaceControllerUpdateContractDeliveryQuote(
+            contract.id,
+            { ...input, expectedRevision: contract.revision },
+            idempotencyKey,
+            requestOptions,
+          ),
         ),
       translate('agritech.marketplace.contract.deliveryQuoteSaved'),
+      undefined,
+      `quote:${contract.id}:${contract.revision}:${JSON.stringify(input)}`,
     );
   };
 
-  const askAi = (question: string, kind: AiKind): Promise<AiConsultationViewDto> =>
-    throwOnOpenApiErrorData(api.marketplaceControllerAskAi({ kind, question }, requestOptions));
+  const askAi = (question: string, kind: AiKind): Promise<MarketplaceAiConsultationDto> =>
+    throwOnOpenApiErrorData(
+      api.marketplaceControllerAskAi({ kind, question }, globalThis.crypto.randomUUID(), requestOptions),
+    );
 
   const submitSearch = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -518,6 +640,9 @@ export const MarketplacePage = observer(function MarketplacePage({
       case 'favorites':
         content = <MarketplaceFavorites {...productActions} status={data.favorites.status} />;
         break;
+      case 'seller':
+        content = <MarketplaceSellerStorefront {...productActions} sellerId={sellerId} status={data.catalog.status} />;
+        break;
       case 'cart':
         content = (
           <MarketplaceCart
@@ -578,7 +703,6 @@ export const MarketplacePage = observer(function MarketplacePage({
         content = (
           <MarketplaceContract
             contract={selectedContract}
-            currentUserId={currentUserId}
             identityStatus={data.verification.status}
             locale={locale}
             navigate={navigate}

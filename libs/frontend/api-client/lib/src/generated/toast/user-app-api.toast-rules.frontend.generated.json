@@ -4506,32 +4506,6 @@
       }
     },
     {
-      "display": "silent",
-      "id": "user-app-api:GET:/marketplace/catalog:401",
-      "match": {
-        "endpoint": "/marketplace/catalog",
-        "method": "GET",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
-        "operationId": "ProductController_list",
-        "path": "/marketplace/catalog",
-        "method": "GET",
-        "status": 401,
-        "tags": ["agritech-catalog"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Product list failed: Unauthorized.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
       "display": "toast",
       "id": "user-app-api:GET:/marketplace/catalog:404",
       "match": {
@@ -4684,32 +4658,6 @@
         "tags": ["agritech-catalog"],
         "defaultDisplay": "toast",
         "defaultMessage": "Product get By Id failed: Bad Request.",
-        "defaultSeverity": "error"
-      }
-    },
-    {
-      "display": "silent",
-      "id": "user-app-api:GET:/marketplace/catalog/{id}:401",
-      "match": {
-        "endpoint": "/marketplace/catalog/{id}",
-        "method": "GET",
-        "status": 401
-      },
-      "toast": {
-        "category": "error",
-        "messageSource": "problem",
-        "titleKey": "ui.runtime.requestFailed.title"
-      },
-      "catalog": {
-        "app": "user-app-api",
-        "errorCode": null,
-        "operationId": "ProductController_getById",
-        "path": "/marketplace/catalog/{id}",
-        "method": "GET",
-        "status": 401,
-        "tags": ["agritech-catalog"],
-        "defaultDisplay": "silent",
-        "defaultMessage": "Product get By Id failed: Unauthorized.",
         "defaultSeverity": "error"
       }
     },

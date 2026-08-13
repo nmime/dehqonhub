@@ -1,5 +1,4 @@
-// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-LIFECYCLE-020 REQ-AGRITECH-STAGE2-017
-/* eslint-disable no-await-in-loop -- table-driven cases mutate stateful mocks and must remain ordered */
+// @requirements REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-STAGE2-017 REQ-AGRITECH-LIFECYCLE-020
 import { describe, expect, it, vi } from 'vitest';
 import {
   BadRequestException,
@@ -8,110 +7,103 @@ import {
   ResourceNotFoundException,
 } from '@app/backend-common-exception';
 import {
-  maximumMarketplaceDisputeEvidenceBytes,
   marketplaceContractTemplateVersion,
-  marketplaceProviderFingerprint,
+  maximumMarketplaceDisputeEvidenceBytes,
   type MarketplaceContractArtifactSnapshot,
-  type MarketplaceContractArtifactStorageProvider,
-  type MarketplaceContractLifecycleRepository,
-  type MarketplaceDirectPaymentProvider,
-  type MarketplaceDisputeEvidenceStorageProvider,
-  type MarketplaceFactoringProvider,
-  type MarketplaceProviderOperationRepository,
-  type MarketplaceQualifiedSignatureProvider,
 } from '@app/backend-feature-agritech-shared';
-import {
-  MarketplaceContractLifecycleDomainService,
-  type MarketplaceContractProviderTimeouts,
-} from './marketplace-contract-lifecycle.domain-service';
+import { MarketplaceContractLifecycleDomainService } from './marketplace-contract-lifecycle.domain-service';
 import { MarketplaceProviderUnavailableException } from './marketplace-verification.domain-service';
 
 const buyer = { tenantId: 'buyer-tenant', userId: 'buyer-user' };
 const seller = { tenantId: 'seller-tenant', userId: 'seller-user' };
-const timestamp = new Date('2030-01-01T00:00:00.000Z');
-const lifecycle = { contractId: 'contract-1', revision: 1 };
-const artifact = { checksumSha256: 'a'.repeat(64), id: 'artifact-1', snapshotRevision: 1 };
-const evidence = { id: 'evidence-1' };
+const admin = { tenantId: 'buyer-tenant', userId: 'admin-user' };
+const contractId = '44444444-4444-4444-8444-444444444444';
+const completedAt = new Date('2026-08-10T09:00:00.000Z');
 
 const snapshot: MarketplaceContractArtifactSnapshot = {
-  amountUzs: 1_000_000,
+  amountUzs: 40_800_000,
   buyer: {
-    legalName: 'Buyer LLC',
-    partnerId: 'buyer-partner',
-    region: 'Samarkand',
+    legalName: 'Bahor Savdo MChJ',
+    partnerId: '22222222-2222-4222-8222-222222222222',
+    region: 'Samarqand',
     tenantId: buyer.tenantId,
     userId: buyer.userId,
   },
-  contractCreatedAt: timestamp.toISOString(),
-  contractId: 'contract-1',
-  delivery: { terms: 'pickup' },
+  contractCreatedAt: '2026-08-10T08:00:00.000Z',
+  contractId,
+  delivery: { days: 8, note: 'Samarqand warehouse', priceUzs: 800_000, terms: 'seller_delivery' },
   lines: [
     {
-      lineTotalUzs: 1_000_000,
-      name: 'Corn seed',
-      quantity: 1,
-      sourceId: 'product-1',
+      lineTotalUzs: 40_000_000,
+      name: 'Corn seed, F1 hybrid',
+      quantity: 10,
+      sourceId: '11111111-1111-4111-8111-111111111111',
       sourceKind: 'product',
-      sourcePublicationId: 'listing-1',
-      sourceRevision: 1,
-      unit: 't',
-      unitPriceUzs: 1_000_000,
+      sourcePublicationId: '33333333-3333-4333-8333-333333333333',
+      sourceRevision: 3,
+      unit: 'ton',
+      unitPriceUzs: 4_000_000,
     },
   ],
   seller: {
-    legalName: 'Seller LLC',
-    partnerId: 'seller-partner',
-    region: 'Fergana',
+    legalName: 'Zamin Agro MChJ',
+    partnerId: '55555555-5555-4555-8555-555555555555',
+    region: 'Samarqand',
     tenantId: seller.tenantId,
     userId: seller.userId,
   },
-  settlementKind: 'direct_payment',
+  settlementKind: 'factoring',
   snapshotRevision: 1,
-  subject: 'Corn seed',
+  subject: 'Corn seed, 10 tons',
   templateVersion: marketplaceContractTemplateVersion,
 };
 
+const artifact = { checksumSha256: 'a'.repeat(64), id: 'artifact-1', snapshotRevision: 1 };
+const lifecycle = { contractId, status: 'signed' };
 const ok = <T>(value: T) => ({ status: 'ok' as const, value });
 
-type ProviderMode = 'disabled' | 'mock' | 'live';
+const pdfMagic = () => Uint8Array.from([...Buffer.from('%PDF-'), 0x0a]);
+const jpegMagic = () => Uint8Array.from([0xff, 0xd8, 0xff, 0xe0]);
+const pngMagic = () => Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
 
-function fixture(
-  input: {
-    artifactMode?: ProviderMode;
-    directPaymentMode?: ProviderMode;
-    evidenceMode?: ProviderMode;
-    factoringMode?: ProviderMode;
-    signatureMode?: ProviderMode;
-    timeouts?: MarketplaceContractProviderTimeouts;
-  } = {},
-) {
+/** Every provider answers with the safe receipt shape the ledger persists. */
+const providerResult = {
+  completedAt,
+  outcome: 'stored' as const,
+  providerEventId: 'event-1',
+  providerMode: 'mock' as const,
+  providerName: 'mock-provider',
+  providerReference: 'reference-1',
+  safeReceipt: { reference: 'reference-1' },
+};
+
+function fixture(overrides: { mode?: 'mock' | 'live' | 'disabled' } = {}) {
+  const mode = overrides.mode ?? 'mock';
   const lifecycleRepository = {
-    activateCommissionRatePolicy: vi.fn().mockResolvedValue(ok({ version: 'v1' })),
+    activateCommissionRatePolicy: vi.fn().mockResolvedValue(ok({ version: 'v2' })),
     completeArtifact: vi.fn().mockResolvedValue(ok(artifact)),
-    completeDisputeEvidence: vi.fn().mockResolvedValue(ok(evidence)),
-    completeSettlementProviderCommand: vi.fn().mockResolvedValue(ok(lifecycle)),
+    completeDisputeEvidence: vi.fn().mockResolvedValue(ok({ id: 'evidence-1' })),
     completeSignature: vi.fn().mockResolvedValue(ok(lifecycle)),
-    downloadArtifact: vi.fn().mockResolvedValue(ok({ artifact, content: Uint8Array.from([1]) })),
+    completeSettlementProviderCommand: vi.fn().mockResolvedValue(ok(lifecycle)),
+    downloadArtifact: vi.fn().mockResolvedValue(ok({ content: pdfMagic() })),
     findArtifact: vi.fn().mockResolvedValue(ok(artifact)),
     getLifecycle: vi.fn().mockResolvedValue(ok(lifecycle)),
-    getLifecycleForAdmin: vi.fn().mockResolvedValue(ok(lifecycle)),
-    listCommissionRatePolicies: vi.fn().mockResolvedValue([]),
+    listCommissionRatePolicies: vi.fn().mockResolvedValue([{ version: 'v1' }]),
     openDispute: vi.fn().mockResolvedValue(ok(lifecycle)),
-    prepareArtifact: vi
-      .fn()
-      .mockResolvedValue(ok({ snapshot, snapshotFingerprint: marketplaceProviderFingerprint(snapshot) })),
+    prepareArtifact: vi.fn().mockResolvedValue(ok({ snapshot, snapshotFingerprint: 'snapshot-fingerprint' })),
     prepareDisputeEvidence: vi
       .fn()
-      .mockResolvedValue(ok({ disputeId: 'dispute-1', disputeRevision: 2, party: 'buyer' as const })),
+      .mockResolvedValue(ok({ disputeId: 'dispute-1', disputeRevision: 2, party: 'buyer' })),
     prepareSettlementProviderCommand: vi.fn().mockResolvedValue(
       ok({
-        amountUzs: 1_000_000,
-        expectedRevision: 1,
-        party: 'buyer' as const,
+        amountUzs: 40_800_000,
+        command: 'confirm_buyer_payment',
+        expectedRevision: 3,
+        party: 'buyer',
         settlement: { kind: 'direct_payment' },
       }),
     ),
-    prepareSignature: vi.fn().mockResolvedValue(ok({ artifact, party: 'buyer' as const })),
+    prepareSignature: vi.fn().mockResolvedValue(ok({ artifact, party: 'buyer', settlement: { kind: 'factoring' } })),
     recordFactoringConsent: vi.fn().mockResolvedValue(ok(lifecycle)),
     resolveDispute: vi.fn().mockResolvedValue(ok(lifecycle)),
     transitionFulfillment: vi.fn().mockResolvedValue(ok(lifecycle)),
@@ -121,80 +113,18 @@ function fixture(
     failProviderOperation: vi.fn().mockResolvedValue(ok(undefined)),
     prepareProviderOperation: vi.fn().mockResolvedValue(ok({ attempt: 1, execute: true, operationId: 'operation-1' })),
   };
-  const artifactStorage = {
-    mode: input.artifactMode ?? 'mock',
-    name: 'artifact-provider',
-    storeContractArtifact: vi.fn().mockResolvedValue({
-      completedAt: timestamp,
-      providerMode: 'mock',
-      providerName: 'artifact-provider',
-      providerReference: 'artifact-reference',
-      safeReceipt: { stored: true },
-      storageReference: 'storage-reference',
-    }),
-  };
-  const qualifiedSignature = {
-    mode: input.signatureMode ?? 'mock',
-    name: 'signature-provider',
-    qualifyContractSignature: vi.fn().mockResolvedValue({
-      completedAt: timestamp,
-      providerMode: 'mock',
-      providerName: 'signature-provider',
-      providerReference: 'signature-reference',
-      safeReceipt: { signed: true },
-    }),
-  };
-  const directPayment = {
-    mode: input.directPaymentMode ?? 'mock',
-    name: 'payment-provider',
-    recordDirectPayment: vi.fn().mockResolvedValue({
-      completedAt: timestamp,
-      outcome: 'confirm_buyer_payment',
-      providerEventId: 'payment-event',
-      providerMode: 'mock',
-      providerName: 'payment-provider',
-      providerReference: 'payment-reference',
-      safeReceipt: { paid: true },
-    }),
-  };
-  const factoring = {
-    mode: input.factoringMode ?? 'mock',
-    name: 'factoring-provider',
-    recordFactoring: vi.fn().mockResolvedValue({
-      completedAt: timestamp,
-      outcome: 'approved',
-      providerEventId: 'factoring-event',
-      providerMode: 'mock',
-      providerName: 'factoring-provider',
-      providerReference: 'factoring-reference',
-      reconciliationReason: 'manual_review',
-      safeReceipt: { approved: true },
-    }),
-  };
-  const disputeEvidenceStorage = {
-    mode: input.evidenceMode ?? 'mock',
-    name: 'evidence-provider',
-    storeDisputeEvidence: vi.fn().mockResolvedValue({
-      completedAt: timestamp,
-      providerMode: 'mock',
-      providerName: 'evidence-provider',
-      providerReference: 'evidence-reference',
-      safeReceipt: { stored: true },
-      storageReference: 'evidence-storage-reference',
-    }),
-  };
-  const args = [
-    lifecycleRepository as unknown as MarketplaceContractLifecycleRepository,
-    providerOperations as unknown as MarketplaceProviderOperationRepository,
-    artifactStorage as unknown as MarketplaceContractArtifactStorageProvider,
-    qualifiedSignature as unknown as MarketplaceQualifiedSignatureProvider,
-    directPayment as unknown as MarketplaceDirectPaymentProvider,
-    factoring as unknown as MarketplaceFactoringProvider,
-    disputeEvidenceStorage as unknown as MarketplaceDisputeEvidenceStorageProvider,
-  ] as const;
-  const service = input.timeouts
-    ? new MarketplaceContractLifecycleDomainService(...args, input.timeouts)
-    : new MarketplaceContractLifecycleDomainService(...args);
+  const artifactStorage = { mode, name: 'mock-artifact-storage', storeContractArtifact: vi.fn() };
+  const qualifiedSignature = { mode, name: 'mock-signature', qualifyContractSignature: vi.fn() };
+  const directPayment = { mode, name: 'mock-payment', recordDirectPayment: vi.fn() };
+  const factoring = { mode, name: 'mock-factoring', recordFactoring: vi.fn() };
+  const disputeEvidenceStorage = { mode, name: 'mock-evidence-storage', storeDisputeEvidence: vi.fn() };
+
+  artifactStorage.storeContractArtifact.mockResolvedValue(providerResult);
+  qualifiedSignature.qualifyContractSignature.mockResolvedValue({ ...providerResult, outcome: 'signature_recorded' });
+  directPayment.recordDirectPayment.mockResolvedValue({ ...providerResult, outcome: 'payment_confirmed' });
+  factoring.recordFactoring.mockResolvedValue({ ...providerResult, outcome: 'decision_requested' });
+  disputeEvidenceStorage.storeDisputeEvidence.mockResolvedValue(providerResult);
+
   return {
     artifactStorage,
     directPayment,
@@ -203,404 +133,476 @@ function fixture(
     lifecycleRepository,
     providerOperations,
     qualifiedSignature,
-    service,
+    service: new MarketplaceContractLifecycleDomainService(
+      lifecycleRepository as never,
+      providerOperations as never,
+      artifactStorage as never,
+      qualifiedSignature as never,
+      directPayment as never,
+      factoring as never,
+      disputeEvidenceStorage as never,
+      {
+        artifactStorageTimeoutMs: 50,
+        directPaymentTimeoutMs: 50,
+        disputeEvidenceStorageTimeoutMs: 50,
+        factoringTimeoutMs: 50,
+        qualifiedSignatureTimeoutMs: 50,
+      },
+    ),
   };
 }
 
-describe('MarketplaceContractLifecycleDomainService', () => {
-  it('covers the complete provider, lifecycle, evidence, idempotency, timeout, and safe failure boundary', async () => {
-    const base = fixture();
-    await expect(
-      base.service.createArtifact(buyer, 'contract-1', 'direct_payment', 'artifact-create-key'),
-    ).resolves.toEqual(artifact);
-    expect(base.artifactStorage.storeContractArtifact).toHaveBeenCalledWith(
-      expect.objectContaining({ contractId: 'contract-1', content: expect.any(Uint8Array) }),
-    );
-    await expect(base.service.sign(buyer, 'contract-1', 'signature-create-key')).resolves.toEqual(lifecycle);
-    await expect(base.service.consentFactoring(buyer, 'contract-1', 'factoring-consent-key')).resolves.toEqual(
-      lifecycle,
-    );
-    await expect(
-      base.service.recordSettlementCommand(buyer, 'contract-1', 'confirm_buyer_payment', 'payment-command-key'),
-    ).resolves.toEqual(lifecycle);
-    await expect(
-      base.service.transitionFulfillment(buyer, 'contract-1', 'start', 'fulfillment-command-key'),
-    ).resolves.toEqual(lifecycle);
-    await expect(base.service.openDispute(buyer, 'contract-1', 'quality_issue', 'dispute-open-key')).resolves.toEqual(
-      lifecycle,
-    );
-    await expect(
-      base.service.storeDisputeEvidence(
-        buyer,
-        'contract-1',
-        {
-          content: Uint8Array.from(Buffer.from('%PDF-proof')),
-          fileName: ' proof.pdf ',
-          mediaType: 'application/pdf',
-        },
-        'evidence-store-key',
-      ),
-    ).resolves.toEqual(evidence);
-    await expect(
-      base.service.resolveDispute(
-        buyer,
-        'contract-1',
-        'dismissed',
-        ['evidence-z', 'evidence-a'],
-        2,
-        ' accepted ',
-        'dispute-resolve-key',
-      ),
-    ).resolves.toEqual(lifecycle);
-    await expect(base.service.listCommissionRatePolicies()).resolves.toEqual([]);
-    await expect(
-      base.service.activateCommissionRatePolicy(
-        buyer,
-        'v1',
-        { produce: 100, product: 200, request: 300 },
-        'commission-policy-key',
-      ),
-    ).resolves.toMatchObject({ version: 'v1' });
-    await expect(base.service.getLifecycle(buyer, 'contract-1')).resolves.toEqual(lifecycle);
-    await expect(base.service.getLifecycleForAdmin(buyer.tenantId, 'contract-1')).resolves.toEqual(lifecycle);
-    expect(base.lifecycleRepository.getLifecycleForAdmin).toHaveBeenCalledWith(buyer.tenantId, 'contract-1');
-    await expect(base.service.getArtifact(buyer, 'contract-1')).resolves.toEqual(artifact);
-    await expect(base.service.downloadArtifact(buyer, 'contract-1')).resolves.toMatchObject({ artifact });
+describe('MarketplaceContractLifecycleDomainService artifacts', () => {
+  it('renders the snapshot, files the provider operation, and returns the completed artifact', async () => {
+    const { artifactStorage, lifecycleRepository, providerOperations, service } = fixture();
 
-    const replayArtifact = fixture();
-    replayArtifact.lifecycleRepository.prepareArtifact.mockResolvedValueOnce(
-      ok({ existingArtifact: artifact, snapshot, snapshotFingerprint: 'f'.repeat(64) }),
-    );
-    await expect(
-      replayArtifact.service.createArtifact(buyer, 'contract-1', 'direct_payment', 'artifact-replay-key'),
-    ).resolves.toEqual(artifact);
-    expect(replayArtifact.providerOperations.prepareProviderOperation).not.toHaveBeenCalled();
+    await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).resolves.toBe(artifact);
 
-    const noExecuteArtifact = fixture();
-    noExecuteArtifact.providerOperations.prepareProviderOperation.mockResolvedValueOnce(
-      ok({ attempt: 1, execute: false, operationId: 'artifact-replay-operation' }),
+    expect(lifecycleRepository.prepareArtifact).toHaveBeenCalledWith(
+      buyer,
+      contractId,
+      'factoring',
+      'artifact-key-1',
+      expect.any(String),
     );
-    await noExecuteArtifact.service.createArtifact(seller, 'contract-1', 'direct_payment', 'artifact-no-execute-key');
-    expect(noExecuteArtifact.artifactStorage.storeContractArtifact).not.toHaveBeenCalled();
-    expect(noExecuteArtifact.providerOperations.prepareProviderOperation).toHaveBeenCalledWith(
+    expect(providerOperations.prepareProviderOperation).toHaveBeenCalledWith(
+      buyer,
+      expect.objectContaining({
+        actorType: 'contract_buyer',
+        capability: 'contract_artifact_storage',
+        idempotencyKey: 'artifact-key-1',
+        resourceRevision: 1,
+      }),
+    );
+    const stored = artifactStorage.storeContractArtifact.mock.calls[0]?.[0];
+    expect(stored).toMatchObject({ contractId, operationAttempt: 1, snapshotRevision: 1 });
+    expect(Buffer.from(stored.content.subarray(0, 5)).toString('ascii')).toBe('%PDF-');
+    expect(providerOperations.completeProviderOperation).toHaveBeenCalledWith(
+      buyer,
+      'operation-1',
+      1,
+      expect.objectContaining({
+        resultDescriptor: expect.objectContaining({ outcome: 'stored', resourceId: contractId }),
+      }),
+    );
+  });
+
+  it('returns an already-stored artifact without rendering or calling the provider again', async () => {
+    const { artifactStorage, lifecycleRepository, providerOperations, service } = fixture();
+    lifecycleRepository.prepareArtifact.mockResolvedValue(
+      ok({ existingArtifact: artifact, snapshot, snapshotFingerprint: 'snapshot-fingerprint' }),
+    );
+
+    await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).resolves.toBe(artifact);
+    expect(providerOperations.prepareProviderOperation).not.toHaveBeenCalled();
+    expect(artifactStorage.storeContractArtifact).not.toHaveBeenCalled();
+  });
+
+  it('skips the provider call when the ledger already holds a succeeded attempt', async () => {
+    const { artifactStorage, providerOperations, service } = fixture();
+    providerOperations.prepareProviderOperation.mockResolvedValue(
+      ok({ attempt: 2, execute: false, operationId: 'operation-1' }),
+    );
+
+    await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).resolves.toBe(artifact);
+    expect(artifactStorage.storeContractArtifact).not.toHaveBeenCalled();
+    expect(providerOperations.completeProviderOperation).not.toHaveBeenCalled();
+  });
+
+  it('names the seller as the acting party and refuses an account that is neither', async () => {
+    const asSeller = fixture();
+    await asSeller.service.createArtifact(seller, contractId, 'factoring', 'artifact-key-1');
+    expect(asSeller.providerOperations.prepareProviderOperation).toHaveBeenCalledWith(
       seller,
       expect.objectContaining({ actorType: 'contract_seller' }),
     );
 
-    const existingSignature = fixture();
-    existingSignature.lifecycleRepository.prepareSignature.mockResolvedValueOnce(
-      ok({ artifact, existingSignature: { party: 'buyer' }, party: 'buyer' }),
-    );
-    await expect(existingSignature.service.sign(buyer, 'contract-1', 'signature-replay-key')).resolves.toEqual(
-      lifecycle,
-    );
-    expect(existingSignature.qualifiedSignature.qualifyContractSignature).not.toHaveBeenCalled();
+    const asStranger = fixture();
+    await expect(
+      asStranger.service.createArtifact({ tenantId: 'other', userId: 'other' }, contractId, 'factoring', 'key'),
+    ).rejects.toThrow(ForbiddenException);
+  });
 
-    const sellerSignature = fixture();
-    sellerSignature.lifecycleRepository.prepareSignature.mockResolvedValueOnce(ok({ artifact, party: 'seller' }));
-    sellerSignature.providerOperations.prepareProviderOperation.mockResolvedValueOnce(
-      ok({ attempt: 1, execute: false, operationId: 'signature-replay-operation' }),
+  it('refuses to start when the artifact storage capability is switched off', async () => {
+    const { lifecycleRepository, service } = fixture({ mode: 'disabled' });
+
+    await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).rejects.toThrow(
+      MarketplaceProviderUnavailableException,
     );
-    await sellerSignature.service.sign(seller, 'contract-1', 'signature-seller-key');
-    expect(sellerSignature.providerOperations.prepareProviderOperation).toHaveBeenCalledWith(
+    expect(lifecycleRepository.prepareArtifact).not.toHaveBeenCalled();
+  });
+});
+
+describe('MarketplaceContractLifecycleDomainService signatures and settlement', () => {
+  it('qualifies a signature and completes it against the recorded operation', async () => {
+    const { qualifiedSignature, providerOperations, service } = fixture();
+
+    await expect(service.sign(buyer, contractId, 'sign-key-1')).resolves.toBe(lifecycle);
+    expect(qualifiedSignature.qualifyContractSignature).toHaveBeenCalledWith(
+      expect.objectContaining({ artifactChecksum: artifact.checksumSha256, contractId, party: 'buyer' }),
+    );
+    expect(providerOperations.prepareProviderOperation).toHaveBeenCalledWith(
+      buyer,
+      expect.objectContaining({ actorType: 'contract_buyer', capability: 'qualified_signature' }),
+    );
+  });
+
+  it('reads back the lifecycle instead of signing twice', async () => {
+    const { lifecycleRepository, qualifiedSignature, service } = fixture();
+    lifecycleRepository.prepareSignature.mockResolvedValue(
+      ok({ artifact, existingSignature: { id: 'signature-1' }, party: 'buyer', settlement: { kind: 'factoring' } }),
+    );
+
+    await expect(service.sign(buyer, contractId, 'sign-key-1')).resolves.toBe(lifecycle);
+    expect(lifecycleRepository.getLifecycle).toHaveBeenCalledWith(buyer, contractId);
+    expect(qualifiedSignature.qualifyContractSignature).not.toHaveBeenCalled();
+  });
+
+  it('files the seller side of a signature against the seller actor type', async () => {
+    const { lifecycleRepository, providerOperations, service } = fixture();
+    lifecycleRepository.prepareSignature.mockResolvedValue(
+      ok({ artifact, party: 'seller', settlement: { kind: 'direct_payment' } }),
+    );
+
+    await service.sign(seller, contractId, 'sign-key-2');
+    expect(providerOperations.prepareProviderOperation).toHaveBeenCalledWith(
       seller,
       expect.objectContaining({ actorType: 'contract_seller' }),
     );
+  });
 
-    const factoringCommand = fixture();
-    factoringCommand.lifecycleRepository.prepareSettlementProviderCommand.mockResolvedValueOnce(
-      ok({ amountUzs: 1_000_000, expectedRevision: 2, party: 'seller', settlement: { kind: 'factoring' } }),
+  it('routes a direct-payment command to the payment provider', async () => {
+    const { directPayment, factoring, providerOperations, service } = fixture();
+
+    await expect(
+      service.recordSettlementCommand(buyer, contractId, 'confirm_buyer_payment', 'settle-key-1'),
+    ).resolves.toBe(lifecycle);
+    expect(directPayment.recordDirectPayment).toHaveBeenCalledWith(
+      expect.objectContaining({ amountUzs: 40_800_000, command: 'confirm_buyer_payment', party: 'buyer' }),
     );
-    await factoringCommand.service.recordSettlementCommand(
-      seller,
-      'contract-1',
-      'request_decision',
-      'factoring-command-key',
+    expect(factoring.recordFactoring).not.toHaveBeenCalled();
+    expect(providerOperations.prepareProviderOperation).toHaveBeenCalledWith(
+      buyer,
+      expect.objectContaining({ actorType: 'contract_buyer', capability: 'direct_payment' }),
     );
-    expect(factoringCommand.factoring.recordFactoring).toHaveBeenCalled();
-    expect(factoringCommand.providerOperations.prepareProviderOperation).toHaveBeenCalledWith(
+  });
+
+  it('routes a factoring command to the factoring provider and carries a reconciliation reason through', async () => {
+    const { directPayment, factoring, lifecycleRepository, providerOperations, service } = fixture();
+    lifecycleRepository.prepareSettlementProviderCommand.mockResolvedValue(
+      ok({
+        amountUzs: 40_800_000,
+        command: 'request_decision',
+        expectedRevision: 4,
+        party: 'seller',
+        settlement: { kind: 'factoring' },
+      }),
+    );
+    factoring.recordFactoring.mockResolvedValue({
+      ...providerResult,
+      outcome: 'decision_requested',
+      reconciliationReason: 'provider_outcome_unknown',
+    });
+
+    await expect(service.recordSettlementCommand(seller, contractId, 'request_decision', 'settle-key-2')).resolves.toBe(
+      lifecycle,
+    );
+    expect(factoring.recordFactoring).toHaveBeenCalledWith(
+      expect.objectContaining({ command: 'request_decision', party: 'seller' }),
+    );
+    expect(directPayment.recordDirectPayment).not.toHaveBeenCalled();
+    expect(providerOperations.prepareProviderOperation).toHaveBeenCalledWith(
       seller,
       expect.objectContaining({ actorType: 'contract_seller', capability: 'factoring' }),
     );
-
-    const noExecuteSettlement = fixture();
-    noExecuteSettlement.providerOperations.prepareProviderOperation.mockResolvedValueOnce(
-      ok({ attempt: 1, execute: false, operationId: 'settlement-replay-operation' }),
-    );
-    await noExecuteSettlement.service.recordSettlementCommand(
-      buyer,
-      'contract-1',
-      'confirm_buyer_payment',
-      'settlement-no-execute-key',
-    );
-    expect(noExecuteSettlement.directPayment.recordDirectPayment).not.toHaveBeenCalled();
-
-    const noReconciliationReason = fixture();
-    noReconciliationReason.directPayment.recordDirectPayment.mockResolvedValueOnce({
-      completedAt: timestamp,
-      outcome: 'confirm_seller_receipt',
-      providerMode: 'mock',
-      providerName: 'payment-provider',
-      providerReference: 'payment-reference',
-      safeReceipt: {},
-    });
-    await noReconciliationReason.service.recordSettlementCommand(
-      buyer,
-      'contract-1',
-      'confirm_seller_receipt',
-      'settlement-no-reason-key',
-    );
-
-    const sellerEvidence = fixture();
-    sellerEvidence.lifecycleRepository.prepareDisputeEvidence.mockResolvedValueOnce(
-      ok({ disputeId: 'dispute-1', disputeRevision: 3, party: 'seller' }),
-    );
-    sellerEvidence.providerOperations.prepareProviderOperation.mockResolvedValueOnce(
-      ok({ attempt: 1, execute: false, operationId: 'evidence-replay-operation' }),
-    );
-    await sellerEvidence.service.storeDisputeEvidence(
+    // An unknown provider outcome has to survive into the ledger, otherwise the
+    // reconciliation job has nothing to look for.
+    expect(providerOperations.completeProviderOperation).toHaveBeenCalledWith(
       seller,
-      'contract-1',
-      { content: Uint8Array.from([0xff, 0xd8, 0xff]), fileName: 'proof.jpg', mediaType: 'image/jpeg' },
-      'evidence-seller-key',
+      'operation-1',
+      1,
+      expect.objectContaining({ reconciliationReason: 'provider_outcome_unknown' }),
     );
-    expect(sellerEvidence.providerOperations.prepareProviderOperation).toHaveBeenCalledWith(
-      seller,
-      expect.objectContaining({ actorType: 'contract_seller' }),
-    );
-    await base.service.storeDisputeEvidence(
-      buyer,
-      'contract-1',
-      {
-        content: Uint8Array.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-        fileName: 'proof.png',
-        mediaType: 'image/png',
-      },
-      'evidence-png-key',
+  });
+
+  it('skips the settlement provider when the ledger already holds a succeeded attempt', async () => {
+    const { directPayment, providerOperations, service } = fixture();
+    providerOperations.prepareProviderOperation.mockResolvedValue(
+      ok({ attempt: 2, execute: false, operationId: 'operation-1' }),
     );
 
-    for (const invalidEvidence of [
-      { content: new Uint8Array(), fileName: 'proof.pdf', mediaType: 'application/pdf' as const },
-      {
-        content: new Uint8Array(maximumMarketplaceDisputeEvidenceBytes + 1),
-        fileName: 'proof.pdf',
-        mediaType: 'application/pdf' as const,
-      },
-      { content: Uint8Array.from(Buffer.from('%PDF-')), fileName: ' ', mediaType: 'application/pdf' as const },
-      {
-        content: Uint8Array.from(Buffer.from('%PDF-')),
-        fileName: 'x'.repeat(201),
-        mediaType: 'application/pdf' as const,
-      },
-      {
-        content: Uint8Array.from(Buffer.from('%PDF-')),
-        fileName: 'bad/name.pdf',
-        mediaType: 'application/pdf' as const,
-      },
-      {
-        content: Uint8Array.from(Buffer.from('%PDF-')),
-        fileName: 'bad\\name.pdf',
-        mediaType: 'application/pdf' as const,
-      },
-      {
-        content: Uint8Array.from(Buffer.from('%PDF-')),
-        fileName: 'bad\u0001name.pdf',
-        mediaType: 'application/pdf' as const,
-      },
-      {
-        content: Uint8Array.from(Buffer.from('%PDF-')),
-        fileName: 'bad\u007fname.pdf',
-        mediaType: 'application/pdf' as const,
-      },
-      {
-        content: Uint8Array.from(Buffer.from('%PDF-')),
-        fileName: 'bad\u202aname.pdf',
-        mediaType: 'application/pdf' as const,
-      },
-      {
-        content: Uint8Array.from(Buffer.from('%PDF-')),
-        fileName: 'bad\u2066name.pdf',
-        mediaType: 'application/pdf' as const,
-      },
-      { content: Uint8Array.from(Buffer.from('wrong')), fileName: 'proof.pdf', mediaType: 'application/pdf' as const },
-      { content: Uint8Array.from([0x00, 0xd8, 0xff]), fileName: 'proof.jpg', mediaType: 'image/jpeg' as const },
-      { content: Uint8Array.from([0xff, 0x00, 0xff]), fileName: 'proof.jpg', mediaType: 'image/jpeg' as const },
-      { content: Uint8Array.from([0xff, 0xd8, 0x00]), fileName: 'proof.jpg', mediaType: 'image/jpeg' as const },
-      { content: Uint8Array.from([0x89]), fileName: 'proof.png', mediaType: 'image/png' as const },
-      {
-        content: Uint8Array.from([0x89, 0x50, 0x00, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]),
-        fileName: 'proof.png',
-        mediaType: 'image/png' as const,
-      },
-    ]) {
-      await expect(
-        base.service.storeDisputeEvidence(
-          buyer,
-          'contract-1',
-          invalidEvidence,
-          `invalid-evidence-${invalidEvidence.fileName.length}-key`,
-        ),
-      ).rejects.toBeInstanceOf(BadRequestException);
-    }
+    await service.recordSettlementCommand(buyer, contractId, 'confirm_buyer_payment', 'settle-key-3');
+    expect(directPayment.recordDirectPayment).not.toHaveBeenCalled();
+  });
 
-    for (const [status, ErrorType] of [
-      ['not_found', ResourceNotFoundException],
-      ['forbidden', ForbiddenException],
-      ['partner_unapproved', ForbiddenException],
-      ['conflict', ConflictException],
-      ['invalid_state', BadRequestException],
+  it('refuses a settlement command whose capability provider is switched off', async () => {
+    const { service } = fixture({ mode: 'disabled' });
+
+    await expect(
+      service.recordSettlementCommand(buyer, contractId, 'confirm_buyer_payment', 'settle-key-4'),
+    ).rejects.toThrow(MarketplaceProviderUnavailableException);
+  });
+
+  it('refuses to sign when the qualified signature provider is switched off', async () => {
+    const { lifecycleRepository, service } = fixture({ mode: 'disabled' });
+
+    await expect(service.sign(buyer, contractId, 'sign-key-3')).rejects.toThrow(MarketplaceProviderUnavailableException);
+    expect(lifecycleRepository.prepareSignature).not.toHaveBeenCalled();
+  });
+});
+
+describe('MarketplaceContractLifecycleDomainService dispute evidence', () => {
+  it('accepts a PDF, a JPEG, and a PNG whose bytes match the declared media type', async () => {
+    for (const [mediaType, content] of [
+      ['application/pdf', pdfMagic()],
+      ['image/jpeg', jpegMagic()],
+      ['image/png', pngMagic()],
     ] as const) {
-      const failed = fixture();
-      failed.lifecycleRepository.getLifecycle.mockResolvedValueOnce({ status, field: 'state' });
-      await expect(failed.service.getLifecycle(buyer, 'contract-1')).rejects.toBeInstanceOf(ErrorType);
-    }
+      const { disputeEvidenceStorage, lifecycleRepository, service } = fixture();
 
-    for (const disabledFixture of [
-      fixture({ artifactMode: 'disabled' }),
-      fixture({ signatureMode: 'disabled' }),
-      fixture({ directPaymentMode: 'disabled' }),
-      fixture({ factoringMode: 'disabled' }),
-      fixture({ evidenceMode: 'disabled' }),
-    ]) {
-      const service = disabledFixture.service;
-      if (disabledFixture.artifactStorage.mode === 'disabled') {
-        await expect(
-          service.createArtifact(buyer, 'contract-1', 'direct_payment', 'disabled-artifact-key'),
-        ).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
-      } else if (disabledFixture.qualifiedSignature.mode === 'disabled') {
-        await expect(service.sign(buyer, 'contract-1', 'disabled-signature-key')).rejects.toBeInstanceOf(
-          MarketplaceProviderUnavailableException,
-        );
-      } else if (disabledFixture.directPayment.mode === 'disabled') {
-        await expect(
-          service.recordSettlementCommand(buyer, 'contract-1', 'confirm_buyer_payment', 'disabled-payment-key'),
-        ).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
-      } else if (disabledFixture.factoring.mode === 'disabled') {
-        disabledFixture.lifecycleRepository.prepareSettlementProviderCommand.mockResolvedValueOnce(
-          ok({ amountUzs: 1, expectedRevision: 1, party: 'buyer', settlement: { kind: 'factoring' } }),
-        );
-        await expect(
-          service.recordSettlementCommand(buyer, 'contract-1', 'request_decision', 'disabled-factoring-key'),
-        ).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
-      } else {
-        await expect(
-          service.storeDisputeEvidence(
-            buyer,
-            'contract-1',
-            {
-              content: Uint8Array.from(Buffer.from('%PDF-proof')),
-              fileName: 'proof.pdf',
-              mediaType: 'application/pdf',
-            },
-            'disabled-evidence-key',
-          ),
-        ).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
-      }
-    }
-
-    const foreignActor = fixture();
-    await expect(
-      foreignActor.service.createArtifact(
-        { tenantId: buyer.tenantId, userId: 'other-user' },
-        'contract-1',
-        'direct_payment',
-        'foreign-buyer-user-key',
-      ),
-    ).rejects.toBeInstanceOf(ForbiddenException);
-    await expect(
-      foreignActor.service.createArtifact(
-        { tenantId: seller.tenantId, userId: 'other-user' },
-        'contract-1',
-        'direct_payment',
-        'foreign-seller-user-key',
-      ),
-    ).rejects.toBeInstanceOf(ForbiddenException);
-
-    for (const providerError of [
-      new BadRequestException(),
-      new ConflictException('provider'),
-      new ForbiddenException('provider'),
-      new Error('provider failed'),
-      'opaque provider failure',
-    ]) {
-      const failedProvider = fixture();
-      failedProvider.qualifiedSignature.qualifyContractSignature.mockRejectedValueOnce(providerError);
-      failedProvider.providerOperations.failProviderOperation.mockRejectedValueOnce(new Error('failure ledger failed'));
-      const result = failedProvider.service.sign(buyer, 'contract-1', `provider-error-${typeof providerError}-key`);
-      if (
-        providerError instanceof BadRequestException ||
-        providerError instanceof ConflictException ||
-        providerError instanceof ForbiddenException
-      ) {
-        await expect(result).rejects.toBe(providerError);
-      } else {
-        await expect(result).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
-      }
-    }
-
-    for (const completionError of [new Error('completion failed'), 'opaque completion failure']) {
-      const failedCompletion = fixture();
-      failedCompletion.providerOperations.completeProviderOperation.mockRejectedValueOnce(completionError);
-      failedCompletion.providerOperations.failProviderOperation.mockRejectedValueOnce(
-        new Error('failure ledger failed'),
-      );
       await expect(
-        failedCompletion.service.sign(buyer, 'contract-1', `completion-error-${typeof completionError}-key`),
-      ).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
-    }
-
-    vi.useFakeTimers();
-    try {
-      const timedOut = fixture({
-        timeouts: {
-          artifactStorageTimeoutMs: 1,
-          directPaymentTimeoutMs: 1,
-          disputeEvidenceStorageTimeoutMs: 1,
-          factoringTimeoutMs: 1,
-          qualifiedSignatureTimeoutMs: 1,
-        },
-      });
-      timedOut.qualifiedSignature.qualifyContractSignature.mockImplementation(() => new Promise(() => undefined));
-      const timeoutResult = timedOut.service.sign(buyer, 'contract-1', 'signature-timeout-key');
-      const timeoutFailure = timeoutResult.catch((error: unknown) => error);
-      await vi.advanceTimersByTimeAsync(2);
-      await expect(timeoutFailure).resolves.toBeInstanceOf(MarketplaceProviderUnavailableException);
-      expect(timedOut.providerOperations.failProviderOperation).toHaveBeenCalledWith(
+        service.storeDisputeEvidence(buyer, contractId, { content, fileName: ' proof.bin ', mediaType }, 'ev-key-1'),
+      ).resolves.toEqual({ id: 'evidence-1' });
+      expect(disputeEvidenceStorage.storeDisputeEvidence).toHaveBeenCalledWith(
+        expect.objectContaining({ disputeId: 'dispute-1', fileName: 'proof.bin', mediaType }),
+      );
+      expect(lifecycleRepository.completeDisputeEvidence).toHaveBeenCalledWith(
         buyer,
         'operation-1',
-        1,
-        'qualified_signature_timeout',
-        'provider_outcome_unknown',
+        expect.objectContaining({ byteSize: content.byteLength, fileName: 'proof.bin', mediaType }),
       );
-    } finally {
-      vi.useRealTimers();
     }
+  });
 
-    vi.stubGlobal(
-      'setTimeout',
-      vi.fn(() => undefined),
-    );
-    try {
-      const noTimerHandle = fixture();
-      await expect(noTimerHandle.service.sign(buyer, 'contract-1', 'signature-no-timer-key')).resolves.toEqual(
-        lifecycle,
-      );
-    } finally {
-      vi.unstubAllGlobals();
-    }
+  it('rejects evidence whose bytes contradict the declared media type', async () => {
+    const { service } = fixture();
 
-    const codePointAt = vi.spyOn(String.prototype, 'codePointAt').mockReturnValue(undefined);
-    try {
+    for (const [mediaType, content] of [
+      ['application/pdf', jpegMagic()],
+      ['image/jpeg', pdfMagic()],
+      ['image/png', jpegMagic()],
+      ['application/pdf', Uint8Array.from([0x25])],
+    ] as const) {
       await expect(
-        base.service.storeDisputeEvidence(
-          buyer,
-          'contract-1',
-          { content: Uint8Array.from(Buffer.from('%PDF-proof')), fileName: 'proof.pdf', mediaType: 'application/pdf' },
-          'evidence-codepoint-fallback-key',
-        ),
-      ).rejects.toBeInstanceOf(BadRequestException);
-    } finally {
-      codePointAt.mockRestore();
+        service.storeDisputeEvidence(buyer, contractId, { content, fileName: 'proof.bin', mediaType }, 'ev-key-1'),
+      ).rejects.toThrow(BadRequestException);
     }
+  });
+
+  it('rejects an empty upload, an oversized upload, and an unusable file name', async () => {
+    const { service } = fixture();
+    const evidence = (content: Uint8Array, fileName: string) => ({
+      content,
+      fileName,
+      mediaType: 'application/pdf' as const,
+    });
+    const oversized = new Uint8Array(maximumMarketplaceDisputeEvidenceBytes + 1);
+    oversized.set(pdfMagic());
+
+    for (const input of [
+      evidence(new Uint8Array(0), 'proof.pdf'),
+      evidence(oversized, 'proof.pdf'),
+      evidence(pdfMagic(), '   '),
+      evidence(pdfMagic(), `${'p'.repeat(201)}.pdf`),
+      // Path separators would let an upload escape its storage prefix, and control or
+      // bidi-override characters would let a file present itself as another type.
+      evidence(pdfMagic(), 'nested/proof.pdf'),
+      evidence(pdfMagic(), 'nested\\proof.pdf'),
+      evidence(pdfMagic(), 'proof\u0001.pdf'),
+      evidence(pdfMagic(), 'proof\u007f.pdf'),
+      evidence(pdfMagic(), 'proof\u202egnp.fdp'),
+      evidence(pdfMagic(), 'proof\u2066.pdf'),
+    ]) {
+      await expect(service.storeDisputeEvidence(buyer, contractId, input, 'ev-key-1')).rejects.toThrow(
+        BadRequestException,
+      );
+    }
+
+    // An ordinary name with spaces and non-Latin letters is not suspicious.
+    await expect(
+      service.storeDisputeEvidence(buyer, contractId, evidence(pdfMagic(), 'yuk xati — 2026.pdf'), 'ev-key-2'),
+    ).resolves.toEqual({ id: 'evidence-1' });
+  });
+
+  it('files seller-side evidence against the seller actor type', async () => {
+    const { lifecycleRepository, providerOperations, service } = fixture();
+    lifecycleRepository.prepareDisputeEvidence.mockResolvedValue(
+      ok({ disputeId: 'dispute-1', disputeRevision: 2, party: 'seller' }),
+    );
+
+    await service.storeDisputeEvidence(
+      seller,
+      contractId,
+      { content: pdfMagic(), fileName: 'proof.pdf', mediaType: 'application/pdf' },
+      'ev-key-2',
+    );
+    expect(providerOperations.prepareProviderOperation).toHaveBeenCalledWith(
+      seller,
+      expect.objectContaining({ actorType: 'contract_seller', capability: 'dispute_evidence_storage' }),
+    );
+  });
+
+  it('skips storage when the ledger already holds a succeeded attempt', async () => {
+    const { disputeEvidenceStorage, providerOperations, service } = fixture();
+    providerOperations.prepareProviderOperation.mockResolvedValue(
+      ok({ attempt: 3, execute: false, operationId: 'operation-1' }),
+    );
+
+    await service.storeDisputeEvidence(
+      buyer,
+      contractId,
+      { content: pdfMagic(), fileName: 'proof.pdf', mediaType: 'application/pdf' },
+      'ev-key-3',
+    );
+    expect(disputeEvidenceStorage.storeDisputeEvidence).not.toHaveBeenCalled();
+  });
+
+  it('refuses to start when evidence storage is switched off', async () => {
+    const { service } = fixture({ mode: 'disabled' });
+
+    await expect(
+      service.storeDisputeEvidence(
+        buyer,
+        contractId,
+        { content: pdfMagic(), fileName: 'proof.pdf', mediaType: 'application/pdf' },
+        'ev-key-4',
+      ),
+    ).rejects.toThrow(MarketplaceProviderUnavailableException);
+  });
+});
+
+describe('MarketplaceContractLifecycleDomainService provider failures', () => {
+  it('reports a provider timeout as retryable and marks the attempt outcome unknown', async () => {
+    const { artifactStorage, providerOperations, service } = fixture();
+    artifactStorage.storeContractArtifact.mockImplementation(
+      () => new Promise((resolve) => setTimeout(() => resolve(providerResult), 500)),
+    );
+
+    await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).rejects.toThrow(
+      MarketplaceProviderUnavailableException,
+    );
+    expect(providerOperations.failProviderOperation).toHaveBeenCalledWith(
+      buyer,
+      'operation-1',
+      1,
+      'contract_artifact_storage_timeout',
+      'provider_outcome_unknown',
+    );
+  });
+
+  it('records a plain provider crash without claiming the outcome is unknown', async () => {
+    const { artifactStorage, providerOperations, service } = fixture();
+    artifactStorage.storeContractArtifact.mockRejectedValue(new Error('socket hang up'));
+
+    await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).rejects.toThrow(
+      MarketplaceProviderUnavailableException,
+    );
+    expect(providerOperations.failProviderOperation).toHaveBeenCalledWith(
+      buyer,
+      'operation-1',
+      1,
+      'contract_artifact_storage_failed',
+      undefined,
+    );
+  });
+
+  it('passes a client-side provider rejection through unchanged', async () => {
+    for (const error of [
+      new BadRequestException({ meta: { field: 'content' } }),
+      new ConflictException('contract'),
+      new ForbiddenException('contract'),
+    ]) {
+      const { artifactStorage, service } = fixture();
+      artifactStorage.storeContractArtifact.mockRejectedValue(error);
+
+      await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).rejects.toBe(error);
+    }
+    // Three sequential artifact renders are compute-bound; the default 5s budget
+    // is not enough when the whole instrumented suite competes for the same cores.
   }, 30_000);
+
+  it('survives a failure ledger write that itself fails', async () => {
+    const { artifactStorage, providerOperations, service } = fixture();
+    artifactStorage.storeContractArtifact.mockRejectedValue('not an Error');
+    providerOperations.failProviderOperation.mockRejectedValue(new Error('ledger offline'));
+
+    await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).rejects.toThrow(
+      MarketplaceProviderUnavailableException,
+    );
+  });
+
+  it('demands reconciliation when the provider succeeded but the completion write did not', async () => {
+    const { providerOperations, service } = fixture();
+    providerOperations.completeProviderOperation.mockResolvedValue({ status: 'conflict' });
+
+    await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).rejects.toThrow(
+      MarketplaceProviderUnavailableException,
+    );
+    expect(providerOperations.failProviderOperation).toHaveBeenCalledWith(
+      buyer,
+      'operation-1',
+      1,
+      'contract_artifact_storage_completion_persist_failed',
+      'provider_outcome_unknown',
+    );
+  });
+
+  it('still demands reconciliation when the completion write throws a bare value', async () => {
+    const { providerOperations, service } = fixture();
+    providerOperations.completeProviderOperation.mockRejectedValue('database gone');
+    providerOperations.failProviderOperation.mockRejectedValue(new Error('ledger offline'));
+
+    await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).rejects.toThrow(
+      MarketplaceProviderUnavailableException,
+    );
+  });
+});
+
+describe('MarketplaceContractLifecycleDomainService repository delegation', () => {
+  it('forwards every command that needs no provider call', async () => {
+    const { lifecycleRepository, service } = fixture();
+
+    await expect(service.consentFactoring(buyer, contractId, 'consent-1')).resolves.toBe(lifecycle);
+    await expect(service.transitionFulfillment(seller, contractId, 'mark_shipped', 'ship-1')).resolves.toBe(lifecycle);
+    await expect(service.openDispute(buyer, contractId, 'quality', 'dispute-1')).resolves.toBe(lifecycle);
+    await expect(
+      service.resolveDispute(admin, contractId, 'dismissed', ['evidence-b', 'evidence-a'], 2, '  settled  ', 'res-1'),
+    ).resolves.toBe(lifecycle);
+    await expect(service.getLifecycle(buyer, contractId)).resolves.toBe(lifecycle);
+    await expect(service.getArtifact(buyer, contractId)).resolves.toBe(artifact);
+    await expect(service.downloadArtifact(buyer, contractId)).resolves.toMatchObject({ content: expect.anything() });
+    await expect(service.listCommissionRatePolicies()).resolves.toEqual([{ version: 'v1' }]);
+    await expect(
+      service.activateCommissionRatePolicy(admin, 'v2', { buyerRate: 0.01, sellerRate: 0.02 } as never, 'policy-1'),
+    ).resolves.toEqual({ version: 'v2' });
+
+    expect(lifecycleRepository.recordFactoringConsent).toHaveBeenCalledWith(
+      buyer,
+      contractId,
+      'consent-1',
+      expect.any(String),
+    );
+    // Evidence ids are fingerprinted in a stable order so two admins selecting the
+    // same evidence in a different order replay onto one decision.
+    const [firstFingerprint] = lifecycleRepository.resolveDispute.mock.calls[0]?.slice(-1) ?? [];
+    await service.resolveDispute(admin, contractId, 'dismissed', ['evidence-a', 'evidence-b'], 2, 'settled', 'res-1');
+    expect(lifecycleRepository.resolveDispute.mock.calls[1]?.at(-1)).toBe(firstFingerprint);
+  });
+
+  it('maps every repository refusal onto its canonical HTTP failure', async () => {
+    const cases = [
+      [{ status: 'not_found' }, ResourceNotFoundException],
+      [{ status: 'forbidden' }, ForbiddenException],
+      [{ status: 'partner_unapproved' }, ForbiddenException],
+      [{ status: 'conflict' }, ConflictException],
+      [{ status: 'invalid', field: 'command' }, BadRequestException],
+    ] as const;
+
+    for (const [result, expected] of cases) {
+      const { lifecycleRepository, service } = fixture();
+      lifecycleRepository.getLifecycle.mockResolvedValue(result);
+
+      await expect(service.getLifecycle(buyer, contractId)).rejects.toThrow(expected);
+    }
+  });
 });

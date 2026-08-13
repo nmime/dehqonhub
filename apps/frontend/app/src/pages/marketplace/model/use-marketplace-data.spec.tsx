@@ -201,10 +201,31 @@ describe('useMarketplaceData', () => {
   });
 
   it('browses as a guest on a 401 and restores the basket from this browser', async () => {
-    globalThis.localStorage.setItem('dehqonhub.guest.favorites', JSON.stringify([product.id]));
+    globalThis.localStorage.setItem(
+      'dehqonhub.guest.favorites',
+      JSON.stringify([
+        {
+          id: product.id,
+          kind: 'product',
+          sampleAvailable: true,
+          sellerId: product.supplierId,
+          sellerName: product.supplierName,
+          title: product.name,
+        },
+      ]),
+    );
     globalThis.localStorage.setItem(
       'dehqonhub.guest.carts',
-      JSON.stringify([{ productId: product.id, quantity: 2, sellerId: product.supplierId }]),
+      JSON.stringify([
+        {
+          productId: product.id,
+          quantity: 2,
+          sellerId: product.supplierId,
+          sellerName: product.supplierName,
+          sellerRegion: product.region,
+          sourceKind: 'product',
+        },
+      ]),
     );
     stubApi({ marketplaceControllerGetVerification: vi.fn(() => fail(401)) });
 
@@ -213,7 +234,9 @@ describe('useMarketplaceData', () => {
     expect(result.current.auth).toBe('signed-out');
     expect(result.current.local).toBe(true);
     expect(result.current.demo).toBe('guest');
-    expect(result.current.favorites.data).toEqual([expect.objectContaining({ productId: product.id })]);
+    expect(result.current.favorites.data).toEqual([
+      expect.objectContaining({ listing: expect.objectContaining({ id: product.id }) }),
+    ]);
     expect(result.current.carts.data).toEqual([expect.objectContaining({ id: `guest-cart-${product.supplierId}` })]);
     // The per-account reads would each 401 and bounce the visitor mid-browse.
     expect(apiState.api['marketplaceControllerListCarts']).not.toHaveBeenCalled();
@@ -228,15 +251,19 @@ describe('useMarketplaceData', () => {
     act(() => {
       result.current.localActions.addToCart(product, 2);
     });
-    expect(result.current.carts.data[0]?.items).toEqual([{ productId: product.id, quantity: 2 }]);
+    expect(result.current.carts.data[0]?.items).toEqual([
+      { listingPublicationId: product.id, quantity: 2, sourceKind: 'product' },
+    ]);
 
     act(() => {
       result.current.localActions.updateCart(product.id, 5);
     });
-    expect(result.current.carts.data[0]?.items).toEqual([{ productId: product.id, quantity: 5 }]);
+    expect(result.current.carts.data[0]?.items).toEqual([
+      { listingPublicationId: product.id, quantity: 5, sourceKind: 'product' },
+    ]);
 
     act(() => {
-      result.current.localActions.toggleFavorite(product.id);
+      result.current.localActions.toggleFavorite(product);
     });
     expect(result.current.favorites.data).toHaveLength(1);
 
@@ -315,7 +342,12 @@ describe('useMarketplaceData', () => {
     expect(result.current.offersByRequest.status).toBe('error');
     expect(result.current.requests.status).toBe('error');
     expect(result.current.samples.status).toBe('error');
-    expect(result.current.sampleUsage).toEqual({ data: { limit: 5, remaining: 5, used: 0 }, status: 'error' });
+    // A failed allowance read assumes nothing spent and nothing remaining beyond
+    // the policy default, so the period is whichever month the page is open in.
+    expect(result.current.sampleUsage).toEqual({
+      data: { limit: 5, period: expect.stringMatching(/^\d{4}-\d{2}$/u), policyVersion: 1, remaining: 5, used: 0 },
+      status: 'error',
+    });
     expect(result.current.catalog.status).toBe('ready');
   });
 

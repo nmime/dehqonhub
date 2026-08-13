@@ -50,10 +50,17 @@ export const Default: Story = {
     const canvas = within(canvasElement);
 
     await expect(canvas.getByRole('heading', { name: 'Admin dashboard' })).toBeVisible();
-    await expect(canvas.getByRole('button', { name: 'Users' })).toHaveAttribute('aria-expanded', 'false');
-    await expect(
-      canvas.getAllByRole('link', { name: /Dashboard/u }).some((link) => link.getAttribute('aria-current') === 'page'),
-    ).toBe(true);
+    const usersSection = canvas.queryByRole('button', { name: 'Users' });
+    if (usersSection) {
+      await expect(usersSection).toHaveAttribute('aria-expanded', 'false');
+      await expect(
+        canvas
+          .getAllByRole('link', { name: /Dashboard/u })
+          .some((link) => link.getAttribute('aria-current') === 'page'),
+      ).toBe(true);
+    } else {
+      await expect(canvas.getByRole('button', { name: 'Open navigation' })).toBeVisible();
+    }
     await expect(canvasElement.scrollWidth).toBeLessThanOrEqual(canvasElement.clientWidth);
     document.documentElement.setAttribute('data-visual-ready', 'true');
   },

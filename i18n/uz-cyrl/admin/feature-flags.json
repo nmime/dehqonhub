@@ -29,10 +29,5 @@
   "admin.featureFlags.error.keyInvalid": "`checkout.newflow` каби нуқталар билан ажратилган кичик ҳарфли калитдан фойдаланинг.",
   "admin.featureFlags.error.numberInvalid": "Чекли сон қийматини киритинг.",
   "admin.featureFlags.error.loadFailed": "Функция байроқларини юклаб бўлмади.",
-  "admin.featureFlags.error.saveFailed": "Функция байроғини сақлаб бўлмади.",
-  "admin.featureFlags.demo.title": "Маркетплейс намуна маълумотлари",
-  "admin.featureFlags.demo.description": "Янги ўрнатишда фойдаланувчи, буюртма, шарҳ ёки бизнес кўрсаткичларини яратмасдан чиройли намуна каталогини кўрсатади.",
-  "admin.featureFlags.demo.label": "Сунъий маркетплейс каталогини кўрсатиш",
-  "admin.featureFlags.demo.hint": "Намуна эълонлари Демо деб белгиланади; уларни сотиб олиш, намуна сўраш, тарғиб қилиш, баҳолаш ёки таҳлилда ҳисоблаш мумкин эмас.",
-  "admin.featureFlags.demo.auditDescription": "Операторнинг аудит қилинадиган байроғи орқали бошқариладиган, фақат кўриш учун сунъий маркетплейс каталоги."
+  "admin.featureFlags.error.saveFailed": "Функция байроғини сақлаб бўлмади."
 }

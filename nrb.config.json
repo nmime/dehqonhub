@@ -44,8 +44,8 @@
   },
   "options": {
     "prune": false,
-    "force": false,
+    "force": true,
     "dryRun": false,
-    "nonInteractive": true
+    "nonInteractive": false
   }
 }

@@ -1,5 +1,16 @@
-// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-LIFECYCLE-020 REQ-AGRITECH-ROUTING-015 REQ-AGRITECH-STAGE2-017
-import { Body, Controller, Get, Headers, Param, ParseUUIDPipe, Post, UseGuards } from '@nestjs/common';
+// @requirements REQ-AGRITECH-STAGE2-017
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  UseGuards,
+} from '@nestjs/common';
 import { ApiHeader, ApiParam, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
@@ -21,11 +32,7 @@ import {
 import { BadRequestException } from '@app/backend-common-exception';
 import { createOkResponse } from '@app/backend-common-response';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
-import {
-  ContractLifecycleDto,
-  MarketplaceContractLifecycleService,
-  toContractLifecycleDto,
-} from '@app/backend-feature-agritech-main';
+import { MarketplaceContractLifecycleService } from '@app/backend-feature-agritech-main';
 import { CurrentUser, RequirePermissions, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import { AdminRbacGuard } from '@app/backend-feature-admin-shared';
 import {
@@ -106,7 +113,7 @@ class ResolveContractDisputeDto {
   @IsIn(['dismissed', 'upheld_cancelled'])
   decision!: 'dismissed' | 'upheld_cancelled';
 
-  @ApiProperty({ format: 'uuid', isArray: true, maxItems: 20, minItems: 1, type: String })
+  @ApiProperty({ format: 'uuid', isArray: true, maxItems: 20, minItems: 1 })
   @IsArray()
   @ArrayMinSize(1)
   @ArrayMaxSize(20)
@@ -140,7 +147,7 @@ class ContractDisputeResolutionDto {
 @ApiExceptions(400, 401, 403, 404, 409, 500)
 @ApiSessionCookieAuth()
 @UseGuards(AdminRbacGuard)
-@Controller('admin/marketplace')
+@Controller('agritech/marketplace')
 export class MarketplaceContractLifecycleAdminController {
   constructor(private readonly lifecycle: MarketplaceContractLifecycleService) {}
 
@@ -160,15 +167,8 @@ export class MarketplaceContractLifecycleAdminController {
     });
   }
 
-  @Get('contracts/:id/lifecycle')
-  @RequirePermissions(AdminAgriTechReadPermission)
-  @ApiParam({ format: 'uuid', name: 'id' })
-  @ApiOkDataResponse(ContractLifecycleDto)
-  async getContractLifecycle(@CurrentUser() principal: AuthenticatedPrincipal, @Param('id', ParseUUIDPipe) id: string) {
-    return createOkResponse(toContractLifecycleDto(await this.lifecycle.getLifecycleForAdmin(principal.tenantId, id)));
-  }
-
   @Post('commission-policies')
+  @HttpCode(HttpStatus.OK)
   @RequirePermissions(AdminAgriTechWritePermission)
   @ApiHeader(idempotencyHeader)
   @ApiOkDataResponse(CommissionRatePolicyDto)
@@ -193,6 +193,7 @@ export class MarketplaceContractLifecycleAdminController {
   }
 
   @Post('contracts/:id/dispute-resolution')
+  @HttpCode(HttpStatus.OK)
   @RequirePermissions(AdminAgriTechApprovePermission)
   @ApiParam({ format: 'uuid', name: 'id' })
   @ApiHeader(idempotencyHeader)

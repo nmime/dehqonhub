@@ -183,8 +183,9 @@ describe('social auth and TMA UI', () => {
     await waitFor(() => {
       expect(tma.viewport.requestFullscreen).toHaveBeenCalledOnce();
     });
-    expect(tma.miniApp.setHeaderColor).toHaveBeenCalledWith('#2563eb');
-    expect(tma.miniApp.setBottomBarColor).toHaveBeenCalledWith('#0f172a');
+    expect(tma.miniApp.setBgColor).toHaveBeenCalledWith('#fbf3e3');
+    expect(tma.miniApp.setHeaderColor).toHaveBeenCalledWith('#0b7138');
+    expect(tma.miniApp.setBottomBarColor).toHaveBeenCalledWith('#203128');
     expect(tma.backButton.onClick).toHaveBeenCalledOnce();
 
     act(() => {

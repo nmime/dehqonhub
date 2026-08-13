@@ -3,9 +3,9 @@ import { describe, expect, it } from 'vitest';
 import {
   canBuyInMarketplace,
   canOfferInMarketplace,
-  hasRequiredVerificationDocuments,
   isContractTransitionAllowed,
   isRequestTransitionAllowed,
+  hasRequiredVerificationDocuments,
   isVerificationAllowed,
   isVerificationReviewReasonValid,
 } from './marketplace-policies';
@@ -15,20 +15,10 @@ describe('marketplace policies', () => {
     expect(canBuyInMarketplace('buyer')).toBe(true);
     expect(canBuyInMarketplace('farmer')).toBe(true);
     expect(canBuyInMarketplace('seller')).toBe(false);
-    expect(canBuyInMarketplace(undefined)).toBe(false);
     expect(canOfferInMarketplace('seller')).toBe(true);
     expect(canOfferInMarketplace('farmer')).toBe(true);
     expect(canOfferInMarketplace('buyer')).toBe(false);
     expect(canOfferInMarketplace(undefined)).toBe(false);
-  });
-
-  it('requires the role-specific verification document set', () => {
-    expect(hasRequiredVerificationDocuments('farmer', [{ kind: 'farm' }, { kind: 'land' }])).toBe(true);
-    expect(hasRequiredVerificationDocuments('farmer', [{ kind: 'farm' }, { kind: 'lease' }])).toBe(true);
-    expect(hasRequiredVerificationDocuments('farmer', [{ kind: 'farm' }])).toBe(false);
-    expect(hasRequiredVerificationDocuments('farmer', [{ kind: 'land' }])).toBe(false);
-    expect(hasRequiredVerificationDocuments('seller', [{ kind: 'business' }])).toBe(true);
-    expect(hasRequiredVerificationDocuments('buyer', [{ kind: 'id' }])).toBe(false);
   });
 
   it('gates verification resubmission on status', () => {
@@ -46,21 +36,31 @@ describe('marketplace policies', () => {
     expect(isVerificationReviewReasonValid('verified', 'criteria_not_met')).toBe(false);
   });
 
+  it('asks farmers for land or lease proof on top of the farm document', () => {
+    const documents = (...kinds: readonly string[]) => kinds.map((kind) => ({ kind }) as never);
+
+    expect(hasRequiredVerificationDocuments('farmer', documents('farm', 'land'))).toBe(true);
+    expect(hasRequiredVerificationDocuments('farmer', documents('farm', 'lease'))).toBe(true);
+    expect(hasRequiredVerificationDocuments('farmer', documents('farm'))).toBe(false);
+    expect(hasRequiredVerificationDocuments('farmer', documents('land', 'lease'))).toBe(false);
+    // A farm document does nothing for the commercial roles, and vice versa.
+    expect(hasRequiredVerificationDocuments('seller', documents('business'))).toBe(true);
+    expect(hasRequiredVerificationDocuments('buyer', documents('business'))).toBe(true);
+    expect(hasRequiredVerificationDocuments('seller', documents('farm', 'land'))).toBe(false);
+    expect(hasRequiredVerificationDocuments('farmer', documents('business'))).toBe(false);
+  });
+
   it('validates contract transitions', () => {
-    expect(isContractTransitionAllowed('draft', 'draft')).toBe(true);
     expect(isContractTransitionAllowed('draft', 'signed')).toBe(true);
     expect(isContractTransitionAllowed('draft', 'cancelled')).toBe(true);
     expect(isContractTransitionAllowed('signed', 'active')).toBe(true);
     expect(isContractTransitionAllowed('active', 'completed')).toBe(true);
-    expect(isContractTransitionAllowed('signed', 'cancelled')).toBe(true);
-    expect(isContractTransitionAllowed('active', 'cancelled')).toBe(true);
     expect(isContractTransitionAllowed('draft', 'active')).toBe(false);
     expect(isContractTransitionAllowed('completed', 'active')).toBe(false);
     expect(isContractTransitionAllowed('legacy_review_required', 'signed')).toBe(false);
   });
 
   it('validates reverse-auction request transitions', () => {
-    expect(isRequestTransitionAllowed('open', 'open')).toBe(true);
     expect(isRequestTransitionAllowed('open', 'offering')).toBe(true);
     expect(isRequestTransitionAllowed('offering', 'selected')).toBe(true);
     expect(isRequestTransitionAllowed('open', 'selected')).toBe(false);

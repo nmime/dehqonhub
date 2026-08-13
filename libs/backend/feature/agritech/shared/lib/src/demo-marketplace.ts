@@ -1,4 +1,5 @@
-import type { BuyerRequest, Review } from './marketplace.types';
+import type { MarketplaceReviewPage, MarketplaceReviewView } from './marketplace-engagement';
+import type { BuyerRequest } from './marketplace.types';
 
 /**
  * Demo marketplace activity, served by the API alongside the demo catalog.
@@ -7,8 +8,8 @@ import type { BuyerRequest, Review } from './marketplace.types';
  * product with no reviews renders an empty ratings block — both surfaces then
  * look broken rather than new. These fixtures stand in for that tenant so the
  * feed and the ratings can be read end to end, and they are delivered through
- * the same `marketplace/requests` and `marketplace/reviews/:productId` reads as
- * real activity.
+ * the same `marketplace/requests` and public-catalog review reads as real
+ * activity.
  *
  * They are never mixed into live tenant data: each read reaches for them only
  * when the tenant's own rows come back empty. Free text stays single-language on
@@ -31,6 +32,7 @@ const demoId = (group: '01' | '02', index: number): string =>
 export const DemoBuyerRequests: readonly BuyerRequest[] = [
   {
     budgetUzs: 96_000_000,
+    buyerPartnerId: 'demo-buyer-partner-1',
     buyerUserId: 'demo-buyer-1',
     createdAt,
     deadline: '2026-09-15',
@@ -46,6 +48,7 @@ export const DemoBuyerRequests: readonly BuyerRequest[] = [
   },
   {
     budgetUzs: 34_000_000,
+    buyerPartnerId: 'demo-buyer-partner-2',
     buyerUserId: 'demo-buyer-2',
     createdAt,
     deadline: '2026-08-30',
@@ -61,6 +64,7 @@ export const DemoBuyerRequests: readonly BuyerRequest[] = [
   },
   {
     budgetUzs: 18_500_000,
+    buyerPartnerId: 'demo-buyer-partner-1',
     buyerUserId: 'demo-buyer-1',
     createdAt,
     deadline: '2026-10-01',
@@ -76,39 +80,72 @@ export const DemoBuyerRequests: readonly BuyerRequest[] = [
   },
 ];
 
-const demoReviews: readonly Review[] = [
+/**
+ * Demo ratings, keyed by the publication a visitor is looking at. Free text is
+ * what a farmer typed, so it stays single-language; every row is marked as a
+ * verified deal because only a settled contract can produce a review here.
+ */
+const demoReviews: readonly MarketplaceReviewView[] = [
   {
+    assetReferences: [],
     comment: 'Всхожесть совпала с заявленной, посеяли 12 га — вышло ровно.',
     createdAt: new Date('2026-05-18T09:12:00.000Z'),
     id: demoId('02', 1),
-    productId: 'dec0de00-0000-4000-8000-000000000001',
+    listingPublicationId: 'dec0de00-0000-4000-8000-000000000001',
     rating: 5,
-    tenantId: 'demo-tenant',
-    userId: 'demo-farmer-7',
+    revision: 1,
+    updatedAt: new Date('2026-05-18T09:12:00.000Z'),
+    verifiedDeal: true,
   },
   {
+    assetReferences: [],
     comment: 'Партия пришла на четыре дня позже срока, в остальном без нареканий.',
     createdAt: new Date('2026-06-02T14:40:00.000Z'),
     id: demoId('02', 2),
-    productId: 'dec0de00-0000-4000-8000-000000000001',
+    listingPublicationId: 'dec0de00-0000-4000-8000-000000000001',
     rating: 4,
-    tenantId: 'demo-tenant',
-    userId: 'demo-farmer-11',
+    revision: 1,
+    updatedAt: new Date('2026-06-02T14:40:00.000Z'),
+    verifiedDeal: true,
   },
   {
+    assetReferences: [],
     comment: 'Фильтростанция в комплекте, монтаж заняли один день. Расход воды упал заметно.',
     createdAt: new Date('2026-04-21T11:05:00.000Z'),
     id: demoId('02', 3),
-    productId: 'dec0de00-0000-4000-8000-000000000011',
+    listingPublicationId: 'dec0de00-0000-4000-8000-000000000011',
     rating: 5,
-    tenantId: 'demo-tenant',
-    userId: 'demo-farmer-3',
+    revision: 1,
+    updatedAt: new Date('2026-04-21T11:05:00.000Z'),
+    verifiedDeal: true,
   },
 ];
 
-/** Demo ratings for one product, or nothing when that product has none. */
-export const demoProductReviews = (productId: string): Review[] =>
-  demoReviews.filter((review) => review.productId === productId);
+/** Demo ratings for one publication, or nothing when it has none. */
+export const demoProductReviews = (listingPublicationId: string): MarketplaceReviewView[] =>
+  demoReviews.filter((review) => review.listingPublicationId === listingPublicationId);
+
+/**
+ * The demo ratings block for one publication, aggregate included, or nothing
+ * when the publication has no demo ratings to show. The aggregate is derived
+ * rather than stored so it can never drift from the rows beside it.
+ */
+export function demoReviewPage(listingPublicationId: string): MarketplaceReviewPage | undefined {
+  const items = demoProductReviews(listingPublicationId);
+  if (items.length === 0) {
+    return undefined;
+  }
+  const total = items.reduce((sum, review) => sum + review.rating, 0);
+  return {
+    aggregate: {
+      averageRating: Math.round((total / items.length) * 10) / 10,
+      listingPublicationId,
+      reviewCount: items.length,
+      revision: 1,
+    },
+    items,
+  };
+}
 
 /** Mirrors the repository's status filter so demo and live feeds read alike. */
 export function filterDemoBuyerRequests(status?: string): BuyerRequest[] {

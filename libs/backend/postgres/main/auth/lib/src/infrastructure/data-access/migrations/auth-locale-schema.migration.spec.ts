@@ -3,7 +3,6 @@ import { describe, expect, it } from 'vitest';
 import { Migration20260607080000AlignAuthUserLocaleConstraint } from './Migration20260607080000AlignAuthUserLocaleConstraint';
 import { Migration20260802170000AddUzbekLocale } from './Migration20260802170000AddUzbekLocale';
 import { Migration20260810120000AddUzbekCyrillicLocale } from './Migration20260810120000AddUzbekCyrillicLocale';
-import { Migration20260811100000AddAuthAccountAssurance } from './Migration20260811100000AddAuthAccountAssurance';
 import { Migration20260609100000CreateFeatureFlags } from '@app/backend-postgres-main-feature-flags';
 import { authMigrations } from './index';
 
@@ -54,8 +53,6 @@ describe('auth locale schema migration', () => {
     expect(upSql).toContain(`check ("locale" in ('en', 'ru', 'uz', 'uz-cyrl'))`);
     expect(downSql).toContain(`update "auth_users" set "locale" = 'uz' where "locale" = 'uz-cyrl'`);
     expect(downSql).toContain(`check ("locale" in ('en', 'ru', 'uz'))`);
-    expect(authMigrations.indexOf(Migration20260810120000AddUzbekCyrillicLocale)).toBeLessThan(
-      authMigrations.indexOf(Migration20260811100000AddAuthAccountAssurance),
-    );
+    expect(authMigrations.at(-1)).toBe(Migration20260810120000AddUzbekCyrillicLocale);
   });
 });

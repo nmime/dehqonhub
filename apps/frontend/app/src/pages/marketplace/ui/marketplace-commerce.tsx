@@ -3,13 +3,10 @@ import type { Locale } from '@app/frontend-runtime';
 import type {
   BuyerRequestViewDto,
   CartViewDto,
-  ContractDeliveryQuoteDto,
   ContractViewDto,
-  CreateRequestDto,
   OfferViewDto,
   ProductViewDto,
-  RequestOfferDto,
-  SampleViewDto,
+  MarketplaceSampleDto,
   VerificationViewDto,
 } from '@app/frontend-api-client';
 import type { Resource, ResourceStatus } from '../model/use-marketplace-data';
@@ -19,8 +16,12 @@ import { MarketplaceEmpty, MarketplaceSkeleton } from './marketplace-discovery';
 import {
   formatDate,
   formatMoney,
+  localizedListingTitle,
   localizedProductName,
+  type MarketplaceDeliveryQuoteDraft,
   type MarketplaceNavigate,
+  type MarketplaceOfferDraft,
+  type MarketplaceRequestDraft,
   type MarketplaceTranslate,
 } from './marketplace-ui';
 
@@ -63,12 +64,9 @@ export function MarketplaceCart({
   const [delivery, setDelivery] = useState<Record<string, DeliveryTerms>>({});
   const selected = carts.data.find((cart) => cart.id === activeId) ?? carts.data[0];
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products]);
-  const sellerNameFor = (cart: CartViewDto): string =>
-    cart.items.map((item) => productById.get(item.productId)).find((product) => product?.supplierId === cart.sellerId)
-      ?.supplierName ?? cart.sellerId;
   const estimatedTotal =
     selected?.items.reduce(
-      (total, item) => total + (productById.get(item.productId)?.priceUzs ?? 0) * item.quantity,
+      (total, item) => total + (productById.get(item.listingPublicationId)?.priceUzs ?? 0) * item.quantity,
       0,
     ) ?? 0;
   const heading = (
@@ -138,7 +136,7 @@ export function MarketplaceCart({
             role="tab"
             type="button"
           >
-            <span>{sellerNameFor(cart)}</span>
+            <span>{cart.seller.displayName}</span>
             <small>{t('agritech.marketplace.cart.itemCountValue', { count: cart.items.length })}</small>
           </button>
         ))}
@@ -148,14 +146,14 @@ export function MarketplaceCart({
           <div className="dh-panel__head">
             <div>
               <p className="dh-eyebrow">{t('agritech.marketplace.cart.seller')}</p>
-              <h2 id="dh-cart-seller">{sellerNameFor(selected)}</h2>
+              <h2 id="dh-cart-seller">{selected.seller.displayName}</h2>
             </div>
             <span className="dh-badge dh-badge--soft">{t('agritech.marketplace.cart.oneSeller')}</span>
           </div>
           {selected.items.map((item) => {
-            const product = productById.get(item.productId);
+            const product = productById.get(item.listingPublicationId);
             return (
-              <article className="dh-cart-line" key={item.productId}>
+              <article className="dh-cart-line" key={item.listingPublicationId}>
                 {product ? (
                   <ProductMedia compact locale={locale} product={product} t={t} />
                 ) : (
@@ -167,14 +165,16 @@ export function MarketplaceCart({
                   <strong>
                     {product ? localizedProductName(product, locale) : t('agritech.marketplace.product.unavailable')}
                   </strong>
-                  <span>{product ? `${formatMoney(product.priceUzs, locale)} / ${product.unit}` : item.productId}</span>
+                  <span>
+                    {product ? `${formatMoney(product.priceUzs, locale)} / ${product.unit}` : item.listingPublicationId}
+                  </span>
                 </div>
                 <div aria-label={t('agritech.marketplace.product.quantity')} className="dh-stepper">
                   <button
                     aria-label={t('agritech.marketplace.cart.decrease')}
-                    disabled={pendingAction === `cart-update:${item.productId}`}
+                    disabled={pendingAction === `cart-update:${item.listingPublicationId}`}
                     onClick={() => {
-                      onUpdate(selected, item.productId, item.quantity - 1);
+                      onUpdate(selected, item.listingPublicationId, item.quantity - 1);
                     }}
                     type="button"
                   >
@@ -183,9 +183,9 @@ export function MarketplaceCart({
                   <output>{item.quantity}</output>
                   <button
                     aria-label={t('agritech.marketplace.cart.increase')}
-                    disabled={pendingAction === `cart-update:${item.productId}`}
+                    disabled={pendingAction === `cart-update:${item.listingPublicationId}`}
                     onClick={() => {
-                      onUpdate(selected, item.productId, item.quantity + 1);
+                      onUpdate(selected, item.listingPublicationId, item.quantity + 1);
                     }}
                     type="button"
                   >
@@ -243,8 +243,8 @@ interface RequestProps {
   navigate: MarketplaceNavigate;
   offersByRequest: Resource<Record<string, OfferViewDto[]>>;
   onChoose: (request: BuyerRequestViewDto, offer: OfferViewDto) => void;
-  onCreate: (input: CreateRequestDto) => void;
-  onOffer: (request: BuyerRequestViewDto, input: RequestOfferDto) => void;
+  onCreate: (input: MarketplaceRequestDraft) => void;
+  onOffer: (request: BuyerRequestViewDto, input: MarketplaceOfferDraft) => void;
   onRetry: () => void;
   pendingAction?: string;
   requests: Resource<BuyerRequestViewDto[]>;
@@ -252,7 +252,7 @@ interface RequestProps {
   t: MarketplaceTranslate;
 }
 
-const emptyRequest: CreateRequestDto = { region: '', title: '' };
+const emptyRequest: MarketplaceRequestDraft = { region: '', title: '' };
 
 export function MarketplaceRequests({
   isVerified,
@@ -274,9 +274,9 @@ export function MarketplaceRequests({
       typeof globalThis.location !== 'undefined' &&
       new URLSearchParams(globalThis.location.search).get('create') === '1',
   );
-  const [requestInput, setRequestInput] = useState<CreateRequestDto>(emptyRequest);
+  const [requestInput, setRequestInput] = useState<MarketplaceRequestDraft>(emptyRequest);
   const [offeringId, setOfferingId] = useState<string>();
-  const [offerInput, setOfferInput] = useState<RequestOfferDto>({
+  const [offerInput, setOfferInput] = useState<MarketplaceOfferDraft>({
     deliveryTerms: 'by_agreement',
     priceUzs: 0,
   });
@@ -887,7 +887,7 @@ interface AccountProps {
   locale: Locale;
   myRequests: Resource<BuyerRequestViewDto[]>;
   navigate: MarketplaceNavigate;
-  samples: Resource<SampleViewDto[]>;
+  samples: Resource<MarketplaceSampleDto[]>;
   t: MarketplaceTranslate;
   verification: Resource<VerificationViewDto | null>;
 }
@@ -948,7 +948,7 @@ export function MarketplaceAccount({
           <div key={sample.id}>
             <MarketplaceIcon name="seeds" />
             <span>
-              <strong>{sample.productId}</strong>
+              <strong>{localizedListingTitle(sample.listing, locale)}</strong>
               <small>{formatDate(sample.createdAt, locale)}</small>
             </span>
             <em>{t(`agritech.marketplace.samples.status.${sample.status}`)}</em>
@@ -1033,11 +1033,10 @@ export function MarketplaceAccount({
 
 interface ContractProps {
   contract?: ContractViewDto;
-  currentUserId?: string;
   identityStatus: ResourceStatus;
   locale: Locale;
   navigate: MarketplaceNavigate;
-  onQuote: (contract: ContractViewDto, input: ContractDeliveryQuoteDto) => void;
+  onQuote: (contract: ContractViewDto, input: MarketplaceDeliveryQuoteDraft) => void;
   onRetry: () => void;
   onSign: (contract: ContractViewDto) => void;
   pendingAction?: string;
@@ -1045,17 +1044,13 @@ interface ContractProps {
   t: MarketplaceTranslate;
 }
 
-function hasCurrentPartySigned(contract: ContractViewDto, currentUserId: string | undefined): boolean {
-  if (!currentUserId) {
-    return false;
-  }
-  if (currentUserId === contract.buyerUserId) {
-    return Boolean(contract.buyerSignedAt);
-  }
-  if (currentUserId === contract.sellerUserId) {
-    return Boolean(contract.sellerSignedAt);
-  }
-  return false;
+/**
+ * Whether this account has already recorded its own consent. The contract names
+ * which side of it the reader is on, so the answer never depends on comparing
+ * identifiers the page would otherwise have to fetch separately.
+ */
+function hasCurrentPartySigned(contract: ContractViewDto): boolean {
+  return Boolean(contract.actorParty === 'buyer' ? contract.buyerSignedAt : contract.sellerSignedAt);
 }
 
 interface ContractConsentState {
@@ -1064,11 +1059,7 @@ interface ContractConsentState {
   messageKey: string;
 }
 
-function contractConsentState(
-  contract: ContractViewDto,
-  currentUserId: string | undefined,
-  identityStatus: ResourceStatus,
-): ContractConsentState {
+function contractConsentState(contract: ContractViewDto, identityStatus: ResourceStatus): ContractConsentState {
   if (identityStatus === 'error') {
     return {
       canSign: false,
@@ -1090,25 +1081,24 @@ function contractConsentState(
       messageKey: 'agritech.marketplace.contract.deliveryQuoteRequired',
     };
   }
-  if (hasCurrentPartySigned(contract, currentUserId)) {
+  if (hasCurrentPartySigned(contract)) {
     return {
       canSign: false,
       icon: 'check',
       messageKey: 'agritech.marketplace.contract.yourSignatureRecorded',
     };
   }
-  const isCurrentParty = currentUserId === contract.buyerUserId || currentUserId === contract.sellerUserId;
-  const isSignable = contract.status === 'draft' || contract.status === 'signed';
+  // A contract only reaches its own parties, so consent depends on the version
+  // being open for it rather than on who is reading the page.
   return {
-    canSign: isCurrentParty && isSignable,
+    canSign: contract.status === 'draft' || contract.status === 'signed',
     icon: 'shield',
-    messageKey: 'agritech.marketplace.contract.notYourContract',
+    messageKey: 'agritech.marketplace.contract.consentClosed',
   };
 }
 
 export function MarketplaceContract({
   contract,
-  currentUserId,
   identityStatus,
   locale,
   navigate,
@@ -1119,7 +1109,7 @@ export function MarketplaceContract({
   status,
   t,
 }: Readonly<ContractProps>) {
-  const [quoteInput, setQuoteInput] = useState<ContractDeliveryQuoteDto>({ deliveryPriceUzs: 0 });
+  const [quoteInput, setQuoteInput] = useState<MarketplaceDeliveryQuoteDraft>({ deliveryPriceUzs: 0 });
   if (status === 'loading' || status === 'idle') {
     return <MarketplaceSkeleton count={3} />;
   }
@@ -1137,11 +1127,11 @@ export function MarketplaceContract({
       />
     );
   }
-  const consent = contractConsentState(contract, currentUserId, identityStatus);
+  const consent = contractConsentState(contract, identityStatus);
   const deliveryQuotePending = contract.deliveryTerms === 'seller_delivery' && contract.deliveryPriceUzs === undefined;
   const canQuoteDelivery =
     deliveryQuotePending &&
-    currentUserId === contract.sellerUserId &&
+    contract.actorParty === 'seller' &&
     contract.status === 'draft' &&
     !contract.buyerSignedAt &&
     !contract.sellerSignedAt;
@@ -1222,7 +1212,9 @@ export function MarketplaceContract({
           <div className="dh-contract-parties">
             <div>
               <span>{t('agritech.marketplace.contract.buyer')}</span>
-              <strong>{contract.buyerName ?? t('agritech.marketplace.contract.partyUnnamed')}</strong>
+              <strong>
+                {contract.buyerPartySnapshot.legalName || t('agritech.marketplace.contract.partyUnnamed')}
+              </strong>
               {contract.buyerSignedAt && (
                 <small>
                   <MarketplaceIcon name="check" />
@@ -1232,7 +1224,9 @@ export function MarketplaceContract({
             </div>
             <div>
               <span>{t('agritech.marketplace.contract.seller')}</span>
-              <strong>{contract.sellerName ?? t('agritech.marketplace.contract.partyUnnamed')}</strong>
+              <strong>
+                {contract.sellerPartySnapshot.legalName || t('agritech.marketplace.contract.partyUnnamed')}
+              </strong>
               {contract.sellerSignedAt && (
                 <small>
                   <MarketplaceIcon name="check" />
@@ -1291,7 +1285,7 @@ export function MarketplaceContract({
             <div className="dh-contract-lines">
               <h2>{t('agritech.marketplace.contract.lines')}</h2>
               {contract.lines.map((item) => (
-                <div key={item.productId}>
+                <div key={item.sourcePublicationId}>
                   <span>
                     {item.name} × {item.quantity}
                   </span>

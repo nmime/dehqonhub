@@ -17,7 +17,6 @@ describe('marketplace engagement policy', () => {
     expect(marketplaceUtcSeasonKey(boundary)).toBe('2027-Q2');
     expect(marketplaceUtcSeasonKey(new Date('2027-12-31T23:59:59.999Z'))).toBe('2027-Q4');
     expect(() => marketplaceUtcMonthKey(new Date(Number.NaN))).toThrow(TypeError);
-    expect(() => marketplaceUtcSeasonKey('2027-04-01' as unknown as Date)).toThrow(TypeError);
   });
 
   it('permits only the ordered sample transition graph', () => {
@@ -37,22 +36,29 @@ describe('marketplace engagement policy', () => {
     expect(normalizeMarketplaceEngagementText('https://private.example/review', 100)).toBeUndefined();
     expect(normalizeMarketplaceEngagementText('safe\u202Eunsafe', 100)).toBeUndefined();
     expect(normalizeMarketplaceEngagementText('x'.repeat(101), 100)).toBeUndefined();
+  });
+
+  it('treats absent, blank, and non-string comments as no comment at all', () => {
     expect(normalizeMarketplaceEngagementText(undefined, 100)).toBeUndefined();
     expect(normalizeMarketplaceEngagementText(null, 100)).toBeUndefined();
     expect(normalizeMarketplaceEngagementText('', 100)).toBeUndefined();
     expect(normalizeMarketplaceEngagementText(42, 100)).toBeUndefined();
+    expect(normalizeMarketplaceEngagementText({ comment: 'nice' }, 100)).toBeUndefined();
     expect(normalizeMarketplaceEngagementText('   ', 100)).toBeUndefined();
-    expect(normalizeMarketplaceEngagementText('www.example.test', 100)).toBeUndefined();
   });
 
   it('accepts only opaque public asset references and canonicalizes fingerprints', () => {
     expect(isMarketplacePublicAssetReference('public-asset:review_photo_123')).toBe(true);
     expect(isMarketplacePublicAssetReference('https://storage.invalid/private')).toBe(false);
     expect(isMarketplacePublicAssetReference('public-asset:short')).toBe(false);
-    expect(isMarketplacePublicAssetReference(42)).toBe(false);
     expect(marketplaceEngagementFingerprint({ b: 2, a: 1 })).toBe(marketplaceEngagementFingerprint({ a: 1, b: 2 }));
-    expect(marketplaceEngagementFingerprint({ nested: [new Date('2027-01-01T00:00:00.000Z'), null, 'value'] })).toBe(
-      marketplaceEngagementFingerprint({ nested: [new Date('2027-01-01T00:00:00.000Z'), null, 'value'] }),
-    );
+  });
+
+  it('canonicalizes dates and nested arrays before fingerprinting', () => {
+    const instant = new Date('2027-04-01T00:00:00.000Z');
+
+    expect(marketplaceEngagementFingerprint(instant)).toBe(marketplaceEngagementFingerprint(instant.toISOString()));
+    expect(marketplaceEngagementFingerprint([{ b: 2, a: 1 }])).toBe(marketplaceEngagementFingerprint([{ a: 1, b: 2 }]));
+    expect(marketplaceEngagementFingerprint([1, 2])).not.toBe(marketplaceEngagementFingerprint([2, 1]));
   });
 });

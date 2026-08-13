@@ -2,7 +2,6 @@
 import { createHash } from 'node:crypto';
 import { EntityManager, LockMode } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
-import { DefaultFeatureFlagTenantId } from '@app/common-feature-flags';
 import type {
   AgriTechOwner,
   MarketplaceCatalogSort,
@@ -350,14 +349,6 @@ const listingCursorFromRow = (
 @Injectable()
 export class PostgresMarketplacePublicRepository implements MarketplacePublicRepository {
   constructor(@Inject(EntityManager) private readonly em: EntityManager) {}
-
-  async isDemoCatalogEnabled(): Promise<boolean> {
-    const rows = await this.executeRows<{ enabled: boolean; value: unknown }>(
-      `select enabled, value from feature_flags where tenant_id = ? and key = 'marketplace.demo' limit 1`,
-      [DefaultFeatureFlagTenantId],
-    );
-    return rows[0]?.enabled === true && rows[0].value === true;
-  }
 
   async findPublishedListing(publicId: string): Promise<MarketplacePublishedListingRecord | undefined> {
     const rows = await this.readListings({ limit: 1, sort: 'newest' }, undefined, publicId);

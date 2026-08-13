@@ -406,7 +406,6 @@ export interface MarketplaceContractLifecycleRepository {
     requestFingerprint: string,
   ): Promise<OperationResult<MarketplaceCommissionRatePolicy>>;
   getLifecycle(owner: AgriTechOwner, contractId: string): Promise<OperationResult<MarketplaceContractLifecycle>>;
-  getLifecycleForAdmin(tenantId: string, contractId: string): Promise<OperationResult<MarketplaceContractLifecycle>>;
 }
 
 export interface MarketplaceProviderIdentity {

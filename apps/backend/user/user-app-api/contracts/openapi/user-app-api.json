@@ -29039,14 +29039,6 @@
           "sellerPartySnapshot": {
             "$ref": "#/components/schemas/MarketplacePartySnapshotDto"
           },
-          "buyerName": {
-            "type": "string",
-            "maxLength": 200
-          },
-          "sellerName": {
-            "type": "string",
-            "maxLength": 200
-          },
           "sourceType": {
             "type": "string",
             "enum": ["cart_checkout", "offer_selection"]
@@ -29179,17 +29171,14 @@
             "type": "string"
           },
           "verified": {
-            "type": "boolean"
-          },
-          "provenance": {
-            "type": "string",
-            "enum": ["live", "demo"]
+            "type": "boolean",
+            "enum": [true]
           },
           "description": {
             "type": "string"
           }
         },
-        "required": ["id", "displayName", "region", "verified", "provenance"]
+        "required": ["id", "displayName", "region", "verified"]
       },
       "MarketplacePublicProductListingDto": {
         "type": "object",
@@ -29234,13 +29223,6 @@
           "promoted": {
             "type": "boolean"
           },
-          "provenance": {
-            "type": "string",
-            "enum": ["live", "demo"]
-          },
-          "transactional": {
-            "type": "boolean"
-          },
           "sampleAvailable": {
             "type": "boolean"
           },
@@ -29277,8 +29259,6 @@
           "region",
           "images",
           "promoted",
-          "provenance",
-          "transactional",
           "sampleAvailable",
           "seller",
           "publishedAt",
@@ -29331,13 +29311,6 @@
           "promoted": {
             "type": "boolean"
           },
-          "provenance": {
-            "type": "string",
-            "enum": ["live", "demo"]
-          },
-          "transactional": {
-            "type": "boolean"
-          },
           "sampleAvailable": {
             "type": "boolean"
           },
@@ -29377,8 +29350,6 @@
           "region",
           "images",
           "promoted",
-          "provenance",
-          "transactional",
           "sampleAvailable",
           "seller",
           "publishedAt",
@@ -30523,10 +30494,6 @@
           },
           "settlement": {
             "discriminator": {
-              "mapping": {
-                "direct_payment": "#/components/schemas/DirectPaymentSettlementDto",
-                "factoring": "#/components/schemas/FactoringSettlementDto"
-              },
               "propertyName": "kind"
             },
             "oneOf": [
