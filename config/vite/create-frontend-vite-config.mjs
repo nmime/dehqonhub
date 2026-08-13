@@ -14,6 +14,43 @@ import { workspaceTsconfigAliases } from './workspace-tsconfig-aliases.mjs';
 const workspaceRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 
 /**
+ * Third-party code is chunked away from app code because the two change on
+ * completely different clocks: a deploy that edits a page should not make a
+ * returning reader re-download React, the router, MobX and Radix as well. The
+ * groups are coarse on purpose — a chunk per package meant 20+ requests for
+ * ~600 kB that always load together — and the catch-all `vendor` group has to
+ * stay last, since the first matching group wins.
+ */
+const vendorChunkGroups = [
+  { name: 'vendor-react', test: /node_modules\/(react|react-dom|react-is|scheduler)\//, minSize: 0 },
+  { name: 'vendor-tanstack', test: /node_modules\/@tanstack\//, minSize: 0 },
+  { name: 'vendor-mobx', test: /node_modules\/mobx[^/]*\//, minSize: 0 },
+  {
+    name: 'vendor-ui',
+    test: /node_modules\/(@radix-ui|@floating-ui|lucide-react|tailwind-merge|clsx|class-variance-authority)\//,
+    minSize: 0,
+  },
+  { name: 'vendor', test: /node_modules\//, minSize: 0 },
+];
+
+/**
+ * Translated copy is a chunk of its own for the same reason, only more so: the
+ * locale catalogs are the largest single block of text in the bundle, they are
+ * identical between deploys that touch no copy, and a translator fixing one
+ * string should not invalidate the application chunk.
+ */
+const localeCatalogChunkGroup = {
+  name: 'i18n-catalogs',
+  // `i18n/<locale>/<namespace>/<catalog>.json`, where the locale is a language
+  // code with an optional script suffix (`en`, `ru`, `uz`, `uz-cyrl`). Spelling
+  // the locale segment out rather than accepting any lowercase word keeps the
+  // group from also claiming the `i18n` *libraries*, whose paths have the same
+  // shape but hold source and tsconfigs rather than copy.
+  test: /[\\/]i18n[\\/][a-z]{2}(-[a-z]+)?[\\/][a-z-]+[\\/][a-z-]+\.json$/,
+  minSize: 0,
+};
+
+/**
  * Shared Vite config for the Vite-built frontend apps (user `app`, `admin`,
  * `landing`). They differ only in their directory name and dev/preview port, so
  * everything else — tailwind + react plugins, workspace tsconfig aliases, the
@@ -81,6 +118,16 @@ export function createFrontendViteConfig({ appName, port }) {
         sourcemap: isE2eCoverage,
         commonjsOptions: {
           transformMixedEsModules: true,
+        },
+        rolldownOptions: {
+          output: {
+            // `codeSplitting` rather than the older `advancedChunks`: same shape,
+            // but Rolldown 1.1 logs a deprecation warning for the latter on every
+            // build of every app.
+            codeSplitting: {
+              groups: [localeCatalogChunkGroup, ...vendorChunkGroups],
+            },
+          },
         },
       },
     };

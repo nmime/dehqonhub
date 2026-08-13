@@ -22,6 +22,15 @@ export default defineConfig({
     },
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
     passWithNoTests: false,
+    // The page specs drive whole screens — dozens of queries, awaited fetches and
+    // route transitions each, now including the lazily imported route chunks — so
+    // a cold or instrumented run where Vite is still transforming modules can push
+    // one past the 5s default even though it passes in well under a second of
+    // actual work. The higher ceilings keep a machine under load from reporting
+    // timeouts as regressions; the hook ceiling covers the `beforeAll` blocks that
+    // boot the whole app once per file.
+    hookTimeout: 30_000,
+    testTimeout: 30_000,
     setupFiles: ['../../../packages/tooling/src/testing/vitest-dom-cleanup.ts'],
     // Fully measured: the two type-narrowing branches this app used to keep as an
     // uncovered budget are gone, so it holds the shared 100% contract with no

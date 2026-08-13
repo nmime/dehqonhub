@@ -151,6 +151,32 @@ Do not publish default same-origin builds without the proxy in place. For
 standalone/static split-origin SPA hosting, set all explicit API origins and use
 a non-`same-origin` mode such as `VITE_API_BASE_URL_MODE=split-origin`.
 
+## Bundle layout and cache granularity
+
+`config/vite/create-frontend-vite-config.mjs` splits every Vite SPA build along
+the lines its content changes on, so a deploy invalidates as little of a
+returning reader's cache as possible:
+
+- `vendor-react`, `vendor-tanstack`, `vendor-mobx`, `vendor-ui` and a catch-all
+  `vendor` chunk hold `node_modules` code. The groups are coarse deliberately —
+  a chunk per package produced 20+ requests for code that always loads together
+  — and the catch-all has to stay last in the list because the first matching
+  group wins.
+- `i18n-catalogs` holds the locale JSON. It is the largest single block of text
+  in a build and is byte-identical between deploys that change no copy.
+- The user app additionally fetches every non-marketplace route on demand
+  (`apps/frontend/app/src/app/router/user-route-tree.tsx`): sign-in, the OAuth
+  callbacks, account preferences, the Telegram mini-app views and the farmer
+  consoles each arrive as their own chunk the first time that route opens, with
+  `UiLoading` covering the gap. The marketplace stays in the entry chunk because
+  it renders `/` and supplies the chrome the other routes are embedded in.
+
+For the user app that turns one 2,112 kB (355 kB gzipped) file into an entry
+chunk of 107 kB (24 kB gzipped) plus separately cached vendor, copy and route
+chunks. Chunk names are visible in `pnpm nx run user-app:build` output, and
+`dist/apps/frontend/app/index.html` lists exactly what a first paint preloads —
+route chunks must not appear there.
+
 ## Runtime browser config (one image, many environments)
 
 API origins are resolved at build time, but browser-safe **feature flags and

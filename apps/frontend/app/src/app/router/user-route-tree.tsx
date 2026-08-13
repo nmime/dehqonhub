@@ -3,23 +3,44 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
+  lazyRouteComponent,
   type RouterHistory,
   useRouterState,
 } from '@tanstack/react-router';
-import { AuthPage } from '../../pages/auth';
-import { AuthDiscordCallbackPage } from '../../pages/auth-discord-callback';
-import { AuthTelegramCallbackPage } from '../../pages/auth-telegram-callback';
-import { ProfilePage } from '../../pages/profile';
-import { SettingsPage } from '../../pages/settings';
-import { TmaPage } from '../../pages/tma';
-import { FarmerRegisterPage } from '../../pages/farmer-register';
-import { FarmerDashboardPage } from '../../pages/farmer-dashboard';
-import { AgriTechOperationsPage } from '../../pages/agritech-operations';
 import { MarketplacePage, type MarketplacePageProps } from '../../pages/marketplace';
 import { NotFoundPage } from '../../pages/not-found';
+import { UiLoading } from '../../shared/ui';
 import { UserShell } from './user-shell';
 import { useUserNavigate } from './user-navigation';
 import { useUserRuntime } from './user-runtime-context';
+
+/**
+ * Everything outside the marketplace is fetched when its route is first opened.
+ * The marketplace itself stays in the entry bundle because it renders `/` and
+ * supplies the chrome every other route is embedded in, but the sign-in flow,
+ * the OAuth callbacks, account preferences, the Telegram mini-app views and the
+ * farmer consoles are each a screen most visits never reach — and between them
+ * they were pulling their whole feature graph, `better-auth` included, into the
+ * bundle a first-time reader waits for.
+ */
+const AuthPage = lazyRouteComponent(() => import('../../pages/auth'), 'AuthPage');
+const AuthDiscordCallbackPage = lazyRouteComponent(
+  () => import('../../pages/auth-discord-callback'),
+  'AuthDiscordCallbackPage',
+);
+const AuthTelegramCallbackPage = lazyRouteComponent(
+  () => import('../../pages/auth-telegram-callback'),
+  'AuthTelegramCallbackPage',
+);
+const ProfilePage = lazyRouteComponent(() => import('../../pages/profile'), 'ProfilePage');
+const SettingsPage = lazyRouteComponent(() => import('../../pages/settings'), 'SettingsPage');
+const TmaPage = lazyRouteComponent(() => import('../../pages/tma'), 'TmaPage');
+const FarmerRegisterPage = lazyRouteComponent(() => import('../../pages/farmer-register'), 'FarmerRegisterPage');
+const FarmerDashboardPage = lazyRouteComponent(() => import('../../pages/farmer-dashboard'), 'FarmerDashboardPage');
+const AgriTechOperationsPage = lazyRouteComponent(
+  () => import('../../pages/agritech-operations'),
+  'AgriTechOperationsPage',
+);
 
 const rootRoute = createRootRoute({
   component: UserShell,
@@ -261,6 +282,10 @@ export const createUserRouter = (history: RouterHistory = createBrowserHistory()
     history,
     trailingSlash: 'never',
     defaultPreload: false,
+    // A lazily fetched route suspends, and TanStack only wraps a match in
+    // Suspense when the router can name what to show meanwhile. The chrome keeps
+    // rendering around it, so this is the page area only.
+    defaultPendingComponent: () => <UiLoading />,
   });
 
 export type UserRouter = ReturnType<typeof createUserRouter>;

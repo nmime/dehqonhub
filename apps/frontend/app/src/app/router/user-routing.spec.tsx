@@ -1,4 +1,5 @@
 // @requirements REQ-AGRITECH-MARKETPLACE-016
+import type { ReactNode } from 'react';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { getLinkRoute, isBareRoute, isMarketplaceRoute, normalizePath } from './user-navigation';
@@ -7,7 +8,13 @@ import { UserRouter } from './user-router';
 const marketplaceRender = vi.hoisted(() => vi.fn());
 
 vi.mock('../../pages/marketplace', () => ({
-  MarketplacePage: (props: { contractId?: string; productId?: string; sellerId?: string; view?: string }) => {
+  MarketplacePage: (props: {
+    children?: ReactNode;
+    contractId?: string;
+    productId?: string;
+    sellerId?: string;
+    view?: string;
+  }) => {
     marketplaceRender(props);
 
     return (
@@ -17,9 +24,35 @@ vi.mock('../../pages/marketplace', () => ({
         data-seller-id={props.sellerId}
         data-testid="marketplace-route"
         data-view={props.view}
-      />
+      >
+        {props.children}
+      </div>
     );
   },
+}));
+
+/**
+ * Every screen outside the marketplace is fetched when its route is first
+ * opened, so each stands in for its module here: the assertions below are about
+ * which page a path resolves to and that the router actually pulls it in, not
+ * about what any of them render.
+ */
+const lazyPage = (page: string) => () => <div data-page={page} data-testid="lazy-page" />;
+
+vi.mock('../../pages/auth', () => ({ AuthPage: lazyPage('auth') }));
+vi.mock('../../pages/auth-discord-callback', () => ({
+  AuthDiscordCallbackPage: lazyPage('auth-discord-callback'),
+}));
+vi.mock('../../pages/auth-telegram-callback', () => ({
+  AuthTelegramCallbackPage: lazyPage('auth-telegram-callback'),
+}));
+vi.mock('../../pages/profile', () => ({ ProfilePage: lazyPage('profile') }));
+vi.mock('../../pages/settings', () => ({ SettingsPage: lazyPage('settings') }));
+vi.mock('../../pages/tma', () => ({ TmaPage: lazyPage('tma') }));
+vi.mock('../../pages/farmer-register', () => ({ FarmerRegisterPage: lazyPage('farmer-register') }));
+vi.mock('../../pages/farmer-dashboard', () => ({ FarmerDashboardPage: lazyPage('farmer-dashboard') }));
+vi.mock('../../pages/agritech-operations', () => ({
+  AgriTechOperationsPage: lazyPage('agritech-operations'),
 }));
 
 vi.mock('@app/frontend-runtime', async (importOriginal) => {
@@ -129,6 +162,27 @@ describe('DehqonHub marketplace routes', () => {
     expect(window.location.search).toBe('?section=seeds');
 
     anchor.remove();
+  });
+
+  it.each([
+    ['/auth', 'auth'],
+    ['/auth/discord/callback', 'auth-discord-callback'],
+    ['/auth/telegram/callback', 'auth-telegram-callback'],
+    ['/profile', 'profile'],
+    ['/settings', 'settings'],
+    ['/link/discord', 'settings'],
+    ['/tma', 'tma'],
+    ['/tma/auth', 'tma'],
+    ['/telegram-mini-app', 'tma'],
+    ['/link/telegram', 'tma'],
+    ['/farmer/register', 'farmer-register'],
+    ['/dashboard', 'farmer-dashboard'],
+    ['/operations', 'agritech-operations'],
+  ])('fetches the %s screen from the %s module when the route opens', async (path, page) => {
+    window.history.replaceState({}, '', path);
+    render(<UserRouter applyUserLocale={vi.fn()} applyUserTheme={vi.fn()} />);
+
+    expect((await screen.findByTestId('lazy-page')).dataset['page']).toBe(page);
   });
 
   // Telegram supplies its own frame around a mini app, so these routes render
