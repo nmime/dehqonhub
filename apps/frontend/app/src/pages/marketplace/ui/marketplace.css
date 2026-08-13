@@ -1136,28 +1136,27 @@
   max-width: 38rem;
 }
 
+/* A white editorial panel, not a dark band. The brand is light only, and this
+   was the last section still inverting it. The lime step badges keep the accent
+   the dark ground used to provide. */
 .dh-how {
   align-items: start;
-  background: var(--dh-ink);
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
   border-radius: 1.75rem;
-  color: var(--dh-surface);
+  box-shadow: var(--shadow-card);
   display: grid;
   gap: 2rem;
   grid-template-columns: minmax(14rem, 0.7fr) minmax(0, 1.3fr);
   padding: clamp(1.5rem, 5vw, 3rem);
 }
 
-.dh-how .dh-eyebrow {
-  color: var(--dh-lime);
-}
-
 .dh-how__intro p:last-child {
-  color: color-mix(in srgb, var(--dh-surface) 72%, transparent);
+  color: var(--dh-muted);
   line-height: 1.6;
 }
 
 .dh-how__steps {
-  counter-reset: dh-step;
   display: grid;
   gap: 0;
   list-style: none;
@@ -1165,32 +1164,49 @@
   padding: 0;
 }
 
+/* The badge, the title and the copy are placed by area. A two-column `auto 1fr`
+   grid used to wrap the title back under the badge, because the markup ships
+   three children per step and a CSS counter added a fourth. */
 .dh-how__steps li {
-  border-bottom: 1px solid color-mix(in srgb, var(--dh-surface) 18%, transparent);
-  counter-increment: dh-step;
+  border-bottom: 1px solid var(--line-on-white);
   display: grid;
-  gap: 0.8rem;
-  grid-template-columns: auto 1fr;
+  gap: 0.2rem 0.9rem;
+  grid-template-areas:
+    'badge title'
+    'badge copy';
+  grid-template-columns: auto minmax(0, 1fr);
   padding: 1rem 0;
 }
 
-.dh-how__steps li::before {
+.dh-how__steps li:last-child {
+  border-bottom: 0;
+}
+
+/* The step number comes from the markup, already zero-padded. */
+.dh-how__steps li > span {
   align-items: center;
   background: var(--dh-lime);
   border-radius: 50%;
   color: var(--ink);
-  content: counter(dh-step);
   display: flex;
-  font-weight: 900;
-  height: 2rem;
+  font-size: 0.8rem;
+  font-weight: 800;
+  grid-area: badge;
+  height: 2.1rem;
   justify-content: center;
-  width: 2rem;
+  width: 2.1rem;
 }
 
-.dh-how__steps p {
-  color: color-mix(in srgb, var(--dh-surface) 72%, transparent);
+.dh-how__steps li > strong {
+  align-self: end;
+  grid-area: title;
+}
+
+.dh-how__steps li > p {
+  color: var(--dh-muted);
   font-size: 0.86rem;
-  margin: 0.2rem 0 0;
+  grid-area: copy;
+  margin: 0;
 }
 
 .dh-tabs {
