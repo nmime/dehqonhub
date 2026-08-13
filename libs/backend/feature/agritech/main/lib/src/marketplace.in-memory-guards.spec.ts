@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-VERIFICATION-015
+// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017
 import { describe, expect, it } from 'vitest';
 import {
   BadRequestException,
@@ -81,25 +81,29 @@ describe('MarketplaceInMemoryAdapter fixture guards', () => {
   it('refuses a membership that does not match its tenant-scoped organization', () => {
     const { adapter } = createCommerceFixture();
 
-    expect(() => adapter.registerPartnerMembership(buyer, 'unknown-partner', 'buyer')).toThrow(
-      'membership must match its tenant-scoped organization',
-    );
-    expect(() => adapter.registerPartnerMembership(buyer, sellerPartnerId, 'seller')).toThrow(
-      'membership must match its tenant-scoped organization',
-    );
-    expect(() => adapter.registerPartnerMembership(seller, sellerPartnerId, 'buyer')).toThrow(
-      'membership must match its tenant-scoped organization',
-    );
-    expect(() => adapter.registerPartnerMembership(buyer, buyerPartnerId, 'seller')).toThrow(
-      'membership must match its tenant-scoped organization',
-    );
+    const mismatched: readonly [typeof buyer, string, 'buyer' | 'seller'][] = [
+      [buyer, 'unknown-partner', 'buyer'],
+      [buyer, sellerPartnerId, 'seller'],
+      [seller, sellerPartnerId, 'buyer'],
+      [buyer, buyerPartnerId, 'seller'],
+    ];
+
+    for (const [actor, partnerId, role] of mismatched) {
+      expect(() => {
+        adapter.registerPartnerMembership(actor, partnerId, role);
+      }).toThrow('membership must match its tenant-scoped organization');
+    }
   });
 
   it('ignores revocation and suspension of organizations that were never registered', () => {
     const { adapter } = createCommerceFixture();
 
-    expect(() => adapter.revokePartnerMembership(buyer, 'unknown-partner', 'buyer')).not.toThrow();
-    expect(() => adapter.setOrganizationStatus('unknown-partner', 'suspended')).not.toThrow();
+    expect(() => {
+      adapter.revokePartnerMembership(buyer, 'unknown-partner', 'buyer');
+    }).not.toThrow();
+    expect(() => {
+      adapter.setOrganizationStatus('unknown-partner', 'suspended');
+    }).not.toThrow();
   });
 
   it('refuses a product without positive stock, positive price, or an approved seller organization', () => {
@@ -322,7 +326,10 @@ describe('MarketplaceInMemoryAdapter reverse auction', () => {
 
   it('accepts the chosen offer, declines the competing one, and refuses a second selection', async () => {
     const { adapter } = createCommerceFixture();
-    const requestPublicId = await publishRequest(adapter, { key: 'request-no-volume-1', title: 'Corn seed without a stated volume' });
+    const requestPublicId = await publishRequest(adapter, {
+      key: 'request-no-volume-1',
+      title: 'Corn seed without a stated volume',
+    });
     const rival = { tenantId: 'tenant-rival', userId: 'rival-user' };
     adapter.registerVerifiedActor(rival, 'seller');
     adapter.registerApprovedOrganization(rival, 'supplier', 'rival-partner', { legalName: 'Bukhara Agro LLC' });
@@ -340,9 +347,9 @@ describe('MarketplaceInMemoryAdapter reverse auction', () => {
       'offer-rejected-01',
     );
 
-    await expect(adapter.chooseOffer(buyer, requestPublicId, 'offer-that-never-existed', 'choose-ghost-1')).rejects.toThrow(
-      ResourceNotFoundException,
-    );
+    await expect(
+      adapter.chooseOffer(buyer, requestPublicId, 'offer-that-never-existed', 'choose-ghost-1'),
+    ).rejects.toThrow(ResourceNotFoundException);
 
     const selection = await adapter.chooseOffer(buyer, requestPublicId, chosen.id, 'choose-winner-01');
     const offers = await adapter.listOffers(buyer, requestPublicId);
@@ -422,7 +429,10 @@ describe('MarketplaceInMemoryAdapter reverse auction', () => {
 
   it('refuses a selection once the offering seller lost its organization membership', async () => {
     const { adapter } = createCommerceFixture();
-    const requestPublicId = await publishRequest(adapter, { key: 'request-revoked-01', title: 'Corn seed for a revoked seller' });
+    const requestPublicId = await publishRequest(adapter, {
+      key: 'request-revoked-01',
+      title: 'Corn seed for a revoked seller',
+    });
     const offer = await adapter.makeOffer(
       seller,
       requestPublicId,

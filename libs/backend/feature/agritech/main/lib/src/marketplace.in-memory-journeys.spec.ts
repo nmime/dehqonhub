@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-VERIFICATION-015
+// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017
 import { describe, expect, it } from 'vitest';
 import {
   BadRequestException,
@@ -64,7 +64,15 @@ describe('MarketplaceInMemoryAdapter verification review', () => {
 
     // A different decision under the same key is a client mistake, not a replay.
     await expect(
-      adapter.reviewVerification(buyer.tenantId, pending.id, 'rejected', 'moderator-user', 0, 'review-0001', 'criteria_not_met'),
+      adapter.reviewVerification(
+        buyer.tenantId,
+        pending.id,
+        'rejected',
+        'moderator-user',
+        0,
+        'review-0001',
+        'criteria_not_met',
+      ),
     ).rejects.toThrow(ConflictException);
     // And the case itself is now settled, so a fresh key cannot re-decide it.
     await expect(
@@ -155,18 +163,18 @@ describe('MarketplaceInMemoryAdapter cart management', () => {
 
     const raised = await adapter.updateCartItem(buyer, cart.id, listingPublicationId, 5, 'cart-update-0001');
     expect(raised.items).toEqual([expect.objectContaining({ quantity: 5 })]);
-    await expect(
-      adapter.updateCartItem(buyer, cart.id, listingPublicationId, 5, 'cart-update-0001'),
-    ).resolves.toEqual(raised);
-    await expect(
-      adapter.updateCartItem(buyer, cart.id, listingPublicationId, 6, 'cart-update-0001'),
-    ).rejects.toThrow(ConflictException);
+    await expect(adapter.updateCartItem(buyer, cart.id, listingPublicationId, 5, 'cart-update-0001')).resolves.toEqual(
+      raised,
+    );
+    await expect(adapter.updateCartItem(buyer, cart.id, listingPublicationId, 6, 'cart-update-0001')).rejects.toThrow(
+      ConflictException,
+    );
 
     const emptied = await adapter.removeCartItem(buyer, cart.id, listingPublicationId, 'cart-remove-0001');
     expect(emptied.items).toEqual([]);
-    await expect(
-      adapter.removeCartItem(buyer, cart.id, listingPublicationId, 'cart-remove-0001'),
-    ).resolves.toEqual(emptied);
+    await expect(adapter.removeCartItem(buyer, cart.id, listingPublicationId, 'cart-remove-0001')).resolves.toEqual(
+      emptied,
+    );
     // An empty cart has nothing to buy.
     await expect(adapter.checkoutCart(buyer, cart.id, { deliveryTerms: 'pickup' }, 'checkout-0002')).rejects.toThrow(
       BadRequestException,
@@ -181,21 +189,21 @@ describe('MarketplaceInMemoryAdapter cart management', () => {
       'cart-add-0003',
     );
 
-    await expect(
-      adapter.updateCartItem(buyer, cart.id, listingPublicationId, 11, 'cart-update-0010'),
-    ).rejects.toThrow(ConflictException);
-    await expect(
-      adapter.updateCartItem(buyer, cart.id, listingPublicationId, 1.5, 'cart-update-0011'),
-    ).rejects.toThrow(BadRequestException);
-    await expect(
-      adapter.updateCartItem(buyer, cart.id, listingPublicationId, -1, 'cart-update-0012'),
-    ).rejects.toThrow(BadRequestException);
+    await expect(adapter.updateCartItem(buyer, cart.id, listingPublicationId, 11, 'cart-update-0010')).rejects.toThrow(
+      ConflictException,
+    );
+    await expect(adapter.updateCartItem(buyer, cart.id, listingPublicationId, 1.5, 'cart-update-0011')).rejects.toThrow(
+      BadRequestException,
+    );
+    await expect(adapter.updateCartItem(buyer, cart.id, listingPublicationId, -1, 'cart-update-0012')).rejects.toThrow(
+      BadRequestException,
+    );
     await expect(adapter.updateCartItem(buyer, cart.id, 'public-listing-404', 2, 'cart-update-0013')).rejects.toThrow(
       ResourceNotFoundException,
     );
-    await expect(adapter.updateCartItem(buyer, 'memory-cart-404', listingPublicationId, 2, 'cart-u-0014')).rejects.toThrow(
-      ResourceNotFoundException,
-    );
+    await expect(
+      adapter.updateCartItem(buyer, 'memory-cart-404', listingPublicationId, 2, 'cart-u-0014'),
+    ).rejects.toThrow(ResourceNotFoundException);
     await expect(adapter.updateCartItem(seller, cart.id, listingPublicationId, 2, 'cart-update-0015')).rejects.toThrow(
       ForbiddenException,
     );
@@ -204,16 +212,16 @@ describe('MarketplaceInMemoryAdapter cart management', () => {
     );
 
     adapter.revokePartnerMembership(buyer, buyerPartnerId, 'buyer');
-    await expect(
-      adapter.updateCartItem(buyer, cart.id, listingPublicationId, 2, 'cart-update-0017'),
-    ).rejects.toThrow(ForbiddenException);
+    await expect(adapter.updateCartItem(buyer, cart.id, listingPublicationId, 2, 'cart-update-0017')).rejects.toThrow(
+      ForbiddenException,
+    );
     adapter.registerPartnerMembership(buyer, buyerPartnerId, 'buyer');
 
     // A suspended seller organization takes its listing out of reach.
     adapter.setOrganizationStatus(sellerPartnerId, 'suspended');
-    await expect(
-      adapter.updateCartItem(buyer, cart.id, listingPublicationId, 2, 'cart-update-0018'),
-    ).rejects.toThrow(ResourceNotFoundException);
+    await expect(adapter.updateCartItem(buyer, cart.id, listingPublicationId, 2, 'cart-update-0018')).rejects.toThrow(
+      ResourceNotFoundException,
+    );
     await expect(
       adapter.addToCart(buyer, { actingPartnerId: buyerPartnerId, listingPublicationId, quantity: 1 }, 'cart-a-0019'),
     ).rejects.toThrow(ResourceNotFoundException);
@@ -224,9 +232,9 @@ describe('MarketplaceInMemoryAdapter cart management', () => {
 
     // A cart that has already become an order is closed to further edits.
     await adapter.checkoutCart(buyer, cart.id, { deliveryTerms: 'pickup' }, 'checkout-0021');
-    await expect(
-      adapter.updateCartItem(buyer, cart.id, listingPublicationId, 3, 'cart-update-0022'),
-    ).rejects.toThrow(ResourceNotFoundException);
+    await expect(adapter.updateCartItem(buyer, cart.id, listingPublicationId, 3, 'cart-update-0022')).rejects.toThrow(
+      ResourceNotFoundException,
+    );
   });
 
   it('rejects a fractional add, an over-stock add, and a self-dealing add', async () => {
@@ -237,9 +245,13 @@ describe('MarketplaceInMemoryAdapter cart management', () => {
     await expect(add(0, 'cart-add-0030')).rejects.toThrow(BadRequestException);
     await expect(add(1.5, 'cart-add-0031')).rejects.toThrow(BadRequestException);
     await expect(add(11, 'cart-add-0032')).rejects.toThrow(ConflictException);
-    await expect(adapter.addToCart(buyer, { actingPartnerId: buyerPartnerId, listingPublicationId: 'nope', quantity: 1 }, 'cart-add-0033')).rejects.toThrow(
-      ResourceNotFoundException,
-    );
+    await expect(
+      adapter.addToCart(
+        buyer,
+        { actingPartnerId: buyerPartnerId, listingPublicationId: 'nope', quantity: 1 },
+        'cart-add-0033',
+      ),
+    ).rejects.toThrow(ResourceNotFoundException);
 
     // The seller cannot buy from itself through its own supplier organization.
     adapter.registerApprovedOrganization(seller, 'buyer', 'seller-as-buyer-partner');
@@ -353,12 +365,7 @@ describe('MarketplaceInMemoryAdapter seller delivery quote', () => {
       { actingPartnerId: buyerPartnerId, listingPublicationId, quantity: 2 },
       'cart-add-0100',
     );
-    const checkout = await adapter.checkoutCart(
-      buyer,
-      cart.id,
-      { deliveryTerms: 'seller_delivery' },
-      'checkout-0100',
-    );
+    const checkout = await adapter.checkoutCart(buyer, cart.id, { deliveryTerms: 'seller_delivery' }, 'checkout-0100');
     return { adapter, contractId: checkout.contractId, listingPublicationId };
   }
 
@@ -413,9 +420,9 @@ describe('MarketplaceInMemoryAdapter seller delivery quote', () => {
     await expect(quote({ deliveryPriceUzs: 0, expectedRevision: 0 }, 'quote-0113')).rejects.toThrow(
       BadRequestException,
     );
-    await expect(quote({ deliveryDays: 0, deliveryPriceUzs: 800_000, expectedRevision: 0 }, 'quote-0114')).rejects.toThrow(
-      BadRequestException,
-    );
+    await expect(
+      quote({ deliveryDays: 0, deliveryPriceUzs: 800_000, expectedRevision: 0 }, 'quote-0114'),
+    ).rejects.toThrow(BadRequestException);
     // The buyer is not the party that ships.
     await expect(
       adapter.updateContractDeliveryQuote(

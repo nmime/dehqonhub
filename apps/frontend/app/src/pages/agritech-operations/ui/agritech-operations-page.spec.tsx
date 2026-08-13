@@ -2,15 +2,15 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { ApiClientProvider, userApi } from '@app/frontend-api-client';
-import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
+import { FrontendI18nProvider, FrontendStateProvider, type Locale } from '@app/frontend-runtime';
 import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
 import { AgriTechOperationsPage } from './agritech-operations-page';
 
 const ok = <T,>(data: T) => ({ data, error: undefined, response: new Response(null, { status: 200 }) });
 
-const renderPage = () =>
+const renderPage = (initialLocale?: Locale) =>
   render(
-    <FrontendStateProvider>
+    <FrontendStateProvider initialLocale={initialLocale}>
       <FrontendI18nProvider translations={userFrontendTranslations}>
         <ApiClientProvider baseUrls={{ admin: '', auth: '', user: '' }}>
           <AgriTechOperationsPage />
@@ -303,8 +303,45 @@ describe('AgriTech operations page', () => {
 
     fireEvent.submit(screen.getAllByRole('button', { name: 'Publish' })[0]!.closest('form')!);
     expect(await screen.findByText('An approved organization is required for this action.')).toBeTruthy();
+    // Publishing harvested produce names the supplier organization too.
+    fireEvent.submit(screen.getAllByRole('button', { name: 'Publish' })[1]!.closest('form')!);
+    expect(await screen.findByText('An approved organization is required for this action.')).toBeTruthy();
     fireEvent.submit(screen.getByRole('button', { name: 'Reserve produce' }).closest('form')!);
     expect(await screen.findByText('An approved organization is required for this action.')).toBeTruthy();
+  });
+
+  // The payment gateways speak Latin Uzbek only, so a Cyrillic-Uzbek session has to
+  // hand off in the script they accept rather than the one it renders in.
+  it('hands a Cyrillic Uzbek session off to the gateway in Latin Uzbek', async () => {
+    mockOperationalLoad();
+    vi.spyOn(userApi, 'agriTechOperationsControllerReserveProduce').mockResolvedValue(
+      ok({ orderId: 'order-cyrl' }) as never,
+    );
+    const createPayment = vi
+      .spyOn(userApi, 'paymentControllerCreate')
+      .mockResolvedValue(ok({ checkoutUrl: 'https://payments.example/checkout' }) as never);
+    vi.stubGlobal('location', { assign: vi.fn(), origin: 'http://localhost' });
+
+    renderPage('uz-cyrl');
+
+    // Field names and gateway names are the same in every locale, so this reaches
+    // the reservation and the hand-off without depending on the rendered script.
+    const reservation = await waitFor(() => {
+      const field = document.querySelector('input[name="deliveryAddress"]');
+      if (!(field instanceof HTMLInputElement) || !field.form) {
+        throw new Error('The reservation form has not rendered yet.');
+      }
+      return field.form;
+    });
+    fireEvent.submit(reservation);
+    fireEvent.click(await screen.findByRole('button', { name: 'payme' }));
+
+    await waitFor(() => {
+      expect(createPayment).toHaveBeenCalledWith(
+        expect.objectContaining({ locale: 'uz', orderId: 'order-cyrl', provider: 'payme' }),
+        expect.any(Object),
+      );
+    });
   });
 
   it('keeps advisory failure non-fatal and exposes action and load retry states', async () => {

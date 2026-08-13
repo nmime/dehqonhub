@@ -4,10 +4,12 @@ import type { ProductViewDto } from '@app/frontend-api-client';
 import {
   formatDate,
   formatMoney,
+  localizedListingTitle,
   localizedProductName,
   querySearch,
   querySection,
   sectionForProduct,
+  type MarketplaceListingSummary,
 } from './marketplace-ui';
 
 const product = (overrides: Partial<ProductViewDto> = {}): ProductViewDto => ({
@@ -50,6 +52,30 @@ describe('marketplace presentation helpers', () => {
     expect(localizedProductName(translated, 'en')).toBe('Wheat seed');
     expect(localizedProductName(product(), 'ru')).toBe('Wheat seed');
     expect(localizedProductName(product(), 'uz')).toBe('Wheat seed');
+  });
+
+  it('prefers the translated listing title and falls back to the base one', () => {
+    const base: MarketplaceListingSummary = {
+      id: 'listing-1',
+      kind: 'product',
+      sampleAvailable: true,
+      seller: { displayName: 'Supplier', id: 'supplier-1' },
+      title: 'Wheat seed',
+    };
+    const translated: MarketplaceListingSummary = {
+      ...base,
+      titleRu: 'Семена пшеницы',
+      titleUz: "Bug'doy urug'i",
+      titleUzCyrl: 'Буғдой уруғи',
+    };
+
+    expect(localizedListingTitle(translated, 'ru')).toBe('Семена пшеницы');
+    expect(localizedListingTitle(translated, 'uz')).toBe("Bug'doy urug'i");
+    expect(localizedListingTitle(translated, 'uz-cyrl')).toBe('Буғдой уруғи');
+    expect(localizedListingTitle(translated, 'en')).toBe('Wheat seed');
+    for (const locale of ['ru', 'uz', 'uz-cyrl'] as const) {
+      expect(localizedListingTitle(base, locale)).toBe('Wheat seed');
+    }
   });
 
   it('formats prices with a non-breaking space before the currency code', () => {

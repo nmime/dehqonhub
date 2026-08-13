@@ -1117,6 +1117,115 @@ describe('MarketplacePage journeys', () => {
     expect(navigate).toHaveBeenCalledWith('/contracts/contract-1');
   });
 
+  it('routes a seller page to that seller storefront', () => {
+    const navigate = vi.fn();
+    const rival = { ...secondSeed, supplierId: 'seller-2', supplierName: 'Rival cooperative' };
+    testState.marketplaceData = { ...signedInData(), catalog: { data: [product, rival], status: 'ready' } };
+
+    render(<MarketplacePage navigate={navigate} sellerId={product.supplierId} view="seller" />);
+
+    expect(screen.getByRole('heading', { level: 1, name: product.supplierName })).toBeTruthy();
+    expect(screen.getByRole('button', { name: product.name })).toBeTruthy();
+    // The second record belongs to another seller, so this storefront omits it.
+    expect(screen.queryByRole('button', { name: rival.name })).toBeNull();
+  });
+
+  // Identity and an approved organization are separate gates: an account can pass
+  // verification and still have no partner to act for, and every command that names
+  // one has to stop there rather than send a request without it.
+  it('sends a verified account with no approved organization to the identity page', async () => {
+    const navigate = vi.fn();
+    testState.marketplaceData = { ...signedInData(), partners: emptyList };
+
+    const view = render(<MarketplacePage navigate={navigate} />);
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }));
+
+    expect(navigate).toHaveBeenLastCalledWith('/verification');
+    expect(screen.getByRole('status').textContent).toContain('agritech.marketplace.cart.verifyRequired');
+    expect(testState.api.marketplaceControllerAddToCart).not.toHaveBeenCalled();
+
+    view.rerender(<MarketplacePage navigate={navigate} view="requests" />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0] as HTMLElement);
+    const requestForm = panel('.dh-form');
+    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.requestTitle'), {
+      target: { value: 'Corn seed for autumn' },
+    });
+    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.product'), {
+      target: { value: product.name },
+    });
+    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.volume'), {
+      target: { value: '40 t' },
+    });
+    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.region'), {
+      target: { value: product.region },
+    });
+    fireEvent.submit(requestForm);
+
+    await settle();
+    expect(testState.api.marketplaceControllerCreateRequest).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenLastCalledWith('/verification');
+  });
+
+  it('stops an offer from an account with no approved supplier organization', async () => {
+    const navigate = vi.fn();
+    testState.marketplaceData = withIdentity(
+      { ...signedInData(), partners: emptyList, requests: { data: [request({ id: 'request-9' })], status: 'ready' } },
+      { role: 'seller' },
+    );
+
+    render(<MarketplacePage navigate={navigate} view="requests" />);
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }));
+    const offerForm = panel('.dh-inline-form');
+    fireEvent.change(within(offerForm).getByLabelText('agritech.marketplace.orders.price'), {
+      target: { value: '2400000' },
+    });
+    fireEvent.change(within(offerForm).getByLabelText('agritech.marketplace.orders.timing'), {
+      target: { value: '7' },
+    });
+    fireEvent.submit(offerForm);
+
+    await settle();
+    expect(testState.api.marketplaceControllerMakeOffer).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenLastCalledWith('/verification');
+  });
+
+  // A retry of the same command reuses its key so the server can recognize it; a
+  // command the visitor has since edited is a different command, and the edited
+  // one must not be able to land under the key the abandoned one still holds.
+  it('reuses an idempotency key for a retry and retires the key of an edited command', async () => {
+    testState.api.marketplaceControllerAddReview.mockResolvedValue(failed(503));
+    testState.marketplaceData = {
+      ...signedInData(),
+      contracts: { data: [contract({ status: 'completed' })], status: 'ready' },
+    };
+
+    render(<MarketplacePage productId={product.id} view="product" />);
+
+    const submitReview = async (rating: string) => {
+      const form = panel('.dh-review-form');
+      fireEvent.change(within(form).getByRole('combobox'), { target: { value: rating } });
+      fireEvent.submit(form);
+      await settle();
+    };
+    const keys = () =>
+      testState.api.marketplaceControllerAddReview.mock.calls.map((call: unknown[]) => call[1] as string);
+
+    await submitReview('4');
+    await submitReview('4');
+    const [first, retry] = keys();
+    expect(retry).toBe(first);
+
+    await submitReview('5');
+    const edited = keys()[2];
+    expect(edited).not.toBe(first);
+
+    // Back to the first rating: its key was retired when the edit took over, so
+    // this is a new command rather than a replay of the abandoned one.
+    await submitReview('4');
+    expect(keys()[3]).not.toBe(first);
+    expect(keys()[3]).not.toBe(edited);
+  });
+
   it('states which order lists are unavailable instead of showing them as empty', () => {
     testState.marketplaceData = {
       ...signedInData(),

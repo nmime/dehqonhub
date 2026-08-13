@@ -70,6 +70,7 @@ function fixture() {
     listSupplierProducts: vi.fn().mockResolvedValue([]),
     updateSupplierProduct: vi.fn().mockResolvedValue(ok({ id: 'supplier-product-1' })),
     createProduceListing: vi.fn().mockResolvedValue(ok({ id: 'produce-1' })),
+    updateProduceSampleAvailability: vi.fn().mockResolvedValue(ok({ id: 'produce-1', sampleAvailable: true })),
     listProduce: vi.fn().mockResolvedValue([]),
     discoverPrice: vi.fn().mockResolvedValue(ok({ crop: 'cotton' })),
     reserveProduce: vi.fn().mockResolvedValue(ok({ orderId: 'order-1', totalAmountUzs: 50_000 })),
@@ -143,6 +144,7 @@ describe('AgriTechOperationsService', () => {
       status: 'active',
     });
     await service.createProduceListing(owner, listingInput);
+    await service.updateProduceSampleAvailability(owner, 'produce-1', true);
     await service.listProduce(owner, { crop: 'cotton', region: 'R', grade: 'A' });
     await service.discoverPrice(owner, { crop: 'cotton', region: 'R', grade: 'A' });
     await service.reserveProduce(owner, 'produce-1', {
@@ -188,6 +190,7 @@ describe('AgriTechOperationsService', () => {
       region: 'R',
       grade: 'A',
     });
+    expect(repository.updateProduceSampleAvailability).toHaveBeenCalledWith(owner, 'produce-1', true);
     expect(notifications.produceReserved).toHaveBeenCalledWith('order-1', owner.userId);
     expect(notifications.partnerStatus).toHaveBeenCalledWith(partner);
     expect(notifications.farmerAssigned).toHaveBeenCalledWith(farmer, 'agent-1');

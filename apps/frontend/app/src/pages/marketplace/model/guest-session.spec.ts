@@ -101,6 +101,28 @@ describe('marketplace guest session', () => {
 
     expect(readGuestFavoriteIds()).toEqual([]);
     expect(readGuestCarts()).toEqual([]);
+
+    // The same two failures the other way round: a favourites payload that parses
+    // into something that is not a list, and a cart payload that does not parse.
+    Object.defineProperty(globalThis, 'localStorage', {
+      configurable: true,
+      value: memoryStorage({ [cartsKey]: 'not json at all', [favoritesKey]: '{"not":"a list"}' }),
+    });
+
+    expect(readGuestFavorites()).toEqual([]);
+    expect(readGuestCarts()).toEqual([]);
+  });
+
+  it('files harvested produce as produce and everything else as a product', () => {
+    Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: memoryStorage() });
+
+    addGuestCartItem({ ...product('harvest-1', 's-1'), category: 'other' }, 2);
+    const [cart] = addGuestCartItem(product('seed-1', 's-1'), 1);
+
+    expect(cart?.items).toEqual([
+      { listingPublicationId: 'harvest-1', quantity: 2, sourceKind: 'produce' },
+      { listingPublicationId: 'seed-1', quantity: 1, sourceKind: 'product' },
+    ]);
   });
 
   it('ignores stored entries of the wrong shape', () => {

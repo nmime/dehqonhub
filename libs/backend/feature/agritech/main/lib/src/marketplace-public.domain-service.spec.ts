@@ -398,7 +398,13 @@ describe('MarketplacePublicDomainService opaque cursors', () => {
     ],
     [
       'a newest cursor whose timestamp is not canonical',
-      encode({ id: productRecord.publicId, kind: 'catalog', promoted: false, publishedAt: '2030-01-01', sort: 'newest' }),
+      encode({
+        id: productRecord.publicId,
+        kind: 'catalog',
+        promoted: false,
+        publishedAt: '2030-01-01',
+        sort: 'newest',
+      }),
     ],
     [
       'a newest cursor whose timestamp is not a string',
@@ -423,7 +429,10 @@ describe('MarketplacePublicDomainService opaque cursors', () => {
   });
 
   it.each([
-    ['a price cursor carrying an extra key', { extra: 1, id: productRecord.publicId, kind: 'catalog', priceUzs: 1, sort: 'price_asc' }],
+    [
+      'a price cursor carrying an extra key',
+      { extra: 1, id: productRecord.publicId, kind: 'catalog', priceUzs: 1, sort: 'price_asc' },
+    ],
     ['a fractional price cursor', { id: productRecord.publicId, kind: 'catalog', priceUzs: 1.5, sort: 'price_asc' }],
     ['a negative price cursor', { id: productRecord.publicId, kind: 'catalog', priceUzs: -1, sort: 'price_asc' }],
     [

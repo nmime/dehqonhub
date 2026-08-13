@@ -74,4 +74,30 @@ describe('marketplace contract PDF', () => {
     // Two full PDF renders are compute-bound; the default 5s budget is not enough
     // when the whole instrumented suite competes for the same cores.
   }, 30_000);
+
+  it('paginates a long direct-payment contract and keeps every script legible', async () => {
+    const long: MarketplaceContractArtifactSnapshot = {
+      ...snapshot,
+      delivery: { terms: 'pickup' },
+      lines: Array.from({ length: 40 }, (_, index) => ({
+        lineTotalUzs: 1_000_000,
+        // Cyrillic Extended-B, Latin Extended-A, and an unbreakable token wider than one line.
+        name: `Ꙑ${'ō'.repeat(3)} lot ${index} ${'x'.repeat(140)}`,
+        quantity: 1,
+        sourceId: '11111111-1111-4111-8111-111111111111',
+        sourceKind: 'product' as const,
+        sourcePublicationId: '33333333-3333-4333-8333-333333333333',
+        sourceRevision: 1,
+        unit: 'тонна',
+        unitPriceUzs: 1_000_000,
+      })),
+      settlementKind: 'direct_payment',
+    };
+
+    const rendered = await generateMarketplaceContractPdf(long, marketplaceProviderFingerprint(long));
+
+    expect(rendered.checksumSha256).toMatch(/^[a-f0-9]{64}$/u);
+    expect(Buffer.from(rendered.content.subarray(0, 8)).toString('ascii')).toBe('%PDF-1.7');
+    expect(Buffer.from(rendered.content).includes(Buffer.from('/Count 1'))).toBe(false);
+  }, 30_000);
 });

@@ -53,14 +53,16 @@ const defaultTimeouts: MarketplaceContractProviderTimeouts = {
 
 function hasUnsafeEvidenceFileNameCharacter(value: string): boolean {
   return [...value].some((character) => {
-    const codePoint = character.codePointAt(0) ?? 0;
+    // Every rejected code point below is inside the BMP, so the first UTF-16 unit of a
+    // whole character identifies it and a surrogate pair can never match either range.
+    const codeUnit = character.charCodeAt(0);
     return (
       character === '/' ||
       character === '\\' ||
-      codePoint <= 0x1f ||
-      codePoint === 0x7f ||
-      (codePoint >= 0x202a && codePoint <= 0x202e) ||
-      (codePoint >= 0x2066 && codePoint <= 0x2069)
+      codeUnit <= 0x1f ||
+      codeUnit === 0x7f ||
+      (codeUnit >= 0x202a && codeUnit <= 0x202e) ||
+      (codeUnit >= 0x2066 && codeUnit <= 0x2069)
     );
   });
 }
@@ -102,9 +104,7 @@ async function callProvider<T>(timeoutMs: number, invoke: (signal: AbortSignal) 
       }),
     ]);
   } finally {
-    if (timer) {
-      clearTimeout(timer);
-    }
+    clearTimeout(timer);
   }
 }
 

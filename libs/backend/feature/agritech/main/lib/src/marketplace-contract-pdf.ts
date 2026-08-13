@@ -42,26 +42,29 @@ function wrapText(value: string, width = 96): string[] {
   if (!normalized) {
     return [''];
   }
+  // Break tokens wider than the column up front so the greedy pass below only decides
+  // where a line ends, never how to cut a single token. That keeps every word at most
+  // one column wide, so the first word always opens a line and no flush can be empty.
+  const words = normalized.split(' ').flatMap((word) => {
+    const characters = [...word];
+    const chunks: string[] = [];
+    while (characters.length > width) {
+      chunks.push(characters.splice(0, width).join(''));
+    }
+    return [...chunks, characters.join('')];
+  });
   const output: string[] = [];
   let current = '';
-  for (const word of normalized.split(' ')) {
+  for (const word of words) {
     const candidate = current ? `${current} ${word}` : word;
     if ([...candidate].length <= width) {
       current = candidate;
       continue;
     }
-    if (current) {
-      output.push(current);
-    }
-    const characters = [...word];
-    while (characters.length > width) {
-      output.push(characters.splice(0, width).join(''));
-    }
-    current = characters.join('');
-  }
-  if (current) {
     output.push(current);
+    current = word;
   }
+  output.push(current);
   return output;
 }
 
@@ -189,14 +192,16 @@ function paginate(lines: DocumentLine[]): DocumentLine[][] {
 }
 
 function fontFor(character: string): keyof typeof fonts {
-  const codePoint = character.codePointAt(0) ?? 0;
-  if ((codePoint >= 0x0460 && codePoint <= 0x052f) || (codePoint >= 0xa640 && codePoint <= 0xa69f)) {
+  // Every subset range below is inside the BMP, so the first UTF-16 unit of a whole
+  // character identifies it and an astral character falls through to the Latin face.
+  const codeUnit = character.charCodeAt(0);
+  if ((codeUnit >= 0x0460 && codeUnit <= 0x052f) || (codeUnit >= 0xa640 && codeUnit <= 0xa69f)) {
     return 'cyrillicExt';
   }
-  if (codePoint >= 0x0400 && codePoint <= 0x045f) {
+  if (codeUnit >= 0x0400 && codeUnit <= 0x045f) {
     return 'cyrillic';
   }
-  if ((codePoint >= 0x0100 && codePoint <= 0x02ff) || (codePoint >= 0x1e00 && codePoint <= 0x1eff)) {
+  if ((codeUnit >= 0x0100 && codeUnit <= 0x02ff) || (codeUnit >= 0x1e00 && codeUnit <= 0x1eff)) {
     return 'latinExt';
   }
   return 'latin';

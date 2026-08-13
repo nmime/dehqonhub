@@ -91,13 +91,6 @@ export class MarketplaceDomainService {
     );
   }
 
-  async requireVerified(owner: AgriTechOwner): Promise<void> {
-    const role = await this.repository.roleOf(owner);
-    if (!role) {
-      throw new ForbiddenException('verification');
-    }
-  }
-
   private async requireBuyerVerificationRole(owner: AgriTechOwner): Promise<VerificationRole> {
     const role = await this.repository.roleOf(owner);
     if (!canBuyInMarketplace(role)) {

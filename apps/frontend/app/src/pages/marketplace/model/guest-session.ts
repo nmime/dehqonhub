@@ -158,28 +158,27 @@ const readCartLines = (): StoredCartLine[] => {
  * splits a basket across suppliers.
  */
 const toCarts = (lines: readonly StoredCartLine[]): CartViewDto[] => {
-  const bySeller = new Map<string, StoredCartLine[]>();
+  const bySeller = new Map<string, { displayName: string; lines: StoredCartLine[]; region: string }>();
   for (const line of lines) {
     const existing = bySeller.get(line.sellerId);
     if (existing) {
-      existing.push(line);
+      existing.lines.push(line);
     } else {
-      bySeller.set(line.sellerId, [line]);
+      // The line that opens a seller's cart names that seller, so the group keeps
+      // the name and region and no later line lookup can come up empty.
+      bySeller.set(line.sellerId, { displayName: line.sellerName, lines: [line], region: line.sellerRegion });
     }
   }
 
-  return [...bySeller.entries()].map(([sellerId, sellerLines]) => ({
+  return [...bySeller.entries()].map(([sellerId, seller]) => ({
     createdAt: guestStamp,
     id: `guest-cart-${sellerId}`,
-    items: sellerLines.map((line) => ({
+    items: seller.lines.map((line) => ({
       listingPublicationId: line.productId,
       quantity: line.quantity,
       sourceKind: line.sourceKind,
     })),
-    seller: {
-      displayName: sellerLines[0]?.sellerName ?? sellerId,
-      region: sellerLines[0]?.sellerRegion ?? '',
-    },
+    seller: { displayName: seller.displayName, region: seller.region },
     status: 'open',
     updatedAt: guestStamp,
   }));

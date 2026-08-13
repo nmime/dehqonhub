@@ -23,6 +23,7 @@ import {
   MarketplaceFavorites,
   MarketplaceHome,
   MarketplaceProductDetail,
+  MarketplaceSellerStorefront,
 } from './marketplace-discovery';
 import { ProductMedia } from './marketplace-product-card';
 import type { MarketplaceTranslate } from './marketplace-ui';
@@ -956,6 +957,78 @@ describe('DehqonHub marketplace components', () => {
     expect(navigate).toHaveBeenLastCalledWith('/catalog');
   });
 
+  it('opens a seller storefront from the product page and lists only that seller', () => {
+    const navigate = vi.fn();
+    render(
+      <MarketplaceProductDetail
+        {...discoveryActions()}
+        canReview={false}
+        navigate={navigate}
+        onReview={vi.fn()}
+        onRetry={vi.fn()}
+        onSample={vi.fn()}
+        product={seed}
+        reviews={{ data: [], status: 'empty' }}
+        sampleUsage={{ data: { limit: 5, remaining: 5, used: 0 }, status: 'ready' }}
+        similar={[]}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: `${seed.supplierName}` }));
+    expect(navigate).toHaveBeenLastCalledWith(`/sellers/${seed.supplierId}`);
+
+    cleanup();
+    render(
+      <MarketplaceSellerStorefront
+        {...discoveryActions()}
+        navigate={navigate}
+        products={[seed, tractor]}
+        sellerId={seed.supplierId}
+        status="ready"
+      />,
+    );
+
+    expect(screen.getByRole('heading', { level: 1, name: seed.supplierName })).toBeTruthy();
+    expect(screen.getByText(/agritech\.marketplace\.catalog\.resultCount/u).textContent).toContain(seed.region);
+    expect(screen.getByText(seed.name)).toBeTruthy();
+    expect(screen.queryByText(tractor.name)).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.back' }));
+    expect(navigate).toHaveBeenLastCalledWith('/catalog');
+  });
+
+  it('distinguishes a loading, unavailable and unknown seller storefront', () => {
+    const navigate = vi.fn();
+    const reload = vi.fn();
+    vi.stubGlobal('location', { ...window.location, reload });
+    const storefront = (status: 'error' | 'idle' | 'loading' | 'ready', sellerId?: string) => (
+      <MarketplaceSellerStorefront
+        {...discoveryActions()}
+        navigate={navigate}
+        products={[seed]}
+        sellerId={sellerId}
+        status={status}
+      />
+    );
+
+    const view = render(storefront('loading', seed.supplierId));
+    expect(document.querySelector('.dh-skeleton-grid')).toBeTruthy();
+
+    view.rerender(storefront('idle', seed.supplierId));
+    expect(document.querySelector('.dh-skeleton-grid')).toBeTruthy();
+
+    view.rerender(storefront('error', seed.supplierId));
+    fireEvent.click(screen.getByRole('button', { name: 'ui.runtime.retry' }));
+    expect(reload).toHaveBeenCalledOnce();
+
+    // A loaded catalog that holds nothing for this seller is a missing storefront,
+    // not an empty one: the visitor is offered the whole catalog instead.
+    view.rerender(storefront('ready', 'seller-unknown'));
+    expect(screen.getByRole('heading', { level: 1, name: 'agritech.marketplace.seller.notFound' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.hero.cta' }));
+    expect(navigate).toHaveBeenLastCalledWith('/catalog');
+  });
+
   it('distinguishes a loading, unavailable and empty basket', () => {
     const navigate = vi.fn();
     const reload = vi.fn();
@@ -1367,7 +1440,7 @@ describe('DehqonHub marketplace components', () => {
       <MarketplaceContract
         contract={signedContract({
           buyerPartySnapshot: { legalName: '', region: 'Samarqand' },
-          sellerPartySnapshot: { legalName: 'Dehqon Bozori Kooperativi', region: 'Tashkent' },
+          sellerPartySnapshot: { legalName: '', region: 'Tashkent' },
         })}
         identityStatus="ready"
         locale="en"
@@ -1380,7 +1453,9 @@ describe('DehqonHub marketplace components', () => {
       />,
     );
 
-    expect(screen.getByText('agritech.marketplace.contract.partyUnnamed')).toBeTruthy();
+    // Neither snapshot carries a legal name, so both sides read as unnamed rather
+    // than as an empty line where a party belongs.
+    expect(screen.getAllByText('agritech.marketplace.contract.partyUnnamed').length).toBe(2);
   });
 
   it('quotes a delivery the seller owes without inventing optional terms', () => {

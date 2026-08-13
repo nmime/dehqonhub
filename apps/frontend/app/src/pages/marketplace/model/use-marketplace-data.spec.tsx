@@ -351,9 +351,35 @@ describe('useMarketplaceData', () => {
     expect(result.current.catalog.status).toBe('ready');
   });
 
+  // Nothing else in this suite stubs the organizations read, so the rest of the
+  // page is measured against a failed one; this is the answered case.
+  it('reads the organizations the account may act for', async () => {
+    const supplier = {
+      createdAt: '2026-08-09T10:00:00.000Z',
+      id: 'partner-supplier',
+      kind: 'supplier',
+      legalName: 'Zamin Agro MChJ',
+      ownerUserId: 'buyer-1',
+      phone: '+998901234567',
+      region: 'Samarqand',
+      status: 'approved',
+      taxId: '300123456',
+      tenantId: 'tenant-1',
+      updatedAt: '2026-08-09T10:00:00.000Z',
+    };
+    stubApi({ agriTechOperationsControllerListPartners: vi.fn(() => ok({ items: [supplier] })) });
+
+    const { result } = await renderMarketplaceData();
+
+    await waitFor(() => {
+      expect(result.current.partners).toEqual({ data: [supplier], status: 'ready' });
+    });
+  });
+
   it('abandons every in-flight read once the page it was loading is gone', async () => {
     const gate = openGate();
     stubApi({
+      agriTechOperationsControllerListPartners: gate.answers({ items: [] }),
       marketplaceControllerGetVerification: gate.answers(verification),
       marketplaceControllerListCarts: gate.answers({ items: [] }),
       marketplaceControllerListContracts: gate.answers({ items: [] }),
@@ -380,6 +406,7 @@ describe('useMarketplaceData', () => {
     expect(apiState.api.marketplaceControllerListOffers).not.toHaveBeenCalled();
     expect(view.result.current.auth).toBe('checking');
     expect(view.result.current.carts).toEqual({ data: [], status: 'idle' });
+    expect(view.result.current.partners).toEqual({ data: [], status: 'idle' });
   });
 
   // The owned requests arrive while the page is still up, so the per-request offer

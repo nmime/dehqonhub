@@ -364,9 +364,9 @@ describe('MarketplaceVerificationService', () => {
       await expect(
         service.createVerification(owner, 'farmer', expectedRevision, 'verification-create-0001'),
       ).rejects.toBeInstanceOf(BadRequestException);
-      await expect(service.submitVerification(owner, expectedRevision, 'verification-submit-0001')).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      await expect(
+        service.submitVerification(owner, expectedRevision, 'verification-submit-0001'),
+      ).rejects.toBeInstanceOf(BadRequestException);
       expect(repository.createVerification).not.toHaveBeenCalled();
       expect(repository.submitVerification).not.toHaveBeenCalled();
     });
@@ -568,19 +568,26 @@ describe('MarketplaceVerificationService', () => {
       });
     });
 
-    it('still reports the provider outage when the failure ledger write itself fails', async () => {
-      const { identityProvider, repository, service } = fixture();
-      repository.prepareProviderOperation.mockResolvedValue({
-        status: 'ok',
-        value: { attempt: 1, execute: true, operationId: 'operation-9' },
-      });
-      identityProvider.linkIdentity.mockRejectedValue(new Error('provider unavailable'));
-      repository.failProviderOperation.mockRejectedValue(new Error('ledger unavailable'));
+    it.each([{ call: 'linkOneId' as const }, { call: 'storeDocuments' as const }])(
+      'still reports the $call outage when the failure ledger write itself fails',
+      async ({ call }) => {
+        const { documentProvider, identityProvider, repository, service } = fixture();
+        repository.prepareProviderOperation.mockResolvedValue({
+          status: 'ok',
+          value: { attempt: 1, execute: true, operationId: 'operation-9' },
+        });
+        identityProvider.linkIdentity.mockRejectedValue(new Error('provider unavailable'));
+        documentProvider.storeVerificationDocuments.mockRejectedValue(new Error('provider unavailable'));
+        repository.failProviderOperation.mockRejectedValue(new Error('ledger unavailable'));
 
-      await expect(service.linkOneId(owner, 'oneid-key-0001')).rejects.toBeInstanceOf(
-        MarketplaceProviderUnavailableException,
-      );
-    });
+        const rejected =
+          call === 'linkOneId'
+            ? service.linkOneId(owner, 'oneid-key-0001')
+            : service.storeDocuments(owner, [pdfDocument()], 'document-key-0001');
+
+        await expect(rejected).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
+      },
+    );
 
     it('turns a refused provider operation record into the matching client error', async () => {
       const { identityProvider, repository, service } = fixture();

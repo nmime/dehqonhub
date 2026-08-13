@@ -93,9 +93,59 @@ describe('MarketplacePromotionDomainService', () => {
   });
 
   it.each([
+    { label: 'an unparsable start date', startsAt: new Date('not-a-date') },
+    { label: 'a start date already in the past', startsAt: new Date('2029-12-01T00:00:00.000Z') },
+  ])('refuses $label before persistence', async ({ startsAt }) => {
+    const { repository, service } = fixture();
+
+    await expect(
+      service.activatePromotion(owner, 'promotion-key-0003', {
+        actingPartnerId,
+        listingPublicId,
+        planCode: 'catalog_7d',
+        startsAt,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.activatePromotion).not.toHaveBeenCalled();
+  });
+
+  it('accepts a start date inside the bounded scheduling window', async () => {
+    const { repository, service } = fixture();
+    const startsAt = new Date('2030-01-05T00:00:00.000Z');
+    repository.activatePromotion.mockResolvedValue({ status: 'ok', value: { ...promotion, startsAt } });
+
+    await expect(
+      service.activatePromotion(owner, 'promotion-key-0004', {
+        actingPartnerId,
+        listingPublicId,
+        planCode: 'catalog_7d',
+        startsAt,
+      }),
+    ).resolves.toMatchObject({ startsAt });
+    expect(repository.activatePromotion).toHaveBeenCalledWith(owner, expect.objectContaining({ startsAt }));
+  });
+
+  it('measures a scheduled start against the system clock when none is injected', async () => {
+    const repository = { activatePromotion: vi.fn(), findPromotion: vi.fn(), listPromotions: vi.fn() };
+    const service = new MarketplacePromotionDomainService(repository as unknown as MarketplacePromotionRepository);
+
+    await expect(
+      service.activatePromotion(owner, 'promotion-key-0005', {
+        actingPartnerId,
+        listingPublicId,
+        planCode: 'catalog_7d',
+        startsAt: new Date('2020-01-01T00:00:00.000Z'),
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.activatePromotion).not.toHaveBeenCalled();
+  });
+
+  it.each([
     ['conflict', ConflictException],
     ['forbidden', ForbiddenException],
+    ['partner_unapproved', ForbiddenException],
     ['not_found', ResourceNotFoundException],
+    ['invalid_state', BadRequestException],
   ] as const)('maps repository %s without leaking persistence details', async (status, ErrorType) => {
     const { repository, service } = fixture();
     repository.activatePromotion.mockResolvedValue({ status, field: 'privateField' });

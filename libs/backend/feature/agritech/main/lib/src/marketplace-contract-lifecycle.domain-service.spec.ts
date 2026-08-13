@@ -258,6 +258,18 @@ describe('MarketplaceContractLifecycleDomainService signatures and settlement', 
     expect(qualifiedSignature.qualifyContractSignature).not.toHaveBeenCalled();
   });
 
+  it('completes a replayed signature operation without qualifying it again', async () => {
+    const { providerOperations, qualifiedSignature, lifecycleRepository, service } = fixture();
+    providerOperations.prepareProviderOperation.mockResolvedValue(
+      ok({ attempt: 2, execute: false, operationId: 'operation-1' }),
+    );
+
+    await expect(service.sign(buyer, contractId, 'sign-key-1')).resolves.toBe(lifecycle);
+    expect(qualifiedSignature.qualifyContractSignature).not.toHaveBeenCalled();
+    expect(providerOperations.completeProviderOperation).not.toHaveBeenCalled();
+    expect(lifecycleRepository.completeSignature).toHaveBeenCalledWith(buyer, 'operation-1');
+  });
+
   it('files the seller side of a signature against the seller actor type', async () => {
     const { lifecycleRepository, providerOperations, service } = fixture();
     lifecycleRepository.prepareSignature.mockResolvedValue(
@@ -346,7 +358,9 @@ describe('MarketplaceContractLifecycleDomainService signatures and settlement', 
   it('refuses to sign when the qualified signature provider is switched off', async () => {
     const { lifecycleRepository, service } = fixture({ mode: 'disabled' });
 
-    await expect(service.sign(buyer, contractId, 'sign-key-3')).rejects.toThrow(MarketplaceProviderUnavailableException);
+    await expect(service.sign(buyer, contractId, 'sign-key-3')).rejects.toThrow(
+      MarketplaceProviderUnavailableException,
+    );
     expect(lifecycleRepository.prepareSignature).not.toHaveBeenCalled();
   });
 });
@@ -475,7 +489,12 @@ describe('MarketplaceContractLifecycleDomainService provider failures', () => {
   it('reports a provider timeout as retryable and marks the attempt outcome unknown', async () => {
     const { artifactStorage, providerOperations, service } = fixture();
     artifactStorage.storeContractArtifact.mockImplementation(
-      () => new Promise((resolve) => setTimeout(() => resolve(providerResult), 500)),
+      () =>
+        new Promise((resolve) => {
+          setTimeout(() => {
+            resolve(providerResult);
+          }, 500);
+        }),
     );
 
     await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).rejects.toThrow(
@@ -563,8 +582,10 @@ describe('MarketplaceContractLifecycleDomainService repository delegation', () =
     const { lifecycleRepository, service } = fixture();
 
     await expect(service.consentFactoring(buyer, contractId, 'consent-1')).resolves.toBe(lifecycle);
-    await expect(service.transitionFulfillment(seller, contractId, 'mark_shipped', 'ship-1')).resolves.toBe(lifecycle);
-    await expect(service.openDispute(buyer, contractId, 'quality', 'dispute-1')).resolves.toBe(lifecycle);
+    await expect(service.transitionFulfillment(seller, contractId, 'mark_delivered', 'ship-1')).resolves.toBe(
+      lifecycle,
+    );
+    await expect(service.openDispute(buyer, contractId, 'quality_issue', 'dispute-1')).resolves.toBe(lifecycle);
     await expect(
       service.resolveDispute(admin, contractId, 'dismissed', ['evidence-b', 'evidence-a'], 2, '  settled  ', 'res-1'),
     ).resolves.toBe(lifecycle);
