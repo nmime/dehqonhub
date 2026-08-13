@@ -88,14 +88,33 @@ const catalogSupplierOwners: Record<string, string> = {
   "Dehqon Bozori Kooperativi": farmerEmail,
 };
 
+/**
+ * The fixture key behind the organization a catalog listing is sold through. It
+ * is the catalog's own supplier slug, not the trade name on screen: the name is
+ * display text, and correcting the typography of `Urug'chilik` renumbered the
+ * partner every listing points at, while the slug survives any such edit.
+ */
+const supplierPartnerKey = (supplierSlug: string): string => `partner:supplier:${supplierSlug}`;
+
 /** The partner id a catalog listing is sold through — see `marketplaceFixtureUuid`. */
-const supplierPartnerId = (supplierName: string): string =>
-  marketplaceFixtureUuid(`partner:supplier:${supplierName}`);
+const supplierPartnerId = (supplierSlug: string): string => marketplaceFixtureUuid(supplierPartnerKey(supplierSlug));
+
+/**
+ * Nine obviously synthetic digits, derived from the same key as the row's id so
+ * that the two always move together. A positional numbering read better but
+ * collided with `ux__agritech_partners__tenant_kind_tax` as soon as a key did
+ * change: the replacement row arrives with a new id, the row it supersedes keeps
+ * its number, and the seed aborted on any database seeded before the change.
+ */
+function fixtureTaxId(key: string): string {
+  const hex = createHash("sha1").update(`${fixtureNamespace}:tax:${key}`).digest("hex").slice(0, 10);
+  return `3${String(Number.parseInt(hex, 16) % 100_000_000).padStart(8, "0")}`;
+}
 
 /** Distinct suppliers in catalog order, so their fixture numbering is stable. */
-const catalogSuppliers = DemoProducts.reduce<{ name: string; region: string }[]>((suppliers, product) => {
-  if (!suppliers.some((supplier) => supplier.name === product.supplierName)) {
-    suppliers.push({ name: product.supplierName, region: product.region });
+const catalogSuppliers = DemoProducts.reduce<{ name: string; region: string; slug: string }[]>((suppliers, product) => {
+  if (!suppliers.some((supplier) => supplier.slug === product.supplierId)) {
+    suppliers.push({ name: product.supplierName, region: product.region, slug: product.supplierId });
   }
   return suppliers;
 }, []);
@@ -108,29 +127,30 @@ const catalogSuppliers = DemoProducts.reduce<{ name: string; region: string }[]>
  */
 export const demoMarketplacePartners: readonly DemoPartnerFixture[] = [
   ...catalogSuppliers.map((supplier) => ({
-    id: supplierPartnerId(supplier.name),
+    key: supplierPartnerKey(supplier.slug),
     ownerEmail: catalogSupplierOwners[supplier.name] ?? sellerEmail,
     kind: "supplier" as const,
     legalName: supplier.name,
     region: supplier.region,
   })),
   {
-    id: marketplaceFixtureUuid("partner:buyer:farmer"),
+    key: "partner:buyer:farmer",
     ownerEmail: farmerEmail,
     kind: "buyer" as const,
-    legalName: "Dehqon Demo Xo‘jaligi",
+    legalName: "Dehqon Demo Xo'jaligi",
     region: "Toshkent",
   },
   {
-    id: marketplaceFixtureUuid("partner:buyer:buyer"),
+    key: "partner:buyer:buyer",
     ownerEmail: buyerEmail,
     kind: "buyer" as const,
     legalName: "Xaridor Demo Savdo",
     region: "Toshkent",
   },
-].map((partner, index) => ({
+].map(({ key, ...partner }, index) => ({
   ...partner,
-  taxId: String(300_000_001 + index),
+  id: marketplaceFixtureUuid(key),
+  taxId: fixtureTaxId(key),
   phone: `+998 71 200-00-${String(index + 1).padStart(2, "0")}`,
 }));
 
@@ -178,7 +198,7 @@ export const demoMarketplaceProducts: readonly DemoProductFixture[] = DemoProduc
   nameUz: product.nameUz,
   category: product.category,
   description: product.description,
-  supplierId: supplierPartnerId(product.supplierName),
+  supplierId: supplierPartnerId(product.supplierId),
   supplierName: product.supplierName,
   priceUzs: product.priceUzs,
   unit: product.unit,

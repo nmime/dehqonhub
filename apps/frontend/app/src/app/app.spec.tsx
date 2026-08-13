@@ -89,7 +89,7 @@ const catalogListing = {
   nameRu: 'Трактор ТТЗ-80, 2023',
   nameUz: 'Traktor TTZ-80, 2023',
   priceUzs: 185_000_000,
-  region: 'Farg‘ona viloyati',
+  region: "Farg'ona viloyati",
   status: 'active',
   stockQuantity: 2,
   supplierId: 'demo-supplier-dehqon-bozori-kooperativi',

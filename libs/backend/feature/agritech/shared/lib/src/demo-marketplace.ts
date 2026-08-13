@@ -66,7 +66,7 @@ export const DemoBuyerRequests: readonly BuyerRequest[] = [
     deadline: '2026-10-01',
     id: demoId('01', 3),
     product: 'Семена озимой пшеницы',
-    region: 'Farg‘ona',
+    region: "Farg'ona",
     requirements: 'Первая репродукция, сертификат обязателен.',
     status: 'open',
     tenantId: 'demo-tenant',
