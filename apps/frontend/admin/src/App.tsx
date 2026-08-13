@@ -219,7 +219,7 @@ const AdminApiClientProvider = ({ children }: Readonly<{ children: ReactElement 
       createApiRuntimeFetch({
         emitUnauthenticatedAuthRequired: true,
         redirectTo: '/admin',
-        toastRules: () => [...adminApiToastRules, ...authApiToastRules, ...createDefaultApiToastRules()],
+        toastRules: () => [...adminApiToastRules(), ...authApiToastRules(), ...createDefaultApiToastRules()],
       }),
     [],
   );

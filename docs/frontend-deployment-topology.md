@@ -177,6 +177,31 @@ chunks. Chunk names are visible in `pnpm nx run user-app:build` output, and
 `dist/apps/frontend/app/index.html` lists exactly what a first paint preloads —
 route chunks must not appear there.
 
+### Generated API toast rules stay per app
+
+The three generated toast-rule configs in `@app/frontend-api-client` are ~1.45 MB
+of JSON, and each app needs two of them at most. They are therefore read through
+`adminApiToastRules()`, `authApiToastRules()`, `userApiToastRules()` and
+`apiToastRuleCatalog()` rather than exported as arrays: a top-level
+`parseApiToastRules(config.rules)` is an opaque call, so the bundler keeps the
+config behind it even in an app that never reads that export, while a reference
+made from inside a function body disappears with the uncalled function. Pure
+annotations were tried first and changed nothing.
+
+Keeping the JSON referenced only from inside those functions is what holds 422 kB
+(16 kB gzipped) of admin rules — and with them the full inventory of `/admin/*`
+paths, error codes and messages — out of the marketplace bundle served to the
+public. Check it after touching that module:
+
+```bash
+grep -c admin-app-api dist/apps/frontend/app/assets/*.js
+```
+
+The admin console still carries all three configs in its entry chunk, because its
+route matrix imports every page statically and the presentation console reads the
+whole catalog; making that page lazy would move ~460 kB (17 kB gzipped) of user
+rules out of an internal tool's first load.
+
 ## Runtime browser config (one image, many environments)
 
 API origins are resolved at build time, but browser-safe **feature flags and

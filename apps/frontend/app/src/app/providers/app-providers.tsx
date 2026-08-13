@@ -46,7 +46,7 @@ const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
       createApiRuntimeFetch({
         emitUnauthenticatedAuthRequired: true,
         redirectTo: '/auth',
-        toastRules: () => [...authApiToastRules, ...userApiToastRules, ...createDefaultApiToastRules()],
+        toastRules: () => [...authApiToastRules(), ...userApiToastRules(), ...createDefaultApiToastRules()],
       }),
     [],
   );
