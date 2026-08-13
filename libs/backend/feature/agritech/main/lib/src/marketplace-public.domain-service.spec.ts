@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-PUBLIC-018
+// @requirements REQ-AGRITECH-PUBLIC-018 REQ-AGRITECH-DEMO-024
 import { describe, expect, it, vi } from 'vitest';
 import {
   BadRequestException,
@@ -13,6 +13,13 @@ import type {
   MarketplacePublishedSellerRecord,
 } from '@app/backend-feature-agritech-shared';
 import { MarketplacePublicDomainService } from './marketplace-public.domain-service';
+import {
+  findMarketplaceDemoListing,
+  findMarketplaceDemoSeller,
+  listMarketplaceDemoListings,
+  listMarketplaceDemoSellerListings,
+  listMarketplaceDemoSuggestions,
+} from './marketplace-demo-catalog';
 
 const productRecord: MarketplacePublishedListingRecord = {
   availableQuantity: 20,
@@ -74,6 +81,7 @@ const listingPublication = {
 };
 
 const repository = (): MarketplacePublicRepository => ({
+  isDemoCatalogEnabled: vi.fn().mockResolvedValue(false),
   findPublishedListing: vi.fn(() => Promise.resolve(productRecord)),
   findPublishedSeller: vi.fn(() => Promise.resolve(sellerRecord)),
   listPublishedListings: vi.fn(() =>
@@ -183,6 +191,7 @@ describe('MarketplacePublicDomainService', () => {
           kind: 'product',
           priceUzs: 4_200_000,
           promoted: false,
+          provenance: 'live',
           publishedAt: productRecord.publishedAt,
           region: 'Samarkand',
           sampleAvailable: false,
@@ -190,6 +199,7 @@ describe('MarketplacePublicDomainService', () => {
           seller: {
             displayName: 'Zarafshon Agro',
             id: productRecord.sellerPublicId,
+            provenance: 'live',
             region: 'Samarkand',
             verified: true,
           },
@@ -198,6 +208,7 @@ describe('MarketplacePublicDomainService', () => {
           titleUz: "Makkajo'xori F1",
           titleUzCyrl: 'Маккажўхори F1',
           unit: 't',
+          transactional: true,
           updatedAt: productRecord.updatedAt,
         },
       ],
@@ -230,6 +241,7 @@ describe('MarketplacePublicDomainService', () => {
       description: 'Verified seed supplier',
       displayName: 'Zarafshon Agro',
       id: sellerRecord.publicId,
+      provenance: 'live',
       region: 'Samarkand',
       verified: true,
     });
@@ -274,6 +286,102 @@ describe('MarketplacePublicDomainService', () => {
       },
     ]);
     expect(JSON.stringify(suggestions)).not.toMatch(/tenantId|sourceId/u);
+  });
+
+  it('adds clearly non-transactional demo listings only when the governed flag is enabled', async () => {
+    const repo = repository();
+    vi.mocked(repo.isDemoCatalogEnabled).mockResolvedValue(true);
+    vi.mocked(repo.listPublishedListings).mockResolvedValue({ items: [] });
+    vi.mocked(repo.findPublishedListing).mockResolvedValue(undefined);
+    vi.mocked(repo.findPublishedSeller).mockResolvedValue(undefined);
+    vi.mocked(repo.listPublishedSuggestions).mockResolvedValue([]);
+    const service = new MarketplacePublicDomainService(repo);
+
+    const page = await service.listCatalog({ limit: 10, sampleAvailable: true, section: 'seeds' });
+    expect(page.items).toHaveLength(1);
+    expect(page.items[0]).toMatchObject({
+      provenance: 'demo',
+      title: 'Premium cotton seed',
+      transactional: false,
+      seller: { provenance: 'demo', verified: false },
+    });
+    const listingId = page.items[0]?.id ?? '';
+    await expect(service.getListing(listingId)).resolves.toMatchObject({ provenance: 'demo' });
+    await expect(service.getSeller(page.items[0]?.seller.id ?? '')).resolves.toMatchObject({
+      provenance: 'demo',
+      verified: false,
+    });
+    await expect(service.listSuggestions('cotton', 8)).resolves.toEqual([
+      expect.objectContaining({ id: listingId, kind: 'listing' }),
+    ]);
+    vi.mocked(repo.listPublishedSuggestions).mockResolvedValueOnce([
+      { id: '9d000000-0000-4000-8000-000000000001', kind: 'seller', label: 'Existing demo seller' },
+    ]);
+    await expect(service.listSuggestions('demo', 8)).resolves.toHaveLength(7);
+    vi.mocked(repo.listPublishedSuggestions).mockResolvedValueOnce([
+      { id: productRecord.publicId, kind: 'listing', label: productRecord.title, section: productRecord.section },
+    ]);
+    await expect(service.listSuggestions('demo', 2)).resolves.toHaveLength(2);
+
+    vi.mocked(repo.listPublishedListings).mockResolvedValueOnce({ items: [productRecord] });
+    await expect(service.listCatalog({ limit: 2 })).resolves.toHaveProperty('items', [
+      expect.objectContaining({ id: productRecord.publicId, provenance: 'live' }),
+      expect.objectContaining({ provenance: 'demo' }),
+    ]);
+    vi.mocked(repo.listPublishedListings).mockResolvedValueOnce({
+      items: [{ ...productRecord, publicId: listingId }],
+    });
+    await expect(service.listCatalog({ limit: 10 })).resolves.toHaveProperty('items.length', 6);
+
+    vi.mocked(repo.listPublishedSellerListings).mockResolvedValue({ items: [] });
+    const sellerCatalog = await service.listSellerCatalog('9d000000-0000-4000-8000-000000000001');
+    expect(sellerCatalog.items).toHaveLength(6);
+    expect(sellerCatalog.items.every((item) => item.provenance === 'demo')).toBe(true);
+
+    expect(
+      listMarketplaceDemoListings({
+        crop: 'apple',
+        limit: 10,
+        maxPriceUzs: 20_000,
+        minAvailableQuantity: 5_000,
+        minPriceUzs: 10_000,
+        region: 'Namangan',
+        sampleAvailable: false,
+        section: 'produce',
+        sort: 'price_asc',
+      }),
+    ).toEqual([expect.objectContaining({ crop: 'Apple', region: 'Namangan' })]);
+    expect(listMarketplaceDemoListings({ category: 'equipment', limit: 10, sort: 'price_desc' })).toEqual([
+      expect.objectContaining({ title: 'Precision seed drill' }),
+    ]);
+    expect(listMarketplaceDemoListings({ limit: 10, sort: 'price_asc' })[0]).toMatchObject({
+      title: 'Fresh orchard apples',
+    });
+    expect(listMarketplaceDemoListings({ limit: 10, sort: 'price_desc' })[0]).toMatchObject({
+      title: 'Precision seed drill',
+    });
+    expect(listMarketplaceDemoListings({ limit: 10, query: 'tomato', sort: 'newest' })).toEqual([
+      expect.objectContaining({ kind: 'produce' }),
+    ]);
+    expect(findMarketplaceDemoListing('missing')).toBeUndefined();
+    expect(findMarketplaceDemoSeller('missing')).toBeUndefined();
+    expect(listMarketplaceDemoSellerListings('missing', { limit: 10, sort: 'newest' })).toEqual([]);
+    expect(listMarketplaceDemoSuggestions('demo', 1)).toEqual([expect.objectContaining({ kind: 'seller' })]);
+
+    vi.mocked(repo.isDemoCatalogEnabled).mockResolvedValue(false);
+    await expect(service.getListing(listingId)).resolves.toBeUndefined();
+  });
+
+  it('fails closed to authoritative records when demo governance is unreadable', async () => {
+    const repo = repository();
+    vi.mocked(repo.isDemoCatalogEnabled).mockRejectedValue(new Error('feature flag storage unavailable'));
+    const service = new MarketplacePublicDomainService(repo);
+
+    await expect(service.listCatalog()).resolves.toMatchObject({
+      items: [{ id: productRecord.publicId, provenance: 'live', transactional: true }],
+    });
+    vi.mocked(repo.findPublishedListing).mockResolvedValueOnce(undefined);
+    await expect(service.getListing('9d000000-0000-4000-8000-000000000101')).resolves.toBeUndefined();
   });
 
   it('rejects malformed opaque cursors before reaching persistence', async () => {
@@ -398,7 +506,13 @@ describe('MarketplacePublicDomainService opaque cursors', () => {
     ],
     [
       'a newest cursor whose timestamp is not canonical',
-      encode({ id: productRecord.publicId, kind: 'catalog', promoted: false, publishedAt: '2030-01-01', sort: 'newest' }),
+      encode({
+        id: productRecord.publicId,
+        kind: 'catalog',
+        promoted: false,
+        publishedAt: '2030-01-01',
+        sort: 'newest',
+      }),
     ],
     [
       'a newest cursor whose timestamp is not a string',
@@ -423,7 +537,10 @@ describe('MarketplacePublicDomainService opaque cursors', () => {
   });
 
   it.each([
-    ['a price cursor carrying an extra key', { extra: 1, id: productRecord.publicId, kind: 'catalog', priceUzs: 1, sort: 'price_asc' }],
+    [
+      'a price cursor carrying an extra key',
+      { extra: 1, id: productRecord.publicId, kind: 'catalog', priceUzs: 1, sort: 'price_asc' },
+    ],
     ['a fractional price cursor', { id: productRecord.publicId, kind: 'catalog', priceUzs: 1.5, sort: 'price_asc' }],
     ['a negative price cursor', { id: productRecord.publicId, kind: 'catalog', priceUzs: -1, sort: 'price_asc' }],
     [
@@ -572,6 +689,7 @@ describe('MarketplacePublicDomainService projections', () => {
       kind: 'produce',
       priceUzs: 1_500_000,
       promoted: true,
+      provenance: 'live',
       publishedAt: produceRecord.publishedAt,
       region: 'Fergana',
       sampleAvailable: true,
@@ -579,10 +697,12 @@ describe('MarketplacePublicDomainService projections', () => {
       seller: {
         displayName: 'Fergana Seeds',
         id: produceRecord.sellerPublicId,
+        provenance: 'live',
         region: 'Fergana',
         verified: true,
       },
       title: 'Corn, grade A',
+      transactional: true,
       unit: 'kg',
       updatedAt: produceRecord.updatedAt,
     });
@@ -640,6 +760,7 @@ describe('MarketplacePublicDomainService projections', () => {
     await expect(service.getSeller(sellerRecord.publicId)).resolves.toEqual({
       displayName: 'Zarafshon Agro',
       id: sellerRecord.publicId,
+      provenance: 'live',
       region: 'Samarkand',
       verified: true,
     });

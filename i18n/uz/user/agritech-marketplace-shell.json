@@ -2,7 +2,6 @@
   "agritech.marketplace.brand": "DehqonHub",
   "agritech.marketplace.title": "DehqonHub marketpleysi",
   "agritech.marketplace.search": "Mahsulot, sotuvchi va xarid so'rovlarini qidirish…",
-  "agritech.marketplace.search.placeholder": "Mahsulot qidirish…",
   "agritech.marketplace.verification": "Tasdiqlash",
   "agritech.marketplace.signIn": "Kirish",
   "agritech.marketplace.home": "Bosh sahifa",
@@ -38,5 +37,6 @@
   "agritech.marketplace.access.sellerOrganization": "Bu amal uchun tasdiqlangan sotuvchi tashkiloti kerak.",
   "agritech.marketplace.access.action.signIn": "Tizimga kirish",
   "agritech.marketplace.access.action.verify": "Tekshiruvni ochish",
-  "agritech.marketplace.access.action.organization": "Tashkilot profilini ochish"
+  "agritech.marketplace.access.action.organization": "Tashkilot profilini ochish",
+  "agritech.marketplace.search.placeholder": "Mahsulot qidirish…"
 }

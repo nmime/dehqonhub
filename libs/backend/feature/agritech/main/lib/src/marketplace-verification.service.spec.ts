@@ -364,9 +364,9 @@ describe('MarketplaceVerificationService', () => {
       await expect(
         service.createVerification(owner, 'farmer', expectedRevision, 'verification-create-0001'),
       ).rejects.toBeInstanceOf(BadRequestException);
-      await expect(service.submitVerification(owner, expectedRevision, 'verification-submit-0001')).rejects.toBeInstanceOf(
-        BadRequestException,
-      );
+      await expect(
+        service.submitVerification(owner, expectedRevision, 'verification-submit-0001'),
+      ).rejects.toBeInstanceOf(BadRequestException);
       expect(repository.createVerification).not.toHaveBeenCalled();
       expect(repository.submitVerification).not.toHaveBeenCalled();
     });

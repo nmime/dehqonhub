@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-PUBLIC-018
+// @requirements REQ-AGRITECH-PUBLIC-018 REQ-AGRITECH-DEMO-024
 import type { EntityManager } from '@mikro-orm/core';
 import { describe, expect, it, vi } from 'vitest';
 import { FarmerEntity } from '../entities/farmer.entity';

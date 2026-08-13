@@ -36,14 +36,12 @@
   "user.state.forbidden": "Доступ ограничен: {{reason}}",
   "user.loadingProfile": "Загрузка профиля...",
   "user.profile.unknown": "неизвестно",
-  "user.profile.subject": "Идентификатор аккаунта",
-  "user.profile.guestTitle": "Вы не вошли в аккаунт",
   "user.nav.home": "Главная",
   "user.nav.auth": "Вход",
   "user.nav.profile": "Профиль",
   "user.nav.settings": "Настройки",
   "user.settings.title": "Настройки",
-  "user.settings.description": "Выберите язык или управляйте аккаунтами, подключенными к вашему профилю.",
+  "user.settings.description": "Выберите язык и оформление или управляйте аккаунтами, подключенными к вашему профилю.",
   "user.settings.preferences.title": "Предпочтения",
   "user.settings.preferences.description": "Эти настройки сохраняются в профиле, когда доступна пользовательская сессия.",
   "user.settings.connections.title": "Подключенные аккаунты",
@@ -53,5 +51,7 @@
   "user.notFound.eyebrow": "Навигация",
   "user.notFound.sectionTitle": "Страница не найдена",
   "user.notFound.title": "Этот маршрут недоступен.",
-  "user.notFound.description": "Вернитесь на главную страницу DehqonHub и выберите доступный сценарий."
+  "user.notFound.description": "Вернитесь на главную страницу DehqonHub и выберите доступный сценарий.",
+  "user.profile.subject": "Идентификатор аккаунта",
+  "user.profile.guestTitle": "Вы не вошли в аккаунт"
 }

@@ -5,7 +5,6 @@
   "agritech.marketplace.contract.sign": "Review and consent",
   "agritech.marketplace.contract.settlement.direct": "Direct bank payment simulation",
   "agritech.marketplace.contract.buyer": "Buyer",
-  "agritech.marketplace.contract.partyUnnamed": "Organization not published",
   "agritech.marketplace.contract.seller": "Seller",
   "agritech.marketplace.contract.delivery": "Delivery terms",
   "agritech.marketplace.contract.deliveryPrice": "Separate delivery charge",
@@ -31,7 +30,6 @@
   "agritech.marketplace.contract.notFound": "Contract unavailable",
   "agritech.marketplace.contract.notFoundDescription": "This contract was not found or is not visible to your account.",
   "agritech.marketplace.contract.notYourContract": "Only a listed contract party can record consent.",
-  "agritech.marketplace.contract.consentClosed": "This contract version is not open for consent.",
   "agritech.marketplace.contract.signConfirmation": "Confirm that you reviewed this contract version. This records consent for your party only and does not process payment.",
   "agritech.marketplace.contract.signOwnParty": "Record my party consent",
   "agritech.marketplace.contract.signatureRecorded": "Your party consent was recorded",
@@ -44,5 +42,7 @@
   "agritech.marketplace.contract.timeline.buyerSigned": "Buyer consent",
   "agritech.marketplace.contract.timeline.sellerSigned": "Seller consent",
   "agritech.marketplace.contract.yourSignatureRecorded": "Your party consent is already recorded.",
-  "agritech.marketplace.contract.legacyReviewRequiredDescription": "This pre-upgrade contract is quarantined. Its former state is retained for audit, but new consent is disabled."
+  "agritech.marketplace.contract.legacyReviewRequiredDescription": "This pre-upgrade contract is quarantined. Its former state is retained for audit, but new consent is disabled.",
+  "agritech.marketplace.contract.partyUnnamed": "Organization not published",
+  "agritech.marketplace.contract.consentClosed": "This contract version is not open for consent."
 }

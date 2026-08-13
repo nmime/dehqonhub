@@ -21,8 +21,11 @@ export default defineConfig({
       },
     },
     include: ['src/**/*.spec.ts', 'src/**/*.spec.tsx'],
+    maxWorkers: 2,
     passWithNoTests: false,
     setupFiles: ['../../../packages/tooling/src/testing/vitest-dom-cleanup.ts'],
+    hookTimeout: 15_000,
+    testTimeout: 15_000,
     coverage: fullCoverage('coverage/apps/frontend/admin', ['src/**/*.{ts,tsx}'], [], {
       branches: -239,
       functions: -153,

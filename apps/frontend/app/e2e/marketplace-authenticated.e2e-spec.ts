@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-WEB-006
+// @requirements REQ-AUTH-RECOVERY-010 REQ-AGRITECH-WEB-006 REQ-AGRITECH-EXPERIENCE-026 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ROUTING-015 REQ-API-PROBLEM-001 REQ-FRONTEND-ACCESSIBILITY-003
 import { expect, test, type Page, type Route } from '@playwright/test';
 import type {
   ContractArtifactDto,
@@ -34,6 +34,7 @@ const seller = {
   description: 'Certified seed cooperative',
   displayName: 'Seed cooperative',
   id: '55555555-5555-4555-8555-555555555555',
+  provenance: 'live',
   region: 'Samarqand',
   verified: true,
 } satisfies MarketplacePublicProductListingDto['seller'];
@@ -47,14 +48,34 @@ const listing = {
   kind: 'product',
   priceUzs: 1_250_000,
   promoted: false,
+  provenance: 'live',
   publishedAt: now,
   region: 'Samarqand',
   sampleAvailable: true,
   section: 'seeds',
   seller,
   title: 'Certified corn seed',
+  transactional: true,
   unit: 't',
   updatedAt: now,
+} satisfies MarketplacePublicProductListingDto;
+
+const demoListing = {
+  ...listing,
+  availableQuantity: 80,
+  id: '9d000000-0000-4000-8000-000000000101',
+  provenance: 'demo',
+  sampleAvailable: true,
+  seller: {
+    description: 'Synthetic preview profile',
+    displayName: 'DehqonHub demo farm',
+    id: '9d000000-0000-4000-8000-000000000001',
+    provenance: 'demo',
+    region: 'Samarqand',
+    verified: false,
+  },
+  title: 'Premium demo cotton seed',
+  transactional: false,
 } satisfies MarketplacePublicProductListingDto;
 
 const providerCapability = {
@@ -427,7 +448,7 @@ class MarketplaceFixtureApi {
       '/marketplace/promotions/plans': {
         items: [{ code: 'catalog_7d', currency: 'UZS', durationDays: 7, priceUzs: 100_000 }],
       },
-      '/marketplace/public/catalog': { items: [listing] },
+      '/marketplace/public/catalog': { items: [listing, demoListing] },
       '/marketplace/public/requests': {
         items: [
           {
@@ -567,7 +588,7 @@ class MarketplaceFixtureApi {
         amountUzs: 1_250_000,
         createdAt: now,
         currency: 'UZS',
-        kind: 'DirectPaymentSettlementDto',
+        kind: 'direct_payment',
         latestProviderMode: 'mock',
         reconciliationState: 'clear',
         revision: this.settlementAdvanced ? 2 : 1,
@@ -698,6 +719,155 @@ const viewports = [
   { height: 960, name: 'desktop', width: 1440 },
 ] as const;
 
+const fulfillAnonymousAuthFailure = async (route: Route): Promise<void> => {
+  await route.fulfill({
+    body: JSON.stringify({ detail: 'Authentication is required.', status: 401, title: 'Unauthorized' }),
+    contentType: 'application/problem+json',
+    status: 401,
+  });
+};
+
+test('anonymous visitors keep the public marketplace when optional presentation bootstrap is unauthorized', async ({
+  page,
+}) => {
+  await page.route('**/auth/problem-presentations', fulfillAnonymousAuthFailure);
+  await page.route('**/marketplace/catalog', fulfillAnonymousAuthFailure);
+  await page.route('**/marketplace/public/catalog', async (route) => {
+    await route.fulfill({ body: JSON.stringify({ data: { items: [] } }), contentType: 'application/json' });
+  });
+  await page.route('**/marketplace/public/requests', async (route) => {
+    await route.fulfill({ body: JSON.stringify({ data: { items: [] } }), contentType: 'application/json' });
+  });
+
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  await expect(page).toHaveURL(/\/$/u);
+  await expect(
+    page.getByRole('heading', { level: 1, name: "Uzbekistan's entire agro market — on one platform" }),
+  ).toBeVisible();
+});
+
+test('reference-led public marketplace keeps local favorites and a polished black theme', async ({ page }) => {
+  await page.setViewportSize({ height: 812, width: 375 });
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  page.on('console', (message) => {
+    if (message.type() === 'error') {
+      consoleErrors.push(message.text());
+    }
+  });
+  page.on('pageerror', (error) => {
+    pageErrors.push(error.message);
+  });
+  await page.route('**/auth/problem-presentations', async (route) => {
+    await route.fulfill({ body: JSON.stringify({ data: { items: [] } }), contentType: 'application/json' });
+  });
+  await page.route('**/auth/me', fulfillAnonymousAuthFailure);
+  await page.route('**/auth/me/preferences', async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ data: { user: { theme: 'dark' } } }),
+      contentType: 'application/json',
+    });
+  });
+  await page.route('**/marketplace/catalog', fulfillAnonymousAuthFailure);
+  await page.route('**/marketplace/verification', fulfillAnonymousAuthFailure);
+  await page.route('**/marketplace/public/catalog', async (route) => {
+    await route.fulfill({
+      body: JSON.stringify({ data: { items: [listing, demoListing] } }),
+      contentType: 'application/json',
+    });
+  });
+  await page.route('**/marketplace/public/requests', async (route) => {
+    await route.fulfill({ body: JSON.stringify({ data: { items: [] } }), contentType: 'application/json' });
+  });
+
+  await page.goto('/');
+  await page.waitForLoadState('networkidle');
+
+  await expect(
+    page.getByRole('heading', { level: 1, name: "Uzbekistan's entire agro market — on one platform" }),
+  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Explore the governed demo catalog' })).toBeVisible();
+  await expect(page.locator('.dh-brand__wordmark').first()).toContainText('DehqonHub');
+  await expect(page.locator('.dh-brand__mark img')).toHaveCount(0);
+  await expectNoHorizontalOverflow(page, '375px reference home');
+
+  const favorite = page
+    .locator('article')
+    .filter({ hasText: listing.title })
+    .getByRole('button', { name: 'Add product to favorites' });
+  await favorite.click();
+  await expect(
+    page
+      .locator('article')
+      .filter({ hasText: listing.title })
+      .getByRole('button', { name: 'Remove product from favorites' }),
+  ).toHaveAttribute('aria-pressed', 'true');
+  await expect
+    .poll(() =>
+      page.evaluate((id) => localStorage.getItem('dehqonhub.marketplace.guest-favorites.v1')?.includes(id), listingId),
+    )
+    .toBe(true);
+
+  const theme = page.getByRole('button', { name: 'Theme' }).last();
+  const publicRouteBeforeThemeChange = page.url();
+  await theme.click();
+  await page.getByRole('menuitem', { name: 'Dark' }).click();
+  await expect(page).toHaveURL(publicRouteBeforeThemeChange);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  const visualTokens = await page.evaluate(() => {
+    const root = document.querySelector<HTMLElement>('.dh-marketplace');
+    const catalogButton = document.querySelector<HTMLElement>('.dh-button--catalog');
+    if (!root || !catalogButton) {
+      throw new Error('Marketplace reference shell is missing.');
+    }
+    const rootStyle = getComputedStyle(root);
+    const buttonStyle = getComputedStyle(catalogButton);
+    return {
+      background: rootStyle.backgroundColor,
+      fontFamily: rootStyle.fontFamily,
+      paddingLeft: buttonStyle.paddingLeft,
+      paddingRight: buttonStyle.paddingRight,
+    };
+  });
+  expect(visualTokens.background).toBe('rgb(13, 17, 14)');
+  expect(visualTokens.fontFamily).toContain('Poppins');
+  expect(visualTokens.paddingLeft).toBe(visualTokens.paddingRight);
+  expect(
+    await page
+      .locator('.dh-button--catalog')
+      .evaluate((element) => Number.parseFloat(getComputedStyle(element).transitionDuration)),
+  ).toBeLessThanOrEqual(0.00001);
+
+  await page.getByRole('button', { name: 'Language' }).last().click();
+  await page.getByRole('menuitem', { name: 'Russian' }).click();
+  await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Весь агрорынок Узбекистана — на одной платформе' }),
+  ).toBeVisible();
+  await expectNoHorizontalOverflow(page, '375px Russian black theme');
+  expect(
+    consoleErrors.filter(
+      (message) => message !== 'Failed to load resource: the server responded with a status of 401 (Unauthorized)',
+    ),
+  ).toEqual([]);
+  expect(pageErrors).toEqual([]);
+});
+
+test('anonymous visitors can read the public RFC 9457 problem registry', async ({ page }) => {
+  await page.route('**/auth/problem-presentations', fulfillAnonymousAuthFailure);
+  await page.route('**/auth/me', fulfillAnonymousAuthFailure);
+
+  await page.goto('/problems');
+  await page.waitForLoadState('networkidle');
+
+  await expect(page).toHaveURL(/\/problems$/u);
+  await expect(page.getByRole('heading', { level: 1, name: 'API problem types' })).toBeVisible();
+  await expect(page.getByText('https://dehqonhub.uz/problems', { exact: true }).first()).toBeVisible();
+});
+
 for (const viewport of viewports) {
   test(`${viewport.name}: authenticated marketplace management and transaction journey`, async ({ page }) => {
     await page.setViewportSize({ height: viewport.height, width: viewport.width });
@@ -749,6 +919,21 @@ for (const viewport of viewports) {
     await expect(page.getByRole('heading', { name: 'Your verification request is under review' })).toBeVisible();
     await expect(page.getByText('Simulation — no live-provider approval')).toBeVisible();
     await expectNoHorizontalOverflow(page, `${viewport.name} verification`);
+
+    await page.goto('/catalog');
+    const liveListingCard = page.locator('article').filter({ hasText: listing.title });
+    await expect(liveListingCard.getByRole('button', { name: 'Add to cart' })).toBeDisabled();
+    await expect(liveListingCard.getByText('Complete marketplace verification to use this action.')).toBeVisible();
+    await expect(liveListingCard.getByRole('button', { name: 'Open verification' })).toBeVisible();
+    const demoListingCard = page.locator('article').filter({ hasText: demoListing.title });
+    await expect(demoListingCard.getByText('Demo', { exact: true })).toBeVisible();
+    await expect(demoListingCard.getByRole('button', { name: 'Add to cart' })).toBeDisabled();
+    await expect(
+      demoListingCard.getByText(
+        'This is synthetic preview data. Browse it freely; transactions and engagement are disabled.',
+      ),
+    ).toBeVisible();
+    await expectNoHorizontalOverflow(page, `${viewport.name} progressive catalog`);
 
     fixture.useVerifiedVerification();
     await page.goto('/requests');
@@ -812,3 +997,68 @@ for (const viewport of viewports) {
     expect([...fixture.unhandledApiPaths]).toEqual([]);
   });
 }
+
+test('account recovery requests and confirms single-use credentials without exposing server detail', async ({
+  page,
+}) => {
+  const commands: string[] = [];
+  await page.setViewportSize({ height: 760, width: 375 });
+  await page.route('**/*', async (route) => {
+    const request = route.request();
+    const path = new URL(request.url()).pathname;
+    if (request.method() === 'GET' && path === '/auth/me') {
+      await route.fulfill({
+        body: JSON.stringify({ detail: 'Authentication is required.', status: 401, title: 'Unauthorized' }),
+        contentType: 'application/problem+json',
+        status: 401,
+      });
+      return;
+    }
+    if (request.method() === 'GET' && path === '/auth/problem-presentations') {
+      await route.fulfill({ body: JSON.stringify({ data: { items: [] } }), contentType: 'application/json' });
+      return;
+    }
+    if (
+      request.method() === 'POST' &&
+      [
+        '/auth/email-verification-token',
+        '/auth/email-verification/confirm',
+        '/auth/password-reset-token',
+        '/auth/password-reset/confirm',
+      ].includes(path)
+    ) {
+      commands.push(path);
+      await route.fulfill({
+        body: JSON.stringify({ data: { accepted: true, confirmed: true } }),
+        contentType: 'application/json',
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto('/auth');
+  const verification = page.getByRole('heading', { name: 'Email verification' }).locator('..');
+  await verification.getByLabel('Email').fill('member@example.com');
+  await verification.getByRole('button', { name: 'Send verification code' }).click();
+  await expect(page.getByText('If the account exists, a verification code has been sent.')).toBeVisible();
+  await verification.getByLabel('Single-use code').fill('verification-code-1234567890');
+  await verification.getByRole('button', { name: 'Verify email' }).click();
+  await expect(page.getByText('Your email is verified.')).toBeVisible();
+
+  const reset = page.getByRole('heading', { name: 'Password reset' }).locator('..');
+  await reset.getByLabel('Email').fill('member@example.com');
+  await reset.getByRole('button', { name: 'Send reset code' }).click();
+  await expect(page.getByText('If the account exists, a password reset code has been sent.')).toBeVisible();
+  await reset.getByLabel('Single-use code').fill('password-reset-code-1234567890');
+  await reset.getByLabel('New password').fill('correct-horse-battery-staple');
+  await reset.getByRole('button', { name: 'Set new password' }).click();
+  await expect(page.getByText('Your password has been updated. Sign in again on other devices.')).toBeVisible();
+  expect(commands).toEqual([
+    '/auth/email-verification-token',
+    '/auth/email-verification/confirm',
+    '/auth/password-reset-token',
+    '/auth/password-reset/confirm',
+  ]);
+  await expectNoHorizontalOverflow(page, '375 recovery');
+});

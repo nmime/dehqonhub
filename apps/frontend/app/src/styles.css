@@ -1,46 +1,208 @@
 /* User-app composition only. Shared tokens and primitives live in @app/frontend-ui-web. */
 
-/* The runtime toast stack is fixed to the top of the viewport at a higher stacking
-   level than any header, so on marketplace routes a failed request landed on top
-   of the brand lockup, search field and category tabs. The offset clears the
-   sticky DehqonHub header (136px at desktop, 123px at 360px) and is scoped to
-   pages that actually render it, leaving the account/auth chrome untouched. */
-body:has(.dh-header) .xr-runtime-overlay__toasts {
-  top: 9rem;
+.xr-mini-app-shell .xr-shell {
+  --xr-font-family: 'Poppins', 'Manrope Variable', sans-serif;
+  --xr-radius-md: 0.9rem;
+  --xr-radius-lg: 1.35rem;
+  --xr-color-background: #fbf3e3;
+  --xr-color-background-accent: rgb(44 196 99 / 14%);
+  --xr-color-surface: rgb(255 253 248 / 94%);
+  --xr-color-surface-strong: #fffdf8;
+  --xr-color-border: #e8dcc7;
+  --xr-color-text: #202720;
+  --xr-color-muted: #687067;
+  --xr-color-primary: #18a957;
+  --xr-color-primary-strong: #08783a;
+  --xr-color-primary-contrast: #fffdf8;
+  --xr-control-background: #f5ecdc;
+  --xr-input-background: #fffdf8;
+  --xr-card-background: #fffdf8;
+  --xr-feedback-background: #fffdf8;
+  --xr-focus-ring: 0 0 0 3px rgb(24 169 87 / 24%);
+  --xr-shadow-sm: 0 1px 2px rgb(36 49 39 / 6%);
+  --xr-shadow-md: 0 14px 36px rgb(36 49 39 / 10%);
+  --xr-mini-app-header-color: #fffdf8;
+  --xr-mini-app-bottom-color: #fffdf8;
+  --background: var(--xr-color-surface-strong);
+  --foreground: var(--xr-color-text);
+  --card: var(--xr-card-background);
+  --card-foreground: var(--xr-color-text);
+  --popover: var(--xr-color-surface-strong);
+  --popover-foreground: var(--xr-color-text);
+  --primary: var(--xr-color-primary);
+  --primary-foreground: var(--xr-color-primary-contrast);
+  --secondary: var(--xr-control-background);
+  --secondary-foreground: var(--xr-color-text);
+  --muted: var(--xr-control-background);
+  --muted-foreground: var(--xr-color-muted);
+  --accent: color-mix(in srgb, var(--xr-color-primary) 12%, transparent);
+  --accent-foreground: var(--xr-color-primary-strong);
+  --border: var(--xr-color-border);
+  --input: var(--xr-color-border);
+  --ring: var(--xr-color-primary);
+  background: #fbf3e3;
+  font-family: var(--xr-font-family);
 }
 
-/* One ground for the whole site. The shared sheet paints the console's blue
-   gradient on `body`: on marketplace routes the cream container covered it, and
-   on the Telegram routes — which render without that container — it showed
-   through as a second visual identity. `html:root` outranks the shared `:root`,
-   which is needed because that sheet is injected after this one. */
-html:root {
-  --xr-body-gradient: var(--bg-cream);
+.xr-mini-app-shell .xr-shell[data-theme='dark'] {
+  --xr-color-background: #0d110e;
+  --xr-color-background-accent: rgb(46 205 100 / 10%);
+  --xr-color-surface: rgb(21 26 22 / 96%);
+  --xr-color-surface-strong: #151a16;
+  --xr-color-border: #2b382e;
+  --xr-color-text: #f5f7f2;
+  --xr-color-muted: #a8b0a9;
+  --xr-color-primary: #55d77e;
+  --xr-color-primary-strong: #2db862;
+  --xr-color-primary-contrast: #07140b;
+  --xr-control-background: #19221b;
+  --xr-input-background: #151a16;
+  --xr-card-background: #151a16;
+  --xr-feedback-background: #151a16;
+  --xr-mini-app-header-color: #111612;
+  --xr-mini-app-bottom-color: #111612;
+  background: #0d110e;
 }
 
-/* Telegram mini-app routes. Telegram frames the webview itself, so the page adds
-   only the reading width and the breathing room the surrounding client does not
-   provide. Fullscreen launches clear Telegram's own overlaid header. */
-.dh-telegram-frame {
-  color: var(--ink);
+.xr-mini-app-shell .xr-shell .xr-header {
+  background: color-mix(in srgb, var(--xr-color-surface-strong) 94%, transparent);
+  border-bottom-color: var(--xr-color-border);
+  box-shadow: none;
+  color: var(--xr-color-text);
+}
+
+.xr-mini-app-shell .xr-shell .xr-brand,
+.xr-mini-app-shell .xr-shell .xr-header .xr-field__label {
+  color: var(--xr-color-text);
+}
+
+.xr-mini-app-shell .xr-shell .xr-brand {
+  color: var(--xr-color-primary-strong);
+  font-size: 1.05rem;
+  letter-spacing: -0.04em;
+}
+
+.xr-mini-app-shell .xr-brand__mark {
+  display: none;
+}
+
+.xr-mini-app-shell .xr-mini-app-control {
+  border-color: var(--xr-color-border);
+  background: var(--xr-control-background);
+  color: var(--xr-color-text);
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0.65rem;
+}
+
+.xr-mini-app-shell .xr-mini-app-control:hover,
+.xr-mini-app-shell .xr-mini-app-control:focus-visible {
+  background: color-mix(in srgb, var(--xr-color-primary) 14%, var(--xr-control-background));
+}
+
+.xr-mini-app-shell[data-mini-app-path]:not([data-mini-app-path='/']) .xr-hero {
+  display: none;
+}
+
+.xr-mini-app-shell .xr-content {
+  max-width: 82.5rem;
+  padding-top: clamp(1.5rem, 4vw, 3rem);
+}
+
+.xr-mini-app-shell .xr-section h1,
+.xr-mini-app-shell .xr-section h2 {
+  font-family: 'Poppins', 'Manrope Variable', sans-serif;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  font-weight: 600;
+  letter-spacing: -0.045em;
+}
+
+.xr-mini-app-shell .xr-card {
+  border-radius: 1.35rem;
+  padding: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+.xr-mini-app-shell .xr-button,
+.xr-mini-app-shell .xr-input,
+.xr-mini-app-shell select {
+  min-height: 2.75rem;
+  border-radius: 999px;
+}
+
+.xr-mini-app-shell .xr-input {
+  padding-inline: 1rem;
+}
+
+.xr-mini-app-shell .xr-input::placeholder {
+  color: var(--xr-color-muted);
+  opacity: 1;
+}
+
+.xr-mini-app-shell .xr-mini-app-bottom-bar {
+  right: auto;
+  bottom: max(0.75rem, var(--xr-mini-app-safe-bottom));
+  left: 50%;
+  display: flex;
+  width: auto;
+  min-height: auto;
+  gap: 0.25rem;
+  padding: 0.45rem;
+  border: 1px solid #e8dcc7;
+  border-radius: 999px;
+  background: rgb(255 253 248 / 94%);
+  box-shadow: 0 14px 36px rgb(36 49 39 / 12%);
+  transform: translateX(-50%);
+}
+
+.xr-mini-app-shell .xr-mini-app-bottom-bar__action {
   display: grid;
-  font-family: var(--font-body);
-  margin-inline: auto;
-  max-width: 34rem;
-  padding: 1.25rem 1rem 2rem;
+  width: 2.75rem;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  border-radius: 999px;
+  color: #687067;
+  padding: 0;
 }
 
-.dh-telegram-frame[data-mini-app-fullscreen='true'] {
-  padding-top: 4.5rem;
+.xr-mini-app-shell .xr-mini-app-bottom-bar__action[data-current='true'],
+.xr-mini-app-shell .xr-mini-app-bottom-bar__action:hover,
+.xr-mini-app-shell .xr-mini-app-bottom-bar__action:focus-visible {
+  background: #e5f7e9;
+  color: #08783a;
 }
 
-/* Account pages lay their cards out in a stretched row, so the shorter card ends
-   up taller than its content. Its rows are auto-sized, and a grid with spare
-   space spreads them — which pushed the heading away from its own text and left
-   a hole in the middle of the card. Content stays packed at the top instead. */
-.dh-main .xr-card,
-.dh-main .xr-card__body {
-  align-content: start;
+:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar {
+  border-color: #2b382e;
+  background: rgb(17 22 18 / 96%);
+  box-shadow: 0 14px 36px rgb(0 0 0 / 32%);
+}
+
+:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action {
+  color: #a8b0a9;
+}
+
+:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action[data-current='true'],
+:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action:hover,
+:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action:focus-visible {
+  background: #1d3424;
+  color: #55d77e;
+}
+
+.xr-mini-app-shell .xr-hero {
+  padding-block: clamp(1.75rem, 5vw, 3.5rem) clamp(1rem, 3vw, 2rem);
+}
+
+.xr-mini-app-shell .xr-hero h1 {
+  font-size: clamp(2.2rem, 7vw, 4.5rem);
+  max-width: 14ch;
+}
+
+.xr-mini-app-shell[data-mini-app-path]:not([data-mini-app-path='/']) .xr-hero {
+  padding-block: 1.35rem 0.75rem;
+}
+
+.xr-mini-app-shell[data-mini-app-path]:not([data-mini-app-path='/']) .xr-hero h1 {
+  font-size: clamp(1.75rem, 5vw, 2.75rem);
 }
 
 .user-page-stack,
@@ -56,6 +218,11 @@ html:root {
   gap: 1rem;
 }
 
+.user-auth {
+  margin-inline: auto;
+  max-width: 70rem;
+}
+
 .user-page-intro {
   color: var(--xr-color-muted);
   font-size: clamp(1rem, 2vw, 1.12rem);
@@ -69,14 +236,6 @@ html:root {
   display: grid;
   gap: 1rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
-/* The account entry point leads with the form and keeps the profile state beside
-   it, so the sign-in card and the registration steps get the wider column. Cards
-   sit at the top of their row instead of stretching to the tallest one. */
-.user-auth__grid {
-  align-items: start;
-  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
 }
 
 .user-auth__card .xr-card__body,
@@ -100,147 +259,6 @@ html:root {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-}
-
-/* Switching between signing in and registering. A sentence with the other route
-   at the end of it, not a second primary action competing with the form's own. */
-.user-auth__switch {
-  align-items: baseline;
-  border-top: 1px solid color-mix(in srgb, var(--xr-color-border) 82%, transparent);
-  color: var(--xr-color-muted);
-  display: flex;
-  flex-wrap: wrap;
-  font-size: 0.92rem;
-  gap: 0.4rem;
-  margin: 0;
-  padding-top: 1rem;
-}
-
-/* Registration trail. Three numbered steps on one line with the count spelled out
-   underneath, so the flow always says where it is and how much is left. */
-.user-auth__trail {
-  display: grid;
-  gap: 0.5rem;
-}
-
-.user-auth__steps {
-  display: grid;
-  gap: 0.5rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.user-auth__step {
-  align-items: center;
-  border-top: 3px solid color-mix(in srgb, var(--xr-color-border) 82%, transparent);
-  color: var(--xr-color-muted);
-  display: flex;
-  font-size: 0.9rem;
-  font-weight: 700;
-  gap: 0.5rem;
-  min-width: 0;
-  padding-top: 0.6rem;
-}
-
-.user-auth__step[data-state='current'],
-.user-auth__step[data-state='done'] {
-  border-top-color: var(--xr-color-primary);
-  color: var(--xr-color-text);
-}
-
-.user-auth__step-mark {
-  align-items: center;
-  background: color-mix(in srgb, var(--xr-color-primary) 12%, transparent);
-  border-radius: 999px;
-  color: var(--xr-color-primary-strong);
-  display: inline-flex;
-  flex: 0 0 auto;
-  font-size: 0.82rem;
-  height: 1.6rem;
-  justify-content: center;
-  width: 1.6rem;
-}
-
-.user-auth__step[data-state='current'] .user-auth__step-mark {
-  background: var(--xr-color-primary);
-  color: var(--xr-color-primary-contrast);
-}
-
-/* The label is a reminder, not the heading: it disappears before the numbers do
-   when the row runs out of room. */
-.user-auth__step-label {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.user-auth__progress {
-  color: var(--xr-color-muted);
-  font-size: 0.85rem;
-  margin: 0;
-}
-
-.user-auth__step-body {
-  display: grid;
-  gap: 1rem;
-}
-
-.user-auth__step-title {
-  color: var(--xr-color-text);
-  font-size: 1.05rem;
-  margin: 0;
-}
-
-.user-auth__summary {
-  background: color-mix(in srgb, var(--xr-color-background-accent) 60%, transparent);
-  border-radius: var(--xr-radius-md);
-  color: var(--xr-color-text);
-  margin: 0;
-  overflow-wrap: anywhere;
-  padding: 0.75rem 0.9rem;
-}
-
-.user-auth__methods {
-  display: grid;
-  gap: 0.75rem;
-}
-
-/* Each method is a tile: its name on the first line, what it means underneath.
-   The shared button ships a fixed height and centred single line, so the tile
-   geometry is set from here rather than by dropping the button primitive. */
-.user-auth__methods .user-auth__method {
-  align-items: flex-start;
-  display: grid;
-  gap: 0.25rem;
-  height: auto;
-  justify-items: start;
-  padding: 0.9rem 1.1rem;
-  text-align: left;
-  white-space: normal;
-  width: 100%;
-}
-
-.user-auth__method-name {
-  font-size: 1rem;
-  font-weight: 700;
-}
-
-.user-auth__method-hint {
-  color: var(--xr-color-muted);
-  font-size: 0.88rem;
-  font-weight: 500;
-  line-height: 1.5;
-}
-
-/* Back stays first so the pair reads in the direction of travel, and the primary
-   action keeps the right edge on every step. */
-.user-auth__step-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  justify-content: space-between;
 }
 
 .user-profile__card,
@@ -275,12 +293,12 @@ html:root {
   padding: 0.9rem;
 }
 
-/* No all-caps: the reference design rules it out, and these labels are the only
-   place the account pages diverged from it. */
 .xr-profile-facts dt {
   color: var(--xr-color-muted);
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .xr-profile-facts dd {
@@ -308,6 +326,81 @@ html:root {
   gap: 0.65rem;
 }
 
+.user-problem-registry {
+  margin-inline: auto;
+  max-width: 55rem;
+  width: 100%;
+}
+
+.user-problem-registry__intro {
+  font-size: clamp(1rem, 2vw, 1.12rem);
+  margin: 0;
+  max-width: 46rem;
+}
+
+.user-problem-registry__intro code,
+.user-problem-card code {
+  color: var(--xr-color-primary-strong);
+  overflow-wrap: anywhere;
+}
+
+.user-problem-card {
+  background: var(--xr-card-background);
+  border: 1px solid var(--xr-color-border);
+  border-radius: var(--xr-radius-lg);
+  box-shadow: var(--xr-shadow-sm);
+  color: var(--xr-color-text);
+  display: grid;
+  gap: 0.75rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.user-problem-card h2 {
+  font-size: clamp(1.1rem, 2vw, 1.35rem);
+  margin: 0;
+}
+
+.user-problem-card p,
+.user-problem-card dl,
+.user-problem-card ul {
+  margin: 0;
+}
+
+.user-problem-card__type {
+  width: fit-content;
+}
+
+.user-problem-card dl {
+  display: grid;
+  gap: 0.6rem 1rem;
+  grid-template-columns: minmax(7rem, 9rem) minmax(0, 1fr);
+}
+
+.user-problem-card dt {
+  color: var(--xr-color-muted);
+  font-weight: 750;
+}
+
+.user-problem-card dd {
+  line-height: 1.6;
+  margin: 0;
+  min-width: 0;
+}
+
+.user-problem-card ul {
+  display: grid;
+  gap: 0.65rem;
+  list-style: none;
+  padding: 0;
+}
+
+.user-problem-card li {
+  align-items: start;
+  display: grid;
+  gap: 0.2rem 0.75rem;
+  grid-template-columns: minmax(6rem, max-content) minmax(0, 1fr);
+}
+
 @media (max-width: 48rem) {
   .user-auth__grid,
   .user-settings__grid {
@@ -323,19 +416,37 @@ html:root {
   .user-auth__social-actions .xr-button {
     width: 100%;
   }
-
-  /* Back and the primary action split the row rather than stacking, which keeps
-     the step's own submit button in reach of a thumb. */
-  .user-auth__step-actions .xr-button {
-    flex: 1 1 8rem;
-  }
 }
 
-/* On a phone the three trail labels do not fit beside their numbers, so only the
-   step being answered is spelled out; the other two stay as numbers under the
-   rule that shows the progress. */
-@media (max-width: 30rem) {
-  .user-auth__step:not([data-state='current']) .user-auth__step-label {
+@media (max-width: 40rem) {
+  .xr-mini-app-shell .xr-shell .xr-brand > span:last-child {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: nowrap;
+  }
+
+  .user-problem-card dl,
+  .user-problem-card li {
+    grid-template-columns: 1fr;
+  }
+
+  .user-problem-card dd + dt {
+    margin-top: 0.35rem;
+  }
+
+  .xr-mini-app-shell .xr-header__primary-controls {
     display: none;
+  }
+
+  .xr-mini-app-shell .xr-brand > span:last-child {
+    max-width: 9rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 }

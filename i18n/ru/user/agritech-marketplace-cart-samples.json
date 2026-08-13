@@ -10,11 +10,9 @@
   "agritech.marketplace.cart.sellerCart": "Корзина продавца {{seller}}",
   "agritech.marketplace.samples.title": "Мои пробники",
   "agritech.marketplace.samples.empty": "Пробников пока нет",
-  "agritech.marketplace.samples.status.requested": "Запрошен",
-  "agritech.marketplace.samples.status.approved": "Одобрен",
-  "agritech.marketplace.samples.status.declined": "Отклонён",
+  "agritech.marketplace.samples.status.pending": "Ожидает",
   "agritech.marketplace.samples.status.shipped": "Отправлен",
-  "agritech.marketplace.samples.status.received": "Получен",
+  "agritech.marketplace.samples.status.delivered": "Доставлен",
   "agritech.marketplace.samples.status.cancelled": "Отменён",
   "agritech.marketplace.samples.requested": "Пробник запрошен",
   "agritech.marketplace.samples.confirmDescription": "Товар-пробник бесплатный; условия и стоимость доставки подтверждаются отдельно.",
@@ -39,5 +37,9 @@
   "agritech.marketplace.samples.deliveryDisclaimer": "Товар-пробник бесплатный; доставка оплачивается или согласуется отдельно. Лимит: 5 запросов за календарный месяц.",
   "agritech.marketplace.samples.unavailable": "Запрос пробника недоступен",
   "agritech.marketplace.samples.usageUnavailable": "Не удалось загрузить месячный лимит пробников. Остаток запросов не предполагается.",
-  "agritech.marketplace.samples.retry": "Обновить лимит"
+  "agritech.marketplace.samples.retry": "Обновить лимит",
+  "agritech.marketplace.samples.status.requested": "Запрошен",
+  "agritech.marketplace.samples.status.approved": "Одобрен",
+  "agritech.marketplace.samples.status.declined": "Отклонён",
+  "agritech.marketplace.samples.status.received": "Получен"
 }

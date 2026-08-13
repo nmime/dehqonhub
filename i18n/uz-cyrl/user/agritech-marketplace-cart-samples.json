@@ -10,11 +10,9 @@
   "agritech.marketplace.cart.sellerCart": "{{seller}} сотувчисининг савати",
   "agritech.marketplace.samples.title": "Менинг намуналарим",
   "agritech.marketplace.samples.empty": "Ҳозирча намуна йўқ",
-  "agritech.marketplace.samples.status.requested": "Сўралди",
-  "agritech.marketplace.samples.status.approved": "Тасдиқланган",
-  "agritech.marketplace.samples.status.declined": "Рад этилган",
+  "agritech.marketplace.samples.status.pending": "Кутилмоқда",
   "agritech.marketplace.samples.status.shipped": "Юборилган",
-  "agritech.marketplace.samples.status.received": "Қабул қилинган",
+  "agritech.marketplace.samples.status.delivered": "Етказилган",
   "agritech.marketplace.samples.status.cancelled": "Бекор қилинган",
   "agritech.marketplace.samples.requested": "Намуна сўралди",
   "agritech.marketplace.samples.confirmDescription": "Маҳсулот намунаси бепул; етказиб бериш шартлари ва нархи алоҳида тасдиқланади.",
@@ -39,5 +37,9 @@
   "agritech.marketplace.samples.deliveryDisclaimer": "Маҳсулот намунаси бепул; етказиб бериш алоҳида тўланади ёки келишилади. Лимит: бир календар ойида 5 та сўров.",
   "agritech.marketplace.samples.unavailable": "Намуна сўрови мавжуд эмас",
   "agritech.marketplace.samples.usageUnavailable": "Ойлик намуна лимити юкланмади. Қолган лимит бор деб ҳисобланмайди.",
-  "agritech.marketplace.samples.retry": "Лимитни қайта юклаш"
+  "agritech.marketplace.samples.retry": "Лимитни қайта юклаш",
+  "agritech.marketplace.samples.status.requested": "Сўралди",
+  "agritech.marketplace.samples.status.approved": "Тасдиқланган",
+  "agritech.marketplace.samples.status.declined": "Рад этилган",
+  "agritech.marketplace.samples.status.received": "Қабул қилинган"
 }

@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017 REQ-AGRITECH-PUBLIC-018 REQ-AGRITECH-ENGAGEMENT-019
+// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017 REQ-AGRITECH-PUBLIC-018 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-DEMO-024
 import type {
   AgriTechOwner,
   MarketplaceCatalogSort,
@@ -35,6 +35,13 @@ import {
   ForbiddenException,
   ResourceNotFoundException,
 } from '@app/backend-common-exception';
+import {
+  findMarketplaceDemoListing,
+  findMarketplaceDemoSeller,
+  listMarketplaceDemoListings,
+  listMarketplaceDemoSellerListings,
+  listMarketplaceDemoSuggestions,
+} from './marketplace-demo-catalog';
 
 export interface MarketplacePublicCatalogInput {
   cursor?: string;
@@ -217,6 +224,7 @@ const sellerView = (record: MarketplacePublishedListingRecord): MarketplacePubli
   displayName: record.sellerDisplayName,
   id: record.sellerPublicId,
   region: record.sellerRegion,
+  provenance: 'live',
   verified: true,
 });
 
@@ -228,6 +236,8 @@ export const toMarketplacePublicListing = (record: MarketplacePublishedListingRe
     images: [...record.images],
     priceUzs: record.priceUzs,
     promoted: record.promoted,
+    provenance: 'live' as const,
+    transactional: true,
     sampleAvailable: record.sampleAvailable,
     publishedAt: record.publishedAt,
     region: record.region,
@@ -280,6 +290,7 @@ const toMarketplacePublicSeller = (record: MarketplacePublishedSellerRecord): Ma
   displayName: record.displayName,
   id: record.publicId,
   region: record.region,
+  provenance: 'live',
   verified: true,
 });
 
@@ -368,30 +379,51 @@ export class MarketplacePublicDomainService {
   async listCatalog(
     input: MarketplacePublicCatalogInput = {},
   ): Promise<MarketplacePublicPage<MarketplacePublicListing>> {
-    const page = await this.repository.listPublishedListings(catalogQuery(input));
+    const query = catalogQuery(input);
+    const page = await this.repository.listPublishedListings(query);
+    const items = page.items.map(toMarketplacePublicListing);
+    if (!query.cursor && !page.nextCursor && items.length < query.limit && (await this.demoCatalogEnabled())) {
+      const existingIds = new Set(items.map((item) => item.id));
+      for (const demo of listMarketplaceDemoListings(query)) {
+        if (!existingIds.has(demo.id) && items.length < query.limit) {
+          items.push(demo);
+        }
+      }
+    }
     return {
-      items: page.items.map(toMarketplacePublicListing),
+      items,
       ...(encodeCursor(page.nextCursor) ? { nextCursor: encodeCursor(page.nextCursor) } : {}),
     };
   }
 
   async getListing(publicId: string): Promise<MarketplacePublicListing | undefined> {
     const record = await this.repository.findPublishedListing(publicId);
-    return record ? toMarketplacePublicListing(record) : undefined;
+    if (record) {
+      return toMarketplacePublicListing(record);
+    }
+    return (await this.demoCatalogEnabled()) ? findMarketplaceDemoListing(publicId) : undefined;
   }
 
   async getSeller(publicId: string): Promise<MarketplacePublicSellerView | undefined> {
     const record = await this.repository.findPublishedSeller(publicId);
-    return record ? toMarketplacePublicSeller(record) : undefined;
+    if (record) {
+      return toMarketplacePublicSeller(record);
+    }
+    return (await this.demoCatalogEnabled()) ? findMarketplaceDemoSeller(publicId) : undefined;
   }
 
   async listSellerCatalog(
     sellerPublicId: string,
     input: MarketplacePublicCatalogInput = {},
   ): Promise<MarketplacePublicPage<MarketplacePublicListing>> {
-    const page = await this.repository.listPublishedSellerListings(sellerPublicId, catalogQuery(input));
+    const query = catalogQuery(input);
+    const page = await this.repository.listPublishedSellerListings(sellerPublicId, query);
+    const items = page.items.map(toMarketplacePublicListing);
+    if (!query.cursor && !page.nextCursor && items.length < query.limit && (await this.demoCatalogEnabled())) {
+      items.push(...listMarketplaceDemoSellerListings(sellerPublicId, query).slice(0, query.limit - items.length));
+    }
     return {
-      items: page.items.map(toMarketplacePublicListing),
+      items,
       ...(encodeCursor(page.nextCursor) ? { nextCursor: encodeCursor(page.nextCursor) } : {}),
     };
   }
@@ -411,13 +443,33 @@ export class MarketplacePublicDomainService {
     if (!normalized) {
       return [];
     }
-    const records = await this.repository.listPublishedSuggestions(normalized, Math.max(1, Math.min(10, limit)));
-    return records.map((record) => ({
+    const resolvedLimit = Math.max(1, Math.min(10, limit));
+    const records = await this.repository.listPublishedSuggestions(normalized, resolvedLimit);
+    const suggestions = records.map((record) => ({
       id: record.id,
       kind: record.kind,
       label: record.label,
       ...(record.section ? { section: record.section } : {}),
     }));
+    if (suggestions.length < resolvedLimit && (await this.demoCatalogEnabled())) {
+      const ids = new Set(suggestions.map((item) => item.id));
+      for (const demo of listMarketplaceDemoSuggestions(normalized, resolvedLimit)) {
+        if (!ids.has(demo.id) && suggestions.length < resolvedLimit) {
+          suggestions.push(demo);
+        }
+      }
+    }
+    return suggestions;
+  }
+
+  private async demoCatalogEnabled(): Promise<boolean> {
+    try {
+      return await this.repository.isDemoCatalogEnabled();
+    } catch {
+      // Demo content is optional presentation data. A missing or unreadable
+      // governance row must never break authoritative public marketplace reads.
+      return false;
+    }
   }
 
   async publishListing(

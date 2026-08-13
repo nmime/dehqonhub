@@ -4,8 +4,6 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 
 ## Getting started
 
-- [Quick Start](quick-start.md) — clone, set up, and run the stack in under five minutes.
-- [Launching a New Project](new-project.md) — rename, initialize, and harden the boilerplate for your product.
 - [First Feature Walkthrough](first-feature-walkthrough.md) — end-to-end guide for shipping a vertical slice.
 - [Scaffolding and Extension Contract](scaffolding-and-extension.md) — canonical fresh-clone, app/library/feature, domain, and production-registration lifecycle.
 - [Project Catalog](project-catalog.md) — generated application IDs, Nx roots, runtimes, selection dependencies, and template hostnames.
@@ -17,13 +15,6 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [CLI Reference](setup/cli-reference.md) — every `nrb` / `repo-tooling` command with flags and examples.
 - [Nx Generators](setup/nx-generators.md) — repository generators, generated contracts, and verification.
 - [Discord Bot Setup](setup/discord-bot.md) — select, configure, and validate the Discord bot integration.
-- [TypeScript 7 Upgrade](setup/upgrade-typescript-7.md) — staged compiler upgrade research and compatibility plan.
-
-## Day-to-day usage
-
-- [Adding a New Service](usage/adding-a-new-service.md) — create and wire a NestJS backend service.
-- [Adding a New Frontend Page](usage/adding-a-new-frontend-page.md) — add a route, page, and tests to a frontend app.
-- [Adding an Auth Provider](usage/adding-an-auth-provider.md) — integrate a Better Auth provider with database migrations.
 
 ## Extension and migration
 
@@ -38,7 +29,6 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Architecture Overview](architecture.md) — app/library split, runtime boundaries, data flow.
 - [Architecture Deep Dives](architecture/README.md) — DDD boundaries, naming conventions, and library contracts.
 - [Architecture Decision Records](adr/README.md) — durable decisions and ADR template.
-- [Technology Choices](technology-choices.md) — framework and platform decisions.
 
 ## API and contracts
 
@@ -101,7 +91,6 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 ## Security and auth
 
 - [Security Baseline](../SECURITY.md) — reporting expectations and baseline controls.
-- [Auth Production Gap Register](auth-production-roadmap.md)
 - [Auth Tenant Hardening](auth-tenant-hardening.md)
 - [Auth Login Analytics](auth-login-analytics.md)
 - [Social Auth and Bots](social-auth-bots.md)
@@ -131,7 +120,6 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Idempotent Single-Server Deployment](single-server-deployment.md)
 - [Production Hardening](production-hardening.md)
 - [Agent Skills](agent-skills.md)
-- [Billing Extension and Admin Capability Status](billing-admin-roadmap.md)
 
 ## Documentation authority
 

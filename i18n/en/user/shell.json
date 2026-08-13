@@ -36,14 +36,12 @@
   "user.state.forbidden": "Forbidden: {{reason}}",
   "user.loadingProfile": "Loading profile...",
   "user.profile.unknown": "unknown",
-  "user.profile.subject": "Account identifier",
-  "user.profile.guestTitle": "Not signed in",
   "user.nav.home": "Home",
   "user.nav.auth": "Sign in",
   "user.nav.profile": "Profile",
   "user.nav.settings": "Settings",
   "user.settings.title": "Settings",
-  "user.settings.description": "Choose your language, or manage the accounts connected to your profile.",
+  "user.settings.description": "Choose your language and appearance, or manage the accounts connected to your profile.",
   "user.settings.preferences.title": "Preferences",
   "user.settings.preferences.description": "These choices follow your account when a profile session is available.",
   "user.settings.connections.title": "Connected accounts",
@@ -53,5 +51,7 @@
   "user.notFound.eyebrow": "Navigation",
   "user.notFound.sectionTitle": "Page not found",
   "user.notFound.title": "This route is not available.",
-  "user.notFound.description": "Return to the DehqonHub home page and choose an available workflow."
+  "user.notFound.description": "Return to the DehqonHub home page and choose an available workflow.",
+  "user.profile.subject": "Account identifier",
+  "user.profile.guestTitle": "Not signed in"
 }

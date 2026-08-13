@@ -2,7 +2,6 @@
   "agritech.marketplace.brand": "DehqonHub",
   "agritech.marketplace.title": "DehqonHub Marketplace",
   "agritech.marketplace.search": "Search products, sellers and purchase requests…",
-  "agritech.marketplace.search.placeholder": "Search products…",
   "agritech.marketplace.verification": "Verification",
   "agritech.marketplace.signIn": "Sign in",
   "agritech.marketplace.home": "Home",
@@ -38,5 +37,6 @@
   "agritech.marketplace.access.sellerOrganization": "An approved seller organization is required for this action.",
   "agritech.marketplace.access.action.signIn": "Sign in",
   "agritech.marketplace.access.action.verify": "Open verification",
-  "agritech.marketplace.access.action.organization": "Open organization profile"
+  "agritech.marketplace.access.action.organization": "Open organization profile",
+  "agritech.marketplace.search.placeholder": "Search products…"
 }

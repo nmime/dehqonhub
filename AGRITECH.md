@@ -95,4 +95,3 @@ pnpm run build                            # all deployable targets
 
 - [docs/why-us.md](docs/why-us.md) / [docs/why-us.ru.md](docs/why-us.ru.md) — competitive positioning report
 - [docs/agritech-platform.md](docs/agritech-platform.md) — full product and operator guide
-- [docs/research/report_en.html](docs/research/report_en.html) / [report_ru.html](docs/research/report_ru.html) — market research (120+ sources)

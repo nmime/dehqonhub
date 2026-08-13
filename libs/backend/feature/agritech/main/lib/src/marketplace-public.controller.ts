@@ -198,7 +198,8 @@ class MarketplacePublicSellerDto implements MarketplacePublicSeller {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() displayName!: string;
   @ApiProperty() region!: string;
-  @ApiProperty({ enum: [true] }) verified!: true;
+  @ApiProperty() verified!: boolean;
+  @ApiProperty({ enum: ['live', 'demo'] }) provenance!: MarketplacePublicSeller['provenance'];
   @ApiPropertyOptional() description?: string;
 }
 
@@ -215,6 +216,8 @@ abstract class MarketplacePublicListingBaseDto {
   @ApiProperty() region!: string;
   @ApiProperty({ type: [String] }) images!: string[];
   @ApiProperty() promoted!: boolean;
+  @ApiProperty({ enum: ['live', 'demo'] }) provenance!: MarketplacePublicListing['provenance'];
+  @ApiProperty() transactional!: boolean;
   @ApiProperty() sampleAvailable!: boolean;
   @ApiProperty({ type: MarketplacePublicSellerDto }) seller!: MarketplacePublicSeller;
   @ApiProperty({ format: 'date-time' }) publishedAt!: Date;

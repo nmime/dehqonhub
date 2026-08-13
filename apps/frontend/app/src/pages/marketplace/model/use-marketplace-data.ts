@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   isApiClientError,
   throwOnOpenApiErrorData,
@@ -6,37 +7,34 @@ import {
   type BuyerRequestViewDto,
   type CartViewDto,
   type ContractViewDto,
+  type MarketplaceAiConsultationDto,
+  type MarketplaceContractNotificationRecipientDto,
   type MarketplaceFavoriteDto,
+  type MarketplaceListingPromotionDto,
+  type MarketplaceOwnedListingPublicationDto,
+  type MarketplaceOwnedRequestPublicationDto,
+  type MarketplacePromotionPlanDto,
+  type MarketplaceProviderReadinessDto,
+  type MarketplacePublicSellerDto,
+  type MarketplaceRoleDashboardDto,
   type MarketplaceSampleDto,
   type MarketplaceSampleUsageDto,
   type OfferViewDto,
   type PartnerViewDto,
-  type ProductViewDto,
+  type ProduceListingViewDto,
+  type SupplierProductViewDto,
   type VerificationViewDto,
 } from '@app/frontend-api-client';
+import { createApiRuntimeFetch } from '@app/frontend-api-support';
 import {
-  addGuestCartItem,
-  clearGuestCart,
-  readGuestCarts,
-  readGuestFavorites,
-  toggleGuestFavorite,
-  updateGuestCartItem,
-} from './guest-session';
+  toMarketplaceListing,
+  toMarketplaceRequestFeedItem,
+  type MarketplaceListing,
+  type MarketplaceRequestFeedItem,
+} from '../ui/marketplace-ui';
 
 export type ResourceStatus = 'idle' | 'loading' | 'ready' | 'empty' | 'error';
 type SessionState = 'checking' | 'signed-in' | 'signed-out' | 'error';
-type CatalogSource = 'checking' | 'demo' | 'live' | 'unavailable';
-
-/**
- * What the marketplace banner has to disclose.
- * - `demo-catalog`: the API answered with its demo dataset, because the tenant
- *   has published nothing yet, so the listings are not live inventory.
- * - `guest`: live listings, but nobody is signed in — the banner offers the
- *   review logins.
- * - `unavailable`: the catalog request failed; the banner keeps a retry.
- * - `none`: live listings read by a signed-in account; no banner.
- */
-export type DemoReason = 'demo-catalog' | 'guest' | 'none' | 'unavailable';
 
 export interface Resource<T> {
   data: T;
@@ -44,119 +42,151 @@ export interface Resource<T> {
 }
 
 const listResource = <T>(): Resource<T[]> => ({ data: [], status: 'idle' });
+const statusForList = (items: readonly unknown[]): ResourceStatus => (items.length === 0 ? 'empty' : 'ready');
 
-/**
- * The sample allowance shown before the account read lands, and the whole of it
- * for a visitor with no account: browsing costs nobody a sample. The period is
- * this month rather than a fixed literal, so a placeholder never claims to
- * describe a month that is not the one being browsed.
- */
-const initialUsage = (): MarketplaceSampleUsageDto => ({
+const settledListResource = <TInput, TOutput>(
+  result: PromiseSettledResult<{ items: TInput[] }>,
+  map: (item: TInput) => TOutput,
+): Resource<TOutput[]> => {
+  if (result.status === 'rejected') {
+    return { data: [], status: 'error' };
+  }
+  const items = result.value.items.map(map);
+  return { data: items, status: statusForList(items) };
+};
+
+const settledValueResource = <TInput, TOutput>(
+  result: PromiseSettledResult<TInput | null>,
+  map: (item: TInput) => TOutput,
+): Resource<TOutput | null> => {
+  if (result.status === 'rejected' || result.value === null) {
+    return { data: null, status: 'error' };
+  }
+  return { data: map(result.value), status: 'ready' };
+};
+
+const offerResourceStatus = (hasFailure: boolean, hasOffers: boolean): ResourceStatus => {
+  if (hasFailure) {
+    return 'error';
+  }
+  return hasOffers ? 'ready' : 'empty';
+};
+
+const initialUsage: MarketplaceSampleUsageDto = {
   limit: 5,
-  period: new Date().toISOString().slice(0, 7),
+  period: 'current',
   policyVersion: 1,
   remaining: 5,
   used: 0,
-});
+};
 
-/**
- * Cart and favourite writes for a visitor without a session. They persist to
- * `localStorage` instead of the API, because both endpoints require a session
- * and bouncing someone to a sign-in form on their first "add to cart" is how a
- * marketplace loses them.
- */
-export interface MarketplaceLocalActions {
-  addToCart: (product: ProductViewDto, quantity: number) => void;
-  checkout: (cartId: string) => void;
-  toggleFavorite: (product: ProductViewDto) => void;
-  updateCart: (productId: string, quantity: number) => void;
+interface VerificationResourceAccess {
+  dashboard: boolean;
+  sampleUsage: boolean;
 }
 
+const resourceAccessForVerification = (verification: VerificationViewDto | null): VerificationResourceAccess => {
+  if (verification?.status !== 'verified') {
+    return { dashboard: false, sampleUsage: false };
+  }
+  return { dashboard: true, sampleUsage: verification.role === 'buyer' };
+};
+
+const beginOptionalResourceLoad = <T>(resource: Resource<T>, enabled: boolean, disabled: Resource<T>): Resource<T> =>
+  enabled ? { ...resource, status: 'loading' } : disabled;
+
+const loadVerificationResources = async (
+  access: VerificationResourceAccess,
+  loaders: { dashboard: () => Promise<void>; sampleUsage: () => Promise<void> },
+): Promise<void> => {
+  const requests: Promise<void>[] = [];
+  if (access.dashboard) {
+    requests.push(loaders.dashboard());
+  }
+  if (access.sampleUsage) {
+    requests.push(loaders.sampleUsage());
+  }
+  await Promise.all(requests);
+};
+
 export interface MarketplaceData {
+  aiConsultations: Resource<MarketplaceAiConsultationDto[]>;
   auth: SessionState;
   carts: Resource<CartViewDto[]>;
-  catalog: Resource<ProductViewDto[]>;
+  catalog: Resource<MarketplaceListing[]>;
   contracts: Resource<ContractViewDto[]>;
-  /** What the banner should disclose about the data on screen. */
-  demo: DemoReason;
+  dashboard: Resource<MarketplaceRoleDashboardDto | null>;
   favorites: Resource<MarketplaceFavoriteDto[]>;
-  /** True while cart and favourite writes stay in this browser: no session. */
-  local: boolean;
-  localActions: MarketplaceLocalActions;
   myRequests: Resource<BuyerRequestViewDto[]>;
+  notifications: Resource<MarketplaceContractNotificationRecipientDto[]>;
   offersByRequest: Resource<Record<string, OfferViewDto[]>>;
-  /**
-   * The organizations this account may act for. Every commerce command names the
-   * partner it is issued on behalf of, so a basket, a purchase request or an
-   * offer is impossible until an approved one exists.
-   */
+  ownedListingPublications: Resource<MarketplaceOwnedListingPublicationDto[]>;
+  ownedRequestPublications: Resource<MarketplaceOwnedRequestPublicationDto[]>;
   partners: Resource<PartnerViewDto[]>;
+  produceListings: Resource<ProduceListingViewDto[]>;
+  promotionPlans: Resource<MarketplacePromotionPlanDto[]>;
+  promotions: Resource<MarketplaceListingPromotionDto[]>;
+  providerReadiness: Resource<MarketplaceProviderReadinessDto | null>;
   refresh: () => void;
-  requests: Resource<BuyerRequestViewDto[]>;
+  requests: Resource<MarketplaceRequestFeedItem[]>;
   sampleUsage: Resource<MarketplaceSampleUsageDto>;
   samples: Resource<MarketplaceSampleDto[]>;
+  seller: Resource<MarketplacePublicSellerDto | null>;
+  sellerCatalog: Resource<MarketplaceListing[]>;
+  selectedListing: Resource<MarketplaceListing | null>;
+  supplierProducts: Resource<SupplierProductViewDto[]>;
   verification: Resource<VerificationViewDto | null>;
 }
 
-const statusForList = (items: readonly unknown[]): ResourceStatus => (items.length === 0 ? 'empty' : 'ready');
-
-/** Reduces the catalog source and session state to the one thing to disclose. */
-const disclosureFor = (source: CatalogSource, auth: SessionState): DemoReason => {
-  if (source === 'unavailable') {
-    return 'unavailable';
-  }
-  if (source === 'demo') {
-    return 'demo-catalog';
-  }
-  // `checking` stays silent: the page shows its loading state, and a banner that
-  // appears for one frame and then leaves reads as a glitch.
-  return auth === 'signed-out' || auth === 'error' ? 'guest' : 'none';
-};
-
-export function useMarketplaceData(): MarketplaceData {
+export function useMarketplaceData(listingPublicationId?: string, sellerPublicId?: string): MarketplaceData {
   const { api, requestOptions } = useUserApiClient();
   const epochRef = useRef(0);
   const [auth, setAuth] = useState<SessionState>('checking');
-  const [catalogSource, setCatalogSource] = useState<CatalogSource>('checking');
-  const [catalog, setCatalog] = useState<Resource<ProductViewDto[]>>(listResource);
+  const [catalog, setCatalog] = useState<Resource<MarketplaceListing[]>>(listResource);
+  const [selectedListing, setSelectedListing] = useState<Resource<MarketplaceListing | null>>({
+    data: null,
+    status: 'idle',
+  });
+  const [seller, setSeller] = useState<Resource<MarketplacePublicSellerDto | null>>({ data: null, status: 'idle' });
+  const [sellerCatalog, setSellerCatalog] = useState<Resource<MarketplaceListing[]>>(listResource);
+  const [requests, setRequests] = useState<Resource<MarketplaceRequestFeedItem[]>>(listResource);
   const [verification, setVerification] = useState<Resource<VerificationViewDto | null>>({
     data: null,
     status: 'idle',
   });
   const [carts, setCarts] = useState<Resource<CartViewDto[]>>(listResource);
   const [favorites, setFavorites] = useState<Resource<MarketplaceFavoriteDto[]>>(listResource);
-  const [requests, setRequests] = useState<Resource<BuyerRequestViewDto[]>>(listResource);
   const [myRequests, setMyRequests] = useState<Resource<BuyerRequestViewDto[]>>(listResource);
   const [offersByRequest, setOffersByRequest] = useState<Resource<Record<string, OfferViewDto[]>>>({
     data: {},
     status: 'idle',
   });
   const [contracts, setContracts] = useState<Resource<ContractViewDto[]>>(listResource);
-  const [partners, setPartners] = useState<Resource<PartnerViewDto[]>>(listResource);
   const [samples, setSamples] = useState<Resource<MarketplaceSampleDto[]>>(listResource);
-  const [sampleUsage, setSampleUsage] = useState<Resource<MarketplaceSampleUsageDto>>({
-    data: initialUsage(),
+  const [partners, setPartners] = useState<Resource<PartnerViewDto[]>>(listResource);
+  const [dashboard, setDashboard] = useState<Resource<MarketplaceRoleDashboardDto | null>>({
+    data: null,
     status: 'idle',
   });
-
-  /**
-   * Restores the browser-local basket for a visitor with no session, and empties
-   * the resources that only exist per account. Their per-resource requests are
-   * deliberately skipped: they would each 401, and those 401s would fire the
-   * runtime's auth-required navigation mid-browse.
-   */
-  const enterGuestMode = useCallback(() => {
-    const favoriteEntries = readGuestFavorites();
-    const cartEntries = readGuestCarts();
-    setCarts({ data: cartEntries, status: statusForList(cartEntries) });
-    setFavorites({ data: favoriteEntries, status: statusForList(favoriteEntries) });
-    setMyRequests({ data: [], status: 'empty' });
-    setOffersByRequest({ data: {}, status: 'empty' });
-    setContracts({ data: [], status: 'empty' });
-    setPartners({ data: [], status: 'empty' });
-    setSamples({ data: [], status: 'empty' });
-    setSampleUsage({ data: initialUsage(), status: 'ready' });
-  }, []);
+  const [sampleUsage, setSampleUsage] = useState<Resource<MarketplaceSampleUsageDto>>({
+    data: initialUsage,
+    status: 'idle',
+  });
+  const [providerReadiness, setProviderReadiness] = useState<Resource<MarketplaceProviderReadinessDto | null>>({
+    data: null,
+    status: 'idle',
+  });
+  const [promotions, setPromotions] = useState<Resource<MarketplaceListingPromotionDto[]>>(listResource);
+  const [promotionPlans, setPromotionPlans] = useState<Resource<MarketplacePromotionPlanDto[]>>(listResource);
+  const [notifications, setNotifications] =
+    useState<Resource<MarketplaceContractNotificationRecipientDto[]>>(listResource);
+  const [aiConsultations, setAiConsultations] = useState<Resource<MarketplaceAiConsultationDto[]>>(listResource);
+  const [supplierProducts, setSupplierProducts] = useState<Resource<SupplierProductViewDto[]>>(listResource);
+  const [produceListings, setProduceListings] = useState<Resource<ProduceListingViewDto[]>>(listResource);
+  const [ownedListingPublications, setOwnedListingPublications] =
+    useState<Resource<MarketplaceOwnedListingPublicationDto[]>>(listResource);
+  const [ownedRequestPublications, setOwnedRequestPublications] =
+    useState<Resource<MarketplaceOwnedRequestPublicationDto[]>>(listResource);
 
   const load = useCallback(async () => {
     const epoch = epochRef.current + 1;
@@ -166,88 +196,124 @@ export function useMarketplaceData(): MarketplaceData {
     setAuth('checking');
     setCatalog((resource) => ({ ...resource, status: 'loading' }));
     setRequests((resource) => ({ ...resource, status: 'loading' }));
-    setVerification((resource) => ({ ...resource, status: 'loading' }));
+    setSelectedListing((resource) => ({
+      data: listingPublicationId ? resource.data : null,
+      status: listingPublicationId ? 'loading' : 'idle',
+    }));
+    setSeller((resource) => ({
+      data: sellerPublicId ? resource.data : null,
+      status: sellerPublicId ? 'loading' : 'idle',
+    }));
+    setSellerCatalog((resource) => ({
+      data: sellerPublicId ? resource.data : [],
+      status: sellerPublicId ? 'loading' : 'idle',
+    }));
 
-    /**
-     * The catalog read needs no session, and the API answers a tenant that has
-     * published nothing with its own demo dataset — so a listing on screen is
-     * always server-owned, and the only failure left here is an unreachable API.
-     */
-    const loadCatalog = async () => {
+    const [catalogResult, requestsResult, listingResult, sellerResult, sellerCatalogResult] = await Promise.allSettled([
+      throwOnOpenApiErrorData(api.marketplacePublicControllerListCatalog({}, requestOptions)),
+      throwOnOpenApiErrorData(api.marketplacePublicControllerListRequests({}, requestOptions)),
+      listingPublicationId
+        ? throwOnOpenApiErrorData(api.marketplacePublicControllerGetListing(listingPublicationId, requestOptions))
+        : Promise.resolve(null),
+      sellerPublicId
+        ? throwOnOpenApiErrorData(api.marketplacePublicControllerGetSeller(sellerPublicId, requestOptions))
+        : Promise.resolve(null),
+      sellerPublicId
+        ? throwOnOpenApiErrorData(api.marketplacePublicControllerListSellerCatalog(sellerPublicId, {}, requestOptions))
+        : Promise.resolve({ items: [] }),
+    ]);
+
+    if (!current()) {
+      return;
+    }
+
+    setCatalog(settledListResource(catalogResult, toMarketplaceListing));
+    setRequests(settledListResource(requestsResult, toMarketplaceRequestFeedItem));
+    if (listingPublicationId) {
+      setSelectedListing(settledValueResource(listingResult, toMarketplaceListing));
+    }
+    if (sellerPublicId) {
+      setSeller(settledValueResource(sellerResult, (value) => value));
+      setSellerCatalog(settledListResource(sellerCatalogResult, toMarketplaceListing));
+    }
+
+    let verificationData: VerificationViewDto | null;
+    try {
+      verificationData = await throwOnOpenApiErrorData(
+        api.marketplaceControllerGetVerification({
+          ...requestOptions,
+          fetchImpl: createApiRuntimeFetch(),
+        }),
+      );
+    } catch (error) {
+      if (!current()) {
+        return;
+      }
+      const signedOut = isApiClientError(error) && error.status === 401;
+      setAuth(signedOut ? 'signed-out' : 'error');
+      setVerification({ data: null, status: signedOut ? 'empty' : 'error' });
+      setCarts({ data: [], status: 'empty' });
+      setFavorites({ data: [], status: 'empty' });
+      setMyRequests({ data: [], status: 'empty' });
+      setOffersByRequest({ data: {}, status: 'empty' });
+      setContracts({ data: [], status: 'empty' });
+      setSamples({ data: [], status: 'empty' });
+      setPartners({ data: [], status: 'empty' });
+      setDashboard({ data: null, status: 'empty' });
+      setSampleUsage({ data: initialUsage, status: 'idle' });
+      setProviderReadiness({ data: null, status: 'empty' });
+      setPromotions({ data: [], status: 'empty' });
+      setPromotionPlans({ data: [], status: 'empty' });
+      setNotifications({ data: [], status: 'empty' });
+      setAiConsultations({ data: [], status: 'empty' });
+      setSupplierProducts({ data: [], status: 'empty' });
+      setProduceListings({ data: [], status: 'empty' });
+      setOwnedListingPublications({ data: [], status: 'empty' });
+      setOwnedRequestPublications({ data: [], status: 'empty' });
+      return;
+    }
+
+    if (!current()) {
+      return;
+    }
+    const verificationResourceAccess = resourceAccessForVerification(verificationData);
+    setAuth('signed-in');
+    setVerification({ data: verificationData, status: 'ready' });
+    setCarts((resource) => ({ ...resource, status: 'loading' }));
+    setFavorites((resource) => ({ ...resource, status: 'loading' }));
+    setMyRequests((resource) => ({ ...resource, status: 'loading' }));
+    setContracts((resource) => ({ ...resource, status: 'loading' }));
+    setSamples((resource) => ({ ...resource, status: 'loading' }));
+    setPartners((resource) => ({ ...resource, status: 'loading' }));
+    setDashboard((resource) =>
+      beginOptionalResourceLoad(resource, verificationResourceAccess.dashboard, { data: null, status: 'empty' }),
+    );
+    setSampleUsage((resource) =>
+      beginOptionalResourceLoad(resource, verificationResourceAccess.sampleUsage, {
+        data: initialUsage,
+        status: 'idle',
+      }),
+    );
+    setOffersByRequest((resource) => ({ ...resource, status: 'loading' }));
+    setProviderReadiness((resource) => ({ ...resource, status: 'loading' }));
+    setPromotions((resource) => ({ ...resource, status: 'loading' }));
+    setPromotionPlans((resource) => ({ ...resource, status: 'loading' }));
+    setNotifications((resource) => ({ ...resource, status: 'loading' }));
+    setAiConsultations((resource) => ({ ...resource, status: 'loading' }));
+    setSupplierProducts((resource) => ({ ...resource, status: 'loading' }));
+    setProduceListings((resource) => ({ ...resource, status: 'loading' }));
+    setOwnedListingPublications((resource) => ({ ...resource, status: 'loading' }));
+    setOwnedRequestPublications((resource) => ({ ...resource, status: 'loading' }));
+
+    const loadList = async <T>(request: Promise<{ items: T[] }>, setter: (resource: Resource<T[]>) => void) => {
       try {
-        const response = await throwOnOpenApiErrorData(api.productControllerList(requestOptions));
-        // A 200 that carries no list is a malformed payload, not an empty catalog.
-        // The chrome issues this request on every route, so a proxy or a stub
-        // answering it with an unrelated body must not take the whole site down.
-        const products = Array.isArray(response.items) ? response.items : [];
+        const data = await request;
         if (current()) {
-          setCatalogSource(response.demo ? 'demo' : 'live');
-          setCatalog({ data: products, status: statusForList(products) });
+          setter({ data: data.items, status: statusForList(data.items) });
         }
       } catch {
         if (current()) {
-          setCatalogSource('unavailable');
-          setCatalog({ data: [], status: 'error' });
-        }
-      }
-    };
-
-    const loadRequests = async () => {
-      try {
-        const data = await throwOnOpenApiErrorData(api.marketplaceControllerListRequests(requestOptions));
-        if (current()) {
-          setRequests({ data: data.items, status: statusForList(data.items) });
-        }
-      } catch {
-        if (current()) {
-          setRequests({ data: [], status: 'error' });
-        }
-      }
-    };
-
-    /**
-     * Verification is the cheapest guarded read, so it doubles as the session
-     * probe: its 401 is how the page learns that nobody is signed in.
-     */
-    const loadSession = async (): Promise<boolean> => {
-      try {
-        const data = await throwOnOpenApiErrorData(api.marketplaceControllerGetVerification(requestOptions));
-        if (current()) {
-          setAuth('signed-in');
-          setVerification({ data, status: 'ready' });
-        }
-        return true;
-      } catch (error) {
-        if (current()) {
-          setAuth(isApiClientError(error) && error.status === 401 ? 'signed-out' : 'error');
-          setVerification({ data: null, status: 'idle' });
-        }
-        return false;
-      }
-    };
-
-    const loadCarts = async () => {
-      try {
-        const data = await throwOnOpenApiErrorData(api.marketplaceControllerListCarts(requestOptions));
-        if (current()) {
-          setCarts({ data: data.items, status: statusForList(data.items) });
-        }
-      } catch {
-        if (current()) {
-          setCarts({ data: [], status: 'error' });
-        }
-      }
-    };
-
-    const loadFavorites = async () => {
-      try {
-        const data = await throwOnOpenApiErrorData(api.marketplaceControllerListFavorites(requestOptions));
-        if (current()) {
-          setFavorites({ data: data.items, status: statusForList(data.items) });
-        }
-      } catch {
-        if (current()) {
-          setFavorites({ data: [], status: 'error' });
+          setter({ data: [], status: 'error' });
         }
       }
     };
@@ -275,69 +341,25 @@ export function useMarketplaceData(): MarketplaceData {
             }
           }),
         );
-        if (current()) {
-          const mapped = pairs.reduce<Record<string, OfferViewDto[]>>((result, [requestId, items]) => {
-            if (items) {
-              result[requestId] = items;
-            }
-            return result;
-          }, {});
-          const hasFailure = pairs.some(([, items]) => items === undefined);
-          const hasOffers = pairs.some(([, items]) => (items?.length ?? 0) > 0);
-          let offersStatus: ResourceStatus = 'empty';
-          if (hasFailure) {
-            offersStatus = 'error';
-          } else if (hasOffers) {
-            offersStatus = 'ready';
-          }
-          setOffersByRequest({
-            data: mapped,
-            status: offersStatus,
-          });
+        if (!current()) {
+          return;
         }
+        const mapped = pairs.reduce<Record<string, OfferViewDto[]>>((result, [requestId, items]) => {
+          if (items) {
+            result[requestId] = items;
+          }
+          return result;
+        }, {});
+        const hasFailure = pairs.some(([, items]) => items === undefined);
+        const hasOffers = pairs.some(([, items]) => (items?.length ?? 0) > 0);
+        setOffersByRequest({
+          data: mapped,
+          status: offerResourceStatus(hasFailure, hasOffers),
+        });
       } catch {
         if (current()) {
           setMyRequests({ data: [], status: 'error' });
           setOffersByRequest({ data: {}, status: 'error' });
-        }
-      }
-    };
-
-    const loadContracts = async () => {
-      try {
-        const data = await throwOnOpenApiErrorData(api.marketplaceControllerListContracts(requestOptions));
-        if (current()) {
-          setContracts({ data: data.items, status: statusForList(data.items) });
-        }
-      } catch {
-        if (current()) {
-          setContracts({ data: [], status: 'error' });
-        }
-      }
-    };
-
-    const loadPartners = async () => {
-      try {
-        const data = await throwOnOpenApiErrorData(api.agriTechOperationsControllerListPartners(requestOptions));
-        if (current()) {
-          setPartners({ data: data.items, status: statusForList(data.items) });
-        }
-      } catch {
-        if (current()) {
-          setPartners({ data: [], status: 'error' });
-        }
-      }
-    };
-
-    const loadSamples = async () => {
-      try {
-        const data = await throwOnOpenApiErrorData(api.marketplaceControllerListSamples(requestOptions));
-        if (current()) {
-          setSamples({ data: data.items, status: statusForList(data.items) });
-        }
-      } catch {
-        if (current()) {
-          setSamples({ data: [], status: 'error' });
         }
       }
     };
@@ -350,31 +372,81 @@ export function useMarketplaceData(): MarketplaceData {
         }
       } catch {
         if (current()) {
-          setSampleUsage({ data: initialUsage(), status: 'error' });
+          setSampleUsage({ data: initialUsage, status: 'error' });
         }
       }
     };
 
-    const loadAccountResources = async () => {
-      if (!(await loadSession())) {
+    const loadDashboard = async () => {
+      try {
+        const data = await throwOnOpenApiErrorData(api.marketplaceControllerGetDashboard(requestOptions));
         if (current()) {
-          enterGuestMode();
+          setDashboard({ data, status: 'ready' });
         }
-        return;
+      } catch {
+        if (current()) {
+          setDashboard({ data: null, status: 'error' });
+        }
       }
-      await Promise.all([
-        loadCarts(),
-        loadFavorites(),
-        loadMyRequestsAndOffers(),
-        loadContracts(),
-        loadPartners(),
-        loadSamples(),
-        loadUsage(),
-      ]);
     };
 
-    await Promise.all([loadCatalog(), loadRequests(), loadAccountResources()]);
-  }, [api, enterGuestMode, requestOptions]);
+    const loadOwnedPublications = async () => {
+      try {
+        const data = await throwOnOpenApiErrorData(
+          api.marketplacePublicationControllerListMine({ limit: 50 }, requestOptions),
+        );
+        if (current()) {
+          setOwnedListingPublications({ data: data.listings, status: statusForList(data.listings) });
+          setOwnedRequestPublications({ data: data.requests, status: statusForList(data.requests) });
+        }
+      } catch {
+        if (current()) {
+          setOwnedListingPublications({ data: [], status: 'error' });
+          setOwnedRequestPublications({ data: [], status: 'error' });
+        }
+      }
+    };
+
+    const loadReadiness = async () => {
+      try {
+        const value = await throwOnOpenApiErrorData(api.marketplaceControllerGetVerificationReadiness(requestOptions));
+        if (current()) {
+          setProviderReadiness({ data: value, status: 'ready' });
+        }
+      } catch {
+        if (current()) {
+          setProviderReadiness({ data: null, status: 'error' });
+        }
+      }
+    };
+
+    await Promise.all([
+      loadList(throwOnOpenApiErrorData(api.marketplaceControllerListCarts(requestOptions)), setCarts),
+      loadList(throwOnOpenApiErrorData(api.marketplaceControllerListFavorites(requestOptions)), setFavorites),
+      loadMyRequestsAndOffers(),
+      loadList(throwOnOpenApiErrorData(api.marketplaceControllerListContracts(requestOptions)), setContracts),
+      loadList(throwOnOpenApiErrorData(api.marketplaceControllerListSamples(requestOptions)), setSamples),
+      loadList(throwOnOpenApiErrorData(api.agriTechOperationsControllerListPartners(requestOptions)), setPartners),
+      loadVerificationResources(verificationResourceAccess, {
+        dashboard: loadDashboard,
+        sampleUsage: loadUsage,
+      }),
+      loadReadiness(),
+      loadList(throwOnOpenApiErrorData(api.marketplacePromotionControllerList(requestOptions)), setPromotions),
+      loadList(throwOnOpenApiErrorData(api.marketplacePromotionControllerListPlans(requestOptions)), setPromotionPlans),
+      loadList(throwOnOpenApiErrorData(api.marketplaceControllerListNotifications(requestOptions)), setNotifications),
+      loadList(throwOnOpenApiErrorData(api.marketplaceControllerListAi(requestOptions)), setAiConsultations),
+      loadList(
+        throwOnOpenApiErrorData(api.agriTechOperationsControllerListSupplierProducts(requestOptions)),
+        setSupplierProducts,
+      ),
+      loadList(
+        throwOnOpenApiErrorData(api.agriTechOperationsControllerListProduce({}, requestOptions)),
+        setProduceListings,
+      ),
+      loadOwnedPublications(),
+    ]);
+  }, [api, listingPublicationId, requestOptions, sellerPublicId]);
 
   useEffect(() => {
     void load();
@@ -383,44 +455,32 @@ export function useMarketplaceData(): MarketplaceData {
     };
   }, [load]);
 
-  const localActions = useMemo<MarketplaceLocalActions>(
-    () => ({
-      addToCart: (product, quantity) => {
-        const next = addGuestCartItem(product, quantity);
-        setCarts({ data: next, status: statusForList(next) });
-      },
-      checkout: (cartId) => {
-        const next = clearGuestCart(cartId);
-        setCarts({ data: next, status: statusForList(next) });
-      },
-      toggleFavorite: (product) => {
-        const next = toggleGuestFavorite(product);
-        setFavorites({ data: next, status: statusForList(next) });
-      },
-      updateCart: (productId, quantity) => {
-        const next = updateGuestCartItem(productId, quantity);
-        setCarts({ data: next, status: statusForList(next) });
-      },
-    }),
-    [],
-  );
-
   return {
+    aiConsultations,
     auth,
     carts,
     catalog,
     contracts,
-    demo: disclosureFor(catalogSource, auth),
+    dashboard,
     favorites,
-    local: auth === 'signed-out' || auth === 'error',
-    localActions,
     myRequests,
+    notifications,
     offersByRequest,
+    ownedListingPublications,
+    ownedRequestPublications,
     partners,
+    produceListings,
+    promotionPlans,
+    promotions,
+    providerReadiness,
     refresh: () => void load(),
     requests,
     sampleUsage,
     samples,
+    seller,
+    sellerCatalog,
+    selectedListing,
+    supplierProducts,
     verification,
   };
 }

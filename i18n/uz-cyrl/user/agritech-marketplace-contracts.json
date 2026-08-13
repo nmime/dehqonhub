@@ -5,7 +5,6 @@
   "agritech.marketplace.contract.sign": "Текшириш ва розилик билдириш",
   "agritech.marketplace.contract.settlement.direct": "Тўғридан-тўғри банк тўлови симуляцияси",
   "agritech.marketplace.contract.buyer": "Харидор",
-  "agritech.marketplace.contract.partyUnnamed": "Ташкилот кўрсатилмаган",
   "agritech.marketplace.contract.seller": "Сотувчи",
   "agritech.marketplace.contract.delivery": "Етказиб бериш шартлари",
   "agritech.marketplace.contract.deliveryPrice": "Етказиб беришнинг алоҳида нархи",
@@ -31,7 +30,6 @@
   "agritech.marketplace.contract.notFound": "Шартнома мавжуд эмас",
   "agritech.marketplace.contract.notFoundDescription": "Бу шартнома топилмади ёки ҳисобингизга кўринмайди.",
   "agritech.marketplace.contract.notYourContract": "Фақат шартномада кўрсатилган томон розиликни қайд эта олади.",
-  "agritech.marketplace.contract.consentClosed": "Шартноманинг бу версияси розилик учун очиқ эмас.",
   "agritech.marketplace.contract.signConfirmation": "Шартноманинг ушбу версиясини кўриб чиққанингизни тасдиқланг. Бу фақат сизнинг томонингиз розилигини қайд этади ва тўловни амалга оширмайди.",
   "agritech.marketplace.contract.signOwnParty": "Томоним розилигини қайд этиш",
   "agritech.marketplace.contract.signatureRecorded": "Томонингиз розилиги қайд этилди",
@@ -44,5 +42,7 @@
   "agritech.marketplace.contract.timeline.buyerSigned": "Харидор розилиги",
   "agritech.marketplace.contract.timeline.sellerSigned": "Сотувчи розилиги",
   "agritech.marketplace.contract.yourSignatureRecorded": "Томонингиз розилиги аввал қайд этилган.",
-  "agritech.marketplace.contract.legacyReviewRequiredDescription": "Янгиланишдан олдинги ушбу шартнома текширувга ажратилди. Аввалги ҳолати аудит учун сақланган, аммо янги розиликни қайд этиш ўчирилган."
+  "agritech.marketplace.contract.legacyReviewRequiredDescription": "Янгиланишдан олдинги ушбу шартнома текширувга ажратилди. Аввалги ҳолати аудит учун сақланган, аммо янги розиликни қайд этиш ўчирилган.",
+  "agritech.marketplace.contract.partyUnnamed": "Ташкилот кўрсатилмаган",
+  "agritech.marketplace.contract.consentClosed": "Шартноманинг бу версияси розилик учун очиқ эмас."
 }

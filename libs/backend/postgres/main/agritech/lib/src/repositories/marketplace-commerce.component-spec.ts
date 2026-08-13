@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017
+// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024
 import { createHash, randomUUID } from 'node:crypto';
 import { MikroORM, type EntityManager } from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';

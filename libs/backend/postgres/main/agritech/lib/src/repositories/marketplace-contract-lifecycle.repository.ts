@@ -1661,6 +1661,17 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
     });
   }
 
+  getLifecycleForAdmin(tenantId: string, contractId: string): Promise<OperationResult<MarketplaceContractLifecycle>> {
+    return this.em.transactional(async (em) => {
+      const contract = await em.findOne(ContractEntity, {
+        bindingStatus: 'resolved',
+        id: contractId,
+        $or: [{ tenantId }, { sellerTenantId: tenantId }],
+      });
+      return contract ? this.lifecycleIn(em, contract, 'admin') : { status: 'not_found' };
+    });
+  }
+
   private isSettlementCommandAllowed(
     settlement: MarketplaceContractSettlementEntity,
     party: MarketplaceContractParty,
@@ -1701,7 +1712,7 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
   private async lifecycleIn(
     em: EntityManager,
     contract: ContractEntity,
-    party: MarketplaceContractParty,
+    party: MarketplaceContractTimelineActor,
   ): Promise<OperationResult<MarketplaceContractLifecycle>> {
     const [
       artifact,
@@ -1726,7 +1737,7 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
       em.find(MarketplaceContractLifecycleEventEntity, { contractId: contract.id }, { orderBy: { sequence: 'ASC' } }),
       em.find(
         MarketplaceContractNotificationIntentEntity,
-        { contractId: contract.id, recipientParty: party },
+        party === 'admin' ? { contractId: contract.id } : { contractId: contract.id, recipientParty: party },
         { orderBy: { createdAt: 'ASC' } },
       ),
       em.find(MarketplaceContractReviewEligibilityEntity, { contractId: contract.id }),

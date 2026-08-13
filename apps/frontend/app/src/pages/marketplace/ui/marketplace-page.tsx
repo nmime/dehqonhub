@@ -1,53 +1,61 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016
+// @requirements REQ-AGRITECH-EXPERIENCE-026 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import './marketplace.css';
 import { observer, useI18n } from '@app/frontend-runtime';
 import {
   isApiClientError,
+  throwOnOpenApiError,
   throwOnOpenApiErrorData,
   useUserApiClient,
   type BuyerRequestViewDto,
   type CartViewDto,
+  type ContractLifecycleDto,
   type ContractViewDto,
   type MarketplaceAiConsultationDto,
+  type MarketplaceListingPromotionDto,
+  type MarketplacePublicSuggestionDto,
   type MarketplaceReviewDto,
+  type MarketplaceSampleDto,
   type OfferViewDto,
-  type ProductViewDto,
+  type VerificationDocumentInputDto,
+  type VerificationViewDto,
 } from '@app/frontend-api-client';
-import { LanguageSwitcher } from '../../../shared/ui';
+import { LanguageSwitcher, ThemeSwitcher } from '../../../shared/ui';
+import { useGuestFavorites } from '../model/use-guest-favorites';
 import { useMarketplaceData, type Resource } from '../model/use-marketplace-data';
 import { MarketplaceAi } from './marketplace-ai';
-import { MarketplaceBrandLockup } from './marketplace-brand';
-import { MarketplaceDemoBanner } from './marketplace-demo-banner';
 import {
   MarketplaceAccount,
   MarketplaceCart,
   MarketplaceContract,
   MarketplaceRequests,
   MarketplaceVerification,
+  type MarketplaceContractLifecycleAction,
+  type MarketplaceContractDeliveryQuoteInput,
+  type MarketplaceCreateRequestInput,
+  type MarketplaceOfferInput,
 } from './marketplace-commerce';
 import {
   MarketplaceCatalog,
+  MarketplaceEmpty,
   MarketplaceFavorites,
   MarketplaceHome,
   MarketplaceProductDetail,
-  MarketplaceSellerStorefront,
+  MarketplaceSellerProfile,
   MarketplaceSkeleton,
 } from './marketplace-discovery';
 import { MarketplaceIcon } from './marketplace-icon';
+import { MarketplaceUserManagement } from './marketplace-management';
 import {
   type MarketplaceNavigate,
-  type MarketplaceDeliveryQuoteDraft,
+  type MarketplaceListing,
   type MarketplaceNotice,
-  type MarketplaceOfferDraft,
-  type MarketplaceRequestDraft,
+  type MarketplaceRequestFeedItem,
   type MarketplaceTranslate,
   type MarketplaceView,
 } from './marketplace-ui';
 
 export interface MarketplacePageProps {
-  /** Route content rendered inside the site chrome when `view` is `embedded`. */
-  children?: ReactNode;
   contractId?: string;
   locationSearch?: string;
   navigate?: MarketplaceNavigate;
@@ -65,21 +73,62 @@ interface Confirmation {
 
 type AiKind = 'find_cheaper' | 'generic' | 'recommendation' | 'season_advice';
 type DeliveryTerms = 'by_agreement' | 'pickup' | 'seller_delivery';
+type VerificationRole = 'buyer' | 'farmer' | 'seller';
+type VerificationDocumentKind = VerificationDocumentInputDto['kind'];
+
+const maximumVerificationDocumentBytes = 10 * 1024 * 1024;
+const verificationDocumentMimeTypes = new Set<VerificationDocumentInputDto['mimeType']>([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+]);
+
+const readFileAsBase64 = (file: File): Promise<string> =>
+  new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener('error', () => {
+      reject(reader.error ?? new Error('Unable to read verification evidence.'));
+    });
+    reader.addEventListener('load', () => {
+      const result = typeof reader.result === 'string' ? reader.result : '';
+      const separator = result.indexOf(',');
+      if (separator < 0) {
+        reject(new Error('Unable to encode verification evidence.'));
+        return;
+      }
+      resolve(result.slice(separator + 1));
+    });
+    reader.readAsDataURL(file);
+  });
+
+const replaceReview = (
+  resource: Resource<MarketplaceReviewDto[]>,
+  updated: MarketplaceReviewDto,
+): Resource<MarketplaceReviewDto[]> => ({
+  data: resource.data.map((item) => (item.id === updated.id ? updated : item)),
+  status: 'ready',
+});
 
 const defaultNavigate: MarketplaceNavigate = (to) => {
   globalThis.location.assign(to);
 };
 
-/**
- * Views that show a person's own identity, documents or agreements. Everything
- * else stays browsable without an account; these three have nothing to show
- * without one, and a placeholder would read as a session that does not exist.
- */
-const requiresOwnSession = (view: MarketplaceView): boolean =>
-  view === 'account' || view === 'contract' || view === 'verification';
+const canMutateContractForRole = (contract: ContractViewDto, canBuy: boolean, canOffer: boolean): boolean =>
+  contract.actorParty === 'buyer' ? canBuy : canOffer;
 
+const isDefinitiveClientError = (error: unknown): boolean =>
+  isApiClientError(error) && Math.floor(error.status / 100) === 4;
+
+const verificationStatusForContract = (verification: Resource<VerificationViewDto | null>, canMutate: boolean) => {
+  if (verification.status !== 'ready') {
+    return verification.status;
+  }
+  const status = verification.data?.status ?? 'none';
+  return status === 'verified' && !canMutate ? 'none' : status;
+};
+
+// eslint-disable-next-line sonarjs/cognitive-complexity -- this owner coordinates fail-closed command handlers across the complete marketplace route surface
 export const MarketplacePage = observer(function MarketplacePage({
-  children,
   contractId,
   locationSearch = '',
   navigate = defaultNavigate,
@@ -93,18 +142,30 @@ export const MarketplacePage = observer(function MarketplacePage({
     [t],
   );
   const { api, requestOptions } = useUserApiClient();
-  const data = useMarketplaceData();
+  const data = useMarketplaceData(productId, sellerId);
+  const guestFavorites = useGuestFavorites();
   const [notice, setNotice] = useState<MarketplaceNotice>();
   const [pendingAction, setPendingAction] = useState<string>();
   const [search, setSearch] = useState('');
+  const [searchSuggestions, setSearchSuggestions] = useState<Resource<MarketplacePublicSuggestionDto[]>>({
+    data: [],
+    status: 'idle',
+  });
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const [reviews, setReviews] = useState<Resource<MarketplaceReviewDto[]>>({ data: [], status: 'idle' });
-  /**
-   * The key each in-flight command was issued under, kept until it is answered.
-   * Pressing the same button again after a timeout has to reach the API as the
-   * same command, or a lost response turns one basket line into two.
-   */
+  const [contractLifecycle, setContractLifecycle] = useState<Resource<ContractLifecycleDto | null>>({
+    data: null,
+    status: 'idle',
+  });
+  const [promotionDetail, setPromotionDetail] = useState<Resource<MarketplaceListingPromotionDto | null>>({
+    data: null,
+    status: 'idle',
+  });
+  const [contractLifecycleReload, setContractLifecycleReload] = useState(0);
   const commandKeysRef = useRef(new Map<string, { actionKey: string; idempotencyKey: string }>());
+  const reloadContractLifecycle = useCallback(() => {
+    setContractLifecycleReload((revision) => revision + 1);
+  }, []);
   const noticeTimer = useRef<ReturnType<typeof globalThis.setTimeout> | undefined>(undefined);
   const closeConfirmation = useCallback(() => {
     setConfirmation(undefined);
@@ -138,12 +199,42 @@ export const MarketplacePage = observer(function MarketplacePage({
   );
 
   useEffect(() => {
+    const query = search.trim();
+    if (query.length < 2) {
+      setSearchSuggestions({ data: [], status: 'idle' });
+      return undefined;
+    }
+    let active = true;
+    setSearchSuggestions((resource) => ({ ...resource, status: 'loading' }));
+    const timer = globalThis.setTimeout(() => {
+      void throwOnOpenApiErrorData(
+        api.marketplacePublicControllerListSuggestions({ limit: 6, q: query }, requestOptions),
+      )
+        .then((response) => {
+          if (active) {
+            setSearchSuggestions({
+              data: response.items,
+              status: response.items.length > 0 ? 'ready' : 'empty',
+            });
+          }
+        })
+        .catch(() => {
+          if (active) {
+            setSearchSuggestions({ data: [], status: 'error' });
+          }
+        });
+    }, 250);
+    return () => {
+      active = false;
+      globalThis.clearTimeout(timer);
+    };
+  }, [api, requestOptions, search]);
+
+  useEffect(() => {
     if (view !== 'product' || !productId) {
       setReviews({ data: [], status: 'idle' });
       return undefined;
     }
-    // Ratings are a public read, so they load for a visitor with no account too:
-    // nobody decides to register in order to find out whether a seller is any good.
     let active = true;
     setReviews((resource) => ({ ...resource, status: 'loading' }));
     void throwOnOpenApiErrorData(api.marketplacePublicControllerListReviews(productId, requestOptions))
@@ -162,45 +253,57 @@ export const MarketplacePage = observer(function MarketplacePage({
     };
   }, [api, productId, requestOptions, view]);
 
-  const favoriteIds = useMemo(
-    () => new Set(data.favorites.data.map((favorite) => favorite.listing.id)),
-    [data.favorites.data],
-  );
-  const selectedProduct = data.catalog.data.find((product) => product.id === productId);
+  useEffect(() => {
+    if (view !== 'contract' || !contractId || data.auth !== 'signed-in') {
+      setContractLifecycle({ data: null, status: 'idle' });
+      return undefined;
+    }
+    let active = true;
+    setContractLifecycle((resource) => ({ ...resource, status: 'loading' }));
+    void throwOnOpenApiErrorData(api.marketplaceControllerGetContractLifecycle(contractId, requestOptions))
+      .then((response) => {
+        if (active) {
+          setContractLifecycle({ data: response, status: 'ready' });
+        }
+      })
+      .catch((error) => {
+        if (active) {
+          const lifecycleNotPrepared = isApiClientError(error) && (error.status === 404 || error.status === 409);
+          setContractLifecycle({ data: null, status: lifecycleNotPrepared ? 'empty' : 'error' });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [api, contractId, contractLifecycleReload, data.auth, requestOptions, view]);
+
+  const favoriteIds = useMemo(() => {
+    const serverIds = data.auth === 'signed-in' ? data.favorites.data.map((favorite) => favorite.listing.id) : [];
+    const localIds = data.catalog.data
+      .filter((product) => data.auth !== 'signed-in' || product.provenance === 'demo')
+      .map((product) => product.id)
+      .filter((id) => guestFavorites.ids.has(id));
+    return new Set([...serverIds, ...localIds]);
+  }, [data.auth, data.catalog.data, data.favorites.data, guestFavorites.ids]);
+  const selectedProduct = data.selectedListing.data ?? data.catalog.data.find((product) => product.id === productId);
   const selectedContract = data.contracts.data.find((contract) => contract.id === contractId);
-  /**
-   * The organization a basket, a purchase request or an offer is issued for. Every
-   * commerce command names it, so an account with no approved organization yet is
-   * sent to verification instead of being allowed to compose a command the API
-   * would reject.
-   */
   const buyerPartner = data.partners.data.find((partner) => partner.kind === 'buyer' && partner.status === 'approved');
-  const sellerPartner = data.partners.data.find(
+  const supplierPartner = data.partners.data.find(
     (partner) => partner.kind === 'supplier' && partner.status === 'approved',
   );
   const isVerified = data.verification.data?.status === 'verified';
-  /** No session behind the page: writes that need one are explained, not attempted. */
-  const guestOnly = data.local;
-  const requiresAccount = useCallback((): boolean => {
-    if (!guestOnly) {
-      return false;
-    }
-    // Letting the request through would 401 at the fetch layer and bounce the
-    // visitor to the sign-in form mid-flow, which reads as a random redirect.
-    flash(translate('agritech.marketplace.demo.signInRequired'), 'info');
-    return true;
-  }, [guestOnly, flash, translate]);
-  /**
-   * Only a buyer who actually took delivery may rate a listing, which the API
-   * enforces and the page mirrors: the contract says which side of it this account
-   * is on, so no separate identity read is needed to work it out.
-   */
+  const verificationRole = data.verification.data?.role;
+  const canBuy = isVerified && (verificationRole === 'buyer' || verificationRole === 'farmer');
+  const canOffer = isVerified && (verificationRole === 'seller' || verificationRole === 'farmer');
+  const selectedContractCanMutate = selectedContract
+    ? canMutateContractForRole(selectedContract, canBuy, canOffer)
+    : false;
   const canReviewSelectedProduct = Boolean(
     selectedProduct &&
     data.contracts.data.some(
       (contract) =>
         contract.actorParty === 'buyer' &&
-        (contract.status === 'active' || contract.status === 'completed') &&
+        contract.status === 'completed' &&
         contract.lines.some((line) => line.sourcePublicationId === selectedProduct.id),
     ),
   );
@@ -226,16 +329,6 @@ export const MarketplacePage = observer(function MarketplacePage({
     [translate],
   );
 
-  /**
-   * Runs one marketplace command under an idempotency key.
-   *
-   * `commandIdentity` is what makes two presses the same command: it defaults to
-   * the pending-action key, and a caller whose intent changes between presses —
-   * a different quantity, say — passes an identity that carries that change. The
-   * key is retained while the outcome is unknown, so a retry after a dropped
-   * response is a replay rather than a second order, and released as soon as the
-   * API has answered either way.
-   */
   const runMutation = useCallback(
     async function runMarketplaceMutation<T>(
       key: string,
@@ -244,13 +337,22 @@ export const MarketplacePage = observer(function MarketplacePage({
       after?: (result: T) => void,
       commandIdentity = key,
     ): Promise<boolean> {
+      if (data.auth !== 'signed-in') {
+        flash(translate('agritech.marketplace.auth.required'), 'info');
+        const returnUrl =
+          typeof globalThis.location === 'undefined'
+            ? '/'
+            : `${globalThis.location.pathname}${globalThis.location.search}`;
+        navigate(`/auth?returnUrl=${encodeURIComponent(returnUrl)}`);
+        return false;
+      }
       for (const [identity, command] of commandKeysRef.current) {
         if (command.actionKey === key && identity !== commandIdentity) {
           commandKeysRef.current.delete(identity);
         }
       }
-      const retained = commandKeysRef.current.get(commandIdentity);
-      const idempotencyKey = retained?.idempotencyKey ?? globalThis.crypto.randomUUID();
+      const retainedCommand = commandKeysRef.current.get(commandIdentity);
+      const idempotencyKey = retainedCommand?.idempotencyKey ?? globalThis.crypto.randomUUID();
       commandKeysRef.current.set(commandIdentity, { actionKey: key, idempotencyKey });
       setPendingAction(key);
       try {
@@ -261,9 +363,7 @@ export const MarketplacePage = observer(function MarketplacePage({
         data.refresh();
         return true;
       } catch (error) {
-        // A 4xx is a verdict, not a lost answer: the command will never succeed
-        // under this key, so the next press has to be a new command.
-        if (isApiClientError(error) && Math.floor(error.status / 100) === 4) {
+        if (isDefinitiveClientError(error)) {
           commandKeysRef.current.delete(commandIdentity);
         }
         if (isApiClientError(error) && (error.status === 404 || error.status === 409)) {
@@ -275,21 +375,19 @@ export const MarketplacePage = observer(function MarketplacePage({
         setPendingAction(undefined);
       }
     },
-    [data, flash, mutationError],
+    [data, flash, mutationError, navigate, translate],
   );
 
-  const openProduct = (product: ProductViewDto) => {
+  const openProduct = (product: MarketplaceListing) => {
     navigate(`/products/${encodeURIComponent(product.id)}`);
   };
 
-  const addToCart = (product: ProductViewDto, quantity = 1) => {
-    const success = translate('agritech.marketplace.cart.addedToSellerCart', { seller: product.supplierName });
-    if (data.local) {
-      data.localActions.addToCart(product, quantity);
-      flash(success);
+  const addToCart = (product: MarketplaceListing, quantity = 1) => {
+    if (!product.transactional) {
+      flash(translate('agritech.marketplace.access.demo'), 'info');
       return;
     }
-    if (!buyerPartner) {
+    if (!canBuy || !buyerPartner) {
       flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
       navigate('/verification');
       return;
@@ -304,22 +402,25 @@ export const MarketplacePage = observer(function MarketplacePage({
             requestOptions,
           ),
         ),
-      success,
+      translate('agritech.marketplace.cart.addedToSellerCart', { seller: product.supplierName }),
       undefined,
       `cart:${product.id}:${buyerPartner.id}:${quantity}`,
     );
   };
 
-  const toggleFavorite = (product: ProductViewDto) => {
-    const favorite = favoriteIds.has(product.id);
-    const success = favorite
-      ? translate('agritech.marketplace.favorites.removed')
-      : translate('agritech.marketplace.favorites.added');
-    if (data.local) {
-      data.localActions.toggleFavorite(product);
-      flash(success);
+  const toggleFavorite = (product: MarketplaceListing) => {
+    if (data.auth !== 'signed-in' || product.provenance === 'demo') {
+      const wasFavorite = guestFavorites.ids.has(product.id);
+      guestFavorites.toggle(product.id);
+      flash(
+        wasFavorite
+          ? translate('agritech.marketplace.favorites.localRemoved')
+          : translate('agritech.marketplace.favorites.localAdded'),
+        'info',
+      );
       return;
     }
+    const favorite = favoriteIds.has(product.id);
     void runMutation(
       `favorite:${product.id}`,
       (idempotencyKey) =>
@@ -328,25 +429,23 @@ export const MarketplacePage = observer(function MarketplacePage({
             ? api.marketplaceControllerRemoveFavorite(product.id, idempotencyKey, requestOptions)
             : api.marketplaceControllerAddFavorite(product.id, idempotencyKey, requestOptions),
         ),
-      success,
+      favorite
+        ? translate('agritech.marketplace.favorites.removed')
+        : translate('agritech.marketplace.favorites.added'),
       undefined,
-      // Saving and unsaving are opposite commands, so they must never share a key.
       `favorite:${product.id}:${favorite ? 'remove' : 'add'}`,
     );
   };
 
-  const addReview = (product: ProductViewDto, rating: number, comment?: string) => {
-    if (requiresAccount()) {
-      return Promise.resolve(false);
-    }
+  const addReview = (product: MarketplaceListing, rating: number, comment?: string) => {
     return runMutation(
       `review:${product.id}`,
       (idempotencyKey) =>
         throwOnOpenApiErrorData(
           api.marketplaceControllerAddReview(
             {
-              assetReferences: [],
               ...(comment ? { comment } : {}),
+              assetReferences: [],
               listingPublicationId: product.id,
               rating,
             },
@@ -362,12 +461,47 @@ export const MarketplacePage = observer(function MarketplacePage({
     );
   };
 
+  const replyToReview = (review: MarketplaceReviewDto, comment: string) =>
+    runMutation(
+      `review-reply:${review.id}`,
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerReplyToReview(
+            review.id,
+            { comment, expectedRevision: review.revision },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
+      translate('agritech.marketplace.reviews.replySubmitted'),
+      (updated) => {
+        setReviews((resource) => replaceReview(resource, updated));
+      },
+      `review-reply:${review.id}:${review.revision}:${comment}`,
+    );
+
+  const reportReview = (
+    review: MarketplaceReviewDto,
+    reason: 'abuse' | 'off_topic' | 'privacy' | 'spam',
+    comment?: string,
+  ) =>
+    runMutation(
+      `review-report:${review.id}`,
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerReportReview(
+            review.id,
+            { ...(comment ? { comment } : {}), reason },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
+      translate('agritech.marketplace.reviews.reportSubmitted'),
+      undefined,
+      `review-report:${review.id}:${reason}:${comment ?? ''}`,
+    );
+
   const updateCart = (cart: CartViewDto, productIdToUpdate: string, quantity: number) => {
-    if (data.local) {
-      data.localActions.updateCart(productIdToUpdate, quantity);
-      flash(translate('agritech.marketplace.cart.updated'));
-      return;
-    }
     void runMutation(
       `cart-update:${productIdToUpdate}`,
       (idempotencyKey) =>
@@ -388,11 +522,12 @@ export const MarketplacePage = observer(function MarketplacePage({
     );
   };
 
-  const requestSample = (product: ProductViewDto) => {
-    if (requiresAccount()) {
+  const requestSample = (product: MarketplaceListing) => {
+    if (!product.transactional) {
+      flash(translate('agritech.marketplace.access.demo'), 'info');
       return;
     }
-    if (!isVerified) {
+    if (!canBuy) {
       flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
       navigate('/verification');
       return;
@@ -406,9 +541,6 @@ export const MarketplacePage = observer(function MarketplacePage({
           (idempotencyKey) =>
             throwOnOpenApiErrorData(
               api.marketplaceControllerRequestSample(
-                // Collection is the only method this dialog can promise: it already
-                // says delivery terms and any charge are agreed with the seller
-                // afterwards, so recording a paid delivery here would pre-empt them.
                 { deliveryMethod: 'pickup', listingPublicationId: product.id },
                 idempotencyKey,
                 requestOptions,
@@ -422,10 +554,7 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const checkout = (cart: CartViewDto, deliveryTerms: DeliveryTerms) => {
-    // Identity checks belong to accounts. Sending a guest to /verification would
-    // land them on the sign-in wall instead of telling them what checkout needs,
-    // so their basket runs to the confirmation and stops there with a note.
-    if (!data.local && !isVerified) {
+    if (!canBuy) {
       flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
       navigate('/verification');
       return;
@@ -435,13 +564,6 @@ export const MarketplacePage = observer(function MarketplacePage({
       confirmLabel: translate('agritech.marketplace.cart.reviewContract'),
       description: translate('agritech.marketplace.cart.checkoutConfirmation', { seller: sellerName }),
       onConfirm: async () => {
-        if (data.local) {
-          // No contract can be drafted without a session, so a guest run ends at
-          // an emptied cart plus an explicit note about what signing needs.
-          data.localActions.checkout(cart.id);
-          flash(translate('agritech.marketplace.demo.checkoutDone'), 'info');
-          return;
-        }
         await runMutation(
           `checkout:${cart.id}`,
           (idempotencyKey) =>
@@ -459,11 +581,8 @@ export const MarketplacePage = observer(function MarketplacePage({
     });
   };
 
-  const createRequest = (input: MarketplaceRequestDraft) => {
-    if (requiresAccount()) {
-      return;
-    }
-    if (!buyerPartner) {
+  const createRequest = (input: MarketplaceCreateRequestInput) => {
+    if (!canBuy || !buyerPartner) {
       flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
       navigate('/verification');
       return;
@@ -484,11 +603,8 @@ export const MarketplacePage = observer(function MarketplacePage({
     );
   };
 
-  const makeOffer = (request: BuyerRequestViewDto, input: MarketplaceOfferDraft) => {
-    if (requiresAccount()) {
-      return;
-    }
-    if (!sellerPartner) {
+  const makeOffer = (request: MarketplaceRequestFeedItem, input: MarketplaceOfferInput) => {
+    if (!canOffer || !supplierPartner) {
       flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
       navigate('/verification');
       return;
@@ -499,7 +615,7 @@ export const MarketplacePage = observer(function MarketplacePage({
         throwOnOpenApiErrorData(
           api.marketplaceControllerMakeOffer(
             request.id,
-            { ...input, actingPartnerId: sellerPartner.id },
+            { ...input, actingPartnerId: supplierPartner.id },
             idempotencyKey,
             requestOptions,
           ),
@@ -511,7 +627,9 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const chooseOffer = (request: BuyerRequestViewDto, offer: OfferViewDto) => {
-    if (requiresAccount()) {
+    if (!canBuy) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
       return;
     }
     setConfirmation({
@@ -535,22 +653,81 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const signContract = (contract: ContractViewDto) => {
+    if (!canMutateContractForRole(contract, canBuy, canOffer)) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
+      return;
+    }
     setConfirmation({
       confirmLabel: translate('agritech.marketplace.contract.signOwnParty'),
       description: translate('agritech.marketplace.contract.signConfirmation'),
       onConfirm: async () => {
         await runMutation(
           `sign:${contract.id}`,
-          (idempotencyKey) =>
-            throwOnOpenApiErrorData(api.marketplaceControllerSignContract(contract.id, idempotencyKey, requestOptions)),
+          async (idempotencyKey) => {
+            await throwOnOpenApiErrorData(
+              api.marketplaceControllerCreateContractArtifact(
+                contract.id,
+                { settlementKind: contract.factoringEnabled ? 'factoring' : 'direct_payment' },
+                `${idempotencyKey}:artifact`,
+                requestOptions,
+              ),
+            );
+            return throwOnOpenApiErrorData(
+              api.marketplaceControllerSignContract(contract.id, `${idempotencyKey}:signature`, requestOptions),
+            );
+          },
           translate('agritech.marketplace.contract.signatureRecorded'),
+          reloadContractLifecycle,
+          `sign:${contract.id}:${contract.revision}:${contract.factoringEnabled ? 'factoring' : 'direct'}`,
         );
       },
       title: translate('agritech.marketplace.contract.sign'),
     });
   };
 
-  const quoteContractDelivery = (contract: ContractViewDto, input: MarketplaceDeliveryQuoteDraft) => {
+  const advanceContractLifecycle = (contract: ContractViewDto, action: MarketplaceContractLifecycleAction): void => {
+    if (!canMutateContractForRole(contract, canBuy, canOffer)) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
+      return;
+    }
+    void runMutation(
+      `lifecycle:${contract.id}`,
+      (idempotencyKey) => {
+        if (action.kind === 'factoring-consent') {
+          return throwOnOpenApiErrorData(
+            api.marketplaceControllerConsentFactoring(contract.id, idempotencyKey, requestOptions),
+          );
+        }
+        if (action.kind === 'settlement') {
+          return throwOnOpenApiErrorData(
+            api.marketplaceControllerRecordSettlementEvent(contract.id, action.body, idempotencyKey, requestOptions),
+          );
+        }
+        return throwOnOpenApiErrorData(
+          api.marketplaceControllerTransitionContractFulfillment(
+            contract.id,
+            action.body,
+            idempotencyKey,
+            requestOptions,
+          ),
+        );
+      },
+      translate('agritech.marketplace.contract.settlement.advanced'),
+      (result) => {
+        setContractLifecycle({ data: result, status: 'ready' });
+      },
+      `lifecycle:${contract.id}:${JSON.stringify(action)}`,
+    );
+  };
+
+  const quoteContractDelivery = (contract: ContractViewDto, input: MarketplaceContractDeliveryQuoteInput) => {
+    if (!canMutateContractForRole(contract, canBuy, canOffer)) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
+      return;
+    }
     void runMutation(
       `quote:${contract.id}`,
       (idempotencyKey) =>
@@ -568,192 +745,743 @@ export const MarketplacePage = observer(function MarketplacePage({
     );
   };
 
-  const askAi = (question: string, kind: AiKind): Promise<MarketplaceAiConsultationDto> =>
-    throwOnOpenApiErrorData(
-      api.marketplaceControllerAskAi({ kind, question }, globalThis.crypto.randomUUID(), requestOptions),
+  const refreshContractArtifact = (contract: ContractViewDto) => {
+    if (!canMutateContractForRole(contract, canBuy, canOffer)) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
+      return;
+    }
+    void runMutation(
+      `artifact:${contract.id}`,
+      () => throwOnOpenApiErrorData(api.marketplaceControllerGetContractArtifact(contract.id, requestOptions)),
+      translate('agritech.marketplace.contract.artifactRefreshed'),
+      (artifact) => {
+        setContractLifecycle((resource) =>
+          resource.data ? { data: { ...resource.data, artifact }, status: 'ready' } : resource,
+        );
+      },
     );
+  };
+
+  const downloadContractArtifact = (contract: ContractViewDto) => {
+    if (!canMutateContractForRole(contract, canBuy, canOffer)) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
+      return;
+    }
+    setPendingAction(`artifact-download:${contract.id}`);
+    void throwOnOpenApiError(api.marketplaceControllerDownloadContractArtifact(contract.id, requestOptions))
+      .then((body) => {
+        const blob = body instanceof Blob ? body : new Blob([body], { type: 'application/pdf' });
+        const href = globalThis.URL.createObjectURL(blob);
+        const anchor = document.createElement('a');
+        anchor.href = href;
+        anchor.download = `dehqonhub-contract-${contract.id}.pdf`;
+        anchor.click();
+        globalThis.URL.revokeObjectURL(href);
+        flash(translate('agritech.marketplace.contract.downloadStarted'));
+      })
+      .catch((error) => {
+        flash(mutationError(error), 'error');
+      })
+      .finally(() => {
+        setPendingAction(undefined);
+      });
+  };
+
+  const openContractDispute = (
+    contract: ContractViewDto,
+    reason: 'delivery_issue' | 'quality_issue' | 'quantity_issue' | 'other',
+  ) => {
+    if (!canMutateContractForRole(contract, canBuy, canOffer)) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
+      return;
+    }
+    void runMutation(
+      `dispute:${contract.id}`,
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerOpenContractDispute(contract.id, { reason }, idempotencyKey, requestOptions),
+        ),
+      translate('agritech.marketplace.contract.disputeOpened'),
+      (lifecycle) => {
+        setContractLifecycle({ data: lifecycle, status: 'ready' });
+      },
+      `dispute:${contract.id}:${reason}`,
+    );
+  };
+
+  const uploadContractDisputeEvidence = (contract: ContractViewDto, evidence: File) => {
+    if (!canMutateContractForRole(contract, canBuy, canOffer)) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
+      return;
+    }
+    void runMutation(
+      `dispute-evidence:${contract.id}`,
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerStoreContractDisputeEvidence(contract.id, evidence, idempotencyKey, requestOptions),
+        ),
+      translate('agritech.marketplace.contract.evidenceUploaded'),
+      () => {
+        reloadContractLifecycle();
+      },
+      `dispute-evidence:${contract.id}:${evidence.name}:${evidence.size}:${evidence.lastModified}`,
+    );
+  };
+
+  const askAi = async (question: string, kind: AiKind): Promise<MarketplaceAiConsultationDto> => {
+    const actionKey = 'ai:ask';
+    const commandIdentity = `${actionKey}:${kind}:${question.trim()}`;
+    for (const [identity, command] of commandKeysRef.current) {
+      if (command.actionKey === actionKey && identity !== commandIdentity) {
+        commandKeysRef.current.delete(identity);
+      }
+    }
+    const retainedCommand = commandKeysRef.current.get(commandIdentity);
+    const idempotencyKey = retainedCommand?.idempotencyKey ?? globalThis.crypto.randomUUID();
+    commandKeysRef.current.set(commandIdentity, { actionKey, idempotencyKey });
+    try {
+      const consultation = await throwOnOpenApiErrorData(
+        api.marketplaceControllerAskAi({ kind, question }, idempotencyKey, requestOptions),
+      );
+      commandKeysRef.current.delete(commandIdentity);
+      return consultation;
+    } catch (error) {
+      if (isDefinitiveClientError(error)) {
+        commandKeysRef.current.delete(commandIdentity);
+      }
+      throw error;
+    }
+  };
+
+  const confirmAiStarterCart = (consultation: MarketplaceAiConsultationDto): Promise<boolean> => {
+    if (!canBuy || !buyerPartner) {
+      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
+      navigate('/verification');
+      return Promise.resolve(false);
+    }
+    return runMutation(
+      `ai-cart:${consultation.id}`,
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerConfirmAiStarterCart(
+            consultation.id,
+            { actingPartnerId: buyerPartner.id, confirmed: true },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
+      translate('agritech.marketplace.ai.starterCart.confirmed'),
+    );
+  };
+
+  const startVerification = (role: VerificationRole) => {
+    void runMutation(
+      'verification:start',
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerCreateVerification(
+            { expectedRevision: data.verification.data?.revision ?? 0, role },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
+      translate('agritech.marketplace.verify.started'),
+      undefined,
+      `verification:start:${role}:${data.verification.data?.revision ?? 0}`,
+    );
+  };
+
+  const linkVerificationIdentity = (verification: VerificationViewDto) => {
+    void runMutation(
+      'verification:identity',
+      (idempotencyKey) => throwOnOpenApiErrorData(api.marketplaceControllerLinkOneId(idempotencyKey, requestOptions)),
+      translate('agritech.marketplace.verify.identityLinked'),
+      undefined,
+      `verification:identity:${verification.id}:${verification.revision}`,
+    );
+  };
+
+  const uploadVerificationDocument = (
+    verification: VerificationViewDto,
+    kind: VerificationDocumentKind,
+    file: File,
+  ) => {
+    if (!verificationDocumentMimeTypes.has(file.type as VerificationDocumentInputDto['mimeType'])) {
+      flash(translate('agritech.marketplace.verify.invalidFileType'), 'error');
+      return;
+    }
+    if (file.size > maximumVerificationDocumentBytes) {
+      flash(translate('agritech.marketplace.verify.fileTooLarge'), 'error');
+      return;
+    }
+    void runMutation(
+      `verification:document:${kind}`,
+      async (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerStoreVerificationDocument(
+            {
+              contentBase64: await readFileAsBase64(file),
+              fileName: file.name,
+              kind,
+              mimeType: file.type as VerificationDocumentInputDto['mimeType'],
+            },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
+      translate('agritech.marketplace.verify.documentUploaded'),
+      undefined,
+      `verification:document:${verification.id}:${verification.revision}:${kind}:${file.name}:${file.size}:${file.lastModified}`,
+    );
+  };
+
+  const submitVerification = (verification: VerificationViewDto) => {
+    void runMutation(
+      'verification:submit',
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerSubmitVerification(
+            { expectedRevision: verification.revision },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
+      translate('agritech.marketplace.verify.pending'),
+      undefined,
+      `verification:submit:${verification.id}:${verification.revision}`,
+    );
+  };
+
+  const publishListing = (
+    sourceId: string,
+    sourceKind: 'produce' | 'product',
+    section: 'equipment' | 'produce' | 'seeds',
+  ) => {
+    if (!canOffer || !supplierPartner) {
+      flash(translate('agritech.marketplace.management.verificationRequired'), 'info');
+      navigate('/verification');
+      return;
+    }
+    void runMutation(
+      `publish-listing:${sourceId}`,
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplacePublicationControllerPublishListing(
+            { section, sellerPartnerId: supplierPartner.id, sourceId, sourceKind },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
+      translate('agritech.marketplace.publication.submitted'),
+      undefined,
+      `publish-listing:${sourceId}:${sourceKind}:${section}`,
+    );
+  };
+
+  const publishRequest = (requestId: string) => {
+    if (!canBuy || !buyerPartner) {
+      flash(translate('agritech.marketplace.management.verificationRequired'), 'info');
+      navigate('/verification');
+      return;
+    }
+    void runMutation(
+      `publish-request:${requestId}`,
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplacePublicationControllerPublishRequest(
+            { buyerPartnerId: buyerPartner.id, requestId },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
+      translate('agritech.marketplace.publication.submitted'),
+    );
+  };
+
+  const activatePromotion = (listingPublicId: string, planCode: 'catalog_7d' | 'catalog_14d' | 'catalog_30d') => {
+    if (!canOffer || !supplierPartner) {
+      flash(translate('agritech.marketplace.management.verificationRequired'), 'info');
+      navigate('/verification');
+      return;
+    }
+    void runMutation(
+      'promotion:activate',
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplacePromotionControllerActivate(
+            { actingPartnerId: supplierPartner.id, listingPublicId, planCode },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
+      translate('agritech.marketplace.promotion.activated'),
+      (promotion) => {
+        setPromotionDetail({ data: promotion, status: 'ready' });
+      },
+      `promotion:activate:${listingPublicId}:${planCode}`,
+    );
+  };
+
+  const loadPromotion = (promotionId: string) => {
+    setPromotionDetail((resource) => ({ ...resource, status: 'loading' }));
+    void throwOnOpenApiErrorData(api.marketplacePromotionControllerGet(promotionId, requestOptions))
+      .then((promotion) => {
+        setPromotionDetail({ data: promotion, status: 'ready' });
+      })
+      .catch(() => {
+        setPromotionDetail({ data: null, status: 'error' });
+      });
+  };
+
+  const transitionSample = (
+    sample: MarketplaceSampleDto,
+    action: 'approve' | 'cancel' | 'decline' | 'receive' | 'ship',
+    deliveryQuoteUzs?: number,
+  ) => {
+    void runMutation(
+      `sample-transition:${sample.id}`,
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerTransitionSample(
+            sample.id,
+            {
+              action,
+              ...(deliveryQuoteUzs === undefined ? {} : { deliveryQuoteUzs }),
+              expectedRevision: sample.revision,
+            },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
+      translate(`agritech.marketplace.samples.actionSuccess.${action}`),
+      undefined,
+      `sample-transition:${sample.id}:${sample.revision}:${action}:${deliveryQuoteUzs ?? ''}`,
+    );
+  };
+
+  const submitSampleFeedback = (sample: MarketplaceSampleDto, rating: number, comment?: string) => {
+    void runMutation(
+      `sample-feedback:${sample.id}`,
+      (idempotencyKey) =>
+        throwOnOpenApiErrorData(
+          api.marketplaceControllerSubmitSampleFeedback(
+            sample.id,
+            { ...(comment ? { comment } : {}), expectedRevision: sample.revision, rating },
+            idempotencyKey,
+            requestOptions,
+          ),
+        ),
+      translate('agritech.marketplace.samples.feedbackSubmitted'),
+      undefined,
+      `sample-feedback:${sample.id}:${sample.revision}:${rating}:${comment ?? ''}`,
+    );
+  };
 
   const submitSearch = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
     navigate(search.trim() ? `/catalog?q=${encodeURIComponent(search.trim())}` : '/catalog');
   };
 
+  const selectSuggestion = (suggestion: MarketplacePublicSuggestionDto) => {
+    setSearch(suggestion.label);
+    setSearchSuggestions({ data: [], status: 'idle' });
+    if (suggestion.kind === 'listing') {
+      navigate(`/products/${encodeURIComponent(suggestion.id)}`);
+      return;
+    }
+    if (suggestion.kind === 'seller') {
+      navigate(`/sellers/${encodeURIComponent(suggestion.id)}`);
+      return;
+    }
+    navigate(`/requests?q=${encodeURIComponent(suggestion.label)}`);
+  };
+
+  const sharedTransactionAccess = (() => {
+    if (data.auth !== 'signed-in') {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.signIn'),
+        hint: translate('agritech.marketplace.access.signIn'),
+        path: '/auth',
+      };
+    }
+    if (data.verification.status === 'loading' || data.verification.status === 'idle') {
+      return { hint: translate('agritech.marketplace.access.checking') };
+    }
+    if (!isVerified) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.verify'),
+        hint: translate('agritech.marketplace.access.verify'),
+        path: '/verification',
+      };
+    }
+    return undefined;
+  })();
+
+  const transactionAccess = (() => {
+    if (sharedTransactionAccess) {
+      return sharedTransactionAccess;
+    }
+    if (!canBuy) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.verify'),
+        hint: translate('agritech.marketplace.access.buyerRole'),
+        path: '/verification',
+      };
+    }
+    if (!buyerPartner) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.organization'),
+        hint: translate('agritech.marketplace.access.organization'),
+        path: '/account',
+      };
+    }
+    return undefined;
+  })();
+
+  const sellerTransactionAccess = (() => {
+    if (sharedTransactionAccess) {
+      return sharedTransactionAccess;
+    }
+    if (!canOffer) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.verify'),
+        hint: translate('agritech.marketplace.access.sellerRole'),
+        path: '/verification',
+      };
+    }
+    if (!supplierPartner) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.organization'),
+        hint: translate('agritech.marketplace.access.sellerOrganization'),
+        path: '/account',
+      };
+    }
+    return undefined;
+  })();
+
   const productActions = {
+    canTransact: canBuy && Boolean(buyerPartner),
     favoriteIds,
     locale,
     navigate,
     onAdd: addToCart,
     onFavorite: toggleFavorite,
     onOpen: openProduct,
+    ...(transactionAccess?.path
+      ? {
+          onTransactionAction: () => {
+            navigate(transactionAccess.path);
+          },
+        }
+      : {}),
     pendingAction,
     products: data.catalog.data,
     t: translate,
+    ...(transactionAccess?.actionLabel ? { transactionActionLabel: transactionAccess.actionLabel } : {}),
+    ...(transactionAccess?.hint ? { transactionHint: transactionAccess.hint } : {}),
   };
 
-  // Rendered inside the home page just below the hero, and above the content on
-  // every other view: the hero is the first thing a visitor should see, so the
-  // credential card follows it instead of pushing it off the first screen.
-  const demoBanner =
-    data.demo === 'none' ? null : (
-      <MarketplaceDemoBanner
-        navigate={navigate}
-        onRetry={data.refresh}
-        reason={data.demo}
-        t={translate}
-        variant={view === 'home' ? 'full' : 'compact'}
-      />
-    );
-
-  let content: ReactNode;
-  if (view === 'embedded') {
-    // Route content owns its own loading and empty states, so the chrome must not
-    // hold it behind a catalog request it does not read.
-    content = children;
-  } else if (data.auth === 'checking') {
-    content = <MarketplaceLoading t={translate} />;
-  } else if (data.catalog.status === 'loading' || data.catalog.status === 'idle') {
-    content = <MarketplaceLoading t={translate} />;
-  } else if (guestOnly && requiresOwnSession(view)) {
-    content = <MarketplaceSignedOut navigate={navigate} t={translate} />;
-  } else {
-    switch (view) {
-      case 'catalog':
-        content = <MarketplaceCatalog {...productActions} locationSearch={locationSearch} />;
-        break;
-      case 'product':
-        content = (
-          <MarketplaceProductDetail
-            {...productActions}
-            canReview={canReviewSelectedProduct}
-            onReview={addReview}
-            onRetry={data.refresh}
-            onSample={requestSample}
-            product={selectedProduct}
-            reviews={reviews}
-            sampleUsage={data.sampleUsage}
-            similar={data.catalog.data.filter(
-              (product) => product.id !== productId && selectedProduct && product.category === selectedProduct.category,
-            )}
-          />
-        );
-        break;
-      case 'favorites':
-        content = <MarketplaceFavorites {...productActions} status={data.favorites.status} />;
-        break;
-      case 'seller':
-        content = <MarketplaceSellerStorefront {...productActions} sellerId={sellerId} status={data.catalog.status} />;
-        break;
-      case 'cart':
-        content = (
-          <MarketplaceCart
-            carts={data.carts}
-            locale={locale}
-            navigate={navigate}
-            onCheckout={checkout}
-            onUpdate={updateCart}
-            pendingAction={pendingAction}
-            products={data.catalog.data}
-            t={translate}
-          />
-        );
-        break;
-      case 'requests':
-        content = (
-          <MarketplaceRequests
-            isVerified={isVerified}
-            locale={locale}
-            myRequests={data.myRequests}
-            navigate={navigate}
-            offersByRequest={data.offersByRequest}
-            onChoose={chooseOffer}
-            onCreate={createRequest}
-            onOffer={makeOffer}
-            onRetry={data.refresh}
-            pendingAction={pendingAction}
-            requests={data.requests}
-            role={data.verification.data?.role}
-            t={translate}
-          />
-        );
-        break;
-      case 'verification':
-        content = (
-          <MarketplaceVerification
-            navigate={navigate}
-            onRetry={data.refresh}
-            t={translate}
-            verification={data.verification}
-          />
-        );
-        break;
-      case 'account':
-        content = (
-          <MarketplaceAccount
-            contracts={data.contracts}
-            locale={locale}
-            myRequests={data.myRequests}
-            navigate={navigate}
-            samples={data.samples}
-            t={translate}
-            verification={data.verification}
-          />
-        );
-        break;
-      case 'contract':
-        content = (
-          <MarketplaceContract
-            contract={selectedContract}
-            identityStatus={data.verification.status}
-            locale={locale}
-            navigate={navigate}
-            onQuote={quoteContractDelivery}
-            onRetry={data.refresh}
-            onSign={signContract}
-            pendingAction={pendingAction}
-            status={data.contracts.status}
-            t={translate}
-          />
-        );
-        break;
-      default:
-        content = <MarketplaceHome {...productActions} banner={demoBanner} />;
+  const privateView = view === 'account' || view === 'cart' || view === 'contract' || view === 'verification';
+  const catalogView = view === 'catalog' || view === 'home';
+  const authChecking = privateView && data.auth === 'checking';
+  const authSignedOut = privateView && data.auth === 'signed-out';
+  const contentUnavailable = (privateView && data.auth === 'error') || (catalogView && data.catalog.status === 'error');
+  const catalogLoading = catalogView && (data.catalog.status === 'loading' || data.catalog.status === 'idle');
+  const productLoading = view === 'product' && data.selectedListing.status === 'loading';
+  // eslint-disable-next-line sonarjs/cognitive-complexity -- an exhaustive route-state switch keeps loading, auth, access, recovery, and command props in one auditable boundary
+  const renderContent = (): ReactNode => {
+    let rendered: ReactNode;
+    if (authChecking) {
+      rendered = <MarketplaceLoading t={translate} />;
+    } else if (authSignedOut) {
+      rendered = <MarketplaceSignedOut navigate={navigate} t={translate} />;
+    } else if (contentUnavailable) {
+      rendered = (
+        <MarketplaceEmpty
+          actionLabel={translate('ui.runtime.retry')}
+          headingLevel={1}
+          icon="produce"
+          message={translate('agritech.marketplace.catalog.unavailableDescription')}
+          onAction={data.refresh}
+          title={translate('agritech.marketplace.catalog.unavailable')}
+        />
+      );
+    } else if (catalogLoading) {
+      rendered = <MarketplaceLoading t={translate} />;
+    } else if (productLoading) {
+      rendered = <MarketplaceLoading t={translate} />;
+    } else {
+      switch (view) {
+        case 'catalog':
+          rendered = <MarketplaceCatalog {...productActions} locationSearch={locationSearch} />;
+          break;
+        case 'product':
+          rendered = (
+            <MarketplaceProductDetail
+              {...productActions}
+              canReplyToReviews={
+                isVerified &&
+                (data.verification.data?.role === 'seller' || data.verification.data?.role === 'farmer') &&
+                Boolean(selectedProduct) &&
+                data.ownedListingPublications.data.some((publication) => publication.id === selectedProduct?.id)
+              }
+              canReportReviews={data.auth === 'signed-in'}
+              canReview={canReviewSelectedProduct}
+              onReview={addReview}
+              onReplyToReview={replyToReview}
+              onReportReview={reportReview}
+              onRetry={data.refresh}
+              onSample={requestSample}
+              product={selectedProduct}
+              reviews={reviews}
+              sampleUsage={data.sampleUsage}
+              similar={data.catalog.data.filter(
+                (product) =>
+                  product.id !== productId && selectedProduct && product.category === selectedProduct.category,
+              )}
+            />
+          );
+          break;
+        case 'seller':
+          rendered = <MarketplaceSellerProfile {...productActions} catalog={data.sellerCatalog} seller={data.seller} />;
+          break;
+        case 'favorites':
+          rendered = (
+            <MarketplaceFavorites
+              {...productActions}
+              localOnly={data.auth !== 'signed-in'}
+              status={data.auth === 'signed-in' ? data.favorites.status : 'ready'}
+            />
+          );
+          break;
+        case 'cart':
+          rendered = (
+            <MarketplaceCart
+              canCheckout={canBuy}
+              {...(transactionAccess?.actionLabel ? { checkoutActionLabel: transactionAccess.actionLabel } : {})}
+              {...(transactionAccess?.hint ? { checkoutHint: transactionAccess.hint } : {})}
+              carts={data.carts}
+              locale={locale}
+              navigate={navigate}
+              onCheckout={checkout}
+              {...(transactionAccess?.path
+                ? {
+                    onCheckoutAction: () => {
+                      navigate(transactionAccess.path);
+                    },
+                  }
+                : {})}
+              onUpdate={(cartId, itemProductId, quantity) => {
+                const cart = data.carts.data.find((entry) => entry.id === cartId);
+                if (cart) {
+                  updateCart(cart, itemProductId, quantity);
+                }
+              }}
+              pendingAction={pendingAction}
+              products={data.catalog.data}
+              t={translate}
+            />
+          );
+          break;
+        case 'requests':
+          rendered = (
+            <MarketplaceRequests
+              {...(transactionAccess?.actionLabel ? { buyerAccessActionLabel: transactionAccess.actionLabel } : {})}
+              {...(transactionAccess?.hint ? { buyerAccessHint: transactionAccess.hint } : {})}
+              isVerified={isVerified}
+              locale={locale}
+              myRequests={data.myRequests}
+              navigate={navigate}
+              offersByRequest={data.offersByRequest}
+              {...(transactionAccess?.path
+                ? {
+                    onBuyerAccessAction: () => {
+                      navigate(transactionAccess.path);
+                    },
+                  }
+                : {})}
+              onChoose={chooseOffer}
+              onCreate={createRequest}
+              onOffer={makeOffer}
+              onRetry={data.refresh}
+              pendingAction={pendingAction}
+              requests={data.requests}
+              role={data.verification.data?.role}
+              {...(sellerTransactionAccess?.actionLabel
+                ? { sellerAccessActionLabel: sellerTransactionAccess.actionLabel }
+                : {})}
+              {...(sellerTransactionAccess?.hint ? { sellerAccessHint: sellerTransactionAccess.hint } : {})}
+              {...(sellerTransactionAccess?.path
+                ? {
+                    onSellerAccessAction: () => {
+                      navigate(sellerTransactionAccess.path);
+                    },
+                  }
+                : {})}
+              t={translate}
+            />
+          );
+          break;
+        case 'verification':
+          rendered = (
+            <MarketplaceVerification
+              navigate={navigate}
+              onLinkIdentity={linkVerificationIdentity}
+              onRetry={data.refresh}
+              onStart={startVerification}
+              onSubmit={submitVerification}
+              onUploadDocument={uploadVerificationDocument}
+              pendingAction={pendingAction}
+              readiness={data.providerReadiness}
+              t={translate}
+              verification={data.verification}
+            />
+          );
+          break;
+        case 'account':
+          rendered = (
+            <MarketplaceAccount
+              contracts={data.contracts}
+              dashboard={data.dashboard}
+              locale={locale}
+              management={
+                <MarketplaceUserManagement
+                  {...(transactionAccess?.actionLabel ? { buyerAccessActionLabel: transactionAccess.actionLabel } : {})}
+                  {...(transactionAccess?.hint ? { buyerAccessHint: transactionAccess.hint } : {})}
+                  aiConsultations={data.aiConsultations}
+                  canActivatePromotions={canOffer && Boolean(supplierPartner)}
+                  canPublishListings={canOffer && Boolean(supplierPartner)}
+                  canPublishRequests={canBuy && Boolean(buyerPartner)}
+                  listingPublications={data.ownedListingPublications}
+                  locale={locale}
+                  myRequests={data.myRequests}
+                  navigate={navigate}
+                  notifications={data.notifications}
+                  {...(transactionAccess?.path
+                    ? {
+                        onBuyerAccessAction: () => {
+                          navigate(transactionAccess.path);
+                        },
+                      }
+                    : {})}
+                  onActivatePromotion={activatePromotion}
+                  onLoadPromotion={loadPromotion}
+                  onPublishListing={publishListing}
+                  onPublishRequest={publishRequest}
+                  onRetry={data.refresh}
+                  onSampleFeedback={submitSampleFeedback}
+                  onSampleTransition={transitionSample}
+                  pendingAction={pendingAction}
+                  produceListings={data.produceListings}
+                  promotionDetail={promotionDetail}
+                  promotionPlans={data.promotionPlans}
+                  promotions={data.promotions}
+                  requestPublications={data.ownedRequestPublications}
+                  samples={data.samples}
+                  {...(sellerTransactionAccess?.actionLabel
+                    ? { sellerAccessActionLabel: sellerTransactionAccess.actionLabel }
+                    : {})}
+                  {...(sellerTransactionAccess?.hint ? { sellerAccessHint: sellerTransactionAccess.hint } : {})}
+                  {...(sellerTransactionAccess?.path
+                    ? {
+                        onSellerAccessAction: () => {
+                          navigate(sellerTransactionAccess.path);
+                        },
+                      }
+                    : {})}
+                  supplierProducts={data.supplierProducts}
+                  t={translate}
+                />
+              }
+              navigate={navigate}
+              onRetry={data.refresh}
+              samples={data.samples}
+              t={translate}
+              verification={data.verification}
+            />
+          );
+          break;
+        case 'contract':
+          rendered = (
+            <MarketplaceContract
+              contract={selectedContract}
+              identityStatus={verificationStatusForContract(data.verification, selectedContractCanMutate)}
+              lifecycle={contractLifecycle}
+              locale={locale}
+              navigate={navigate}
+              onDownloadArtifact={downloadContractArtifact}
+              onAdvanceLifecycle={advanceContractLifecycle}
+              onOpenDispute={openContractDispute}
+              onQuote={quoteContractDelivery}
+              onRefreshArtifact={refreshContractArtifact}
+              onRetry={() => {
+                reloadContractLifecycle();
+                data.refresh();
+              }}
+              onSign={signContract}
+              onUploadDisputeEvidence={uploadContractDisputeEvidence}
+              pendingAction={pendingAction}
+              status={data.contracts.status}
+              t={translate}
+            />
+          );
+          break;
+        default:
+          rendered = <MarketplaceHome {...productActions} />;
+      }
     }
-  }
+    return rendered;
+  };
+  const content = renderContent();
 
   return (
-    // The floating assistant is signed-in only, and the phone footer has to keep
-    // its last line out from under it, so the shell states whether it is there.
-    <div className="dh-marketplace" data-assistant={data.auth === 'signed-in' ? 'on' : undefined}>
-      <a className="dh-skip-link" href="#dh-main">
-        {translate('agritech.marketplace.accessibility.skipToContent')}
-      </a>
+    <div className="dh-marketplace">
       <MarketplaceHeader
         cartCount={data.carts.data.reduce((count, cart) => count + cart.items.length, 0)}
         favoriteCount={favoriteIds.size}
         navigate={navigate}
         onSearch={submitSearch}
+        onSelectSuggestion={selectSuggestion}
         search={search}
         setSearch={setSearch}
+        suggestions={searchSuggestions}
         t={translate}
         verificationStatus={data.verification.data?.status}
         view={view}
       />
-      <MarketplaceNoticeBar
-        notice={notice}
-        onClose={() => {
-          setNotice(undefined);
-        }}
-        t={translate}
-      />
+      {notice && (
+        <div
+          aria-live="polite"
+          className={`dh-notice dh-notice--${notice.kind}`}
+          role={notice.kind === 'error' ? 'alert' : 'status'}
+        >
+          <MarketplaceIcon name={notice.kind === 'error' ? 'shield' : 'check'} />
+          <span>{notice.message}</span>
+          <button
+            aria-label={translate('agritech.marketplace.close')}
+            onClick={() => {
+              setNotice(undefined);
+            }}
+            type="button"
+          >
+            <MarketplaceIcon name="close" />
+          </button>
+        </div>
+      )}
       <main className="dh-main" id="dh-main">
-        {view === 'home' ? null : demoBanner}
         {content}
       </main>
       <MarketplaceFooter navigate={navigate} t={translate} />
       {data.auth === 'signed-in' && (
         <MarketplaceAi
+          canConfirmStarterCart={canBuy && Boolean(buyerPartner)}
           locale={locale}
           onAsk={askAi}
+          onConfirmStarterCart={confirmAiStarterCart}
           onOpenProduct={openProduct}
           products={data.catalog.data}
           t={translate}
@@ -782,11 +1510,25 @@ interface HeaderProps {
   favoriteCount: number;
   navigate: MarketplaceNavigate;
   onSearch: (event: SyntheticEvent<HTMLFormElement>) => void;
+  onSelectSuggestion: (suggestion: MarketplacePublicSuggestionDto) => void;
   search: string;
   setSearch: (value: string) => void;
+  suggestions: Resource<MarketplacePublicSuggestionDto[]>;
   t: MarketplaceTranslate;
   verificationStatus?: string;
   view: MarketplaceView;
+}
+
+function MarketplaceBrand({ t }: Readonly<{ t: MarketplaceTranslate }>) {
+  const brand = t('agritech.marketplace.brand');
+  const accentStart = Math.max(0, brand.length - 3);
+
+  return (
+    <span className="dh-brand__wordmark">
+      <span>{brand.slice(0, accentStart)}</span>
+      <strong>{brand.slice(accentStart)}</strong>
+    </span>
+  );
 }
 
 function MarketplaceHeader({
@@ -794,14 +1536,19 @@ function MarketplaceHeader({
   favoriteCount,
   navigate,
   onSearch,
+  onSelectSuggestion,
   search,
   setSearch,
+  suggestions,
   t,
   verificationStatus,
   view,
 }: Readonly<HeaderProps>) {
   return (
     <header className="dh-header">
+      <a className="dh-skip-link" href="#dh-main">
+        {t('agritech.marketplace.accessibility.skipToContent')}
+      </a>
       <div className="dh-header__main">
         <button
           aria-label={t('agritech.marketplace.brand')}
@@ -811,7 +1558,7 @@ function MarketplaceHeader({
           }}
           type="button"
         >
-          <MarketplaceBrandLockup t={t} />
+          <MarketplaceBrand t={t} />
         </button>
         <button
           className={`dh-button dh-button--catalog${view === 'catalog' ? ' is-active' : ''}`}
@@ -823,23 +1570,58 @@ function MarketplaceHeader({
           <MarketplaceIcon name="produce" />
           {t('agritech.marketplace.catalog')}
         </button>
-        <form className="dh-search" onSubmit={onSearch} role="search">
-          <label className="dh-sr-only" htmlFor="dh-search">
-            {t('agritech.marketplace.search')}
-          </label>
-          <input
-            id="dh-search"
-            onChange={(event) => {
-              setSearch(event.target.value);
-            }}
-            placeholder={t('agritech.marketplace.search.placeholder')}
-            type="search"
-            value={search}
-          />
-          <button aria-label={t('agritech.marketplace.search')} type="submit">
-            <MarketplaceIcon name="search" />
-          </button>
-        </form>
+        <div className="dh-search-shell">
+          <form className="dh-search" onSubmit={onSearch} role="search">
+            <label className="dh-sr-only" htmlFor="dh-search">
+              {t('agritech.marketplace.search')}
+            </label>
+            <input
+              autoComplete="off"
+              id="dh-search"
+              onChange={(event) => {
+                setSearch(event.target.value);
+              }}
+              placeholder={t('agritech.marketplace.search')}
+              type="search"
+              value={search}
+            />
+            <button aria-label={t('agritech.marketplace.search')} type="submit">
+              <MarketplaceIcon name="search" />
+            </button>
+          </form>
+          {suggestions.status === 'loading' ? (
+            <span aria-live="polite" className="dh-search-state" role="status">
+              {t('agritech.marketplace.search.loading')}
+            </span>
+          ) : null}
+          {suggestions.status === 'error' ? (
+            <span aria-live="polite" className="dh-search-state dh-search-state--error" role="status">
+              {t('agritech.marketplace.search.unavailable')}
+            </span>
+          ) : null}
+          {suggestions.status === 'ready' ? (
+            <ul
+              aria-label={t('agritech.marketplace.search.suggestions')}
+              aria-live="polite"
+              className="dh-search-suggestions"
+              id="dh-search-suggestions"
+            >
+              {suggestions.data.map((suggestion) => (
+                <li key={`${suggestion.kind}:${suggestion.id}`}>
+                  <button
+                    onClick={() => {
+                      onSelectSuggestion(suggestion);
+                    }}
+                    type="button"
+                  >
+                    <span>{suggestion.label}</span>
+                    <small>{t(`agritech.marketplace.search.kind.${suggestion.kind}`)}</small>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+        </div>
         <nav aria-label={t('agritech.marketplace.accessibility.primaryNavigation')} className="dh-header__nav">
           <HeaderAction
             active={view === 'requests'}
@@ -881,9 +1663,8 @@ function MarketplaceHeader({
           />
         </nav>
         <div className="dh-header__preferences">
-          {/* Code, not language name: the header already carries a brand lockup, a
-              catalog button, the search field and four actions. */}
-          <LanguageSwitcher compact variant="menu" />
+          <LanguageSwitcher variant="menu" />
+          <ThemeSwitcher variant="menu" />
         </div>
       </div>
       <nav aria-label={t('agritech.marketplace.catalog.categories')} className="dh-header__categories">
@@ -899,6 +1680,10 @@ function MarketplaceHeader({
           </button>
         ))}
       </nav>
+      <div className="dh-header__mobile-preferences">
+        <LanguageSwitcher variant="menu" />
+        <ThemeSwitcher variant="menu" />
+      </div>
     </header>
   );
 }
@@ -932,29 +1717,6 @@ function HeaderAction({
   );
 }
 
-/** Transient result of an action: an error speaks up, anything else reports. */
-function MarketplaceNoticeBar({
-  notice,
-  onClose,
-  t,
-}: Readonly<{ notice: MarketplaceNotice | undefined; onClose: () => void; t: MarketplaceTranslate }>) {
-  if (!notice) {
-    return null;
-  }
-
-  const isError = notice.kind === 'error';
-
-  return (
-    <div aria-live="polite" className={`dh-notice dh-notice--${notice.kind}`} role={isError ? 'alert' : 'status'}>
-      <MarketplaceIcon name={isError ? 'alert' : 'check'} />
-      <span>{notice.message}</span>
-      <button aria-label={t('agritech.marketplace.close')} onClick={onClose} type="button">
-        <MarketplaceIcon name="close" />
-      </button>
-    </div>
-  );
-}
-
 function MarketplaceLoading({ t }: Readonly<{ t: MarketplaceTranslate }>) {
   return (
     <div aria-busy="true" aria-label={t('agritech.marketplace.loading')} className="dh-loading">
@@ -985,7 +1747,6 @@ function MarketplaceSignedOut({ navigate, t }: Readonly<{ navigate: MarketplaceN
         {t('agritech.marketplace.signIn')}
         <MarketplaceIcon name="arrow" />
       </button>
-      <small>{t('agritech.marketplace.auth.noPublicTenant')}</small>
     </section>
   );
 }
@@ -996,24 +1757,70 @@ function MarketplaceConfirmation({
   pending,
   t,
 }: Readonly<{ confirmation: Confirmation; onClose: () => void; pending: boolean; t: MarketplaceTranslate }>) {
+  const backdropRef = useRef<HTMLDivElement>(null);
   const confirmRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
   const pendingRef = useRef(pending);
   useEffect(() => {
     pendingRef.current = pending;
   }, [pending]);
   useEffect(() => {
-    /* v8 ignore next -- the dialog always opens from a focused control, so activeElement is an HTMLElement; the null keeps focus restoration total. */
     previousFocus.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     confirmRef.current?.focus();
+    const backdrop = backdropRef.current;
+    const siblings = backdrop?.parentElement
+      ? Array.from(backdrop.parentElement.children).filter(
+          (element): element is HTMLElement => element instanceof HTMLElement && element !== backdrop,
+        )
+      : [];
+    const siblingState = siblings.map((element) => ({
+      ariaHidden: element.getAttribute('aria-hidden'),
+      element,
+      inert: element.inert,
+    }));
+    for (const element of siblings) {
+      element.inert = true;
+      element.setAttribute('aria-hidden', 'true');
+    }
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape' && !pendingRef.current) {
         onClose();
+        return;
+      }
+      if (event.key !== 'Tab') {
+        return;
+      }
+      const focusable = Array.from(
+        dialogRef.current?.querySelectorAll<HTMLButtonElement>('button:not([disabled])') ?? [],
+      );
+      if (focusable.length === 0) {
+        event.preventDefault();
+        return;
+      }
+      const first = focusable[0];
+      const last = focusable.at(-1);
+      const firstIsFocused = first?.matches(':focus') ?? false;
+      const lastIsFocused = last?.matches(':focus') ?? false;
+      if (event.shiftKey && (firstIsFocused || !dialogRef.current?.contains(document.activeElement))) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && lastIsFocused) {
+        event.preventDefault();
+        first?.focus();
       }
     };
     globalThis.addEventListener('keydown', onKey);
     return () => {
       globalThis.removeEventListener('keydown', onKey);
+      for (const state of siblingState) {
+        state.element.inert = state.inert;
+        if (state.ariaHidden === null) {
+          state.element.removeAttribute('aria-hidden');
+        } else {
+          state.element.setAttribute('aria-hidden', state.ariaHidden);
+        }
+      }
       previousFocus.current?.focus();
     };
   }, [onClose]);
@@ -1025,12 +1832,14 @@ function MarketplaceConfirmation({
           onClose();
         }
       }}
+      ref={backdropRef}
     >
       <section
         aria-describedby="dh-confirm-description"
         aria-labelledby="dh-confirm-title"
         aria-modal="true"
         className="dh-dialog"
+        ref={dialogRef}
         role="dialog"
       >
         <button
@@ -1078,7 +1887,7 @@ function MarketplaceFooter({ navigate, t }: Readonly<{ navigate: MarketplaceNavi
           }}
           type="button"
         >
-          <MarketplaceBrandLockup t={t} />
+          <MarketplaceBrand t={t} />
         </button>
         <p>{t('agritech.marketplace.footer.description')}</p>
       </div>
@@ -1115,6 +1924,7 @@ function MarketplaceFooter({ navigate, t }: Readonly<{ navigate: MarketplaceNavi
           {t('agritech.marketplace.orders.feed')}
         </button>
         <button
+          aria-label={`${t('agritech.marketplace.footer.forSellers')}: ${t('agritech.marketplace.verification')}`}
           onClick={() => {
             navigate('/verification');
           }}
@@ -1127,30 +1937,27 @@ function MarketplaceFooter({ navigate, t }: Readonly<{ navigate: MarketplaceNavi
         <strong>{t('agritech.marketplace.footer.help')}</strong>
         <button
           onClick={() => {
+            navigate('/auth');
+          }}
+          type="button"
+        >
+          {t('user.form.login')}
+        </button>
+        <button
+          onClick={() => {
             navigate('/account');
           }}
           type="button"
         >
           {t('agritech.marketplace.account')}
         </button>
-        {/* The profile and preferences pages used to hang off a second, generic
-            navigation bar. That bar is gone, so the site's own footer carries
-            them — otherwise both pages would only be reachable by URL. */}
         <button
           onClick={() => {
-            navigate('/profile');
+            navigate('/problems');
           }}
           type="button"
         >
-          {t('user.nav.profile')}
-        </button>
-        <button
-          onClick={() => {
-            navigate('/settings');
-          }}
-          type="button"
-        >
-          {t('user.nav.settings')}
+          {t('site.problems.title')}
         </button>
         <span>{t('agritech.marketplace.footer.providerBoundary')}</span>
       </div>
@@ -1172,7 +1979,12 @@ function MarketplaceMobileNav({
     views: MarketplaceView[];
   }> = [
     { href: '/', icon: 'home', label: t('agritech.marketplace.home'), views: ['home'] },
-    { href: '/catalog', icon: 'produce', label: t('agritech.marketplace.catalog'), views: ['catalog', 'product'] },
+    {
+      href: '/catalog',
+      icon: 'produce',
+      label: t('agritech.marketplace.catalog'),
+      views: ['catalog', 'product', 'seller'],
+    },
     { href: '/requests', icon: 'orders', label: t('agritech.marketplace.orders'), views: ['requests'] },
     { href: '/cart', icon: 'cart', label: t('agritech.marketplace.cart'), views: ['cart'] },
     {

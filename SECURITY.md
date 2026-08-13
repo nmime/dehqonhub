@@ -2,7 +2,8 @@
 
 ## Supported versions
 
-Security fixes target the current `main` branch. Projects launched from this boilerplate should define their own supported release windows after the first production release.
+Security fixes target the current `main` branch. Supported release windows are
+defined when a production release is published.
 
 ## Reporting a vulnerability
 
@@ -10,7 +11,7 @@ Please report suspected vulnerabilities privately. Do not open public issues for
 
 ### GitHub
 
-Report through [GitHub Security Advisories](https://github.com/nmime/nest-react-boilerplate/security/advisories/new). This is the canonical private intake channel for this repository.
+Report through [GitHub Security Advisories](https://github.com/nmime/dehqonhub/security/advisories/new). This is the canonical private intake channel for this repository.
 
 ### GitLab
 
@@ -18,8 +19,8 @@ If you are using a GitLab mirror, contact that mirror's owner privately or use a
 private vulnerability-report feature that its maintainers have explicitly
 enabled. Do not post an exploitable finding in a public issue.
 
-Projects created from this boilerplate must configure and document their own
-monitored security contact before launch; the template does not invent a mailbox.
+Production operations must configure and document a monitored security contact
+before launch; this repository does not publish a fallback mailbox.
 
 ### Response targets
 

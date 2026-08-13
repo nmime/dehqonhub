@@ -10,6 +10,11 @@ import enAdminNotificationNavigationCatalog from '@app/i18n-en-admin/notificatio
 import enAdminLoginAnalyticsCatalog from '@app/i18n-en-admin/login-analytics.json';
 import enAdminCatalog from '@app/i18n-en-admin/shell.json';
 import enAdminAgriTechCatalog from '@app/i18n-en-admin/agritech.json';
+import enAdminMarketplaceCatalog from '@app/i18n-en-admin/marketplace.json';
+import enAdminMarketplaceStatusCatalog from '@app/i18n-en-admin/marketplace-status.json';
+import enAdminMarketplaceCommerceCatalog from '@app/i18n-en-admin/marketplace-commerce.json';
+import enAdminMarketplaceEngagementCatalog from '@app/i18n-en-admin/marketplace-engagement.json';
+import enAdminMarketplaceModerationCatalog from '@app/i18n-en-admin/marketplace-moderation.json';
 import enAdminUsersCatalog from '@app/i18n-en-admin/users.json';
 import enErrorsCatalog from '@app/i18n-en-common/errors.json';
 import enCommonCatalog from '@app/i18n-en-common/shared.json';
@@ -25,6 +30,11 @@ import ruAdminNotificationNavigationCatalog from '@app/i18n-ru-admin/notificatio
 import ruAdminLoginAnalyticsCatalog from '@app/i18n-ru-admin/login-analytics.json';
 import ruAdminCatalog from '@app/i18n-ru-admin/shell.json';
 import ruAdminAgriTechCatalog from '@app/i18n-ru-admin/agritech.json';
+import ruAdminMarketplaceCatalog from '@app/i18n-ru-admin/marketplace.json';
+import ruAdminMarketplaceStatusCatalog from '@app/i18n-ru-admin/marketplace-status.json';
+import ruAdminMarketplaceCommerceCatalog from '@app/i18n-ru-admin/marketplace-commerce.json';
+import ruAdminMarketplaceEngagementCatalog from '@app/i18n-ru-admin/marketplace-engagement.json';
+import ruAdminMarketplaceModerationCatalog from '@app/i18n-ru-admin/marketplace-moderation.json';
 import ruAdminUsersCatalog from '@app/i18n-ru-admin/users.json';
 import ruErrorsCatalog from '@app/i18n-ru-common/errors.json';
 import ruCommonCatalog from '@app/i18n-ru-common/shared.json';
@@ -40,6 +50,11 @@ import uzAdminNotificationNavigationCatalog from '@app/i18n-uz-admin/notificatio
 import uzAdminLoginAnalyticsCatalog from '@app/i18n-uz-admin/login-analytics.json';
 import uzAdminCatalog from '@app/i18n-uz-admin/shell.json';
 import uzAdminAgriTechCatalog from '@app/i18n-uz-admin/agritech.json';
+import uzAdminMarketplaceCatalog from '@app/i18n-uz-admin/marketplace.json';
+import uzAdminMarketplaceStatusCatalog from '@app/i18n-uz-admin/marketplace-status.json';
+import uzAdminMarketplaceCommerceCatalog from '@app/i18n-uz-admin/marketplace-commerce.json';
+import uzAdminMarketplaceEngagementCatalog from '@app/i18n-uz-admin/marketplace-engagement.json';
+import uzAdminMarketplaceModerationCatalog from '@app/i18n-uz-admin/marketplace-moderation.json';
 import uzAdminUsersCatalog from '@app/i18n-uz-admin/users.json';
 import uzErrorsCatalog from '@app/i18n-uz-common/errors.json';
 import uzCommonCatalog from '@app/i18n-uz-common/shared.json';
@@ -55,6 +70,11 @@ import uzCyrlAdminNotificationNavigationCatalog from '@app/i18n-uz-cyrl-admin/no
 import uzCyrlAdminLoginAnalyticsCatalog from '@app/i18n-uz-cyrl-admin/login-analytics.json';
 import uzCyrlAdminCatalog from '@app/i18n-uz-cyrl-admin/shell.json';
 import uzCyrlAdminAgriTechCatalog from '@app/i18n-uz-cyrl-admin/agritech.json';
+import uzCyrlAdminMarketplaceCatalog from '@app/i18n-uz-cyrl-admin/marketplace.json';
+import uzCyrlAdminMarketplaceStatusCatalog from '@app/i18n-uz-cyrl-admin/marketplace-status.json';
+import uzCyrlAdminMarketplaceCommerceCatalog from '@app/i18n-uz-cyrl-admin/marketplace-commerce.json';
+import uzCyrlAdminMarketplaceEngagementCatalog from '@app/i18n-uz-cyrl-admin/marketplace-engagement.json';
+import uzCyrlAdminMarketplaceModerationCatalog from '@app/i18n-uz-cyrl-admin/marketplace-moderation.json';
 import uzCyrlAdminUsersCatalog from '@app/i18n-uz-cyrl-admin/users.json';
 import uzCyrlErrorsCatalog from '@app/i18n-uz-cyrl-common/errors.json';
 import uzCyrlCommonCatalog from '@app/i18n-uz-cyrl-common/shared.json';
@@ -77,6 +97,11 @@ export const adminFrontendCatalogFileNames = [
   'admin/notification-navigation.json',
   'admin/login-analytics.json',
   'admin/agritech.json',
+  'admin/marketplace.json',
+  'admin/marketplace-status.json',
+  'admin/marketplace-moderation.json',
+  'admin/marketplace-commerce.json',
+  'admin/marketplace-engagement.json',
 ] as const;
 
 const enFiles = [
@@ -95,6 +120,11 @@ const enFiles = [
   ['admin/notification-navigation.json', enAdminNotificationNavigationCatalog],
   ['admin/login-analytics.json', enAdminLoginAnalyticsCatalog],
   ['admin/agritech.json', enAdminAgriTechCatalog],
+  ['admin/marketplace.json', enAdminMarketplaceCatalog],
+  ['admin/marketplace-status.json', enAdminMarketplaceStatusCatalog],
+  ['admin/marketplace-moderation.json', enAdminMarketplaceModerationCatalog],
+  ['admin/marketplace-commerce.json', enAdminMarketplaceCommerceCatalog],
+  ['admin/marketplace-engagement.json', enAdminMarketplaceEngagementCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const ruFiles = [
@@ -113,6 +143,11 @@ const ruFiles = [
   ['admin/notification-navigation.json', ruAdminNotificationNavigationCatalog],
   ['admin/login-analytics.json', ruAdminLoginAnalyticsCatalog],
   ['admin/agritech.json', ruAdminAgriTechCatalog],
+  ['admin/marketplace.json', ruAdminMarketplaceCatalog],
+  ['admin/marketplace-status.json', ruAdminMarketplaceStatusCatalog],
+  ['admin/marketplace-moderation.json', ruAdminMarketplaceModerationCatalog],
+  ['admin/marketplace-commerce.json', ruAdminMarketplaceCommerceCatalog],
+  ['admin/marketplace-engagement.json', ruAdminMarketplaceEngagementCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const uzFiles = [
@@ -131,6 +166,11 @@ const uzFiles = [
   ['admin/notification-navigation.json', uzAdminNotificationNavigationCatalog],
   ['admin/login-analytics.json', uzAdminLoginAnalyticsCatalog],
   ['admin/agritech.json', uzAdminAgriTechCatalog],
+  ['admin/marketplace.json', uzAdminMarketplaceCatalog],
+  ['admin/marketplace-status.json', uzAdminMarketplaceStatusCatalog],
+  ['admin/marketplace-moderation.json', uzAdminMarketplaceModerationCatalog],
+  ['admin/marketplace-commerce.json', uzAdminMarketplaceCommerceCatalog],
+  ['admin/marketplace-engagement.json', uzAdminMarketplaceEngagementCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const uzCyrlFiles = [
@@ -149,6 +189,11 @@ const uzCyrlFiles = [
   ['admin/notification-navigation.json', uzCyrlAdminNotificationNavigationCatalog],
   ['admin/login-analytics.json', uzCyrlAdminLoginAnalyticsCatalog],
   ['admin/agritech.json', uzCyrlAdminAgriTechCatalog],
+  ['admin/marketplace.json', uzCyrlAdminMarketplaceCatalog],
+  ['admin/marketplace-status.json', uzCyrlAdminMarketplaceStatusCatalog],
+  ['admin/marketplace-moderation.json', uzCyrlAdminMarketplaceModerationCatalog],
+  ['admin/marketplace-commerce.json', uzCyrlAdminMarketplaceCommerceCatalog],
+  ['admin/marketplace-engagement.json', uzCyrlAdminMarketplaceEngagementCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 export const adminFrontendTranslations = {

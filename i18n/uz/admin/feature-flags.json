@@ -29,5 +29,10 @@
   "admin.featureFlags.error.keyInvalid": "checkout.newflow kabi nuqtali kichik harfli kalitdan foydalaning.",
   "admin.featureFlags.error.numberInvalid": "Chekli raqamli qiymat kiriting.",
   "admin.featureFlags.error.loadFailed": "Funksiya bayroqlarini yuklab bo'lmadi.",
-  "admin.featureFlags.error.saveFailed": "Funksiya bayrog'ini saqlab bo'lmadi."
+  "admin.featureFlags.error.saveFailed": "Funksiya bayrog'ini saqlab bo'lmadi.",
+  "admin.featureFlags.demo.title": "Marketpleys namuna maʼlumotlari",
+  "admin.featureFlags.demo.description": "Yangi o‘rnatishda foydalanuvchi, buyurtma, sharh yoki biznes ko‘rsatkichlarini yaratmasdan chiroyli namuna katalogini ko‘rsatadi.",
+  "admin.featureFlags.demo.label": "Sunʼiy marketpleys katalogini ko‘rsatish",
+  "admin.featureFlags.demo.hint": "Namuna eʼlonlari Demo deb belgilanadi; ularni sotib olish, namuna so‘rash, targ‘ib qilish, baholash yoki tahlilda hisoblash mumkin emas.",
+  "admin.featureFlags.demo.auditDescription": "Operatorning audit qilinadigan bayrog‘i orqali boshqariladigan, faqat ko‘rish uchun sunʼiy marketpleys katalogi."
 }

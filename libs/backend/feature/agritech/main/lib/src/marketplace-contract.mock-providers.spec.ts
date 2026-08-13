@@ -81,7 +81,11 @@ const liveGuards = [
     createDirectPaymentProvider,
     'MARKETPLACE_DIRECT_PAYMENT_PROVIDER_MODE=live requires a configured payment adapter.',
   ],
-  ['factoring', createFactoringProvider, 'MARKETPLACE_FACTORING_PROVIDER_MODE=live requires a configured factoring adapter.'],
+  [
+    'factoring',
+    createFactoringProvider,
+    'MARKETPLACE_FACTORING_PROVIDER_MODE=live requires a configured factoring adapter.',
+  ],
 ] as const;
 
 describe('contract provider factories', () => {

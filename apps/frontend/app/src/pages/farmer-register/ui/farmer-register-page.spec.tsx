@@ -6,7 +6,7 @@ import { userFrontendTranslations } from '@app/frontend-feature-user-i18n';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
 import { FarmerRegisterPage } from './farmer-register-page';
 
-const ok = <T,>(data: T) => ({ data, error: undefined, response: new Response(null, { status: 200 }) });
+const ok = <T,>(data: T) => ({ data, error: undefined, response: new Response(null, { status: 201 }) });
 
 const renderPage = () =>
   render(

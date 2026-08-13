@@ -5,7 +5,6 @@
   "agritech.marketplace.contract.sign": "Tekshirish va rozilik bildirish",
   "agritech.marketplace.contract.settlement.direct": "To'g'ridan-to'g'ri bank to'lovi simulyatsiyasi",
   "agritech.marketplace.contract.buyer": "Xaridor",
-  "agritech.marketplace.contract.partyUnnamed": "Tashkilot ko'rsatilmagan",
   "agritech.marketplace.contract.seller": "Sotuvchi",
   "agritech.marketplace.contract.delivery": "Yetkazib berish shartlari",
   "agritech.marketplace.contract.deliveryPrice": "Yetkazib berishning alohida narxi",
@@ -31,7 +30,6 @@
   "agritech.marketplace.contract.notFound": "Shartnoma mavjud emas",
   "agritech.marketplace.contract.notFoundDescription": "Bu shartnoma topilmadi yoki hisobingizga ko'rinmaydi.",
   "agritech.marketplace.contract.notYourContract": "Faqat shartnomada ko'rsatilgan tomon rozilikni qayd eta oladi.",
-  "agritech.marketplace.contract.consentClosed": "Shartnomaning bu versiyasi rozilik uchun ochiq emas.",
   "agritech.marketplace.contract.signConfirmation": "Shartnomaning ushbu versiyasini ko'rib chiqqaningizni tasdiqlang. Bu faqat sizning tomoningiz roziligini qayd etadi va to'lovni amalga oshirmaydi.",
   "agritech.marketplace.contract.signOwnParty": "Tomonim roziligini qayd etish",
   "agritech.marketplace.contract.signatureRecorded": "Tomoningiz roziligi qayd etildi",
@@ -44,5 +42,7 @@
   "agritech.marketplace.contract.timeline.buyerSigned": "Xaridor roziligi",
   "agritech.marketplace.contract.timeline.sellerSigned": "Sotuvchi roziligi",
   "agritech.marketplace.contract.yourSignatureRecorded": "Tomoningiz roziligi avval qayd etilgan.",
-  "agritech.marketplace.contract.legacyReviewRequiredDescription": "Yangilanishdan oldingi ushbu shartnoma tekshiruvga ajratildi. Avvalgi holati audit uchun saqlangan, ammo yangi rozilikni qayd etish o'chirilgan."
+  "agritech.marketplace.contract.legacyReviewRequiredDescription": "Yangilanishdan oldingi ushbu shartnoma tekshiruvga ajratildi. Avvalgi holati audit uchun saqlangan, ammo yangi rozilikni qayd etish o'chirilgan.",
+  "agritech.marketplace.contract.partyUnnamed": "Tashkilot ko'rsatilmagan",
+  "agritech.marketplace.contract.consentClosed": "Shartnomaning bu versiyasi rozilik uchun ochiq emas."
 }

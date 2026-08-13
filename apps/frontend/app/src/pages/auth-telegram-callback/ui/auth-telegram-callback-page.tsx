@@ -20,9 +20,6 @@ export function AuthTelegramCallbackPage({ navigate }: Readonly<AuthTelegramCall
   const pendingState = useMemo(readTelegramOidcState, []);
   const callbackStarted = useRef(false);
 
-  // The effect re-runs on every render, so the ref — not the mutation status, which
-  // is still `idle` inside the commit that starts it — is what keeps a Strict Mode
-  // double mount, or any later render, from projecting the same session twice.
   useEffect(() => {
     if (callbackStarted.current) {
       return;
@@ -30,6 +27,9 @@ export function AuthTelegramCallbackPage({ navigate }: Readonly<AuthTelegramCall
     if (providerError) {
       callbackStarted.current = true;
       clearTelegramOidcState();
+      return;
+    }
+    if (socialAuth.telegramOidcCallbackStatus !== 'idle') {
       return;
     }
     callbackStarted.current = true;

@@ -345,6 +345,7 @@ export class AuthController {
   }
 
   @Post('email-verification/confirm')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOkDataResponse(UserActionConfirmationPayloadDto)
   async confirmEmailVerification(
@@ -355,6 +356,7 @@ export class AuthController {
   }
 
   @Post('password-reset/confirm')
+  @HttpCode(HttpStatus.OK)
   @Public()
   @ApiOkDataResponse(UserActionConfirmationPayloadDto)
   async confirmPasswordReset(
