@@ -314,15 +314,24 @@ const backendStage = section(dockerfile, 'FROM node:${NODE_VERSION} AS backend',
 has(backendStage, 'USER 1000:1000', 'backend image defaults to the numeric non-root node user');
 has(
   backendStage,
-  'COPY --from=backend-deps /runtime/node_modules ./node_modules',
+  'COPY --chown=1000:1000 --from=backend-deps /runtime/node_modules ./node_modules',
   'backend copies only the staged per-app node_modules',
 );
 has(
   backendStage,
-  'COPY --from=backend-deps /runtime/package.json ./package.json',
+  'COPY --chown=1000:1000 --from=backend-deps /runtime/package.json ./package.json',
   "backend copies the app's generated package.json alongside its node_modules",
 );
-has(backendStage, 'COPY --from=backend-deps /runtime/dist ./dist', 'backend copies only the staged output closure');
+has(
+  backendStage,
+  'COPY --chown=1000:1000 --from=backend-deps /runtime/dist ./dist',
+  'backend copies only the staged output closure for its numeric runtime user',
+);
+has(
+  backendStage,
+  'COPY --chown=1000:1000 --from=backend-deps /runtime/i18n ./i18n',
+  'backend owns staged locale assets as its numeric runtime user',
+);
 assert.ok(
   !dockerfile.includes('pnpm prune --prod'),
   'Backend images must install per-app dependencies instead of pruning the whole workspace tree.',
@@ -352,6 +361,11 @@ has(
   "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')",
   'backend image verifies the canonical backend i18n runtime output',
 );
+assert.ok(
+  backendStage.indexOf('USER 1000:1000') <
+    backendStage.indexOf("require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"),
+  'backend verifies the locale output after switching to its numeric non-root runtime user',
+);
 const siteStage = section(dockerfile, 'FROM node:${NODE_VERSION} AS site-runtime', 'FROM nginxinc/nginx-unprivileged');
 has(
   siteStage,
@@ -360,10 +374,47 @@ has(
   PORT=80`,
   'site runtime explicitly assigns container port 80',
 );
-has(siteStage, 'COPY --from=site-deps /site-deploy/dist ./dist', 'site runtime copies only staged Vike output');
+has(
+  siteStage,
+  'COPY --chown=1000:1000 --from=site-deps /site-deploy/package.json ./package.json',
+  'site runtime owns its staged package contract as the numeric node user',
+);
+has(
+  siteStage,
+  'COPY --chown=1000:1000 --from=site-deps /site-deploy/node_modules ./node_modules',
+  'site runtime owns its staged dependencies as the numeric node user',
+);
+has(
+  siteStage,
+  'COPY --chown=1000:1000 --from=site-deps /site-deploy/dist ./dist',
+  'site runtime owns only staged Vike output as the numeric node user',
+);
 assert.ok(!siteStage.includes('/workspace/dist'), 'Site runtime must not copy the full workspace dist tree.');
 has(siteStage, 'USER node', 'site runtime runs as the non-root node user');
+has(
+  siteStage,
+  'RUN test -r ./dist/apps/frontend/site/server/index.js',
+  'site runtime verifies its entrypoint after switching to the non-root node user',
+);
 has(siteStage, 'EXPOSE 80', 'site runtime exposes the Vike server port');
+
+const frontendStage = section(dockerfile, 'FROM nginxinc/nginx-unprivileged', 'HEALTHCHECK');
+has(
+  frontendStage,
+  'chmod -R a=rX /usr/share/nginx/html',
+  'frontend runtime makes every immutable bundle asset readable independently of source checkout modes',
+);
+has(
+  frontendStage,
+  'chmod 0644 /usr/share/nginx/html/runtime-config.js',
+  'frontend runtime keeps only the generated runtime configuration writable by nginx',
+);
+has(frontendStage, 'USER 101', 'frontend runtime uses the nginx numeric non-root user');
+has(
+  frontendStage,
+  'RUN test -r /usr/share/nginx/html/index.html',
+  'frontend runtime verifies its entry document after switching to the nginx user',
+);
 
 const devCompose = read('docker/docker-compose.yml');
 has(devCompose, 'http://127.0.0.1:8080/nginx-health', 'dev frontend healthcheck targets container port 8080');

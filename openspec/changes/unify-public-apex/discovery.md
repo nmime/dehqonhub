@@ -32,6 +32,10 @@
 - Frontend directory canonicalization behind host TLS remains relative, so an inner `http://<host>:8080/<path>/` redirect cannot change the browser's public scheme or expose the inner port.
 - Migrator runtime sources remain readable by the numeric non-root image user
   even when the deployment checkout was created under a restrictive umask.
+- Final API, worker, SSR, and static frontend runtime assets remain readable by
+  their numeric non-root image users when the deployment checkout was created
+  under a restrictive umask; representative asset checks run after each final
+  image user switch.
 
 ## Examples
 
@@ -57,6 +61,9 @@
 - Returning `Location: http://dehqonhub.uz:8080/problems/` from the public TLS origin is not accepted.
 - Deriving a problem type or occurrence from a request host, repository/package
   identity, removed subdomain, or unsafe identifier is not accepted.
+- Passing an image smoke check as root before its final numeric runtime user
+  attempts to load restrictive-mode locale, server, or static assets is not
+  accepted.
 
 ## Failure and rollback
 

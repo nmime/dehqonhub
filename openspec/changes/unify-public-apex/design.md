@@ -97,8 +97,10 @@ idempotent no-op; and frontend directory redirects cannot leak inner HTTP port
   emitted before the user SPA fallback and `/marketplace/*` has direct tests.
 - **Local builds consume server disk** -> build once outside systemd, preserve
   the healthy revision until convergence, and prune only disposable cache.
-- **Host umask can restrict copied source modes** -> assign every standalone
-  migrator runtime source to its numeric non-root image user during `COPY`.
+- **Host umask can restrict copied source and generated asset modes** -> assign
+  migrator/backend/SSR artifacts to their numeric non-root image users, make
+  immutable static bundles globally readable, and smoke representative assets
+  after each final user switch.
 
 ## Migration plan
 

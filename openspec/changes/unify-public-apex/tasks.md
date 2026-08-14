@@ -12,6 +12,8 @@
 - [x] 2.5 Retain Nginx 1.24, idempotent UFW, one-build activation, backend binding, and TLS-safe frontend redirect fixes.
 - [x] 2.6 Serve the shared RFC 9457 problem registry from user-app `/problems` and root public problem identities at the DehqonHub apex.
 - [x] 2.7 Own standalone migrator runtime sources as the numeric non-root image user independently of host checkout umask.
+- [x] 2.8 Make every final non-root runtime image read its staged artifacts and
+      execute its representative asset check after the user switch.
 
 ## 3. Evidence and documentation
 

@@ -144,13 +144,16 @@ RUN apk add --no-cache libcap su-exec \
     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 # Placed at /app so both the app and the libs it inlines resolve modules from
 # a shared ancestor node_modules.
-COPY --from=backend-deps /runtime/package.json ./package.json
-COPY --from=backend-deps /runtime/node_modules ./node_modules
-COPY --from=backend-deps /runtime/dist ./dist
-COPY --from=backend-deps /runtime/i18n ./i18n
+COPY --chown=1000:1000 --from=backend-deps /runtime/package.json ./package.json
+COPY --chown=1000:1000 --from=backend-deps /runtime/node_modules ./node_modules
+COPY --chown=1000:1000 --from=backend-deps /runtime/dist ./dist
+COPY --chown=1000:1000 --from=backend-deps /runtime/i18n ./i18n
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
-RUN node -e "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"
 USER 1000:1000
+# Execute the same locale import every API and worker performs, after the UID
+# switch. This makes image construction fail when restrictive checkout modes
+# survive staging into any backend runtime asset.
+RUN node -e "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
 EXPOSE 80
 CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
@@ -182,10 +185,11 @@ RUN apk add --no-cache libcap \
   && setcap 'cap_net_bind_service=+ep' "$(which node)" \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
-COPY --from=site-deps /site-deploy/package.json ./package.json
-COPY --from=site-deps /site-deploy/node_modules ./node_modules
-COPY --from=site-deps /site-deploy/dist ./dist
+COPY --chown=1000:1000 --from=site-deps /site-deploy/package.json ./package.json
+COPY --chown=1000:1000 --from=site-deps /site-deploy/node_modules ./node_modules
+COPY --chown=1000:1000 --from=site-deps /site-deploy/dist ./dist
 USER node
+RUN test -r ./dist/apps/frontend/site/server/index.js
 EXPOSE 80
 CMD ["node", "dist/apps/frontend/site/server/index.js"]
 
@@ -210,9 +214,12 @@ RUN if [ "${NX_PROJECT}" = landing-app ]; then \
 # by the runtime user — the rest of the bundle stays immutable.
 COPY docker/frontend-runtime-config.sh /docker-entrypoint.d/40-frontend-runtime-config.sh
 RUN chmod +x /docker-entrypoint.d/40-frontend-runtime-config.sh \
+  && chmod -R a=rX /usr/share/nginx/html \
   && touch /usr/share/nginx/html/runtime-config.js \
-  && chown 101:101 /usr/share/nginx/html/runtime-config.js
+  && chown 101:101 /usr/share/nginx/html/runtime-config.js \
+  && chmod 0644 /usr/share/nginx/html/runtime-config.js
 USER 101
+RUN test -r /usr/share/nginx/html/index.html
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://localhost:8080/nginx-health || exit 1

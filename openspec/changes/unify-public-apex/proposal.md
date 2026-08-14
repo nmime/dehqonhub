@@ -29,6 +29,9 @@ one-build activation, backend-listener, and TLS-safe redirect repairs.
 - Rewrite inner frontend `:8080` directory redirects to relative paths at the host TLS proxy.
 - Make standalone migrator sources readable by its numeric non-root runtime
   user regardless of host checkout umask.
+- Make final API, worker, SSR, and static frontend runtime assets readable by
+  their numeric non-root users regardless of host checkout umask, with image
+  build checks executed after each runtime user switch.
 - Add apex ownership, selected-host, certificate, and compatibility regression evidence.
 
 ## Capabilities

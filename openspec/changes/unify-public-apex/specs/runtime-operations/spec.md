@@ -24,7 +24,10 @@ The host TLS renderer SHALL convert inner frontend `Location` values shaped as
 `http://<host>:8080/<path>` into relative paths without applying that rewrite
 to API proxy locations. The standalone migrator image SHALL assign its runtime
 dependencies and TypeScript migration sources to the numeric non-root runtime
-user independently of the host checkout umask.
+user independently of the host checkout umask. Every final backend, worker,
+SSR, and static frontend image SHALL likewise make its staged dependencies and
+runtime assets readable by its numeric non-root user and SHALL verify a
+representative runtime entrypoint only after switching to that user.
 
 **Evidence profile:** operations, security
 
@@ -50,6 +53,8 @@ user independently of the host checkout umask.
   the inner port.
 - Restrictive host checkout permissions cannot make staged migration sources
   unreadable by the non-root migrator process.
+- Restrictive host checkout permissions cannot make staged locale, server, or
+  static bundle assets unreadable by any final non-root runtime process.
 
 **Failure behavior:**
 
@@ -66,6 +71,8 @@ user independently of the host checkout umask.
   response blocks readiness.
 - An image whose non-root migrator cannot read every staged runtime source
   blocks deployment before application services start.
+- An API, worker, SSR, or static frontend image whose final non-root user cannot
+  read its staged runtime assets blocks the image build before activation.
 
 #### Scenario: Deployment validation
 
@@ -78,6 +85,13 @@ user independently of the host checkout umask.
   into the standalone migration image
 - **THEN** every runtime dependency and migration source is owned and readable
   by the numeric non-root migrator user
+
+#### Scenario: Non-root final runtime asset readability
+
+- **WHEN** backend, worker, SSR, and static frontend artifacts built from a
+  restrictive source checkout are copied into their final images
+- **THEN** each numeric non-root runtime user can read its staged entrypoint and
+  assets, and the build verifies that access after the user switch
 
 #### Scenario: Selected user application owns the apex
 

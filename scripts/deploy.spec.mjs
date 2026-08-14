@@ -57,6 +57,60 @@ test('migrator runtime sources remain readable by the non-root image user', () =
   }
 });
 
+test('final runtime assets remain readable by their non-root image users', () => {
+  const dockerfile = readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8');
+  const backend = dockerfile.slice(
+    dockerfile.indexOf('FROM node:${NODE_VERSION} AS backend'),
+    dockerfile.indexOf('FROM builder AS site-deps'),
+  );
+  const site = dockerfile.slice(
+    dockerfile.indexOf('FROM node:${NODE_VERSION} AS site-runtime'),
+    dockerfile.indexOf('FROM nginxinc/nginx-unprivileged'),
+  );
+  const frontend = dockerfile.slice(dockerfile.indexOf('FROM nginxinc/nginx-unprivileged'));
+
+  for (const runtimeAsset of [
+    '/runtime/package.json ./package.json',
+    '/runtime/node_modules ./node_modules',
+    '/runtime/dist ./dist',
+    '/runtime/i18n ./i18n',
+  ]) {
+    assert.match(
+      backend,
+      new RegExp(
+        `COPY --chown=1000:1000 --from=backend-deps ${runtimeAsset.replaceAll('/', '\\/').replaceAll('.', '\\.')}`,
+        'u',
+      ),
+      `${runtimeAsset} must be owned by the backend runtime UID`,
+    );
+  }
+  assert.ok(
+    backend.indexOf('USER 1000:1000') <
+      backend.indexOf("require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"),
+    'the locale smoke import must execute as the final backend runtime UID',
+  );
+
+  for (const runtimeAsset of [
+    '/site-deploy/package.json ./package.json',
+    '/site-deploy/node_modules ./node_modules',
+    '/site-deploy/dist ./dist',
+  ]) {
+    assert.match(
+      site,
+      new RegExp(
+        `COPY --chown=1000:1000 --from=site-deps ${runtimeAsset.replaceAll('/', '\\/').replaceAll('.', '\\.')}`,
+        'u',
+      ),
+      `${runtimeAsset} must be owned by the site runtime UID`,
+    );
+  }
+  assert.match(site, /USER node\s+RUN test -r \.\/dist\/apps\/frontend\/site\/server\/index\.js/u);
+
+  assert.match(frontend, /chmod -R a=rX \/usr\/share\/nginx\/html/u);
+  assert.match(frontend, /chmod 0644 \/usr\/share\/nginx\/html\/runtime-config\.js/u);
+  assert.match(frontend, /USER 101\s+RUN test -r \/usr\/share\/nginx\/html\/index\.html/u);
+});
+
 test('every documented target is plannable', () => {
   assert.deepEqual(deployTargets, ['compose', 'pm2', 'helm']);
   // Each target gets axes that are legal for it: a Caddy edge for plain Compose and
