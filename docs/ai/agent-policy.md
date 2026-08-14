@@ -281,7 +281,7 @@ shared/public APIs.
     `pnpm run db:migrations:rollback-check`
   - API contract/client checks: `pnpm run api:contracts:check`,
     `pnpm run api:clients:check`, `pnpm run api:openapi:lint`
-  - GitHub workflow edits: `pnpm run ci:workflows:check`
+  - repository execution-boundary edits: `pnpm run tooling:static-check`
 - Security-sensitive changes: `pnpm run test:security:secrets` and targeted
   SAST/security checks when relevant.
 

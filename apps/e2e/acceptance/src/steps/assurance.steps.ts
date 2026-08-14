@@ -29,19 +29,25 @@ Then('no project, requirement, feature, or scenario is orphaned', function (this
   assert.equal(this.assuranceExitCode, 0);
 });
 
-Given('the release workflow', function (this: AcceptanceWorld) {
-  this.releaseWorkflow = readFileSync('.github/workflows/release.yml', 'utf8');
+Given('the runner-neutral release assurance sources', function (this: AcceptanceWorld) {
+  this.releaseAssuranceSources = [
+    readFileSync('packages/tooling/src/commands/tooling/static-check.ts', 'utf8'),
+    readFileSync('packages/tooling/src/commands/spec/assurance.ts', 'utf8'),
+  ].join('\n');
 });
 
-When('its successful CI provenance is inspected', function (this: AcceptanceWorld) {
-  assert.match(this.releaseWorkflow ?? '', /workflow_run:/u);
-  assert.match(this.releaseWorkflow ?? '', /conclusion == 'success'/u);
+When('its exact revision controls are inspected', function (this: AcceptanceWorld) {
+  assert.match(this.releaseAssuranceSources ?? '', /checkGitHubActionsAbsent/u);
+  assert.match(this.releaseAssuranceSources ?? '', /git status --porcelain/u);
 });
 
-Then('it checks out the successful workflow SHA', function (this: AcceptanceWorld) {
-  assert.match(this.releaseWorkflow ?? '', /ref:\s+\$\{\{\s*github\.event\.workflow_run\.head_sha\s*\}\}/u);
+Then('repository-owned GitHub execution remains absent', function (this: AcceptanceWorld) {
+  assert.match(this.releaseAssuranceSources ?? '', /\.github\/workflows/u);
+  assert.match(this.releaseAssuranceSources ?? '', /\.github\/actions/u);
 });
 
-Then('it refuses a SHA that is no longer current main', function (this: AcceptanceWorld) {
-  assert.match(this.releaseWorkflow ?? '', /origin\/main.*VERIFIED_SHA/u);
+Then('release evidence binds a clean exact source revision', function (this: AcceptanceWorld) {
+  assert.match(this.releaseAssuranceSources ?? '', /The worktree is dirty/u);
+  assert.match(this.releaseAssuranceSources ?? '', /git.*rev-parse.*HEAD/u);
+  assert.match(this.releaseAssuranceSources ?? '', /specificationHash/u);
 });

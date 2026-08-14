@@ -265,22 +265,21 @@ application stack with staging-specific secrets, databases, and domain names.
 4. **Staging port offsets:** staging services use ports offset by +100 from
    production defaults to avoid collisions. See [PORTS.md](../PORTS.md#staging).
 
-### CI/CD — Deploying to Staging
+### Deploying to staging
 
-There is no automated staging pipeline; staging shares the production deploy
-path. Deployment runs from the manual `deploy` workflow
-(`.github/workflows/deploy.yml`), triggered via `workflow_dispatch`:
+There is no automated staging pipeline or repository-owned GitHub deployment
+workflow; staging shares the production deploy path. A trusted operator starts
+from a full 40-character `git_sha` that is an ancestor of `origin/main` and
+whose selected-and-enabled deployment image set already exists with immutable
+digests:
 
-- **Trigger:** manual `workflow_dispatch` with a full 40-character `git_sha`
-  that is an ancestor of `origin/main` and whose selected-and-enabled deployment
-  image set already exists with immutable digests.
 - **Image tag:** `sha-<git_sha>`.
 - **Helm:** renders `.helm/values-production.yaml` (there is no
   `values-staging.yaml` overlay in the repo).
 - **Namespace:** `nest-react-boilerplate`.
-- **GitOps:** commits the updated deploy tags to a `gitops/sha-<git_sha>`
-  branch for Argo CD / Flux to reconcile.
-- **Rollback:** re-run the workflow with the previous known-good Git SHA.
+- **GitOps:** commit the updated deploy tags to a policy-compliant topic branch
+  for Argo CD / Flux to reconcile after review.
+- **Rollback:** repeat the procedure with the previous known-good Git SHA.
 
 ### Running Staging Locally
 

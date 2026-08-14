@@ -35,7 +35,7 @@ protected branches, or merge blocking.
 
 | Platform | Checked-in coverage                                                                                                         | Enforcement notes                                                                                                                           |
 | -------- | --------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
-| GitHub   | Gitleaks, native secret/SAST tests, CodeQL, `audit:ci`, Dependabot, and release-image Trivy scanning                        | CI, CodeQL, dependency audit, and Trivy commands are blocking; repository rules still determine whether merges require them.                |
+| GitHub   | Collaboration metadata, npm/Docker Dependabot, local Gitleaks/native SAST, and `audit:ci` commands                          | No repository-owned GitHub Actions, CodeQL, Scorecard, dependency review, image scanning, signing, or hosted status checks are configured.  |
 | GitLab   | Blocking Gitleaks and `audit:ci`, plus GitLab Secret Detection, Dependency Scanning, SAST, and Container Scanning templates | The checked-in jobs do not use `allow_failure`; availability of GitLab-managed scanner templates depends on the hosting tier/configuration. |
 
 ## Secured components

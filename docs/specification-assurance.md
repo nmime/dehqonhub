@@ -136,10 +136,12 @@ because `HEAD` would not identify the source that actually executed.
 | Nightly | `pnpm run spec:verify -- --all --lane nightly`                        | mutation, property, component, resilience, recovery, and operations evidence |
 | Runtime | `pnpm run spec:verify -- --all --lane runtime`                        | environment-bound fullstack Playwright journeys and canaries                 |
 
-GitHub and GitLab run impacted PR/main evidence. GitHub also owns scheduled
-nightly and manually dispatched runtime workflows. Required skips are failures;
-an unavailable runtime is reported as an environment boundary, not converted
-into a source-code pass.
+GitLab CI runs impacted PR/main evidence when that external runner is configured.
+This repository contains no GitHub Actions and does not schedule the nightly or
+runtime lanes. A trusted operator or external runner must invoke those lanes and
+retain their exact-revision dossiers. Required skips are failures; an unavailable
+runtime is reported as an environment boundary, not converted into a source-code
+pass.
 
 ## Writing or changing behavior
 

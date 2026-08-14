@@ -1,4 +1,4 @@
-# GitLab CI — mirrors .github/workflows/ci.yml
+# GitLab CI is an optional external runner for the same repository-owned local commands.
 # Variables: NODE_VERSION_FILE, PNPM_VERSION, CI, NX_DAEMON
 
 stages:
@@ -56,7 +56,7 @@ helm-validation:
       - HELM_SELECTION: mongodb
         SETUP_ARGS: '--replace --app auth-app-api --capability mongodb --non-interactive'
   script:
-    - node scripts/validate-github-workflows.mjs
+    - pnpm run tooling:static-check
     - pnpm nrb setup $SETUP_ARGS
     - pnpm run deploy:validate:helm
   variables:

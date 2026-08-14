@@ -2,16 +2,16 @@
 
 ## Feature matrix
 
-| Feature            | GitHub              | GitLab                 |
-| ------------------ | ------------------- | ---------------------- |
-| PR/MR templates    | ✅                  | ✅                     |
-| Secret scanning    | ✅ Gitleaks         | ✅ Secret Detection    |
-| Dependency updates | ✅ Dependabot       | ✅ Dependency Scanning |
-| SAST               | ✅ CodeQL           | ✅ SAST                |
-| Container scanning | Docker build checks | ✅ Container Scanning  |
-| CODEOWNERS         | ✅                  | ✅                     |
-| Branch protection  | ✅                  | ✅                     |
-| Scorecard          | ✅                  | ❌                     |
+| Feature            | GitHub            | GitLab                 |
+| ------------------ | ----------------- | ---------------------- |
+| PR/MR templates    | ✅                | ✅                     |
+| Secret scanning    | ✅ Gitleaks       | ✅ Secret Detection    |
+| Dependency updates | ✅ Dependabot     | ✅ Dependency Scanning |
+| SAST               | Local native SAST | ✅ SAST                |
+| Container scanning | Not automated     | ✅ Container Scanning  |
+| CODEOWNERS         | ✅                | ✅                     |
+| Branch protection  | ✅                | ✅                     |
+| Scorecard          | Not automated     | ❌                     |
 
 ## Platform setup notes
 
@@ -19,7 +19,7 @@
 
 - CODEOWNERS in .github/CODEOWNERS
 - Dependabot in .github/dependabot.yml
-- CodeQL in .github/workflows/codeql.yml
+- No repository-owned CodeQL, dependency-review, or Scorecard execution
 - Security advisories via Settings → Security
 
 ### GitLab

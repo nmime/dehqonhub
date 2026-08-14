@@ -418,12 +418,22 @@ function disasterRecovery() {
 
 function backupRestoreCiGate() {
   const evidence = runBackupRestore();
-  const packageJson = readText("package.json");
-  const workflows = `${readText(".github/workflows/ci.yml")}\n${readText(".github/workflows/quality-presets.yml")}`;
-  assertGate(!/"quality:presets"\s*:\s*"[^"]*--dry-run/.test(packageJson), "quality:presets must not default to dry-run", {});
-  assertGate(!/world-class|backup-restore/.test(workflows) || !/--dry-run/.test(workflows), "CI ops gates must not use dry-run", {});
-  assertGate(/test:world-class|world-class-gates/.test(workflows), "CI must run world-class gates", {});
-  return { ...evidence, workflows: ["ci.yml", "quality-presets.yml"] };
+  const packageJson = JSON.parse(readText("package.json")) as {
+    scripts?: Record<string, string>;
+  };
+  const worldClassScript = packageJson.scripts?.["test:world-class"] ?? "";
+  const qualityPresetScript = packageJson.scripts?.["quality:presets"] ?? "";
+  assertGate(!qualityPresetScript.includes("--dry-run"), "quality:presets must not default to dry-run", {});
+  assertGate(/world-class-gates/.test(worldClassScript), "test:world-class must run the repository-owned gate", {});
+  assertGate(
+    /test:world-class/.test(qualityPresetScript),
+    "quality:presets must include the world-class gate",
+    {},
+  );
+  return {
+    ...evidence,
+    assuranceCommands: ["package.json#test:world-class", "package.json#quality:presets"],
+  };
 }
 
 function multiTenantSecurity() {

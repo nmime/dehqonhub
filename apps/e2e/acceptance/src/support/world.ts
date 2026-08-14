@@ -39,6 +39,7 @@ export class AcceptanceWorld extends World {
   externalDelivery: boolean | undefined;
   assuranceExitCode: number | null | undefined;
   releaseWorkflow: string | undefined;
+  releaseAssuranceSources: string | undefined;
   agriTechPartnerStatus: 'pending' | 'approved' | undefined;
   agriTechAvailableQuantityKg: number | undefined;
   agriTechRequestedQuantityKg: number | undefined;

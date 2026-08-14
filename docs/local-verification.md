@@ -1,6 +1,8 @@
-# Local verification, artifacts, and fallback CI policy
+# Local verification and exact-revision evidence
 
-GitHub-hosted Actions may be unavailable for this repository/account. When that happens, a trusted local or CI runner with repository access is the source of truth.
+The repository contains no GitHub Actions. A trusted local checkout or
+separately configured external runner with repository access is the source of
+execution evidence.
 
 ## Canonical local gate
 
@@ -39,12 +41,10 @@ runs through `test:fullstack` after Docker smoke succeeds.
 
 Docker smoke and fullstack tests now choose collision-resistant port defaults and unique Compose project names. To reproduce a fixed layout, set `DOCKER_TEST_PORT_BASE`, `COMPOSE_PROJECT_NAME`, or the individual `*_PORT` variables before running the scripts.
 
-The PR/push CI workflow exposes a focused `Non-runtime validation gates` job
-after `ci:pr` and dependency installation. It hard-gates onboarding and
-application scaffold generation, migration and library configuration standards,
-generated OpenAPI contract and client freshness, OpenAPI lint, consumer
-contracts, bounded OpenAPI fuzz case generation, and property-based invariants
-without adding deployed-service prerequisites to that job.
+`pnpm run ci:pr` is the focused runner-neutral preflight. Broader changes must
+add onboarding/scaffold generation, migration and library configuration,
+generated API freshness, OpenAPI/consumer/property evidence, and runtime checks
+in proportion to their risk.
 
 ## Current CI/local parity gates
 
@@ -77,7 +77,6 @@ For documentation-only ops/QA/deployment changes, the focused parity slice is:
 
 ```bash
 CI=true pnpm install --frozen-lockfile
-pnpm run ci:workflows:check
 pnpm run tooling:static-check
 pnpm run docs:check
 pnpm run deploy:validate
@@ -86,11 +85,10 @@ pnpm run format:changed
 git diff --check
 ```
 
-The corresponding CI green surface includes supported lockfile audit, native
-secret scan, Docker smoke, Fullstack Playwright, Runtime QA/ops, CodeQL, and any
-external GitGuardian integration configured outside this repository. Keep local
-failures grouped by command and distinguish task-related failures from runner or
-optional-tool availability.
+Record each executed command separately. Local audit, secret scan, Docker smoke,
+Fullstack Playwright, and Runtime QA/ops do not imply CodeQL, GitGuardian, or
+another hosted service ran. Keep failures grouped by command and distinguish
+task-related failures from runner or optional-tool availability.
 
 ## Pass 3 targeted validation
 
@@ -106,7 +104,7 @@ pnpm exec vitest run apps/frontend/admin/src/app/preference-token.spec.tsx
 pnpm exec vitest run libs/backend/feature/auth/main/lib/src/auth-token-store.spec.ts libs/backend/postgres/main/auth/lib/src/repository/auth-token.repository.spec.ts
 ```
 
-For private-repository sandbox validation, prefer an authenticated full checkout or archive download before attempting file-by-file reconstruction. If credentials are not available inside the sandbox and nested source/archive retrieval is blocked, use GitHub Actions or a trusted local checkout for these commands rather than validating against a partial tree.
+For private-repository sandbox validation, prefer an authenticated full checkout or archive download before attempting file-by-file reconstruction. If credentials are not available inside the sandbox and nested source/archive retrieval is blocked, use a trusted authenticated checkout or external runner rather than validating against a partial tree.
 
 ## Private repository sandbox fallback
 
@@ -117,7 +115,7 @@ Use the connected GitHub API/MCP for targeted evidence instead:
 - Read PR metadata, diffs, changed files, and combined commit status through authenticated GitHub tooling.
 - Read repository files through `get_file_contents`. When a sandbox needs a copy of a file, use the `download_url` returned for that exact file/ref. Treat those URLs as scoped, short-lived credentials; do not paste them into logs and do not reuse a root-file token for nested paths.
 - Reconstruct only the files needed for static checks or focused script validation. Do not treat file-by-file reconstruction as a substitute for the canonical full gate.
-- If combined status is `pending` with `total_count: 0`, or check-run/workflow/log/artifact APIs are inaccessible to the token, record that as an access limitation and use GitHub Actions with sufficient permissions, an authenticated checkout, or a trusted local/CI runner for definitive results.
+- If combined status is `pending` with `total_count: 0`, or remote check/log/artifact APIs are inaccessible to the token, record that as an access limitation and use an authenticated checkout or trusted external runner for definitive results.
 
 ## Coverage gates
 
@@ -146,7 +144,7 @@ Generated OpenAPI clients under `generated/` and visual baseline PNGs under `pac
 
 - `pnpm run onboarding:verify`: non-deploying fresh-install proof that runs the doctor, resolves all five preset closures, and generates/builds/tests all application renderers and library runtimes.
 - `pnpm run check`: full aggregate for formatting, tooling static validation, migrations, contracts, QA presets, lint, typecheck, and unit tests.
-- CI `Non-runtime validation gates`: focused PR/push job that runs `onboarding:verify`, `db:migrations:check`, `lib:configs:check`, `api:contracts:check`, `api:clients:check`, `api:openapi:lint`, `api:contracts:consumer`, `api:openapi:fuzz`, and `test:property` after `ci:pr` and lockfile installation.
+- `pnpm run ci:pr`: focused runner-neutral preflight; add `onboarding:verify`, `db:migrations:check`, `lib:configs:check`, API contract/client checks, OpenAPI/consumer/fuzz checks, and property tests when the changed boundary requires them.
 - `pnpm run tooling:static-check`: deterministic static syntax/import/reference validation for repo tooling scripts without running destructive or runtime-heavy commands.
 - `pnpm run bun:check`: selected-closure Node/Bun deployment-artifact parity; durable provider selections require Docker Compose.
 - `pnpm run db:migrations:rollback-check`: Docker/Testcontainers-backed real migration rollback validation.

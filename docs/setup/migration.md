@@ -52,7 +52,7 @@ Neither initialization nor setup performs these external operations:
 
 1. **Renaming the Git repository** — still a manual step.
 2. **DNS and TLS provisioning** — initialization replaces hostname values but does not create DNS records or certificates.
-3. **Setting up CODEOWNERS, issue templates, Dependabot, CodeQL** — still manual or scripted outside the engine.
+3. **Setting up CODEOWNERS, issue templates, Dependabot, and any external security services** — still manual or scripted outside the engine; this repository does not install GitHub Actions or CodeQL.
 4. **Replacing placeholder secrets** — copy from `.env.local.example` / `.env.production.example` and fill in real values.
 
 Run `pnpm nrb init` first, then `pnpm nrb setup`.

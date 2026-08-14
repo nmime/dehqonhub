@@ -32,53 +32,31 @@ commit according to the promotion policy.
 ```mermaid
 flowchart LR
   merge[Merge application code] --> tag[Create reviewed release tag]
-  tag --> plan[Release workflow validates the fresh selected closure]
-  plan --> images[Build, scan, sign, and publish its complete selected image set]
-  images --> promote[Run Promote GitOps release with the full 40-character Git SHA]
-  promote --> verify[Verify digest, signature, scan, SBOM, provenance, and render Helm]
-  verify --> pr[Open a promotion pull request updating values-production.yaml]
-  pr --> reconcile[Merge after CI; Argo CD or Flux reconciles]
+  tag --> plan[Trusted operator validates the fresh selected closure]
+  plan --> images[Build and publish the selected image set]
+  images --> verify[Record immutable digests and any independently produced supply-chain evidence]
+  verify --> pr[Open a reviewed change updating values-production.yaml]
+  pr --> reconcile[Merge after validation; Argo CD or Flux reconciles]
 ```
 
-The promotion workflow is manual by design. It:
+The repository does not contain an automated publisher or promotion actor. A
+trusted operator must accept only a full 40-character source SHA, validate its
+setup-selected closure, intersect `releaseImages` with effective Helm ownership,
+and provide every required immutable digest to the tag updater. Unselected or
+disabled image values stay unchanged. Run `pnpm run deploy:validate:gitops` on
+the resulting topic branch and merge it only through normal review.
 
-1. accepts only a full 40-character commit SHA already contained in `main`;
-2. validates that SHA's setup-selected closure and intersects its
-   `releaseImages` with applications and migrations enabled by the matching
-   setup-generated `.helm/values-selection.yaml` and effective Helm production values;
-3. requires every image in that exact set to have an immutable digest in GHCR,
-   on both initial and later promotions, then verifies each digest's keyless
-   release-workflow signature, signed SPDX SBOM, SLSA provenance, and passing
-   Trivy scan attestation;
-4. rejects missing required digests and supplied unselected or disabled image
-   digests, then updates the exact set to the full-SHA tag plus digest;
-5. leaves image values outside the selected-and-enabled set unchanged;
-6. renders the chart and validates both GitOps controller manifests;
-7. pushes `release/gitops-sha-<full-sha>` with the repository owner identity and
-   opens a pull request.
-
-It never commits directly to `main`, never shortens the image tag, and never
-creates a CI/deploy commit loop. Configure `GH_DEPLOY_TOKEN` with repository
-contents, pull-request, and package read access before using the workflow.
-Promotion fails when an image merely exists in the registry without all signed
-evidence or when the signing certificate does not name the exact repository,
-release workflow, and requested source SHA.
-
-The release planner uses Nx's affected graph for application images and a
-separate migration-path rule for the migration image, then intersects both with
-the current closure's `releaseImages`. Tag releases and explicit `force_full`
-dispatches build every selected image so the result is promotable; this never
-expands to every catalog image. Missing or stale closure metadata fails release
-and promotion. Every product image build runs through the generated Bake plan
-with its validated selected `nrb-closure` context; no direct Docker workspace
-target bypasses that plan.
+The release planner still derives application images from the setup catalog and
+the selected closure; missing or stale closure metadata fails validation.
+SBOMs, scans, signatures, and attestations are required only when the selected
+external release policy calls for them and must be verified independently. They
+are not produced by this repository.
 
 ## Common prerequisites
 
 - a Kubernetes cluster compatible with the selected Helm version;
-- release images published under full-SHA tags by
-  `.github/workflows/release-images.yml`; promotion pins selected workloads to
-  their registry digest automatically;
+- release images published under full-SHA tags by a trusted builder and recorded
+  by immutable digest;
 - a target namespace Secret named by `secrets.existingSecret` containing at
   least `SESSION_SECRET`, `BETTER_AUTH_SECRET`, and the selected provider
   credential: `DATABASE_URL` for PostgreSQL or a replica-set `MONGODB_URI` for
@@ -120,9 +98,9 @@ namespace, and retries transient sync failures. For a private Git repository,
 configure repository credentials in Argo CD; do not add credentials to this
 manifest.
 
-The optional `.github/workflows/argo-sync.yml` is a manual operational shortcut.
-It uses a version-pinned, checksum-verified Argo CD CLI and requires
-`ARGOCD_SERVER` plus `ARGOCD_AUTH_TOKEN` repository secrets.
+No repository-owned Argo sync shortcut is installed. Run the reviewed Argo CD
+CLI commands from the platform operations environment with its scoped
+credentials.
 
 ## Flux
 

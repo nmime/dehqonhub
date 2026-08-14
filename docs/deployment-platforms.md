@@ -1,17 +1,19 @@
 # Deployment Platform Support
 
-This boilerplate supports deployment from GitHub or GitLab.
+This boilerplate keeps deployment configuration provider-neutral. GitHub hosts
+collaboration metadata and may host images in GHCR, but the repository contains
+no GitHub Actions execution. `.gitlab-ci.yml` is an optional external runner.
 
 ## CI/CD comparison
 
 | Feature            | GitHub                             | GitLab                             |
 | ------------------ | ---------------------------------- | ---------------------------------- |
-| CI config          | `.github/workflows/`               | `.gitlab-ci.yml`                   |
+| CI config          | None in repository                 | Optional `.gitlab-ci.yml`          |
 | MR/PR templates    | `.github/PULL_REQUEST_TEMPLATE.md` | `.gitlab/merge_request_templates/` |
 | Issue templates    | `.github/ISSUE_TEMPLATE/`          | `.gitlab/issue_templates/`         |
 | Dependency updates | Dependabot                         | GitLab Dependency Scanning         |
-| GitOps promotion   | Manual promotion PR workflow       | Product-owned pipeline/MR          |
-| Releases           | Native GitHub Actions              | Native GitLab CI                   |
+| GitOps promotion   | Maintainer-owned reviewed PR       | Product-owned pipeline/MR          |
+| Releases           | Manual/trusted-runner invocation   | Optional native GitLab CI          |
 | Container registry | GHCR                               | GitLab Container Registry          |
 
 ## Helm values
@@ -27,9 +29,8 @@ migrator outside the fresh selected closure.
 
 ## GitOps reconciliation
 
-The promotion workflow (`.github/workflows/deploy.yml`) is GitHub-specific and
-opens a reviewed image-tag PR. Argo CD and Flux manifests are provider-agnostic.
-For GitLab:
+Argo CD and Flux manifests are provider-agnostic. For any trusted operator or
+GitLab runner:
 
 1. Build and verify full-SHA image digests for the fresh selected closure.
 2. Intersect that inventory with enabled Helm deployment ownership and update
@@ -40,11 +41,12 @@ For GitLab:
 
 See [GITOPS.md](../GITOPS.md) for both controller setups.
 
-## Automated releases
+## Release providers
 
-`release.config.mjs` selects exactly one semantic-release provider. GitHub
-Actions sets `RELEASE_PROVIDER=github` and uses the repository `GITHUB_TOKEN`.
-GitLab CI sets `RELEASE_PROVIDER=gitlab` and runs the release job on the default
+`release.config.mjs` selects exactly one semantic-release provider when a
+maintainer or trusted runner invokes it. GitHub publication requires an
+explicit protected token; no checked-in GitHub workflow invokes it. GitLab CI
+sets `RELEASE_PROVIDER=gitlab` and runs the release job on the default
 branch push pipeline only when `GITLAB_TOKEN` or `GL_TOKEN` is configured as a
 protected CI/CD variable. Immediately before semantic-release, the job fetches
 the remote default branch and refuses to publish unless it still equals
@@ -58,7 +60,7 @@ contexts, while each fullstack job installs its matching selected closure and
 passes `.nrb/closure` as `NRB_CLOSURE_CONTEXT`; no Docker build falls back to
 the default source context.
 
-Both providers use the latest `vMAJOR.MINOR.PATCH` tag as the Semantic
+Both provider modes use the latest `vMAJOR.MINOR.PATCH` tag as the Semantic
 Versioning baseline. `fix`, `perf`, and `revert` commits increment patch;
 `feat` increments minor; and `!` or a `BREAKING CHANGE:` footer increments
 major. Other accepted commit types do not publish by themselves. Squashing or

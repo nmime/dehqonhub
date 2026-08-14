@@ -74,7 +74,7 @@ marks the E2E project as non-deployable.
 1. Review the `pnpm nrb init` diff for package, product, database, repository owner, image repository, and every public domain.
 2. Copy `.env.local.example`, `.env.test.example`, or `.env.production.example` to the environment-specific secret source.
 3. Replace placeholder secrets with values from a secret manager. Never commit real `.env` files.
-4. Review `CODEOWNERS`, issue templates, Dependabot, CodeQL, and branch protection.
+4. Review `CODEOWNERS`, issue templates, npm/Docker Dependabot, branch protection, and the documented absence of GitHub-hosted security jobs.
 5. Configure production auth lifecycle decisions before launch: session lifetime/renewal/revocation, password reset, email verification, rate limits, and audit events.
 6. Export OpenAPI and generate typed client scaffolding if the frontend will consume generated API types.
 7. Run migrations, seed only local/test environments, configure backups, then deploy through the Kubernetes/Ansible flow in `docs/production-deploy.md`.
