@@ -288,6 +288,33 @@ describe('User app shell', () => {
     expect(new URLSearchParams(window.location.search).get('returnUrl')).toBe('/verification');
   });
 
+  it('keeps an anonymous presentation-preference rejection on the current public route', async () => {
+    enableProductionSameOriginApi();
+    installSignedOutMarketplaceFetch();
+    render(<App />);
+
+    await screen.findByRole('heading', { name: "Uzbekistan's entire agro market — on one platform" });
+    act(() => {
+      apiRuntimeEvents.emit({
+        type: 'auth-required',
+        error: {
+          code: 'http.401',
+          endpoint: '/auth/me/preferences',
+          id: 'PATCH:/auth/me/preferences:401:http.401',
+          kind: 'client',
+          message: 'Authentication is required.',
+          method: 'PATCH',
+          status: 401,
+        },
+        reason: 'unauthenticated',
+        redirectTo: '/auth',
+      });
+    });
+
+    expect(apiRuntimeEvents.getState().authRequired).toBe(false);
+    expect(window.location.pathname).toBe('/');
+  });
+
   it('keeps the public problem registry available after its anonymous production bootstrap and session event', async () => {
     window.history.replaceState({}, '', '/problems');
     enableProductionSameOriginApi();

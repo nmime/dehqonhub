@@ -27,7 +27,14 @@ browser-authored commercial record.
 
 ## Working-tree evidence
 
-- `user-app:test` passed 168 tests; shared `ui-web` passed 116 tests.
+- A production browser canary exposed that an anonymous
+  `PATCH /auth/me/preferences` rejection redirected theme changes to `/auth`.
+  The auth bridge now treats only that presentation-preference write as
+  optional, while protected-route authentication failures still redirect. The
+  focused app-shell test and the selected Playwright journey exercise the real
+  401 failure path instead of mocking a successful preference save.
+
+- `user-app:test` passed 187 tests; shared `ui-web` passed 116 tests.
 - `user-app:lint`, `user-app:typecheck`, the selected user-app build, and the
   common i18n key build passed without cache reuse.
 - `user-app:e2e-authenticated` passed all seven Chromium journeys, including
@@ -45,7 +52,7 @@ browser-authored commercial record.
 - FSD, documentation, strict OpenSpec, specification trace validation,
   repository tooling static checks, dependency audit, package-scoped licence
   review, selected closure validation, workspace doctor, formatting, and
-  `git diff --check` passed. The trace inventory is 116 projects, 604 behavior
+  `git diff --check` passed. The trace inventory is 116 projects, 619 behavior
   tests, 84 requirements, and 399 evidence entries.
 
 ## Demo identity boundary

@@ -766,10 +766,7 @@ test('reference-led public marketplace keeps local favorites and a polished blac
   });
   await page.route('**/auth/me', fulfillAnonymousAuthFailure);
   await page.route('**/auth/me/preferences', async (route) => {
-    await route.fulfill({
-      body: JSON.stringify({ data: { user: { theme: 'dark' } } }),
-      contentType: 'application/json',
-    });
+    await fulfillAnonymousAuthFailure(route);
   });
   await page.route('**/marketplace/catalog', fulfillAnonymousAuthFailure);
   await page.route('**/marketplace/verification', fulfillAnonymousAuthFailure);

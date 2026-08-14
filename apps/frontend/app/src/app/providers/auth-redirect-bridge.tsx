@@ -36,6 +36,9 @@ const isAnonymousPublicRoute = (path: string): boolean => normalizePath(path) ==
 const isOptionalProblemPresentationBootstrap = (method: string | undefined, endpoint: string | undefined): boolean =>
   method === 'GET' && endpoint === '/auth/problem-presentations';
 
+const isOptionalPreferencePersistence = (method: string | undefined, endpoint: string | undefined): boolean =>
+  method === 'PATCH' && endpoint === '/auth/me/preferences';
+
 const tmaEnvironment = (): TmaEnvironment => {
   const env = import.meta.env as Partial<Record<keyof TmaEnvironment, string | undefined>>;
   return {
@@ -84,6 +87,18 @@ export const AuthRedirectBridge = () => {
         if (
           event.reason === 'unauthenticated' &&
           isOptionalProblemPresentationBootstrap(event.error?.method, event.error?.endpoint)
+        ) {
+          clearApiAuthRequired();
+          return;
+        }
+
+        // Locale and theme changes apply to browser state before the optional
+        // account preference write. A guest may legitimately receive 401 from
+        // that write; it must not turn a presentation-only choice into a login
+        // gate. Protected routes retain their own session probes and guards.
+        if (
+          event.reason === 'unauthenticated' &&
+          isOptionalPreferencePersistence(event.error?.method, event.error?.endpoint)
         ) {
           clearApiAuthRequired();
           return;
