@@ -82,6 +82,17 @@ and Playwright use deterministic multi-category fixtures solely as test
 evidence. An API error or genuinely empty authoritative catalog remains an
 explicit recoverable/empty state.
 
+### Make account entry progressive without changing auth authority
+
+The account route shows a compact sign-in card and connected providers by
+default. Account creation replaces that form wall with three localized steps:
+method, identity, and credentials. Only display name and email are retained in
+the in-memory draft when the visitor moves backward; the password remains in
+the final form and is submitted through the existing auth-session owner. The
+configured Telegram method keeps its existing provider redirect, password
+recovery stays independently available, and neither mode nor step changes the
+route or return URL.
+
 ## Risks and mitigations
 
 - **Large visual change hides a workflow regression** -> retain route owners,
@@ -93,6 +104,9 @@ explicit recoverable/empty state.
 - **Reference density overflows Russian/mobile layouts** -> compact menus,
   horizontal category scrolling, two-column mobile catalog where viable, and
   browser checks at 375 px and 320 px.
+- **A stepped form loses context or hides recovery** -> keep a visible localized
+  trail, retain only non-secret identity draft values, expose a clear sign-in
+  switch, and leave the existing recovery card after the focused account panel.
 - **Demo preview is mistaken for real inventory** -> preserve visible Demo
   badges, browse-only controls, and server-owned feature-flag provenance.
 

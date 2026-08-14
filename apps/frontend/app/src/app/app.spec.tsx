@@ -235,6 +235,15 @@ const submitLogin = async (email = 'user@example.com') => {
   fireEvent.click(screen.getByRole('button', { name: 'Login' }));
 };
 
+const openEmailRegistration = async () => {
+  fireEvent.click(await screen.findByRole('button', { name: /^(Create an account|Создать аккаунт)$/u }));
+  fireEvent.click(
+    await screen.findByRole('button', {
+      name: /^(Email and password|Email и пароль)/u,
+    }),
+  );
+};
+
 describe('User app shell', () => {
   beforeEach(() => {
     installStorage();
@@ -807,12 +816,14 @@ describe('User app shell', () => {
     window.history.pushState({}, '', '/auth');
     const { unmount } = render(<App />);
 
+    await openEmailRegistration();
     fireEvent.change(await screen.findByLabelText('Register display name'), {
       target: { value: 'Registered User' },
     });
     fireEvent.change(screen.getByLabelText(/^(Register email|Email de registro)$/u), {
       target: { value: 'new@example.com' },
     });
+    fireEvent.click(screen.getByRole('button', { name: /^(Continue|Продолжить)$/u }));
     fireEvent.change(screen.getByLabelText(/^(Register password|Contraseña de registro)$/u), {
       target: { value: 'password123' },
     });
@@ -881,10 +892,12 @@ describe('User app shell', () => {
     );
     window.history.pushState({}, '', '/auth');
     render(<App />);
+    await openEmailRegistration();
     (await screen.findByLabelText(/^(Register display name|Отображаемое имя для регистрации)$/u)).remove();
     fireEvent.change(screen.getByLabelText(/^(Register email|Email для регистрации)$/u), {
       target: { value: 'registered@example.com' },
     });
+    fireEvent.click(screen.getByRole('button', { name: /^(Continue|Продолжить)$/u }));
     fireEvent.change(screen.getByLabelText(/^(Register password|Пароль для регистрации)$/u), {
       target: { value: 'password123' },
     });

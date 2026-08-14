@@ -29,6 +29,10 @@ force authentication even though a clearly local bookmark is sufficient.
   frontend evaluation without a production fixture fallback.
 - Preserve generated API clients, verification/organization gates, public route
   behavior, and every existing transactional boundary.
+- Replace the simultaneous sign-in and registration form wall with a compact
+  sign-in view and a localized method-identity-credentials registration flow
+  that preserves non-secret draft progress and keeps provider and recovery
+  behavior intact.
 
 ## Capabilities
 

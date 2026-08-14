@@ -748,6 +748,54 @@ test('anonymous visitors keep the public marketplace when optional presentation 
   ).toBeVisible();
 });
 
+test('account entry stays focused while progressive registration preserves its non-secret draft', async ({ page }) => {
+  await page.setViewportSize({ height: 812, width: 375 });
+  await page.route('**/auth/problem-presentations', async (route) => {
+    await route.fulfill({ body: JSON.stringify({ data: { items: [] } }), contentType: 'application/json' });
+  });
+  await page.route('**/auth/me', fulfillAnonymousAuthFailure);
+  await page.route('**/auth/me/preferences', fulfillAnonymousAuthFailure);
+
+  await page.goto('/auth?returnUrl=/favorites');
+  await page.waitForLoadState('networkidle');
+  const accountRoute = page.url();
+
+  await expect(page.getByRole('heading', { name: 'Sign in to DehqonHub' })).toBeVisible();
+  await expect(page.getByLabel('Register display name')).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Email verification' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Password reset' })).toBeVisible();
+
+  await page.getByRole('button', { name: 'Create an account' }).click();
+  await expect(page).toHaveURL(accountRoute);
+  await expect(page.getByRole('heading', { name: 'Create an account' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'How would you like to register?' })).toBeFocused();
+  await expect(page.getByText('Step 1 of 3')).toBeVisible();
+
+  await page.getByRole('button', { name: /Email and password/u }).click();
+  await expect(page.getByRole('heading', { name: 'Tell us who you are' })).toBeFocused();
+  await page.getByLabel('Register display name').fill('Dilnoza Karimova');
+  await page.getByLabel('Register email').fill('dilnoza@example.com');
+  await page.getByRole('button', { name: 'Continue' }).click();
+
+  await expect(page.getByRole('heading', { name: 'Choose a password' })).toBeFocused();
+  await expect(page.getByText('Creating an account for dilnoza@example.com.')).toBeVisible();
+  await page.locator('#auth').getByRole('button', { name: 'Back' }).click();
+  await expect(page.getByLabel('Register display name')).toHaveValue('Dilnoza Karimova');
+  await expect(page.getByLabel('Register email')).toHaveValue('dilnoza@example.com');
+
+  await page.setViewportSize({ height: 812, width: 760 });
+  await page.getByRole('combobox', { name: 'Theme' }).click();
+  await page.getByRole('option', { name: 'Dark' }).click();
+  await expect(page).toHaveURL(accountRoute);
+  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await page.setViewportSize({ height: 812, width: 375 });
+  await expectNoHorizontalOverflow(page, '375px progressive registration black theme');
+
+  await page.getByRole('button', { name: 'Sign in' }).click();
+  await expect(page.getByRole('heading', { name: 'Sign in to DehqonHub' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Email verification' })).toBeVisible();
+});
+
 test('reference-led public marketplace keeps local favorites and a polished black theme', async ({ page }) => {
   await page.setViewportSize({ height: 812, width: 375 });
   await page.emulateMedia({ reducedMotion: 'reduce' });

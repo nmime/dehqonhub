@@ -15,6 +15,9 @@
 - A signed-out visitor can browse, search, filter, change language or theme, and
   bookmark public or governed-demo listings locally without being redirected to
   authentication by presentation-only behavior.
+- A visitor entering an account can sign in without seeing registration fields,
+  or create an account through a short method, identity, and credentials flow
+  that preserves drafted non-secret identity values when stepping backward.
 - A buyer, seller, or farmer retains the real generated-API workflow and its
   authorization gates while every route uses the same DehqonHub visual system.
 - A reviewer can exercise realistic populated, filtered, empty, error, and
@@ -41,6 +44,9 @@
 - Language and theme changes apply locally first. An anonymous rejection from
   optional preference persistence must not change the current route or create
   an authentication requirement; backend authorization remains unchanged.
+- The account route keeps sign-in, registration, provider handoff, and password
+  recovery distinct. Registration reuses the existing auth submission and does
+  not store credentials or invent a parallel browser-owned account state.
 - Order, contract, verification, account, cart, favorites, and AI owners retain
   their generated clients, server state machines, and provider disclosures.
 
@@ -54,6 +60,9 @@
   never receives horizontal page overflow.
 - A guest bookmarks a governed-demo seed listing, sees the device-local favorite
   count and Favorites route update, then removes it without a marketplace write.
+- A visitor chooses Create account, selects email, enters a name and address,
+  advances to credentials, steps back, and finds the identity draft intact;
+  choosing Telegram instead delegates to the configured provider.
 - A public catalog with no records renders a labelled empty state and reset or
   purchase-request guidance instead of blank filters or fabricated listings.
 
@@ -69,6 +78,9 @@
   automatic dark-color inversion do not satisfy the reference.
 - Storybook and Playwright fixtures cannot appear as authoritative production
   inventory, orders, contracts, verification, payment, or provider results.
+- Rendering sign-in, registration, connected providers, profile status, and all
+  recovery controls as one form wall is invalid; account entry asks one focused
+  question set at a time and keeps recovery independently reachable.
 - Desktop-only screenshots do not prove responsive, locale-expansion,
   keyboard, reduced-motion, or dark-theme behavior.
 

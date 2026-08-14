@@ -17,6 +17,9 @@
   - Storybook renders deterministic realistic multi-category API fixtures for
     visual review while production empty/error behavior remains authoritative;
     it also covers filtered, empty-catalog, and signed-out authentication states.
+  - focused auth component and selected user-app browser evidence prove compact
+    sign-in, progressive registration, draft retention, provider delegation,
+    recovery availability, route stability, and narrow light/black rendering.
 
 ## Independent review
 
@@ -34,12 +37,20 @@ browser-authored commercial record.
   focused app-shell test and the selected Playwright journey exercise the real
   401 failure path instead of mocking a successful preference save.
 
-- `user-app:test` passed 187 tests; shared `ui-web` passed 116 tests.
+- Account entry now renders compact sign-in by default and a separate
+  method-identity-credentials registration flow on demand. Four focused Vitest
+  cases prove step focus, one-request submission, non-secret draft retention,
+  Telegram delegation, and provider-disabled behavior. The selected Playwright
+  journey proves the 375 px light/black flow, exact route retention, recovery
+  availability, and no horizontal overflow.
+
+- `user-app:test` passed 191 tests; shared `ui-web` passed 116 tests.
 - `user-app:lint`, `user-app:typecheck`, the selected user-app build, and the
   common i18n key build passed without cache reuse.
-- `user-app:e2e-authenticated` passed all seven Chromium journeys, including
+- `user-app:e2e-authenticated` passed all eight Chromium journeys, including
   320 px and 375 px layouts, keyboard focus behavior, reduced motion, local
-  favorites, Russian copy, both approved themes, and horizontal-overflow checks.
+  favorites, progressive account entry, Russian copy, both approved themes, and
+  horizontal-overflow checks.
 - Storybook built successfully and its interaction suite passed 35 stories.
   Manual Chromium review covered the populated, filtered, and empty catalog,
   the purchase-request steps, and the authentication shell at desktop and
@@ -48,12 +59,12 @@ browser-authored commercial record.
   padding, transparent wordmarks, icon navigation, and zero horizontal overflow.
 - The selected visual-regression story passed after its reviewed Darwin Chromium
   baseline was updated. The user-app CLI browser lane passed its 18% function
-  threshold at 19.58% (152/776 functions).
+  threshold at 21.2% (155/731 functions).
 - FSD, documentation, strict OpenSpec, specification trace validation,
   repository tooling static checks, dependency audit, package-scoped licence
   review, selected closure validation, workspace doctor, formatting, and
-  `git diff --check` passed. The trace inventory is 116 projects, 619 behavior
-  tests, 84 requirements, and 399 evidence entries.
+  `git diff --check` passed. The trace inventory is 116 projects, 620 behavior
+  tests, 84 requirements, and 400 evidence entries.
 - The first exact-SHA PR lane exposed three repository-wide blockers that the
   focused frontend lane could not see. Frontend proxy parity now keeps nested
   `/profile/*` paths API-owned (114 tests passed); the PostgreSQL review seed

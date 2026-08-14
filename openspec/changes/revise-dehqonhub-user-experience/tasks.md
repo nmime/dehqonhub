@@ -12,6 +12,7 @@
 - [x] 2.5 Add honest browser-local guest favorites while retaining server-owned authenticated favorites.
 - [x] 2.6 Expand deterministic realistic frontend preview data without adding a production fixture fallback.
 - [x] 2.7 Add explicit localized filter placeholder examples with readable light and black-theme contrast.
+- [x] 2.8 Restore focused sign-in and progressive registration while preserving provider, recovery, and auth-client behavior.
 
 ## 3. Evidence
 
@@ -19,6 +20,7 @@
 - [x] 3.2 Add focused component and browser assertions for design structure, filters, themes, local favorites, and public-route stability.
 - [x] 3.3 Verify light/black desktop, Russian 375 px, 320 px, keyboard, reduced-motion, and no horizontal overflow.
 - [x] 3.4 Run user-app lint, typecheck, tests, build, Storybook, Playwright, FSD, specification, and diff gates.
+- [x] 3.5 Add focused registration-step and browser evidence for draft retention, provider choice, route stability, both themes, and narrow layouts.
 
 ## 4. Release
 
