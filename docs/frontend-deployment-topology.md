@@ -175,6 +175,58 @@ Do not publish default same-origin builds without the proxy in place. For
 standalone/static split-origin SPA hosting, set all explicit API origins and use
 a non-`same-origin` mode such as `VITE_API_BASE_URL_MODE=split-origin`.
 
+## Bundle layout and cache granularity
+
+All three Vite-built apps share one Rolldown chunking policy, declared in
+`config/vite/create-frontend-vite-config.mjs` and passed as
+`build.rolldownOptions.output.codeSplitting.groups`. The groups exist for cache
+granularity: a release that only touches product code must not invalidate the
+dependency and translated-copy bundles a returning visitor already holds. Sizes
+below are raw / gzip from a production build of each app.
+
+| Chunk group       | Matches                                                                                  | User app          | Admin             | Landing           |
+| ----------------- | ---------------------------------------------------------------------------------------- | ----------------- | ----------------- | ----------------- |
+| `i18n-catalogs`   | `i18n/<locale>/<namespace>/<catalog>.json`                                               | 302.59 / 66.26 kB | 203.69 / 45.21 kB | 36.97 / 9.24 kB   |
+| `vendor-react`    | `react`, `react-dom`, `react-is`, `scheduler`                                            | 189.64 / 59.65 kB | 189.64 / 59.65 kB | 189.64 / 59.65 kB |
+| `vendor-tanstack` | `@tanstack/*`                                                                            | 119.09 / 37.20 kB | 118.34 / 36.93 kB | 24.24 / 7.12 kB   |
+| `vendor-mobx`     | `mobx*`                                                                                  | 77.88 / 21.60 kB  | 62.04 / 17.59 kB  | 62.74 / 17.83 kB  |
+| `vendor-ui`       | Radix, Floating UI, `lucide-react`, `clsx`, `tailwind-merge`, `class-variance-authority` | 141.13 / 45.90 kB | 140.49 / 45.64 kB | 140.32 / 45.58 kB |
+| `vendor`          | anything else under `node_modules/`                                                      | 90.48 / 29.90 kB  | 36.86 / 13.61 kB  | —                 |
+
+Two ordering rules matter when editing that list. The catch-all `vendor` group
+is declared last because the first matching group wins, and the locale group is
+declared before the vendor groups so a catalog imported through a dependency
+still lands in `i18n-catalogs`. The locale pattern spells the locale segment out
+as a language code with an optional script suffix (`en`, `ru`, `uz`, `uz-cyrl`)
+rather than accepting any lowercase word, so it claims translated copy without
+also claiming the `libs/**/i18n/` _libraries_, whose paths have the same shape
+but hold source and tsconfigs.
+
+Route code is split by the routers rather than by pattern, because a chunk holds
+whole modules: leaving a screen statically imported keeps its entire feature
+graph in the entry bundle even when nothing renders it.
+
+- The user app fetches every screen outside the marketplace on first visit to
+  its route (`lazyRouteComponent`, with a `defaultPendingComponent` so the
+  suspended match has something to show). The marketplace itself stays in the
+  entry bundle: it renders `/` and supplies the chrome the other routes are
+  embedded in. The lazily fetched screens are 0.90–8.84 kB each, and the entry
+  chunk is 161.64 / 35.06 kB.
+- The admin console fetches the problem-presentation console and its generated
+  catalog only when `/settings/errors` opens — 462.24 / 20.94 kB that no other
+  screen pays for — leaving a 117.89 / 26.19 kB entry chunk.
+
+### Generated API toast rules stay per app
+
+`@app/frontend-api-client` exposes the generated toast rules as three memoised
+getters (`adminApiToastRules`, `authApiToastRules`, `userApiToastRules`) instead
+of eagerly built arrays, and the full rule catalog — the admin-only surface —
+behind `apiToastRuleCatalog()`. Each app composes only the getters it needs, so
+the admin API surface never reaches the public bundle and the parse cost is paid
+once, on first use. Import them through the library barrel; reaching into
+`libs/frontend/api-client/lib/src/*` directly is an FSD public-API violation and
+fails `frontend:fsd:check`.
+
 ## Runtime browser config (one image, many environments)
 
 API origins are resolved at build time, but browser-safe **feature flags and

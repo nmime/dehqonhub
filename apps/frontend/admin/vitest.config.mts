@@ -24,8 +24,14 @@ export default defineConfig({
     maxWorkers: 2,
     passWithNoTests: false,
     setupFiles: ['../../../packages/tooling/src/testing/vitest-dom-cleanup.ts'],
-    hookTimeout: 15_000,
-    testTimeout: 15_000,
+    // The console's page specs drive whole RBAC screens — each one mounts the
+    // workspace, resolves access and awaits a fistful of fetches. The hook ceiling
+    // is the higher of the two because `main.spec.tsx` imports the entry module
+    // inside `beforeAll`: that single import transforms the shared UI library,
+    // which takes ~17s alone and more while the worker forks compete for the same
+    // cores. A genuinely stuck test still fails, just later.
+    hookTimeout: 60_000,
+    testTimeout: 30_000,
     coverage: fullCoverage('coverage/apps/frontend/admin', ['src/**/*.{ts,tsx}'], [], {
       branches: -239,
       functions: -153,

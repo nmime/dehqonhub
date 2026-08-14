@@ -22,6 +22,31 @@ vi.mock('../../pages/marketplace', () => ({
   },
 }));
 
+/**
+ * Every screen outside the marketplace is fetched when its route is first
+ * opened, so each stands in for its module here: the assertions below are about
+ * which page a path resolves to and that the router actually pulls it in, not
+ * about what any of them render. The problem registry is the exception — it is
+ * asserted through its real module further down, which covers the fetch too.
+ */
+const lazyPage = (page: string) => () => <div data-page={page} data-testid="lazy-page" />;
+
+vi.mock('../../pages/auth', () => ({ AuthPage: lazyPage('auth') }));
+vi.mock('../../pages/auth-discord-callback', () => ({
+  AuthDiscordCallbackPage: lazyPage('auth-discord-callback'),
+}));
+vi.mock('../../pages/auth-telegram-callback', () => ({
+  AuthTelegramCallbackPage: lazyPage('auth-telegram-callback'),
+}));
+vi.mock('../../pages/profile', () => ({ ProfilePage: lazyPage('profile') }));
+vi.mock('../../pages/settings', () => ({ SettingsPage: lazyPage('settings') }));
+vi.mock('../../pages/tma', () => ({ TmaPage: lazyPage('tma') }));
+vi.mock('../../pages/farmer-register', () => ({ FarmerRegisterPage: lazyPage('farmer-register') }));
+vi.mock('../../pages/farmer-dashboard', () => ({ FarmerDashboardPage: lazyPage('farmer-dashboard') }));
+vi.mock('../../pages/agritech-operations', () => ({
+  AgriTechOperationsPage: lazyPage('agritech-operations'),
+}));
+
 vi.mock('../../shared/ui', async (importOriginal) => {
   const actual = await importOriginal<typeof import('../../shared/ui')>();
 
@@ -74,6 +99,27 @@ describe('DehqonHub marketplace routes', () => {
 
     expect(route.dataset['view']).toBe(view);
     expect(screen.queryByTestId('generic-user-shell')).toBeNull();
+  });
+
+  it.each([
+    ['/auth', 'auth'],
+    ['/auth/discord/callback', 'auth-discord-callback'],
+    ['/auth/telegram/callback', 'auth-telegram-callback'],
+    ['/profile', 'profile'],
+    ['/settings', 'settings'],
+    ['/link/discord', 'settings'],
+    ['/tma', 'tma'],
+    ['/tma/auth', 'tma'],
+    ['/telegram-mini-app', 'tma'],
+    ['/link/telegram', 'tma'],
+    ['/farmer/register', 'farmer-register'],
+    ['/dashboard', 'farmer-dashboard'],
+    ['/operations', 'agritech-operations'],
+  ])('fetches the %s screen from the %s module when the route opens', async (path, page) => {
+    window.history.replaceState({}, '', path);
+    render(<UserRouter applyUserLocale={vi.fn()} applyUserTheme={vi.fn()} />);
+
+    expect((await screen.findByTestId('lazy-page')).dataset['page']).toBe(page);
   });
 
   it('passes decoded product, seller and contract identifiers into marketplace states', async () => {
