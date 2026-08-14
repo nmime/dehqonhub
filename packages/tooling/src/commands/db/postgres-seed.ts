@@ -199,12 +199,21 @@ async function seed(
         counts.demoVerifications += await insertedCount(
           client,
           `INSERT INTO "marketplace_verifications" (
-             "id", "tenant_id", "user_id", "role", "level", "status", "one_id_linked", "documents",
-             "reviewed_by", "reviewed_at", "created_at", "updated_at"
-           ) VALUES ($1, $2, $3, $4, $5, 'verified', $6, '[]'::jsonb, $7, now(), now(), now())
+             "id", "tenant_id", "user_id", "role", "level", "status", "one_id_linked",
+             "provider_mode", "identity_assurance", "documents", "reviewed_by", "reviewed_at",
+             "created_at", "updated_at"
+           ) VALUES (
+             $1, $2, $3, $4, $5, 'verified', $6,
+             CASE WHEN $6 THEN 'legacy' ELSE 'none' END,
+             CASE WHEN $6 THEN 'legacy_unknown' ELSE 'none' END,
+             '[]'::jsonb, $7, now(), now(), now()
+           )
            ON CONFLICT ("tenant_id", "user_id") DO UPDATE SET
              "role" = excluded."role", "level" = excluded."level", "status" = 'verified',
-             "one_id_linked" = excluded."one_id_linked", "reviewed_by" = excluded."reviewed_by",
+             "one_id_linked" = excluded."one_id_linked", "provider_mode" = excluded."provider_mode",
+             "identity_assurance" = excluded."identity_assurance", "provider_name" = null,
+             "provider_subject_key" = null, "provider_receipt_id" = null, "one_id_linked_at" = null,
+             "reviewed_by" = excluded."reviewed_by",
              "reviewed_at" = now(), "rejection_reason" = null, "updated_at" = now()
            RETURNING ("xmax" = 0) AS "inserted"`,
           [

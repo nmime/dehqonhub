@@ -54,6 +54,16 @@ browser-authored commercial record.
   review, selected closure validation, workspace doctor, formatting, and
   `git diff --check` passed. The trace inventory is 116 projects, 619 behavior
   tests, 84 requirements, and 399 evidence entries.
+- The first exact-SHA PR lane exposed three repository-wide blockers that the
+  focused frontend lane could not see. Frontend proxy parity now keeps nested
+  `/profile/*` paths API-owned (114 tests passed); the PostgreSQL review seed
+  now writes provenance that satisfies the migrated verification constraint
+  and replays idempotently (the complete tooling target passed 764 unit tests,
+  10 PostgreSQL migration/seed tests, and 4 MongoDB ledger tests); and the
+  runner-neutral release guard again rejects checked-in GitHub workflows and
+  composite actions. The release-provenance acceptance suite passed all 33
+  scenarios and 104 steps after its source assertions were synchronized with
+  the current exact-revision implementation.
 
 ## Demo identity boundary
 

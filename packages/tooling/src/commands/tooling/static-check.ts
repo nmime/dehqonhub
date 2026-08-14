@@ -460,6 +460,7 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
     ...checkPackageProjectReferences(workspaceRoot),
     ...checkFrontendFsd(workspaceRoot),
     ...checkWorkspaceMetadata(workspaceRoot),
+    ...checkGitHubActionsAbsent(workspaceRoot),
     ...checkBunPackageManagerParity(workspaceRoot),
     ...checkExportedAllCapsConstantConventions(workspaceRoot),
     ...checkExportedSymbolTokenConventions(workspaceRoot),
@@ -504,6 +505,27 @@ export function runStaticCheck(options: StaticCheckOptions = {}): number {
   );
 
   return 0;
+}
+
+export function checkGitHubActionsAbsent(workspaceRoot: string): CheckFailure[] {
+  const failures: CheckFailure[] = [];
+  for (const root of [".github/workflows", ".github/actions"]) {
+    const absoluteRoot = join(workspaceRoot, root);
+    if (!existsSync(absoluteRoot)) continue;
+
+    for (const file of walk(absoluteRoot)) {
+      if (!statSync(file).isFile()) continue;
+      const relativeFile = relativeToWorkspace(workspaceRoot, file);
+      failures.push({
+        command: "repository-owned GitHub Actions absence",
+        file: relativeFile,
+        status: 1,
+        stdout: "",
+        stderr: `${relativeFile} introduces repository-owned GitHub Actions execution; use the runner-neutral local commands from docs/local-verification.md on a trusted external runner.`,
+      });
+    }
+  }
+  return failures;
 }
 
 export function checkBunPackageManagerParity(workspaceRoot: string): CheckFailure[] {

@@ -1,4 +1,4 @@
-// @requirements REQ-SCAFFOLD-TOOLING-005 REQ-AGRITECH-I18N-012
+// @requirements REQ-SCAFFOLD-TOOLING-005 REQ-AGRITECH-I18N-012 REQ-ASSURANCE-RELEASE-003
 import assert from "node:assert/strict";
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -15,6 +15,7 @@ import {
   checkForbiddenSocialAuthDependencies,
   checkForbiddenSocialAuthImports,
   checkGeneratedContractImports,
+  checkGitHubActionsAbsent,
   checkDuplicatedLibrarySourceLibPaths,
   checkFrontendUiOwnership,
   checkLocalBarrelExportConventions,
@@ -29,6 +30,28 @@ import {
   isWorkspaceMetadataFileName,
   thinLocaleCatalogFileNames,
 } from "./static-check.ts";
+
+describe("static-check runner-neutral execution boundary", () => {
+  it("allows collaboration metadata but rejects workflows and composite actions", () => {
+    const workspaceRoot = createWorkspace();
+    try {
+      writeText(workspaceRoot, ".github/release.yml", "changelog: {}\n");
+      assert.deepEqual(checkGitHubActionsAbsent(workspaceRoot), []);
+
+      writeText(workspaceRoot, ".github/workflows/ci.yml", "name: CI\n");
+      writeText(workspaceRoot, ".github/actions/setup/action.yml", "name: setup\n");
+      const failures = checkGitHubActionsAbsent(workspaceRoot);
+
+      assert.deepEqual(
+        failures.map((failure) => failure.file).sort(),
+        [".github/workflows/ci.yml", ".github/actions/setup/action.yml"].sort(),
+      );
+      assert.ok(failures.every((failure) => failure.command === "repository-owned GitHub Actions absence"));
+    } finally {
+      removeWorkspace(workspaceRoot);
+    }
+  });
+});
 
 describe("static-check Bun and pnpm dependency parity", () => {
   it("accepts Bun runtime execution over pnpm-owned dependency state", () => {

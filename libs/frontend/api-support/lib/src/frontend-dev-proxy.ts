@@ -32,7 +32,10 @@ export const frontendDevProxyRoutes: readonly FrontendDevProxyRoute[] = [
   // browser route shares it.
   { prefix: '/api/auth/', sharedWithSpaRoutes: false, upstream: 'auth' },
   { prefix: '/auth/', sharedWithSpaRoutes: true, upstream: 'auth' },
-  { prefix: '/profile/', sharedWithSpaRoutes: true, upstream: 'user' },
+  // The SPA owns only the exact `/profile` document route. Nested `/profile/*`
+  // paths are user API endpoints, so a document-shaped request must still
+  // reach the API just as it does behind the production proxy.
+  { prefix: '/profile/', sharedWithSpaRoutes: false, upstream: 'user' },
   // DehqonHub keeps its API under one namespace precisely so its browser routes
   // — `/catalog`, `/cart`, `/requests` — cannot collide with it.
   { prefix: '/marketplace/', sharedWithSpaRoutes: false, upstream: 'user' },

@@ -75,7 +75,7 @@ describe('frontend dev proxy navigation split', () => {
     // `/auth/telegram/callback` is a browser route; `/auth/register` is an API path.
     expect(proxy['/auth/']?.bypass?.(navigation)).toBe('/index.html');
     expect(proxy['/auth/']?.bypass?.(apiCall)).toBeUndefined();
-    expect(proxy['/profile/']?.bypass?.(navigation)).toBe('/index.html');
+    expect(proxy['/profile/']?.bypass).toBeUndefined();
     expect(proxy['/admin/']?.bypass?.(navigation)).toBe('/index.html');
   });
 
