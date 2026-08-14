@@ -1,9 +1,5 @@
 @user_api {
-	path /profile /profile/*
-	not {
-		method GET HEAD
-		header Accept *text/html*
-	}
+	path /advisories /advisories/* /deliveries /deliveries/* /farmer /field-agent /field-agent/* /field-visits /field-visits/* /marketplace /marketplace/* /orders /orders/* /partners /partners/* /payments /payments/* /produce /produce/* /profile/* /supplier /supplier/*
 }
 handle @user_api {
 	reverse_proxy user-app-api:80

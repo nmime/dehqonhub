@@ -43,6 +43,21 @@ describe('getProfileState', () => {
       subject: 'unknown-user',
       email: undefined,
     });
+    expect(
+      getProfileState(
+        false,
+        { profile: { email: 'verified@example.com', emailVerified: false } },
+        'f',
+        'unknown',
+        undefined,
+        { user: { emailVerified: true } } as never,
+      ),
+    ).toEqual({
+      status: 'ready',
+      subject: 'verified@example.com',
+      email: 'verified@example.com',
+      emailVerified: true,
+    });
   });
 });
 

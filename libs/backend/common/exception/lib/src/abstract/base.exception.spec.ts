@@ -18,7 +18,7 @@ describe('BaseException / Exception factory', () => {
     });
 
     expect(exception.toProblemDetails()).toEqual({
-      type: 'https://example.com/problems#resource-conflict',
+      type: 'https://dehqonhub.uz/problems#resource-conflict',
       title: 'Resource Conflict',
       status: 409,
       detail: 'The request conflicts with the current state of the resource.',

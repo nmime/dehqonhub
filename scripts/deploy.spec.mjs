@@ -1,6 +1,7 @@
 // @requirements REQ-RUNTIME-DELIVERY-009
 // Evidence for: REQ-RUNTIME-DELIVERY-009
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 import {
@@ -31,6 +32,88 @@ const { target: _ignoredTarget, database: _ignoredDatabase, ...presetBase } = ba
 const titles = (plan) => plan.steps.map((step) => step.title);
 const commandLine = (step) => [step.command, ...step.args].join(' ');
 const stepFor = (plan, fragment) => plan.steps.find((step) => step.title.toLowerCase().includes(fragment));
+
+test('migrator runtime sources remain readable by the non-root image user', () => {
+  const dockerfile = readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8');
+  const migrator = dockerfile.slice(
+    dockerfile.indexOf('FROM node:${NODE_VERSION} AS migrator'),
+    dockerfile.indexOf('FROM workspace AS builder'),
+  );
+
+  for (const runtimeSource of [
+    '--from=migrator-deps /migrator/node_modules ./node_modules',
+    'packages/tooling ./packages/tooling',
+    'libs ./libs',
+    'config ./config',
+    'i18n ./i18n',
+    'tsconfig.base.json ./tsconfig.base.json',
+    'docker/migrator-run.mjs ./docker/migrator-run.mjs',
+  ]) {
+    assert.match(
+      migrator,
+      new RegExp(`COPY --chown=1000:1000 ${runtimeSource.replaceAll('/', '\\/').replaceAll('.', '\\.')}`, 'u'),
+      `${runtimeSource} must be owned by UID 1000 even when the build context uses a restrictive umask`,
+    );
+  }
+});
+
+test('final runtime assets remain readable by their non-root image users', () => {
+  const dockerfile = readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8');
+  const backend = dockerfile.slice(
+    dockerfile.indexOf('FROM node:${NODE_VERSION} AS backend'),
+    dockerfile.indexOf('FROM builder AS site-deps'),
+  );
+  const site = dockerfile.slice(
+    dockerfile.indexOf('FROM node:${NODE_VERSION} AS site-runtime'),
+    dockerfile.indexOf('FROM nginxinc/nginx-unprivileged'),
+  );
+  const frontend = dockerfile.slice(dockerfile.indexOf('FROM nginxinc/nginx-unprivileged'));
+
+  for (const runtimeAsset of [
+    '/runtime/package.json ./package.json',
+    '/runtime/node_modules ./node_modules',
+    '/runtime/dist ./dist',
+    '/runtime/i18n ./i18n',
+  ]) {
+    assert.match(
+      backend,
+      new RegExp(
+        `COPY --chown=1000:1000 --from=backend-deps ${runtimeAsset.replaceAll('/', '\\/').replaceAll('.', '\\.')}`,
+        'u',
+      ),
+      `${runtimeAsset} must be owned by the backend runtime UID`,
+    );
+  }
+  assert.ok(
+    backend.indexOf('USER 1000:1000') <
+      backend.indexOf("require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"),
+    'the locale smoke import must execute as the final backend runtime UID',
+  );
+
+  for (const runtimeAsset of [
+    '/site-deploy/package.json ./package.json',
+    '/site-deploy/node_modules ./node_modules',
+    '/site-deploy/dist ./dist',
+  ]) {
+    assert.match(
+      site,
+      new RegExp(
+        `COPY --chown=1000:1000 --from=site-deps ${runtimeAsset.replaceAll('/', '\\/').replaceAll('.', '\\.')}`,
+        'u',
+      ),
+      `${runtimeAsset} must be owned by the site runtime UID`,
+    );
+  }
+  assert.match(site, /USER node\s+RUN test -r \.\/dist\/apps\/frontend\/site\/server\/index\.js/u);
+
+  assert.match(frontend, /chmod -R a=rX \/usr\/share\/nginx\/html/u);
+  assert.match(frontend, /chmod 0644 \/usr\/share\/nginx\/html\/runtime-config\.js/u);
+  assert.match(frontend, /COPY --chmod=0644 \$\{NGINX_CONFIG\} \/etc\/nginx\/conf\.d\/default\.conf/u);
+  assert.match(
+    frontend,
+    /USER 101\s+RUN test -r \/usr\/share\/nginx\/html\/index\.html \\\s+&& test -r \/etc\/nginx\/conf\.d\/default\.conf/u,
+  );
+});
 
 test('every documented target is plannable', () => {
   assert.deepEqual(deployTargets, ['compose', 'pm2', 'helm']);
@@ -151,7 +234,10 @@ test('helm plan validates the chart then upgrades with production values', () =>
   const upgrade = commandLine(stepFor(plan, 'helm release'));
   assert.match(upgrade, /helm upgrade --install acme \.helm/u);
   assert.match(upgrade, /--namespace acme --create-namespace/u);
-  assert.match(upgrade, /-f \.helm\/values\.yaml -f \.helm\/values-production\.yaml/u);
+  assert.match(
+    upgrade,
+    /-f \.helm\/values\.yaml -f \.helm\/values-production\.yaml -f \.helm\/values-selection\.yaml/u,
+  );
   assert.match(upgrade, /--atomic --wait/u);
 });
 

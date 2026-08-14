@@ -2,7 +2,6 @@
   "agritech.marketplace.brand": "DehqonHub",
   "agritech.marketplace.title": "Маркетплейс DehqonHub",
   "agritech.marketplace.search": "Поиск товаров, продавцов и запросов на закупку…",
-  "agritech.marketplace.search.placeholder": "Поиск товаров…",
   "agritech.marketplace.verification": "Верификация",
   "agritech.marketplace.signIn": "Войти",
   "agritech.marketplace.home": "Главная",
@@ -26,5 +25,18 @@
   "agritech.marketplace.auth.required": "Войдите, чтобы продолжить.",
   "agritech.marketplace.auth.title": "Вход в DehqonHub",
   "agritech.marketplace.footer.description": "DehqonHub упорядочивает актуальную информацию маркетплейса и процессы сделок.",
-  "agritech.marketplace.footer.providerBoundary": "Оплата, финансирование и проверка личности недоступны, пока провайдер явно не показан как подключённый."
+  "agritech.marketplace.footer.providerBoundary": "Оплата, финансирование и проверка личности недоступны, пока провайдер явно не показан как подключённый.",
+  "agritech.marketplace.access.demoBadge": "Демо",
+  "agritech.marketplace.access.demo": "Это синтетические данные для знакомства. Их можно просматривать, но сделки и взаимодействия отключены.",
+  "agritech.marketplace.access.signIn": "Войдите, чтобы использовать это действие маркетплейса.",
+  "agritech.marketplace.access.checking": "Проверяем ваш доступ к маркетплейсу…",
+  "agritech.marketplace.access.verify": "Завершите проверку в маркетплейсе, чтобы использовать это действие.",
+  "agritech.marketplace.access.buyerRole": "Ваша подтверждённая роль не позволяет покупать. Пройдите проверку как покупатель или фермер.",
+  "agritech.marketplace.access.sellerRole": "Ваша подтверждённая роль не позволяет продавать. Пройдите проверку как продавец или фермер.",
+  "agritech.marketplace.access.organization": "Для этого действия нужна одобренная организация покупателя.",
+  "agritech.marketplace.access.sellerOrganization": "Для этого действия нужна одобренная организация продавца.",
+  "agritech.marketplace.access.action.signIn": "Войти",
+  "agritech.marketplace.access.action.verify": "Открыть проверку",
+  "agritech.marketplace.access.action.organization": "Открыть профиль организации",
+  "agritech.marketplace.search.placeholder": "Поиск товаров…"
 }

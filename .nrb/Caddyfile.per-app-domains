@@ -27,14 +27,6 @@ import /etc/caddy/common.caddy
 	import frontend_service user-app:8080
 }
 
-{$LANDING_APP_DOMAIN} {
-	import frontend_service landing-app:8080
-}
-
-{$SITE_APP_DOMAIN} {
-	import frontend_service site-app:80
-}
-
 {$MOBILE_APP_DOMAIN} {
 	import frontend_service mobile-app:8080
 }

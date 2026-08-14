@@ -69,7 +69,7 @@ const { catalog } = vi.hoisted(() => ({
 
 vi.mock('@app/frontend-api-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@app/frontend-api-client')>();
-  return { ...actual, apiToastRuleCatalog: () => catalog };
+  return { ...actual, apiToastRuleCatalog: catalog };
 });
 
 const writeAccess = createAdminAccess({

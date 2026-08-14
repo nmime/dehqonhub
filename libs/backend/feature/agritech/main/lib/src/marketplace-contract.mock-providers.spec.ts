@@ -1,13 +1,6 @@
 // @requirements REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-STAGE2-017 REQ-AGRITECH-LIFECYCLE-020
 import { describe, expect, it } from 'vitest';
-import type {
-  MarketplaceContractArtifactStorageProvider,
-  MarketplaceDirectPaymentProvider,
-  MarketplaceDisputeEvidenceStorageProvider,
-  MarketplaceExternalProviderMode,
-  MarketplaceFactoringProvider,
-  MarketplaceQualifiedSignatureProvider,
-} from '@app/backend-feature-agritech-shared';
+import type { MarketplaceExternalProviderMode } from '@app/backend-feature-agritech-shared';
 import {
   createContractArtifactStorageProvider,
   createDirectPaymentProvider,
@@ -37,17 +30,6 @@ const capabilities = [
   'factoring',
   'notificationDelivery',
 ] as const satisfies readonly MarketplaceProviderConfigCapability[];
-
-/**
- * Each mock declares only the fields it reads, so the calls below are typed as the
- * provider inputs the lifecycle service actually sends. That keeps every request
- * realistic — payload bytes included — instead of trimmed to what the mock uses.
- */
-type ArtifactStorageInput = Parameters<MarketplaceContractArtifactStorageProvider['storeContractArtifact']>[0];
-type DirectPaymentInput = Parameters<MarketplaceDirectPaymentProvider['recordDirectPayment']>[0];
-type DisputeEvidenceInput = Parameters<MarketplaceDisputeEvidenceStorageProvider['storeDisputeEvidence']>[0];
-type FactoringInput = Parameters<MarketplaceFactoringProvider['recordFactoring']>[0];
-type QualifiedSignatureInput = Parameters<MarketplaceQualifiedSignatureProvider['qualifyContractSignature']>[0];
 
 const completedAt = new Date('2030-05-01T10:00:00.000Z');
 const clock = () => completedAt;
@@ -213,7 +195,7 @@ describe('mock contract providers', () => {
   it('derives the artifact storage reference from the contract and its checksum, keeping no bytes', async () => {
     const provider = new MockContractArtifactStorageProvider(clock);
 
-    const input: ArtifactStorageInput = {
+    const result = await provider.storeContractArtifact({
       artifactChecksum: 'checksum-1',
       byteSize: content.byteLength,
       content,
@@ -223,9 +205,7 @@ describe('mock contract providers', () => {
       signal,
       snapshotFingerprint: 'fingerprint-1',
       snapshotRevision: 3,
-    };
-
-    const result = await provider.storeContractArtifact(input);
+    });
 
     expect(result).toEqual({
       completedAt,
@@ -246,7 +226,7 @@ describe('mock contract providers', () => {
   it.each(['buyer', 'seller'] as const)('signs for %s under its own provider reference', async (party) => {
     const provider = new MockQualifiedSignatureProvider(clock);
 
-    const input: QualifiedSignatureInput = {
+    const result = await provider.qualifyContractSignature({
       artifactChecksum: 'checksum-1',
       contractId: 'contract-1',
       operationAttempt: 1,
@@ -254,9 +234,7 @@ describe('mock contract providers', () => {
       party,
       signal,
       snapshotRevision: 3,
-    };
-
-    const result = await provider.qualifyContractSignature(input);
+    });
 
     expect(result).toEqual({
       completedAt,
@@ -278,7 +256,7 @@ describe('mock contract providers', () => {
     async (mediaType) => {
       const provider = new MockDisputeEvidenceStorageProvider(clock);
 
-      const input: DisputeEvidenceInput = {
+      const result = await provider.storeDisputeEvidence({
         checksumSha256: 'checksum-1',
         content,
         contractId: 'contract-1',
@@ -288,9 +266,7 @@ describe('mock contract providers', () => {
         operationAttempt: 1,
         operationId: 'operation-1',
         signal,
-      };
-
-      const result = await provider.storeDisputeEvidence(input);
+      });
 
       expect(result).toEqual({
         completedAt,
@@ -317,7 +293,7 @@ describe('mock contract providers', () => {
   ] as const)('echoes the %s command back as its outcome without moving money', async (command, party) => {
     const provider = new MockDirectPaymentProvider(clock);
 
-    const input: DirectPaymentInput = {
+    const result = await provider.recordDirectPayment({
       amountUzs: 4_080_000,
       command,
       contractId: 'contract-1',
@@ -325,9 +301,7 @@ describe('mock contract providers', () => {
       operationId: 'operation-1',
       party,
       signal,
-    };
-
-    const result = await provider.recordDirectPayment(input);
+    });
 
     expect(result).toEqual({
       completedAt,
@@ -355,7 +329,7 @@ describe('mock contract providers', () => {
   ] as const)('resolves the %s factoring command to %s', async (command, outcome, decision) => {
     const provider = new MockFactoringProvider(clock);
 
-    const input: FactoringInput = {
+    const result = await provider.recordFactoring({
       amountUzs: 4_080_000,
       command,
       contractId: 'contract-1',
@@ -363,9 +337,7 @@ describe('mock contract providers', () => {
       operationId: 'operation-1',
       party: 'seller',
       signal,
-    };
-
-    const result = await provider.recordFactoring(input);
+    });
 
     expect(result).toEqual({
       completedAt,
@@ -389,7 +361,7 @@ describe('mock contract providers', () => {
   it('reuses the system clock when no clock is injected', async () => {
     const before = Date.now();
 
-    const input: FactoringInput = {
+    const result = await new MockFactoringProvider().recordFactoring({
       amountUzs: 1,
       command: 'close',
       contractId: 'contract-1',
@@ -397,9 +369,7 @@ describe('mock contract providers', () => {
       operationId: 'operation-1',
       party: 'buyer',
       signal,
-    };
-
-    const result = await new MockFactoringProvider().recordFactoring(input);
+    });
 
     expect(result.completedAt.getTime()).toBeGreaterThanOrEqual(before);
   });

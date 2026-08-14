@@ -17,9 +17,8 @@ Use squash merges for boilerplate-sized feature branches unless release history 
 
 Human topic branches use `<type>/<kebab-case>`. Allowed types are `feat`,
 `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `build`, `revert`,
-`release`, and `hotfix`. `main` is the protected branch, and
-`dependabot/**` is the only generated-name exception. Branch path segments must
-never identify an assistant or vendor, including `codex` and `claude`.
+`release`, and `hotfix`. `main` is the protected branch. Branch path segments
+must never identify an assistant or vendor, including `codex` and `claude`.
 
 Commits use `<type>(<optional-scope>)!: <lowercase description>` with
 Conventional Commit types `feat`, `fix`, `docs`, `chore`, `refactor`, `test`,

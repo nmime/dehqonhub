@@ -1,0 +1,16 @@
+{
+  "admin.marketplace.moderation.eyebrow": "Ишонч ва эълон хавфсизлиги",
+  "admin.marketplace.moderation.title": "Маркетплейс модерацияси",
+  "admin.marketplace.moderation.description": "Оммага чиқаришдан олдин тенант ҳужжатлари ва ўзгармас эълон нусхаларини текширинг.",
+  "admin.marketplace.moderation.verifications": "Фойдаланувчи текширувлари",
+  "admin.marketplace.moderation.sellers": "Сотувчи профиллари",
+  "admin.marketplace.moderation.listings": "Эълонлар",
+  "admin.marketplace.moderation.requests": "Харидор сўровлари",
+  "admin.marketplace.moderation.revision": "Ревизия",
+  "admin.marketplace.moderation.provider": "Далил провайдери",
+  "admin.marketplace.moderation.documents": "Ҳужжатлар",
+  "admin.marketplace.moderation.rejectionReason": "Рад этиш сабаби",
+  "admin.marketplace.moderation.reason.criteria": "Мезонлар бажарилмаган",
+  "admin.marketplace.moderation.reason.documents": "Ҳужжатлар ўқилмайди",
+  "admin.marketplace.moderation.reason.identity": "Шахс мос келмайди"
+}

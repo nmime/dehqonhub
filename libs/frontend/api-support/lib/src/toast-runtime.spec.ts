@@ -50,7 +50,7 @@ describe('parseApiToastRules', () => {
           code: 'billing.declined',
           kind: 'network',
           statusRange: [500, 599],
-          type: 'https://example.com/problems#resource-conflict',
+          type: 'https://dehqonhub.uz/problems#resource-conflict',
         },
         toast: { category: 'error', message: 'Declined', title: 'Payment' },
       },
@@ -79,7 +79,7 @@ describe('parseApiToastRules', () => {
         code: 'billing.declined',
         kind: 'network',
         statusRange: [500, 599],
-        type: 'https://example.com/problems#resource-conflict',
+        type: 'https://dehqonhub.uz/problems#resource-conflict',
       },
       toast: { category: 'error', message: 'Declined', title: 'Payment' },
     });
@@ -133,7 +133,7 @@ describe('resolveApiToastRule', () => {
     },
     {
       id: 'type-rule',
-      match: { type: 'https://example.com/problems#resource-conflict' },
+      match: { type: 'https://dehqonhub.uz/problems#resource-conflict' },
       toast: { category: 'error', title: 'Type' },
     },
     {
@@ -160,7 +160,7 @@ describe('resolveApiToastRule', () => {
 
     expect(resolveApiToastRule({ method: 'GET', endpoint: '/other' }, rules)).toBeNull();
     expect(resolveApiToastRule({ code: 'other.code' }, rules)).toBeNull();
-    expect(resolveApiToastRule({ type: 'https://example.com/problems#other' }, rules)).toBeNull();
+    expect(resolveApiToastRule({ type: 'https://dehqonhub.uz/problems#other' }, rules)).toBeNull();
     expect(resolveApiToastRule({ status: 500 }, [statusRule])).toBeNull();
   });
 
@@ -174,7 +174,7 @@ describe('resolveApiToastRule', () => {
     expect(resolveApiToastRule({ endpoint: '/profiles' }, rules)).toBeNull();
     expect(resolveApiToastRule({ endpoint: '/profiles/' }, rules)).toBeNull();
     expect(resolveApiToastRule({ code: 'billing.declined' }, rules)).toMatchObject({ id: 'code-rule' });
-    expect(resolveApiToastRule({ type: 'https://example.com/problems#resource-conflict' }, rules)).toMatchObject({
+    expect(resolveApiToastRule({ type: 'https://dehqonhub.uz/problems#resource-conflict' }, rules)).toMatchObject({
       id: 'type-rule',
     });
     expect(resolveApiToastRule({ status: 404 }, rules)).toMatchObject({

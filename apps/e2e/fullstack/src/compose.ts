@@ -23,8 +23,6 @@ const ports = {
   authApi: pickPort('AUTH_APP_API_PORT', 3),
   adminApp: pickPort('ADMIN_APP_PORT', 81),
   userApp: pickPort('USER_APP_PORT', 82),
-  landingApp: pickPort('LANDING_APP_PORT', 83),
-  siteApp: pickPort('SITE_APP_PORT', 84),
 };
 const url = (port: string, path = '') => `http://${host}:${port}${path}`;
 const normalizeConfiguredUrl = (name: string, value: string): string => {
@@ -53,9 +51,7 @@ const configuredUrl = (names: string[], fallback: string): string => {
 
   return fallback;
 };
-const frontendOrigins = [ports.adminApp, ports.userApp, ports.landingApp, ports.siteApp]
-  .map((port) => url(port))
-  .join(',');
+const frontendOrigins = [ports.adminApp, ports.userApp].map((port) => url(port)).join(',');
 
 export const urls = {
   adminApi: configuredUrl(['FULLSTACK_ADMIN_API_URL', 'ADMIN_APP_API_URL'], url(ports.adminApi)),
@@ -66,8 +62,6 @@ export const urls = {
     ['FULLSTACK_USER_APP_URL', 'USER_APP_URL', 'FULLSTACK_BASE_URL', 'PLAYWRIGHT_BASE_URL'],
     url(ports.userApp),
   ),
-  landingApp: configuredUrl(['FULLSTACK_LANDING_APP_URL', 'LANDING_APP_URL'], url(ports.landingApp)),
-  siteApp: configuredUrl(['FULLSTACK_SITE_APP_URL', 'SITE_APP_URL'], url(ports.siteApp)),
 };
 
 const externalUrlGroups = [
@@ -76,8 +70,6 @@ const externalUrlGroups = [
   ['FULLSTACK_AUTH_API_URL', 'AUTH_APP_API_URL'],
   ['FULLSTACK_ADMIN_APP_URL', 'ADMIN_APP_URL'],
   ['FULLSTACK_USER_APP_URL', 'USER_APP_URL', 'FULLSTACK_BASE_URL', 'PLAYWRIGHT_BASE_URL'],
-  ['FULLSTACK_LANDING_APP_URL', 'LANDING_APP_URL'],
-  ['FULLSTACK_SITE_APP_URL', 'SITE_APP_URL'],
 ] as const;
 
 export function assertExternalStackUrlsConfigured(): void {
@@ -112,6 +104,18 @@ const writeStderrLine = (message: string): void => {
 };
 
 const selectedEnvironment = { ...process.env };
+for (const removedRendererKey of [
+  'FULLSTACK_LANDING_APP_URL',
+  'FULLSTACK_SITE_APP_URL',
+  'LANDING_ADMIN_APP_URL',
+  'LANDING_APP_PORT',
+  'LANDING_APP_URL',
+  'LANDING_USER_APP_URL',
+  'SITE_APP_PORT',
+  'SITE_APP_URL',
+]) {
+  delete selectedEnvironment[removedRendererKey];
+}
 const mongodbDatabase = selectedEnvironment.MONGODB_DATABASE ?? 'nest_react_boilerplate';
 
 export const composeEnv = {
@@ -125,8 +129,6 @@ export const composeEnv = {
   AUTH_APP_API_PORT: ports.authApi,
   ADMIN_APP_PORT: ports.adminApp,
   USER_APP_PORT: ports.userApp,
-  LANDING_APP_PORT: ports.landingApp,
-  SITE_APP_PORT: ports.siteApp,
   // Cap parallel targets rather than serializing the full stack. Docker shares
   // the dependency layers across this one invocation, so two builders is a
   // useful default without exhausting a typical CI runner.
@@ -158,8 +160,6 @@ export const composeEnv = {
   NX_PARALLEL: process.env.NX_PARALLEL ?? '1',
   CORS_ORIGINS: process.env.CORS_ORIGINS ?? frontendOrigins,
   FRONTEND_RUNTIME_ALLOW_LOOPBACK_HTTP: 'true',
-  LANDING_ADMIN_APP_URL: urls.adminApp,
-  LANDING_USER_APP_URL: urls.userApp,
   USER_APP_URL: urls.userApp,
   FULLSTACK_BASE_URL: urls.userApp,
   SESSION_SECRET: process.env.SESSION_SECRET ?? 'fullstack-e2e-session-secret-change-me',

@@ -48,6 +48,7 @@ const productionApps = new Set([
   'user-app',
   'user-app-api',
 ]);
+export const productionAppIds = Object.freeze([...productionApps].sort());
 const productionComposeServices = new Set([
   ...productionApps,
   'alertmanager',
@@ -64,6 +65,7 @@ const productionComposeServices = new Set([
 const primaryUpstreams = {
   'landing-app': 'landing-app:8080',
   'site-app': 'site-app:80',
+  'user-app': 'user-app:8080',
 };
 const publicApps = [
   ['landing-app', 'LANDING_APP_DOMAIN'],
@@ -77,6 +79,18 @@ const publicApps = [
   ['discord-app-api', 'DISCORD_APP_API_DOMAIN'],
   ['telegram-bot-api', 'TELEGRAM_BOT_API_DOMAIN'],
 ];
+const appPortEnvironmentKeys = {
+  'admin-app': 'ADMIN_APP_PORT',
+  'admin-app-api': 'ADMIN_APP_API_PORT',
+  'auth-app-api': 'AUTH_APP_API_PORT',
+  'discord-app-api': 'DISCORD_APP_API_PORT',
+  'landing-app': 'LANDING_APP_PORT',
+  'mobile-app': 'MOBILE_APP_PORT',
+  'site-app': 'SITE_APP_PORT',
+  'telegram-bot-api': 'TELEGRAM_BOT_API_PORT',
+  'user-app': 'USER_APP_PORT',
+  'user-app-api': 'USER_APP_API_PORT',
+};
 
 export const productionComposeDiagnostics = Object.freeze({
   dryRun: JSON.stringify({ status: 'validated', execution: 'skipped' }, null, 2),
@@ -94,6 +108,23 @@ export function composeExecutionStatus(result, reportFailure = (message) => cons
   const status = result.status ?? 1;
   if (status !== 0) reportFailure(productionComposeDiagnostics.executionFailure);
   return status;
+}
+
+export function executeComposeInvocation(
+  invocation,
+  { reportFailure = (message) => console.error(message), spawn = spawnSync } = {},
+) {
+  const execute = (args) =>
+    spawn('docker', args, {
+      cwd: rootDir,
+      env: invocation.env,
+      stdio: 'inherit',
+    });
+  if (invocation.reconcileArgs) {
+    const reconciliationStatus = composeExecutionStatus(execute(invocation.reconcileArgs), reportFailure);
+    if (reconciliationStatus !== 0) return reconciliationStatus;
+  }
+  return composeExecutionStatus(execute(invocation.args), reportFailure);
 }
 
 const fail = (message) => {
@@ -141,7 +172,7 @@ export function validateBaseDomain(value) {
 
 export function derivePublicDomains(baseDomain, primaryApp) {
   if (!Object.hasOwn(primaryUpstreams, primaryApp)) {
-    fail('PRIMARY_APP must be either "landing-app" or "site-app".');
+    fail('PRIMARY_APP must be one of: landing-app, site-app, user-app.');
   }
   const domain = validateBaseDomain(baseDomain);
   return Object.fromEntries(
@@ -445,8 +476,10 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
     imageSources,
     'COMPOSE_IMAGE_SOURCE',
   );
-  // `build` always needs the overlay, whatever the configured provenance is.
-  const sourceBuild = options.sourceBuild || imageSource === 'local';
+  // Provenance decides whether an orchestrator pulls or builds before activation;
+  // only the explicit build action/flag loads source-build configuration. This
+  // keeps every ordinary `up` bounded to activating already-resolved image tags.
+  const sourceBuild = options.sourceBuild;
   const frontendApiBaseUrlMode = requireMode(
     valueOrDefault(effectiveEnvironment, 'VITE_API_BASE_URL_MODE', 'same-origin').toLowerCase(),
     frontendApiBaseUrlModes,
@@ -507,33 +540,49 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
 
   const baseDomain = validateBaseDomain(effectiveEnvironment.PUBLIC_DOMAIN ?? '');
   const primaryApp = effectiveEnvironment.PRIMARY_APP ?? '';
-  if (domainMode !== 'external-proxy' && !closure.selectedApps.includes(primaryApp)) {
-    fail('PRIMARY_APP must be selected when Compose owns the public edge.');
-  }
-  const domains = derivePublicDomains(baseDomain, primaryApp);
   const configuredExternalPublicMode = effectiveEnvironment.EXTERNAL_PROXY_PUBLIC_MODE?.trim();
   if (configuredExternalPublicMode && !publicDomainModes.has(configuredExternalPublicMode)) {
     fail('EXTERNAL_PROXY_PUBLIC_MODE must be either "single-domain" or "per-app-domains".');
   }
   const publicDomainMode = domainMode === 'external-proxy' ? configuredExternalPublicMode : domainMode;
+  if (publicDomainMode && !closure.selectedApps.includes(primaryApp)) {
+    fail('PRIMARY_APP must be selected whenever a public domain mode is configured.');
+  }
+  const domains = derivePublicDomains(baseDomain, primaryApp);
+  const selectedDomains = Object.fromEntries(
+    publicApps.filter(([appId]) => closure.selectedApps.includes(appId)).map(([, key]) => [key, domains[key]]),
+  );
   const frontendOrigins = publicApps
     .filter(([appId]) => closure.selectedApps.includes(appId) && appId.endsWith('-app'))
     .map(([, key]) => `https://${domains[key]}`);
   const exposedOrigins = publicDomainMode === 'single-domain' ? [`https://${baseDomain}`] : frontendOrigins;
-  const extraCorsOrigins = splitList(effectiveEnvironment.CORS_EXTRA_ORIGINS);
-  const extraTrustedOrigins = splitList(effectiveEnvironment.BETTER_AUTH_EXTRA_TRUSTED_ORIGINS);
+  const forbiddenExtraOriginHosts = new Set([
+    ...publicApps.filter(([appId]) => !closure.selectedApps.includes(appId)).map(([, key]) => domains[key]),
+    ...(primaryApp === 'user-app' ? [`user-app.${baseDomain}`] : []),
+  ]);
+  const validatedExtraOrigins = (key) =>
+    splitList(effectiveEnvironment[key]).map((value) => {
+      const origin = requireAbsoluteHttpOrigin(value, key);
+      if (forbiddenExtraOriginHosts.has(new URL(origin).hostname)) {
+        fail(`${key} cannot re-enable an unselected or noncanonical application origin: ${origin}.`);
+      }
+      return origin;
+    });
+  const extraCorsOrigins = validatedExtraOrigins('CORS_EXTRA_ORIGINS');
+  const extraTrustedOrigins = validatedExtraOrigins('BETTER_AUTH_EXTRA_TRUSTED_ORIGINS');
   const authOrigin =
     publicDomainMode === 'single-domain' ? `https://${baseDomain}` : `https://${domains.AUTH_APP_API_DOMAIN}`;
   const selectedLandingDestinations = (adminUrl, userUrl) => ({
     ...(closure.selectedApps.includes('admin-app') ? { LANDING_ADMIN_APP_URL: adminUrl } : {}),
     ...(closure.selectedApps.includes('user-app') ? { LANDING_USER_APP_URL: userUrl } : {}),
   });
-  const landingAppRuntimeDefaults =
-    publicDomainMode === 'single-domain'
+  const landingAppRuntimeDefaults = closure.selectedApps.includes('landing-app')
+    ? publicDomainMode === 'single-domain'
       ? selectedLandingDestinations('/admin', '/app')
       : publicDomainMode === 'per-app-domains'
-        ? selectedLandingDestinations(`https://${domains.ADMIN_APP_DOMAIN}`, `https://${domains.USER_APP_DOMAIN}`)
-        : {};
+        ? selectedLandingDestinations(`https://${domains.ADMIN_APP_DOMAIN}/admin`, `https://${domains.USER_APP_DOMAIN}`)
+        : {}
+    : {};
   const runtimeDefaults =
     domainMode === 'external-proxy' && !publicDomainMode
       ? {}
@@ -545,28 +594,42 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
           BETTER_AUTH_URL:
             publicDomainMode === 'single-domain' ? `https://${baseDomain}` : `https://${domains.USER_APP_DOMAIN}`,
           CORS_ORIGINS: unique([...exposedOrigins, ...extraCorsOrigins]).join(','),
-          DISCORD_WEB_APP_BASE_URL:
-            publicDomainMode === 'single-domain' ? `https://${baseDomain}` : `https://${domains.USER_APP_DOMAIN}`,
-          DISCORD_INTERACTIONS_ENDPOINT:
-            publicDomainMode === 'single-domain'
-              ? `https://${baseDomain}/discord/interactions`
-              : `https://${domains.DISCORD_APP_API_DOMAIN}/discord/interactions`,
-          DISCORD_REDIRECT_URI: `${authOrigin}/auth/discord/callback`,
-          TELEGRAM_BOT_WEBHOOK_URL:
-            publicDomainMode === 'single-domain'
-              ? `https://${baseDomain}/telegram/webhook`
-              : `https://${domains.TELEGRAM_BOT_API_DOMAIN}/telegram/webhook`,
-          TELEGRAM_MINI_APP_URL:
-            publicDomainMode === 'single-domain'
-              ? `https://${baseDomain}/telegram-mini-app`
-              : `https://${domains.USER_APP_DOMAIN}/telegram-mini-app`,
+          ...(profiles.includes('discord')
+            ? {
+                DISCORD_WEB_APP_BASE_URL:
+                  publicDomainMode === 'single-domain' ? `https://${baseDomain}` : `https://${domains.USER_APP_DOMAIN}`,
+                DISCORD_INTERACTIONS_ENDPOINT:
+                  publicDomainMode === 'single-domain'
+                    ? `https://${baseDomain}/discord/interactions`
+                    : `https://${domains.DISCORD_APP_API_DOMAIN}/discord/interactions`,
+                DISCORD_REDIRECT_URI: `${authOrigin}/auth/discord/callback`,
+              }
+            : {}),
+          ...(closure.selectedApps.includes('user-app')
+            ? {
+                PAYMENT_RETURN_URL_ORIGINS: `https://${domains.USER_APP_DOMAIN}`,
+                USER_APP_URL: `https://${domains.USER_APP_DOMAIN}`,
+              }
+            : {}),
+          ...(profiles.includes('telegram')
+            ? {
+                TELEGRAM_BOT_WEBHOOK_URL:
+                  publicDomainMode === 'single-domain'
+                    ? `https://${baseDomain}/telegram/webhook`
+                    : `https://${domains.TELEGRAM_BOT_API_DOMAIN}/telegram/webhook`,
+                TELEGRAM_MINI_APP_URL:
+                  publicDomainMode === 'single-domain'
+                    ? `https://${baseDomain}/telegram-mini-app`
+                    : `https://${domains.USER_APP_DOMAIN}/telegram-mini-app`,
+              }
+            : {}),
         };
 
   const composeEnvironment = {
     ...processEnvironment,
     DOCKER_BUILDKIT: '1',
     ...(closureContext ? { NRB_CLOSURE_CONTEXT: closureContext } : {}),
-    ...domains,
+    ...selectedDomains,
     ...runtimeDefaults,
     ...frontendBuildEnvironment,
     ...(profiles.includes('telegram')
@@ -600,6 +663,30 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
   };
   for (const [key, value] of Object.entries(fileEnvironment)) {
     if (!Object.hasOwn(composeEnvironment, key)) composeEnvironment[key] = value;
+  }
+  for (const [appId, key] of publicApps) {
+    if (!closure.selectedApps.includes(appId)) delete composeEnvironment[key];
+  }
+  for (const [appId, key] of Object.entries(appPortEnvironmentKeys)) {
+    if (!closure.selectedApps.includes(appId)) delete composeEnvironment[key];
+  }
+  if (!closure.selectedApps.includes('landing-app')) {
+    delete composeEnvironment.LANDING_ADMIN_APP_URL;
+    delete composeEnvironment.LANDING_USER_APP_URL;
+  }
+  if (!profiles.includes('discord')) {
+    delete composeEnvironment.DISCORD_INTERACTIONS_ENDPOINT;
+    delete composeEnvironment.DISCORD_REDIRECT_URI;
+    delete composeEnvironment.DISCORD_WEB_APP_BASE_URL;
+  }
+  if (!profiles.includes('telegram')) {
+    delete composeEnvironment.TELEGRAM_BOT_WEBHOOK_URL;
+    delete composeEnvironment.TELEGRAM_MINI_APP_URL;
+  }
+  // End-to-end harness URLs are not production runtime configuration and must
+  // not leak from a copied example after that harness leaves the selection.
+  for (const key of Object.keys(composeEnvironment)) {
+    if (key.startsWith('FULLSTACK_')) delete composeEnvironment[key];
   }
   if (domainMode === 'external-proxy' && !publicDomainMode) {
     for (const required of [
@@ -658,22 +745,31 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
     }
   }
 
-  const composeArgs = ['compose', '--env-file', options.envFile];
-  for (const file of files) composeArgs.push('-f', file);
-  for (const profile of profiles) composeArgs.push('--profile', profile);
+  const composePrefix = ['compose', '--env-file', options.envFile];
+  for (const file of files) composePrefix.push('-f', file);
+  for (const profile of profiles) composePrefix.push('--profile', profile);
+  const composeArgs = [...composePrefix];
   composeArgs.push(options.action);
   if (options.action === 'up') {
-    // The parse-time guard only sees the explicit --source-build flag. Local image
-    // provenance derived from COMPOSE_IMAGE_SOURCE reaches here too, and emitting
-    // both flags makes Compose reject the invocation, so fail with the real reason.
-    if (sourceBuild && options.composeArguments.includes('--no-build')) {
-      fail('COMPOSE_IMAGE_SOURCE=local builds images, so --no-build cannot be passed to up.');
-    }
+    // An explicit --no-build activates images that were already pulled or built.
+    // Local provenance remains available to the controller without leaking build
+    // configuration into this bounded systemd start.
+    const noBuildRequested = options.composeArguments.includes('--no-build');
     if (sourceBuild) composeArgs.push('--build');
-    else if (!options.composeArguments.includes('--no-build')) composeArgs.push('--no-build');
+    else if (!noBuildRequested) composeArgs.push('--no-build');
   }
   composeArgs.push(...options.composeArguments);
   if (options.action !== 'down') composeArgs.push(...actionServices);
+
+  // `--remove-orphans` cannot remove a service that is still declared by the
+  // generic Compose model. Reconcile deselected application containers before
+  // activation so a changed product closure cannot leave an old public app
+  // running on its previous host port.
+  const deselectedApps = [...productionApps].filter((appId) => !closure.selectedApps.includes(appId)).sort();
+  const reconcileArgs =
+    options.action === 'up' && deselectedApps.length > 0
+      ? [...composePrefix, 'rm', '--stop', '--force', ...deselectedApps]
+      : undefined;
 
   return {
     action: options.action,
@@ -685,6 +781,7 @@ export function buildComposeInvocation(argv, processEnvironment = process.env, d
     env: composeEnvironment,
     files,
     profiles,
+    reconcileArgs,
     selectedApps: closure.selectedApps,
     selectedServices,
     publicDomain: baseDomain,
@@ -718,12 +815,7 @@ function main() {
     }
     console.error(productionComposeDiagnostics.start);
     failureDiagnostic = productionComposeDiagnostics.executionFailure;
-    const result = spawnSync('docker', invocation.args, {
-      cwd: rootDir,
-      env: invocation.env,
-      stdio: 'inherit',
-    });
-    process.exitCode = composeExecutionStatus(result);
+    process.exitCode = executeComposeInvocation(invocation);
   } catch {
     console.error(failureDiagnostic);
     process.exitCode = 1;

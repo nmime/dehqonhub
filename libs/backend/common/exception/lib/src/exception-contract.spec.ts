@@ -9,7 +9,7 @@ import { toProblemDetails } from './util/to-problem-details.util';
 describe('RFC 9457 producer contract', () => {
   it('keeps registered type identity, title, and status consistent', () => {
     for (const definition of ProblemTypeDefinitions) {
-      expect(problemTypeForCode(definition.code)).toBe(`https://example.com/problems#${definition.code}`);
+      expect(problemTypeForCode(definition.code)).toBe(`https://dehqonhub.uz/problems#${definition.code}`);
       expect(definition.title).not.toBe('');
       expect(definition.status).toBeGreaterThanOrEqual(400);
       expect(definition.status).toBeLessThanOrEqual(599);
@@ -23,10 +23,10 @@ describe('RFC 9457 producer contract', () => {
       problemType: 'resource-not-found',
     });
     const first = new NotFoundException({ extensions: { resourceType: 'user' } }).toProblemDetails(
-      'https://example.com/problem-instances/request-1',
+      'https://dehqonhub.uz/problem-instances/request-1',
     );
     const second = new NotFoundException({ extensions: { resourceType: 'invoice' } }).toProblemDetails(
-      'https://example.com/problem-instances/request-2',
+      'https://dehqonhub.uz/problem-instances/request-2',
     );
 
     expect(first.type).toBe(second.type);

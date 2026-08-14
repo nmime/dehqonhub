@@ -1,4 +1,4 @@
-// @requirements REQ-FRONTEND-NATIVE-006 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-I18N-012
+// @requirements REQ-FRONTEND-NATIVE-006 REQ-AGRITECH-FULFILLMENT-010
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { FrontendI18nProvider, FrontendStateProvider } from '@app/frontend-runtime';
@@ -65,7 +65,7 @@ describe('mobile home screen', () => {
   it('renders the app title', async () => {
     await renderScreen();
 
-    expect(screen.getByRole('heading', { name: 'AgroUz Mobile' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'DehqonHub Mobile' })).toBeTruthy();
   });
 
   it('renders the field-agent workspace', async () => {

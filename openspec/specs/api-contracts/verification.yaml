@@ -6,6 +6,7 @@ owners:
 requirements:
   - id: REQ-API-PROBLEM-001
     projects:
+      - user-app
       - '@app/backend-common-exception'
       - '@app/backend-common-response'
       - '@app/common-problem-details'
@@ -34,6 +35,24 @@ requirements:
       - kind: contract
         file: libs/common/problem-details/lib/src/index.spec.ts
         target: '@app/common-problem-details:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: apps/frontend/app/src/app/router/user-routing.spec.tsx
+        target: user-app:test
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: apps/frontend/app/src/app/app.spec.tsx
+        target: user-app:test
+        lanes:
+          - pr
+          - main
+      - kind: playwright
+        file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
+        target: user-app:e2e-authenticated
         lanes:
           - pr
           - main

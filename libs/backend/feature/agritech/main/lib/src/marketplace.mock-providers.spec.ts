@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-STAGE2-017
+// @requirements REQ-AGRITECH-INTEGRATION-013
 import { describe, expect, it } from 'vitest';
 import type { MarketplaceProviderConfig } from './marketplace-provider.config';
 import { resolveMarketplaceProviderConfig } from './marketplace-provider.config';

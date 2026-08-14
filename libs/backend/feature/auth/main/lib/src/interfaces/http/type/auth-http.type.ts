@@ -5,6 +5,10 @@ export interface UserActionTokenPayload {
   issued: boolean;
 }
 
+export interface UserActionConfirmationPayload {
+  confirmed: true;
+}
+
 export interface MePayload {
   principal: AuthenticatedPrincipal;
   user: AuthSessionView['user'] | null;

@@ -563,9 +563,18 @@ export function verifyRequirements(options: {
   const trace = createTraceReport(model);
   const executables = collectExecutables(model, requirementIds, lane);
   const runs: VerificationRun[] = [];
+  const checkedOutSourceSha = sourceSha(model.workspaceRoot);
   const workspaceState = dryRun
     ? 'planned'
     : verificationWorkspaceState(model.workspaceRoot);
+  const requestedSourceSha =
+    head === undefined ? checkedOutSourceSha : resolveSourceSha(model.workspaceRoot, head);
+  const exactHeadError =
+    !dryRun && head !== undefined && requestedSourceSha !== checkedOutSourceSha
+      ? requestedSourceSha === 'unknown'
+        ? `The requested source revision ${head} could not be resolved.`
+        : `The requested source revision ${head} resolves to ${requestedSourceSha}, but the checked-out source is ${checkedOutSourceSha}.`
+      : undefined;
 
   if (workspaceState === 'dirty' || workspaceState === 'unavailable') {
     runs.push(
@@ -580,6 +589,14 @@ export function verifyRequirements(options: {
             : 'Git worktree state could not be established.',
       },
     );
+  } else if (exactHeadError !== undefined) {
+    runs.push({
+      key: 'exact-source-head',
+      kind: 'script',
+      command: `git rev-parse --verify ${head}^{commit}`,
+      status: 'failed',
+      stderrTail: exactHeadError,
+    });
   } else {
     for (const target of executables.targets) {
       runs.push(
@@ -610,7 +627,7 @@ export function verifyRequirements(options: {
     status: dryRun ? 'planned' : failed ? 'failed' : 'ok',
     lane,
     workspaceState,
-    sourceSha: sourceSha(model.workspaceRoot),
+    sourceSha: checkedOutSourceSha,
     generatedAt: new Date().toISOString(),
     specificationHash: model.hash,
     ...(base === undefined ? {} : { base }),
@@ -858,6 +875,10 @@ function validateRequirementMapping(options: {
     } else if (evidence.script) {
       if (!rootScripts.has(evidence.script)) {
         errors.push(`${prefix}: unknown root package script ${evidence.script}`);
+      } else if (evidence.script === 'spec:verify') {
+        errors.push(
+          `${prefix}: spec:verify cannot execute itself as evidence; map a non-recursive target instead`,
+        );
       }
     } else if (evidence.kind !== 'documentation') {
       errors.push(`${prefix}: ${evidence.kind} evidence requires target or script`);
@@ -1274,7 +1295,13 @@ function executeEvidenceCommand(options: {
 }
 
 function sourceSha(workspaceRoot: string): string {
-  const result = run('git', ['rev-parse', 'HEAD'], { cwd: workspaceRoot });
+  return resolveSourceSha(workspaceRoot, 'HEAD');
+}
+
+function resolveSourceSha(workspaceRoot: string, revision: string): string {
+  const result = run('git', ['rev-parse', '--verify', `${revision}^{commit}`], {
+    cwd: workspaceRoot,
+  });
   return result.status === 0 ? result.stdout.trim() : 'unknown';
 }
 

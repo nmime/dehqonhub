@@ -1,14 +1,15 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-WEB-006 REQ-AGRITECH-ENGAGEMENT-019
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-EXPERIENCE-026 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type {
   BuyerRequestViewDto,
   CartViewDto,
+  ContractLifecycleDto,
   ContractViewDto,
-  ProductViewDto,
-  VerificationViewDto,
+  MarketplaceAiConsultationDto,
+  MarketplaceProviderReadinessDto,
+  OfferViewDto,
 } from '@app/frontend-api-client';
-import { demoAccounts } from '../model/demo-accounts';
 import { MarketplaceAi } from './marketplace-ai';
 import {
   MarketplaceAccount,
@@ -17,125 +18,274 @@ import {
   MarketplaceRequests,
   MarketplaceVerification,
 } from './marketplace-commerce';
-import { MarketplaceDemoBanner } from './marketplace-demo-banner';
-import {
-  MarketplaceCatalog,
-  MarketplaceFavorites,
-  MarketplaceHome,
-  MarketplaceProductDetail,
-  MarketplaceSellerStorefront,
-} from './marketplace-discovery';
-import { ProductMedia } from './marketplace-product-card';
-import type { MarketplaceTranslate } from './marketplace-ui';
+import { MarketplaceCatalog, MarketplaceProductDetail, MarketplaceSellerProfile } from './marketplace-discovery';
+import { MarketplaceProductCard, ProductMedia } from './marketplace-product-card';
+import type { MarketplaceListing, MarketplaceTranslate } from './marketplace-ui';
 
 const t: MarketplaceTranslate = (key) => key;
 
 const product = (
   id: string,
   supplierId: string,
-  category: ProductViewDto['category'],
+  category: MarketplaceListing['category'],
   name: string,
-): ProductViewDto => ({
+): MarketplaceListing => ({
   category,
-  createdAt: '2026-08-09T10:00:00.000Z',
   description: `${name} description`,
   id,
   images: [],
+  kind: 'product',
   name,
   priceUzs: 1_250_000,
+  promoted: false,
+  provenance: 'live',
   region: 'Samarqand',
+  sampleAvailable: true,
+  section: category === 'equipment' || category === 'irrigation' ? 'equipment' : 'seeds',
   status: 'active',
   stockQuantity: 20,
   supplierId,
   supplierName: `Seller ${supplierId}`,
+  transactional: true,
   unit: 't',
-  updatedAt: '2026-08-09T10:00:00.000Z',
 });
 
 const seed = product('seed-1', 'seller-a', 'seed', 'Certified corn seed');
 const tractor = product('equipment-1', 'seller-b', 'equipment', 'Compact tractor');
 const otherInput = product('input-1', 'seller-c', 'other', 'Specialty soil input');
+const fertilizer = product('fertilizer-1', 'seller-d', 'fertilizer', 'Granular fertilizer');
+const pesticide = product('pesticide-1', 'seller-e', 'pesticide', 'Crop protection concentrate');
+
+const demoSeed: MarketplaceListing = {
+  ...seed,
+  id: 'demo-seed-1',
+  provenance: 'demo',
+  supplierId: 'demo-seller',
+  transactional: false,
+};
+
+const aiAnswer = (id: string): MarketplaceAiConsultationDto => ({
+  answer: 'catalog_match' as const,
+  createdAt: '2026-08-09T10:00:00.000Z',
+  id,
+  kind: 'recommendation' as const,
+  listingPublicationIds: [seed.id],
+  question: 'seed',
+  response: {
+    explanationCodes: ['grounded_at_consultation_time' as const],
+    recommendations: [
+      {
+        availability: {
+          quantity: seed.stockQuantity,
+          status: 'in_stock_at_consultation' as const,
+          unit: seed.unit,
+          warningCode: 'stock_may_change' as const,
+        },
+        listingPublicationId: seed.id,
+        priceUzs: seed.priceUzs,
+        reasonCodes: ['query_terms_match' as const],
+        sellerPublicId: seed.supplierId,
+        titles: { en: seed.name, ru: seed.name, uz: seed.name, uzCyrl: seed.name },
+      },
+    ],
+    starterCartPreview: { sellerPartitions: [], status: 'unavailable' as const },
+  },
+  updatedAt: '2026-08-09T10:00:00.000Z',
+});
+
+const contractLifecycle = (contractId: string): ContractLifecycleDto => ({
+  contractId,
+  disputeEvidence: [],
+  fulfillment: {
+    createdAt: '2026-08-09T10:00:00.000Z',
+    revision: 1,
+    status: 'awaiting_settlement',
+    updatedAt: '2026-08-09T10:00:00.000Z',
+  },
+  notificationIntents: [],
+  reputationSignals: [],
+  reviewEligibility: { eligible: false, sourceCount: 0 },
+  settlement: {
+    amountUzs: 2_500_000,
+    createdAt: '2026-08-09T10:00:00.000Z',
+    currency: 'UZS',
+    kind: 'DirectPaymentSettlementDto',
+    latestProviderMode: 'mock',
+    reconciliationState: 'clear',
+    revision: 1,
+    simulation: true,
+    status: 'awaiting_buyer_confirmation',
+    updatedAt: '2026-08-09T10:00:00.000Z',
+  },
+  settlementEvents: [],
+  signatures: [],
+  timeline: [],
+});
+
+interface LifecycleCoverageScenario {
+  actorParty: ContractViewDto['actorParty'];
+  alreadyConsented?: boolean;
+  factoring: boolean;
+  fulfillment: ContractLifecycleDto['fulfillment']['status'];
+  hasAction?: boolean;
+  settlement: ContractLifecycleDto['settlement']['status'];
+}
+
+const configureLifecycleCoverage = (
+  lifecycle: ContractLifecycleDto,
+  scenario: LifecycleCoverageScenario,
+  index: number,
+) => {
+  lifecycle.fulfillment.status = scenario.fulfillment;
+  lifecycle.settlement = {
+    ...lifecycle.settlement,
+    kind: scenario.factoring ? 'FactoringSettlementDto' : 'DirectPaymentSettlementDto',
+    status: scenario.settlement,
+  } as ContractLifecycleDto['settlement'];
+  if (scenario.alreadyConsented) {
+    Object.assign(
+      lifecycle.settlement,
+      scenario.actorParty === 'buyer'
+        ? { buyerConsentedAt: '2026-08-09T10:01:00.000Z' }
+        : { sellerConsentedAt: '2026-08-09T10:01:00.000Z' },
+    );
+  }
+  if (index === 0) {
+    lifecycle.settlement.simulation = false;
+    lifecycle.timeline = [
+      {
+        actorParty: 'seller',
+        category: 'fulfillment',
+        createdAt: '2026-08-09T10:01:00.000Z',
+        eventType: 'fulfillment_ready',
+        providerMode: 'mock',
+        sequence: 1,
+        simulation: true,
+      },
+    ];
+    lifecycle.disputeEvidence = [
+      {
+        byteSize: 128,
+        checksumSha256: 'checksum',
+        createdAt: '2026-08-09T10:00:00.000Z',
+        fileName: 'delivery-proof.pdf',
+        id: 'evidence-1',
+        mediaType: 'application/pdf',
+        providerMode: 'mock',
+        providerName: 'mock-storage',
+        revision: 1,
+        simulation: true,
+        uploadedByParty: 'buyer',
+      },
+    ];
+  } else if (index === 1) {
+    lifecycle.settlement.simulation = false;
+    lifecycle.timeline = [
+      {
+        actorParty: 'seller',
+        category: 'fulfillment',
+        createdAt: '2026-08-09T10:01:00.000Z',
+        eventType: 'provider_specific_event',
+        providerMode: 'live',
+        sequence: 1,
+        simulation: false,
+      },
+    ];
+  }
+};
+
+const readyVerificationProviders: MarketplaceProviderReadinessDto = Object.fromEntries(
+  [
+    'contractArtifactStorage',
+    'directPayment',
+    'factoring',
+    'notificationDelivery',
+    'oneId',
+    'promotionBilling',
+    'qualifiedSignature',
+    'verificationDocuments',
+  ].map((capability) => [
+    capability,
+    {
+      mode: 'mock',
+      providerName: 'mock',
+      ready: true,
+      reconciliation: 'idempotent-retry',
+      simulation: true,
+      timeoutMs: 1_000,
+    },
+  ]),
+) as MarketplaceProviderReadinessDto;
+
+function installMatchMedia(initialMatches: boolean) {
+  const original = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+  let matches = initialMatches;
+  const listeners = new Set<() => void>();
+  const query = {
+    addEventListener: (_type: string, listener: () => void) => listeners.add(listener),
+    addListener: (listener: () => void) => listeners.add(listener),
+    dispatchEvent: () => true,
+    get matches() {
+      return matches;
+    },
+    media: '',
+    onchange: null,
+    removeEventListener: (_type: string, listener: () => void) => listeners.delete(listener),
+    removeListener: (listener: () => void) => listeners.delete(listener),
+  } as unknown as MediaQueryList;
+  Object.defineProperty(window, 'matchMedia', {
+    configurable: true,
+    value: vi.fn(() => query),
+  });
+  return {
+    restore: () => {
+      if (original) {
+        Object.defineProperty(window, 'matchMedia', original);
+      } else {
+        Reflect.deleteProperty(window, 'matchMedia');
+      }
+    },
+    setMatches: (value: boolean) => {
+      matches = value;
+      for (const listener of listeners) {
+        listener();
+      }
+    },
+  };
+}
 
 afterEach(() => {
   cleanup();
-  vi.unstubAllGlobals();
   window.history.replaceState({}, '', '/');
 });
 
-const region = (product: ProductViewDto, name: string): ProductViewDto => ({ ...product, region: name });
-
-const panel = (selector: string): HTMLElement => {
-  const found = document.querySelector(selector);
-
-  if (!(found instanceof HTMLElement)) {
-    throw new Error(`The ${selector} region is missing from the page.`);
-  }
-
-  return found;
-};
-
-const discoveryActions = () => ({
-  favoriteIds: new Set<string>(),
-  locale: 'en' as const,
-  onAdd: vi.fn(),
-  onFavorite: vi.fn(),
-  onOpen: vi.fn(),
-  t,
-});
-
-const identity = (overrides: Partial<VerificationViewDto> = {}): VerificationViewDto => ({
-  createdAt: '2026-08-09T10:00:00.000Z',
-  documents: [],
-  id: 'verification-1',
-  level: 'verified',
-  oneIdLinked: false,
-  role: 'buyer',
-  status: 'verified',
-  tenantId: 'tenant-1',
-  updatedAt: '2026-08-09T10:00:00.000Z',
-  userId: 'buyer-1',
-  ...overrides,
-});
-
-const signedContract = (overrides: Partial<ContractViewDto> = {}): ContractViewDto => ({
-  actorParty: 'buyer',
-  amountUzs: 2_500_000,
-  buyerPartySnapshot: { legalName: 'Bahor Savdo MChJ', region: 'Samarqand' },
-  createdAt: '2026-08-09T10:00:00.000Z',
-  deliveryTerms: 'pickup',
-  factoringEnabled: false,
-  id: 'contract-1',
-  lines: [],
-  revision: 1,
-  sellerPartySnapshot: { legalName: 'Zamin Agro MChJ', region: 'Tashkent' },
-  status: 'draft',
-  subject: seed.name,
-  updatedAt: '2026-08-09T10:00:00.000Z',
-  ...overrides,
-});
-
-const ownedRequest = (overrides: Partial<BuyerRequestViewDto> = {}): BuyerRequestViewDto => ({
-  createdAt: '2026-08-09T10:00:00.000Z',
-  id: 'request-1',
-  region: 'Samarqand',
-  status: 'open',
-  title: 'Corn seed for autumn',
-  updatedAt: '2026-08-09T10:00:00.000Z',
-  ...overrides,
-});
-
-const emptyResource = { data: [], status: 'empty' as const };
-
-const basket = (items: CartViewDto['items'], seller = seed.supplierName): CartViewDto => ({
-  createdAt: '2026-08-09T10:00:00.000Z',
-  id: 'cart-a',
-  items,
-  seller: { displayName: seller, region: seed.region },
-  status: 'open',
-  updatedAt: '2026-08-09T10:00:00.000Z',
-});
-
 describe('DehqonHub marketplace components', () => {
+  it('keeps synthetic catalog content browseable while every transaction control is disabled', () => {
+    const onAdd = vi.fn();
+    const onFavorite = vi.fn();
+    render(
+      <MarketplaceProductCard
+        favorite={false}
+        locale="en"
+        onAdd={onAdd}
+        onFavorite={onFavorite}
+        onOpen={vi.fn()}
+        product={demoSeed}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('agritech.marketplace.access.demoBadge')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.access.demo')).toBeTruthy();
+    const favorite = screen.getByRole('button', { name: 'agritech.marketplace.product.addFavorite' });
+    expect(favorite.hasAttribute('disabled')).toBe(false);
+    expect(
+      screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }).hasAttribute('disabled'),
+    ).toBe(true);
+    expect(onAdd).not.toHaveBeenCalled();
+    fireEvent.click(favorite);
+    expect(onFavorite).toHaveBeenCalledWith(demoSeed);
+  });
   it('keeps catalog branches distinct and applies real record filters', () => {
     window.history.replaceState({}, '', '/catalog?section=seeds');
     const onOpen = vi.fn();
@@ -149,7 +299,7 @@ describe('DehqonHub marketplace components', () => {
         onAdd={vi.fn()}
         onFavorite={vi.fn()}
         onOpen={onOpen}
-        products={[seed, tractor, otherInput]}
+        products={[seed, tractor, otherInput, fertilizer, pesticide]}
         t={t}
       />,
     );
@@ -164,14 +314,27 @@ describe('DehqonHub marketplace components', () => {
     fireEvent.click(screen.getByRole('button', { name: tractor.name }));
     expect(onOpen).toHaveBeenCalledWith(tractor);
 
-    // Produce is where the `other` category lands: the section mapping is total,
-    // so no category is left without a browsable branch.
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.section.produce' }));
-    expect(screen.getByText(otherInput.name)).toBeTruthy();
-    expect(screen.queryByText(tractor.name)).toBeNull();
+    expect(screen.queryByText(otherInput.name)).toBeNull();
+    expect(screen.queryByText(fertilizer.name)).toBeNull();
+    expect(screen.queryByText(pesticide.name)).toBeNull();
+    expect(screen.getByRole('heading', { name: 'agritech.marketplace.catalog.noResults' })).toBeTruthy();
 
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.section.all' }));
     expect(screen.getByText(otherInput.name)).toBeTruthy();
+  });
+
+  it.each([
+    [fertilizer, 'fertilizer'],
+    [pesticide, 'pesticide'],
+    [otherInput, 'input'],
+  ] as const)('renders %s with a non-produce fallback glyph', (catalogProduct, expectedIcon) => {
+    render(<ProductMedia locale="en" product={catalogProduct} t={t} />);
+
+    const fallback = screen.getByRole('img', { name: 'agritech.marketplace.product.imageFallback' });
+    const icon = fallback.querySelector('[data-marketplace-icon]');
+    expect(icon?.getAttribute('data-marketplace-icon')).toBe(expectedIcon);
+    expect(icon?.getAttribute('data-marketplace-icon')).not.toBe('produce');
   });
 
   it('synchronizes catalog products when same-route query parameters change', () => {
@@ -208,10 +371,104 @@ describe('DehqonHub marketplace components', () => {
     expect(screen.queryByText(tractor.name)).toBeNull();
   });
 
+  it('renders a public seller profile with its privacy-safe catalog', () => {
+    const view = render(
+      <MarketplaceSellerProfile
+        catalog={{ data: [seed], status: 'ready' }}
+        favoriteIds={new Set()}
+        locale="en"
+        navigate={vi.fn()}
+        onAdd={vi.fn()}
+        onFavorite={vi.fn()}
+        onOpen={vi.fn()}
+        seller={{
+          data: {
+            description: 'Regional certified seed supplier',
+            displayName: 'Seed cooperative',
+            id: seed.supplierId,
+            region: 'Samarqand',
+            verified: true,
+          },
+          status: 'ready',
+        }}
+        t={t}
+      />,
+    );
+
+    expect(screen.getByRole('heading', { level: 1, name: 'Seed cooperative' })).toBeTruthy();
+    expect(screen.getByText('Regional certified seed supplier')).toBeTruthy();
+    expect(screen.getByText(seed.name)).toBeTruthy();
+
+    view.rerender(
+      <MarketplaceSellerProfile
+        catalog={{ data: [demoSeed], status: 'ready' }}
+        favoriteIds={new Set()}
+        locale="en"
+        navigate={vi.fn()}
+        onAdd={vi.fn()}
+        onFavorite={vi.fn()}
+        onOpen={vi.fn()}
+        seller={{
+          data: {
+            displayName: 'DehqonHub demo cooperative',
+            id: demoSeed.supplierId,
+            provenance: 'demo',
+            region: 'Samarqand',
+            verified: false,
+          },
+          status: 'ready',
+        }}
+        t={t}
+      />,
+    );
+    expect(screen.getAllByText('agritech.marketplace.access.demoBadge').length).toBeGreaterThan(0);
+  });
+
+  it('closes mobile catalog filters explicitly and when the viewport becomes desktop', () => {
+    const viewport = installMatchMedia(false);
+    try {
+      render(
+        <MarketplaceCatalog
+          favoriteIds={new Set()}
+          locale="en"
+          locationSearch="?section=seeds"
+          navigate={vi.fn()}
+          onAdd={vi.fn()}
+          onFavorite={vi.fn()}
+          onOpen={vi.fn()}
+          products={[seed]}
+          t={t}
+        />,
+      );
+
+      const trigger = screen.getByRole('button', { name: 'agritech.marketplace.filter.open' });
+      fireEvent.click(trigger);
+      const dialog = screen.getByRole('dialog', { name: 'agritech.marketplace.filter.title' });
+      expect(dialog.getAttribute('open')).not.toBeNull();
+
+      fireEvent(dialog, new Event('cancel', { cancelable: true }));
+      expect(dialog.getAttribute('open')).toBeNull();
+
+      fireEvent.click(trigger);
+      fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.close' }));
+      expect(dialog.getAttribute('open')).toBeNull();
+
+      fireEvent.click(trigger);
+      act(() => {
+        viewport.setMatches(true);
+      });
+      expect(dialog.getAttribute('open')).toBeNull();
+    } finally {
+      viewport.restore();
+    }
+  });
+
   it('defers PDP delivery selection to checkout and distinguishes unavailable sample allowance', () => {
     const onRetry = vi.fn();
     render(
       <MarketplaceProductDetail
+        canReplyToReviews={false}
+        canReportReviews={false}
         canReview={false}
         favoriteIds={new Set()}
         locale="en"
@@ -220,11 +477,16 @@ describe('DehqonHub marketplace components', () => {
         onFavorite={vi.fn()}
         onOpen={vi.fn()}
         onReview={vi.fn()}
+        onReplyToReview={vi.fn()}
+        onReportReview={vi.fn()}
         onRetry={onRetry}
         onSample={vi.fn()}
         product={seed}
         reviews={{ data: [], status: 'empty' }}
-        sampleUsage={{ data: { limit: 5, remaining: 5, used: 0 }, status: 'error' }}
+        sampleUsage={{
+          data: { limit: 5, period: '2026', policyVersion: 1, remaining: 5, used: 0 },
+          status: 'error',
+        }}
         similar={[]}
         t={t}
       />,
@@ -236,10 +498,70 @@ describe('DehqonHub marketplace components', () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
+  it('keeps live and demo product details browseable while explaining restricted transactions', () => {
+    const onTransactionAction = vi.fn();
+    const common = {
+      canReplyToReviews: false,
+      canReportReviews: false,
+      canReview: false,
+      favoriteIds: new Set<string>(),
+      locale: 'en' as const,
+      navigate: vi.fn(),
+      onAdd: vi.fn(),
+      onFavorite: vi.fn(),
+      onOpen: vi.fn(),
+      onReview: vi.fn(),
+      onReplyToReview: vi.fn(),
+      onReportReview: vi.fn(),
+      onRetry: vi.fn(),
+      onSample: vi.fn(),
+      reviews: { data: [], status: 'empty' as const },
+      sampleUsage: {
+        data: { limit: 5, period: '2026', policyVersion: 1, remaining: 5, used: 0 },
+        status: 'ready' as const,
+      },
+      similar: [],
+      t,
+    };
+    const view = render(
+      <MarketplaceProductDetail
+        {...common}
+        canTransact={false}
+        onTransactionAction={onTransactionAction}
+        product={seed}
+        transactionActionLabel="verify-now"
+        transactionHint="verification-needed"
+      />,
+    );
+
+    expect(screen.getByText('verification-needed')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'verify-now' }));
+    expect(onTransactionAction).toHaveBeenCalledOnce();
+
+    view.rerender(<MarketplaceProductDetail {...common} canTransact={false} product={seed} />);
+    expect(screen.queryByRole('button', { name: 'verify-now' })).toBeNull();
+
+    view.rerender(
+      <MarketplaceProductDetail
+        {...common}
+        canTransact
+        onTransactionAction={onTransactionAction}
+        product={demoSeed}
+        transactionActionLabel="verify-now"
+        transactionHint="ignored-live-hint"
+      />,
+    );
+    expect(screen.getAllByText('agritech.marketplace.access.demoBadge').length).toBeGreaterThan(0);
+    expect(screen.getByText('agritech.marketplace.access.demo')).toBeTruthy();
+    expect(screen.queryByText('ignored-live-hint')).toBeNull();
+  });
+
   it('submits an eligible buyer review from the product page', async () => {
     const onReview = vi.fn().mockResolvedValue(true);
     render(
       <MarketplaceProductDetail
+        canReplyToReviews={false}
+        canReportReviews={false}
         canReview
         favoriteIds={new Set()}
         locale="en"
@@ -248,11 +570,16 @@ describe('DehqonHub marketplace components', () => {
         onFavorite={vi.fn()}
         onOpen={vi.fn()}
         onReview={onReview}
+        onReplyToReview={vi.fn()}
+        onReportReview={vi.fn()}
         onRetry={vi.fn()}
         onSample={vi.fn()}
         product={seed}
         reviews={{ data: [], status: 'empty' }}
-        sampleUsage={{ data: { limit: 5, remaining: 5, used: 0 }, status: 'ready' }}
+        sampleUsage={{
+          data: { limit: 5, period: '2026', policyVersion: 1, remaining: 5, used: 0 },
+          status: 'ready',
+        }}
         similar={[]}
         t={t}
       />,
@@ -274,6 +601,8 @@ describe('DehqonHub marketplace components', () => {
     const onReview = vi.fn().mockResolvedValue(false);
     render(
       <MarketplaceProductDetail
+        canReplyToReviews={false}
+        canReportReviews={false}
         canReview
         favoriteIds={new Set()}
         locale="en"
@@ -282,11 +611,16 @@ describe('DehqonHub marketplace components', () => {
         onFavorite={vi.fn()}
         onOpen={vi.fn()}
         onReview={onReview}
+        onReplyToReview={vi.fn()}
+        onReportReview={vi.fn()}
         onRetry={vi.fn()}
         onSample={vi.fn()}
         product={seed}
         reviews={{ data: [], status: 'empty' }}
-        sampleUsage={{ data: { limit: 5, remaining: 5, used: 0 }, status: 'ready' }}
+        sampleUsage={{
+          data: { limit: 5, period: '2026', policyVersion: 1, remaining: 5, used: 0 },
+          status: 'ready',
+        }}
         similar={[]}
         t={t}
       />,
@@ -300,6 +634,70 @@ describe('DehqonHub marketplace components', () => {
       expect(onReview).toHaveBeenCalledOnce();
     });
     expect((comment as HTMLTextAreaElement).value).toBe('Keep this on failure');
+  });
+
+  it('exposes actor-authorized review reply and report commands', async () => {
+    const review = {
+      assetReferences: [],
+      comment: 'Strong germination rate',
+      createdAt: '2026-08-09T10:00:00.000Z',
+      id: 'review-1',
+      listingPublicationId: seed.id,
+      rating: 5,
+      revision: 2,
+      updatedAt: '2026-08-09T10:00:00.000Z',
+      verifiedDeal: true as const,
+    };
+    const onReplyToReview = vi.fn().mockResolvedValue(true);
+    const onReportReview = vi.fn().mockResolvedValue(true);
+
+    render(
+      <MarketplaceProductDetail
+        canReplyToReviews
+        canReportReviews
+        canReview={false}
+        favoriteIds={new Set()}
+        locale="en"
+        navigate={vi.fn()}
+        onAdd={vi.fn()}
+        onFavorite={vi.fn()}
+        onOpen={vi.fn()}
+        onReview={vi.fn()}
+        onReplyToReview={onReplyToReview}
+        onReportReview={onReportReview}
+        onRetry={vi.fn()}
+        onSample={vi.fn()}
+        product={seed}
+        reviews={{ data: [review], status: 'ready' }}
+        sampleUsage={{
+          data: { limit: 5, period: '2026', policyVersion: 1, remaining: 5, used: 0 },
+          status: 'ready',
+        }}
+        similar={[]}
+        t={t}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.reply' }));
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.reviews.reply'), {
+      target: { value: 'Thank you for the feedback' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.replySubmit' }));
+    await waitFor(() => {
+      expect(onReplyToReview).toHaveBeenCalledWith(review, 'Thank you for the feedback');
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.report' }));
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.reviews.reportReason'), {
+      target: { value: 'privacy' },
+    });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.reviews.reportComment'), {
+      target: { value: 'Contains personal information' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.reportSubmit' }));
+    await waitFor(() => {
+      expect(onReportReview).toHaveBeenCalledWith(review, 'privacy', 'Contains personal information');
+    });
   });
 
   it('keeps an accessible cart page heading when the cart is empty', () => {
@@ -319,15 +717,16 @@ describe('DehqonHub marketplace components', () => {
     expect(screen.getByRole('heading', { name: 'agritech.marketplace.cart.empty' })).toBeTruthy();
   });
 
-  it('does not invite offers on closed or expired purchase requests', () => {
-    const request = (id: string, status: BuyerRequestViewDto['status']): BuyerRequestViewDto => ({
+  it('invites a verified seller to an open public purchase request', () => {
+    const request = {
+      buyerDisplayName: 'Regional buyer',
       createdAt: '2026-08-09T10:00:00.000Z',
-      id,
+      id: 'public-request-1',
       region: 'Samarqand',
-      status,
-      title: `Request ${id}`,
+      status: 'open' as const,
+      title: 'Request for corn seed',
       updatedAt: '2026-08-09T10:00:00.000Z',
-    });
+    };
     render(
       <MarketplaceRequests
         isVerified
@@ -339,13 +738,74 @@ describe('DehqonHub marketplace components', () => {
         onCreate={vi.fn()}
         onOffer={vi.fn()}
         onRetry={vi.fn()}
-        requests={{ data: [request('closed', 'closed'), request('expired', 'expired')], status: 'ready' }}
+        requests={{ data: [request], status: 'ready' }}
         role="seller"
         t={t}
       />,
     );
 
-    expect(screen.queryByRole('button', { name: 'agritech.marketplace.orders.makeOffer' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' })).toBeTruthy();
+  });
+
+  it('keeps restricted request and offer controls visible, disabled, and explained', () => {
+    const onBuyerAccessAction = vi.fn();
+    const onSellerAccessAction = vi.fn();
+    const request: BuyerRequestViewDto = {
+      createdAt: '2026-08-09T10:00:00.000Z',
+      id: 'request-unverified',
+      region: 'Samarqand',
+      status: 'offering',
+      title: 'Corn seed',
+      updatedAt: '2026-08-09T10:00:00.000Z',
+    };
+    const offer: OfferViewDto = {
+      createdAt: '2026-08-09T10:05:00.000Z',
+      deliveryTerms: 'pickup',
+      id: 'offer-unverified',
+      priceUzs: 4_500_000,
+      requestPublicId: request.id,
+      seller: { displayName: 'Seed cooperative', region: 'Tashkent' },
+      status: 'pending',
+    };
+    render(
+      <MarketplaceRequests
+        buyerAccessActionLabel="buyer-next"
+        buyerAccessHint="buyer-prerequisite"
+        isVerified={false}
+        locale="en"
+        myRequests={{ data: [request], status: 'ready' }}
+        navigate={vi.fn()}
+        offersByRequest={{ data: { [request.id]: [offer] }, status: 'ready' }}
+        onBuyerAccessAction={onBuyerAccessAction}
+        onChoose={vi.fn()}
+        onCreate={vi.fn()}
+        onOffer={vi.fn()}
+        onRetry={vi.fn()}
+        onSellerAccessAction={onSellerAccessAction}
+        requests={{ data: [{ ...request, id: 'public-request-unverified' }], status: 'ready' }}
+        role="seller"
+        sellerAccessActionLabel="seller-next"
+        sellerAccessHint="seller-prerequisite"
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText('buyer-prerequisite')).toBeTruthy();
+    expect(screen.getByText('seller-prerequisite')).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }).hasAttribute('disabled')).toBe(
+      true,
+    );
+    expect(screen.getByRole('button', { name: 'agritech.marketplace.orders.choose' }).hasAttribute('disabled')).toBe(
+      true,
+    );
+    expect(
+      screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0]?.hasAttribute('disabled'),
+    ).toBe(true);
+    fireEvent.click(screen.getByRole('button', { name: 'buyer-next' }));
+    fireEvent.click(screen.getByRole('button', { name: 'seller-next' }));
+    expect(onBuyerAccessAction).toHaveBeenCalledOnce();
+    expect(onSellerAccessAction).toHaveBeenCalledOnce();
+    expect(screen.queryByLabelText('agritech.marketplace.orders.requestTitle')).toBeNull();
   });
 
   it('submits the visible request deadline even before controlled state catches up', () => {
@@ -465,13 +925,56 @@ describe('DehqonHub marketplace components', () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
+  it('renders the privacy-safe seller snapshot for an owned request offer', () => {
+    const request: BuyerRequestViewDto = {
+      createdAt: '2026-08-09T10:00:00.000Z',
+      id: 'request-with-offer',
+      region: 'Samarqand',
+      status: 'offering',
+      title: 'Corn seed',
+      updatedAt: '2026-08-09T10:00:00.000Z',
+    };
+    const offer = {
+      createdAt: '2026-08-09T10:05:00.000Z',
+      deliveryTerms: 'pickup' as const,
+      id: 'offer-1',
+      priceUzs: 4_500_000,
+      requestPublicId: request.id,
+      seller: { displayName: 'Verified seed cooperative', region: 'Tashkent' },
+      status: 'pending' as const,
+    };
+    const onChoose = vi.fn();
+
+    render(
+      <MarketplaceRequests
+        isVerified
+        locale="en"
+        myRequests={{ data: [request], status: 'ready' }}
+        navigate={vi.fn()}
+        offersByRequest={{ data: { [request.id]: [offer] }, status: 'ready' }}
+        onChoose={onChoose}
+        onCreate={vi.fn()}
+        onOffer={vi.fn()}
+        onRetry={vi.fn()}
+        requests={{ data: [], status: 'empty' }}
+        role="buyer"
+        t={t}
+      />,
+    );
+
+    expect(screen.getByText(/Verified seed cooperative/u)).toBeTruthy();
+    expect(screen.getByText(/Tashkent/u)).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.choose' }));
+    expect(onChoose).toHaveBeenCalledWith(request, offer);
+  });
+
   it('reviews each server-separated seller cart with explicit delivery terms', () => {
     const carts: CartViewDto[] = [
       {
         createdAt: '2026-08-09T10:00:00.000Z',
         id: 'cart-a',
         items: [{ listingPublicationId: seed.id, quantity: 2, sourceKind: 'product' }],
-        seller: { displayName: seed.supplierName, region: seed.region },
+        seller: { displayName: 'Seller seller-a', region: 'Samarqand' },
         status: 'open',
         updatedAt: '2026-08-09T10:00:00.000Z',
       },
@@ -479,7 +982,7 @@ describe('DehqonHub marketplace components', () => {
         createdAt: '2026-08-09T10:00:00.000Z',
         id: 'cart-b',
         items: [{ listingPublicationId: tractor.id, quantity: 1, sourceKind: 'product' }],
-        seller: { displayName: tractor.supplierName, region: tractor.region },
+        seller: { displayName: 'Seller seller-b', region: 'Tashkent' },
         status: 'open',
         updatedAt: '2026-08-09T10:00:00.000Z',
       },
@@ -506,19 +1009,93 @@ describe('DehqonHub marketplace components', () => {
     expect(onCheckout).toHaveBeenCalledWith(carts[1], 'seller_delivery');
   });
 
-  it('shows honest verification provider unavailability without a placeholder submission', () => {
+  it('starts the explicitly selected mock-backed verification flow', () => {
+    const onStart = vi.fn();
     render(
       <MarketplaceVerification
         navigate={vi.fn()}
+        onLinkIdentity={vi.fn()}
         onRetry={vi.fn()}
+        onStart={onStart}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{
+          data: {
+            contractArtifactStorage: {
+              mode: 'mock',
+              providerName: 'mock',
+              ready: true,
+              reconciliation: 'idempotent-retry',
+              simulation: true,
+              timeoutMs: 1000,
+            },
+            directPayment: {
+              mode: 'mock',
+              providerName: 'mock',
+              ready: true,
+              reconciliation: 'idempotent-retry',
+              simulation: true,
+              timeoutMs: 1000,
+            },
+            factoring: {
+              mode: 'mock',
+              providerName: 'mock',
+              ready: true,
+              reconciliation: 'idempotent-retry',
+              simulation: true,
+              timeoutMs: 1000,
+            },
+            notificationDelivery: {
+              mode: 'mock',
+              providerName: 'mock',
+              ready: true,
+              reconciliation: 'idempotent-retry',
+              simulation: true,
+              timeoutMs: 1000,
+            },
+            oneId: {
+              mode: 'mock',
+              providerName: 'mock',
+              ready: true,
+              reconciliation: 'idempotent-retry',
+              simulation: true,
+              timeoutMs: 1000,
+            },
+            promotionBilling: {
+              mode: 'mock',
+              providerName: 'mock',
+              ready: true,
+              reconciliation: 'idempotent-retry',
+              simulation: true,
+              timeoutMs: 1000,
+            },
+            qualifiedSignature: {
+              mode: 'mock',
+              providerName: 'mock',
+              ready: true,
+              reconciliation: 'idempotent-retry',
+              simulation: true,
+              timeoutMs: 1000,
+            },
+            verificationDocuments: {
+              mode: 'mock',
+              providerName: 'mock',
+              ready: true,
+              reconciliation: 'idempotent-retry',
+              simulation: true,
+              timeoutMs: 1000,
+            },
+          },
+          status: 'ready',
+        }}
         t={t}
         verification={{ data: null, status: 'empty' }}
       />,
     );
 
-    expect(screen.getByRole('heading', { name: 'agritech.marketplace.verify.providerUnavailable' })).toBeTruthy();
-    expect(screen.getByText('agritech.marketplace.verify.noPlaceholderSubmission')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'agritech.marketplace.verify.submit' })).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: /agritech.marketplace.account.role.seller/u }));
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.verify.start' }));
+    expect(onStart).toHaveBeenCalledWith('seller');
   });
 
   it('retries a failed verification identity load without reloading the browser', () => {
@@ -527,7 +1104,12 @@ describe('DehqonHub marketplace components', () => {
     render(
       <MarketplaceVerification
         navigate={vi.fn()}
+        onLinkIdentity={vi.fn()}
         onRetry={onRetry}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: null, status: 'error' }}
         t={t}
         verification={{ data: null, status: 'error' }}
       />,
@@ -537,16 +1119,131 @@ describe('DehqonHub marketplace components', () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
+  it('links identity, uploads user-selected evidence, and submits only after every explicit step', () => {
+    const onLinkIdentity = vi.fn();
+    const onSubmit = vi.fn();
+    const onUploadDocument = vi.fn();
+    const baseVerification = {
+      createdAt: '2026-08-09T10:00:00.000Z',
+      documents: [],
+      id: 'verification-explicit',
+      identityAssurance: 'mock' as const,
+      level: 'basic' as const,
+      oneIdLinked: false,
+      providerMode: 'mock' as const,
+      revision: 2,
+      role: 'buyer' as const,
+      simulation: true,
+      status: 'none' as const,
+      step: 'identity' as const,
+      updatedAt: '2026-08-09T10:00:00.000Z',
+    };
+    const props = {
+      navigate: vi.fn(),
+      onLinkIdentity,
+      onRetry: vi.fn(),
+      onStart: vi.fn(),
+      onSubmit,
+      onUploadDocument,
+      readiness: { data: readyVerificationProviders, status: 'ready' as const },
+      t,
+    };
+    const view = render(
+      <MarketplaceVerification {...props} verification={{ data: baseVerification, status: 'ready' }} />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.verify.linkIdentity' }));
+    expect(onLinkIdentity).toHaveBeenCalledWith(baseVerification);
+    const evidence = new File(['identity evidence'], 'identity.pdf', { type: 'application/pdf' });
+    const identityInput = screen.getAllByLabelText(/agritech.marketplace.verify.uploadDocument/u)[0];
+    if (!identityInput) {
+      throw new Error('Identity evidence input is unavailable.');
+    }
+    Object.defineProperty(identityInput, 'files', { configurable: true, value: [evidence] });
+    fireEvent.change(identityInput);
+    expect(onUploadDocument).toHaveBeenCalledWith(baseVerification, 'id', evidence);
+    expect(screen.getByRole('button', { name: 'agritech.marketplace.verify.submit' }).hasAttribute('disabled')).toBe(
+      true,
+    );
+
+    const completeVerification = {
+      ...baseVerification,
+      documents: [
+        {
+          fileName: 'identity.pdf',
+          kind: 'id',
+          mimeType: 'application/pdf',
+          providerMode: 'mock' as const,
+          simulation: true,
+        },
+        {
+          fileName: 'business.pdf',
+          kind: 'business',
+          mimeType: 'application/pdf',
+          providerMode: 'mock' as const,
+          simulation: true,
+        },
+      ],
+      oneIdLinked: true,
+      revision: 5,
+      step: 'documents' as const,
+    };
+    view.rerender(
+      <MarketplaceVerification {...props} verification={{ data: completeVerification, status: 'ready' }} />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.verify.submit' }));
+    expect(onSubmit).toHaveBeenCalledWith(completeVerification);
+  });
+
+  it('resumes a rejected verification at its current role before replacement uploads', () => {
+    const onStart = vi.fn();
+    const rejected = {
+      createdAt: '2026-08-09T10:00:00.000Z',
+      documents: [],
+      id: 'verification-rejected',
+      identityAssurance: 'mock' as const,
+      level: 'basic' as const,
+      oneIdLinked: true,
+      providerMode: 'mock' as const,
+      rejectionReason: 'documents_unreadable' as const,
+      revision: 7,
+      role: 'seller' as const,
+      simulation: true,
+      status: 'rejected' as const,
+      step: 'review' as const,
+      updatedAt: '2026-08-09T10:00:00.000Z',
+    };
+
+    render(
+      <MarketplaceVerification
+        navigate={vi.fn()}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={onStart}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: readyVerificationProviders, status: 'ready' }}
+        t={t}
+        verification={{ data: rejected, status: 'ready' }}
+      />,
+    );
+
+    expect(screen.getByRole('alert').textContent).toContain('agritech.marketplace.verify.simulationDisclosure');
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.verify.resume' }));
+    expect(onStart).toHaveBeenCalledWith('seller');
+  });
+
   it('lets only the current unsigned party record contract consent', () => {
     const contract: ContractViewDto = {
       actorParty: 'buyer',
       amountUzs: 2_500_000,
-      buyerPartySnapshot: { legalName: 'Bahor Savdo MChJ', region: 'Samarqand' },
+      buyerPartySnapshot: { legalName: 'Buyer cooperative', region: 'Samarqand' },
       createdAt: '2026-08-09T10:00:00.000Z',
       deliveryTerms: 'pickup',
       deliveryPriceUzs: 0,
       factoringEnabled: false,
       id: 'contract-1',
+      revision: 1,
       lines: [
         {
           lineTotalUzs: 2_500_000,
@@ -559,8 +1256,7 @@ describe('DehqonHub marketplace components', () => {
           unitPriceUzs: 1_250_000,
         },
       ],
-      revision: 1,
-      sellerPartySnapshot: { legalName: 'Zamin Agro MChJ', region: 'Tashkent' },
+      sellerPartySnapshot: { legalName: 'Seed cooperative', region: 'Toshkent' },
       sourceType: 'cart_checkout',
       status: 'draft',
       subject: seed.name,
@@ -571,12 +1267,18 @@ describe('DehqonHub marketplace components', () => {
     render(
       <MarketplaceContract
         contract={contract}
-        identityStatus="ready"
+        identityStatus="verified"
+        lifecycle={{ data: contractLifecycle(contract.id), status: 'ready' }}
         locale="en"
         navigate={vi.fn()}
+        onDownloadArtifact={vi.fn()}
+        onAdvanceLifecycle={vi.fn()}
+        onOpenDispute={vi.fn()}
         onQuote={vi.fn()}
+        onRefreshArtifact={vi.fn()}
         onRetry={vi.fn()}
         onSign={onSign}
+        onUploadDisputeEvidence={vi.fn()}
         status="ready"
         t={t}
       />,
@@ -584,22 +1286,219 @@ describe('DehqonHub marketplace components', () => {
 
     fireEvent.click(screen.getByRole('button', { name: /agritech.marketplace.contract.signOwnParty/u }));
     expect(onSign).toHaveBeenCalledWith(contract);
-    expect(screen.getByText('agritech.marketplace.contract.paymentUnavailable')).toBeTruthy();
-    expect(screen.getByText('agritech.marketplace.contract.factoringUnavailable')).toBeTruthy();
+    expect(screen.getByText('Buyer cooperative')).toBeTruthy();
+    expect(screen.getByText('Seed cooperative')).toBeTruthy();
+    expect(screen.queryByText('buyer-1')).toBeNull();
+    expect(screen.getByText('agritech.marketplace.contract.settlement.direct')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.contract.settlement.description')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.contract.settlement.awaiting')).toBeTruthy();
+  });
+
+  it('exposes contract artifact, dispute, and evidence controls on the contract surface', () => {
+    const contract: ContractViewDto = {
+      actorParty: 'buyer',
+      amountUzs: 2_500_000,
+      buyerPartySnapshot: { legalName: 'Buyer cooperative', region: 'Samarqand' },
+      buyerSignedAt: '2026-08-09T10:02:00.000Z',
+      createdAt: '2026-08-09T10:00:00.000Z',
+      deliveryPriceUzs: 0,
+      deliveryTerms: 'pickup',
+      factoringEnabled: false,
+      id: 'contract-evidence',
+      lines: [],
+      revision: 4,
+      sellerPartySnapshot: { legalName: 'Seed cooperative', region: 'Toshkent' },
+      sellerSignedAt: '2026-08-09T10:03:00.000Z',
+      signedAt: '2026-08-09T10:03:00.000Z',
+      sourceType: 'cart_checkout',
+      status: 'active',
+      subject: seed.name,
+      updatedAt: '2026-08-09T10:03:00.000Z',
+    };
+    const lifecycle = contractLifecycle(contract.id);
+    lifecycle.artifact = {
+      byteSize: 2_048,
+      checksumSha256: 'checksum',
+      createdAt: '2026-08-09T10:01:00.000Z',
+      mediaType: 'application/pdf',
+      providerMode: 'mock',
+      providerName: 'mock-artifact-store',
+      simulation: true,
+      snapshotFingerprint: 'snapshot',
+      snapshotRevision: 1,
+      templateVersion: 'dehqonhub-contract-v1',
+      watermark: null,
+    };
+    const onDownloadArtifact = vi.fn();
+    const onOpenDispute = vi.fn();
+    const onRefreshArtifact = vi.fn();
+    const onUploadDisputeEvidence = vi.fn();
+
+    const view = render(
+      <MarketplaceContract
+        contract={contract}
+        identityStatus="verified"
+        lifecycle={{ data: lifecycle, status: 'ready' }}
+        locale="en"
+        navigate={vi.fn()}
+        onDownloadArtifact={onDownloadArtifact}
+        onAdvanceLifecycle={vi.fn()}
+        onOpenDispute={onOpenDispute}
+        onQuote={vi.fn()}
+        onRefreshArtifact={onRefreshArtifact}
+        onRetry={vi.fn()}
+        onSign={vi.fn()}
+        onUploadDisputeEvidence={onUploadDisputeEvidence}
+        status="ready"
+        t={t}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.contract.refreshArtifact' }));
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.contract.downloadArtifact' }));
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.contract.disputeReason'), {
+      target: { value: 'quality_issue' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.contract.openDispute' }));
+    expect(onRefreshArtifact).toHaveBeenCalledWith(contract);
+    expect(onDownloadArtifact).toHaveBeenCalledWith(contract);
+    expect(onOpenDispute).toHaveBeenCalledWith(contract, 'quality_issue');
+    expect(screen.getByText('mock-artifact-store')).toBeTruthy();
+    expect(screen.getAllByText('agritech.marketplace.contract.simulationDisclosure').length).toBeGreaterThan(0);
+
+    const disputedLifecycle = {
+      ...lifecycle,
+      dispute: {
+        createdAt: '2026-08-09T10:04:00.000Z',
+        openedByParty: 'buyer' as const,
+        reason: 'quality_issue' as const,
+        status: 'open' as const,
+      },
+      disputeEvidence: [
+        {
+          byteSize: 64,
+          checksumSha256: 'second-checksum',
+          createdAt: '2026-08-09T10:05:00.000Z',
+          fileName: 'inspection.txt',
+          id: 'evidence-without-simulation',
+          mediaType: 'text/plain',
+          providerMode: 'live' as const,
+          providerName: 'document-store',
+          revision: 1,
+          simulation: false,
+          uploadedByParty: 'buyer' as const,
+        },
+      ],
+    };
+    view.rerender(
+      <MarketplaceContract
+        contract={contract}
+        identityStatus="verified"
+        lifecycle={{ data: disputedLifecycle, status: 'ready' }}
+        locale="en"
+        navigate={vi.fn()}
+        onDownloadArtifact={onDownloadArtifact}
+        onAdvanceLifecycle={vi.fn()}
+        onOpenDispute={onOpenDispute}
+        onQuote={vi.fn()}
+        onRefreshArtifact={onRefreshArtifact}
+        onRetry={vi.fn()}
+        onSign={vi.fn()}
+        onUploadDisputeEvidence={onUploadDisputeEvidence}
+        status="ready"
+        t={t}
+      />,
+    );
+    const evidence = new File(['evidence'], 'quality-photo.png', { type: 'image/png' });
+    const evidenceInput = screen.getByLabelText('agritech.marketplace.contract.disputeEvidence');
+    fireEvent.submit(evidenceInput.closest('form')!);
+    expect(onUploadDisputeEvidence).not.toHaveBeenCalled();
+    Object.defineProperty(evidenceInput, 'files', { configurable: true, value: [evidence] });
+    fireEvent.change(evidenceInput);
+    const uploadButton = screen.getByRole('button', { name: 'agritech.marketplace.contract.uploadEvidence' });
+    expect(uploadButton.hasAttribute('disabled')).toBe(false);
+    fireEvent.submit(uploadButton.closest('form')!);
+    expect(onUploadDisputeEvidence).toHaveBeenCalledWith(contract, evidence);
+  });
+
+  it('distinguishes dashboard, contract, sample, and lifecycle failures from empty data and retries in place', () => {
+    const onRetry = vi.fn();
+    const account = render(
+      <MarketplaceAccount
+        contracts={{ data: [], status: 'error' }}
+        dashboard={{ data: null, status: 'error' }}
+        locale="en"
+        navigate={vi.fn()}
+        onRetry={onRetry}
+        samples={{ data: [], status: 'error' }}
+        t={t}
+        verification={{ data: null, status: 'empty' }}
+      />,
+    );
+
+    expect(screen.getByText('agritech.marketplace.account.dashboardUnavailable')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.account.contractsUnavailable')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.samples.unavailable')).toBeTruthy();
+    expect(screen.queryByLabelText('agritech.marketplace.account.dashboard')).toBeNull();
+    for (const retry of screen.getAllByRole('button', { name: 'ui.runtime.retry' })) {
+      fireEvent.click(retry);
+    }
+    expect(onRetry).toHaveBeenCalledTimes(3);
+
+    account.unmount();
+    const contract: ContractViewDto = {
+      actorParty: 'buyer',
+      amountUzs: 2_500_000,
+      buyerPartySnapshot: { legalName: 'Buyer cooperative', region: 'Samarqand' },
+      createdAt: '2026-08-09T10:00:00.000Z',
+      deliveryPriceUzs: 0,
+      deliveryTerms: 'pickup',
+      factoringEnabled: false,
+      id: 'contract-lifecycle-error',
+      lines: [],
+      revision: 1,
+      sellerPartySnapshot: { legalName: 'Seed cooperative', region: 'Toshkent' },
+      sourceType: 'cart_checkout',
+      status: 'draft',
+      subject: seed.name,
+      updatedAt: '2026-08-09T10:00:00.000Z',
+    };
+    render(
+      <MarketplaceContract
+        contract={contract}
+        identityStatus="verified"
+        lifecycle={{ data: null, status: 'error' }}
+        locale="en"
+        navigate={vi.fn()}
+        onAdvanceLifecycle={vi.fn()}
+        onDownloadArtifact={vi.fn()}
+        onOpenDispute={vi.fn()}
+        onQuote={vi.fn()}
+        onRefreshArtifact={vi.fn()}
+        onRetry={onRetry}
+        onSign={vi.fn()}
+        onUploadDisputeEvidence={vi.fn()}
+        status="ready"
+        t={t}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.error')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'ui.runtime.retry' }));
+    expect(onRetry).toHaveBeenCalledTimes(4);
   });
 
   it('blocks consent and lets the listed seller quote pending delivery', () => {
     const contract: ContractViewDto = {
       actorParty: 'seller',
       amountUzs: 2_500_000,
-      buyerPartySnapshot: { legalName: 'Bahor Savdo MChJ', region: 'Samarqand' },
+      buyerPartySnapshot: { legalName: 'Buyer cooperative', region: 'Samarqand' },
       createdAt: '2026-08-09T10:00:00.000Z',
       deliveryTerms: 'seller_delivery',
       factoringEnabled: false,
       id: 'contract-delivery',
-      lines: [],
       revision: 1,
-      sellerPartySnapshot: { legalName: 'Zamin Agro MChJ', region: 'Tashkent' },
+      lines: [],
+      sellerPartySnapshot: { legalName: 'Seed cooperative', region: 'Toshkent' },
       sourceType: 'cart_checkout',
       status: 'draft',
       subject: seed.name,
@@ -609,12 +1508,18 @@ describe('DehqonHub marketplace components', () => {
     render(
       <MarketplaceContract
         contract={contract}
-        identityStatus="ready"
+        identityStatus="verified"
+        lifecycle={{ data: contractLifecycle(contract.id), status: 'ready' }}
         locale="en"
         navigate={vi.fn()}
+        onDownloadArtifact={vi.fn()}
+        onAdvanceLifecycle={vi.fn()}
+        onOpenDispute={vi.fn()}
         onQuote={onQuote}
+        onRefreshArtifact={vi.fn()}
         onRetry={vi.fn()}
         onSign={vi.fn()}
+        onUploadDisputeEvidence={vi.fn()}
         status="ready"
         t={t}
       />,
@@ -632,15 +1537,15 @@ describe('DehqonHub marketplace components', () => {
     const contract: ContractViewDto = {
       actorParty: 'buyer',
       amountUzs: 2_500_000,
-      buyerPartySnapshot: { legalName: 'Bahor Savdo MChJ', region: 'Samarqand' },
+      buyerPartySnapshot: { legalName: 'Buyer cooperative', region: 'Samarqand' },
       createdAt: '2026-08-09T10:00:00.000Z',
       deliveryPriceUzs: 0,
       deliveryTerms: 'pickup',
       factoringEnabled: false,
       id: 'contract-identity-error',
-      lines: [],
       revision: 1,
-      sellerPartySnapshot: { legalName: 'Zamin Agro MChJ', region: 'Tashkent' },
+      lines: [],
+      sellerPartySnapshot: { legalName: 'Seed cooperative', region: 'Toshkent' },
       sourceType: 'cart_checkout',
       status: 'draft',
       subject: seed.name,
@@ -652,11 +1557,17 @@ describe('DehqonHub marketplace components', () => {
       <MarketplaceContract
         contract={contract}
         identityStatus="error"
+        lifecycle={{ data: contractLifecycle(contract.id), status: 'ready' }}
         locale="en"
         navigate={vi.fn()}
+        onDownloadArtifact={vi.fn()}
+        onAdvanceLifecycle={vi.fn()}
+        onOpenDispute={vi.fn()}
         onQuote={vi.fn()}
+        onRefreshArtifact={vi.fn()}
         onRetry={onRetry}
         onSign={vi.fn()}
+        onUploadDisputeEvidence={vi.fn()}
         status="ready"
         t={t}
       />,
@@ -667,15 +1578,947 @@ describe('DehqonHub marketplace components', () => {
     expect(onRetry).toHaveBeenCalledOnce();
   });
 
-  it('keeps grounded AI informational and returns focus after closing', async () => {
-    const onAsk = vi.fn().mockResolvedValue({
-      answer: 'Unlocalized server explanation',
+  it.each(['pending', 'rejected'] as const)(
+    'hides contract mutations while current verification is %s',
+    (identityStatus) => {
+      const draft: ContractViewDto = {
+        actorParty: 'buyer',
+        amountUzs: 2_500_000,
+        buyerPartySnapshot: { legalName: 'Buyer cooperative', region: 'Samarqand' },
+        createdAt: '2026-08-09T10:00:00.000Z',
+        deliveryPriceUzs: 0,
+        deliveryTerms: 'pickup',
+        factoringEnabled: false,
+        id: `contract-${identityStatus}`,
+        lines: [],
+        revision: 1,
+        sellerPartySnapshot: { legalName: 'Seed cooperative', region: 'Toshkent' },
+        sourceType: 'cart_checkout',
+        status: 'draft',
+        subject: seed.name,
+        updatedAt: '2026-08-09T10:00:00.000Z',
+      };
+      const lifecycle = contractLifecycle(draft.id);
+      lifecycle.artifact = {
+        byteSize: 2_048,
+        checksumSha256: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa',
+        createdAt: '2026-08-09T10:01:00.000Z',
+        mediaType: 'application/pdf',
+        providerMode: 'mock',
+        providerName: 'mock-artifact-store',
+        simulation: true,
+        snapshotFingerprint: 'bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb',
+        snapshotRevision: 1,
+        templateVersion: 'dehqonhub-contract-v1',
+        watermark: 'MOCK PROVIDER — NOT A LEGAL CONTRACT',
+      };
+      const view = render(
+        <MarketplaceContract
+          contract={draft}
+          identityStatus={identityStatus}
+          lifecycle={{ data: lifecycle, status: 'ready' }}
+          locale="en"
+          navigate={vi.fn()}
+          onAdvanceLifecycle={vi.fn()}
+          onDownloadArtifact={vi.fn()}
+          onOpenDispute={vi.fn()}
+          onQuote={vi.fn()}
+          onRefreshArtifact={vi.fn()}
+          onRetry={vi.fn()}
+          onSign={vi.fn()}
+          onUploadDisputeEvidence={vi.fn()}
+          status="ready"
+          t={t}
+        />,
+      );
+
+      expect(screen.queryByRole('button', { name: 'agritech.marketplace.contract.signOwnParty' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'agritech.marketplace.contract.refreshArtifact' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'agritech.marketplace.contract.downloadArtifact' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'agritech.marketplace.contract.openDispute' })).toBeNull();
+
+      view.rerender(
+        <MarketplaceContract
+          contract={{
+            ...draft,
+            buyerSignedAt: '2026-08-09T10:02:00.000Z',
+            sellerSignedAt: '2026-08-09T10:03:00.000Z',
+            signedAt: '2026-08-09T10:03:00.000Z',
+            status: 'active',
+          }}
+          identityStatus={identityStatus}
+          lifecycle={{ data: lifecycle, status: 'ready' }}
+          locale="en"
+          navigate={vi.fn()}
+          onAdvanceLifecycle={vi.fn()}
+          onDownloadArtifact={vi.fn()}
+          onOpenDispute={vi.fn()}
+          onQuote={vi.fn()}
+          onRefreshArtifact={vi.fn()}
+          onRetry={vi.fn()}
+          onSign={vi.fn()}
+          onUploadDisputeEvidence={vi.fn()}
+          status="ready"
+          t={t}
+        />,
+      );
+      expect(screen.queryByRole('button', { name: 'agritech.marketplace.contract.settlement.advance' })).toBeNull();
+    },
+  );
+
+  it('exercises the remaining cart, request, verification, account, and lifecycle state transitions', () => {
+    const navigate = vi.fn();
+    const cart: CartViewDto = {
       createdAt: '2026-08-09T10:00:00.000Z',
-      id: 'ai-1',
-      kind: 'recommendation',
-      listingPublicationIds: [seed.id],
-      question: 'seed',
+      id: 'cart-coverage',
+      items: [
+        { listingPublicationId: seed.id, quantity: 2, sourceKind: 'product' },
+        { listingPublicationId: 'missing-listing', quantity: 1, sourceKind: 'product' },
+      ],
+      seller: { displayName: 'Seed cooperative', region: 'Samarqand' },
+      status: 'open',
+      updatedAt: '2026-08-09T10:00:00.000Z',
+    };
+    const onUpdate = vi.fn();
+    const cartView = render(
+      <MarketplaceCart
+        carts={{ data: [], status: 'loading' }}
+        locale="en"
+        navigate={navigate}
+        onCheckout={vi.fn()}
+        onUpdate={onUpdate}
+        products={[seed]}
+        t={t}
+      />,
+    );
+    cartView.rerender(
+      <MarketplaceCart
+        carts={{ data: [], status: 'error' }}
+        locale="en"
+        navigate={navigate}
+        onCheckout={vi.fn()}
+        onUpdate={onUpdate}
+        products={[seed]}
+        t={t}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'ui.runtime.retry' }));
+    cartView.rerender(
+      <MarketplaceCart
+        carts={{ data: [], status: 'empty' }}
+        locale="en"
+        navigate={navigate}
+        onCheckout={vi.fn()}
+        onUpdate={onUpdate}
+        products={[seed]}
+        t={t}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.hero.cta' }));
+    cartView.rerender(
+      <MarketplaceCart
+        carts={{ data: [cart], status: 'ready' }}
+        locale="en"
+        navigate={navigate}
+        onCheckout={vi.fn()}
+        onUpdate={onUpdate}
+        products={[seed]}
+        t={t}
+      />,
+    );
+    const onCheckoutAction = vi.fn();
+    cartView.rerender(
+      <MarketplaceCart
+        canCheckout={false}
+        carts={{ data: [cart], status: 'ready' }}
+        checkoutActionLabel="complete-verification"
+        checkoutHint="checkout-restricted"
+        locale="en"
+        navigate={navigate}
+        onCheckout={vi.fn()}
+        onCheckoutAction={onCheckoutAction}
+        onUpdate={onUpdate}
+        products={[seed]}
+        t={t}
+      />,
+    );
+    expect(screen.getByText('checkout-restricted')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'complete-verification' }));
+    expect(onCheckoutAction).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.cart.decrease' })[0]!);
+    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.cart.increase' })[0]!);
+    expect(onUpdate).toHaveBeenNthCalledWith(1, cart.id, seed.id, 1);
+    expect(onUpdate).toHaveBeenNthCalledWith(2, cart.id, seed.id, 3);
+    cartView.unmount();
+
+    const publicRequest = {
+      budgetUzs: 4_000_000,
+      buyerDisplayName: 'Regional buyer',
+      createdAt: '2026-08-09T10:00:00.000Z',
+      deadline: '2026-09-01',
+      id: 'request-coverage',
+      product: 'Corn seed',
+      region: 'Samarqand',
+      requirements: 'Certified only',
+      status: 'open' as const,
+      title: 'Need corn seed',
+      updatedAt: '2026-08-09T10:00:00.000Z',
+      volume: '5 t',
+    };
+    const ownedRequest: BuyerRequestViewDto = {
+      ...publicRequest,
+      id: 'owned-coverage',
+      status: 'offering',
+    };
+    const onCreate = vi.fn();
+    const onOffer = vi.fn();
+    const requestView = render(
+      <MarketplaceRequests
+        isVerified
+        locale="en"
+        myRequests={{ data: [], status: 'loading' }}
+        navigate={navigate}
+        offersByRequest={{ data: {}, status: 'loading' }}
+        onChoose={vi.fn()}
+        onCreate={onCreate}
+        onOffer={onOffer}
+        onRetry={vi.fn()}
+        requests={{ data: [], status: 'loading' }}
+        role="farmer"
+        t={t}
+      />,
+    );
+    requestView.rerender(
+      <MarketplaceRequests
+        isVerified
+        locale="en"
+        myRequests={{ data: [ownedRequest], status: 'ready' }}
+        navigate={navigate}
+        offersByRequest={{ data: { [ownedRequest.id]: [] }, status: 'empty' }}
+        onChoose={vi.fn()}
+        onCreate={onCreate}
+        onOffer={onOffer}
+        onRetry={vi.fn()}
+        requests={{ data: [publicRequest], status: 'ready' }}
+        role="farmer"
+        t={t}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.orders.noOffers')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }));
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.price'), { target: { value: '3000000' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.product.delivery'), {
+      target: { value: 'seller_delivery' },
     });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.contract.deliveryPrice'), {
+      target: { value: '250000' },
+    });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.timing'), { target: { value: '4' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.deliveryNote'), {
+      target: { value: 'Truck delivery' },
+    });
+    fireEvent.click(
+      within(screen.getByLabelText('agritech.marketplace.orders.price').closest('form')!).getByRole('button', {
+        name: 'agritech.marketplace.cancel',
+      }),
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }));
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.price'), { target: { value: '1' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.deliveryNote'), {
+      target: { value: 'Temporary note' },
+    });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.deliveryNote'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.timing'), { target: { value: '2' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.timing'), { target: { value: '' } });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.submitOffer' }));
+    expect(onOffer).toHaveBeenCalledWith(publicRequest, expect.objectContaining({ priceUzs: 1 }));
+
+    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0]!);
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.requestTitle'), {
+      target: { value: 'Complete request' },
+    });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.product'), { target: { value: 'Seed' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.volume'), { target: { value: '10 t' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.region'), { target: { value: 'Buxoro' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.deadline'), {
+      target: { value: '2026-10-01' },
+    });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.budget'), { target: { value: '7000000' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.requirements'), {
+      target: { value: 'Certified' },
+    });
+    fireEvent.click(
+      within(screen.getByLabelText('agritech.marketplace.orders.requestTitle').closest('form')!).getByRole('button', {
+        name: 'agritech.marketplace.cancel',
+      }),
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0]!);
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.product'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.volume'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.deadline'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.budget'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.requirements'), { target: { value: '' } });
+    fireEvent.submit(screen.getByLabelText('agritech.marketplace.orders.requestTitle').closest('form')!);
+    expect(onCreate).toHaveBeenLastCalledWith(expect.objectContaining({ deadline: undefined }));
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.close' }));
+
+    const requestOffer = (id: string, priceUzs: number): OfferViewDto => ({
+      createdAt: '2026-08-09T10:00:00.000Z',
+      deliveryTerms: 'pickup',
+      id,
+      priceUzs,
+      requestPublicId: ownedRequest.id,
+      seller: { displayName: `Seller ${id}`, region: 'Tashkent' },
+      status: 'pending',
+    });
+    requestView.rerender(
+      <MarketplaceRequests
+        isVerified
+        locale="en"
+        myRequests={{ data: [ownedRequest], status: 'ready' }}
+        navigate={navigate}
+        offersByRequest={{
+          data: {
+            [ownedRequest.id]: [
+              {
+                ...requestOffer('expensive', 3_000_000),
+                deliveryDays: 4,
+                deliveryPriceUzs: 250_000,
+                status: 'accepted',
+              },
+              requestOffer('cheap', 1_000_000),
+            ],
+          },
+          status: 'ready',
+        }}
+        onChoose={vi.fn()}
+        onCreate={onCreate}
+        onOffer={onOffer}
+        onRetry={vi.fn()}
+        requests={{ data: [], status: 'error' }}
+        role="farmer"
+        t={t}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.orders.unavailable')).toBeTruthy();
+    expect(screen.getByText(/Seller cheap/u)).toBeTruthy();
+    requestView.rerender(
+      <MarketplaceRequests
+        isVerified
+        locale="en"
+        myRequests={{ data: [], status: 'error' }}
+        navigate={navigate}
+        offersByRequest={{ data: {}, status: 'empty' }}
+        onChoose={vi.fn()}
+        onCreate={onCreate}
+        onOffer={onOffer}
+        onRetry={vi.fn()}
+        requests={{ data: [], status: 'empty' }}
+        role="buyer"
+        t={t}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.orders.unavailable')).toBeTruthy();
+    requestView.rerender(
+      <MarketplaceRequests
+        isVerified
+        locale="en"
+        myRequests={{ data: [], status: 'empty' }}
+        navigate={navigate}
+        offersByRequest={{ data: {}, status: 'empty' }}
+        onChoose={vi.fn()}
+        onCreate={onCreate}
+        onOffer={onOffer}
+        onRetry={vi.fn()}
+        requests={{ data: [], status: 'empty' }}
+        role="buyer"
+        t={t}
+      />,
+    );
+    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' }).at(-1)!);
+    requestView.rerender(
+      <MarketplaceRequests
+        isVerified={false}
+        locale="en"
+        myRequests={{ data: [], status: 'empty' }}
+        navigate={navigate}
+        offersByRequest={{ data: {}, status: 'empty' }}
+        onChoose={vi.fn()}
+        onCreate={onCreate}
+        onOffer={onOffer}
+        onRetry={vi.fn()}
+        requests={{ data: [], status: 'empty' }}
+        role="buyer"
+        t={t}
+      />,
+    );
+    requestView.rerender(
+      <MarketplaceRequests
+        buyerAccessHint="buyer-prerequisite"
+        isVerified={false}
+        locale="en"
+        myRequests={{ data: [], status: 'empty' }}
+        navigate={navigate}
+        offersByRequest={{ data: {}, status: 'empty' }}
+        onChoose={vi.fn()}
+        onCreate={onCreate}
+        onOffer={onOffer}
+        onRetry={vi.fn()}
+        requests={{ data: [publicRequest], status: 'ready' }}
+        role="seller"
+        sellerAccessHint="seller-prerequisite"
+        t={t}
+      />,
+    );
+    expect(screen.getByText('buyer-prerequisite')).toBeTruthy();
+    expect(screen.getByText('seller-prerequisite')).toBeTruthy();
+    fireEvent.submit(screen.getByLabelText('agritech.marketplace.orders.requestTitle').closest('form')!);
+    expect(navigate).toHaveBeenCalledWith('/verification');
+    requestView.unmount();
+
+    const verified = {
+      createdAt: '2026-08-09T10:00:00.000Z',
+      documents: [],
+      id: 'verification-terminal',
+      identityAssurance: 'mock' as const,
+      level: 'verified' as const,
+      oneIdLinked: true,
+      providerMode: 'mock' as const,
+      revision: 2,
+      role: 'buyer' as const,
+      simulation: false,
+      status: 'verified' as const,
+      step: 'complete' as const,
+      updatedAt: '2026-08-09T10:00:00.000Z',
+    };
+    const verificationView = render(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: readyVerificationProviders, status: 'ready' }}
+        t={t}
+        verification={{ data: verified, status: 'ready' }}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.account.title' }));
+    verificationView.rerender(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: readyVerificationProviders, status: 'ready' }}
+        t={t}
+        verification={{ data: { ...verified, simulation: true }, status: 'ready' }}
+      />,
+    );
+    expect(screen.getByText(/agritech\.marketplace\.verify\.simulationDisclosure/u)).toBeTruthy();
+    verificationView.rerender(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: readyVerificationProviders, status: 'ready' }}
+        t={t}
+        verification={{ data: { ...verified, simulation: true, status: 'pending', step: 'review' }, status: 'ready' }}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.verify.noFixedReviewTime')).toBeTruthy();
+    verificationView.rerender(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: readyVerificationProviders, status: 'ready' }}
+        t={t}
+        verification={{
+          data: { ...verified, simulation: false, status: 'pending', step: 'review' },
+          status: 'ready',
+        }}
+      />,
+    );
+    expect(screen.queryByText('agritech.marketplace.verify.simulationDisclosure')).toBeNull();
+    verificationView.rerender(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: readyVerificationProviders, status: 'ready' }}
+        t={t}
+        verification={{ data: { ...verified, status: 'unexpected' as never }, status: 'ready' }}
+      />,
+    );
+    expect(screen.queryByRole('status')).toBeNull();
+    verificationView.rerender(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: null, status: 'loading' }}
+        t={t}
+        verification={{ data: null, status: 'loading' }}
+      />,
+    );
+    expect(document.querySelector('.dh-skeleton-grid')).toBeTruthy();
+    verificationView.rerender(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: readyVerificationProviders, status: 'ready' }}
+        t={t}
+        verification={{
+          data: { ...verified, level: 'basic', status: 'none', step: 'identity' },
+          status: 'ready',
+        }}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.account.role.none')).toBeTruthy();
+    const emptyUpload = document.querySelector<HTMLInputElement>('input[type="file"]')!;
+    Object.defineProperty(emptyUpload, 'files', { configurable: true, value: [] });
+    fireEvent.change(emptyUpload);
+    verificationView.rerender(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: null, status: 'idle' }}
+        t={t}
+        verification={{ data: { ...verified, level: 'basic', status: 'none', step: 'identity' }, status: 'ready' }}
+      />,
+    );
+    expect(screen.getByRole('status')).toBeTruthy();
+    verificationView.rerender(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: null, status: 'error' }}
+        t={t}
+        verification={{ data: { ...verified, level: 'basic', status: 'none', step: 'identity' }, status: 'ready' }}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.verify.providerUnavailableDescription')).toBeTruthy();
+    const unavailableProviders: MarketplaceProviderReadinessDto = {
+      ...readyVerificationProviders,
+      oneId: { ...readyVerificationProviders.oneId, ready: false },
+      verificationDocuments: { ...readyVerificationProviders.verificationDocuments, ready: false },
+    };
+    verificationView.rerender(
+      <MarketplaceVerification
+        navigate={navigate}
+        onLinkIdentity={vi.fn()}
+        onRetry={vi.fn()}
+        onStart={vi.fn()}
+        onSubmit={vi.fn()}
+        onUploadDocument={vi.fn()}
+        readiness={{ data: unavailableProviders, status: 'ready' }}
+        t={t}
+        verification={{
+          data: {
+            ...verified,
+            level: 'basic',
+            oneIdLinked: false,
+            rejectionReason: undefined,
+            simulation: false,
+            status: 'rejected',
+            step: 'identity',
+          },
+          status: 'ready',
+        }}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.verify.rejectedDescription')).toBeTruthy();
+    verificationView.unmount();
+
+    const contract: ContractViewDto = {
+      actorParty: 'buyer',
+      amountUzs: 2_500_000,
+      buyerPartySnapshot: { legalName: 'Buyer cooperative', region: 'Samarqand' },
+      createdAt: '2026-08-09T10:00:00.000Z',
+      deliveryPriceUzs: 0,
+      deliveryTerms: 'pickup',
+      factoringEnabled: false,
+      id: 'account-contract',
+      lines: [],
+      revision: 1,
+      sellerPartySnapshot: { legalName: 'Seed cooperative', region: 'Toshkent' },
+      sourceType: 'cart_checkout',
+      status: 'active',
+      subject: seed.name,
+      updatedAt: '2026-08-09T10:03:00.000Z',
+    };
+    const account = render(
+      <MarketplaceAccount
+        contracts={{ data: [contract], status: 'ready' }}
+        dashboard={{
+          data: {
+            buyer: { activeDeals: 2, completedDeals: 3, openPurchaseRequests: 4 },
+            role: 'buyer',
+          } as never,
+          status: 'ready',
+        }}
+        locale="en"
+        navigate={navigate}
+        onRetry={vi.fn()}
+        samples={{ data: [], status: 'loading' }}
+        t={t}
+        verification={{ data: null, status: 'empty' }}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.verification' }));
+    fireEvent.click(screen.getAllByRole('button', { name: new RegExp(seed.name, 'u') })[0]!);
+    account.rerender(
+      <MarketplaceAccount
+        contracts={{ data: [], status: 'loading' }}
+        dashboard={{
+          data: { role: 'seller', seller: { activeDeals: 1, completedDeals: 2, pendingOffers: 3 } } as never,
+          status: 'ready',
+        }}
+        locale="en"
+        navigate={navigate}
+        onRetry={vi.fn()}
+        samples={{ data: [], status: 'empty' }}
+        t={t}
+        verification={{ data: verified, status: 'ready' }}
+      />,
+    );
+    expect(screen.getByLabelText('agritech.marketplace.account.dashboard')).toBeTruthy();
+    account.rerender(
+      <MarketplaceAccount
+        contracts={{ data: [], status: 'empty' }}
+        dashboard={{ data: { role: 'farmer' } as never, status: 'ready' }}
+        locale="en"
+        navigate={navigate}
+        onRetry={vi.fn()}
+        samples={{ data: [], status: 'empty' }}
+        t={t}
+        verification={{ data: verified, status: 'ready' }}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.empty')).toBeTruthy();
+    account.rerender(
+      <MarketplaceAccount
+        contracts={{ data: [], status: 'empty' }}
+        dashboard={{ data: null, status: 'loading' }}
+        locale="en"
+        navigate={navigate}
+        onRetry={vi.fn()}
+        samples={{
+          data: [
+            {
+              actorRole: 'requester',
+              createdAt: '2026-08-09T10:00:00.000Z',
+              delivery: { itemPriceUzs: 0, method: 'pickup', requesterPays: true },
+              id: 'account-sample',
+              listing: {
+                id: seed.id,
+                kind: 'product',
+                sampleAvailable: true,
+                seller: { displayName: 'Seed cooperative', id: seed.supplierId },
+                title: seed.name,
+              },
+              policyVersion: 1,
+              revision: 1,
+              seasonKey: '2026-Q1',
+              status: 'received',
+              updatedAt: '2026-08-09T10:00:00.000Z',
+            },
+          ],
+          status: 'ready',
+        }}
+        t={t}
+        verification={{ data: verified, status: 'ready' }}
+      />,
+    );
+    expect(screen.getByText(seed.name)).toBeTruthy();
+    account.unmount();
+
+    const lifecycleCases: LifecycleCoverageScenario[] = [
+      { actorParty: 'seller', factoring: false, fulfillment: 'ready', settlement: 'awaiting_buyer_confirmation' },
+      { actorParty: 'seller', factoring: false, fulfillment: 'in_progress', settlement: 'awaiting_buyer_confirmation' },
+      { actorParty: 'buyer', factoring: false, fulfillment: 'delivered', settlement: 'awaiting_buyer_confirmation' },
+      { actorParty: 'seller', factoring: false, fulfillment: 'completed', settlement: 'buyer_confirmed' },
+      { actorParty: 'buyer', factoring: true, fulfillment: 'completed', settlement: 'ready_to_request' },
+      { actorParty: 'seller', factoring: true, fulfillment: 'completed', settlement: 'approved' },
+      { actorParty: 'buyer', factoring: true, fulfillment: 'completed', settlement: 'seller_paid' },
+      { actorParty: 'buyer', factoring: true, fulfillment: 'completed', settlement: 'buyer_repaid' },
+      {
+        actorParty: 'buyer',
+        factoring: true,
+        fulfillment: 'completed',
+        settlement: 'awaiting_consents',
+      },
+      {
+        actorParty: 'seller',
+        factoring: true,
+        fulfillment: 'completed',
+        settlement: 'awaiting_consents',
+      },
+      {
+        actorParty: 'buyer',
+        alreadyConsented: true,
+        factoring: true,
+        fulfillment: 'completed',
+        hasAction: false,
+        settlement: 'awaiting_consents',
+      },
+      {
+        actorParty: 'seller',
+        alreadyConsented: true,
+        factoring: true,
+        fulfillment: 'completed',
+        hasAction: false,
+        settlement: 'awaiting_consents',
+      },
+      {
+        actorParty: 'seller',
+        factoring: false,
+        fulfillment: 'completed',
+        hasAction: false,
+        settlement: 'awaiting_buyer_confirmation',
+      },
+      {
+        actorParty: 'seller',
+        factoring: true,
+        fulfillment: 'completed',
+        hasAction: false,
+        settlement: 'rejected',
+      },
+    ];
+    for (const [index, scenario] of lifecycleCases.entries()) {
+      const lifecycle = contractLifecycle(`lifecycle-${index}`);
+      configureLifecycleCoverage(lifecycle, scenario, index);
+      const onAdvanceLifecycle = vi.fn();
+      const lifecycleView = render(
+        <MarketplaceContract
+          contract={{
+            ...contract,
+            actorParty: scenario.actorParty,
+            factoringEnabled: scenario.factoring,
+            id: lifecycle.contractId,
+          }}
+          identityStatus="verified"
+          lifecycle={{ data: lifecycle, status: 'ready' }}
+          locale="en"
+          navigate={navigate}
+          onAdvanceLifecycle={onAdvanceLifecycle}
+          onDownloadArtifact={vi.fn()}
+          onOpenDispute={vi.fn()}
+          onQuote={vi.fn()}
+          onRefreshArtifact={vi.fn()}
+          onRetry={vi.fn()}
+          onSign={vi.fn()}
+          onUploadDisputeEvidence={vi.fn()}
+          status="ready"
+          t={t}
+        />,
+      );
+      const advance = screen.queryByRole('button', { name: 'agritech.marketplace.contract.settlement.advance' });
+      if (scenario.hasAction === false) {
+        expect(advance).toBeNull();
+      } else {
+        fireEvent.click(advance!);
+        expect(onAdvanceLifecycle).toHaveBeenCalledOnce();
+      }
+      lifecycleView.unmount();
+    }
+
+    const contractStates = render(
+      <MarketplaceContract
+        identityStatus="verified"
+        lifecycle={{ data: null, status: 'empty' }}
+        locale="en"
+        navigate={navigate}
+        onAdvanceLifecycle={vi.fn()}
+        onDownloadArtifact={vi.fn()}
+        onOpenDispute={vi.fn()}
+        onQuote={vi.fn()}
+        onRefreshArtifact={vi.fn()}
+        onRetry={vi.fn()}
+        onSign={vi.fn()}
+        onUploadDisputeEvidence={vi.fn()}
+        status="loading"
+        t={t}
+      />,
+    );
+    expect(document.querySelector('.dh-skeleton-grid')).toBeTruthy();
+    contractStates.rerender(
+      <MarketplaceContract
+        identityStatus="verified"
+        lifecycle={{ data: null, status: 'empty' }}
+        locale="en"
+        navigate={navigate}
+        onAdvanceLifecycle={vi.fn()}
+        onDownloadArtifact={vi.fn()}
+        onOpenDispute={vi.fn()}
+        onQuote={vi.fn()}
+        onRefreshArtifact={vi.fn()}
+        onRetry={vi.fn()}
+        onSign={vi.fn()}
+        onUploadDisputeEvidence={vi.fn()}
+        status="ready"
+        t={t}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.back' }));
+    const legacyContract: ContractViewDto = { ...contract, status: 'legacy_review_required' };
+    contractStates.rerender(
+      <MarketplaceContract
+        contract={legacyContract}
+        identityStatus="verified"
+        lifecycle={{ data: contractLifecycle(legacyContract.id), status: 'ready' }}
+        locale="en"
+        navigate={navigate}
+        onAdvanceLifecycle={vi.fn()}
+        onDownloadArtifact={vi.fn()}
+        onOpenDispute={vi.fn()}
+        onQuote={vi.fn()}
+        onRefreshArtifact={vi.fn()}
+        onRetry={vi.fn()}
+        onSign={vi.fn()}
+        onUploadDisputeEvidence={vi.fn()}
+        status="ready"
+        t={t}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.contract.legacyReviewRequiredDescription')).toBeTruthy();
+    fireEvent.click(document.querySelector<HTMLButtonElement>('.dh-contract-page .dh-back')!);
+
+    const quoteContract: ContractViewDto = {
+      ...contract,
+      actorParty: 'seller',
+      deliveryPriceUzs: undefined,
+      deliveryTerms: 'seller_delivery',
+      id: 'contract-full-quote',
+      status: 'draft',
+    };
+    const onQuote = vi.fn();
+    contractStates.rerender(
+      <MarketplaceContract
+        contract={quoteContract}
+        identityStatus="verified"
+        lifecycle={{ data: contractLifecycle(quoteContract.id), status: 'ready' }}
+        locale="en"
+        navigate={navigate}
+        onAdvanceLifecycle={vi.fn()}
+        onDownloadArtifact={vi.fn()}
+        onOpenDispute={vi.fn()}
+        onQuote={onQuote}
+        onRefreshArtifact={vi.fn()}
+        onRetry={vi.fn()}
+        onSign={vi.fn()}
+        onUploadDisputeEvidence={vi.fn()}
+        status="ready"
+        t={t}
+      />,
+    );
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.contract.deliveryPrice'), {
+      target: { value: '250000' },
+    });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.timing'), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.deliveryNote'), {
+      target: { value: 'Refrigerated truck' },
+    });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.timing'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.deliveryNote'), { target: { value: '' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.timing'), { target: { value: '3' } });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.deliveryNote'), {
+      target: { value: 'Refrigerated truck' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.contract.saveDeliveryQuote' }));
+    expect(onQuote).toHaveBeenCalledWith(quoteContract, {
+      deliveryDays: 3,
+      deliveryNote: 'Refrigerated truck',
+      deliveryPriceUzs: 250_000,
+    });
+    const agreementContract: ContractViewDto = {
+      ...contract,
+      deliveryDays: 5,
+      deliveryNote: undefined,
+      deliveryPriceUzs: undefined,
+      deliveryTerms: 'by_agreement',
+      id: 'contract-by-agreement',
+      sourceType: undefined,
+    };
+    contractStates.rerender(
+      <MarketplaceContract
+        contract={agreementContract}
+        identityStatus="verified"
+        lifecycle={{ data: contractLifecycle(agreementContract.id), status: 'ready' }}
+        locale="en"
+        navigate={navigate}
+        onAdvanceLifecycle={vi.fn()}
+        onDownloadArtifact={vi.fn()}
+        onOpenDispute={vi.fn()}
+        onQuote={vi.fn()}
+        onRefreshArtifact={vi.fn()}
+        onRetry={vi.fn()}
+        onSign={vi.fn()}
+        onUploadDisputeEvidence={vi.fn()}
+        status="ready"
+        t={t}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.contract.source.direct')).toBeTruthy();
+    contractStates.rerender(
+      <MarketplaceContract
+        contract={contract}
+        identityStatus="verified"
+        lifecycle={{ data: null, status: 'empty' }}
+        locale="en"
+        navigate={navigate}
+        onAdvanceLifecycle={vi.fn()}
+        onDownloadArtifact={vi.fn()}
+        onOpenDispute={vi.fn()}
+        onQuote={vi.fn()}
+        onRefreshArtifact={vi.fn()}
+        onRetry={vi.fn()}
+        onSign={vi.fn()}
+        onUploadDisputeEvidence={vi.fn()}
+        status="ready"
+        t={t}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.contract.artifactUnavailable')).toBeTruthy();
+    contractStates.unmount();
+  });
+
+  it('keeps grounded AI informational and returns focus after closing', async () => {
+    const noMatch = aiAnswer('ai-no-match');
+    noMatch.response.recommendations = [];
+    const onAsk = vi
+      .fn()
+      .mockResolvedValueOnce(aiAnswer('ai-1'))
+      .mockRejectedValueOnce(new Error('assistant unavailable'))
+      .mockResolvedValueOnce(noMatch);
     const onOpenProduct = vi.fn();
 
     render(<MarketplaceAi locale="en" onAsk={onAsk} onOpenProduct={onOpenProduct} products={[seed]} t={t} />);
@@ -688,8 +2531,15 @@ describe('DehqonHub marketplace components', () => {
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.send' }));
 
     expect(await screen.findByText('agritech.marketplace.ai.result.recommendation')).toBeTruthy();
+    fireEvent.submit(question.closest('form')!);
+    expect(onAsk).toHaveBeenCalledOnce();
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.q.beginner' }));
+    expect(await screen.findByText('agritech.marketplace.ai.unavailable')).toBeTruthy();
     expect(screen.queryByText('Unlocalized server explanation')).toBeNull();
-    fireEvent.click(screen.getByRole('button', { name: new RegExp(seed.name, 'u') }));
+    fireEvent.change(question, { target: { value: 'unavailable crop' } });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.send' }));
+    expect(await screen.findByText('agritech.marketplace.ai.noMatch')).toBeTruthy();
+    fireEvent.click(screen.getAllByRole('button', { name: new RegExp(seed.name, 'u') })[0]!);
     expect(onOpenProduct).toHaveBeenCalledWith(seed);
 
     fireEvent.keyDown(globalThis, { key: 'Escape' });
@@ -699,15 +2549,137 @@ describe('DehqonHub marketplace components', () => {
     });
   });
 
-  it('renders grounded AI results through the current locale translator', async () => {
-    const onAsk = vi.fn().mockResolvedValue({
-      answer: 'Unlocalized server explanation',
-      createdAt: '2026-08-09T10:00:00.000Z',
-      id: 'ai-locale',
-      kind: 'recommendation',
-      listingPublicationIds: [seed.id],
-      question: 'seed',
+  it('contains focus and exposes modal semantics in the full-screen mobile AI view', () => {
+    const viewport = installMatchMedia(true);
+    try {
+      render(<MarketplaceAi locale="en" onAsk={vi.fn()} onOpenProduct={vi.fn()} products={[seed]} t={t} />);
+
+      const launcher = screen.getByRole('button', { name: 'agritech.marketplace.ai.open' });
+      fireEvent.click(launcher);
+      const dialog = screen.getByRole('dialog', { name: 'agritech.marketplace.ai.title' });
+      const input = within(dialog).getByRole('textbox', { name: 'agritech.marketplace.ai.placeholder' });
+      const closeButton = within(dialog).getByRole('button', { name: 'agritech.marketplace.ai.close' });
+      expect(dialog.getAttribute('aria-modal')).toBe('true');
+      expect(document.activeElement).toBe(input);
+
+      fireEvent.keyDown(globalThis, { key: 'ArrowDown' });
+      fireEvent.keyDown(globalThis, { key: 'Tab' });
+      expect(document.activeElement).toBe(closeButton);
+      fireEvent.keyDown(globalThis, { key: 'Tab', shiftKey: true });
+      expect(document.activeElement).toBe(input);
+      const focusable = Array.from(
+        dialog.querySelectorAll<HTMLElement>(
+          'a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled), textarea:not(:disabled), [tabindex]:not([tabindex="-1"])',
+        ),
+      );
+      launcher.focus();
+      fireEvent.keyDown(globalThis, { key: 'Tab', shiftKey: true });
+      expect(document.activeElement).toBe(focusable.at(-1));
+      focusable[0]?.focus();
+      fireEvent.keyDown(globalThis, { key: 'Tab' });
+      focusable.at(-1)?.focus();
+      fireEvent.keyDown(globalThis, { key: 'Tab' });
+      expect(document.activeElement).toBe(focusable[0]);
+      for (const element of dialog.querySelectorAll<HTMLElement>('button, input')) {
+        element.hidden = true;
+      }
+      fireEvent.keyDown(globalThis, { key: 'Tab' });
+    } finally {
+      viewport.restore();
+    }
+  });
+
+  it('mutates an AI starter cart only after explicit confirmation', async () => {
+    const answer = aiAnswer('ai-starter-cart');
+    answer.response.starterCartPreview = {
+      sellerPartitions: [{ listingPublicationIds: [seed.id], sellerPublicId: seed.supplierId }],
+      status: 'requires_confirmation',
+    };
+    const onConfirmStarterCart = vi.fn().mockResolvedValue(true);
+    render(
+      <MarketplaceAi
+        locale="en"
+        onAsk={vi.fn().mockResolvedValue(answer)}
+        onConfirmStarterCart={onConfirmStarterCart}
+        onOpenProduct={vi.fn()}
+        products={[seed]}
+        t={t}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.open' }));
+    const question = screen.getByRole('textbox', { name: 'agritech.marketplace.ai.placeholder' });
+    fireEvent.change(question, { target: { value: 'seed' } });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.send' }));
+    const confirm = await screen.findByRole('button', {
+      name: /agritech.marketplace.ai.starterCart.confirm/u,
     });
+    expect(onConfirmStarterCart).not.toHaveBeenCalled();
+
+    fireEvent.click(confirm);
+    await waitFor(() => {
+      expect(onConfirmStarterCart).toHaveBeenCalledWith(answer);
+      expect(screen.getByText('agritech.marketplace.ai.starterCart.confirmed')).toBeTruthy();
+    });
+
+    cleanup();
+    const defaultAnswer = aiAnswer('ai-default-confirmation');
+    defaultAnswer.response.starterCartPreview = {
+      sellerPartitions: [{ listingPublicationIds: [seed.id], sellerPublicId: seed.supplierId }],
+      status: 'requires_confirmation',
+    };
+    render(
+      <MarketplaceAi
+        locale="en"
+        onAsk={vi.fn().mockResolvedValue(defaultAnswer)}
+        onOpenProduct={vi.fn()}
+        products={[seed]}
+        t={t}
+      />,
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.open' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'agritech.marketplace.ai.placeholder' }), {
+      target: { value: 'seed' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.send' }));
+    const defaultConfirm = await screen.findByRole('button', {
+      name: /agritech.marketplace.ai.starterCart.confirm/u,
+    });
+    fireEvent.click(defaultConfirm);
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /agritech.marketplace.ai.starterCart.confirm/u })).toBeTruthy();
+    });
+  });
+
+  it('keeps AI starter-cart confirmation unavailable without a verified buyer capability', async () => {
+    const answer = aiAnswer('ai-unverified-cart');
+    answer.response.starterCartPreview = {
+      sellerPartitions: [{ listingPublicationIds: [seed.id], sellerPublicId: seed.supplierId }],
+      status: 'requires_confirmation',
+    };
+    render(
+      <MarketplaceAi
+        canConfirmStarterCart={false}
+        locale="en"
+        onAsk={vi.fn().mockResolvedValue(answer)}
+        onConfirmStarterCart={vi.fn()}
+        onOpenProduct={vi.fn()}
+        products={[seed]}
+        t={t}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.open' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'agritech.marketplace.ai.placeholder' }), {
+      target: { value: 'seed' },
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.send' }));
+    await screen.findByText('agritech.marketplace.ai.result.recommendation');
+    expect(screen.queryByRole('button', { name: /agritech.marketplace.ai.starterCart.confirm/u })).toBeNull();
+  });
+
+  it('renders grounded AI results through the current locale translator', async () => {
+    const onAsk = vi.fn().mockResolvedValue(aiAnswer('ai-locale'));
     const english: MarketplaceTranslate = (key) => `en:${key}`;
     const russian: MarketplaceTranslate = (key) => `ru:${key}`;
     const view = render(
@@ -723,836 +2695,5 @@ describe('DehqonHub marketplace components', () => {
     view.rerender(<MarketplaceAi locale="ru" onAsk={onAsk} onOpenProduct={vi.fn()} products={[seed]} t={russian} />);
     expect(screen.getByText('ru:agritech.marketplace.ai.result.recommendation')).toBeTruthy();
     expect(screen.queryByText('en:agritech.marketplace.ai.result.recommendation')).toBeNull();
-  });
-
-  it('copies a review login and sends a guest to sign in from where they were', async () => {
-    window.history.replaceState({}, '', '/catalog?section=seeds');
-    const writeText = vi.fn(async () => {});
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
-    const navigate = vi.fn();
-    const account = demoAccounts[0];
-
-    if (!account) {
-      throw new Error('Missing demo account fixture.');
-    }
-
-    render(<MarketplaceDemoBanner navigate={navigate} onRetry={vi.fn()} reason="guest" t={t} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.demo.signIn' }));
-    expect(navigate).toHaveBeenCalledWith(`/auth?returnUrl=${encodeURIComponent('/catalog?section=seeds')}`);
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.demo.copy' })[0] as HTMLElement);
-
-    expect(writeText).toHaveBeenCalledWith(`${account.email} / ${account.password}`);
-    expect(await screen.findByRole('button', { name: 'agritech.marketplace.demo.copied' })).toBeTruthy();
-  });
-
-  // The banner is typed against a browser, but it also renders where there is no
-  // `location` to read the current page from, and sign-in still has to lead home.
-  it('sends sign-in to the site root when there is no page to return to', () => {
-    const navigate = vi.fn();
-    vi.stubGlobal('location', undefined);
-
-    render(<MarketplaceDemoBanner navigate={navigate} onRetry={vi.fn()} reason="guest" t={t} />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.demo.signIn' }));
-
-    expect(navigate).toHaveBeenCalledWith(`/auth?returnUrl=${encodeURIComponent('/')}`);
-  });
-
-  it('leaves the credentials on screen when the browser has no clipboard', () => {
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: undefined });
-
-    render(<MarketplaceDemoBanner navigate={vi.fn()} onRetry={vi.fn()} reason="demo-catalog" t={t} />);
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.demo.copy' })[0] as HTMLElement);
-
-    expect(screen.queryByRole('button', { name: 'agritech.marketplace.demo.copied' })).toBeNull();
-    expect(screen.getByText('agritech.marketplace.demo.description')).toBeTruthy();
-  });
-
-  it('keeps the retry within reach while the catalog is unavailable', () => {
-    const navigate = vi.fn();
-    const onRetry = vi.fn();
-
-    render(
-      <MarketplaceDemoBanner navigate={navigate} onRetry={onRetry} reason="unavailable" t={t} variant="compact" />,
-    );
-
-    expect(screen.getByText('agritech.marketplace.demo.unavailable')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'ui.runtime.retry' }));
-    expect(onRetry).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.demo.title' }));
-    expect(navigate).toHaveBeenCalledWith('/');
-  });
-
-  it('states the demo reason on a compact strip without repeating the credentials', () => {
-    render(<MarketplaceDemoBanner navigate={vi.fn()} onRetry={vi.fn()} reason="guest" t={t} variant="compact" />);
-
-    expect(screen.getByText('agritech.marketplace.demo.guest')).toBeTruthy();
-    expect(screen.queryByRole('button', { name: 'agritech.marketplace.demo.copy' })).toBeNull();
-    expect(screen.queryByRole('button', { name: 'ui.runtime.retry' })).toBeNull();
-  });
-
-  it('keeps the credentials on screen when the clipboard refuses the write', async () => {
-    const writeText = vi.fn(async () => {
-      throw new Error('The clipboard permission was denied.');
-    });
-    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText } });
-
-    render(<MarketplaceDemoBanner navigate={vi.fn()} onRetry={vi.fn()} reason="guest" t={t} />);
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.demo.copy' })[0] as HTMLElement);
-
-    await waitFor(() => {
-      expect(writeText).toHaveBeenCalledOnce();
-    });
-    expect(screen.queryByRole('button', { name: 'agritech.marketplace.demo.copied' })).toBeNull();
-  });
-
-  it('leaves a blank assistant question unsent and says when the assistant is unreachable', async () => {
-    const onAsk = vi.fn().mockRejectedValue(new Error('The consultation service is down.'));
-
-    render(<MarketplaceAi locale="en" onAsk={onAsk} onOpenProduct={vi.fn()} products={[seed]} t={t} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.open' }));
-    // The send control is disabled, so a bare form submit is the way in.
-    fireEvent.submit(panel('.dh-ai-panel__composer'));
-    expect(onAsk).not.toHaveBeenCalled();
-
-    fireEvent.change(screen.getByRole('textbox', { name: 'agritech.marketplace.ai.placeholder' }), {
-      target: { value: 'cheapest seed' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.send' }));
-
-    expect(await screen.findByText('agritech.marketplace.ai.unavailable')).toBeTruthy();
-  });
-
-  it('falls back to the category mark when a product photo cannot load', () => {
-    render(<ProductMedia locale="en" product={{ ...seed, images: ['https://cdn.invalid/seed.png'] }} t={t} />);
-
-    fireEvent.error(screen.getByRole('img', { name: seed.name }));
-
-    expect(screen.getByRole('img', { name: 'agritech.marketplace.product.imageFallback' })).toBeTruthy();
-  });
-
-  it('opens every home entry point, and offers a request where a branch has no records', () => {
-    const navigate = vi.fn();
-
-    render(<MarketplaceHome {...discoveryActions()} navigate={navigate} products={[seed]} />);
-
-    fireEvent.click(screen.getByRole('button', { name: /agritech\.marketplace\.hero\.cta/u }));
-    expect(navigate).toHaveBeenLastCalledWith('/catalog');
-
-    const creates = screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' });
-    fireEvent.click(creates[0] as HTMLElement);
-    expect(navigate).toHaveBeenLastCalledWith('/requests?create=1');
-
-    fireEvent.click(screen.getByRole('button', { name: /agritech\.marketplace\.section\.seedsDescription/u }));
-    expect(navigate).toHaveBeenLastCalledWith('/catalog?section=seeds');
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.scenario.verify' }));
-    expect(navigate).toHaveBeenLastCalledWith('/verification');
-
-    fireEvent.click(screen.getAllByRole('button', { name: /agritech\.marketplace\.shelf\.seeAll/u })[0] as HTMLElement);
-    expect(navigate).toHaveBeenLastCalledWith('/catalog?section=seeds');
-
-    // Equipment and produce carry nothing in this fixture, so both shelves offer
-    // the reverse auction instead of an empty grid.
-    expect(screen.getAllByText('agritech.marketplace.catalog.noBranchRecords').length).toBe(2);
-    fireEvent.click(creates[1] as HTMLElement);
-    expect(navigate).toHaveBeenLastCalledWith('/requests?create=1');
-  });
-
-  it('narrows the catalog by region, price, stock and order, then clears every filter', () => {
-    const cheap = { ...region(seed, 'Xorazm'), id: 'seed-cheap', name: 'Barley seed', priceUzs: 400_000 };
-    const soldOut = { ...seed, id: 'seed-sold-out', name: 'Rye seed', stockQuantity: 0 };
-
-    render(
-      <MarketplaceCatalog
-        {...discoveryActions()}
-        locationSearch=""
-        navigate={vi.fn()}
-        products={[seed, cheap, soldOut]}
-      />,
-    );
-
-    const filters = within(panel('.dh-filter-panel'));
-    const resultCount = () => document.querySelectorAll('.dh-product-card').length;
-
-    fireEvent.change(filters.getByLabelText('agritech.marketplace.filter.query'), { target: { value: 'barley' } });
-    expect(resultCount()).toBe(1);
-
-    fireEvent.change(filters.getByLabelText('agritech.marketplace.filter.query'), { target: { value: '' } });
-    fireEvent.change(filters.getByLabelText('agritech.marketplace.filter.region'), { target: { value: 'Xorazm' } });
-    expect(resultCount()).toBe(1);
-
-    fireEvent.change(filters.getByLabelText('agritech.marketplace.filter.region'), { target: { value: '' } });
-    fireEvent.click(filters.getByLabelText('agritech.marketplace.filter.inStock'));
-    expect(resultCount()).toBe(2);
-
-    fireEvent.click(filters.getByLabelText('agritech.marketplace.filter.inStock'));
-    fireEvent.change(filters.getByLabelText('agritech.marketplace.filter.from'), { target: { value: '500000' } });
-    expect(resultCount()).toBe(2);
-    fireEvent.change(filters.getByLabelText('agritech.marketplace.filter.to'), { target: { value: '1000000' } });
-    expect(document.querySelector('.dh-empty')).toBeTruthy();
-
-    // The empty result offers the same reset the filter panel carries.
-    fireEvent.click(within(panel('.dh-empty')).getByRole('button', { name: 'agritech.marketplace.filter.reset' }));
-    expect(resultCount()).toBe(3);
-
-    const sort = screen.getByLabelText('agritech.marketplace.sort');
-    fireEvent.change(sort, { target: { value: 'priceAsc' } });
-    expect(panel('.dh-product-card .dh-product-card__title').textContent).toBe(cheap.name);
-    fireEvent.change(sort, { target: { value: 'priceDesc' } });
-    expect(panel('.dh-product-card .dh-product-card__title').textContent).not.toBe(cheap.name);
-  });
-
-  it('sends a visitor back to the catalog from a product that is gone, and from one that is not', () => {
-    const navigate = vi.fn();
-    const detail = (product?: ProductViewDto) => (
-      <MarketplaceProductDetail
-        {...discoveryActions()}
-        canReview={false}
-        navigate={navigate}
-        onReview={vi.fn()}
-        onRetry={vi.fn()}
-        onSample={vi.fn()}
-        product={product}
-        reviews={{ data: [], status: 'idle' }}
-        sampleUsage={{ data: { limit: 5, remaining: 0, used: 5 }, status: 'ready' }}
-        similar={[]}
-      />
-    );
-
-    const view = render(detail());
-    expect(screen.getByRole('heading', { name: 'agritech.marketplace.product.notFound' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.back' }));
-    expect(navigate).toHaveBeenLastCalledWith('/catalog');
-
-    view.rerender(detail(seed));
-    fireEvent.click(screen.getByRole('button', { name: /agritech\.marketplace\.back/u }));
-    expect(navigate).toHaveBeenLastCalledWith('/catalog');
-    // No allowance left, so the sample control states that instead of inviting one.
-    expect(screen.getByRole('button', { name: 'agritech.marketplace.samples.unavailable' })).toBeTruthy();
-  });
-
-  it('distinguishes a loading, unavailable and empty favourites page', () => {
-    const navigate = vi.fn();
-    const reload = vi.fn();
-    vi.stubGlobal('location', { ...window.location, reload });
-    const favorites = (status: 'empty' | 'error' | 'loading') => (
-      <MarketplaceFavorites {...discoveryActions()} navigate={navigate} products={[seed]} status={status} />
-    );
-
-    const view = render(favorites('loading'));
-    expect(document.querySelector('.dh-skeleton-grid')).toBeTruthy();
-
-    view.rerender(favorites('error'));
-    fireEvent.click(screen.getByRole('button', { name: 'ui.runtime.retry' }));
-    expect(reload).toHaveBeenCalledOnce();
-
-    view.rerender(favorites('empty'));
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.hero.cta' }));
-    expect(navigate).toHaveBeenLastCalledWith('/catalog');
-  });
-
-  it('opens a seller storefront from the product page and lists only that seller', () => {
-    const navigate = vi.fn();
-    render(
-      <MarketplaceProductDetail
-        {...discoveryActions()}
-        canReview={false}
-        navigate={navigate}
-        onReview={vi.fn()}
-        onRetry={vi.fn()}
-        onSample={vi.fn()}
-        product={seed}
-        reviews={{ data: [], status: 'empty' }}
-        sampleUsage={{ data: { limit: 5, remaining: 5, used: 0 }, status: 'ready' }}
-        similar={[]}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: `${seed.supplierName}` }));
-    expect(navigate).toHaveBeenLastCalledWith(`/sellers/${seed.supplierId}`);
-
-    cleanup();
-    render(
-      <MarketplaceSellerStorefront
-        {...discoveryActions()}
-        navigate={navigate}
-        products={[seed, tractor]}
-        sellerId={seed.supplierId}
-        status="ready"
-      />,
-    );
-
-    expect(screen.getByRole('heading', { level: 1, name: seed.supplierName })).toBeTruthy();
-    expect(screen.getByText(/agritech\.marketplace\.catalog\.resultCount/u).textContent).toContain(seed.region);
-    expect(screen.getByText(seed.name)).toBeTruthy();
-    expect(screen.queryByText(tractor.name)).toBeNull();
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.back' }));
-    expect(navigate).toHaveBeenLastCalledWith('/catalog');
-  });
-
-  it('distinguishes a loading, unavailable and unknown seller storefront', () => {
-    const navigate = vi.fn();
-    const reload = vi.fn();
-    vi.stubGlobal('location', { ...window.location, reload });
-    const storefront = (status: 'error' | 'idle' | 'loading' | 'ready', sellerId?: string) => (
-      <MarketplaceSellerStorefront
-        {...discoveryActions()}
-        navigate={navigate}
-        products={[seed]}
-        sellerId={sellerId}
-        status={status}
-      />
-    );
-
-    const view = render(storefront('loading', seed.supplierId));
-    expect(document.querySelector('.dh-skeleton-grid')).toBeTruthy();
-
-    view.rerender(storefront('idle', seed.supplierId));
-    expect(document.querySelector('.dh-skeleton-grid')).toBeTruthy();
-
-    view.rerender(storefront('error', seed.supplierId));
-    fireEvent.click(screen.getByRole('button', { name: 'ui.runtime.retry' }));
-    expect(reload).toHaveBeenCalledOnce();
-
-    // A loaded catalog that holds nothing for this seller is a missing storefront,
-    // not an empty one: the visitor is offered the whole catalog instead.
-    view.rerender(storefront('ready', 'seller-unknown'));
-    expect(screen.getByRole('heading', { level: 1, name: 'agritech.marketplace.seller.notFound' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.hero.cta' }));
-    expect(navigate).toHaveBeenLastCalledWith('/catalog');
-  });
-
-  it('distinguishes a loading, unavailable and empty basket', () => {
-    const navigate = vi.fn();
-    const reload = vi.fn();
-    vi.stubGlobal('location', { ...window.location, reload });
-    const basket = (status: 'empty' | 'error' | 'loading') => (
-      <MarketplaceCart
-        carts={{ data: [], status }}
-        locale="en"
-        navigate={navigate}
-        onCheckout={vi.fn()}
-        onUpdate={vi.fn()}
-        products={[]}
-        t={t}
-      />
-    );
-
-    const view = render(basket('loading'));
-    expect(document.querySelector('.dh-skeleton-grid')).toBeTruthy();
-
-    view.rerender(basket('error'));
-    fireEvent.click(screen.getByRole('button', { name: 'ui.runtime.retry' }));
-    expect(reload).toHaveBeenCalledOnce();
-
-    view.rerender(basket('empty'));
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.hero.cta' }));
-    expect(navigate).toHaveBeenLastCalledWith('/catalog');
-  });
-
-  it('asks an unverified buyer for identity even when a link opened the request form', () => {
-    window.history.replaceState({}, '', '/requests?create=1');
-    const navigate = vi.fn();
-    const onCreate = vi.fn();
-
-    render(
-      <MarketplaceRequests
-        isVerified={false}
-        locale="en"
-        myRequests={emptyResource}
-        navigate={navigate}
-        offersByRequest={{ data: {}, status: 'empty' }}
-        onChoose={vi.fn()}
-        onCreate={onCreate}
-        onOffer={vi.fn()}
-        onRetry={vi.fn()}
-        requests={emptyResource}
-        t={t}
-      />,
-    );
-
-    fireEvent.submit(panel('.dh-form'));
-    expect(navigate).toHaveBeenCalledWith('/verification');
-    expect(onCreate).not.toHaveBeenCalled();
-
-    fireEvent.click(within(panel('.dh-form')).getByRole('button', { name: 'agritech.marketplace.close' }));
-    expect(document.querySelector('.dh-form')).toBeNull();
-  });
-
-  it('says an owned request has drawn no offers yet', () => {
-    render(
-      <MarketplaceRequests
-        isVerified
-        locale="en"
-        myRequests={{ data: [ownedRequest()], status: 'ready' }}
-        navigate={vi.fn()}
-        offersByRequest={{ data: {}, status: 'ready' }}
-        onChoose={vi.fn()}
-        onCreate={vi.fn()}
-        onOffer={vi.fn()}
-        onRetry={vi.fn()}
-        requests={emptyResource}
-        t={t}
-      />,
-    );
-
-    expect(screen.getByText('agritech.marketplace.orders.noOffers')).toBeTruthy();
-  });
-
-  it('reports each identity outcome on its own page', () => {
-    const navigate = vi.fn();
-    const verification = (data: VerificationViewDto | null, status: 'error' | 'loading' | 'ready') => (
-      <MarketplaceVerification navigate={navigate} onRetry={vi.fn()} t={t} verification={{ data, status }} />
-    );
-
-    const view = render(verification(null, 'loading'));
-    expect(document.querySelector('.dh-skeleton-grid')).toBeTruthy();
-
-    view.rerender(verification(identity(), 'ready'));
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.account.title' }));
-    expect(navigate).toHaveBeenLastCalledWith('/account');
-
-    view.rerender(verification(identity({ rejectionReason: 'document_unreadable', status: 'rejected' }), 'ready'));
-    expect(screen.getByText('agritech.marketplace.verify.rejection.document_unreadable')).toBeTruthy();
-
-    view.rerender(verification(null, 'ready'));
-    fireEvent.click(screen.getByRole('button', { name: /agritech\.marketplace\.account\.role\.seller/u }));
-    expect(screen.getByText('agritech.marketplace.verify.doc.warehouse')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.account.title' }));
-    expect(navigate).toHaveBeenLastCalledWith('/account');
-  });
-
-  it('keeps the account dashboard honest when nothing has happened on it yet', () => {
-    const navigate = vi.fn();
-
-    render(
-      <MarketplaceAccount
-        contracts={emptyResource}
-        locale="en"
-        myRequests={emptyResource}
-        navigate={navigate}
-        samples={emptyResource}
-        t={t}
-        verification={{ data: null, status: 'empty' }}
-      />,
-    );
-
-    expect(screen.getByText('agritech.marketplace.empty')).toBeTruthy();
-    expect(screen.getByText('agritech.marketplace.samples.empty')).toBeTruthy();
-    expect(screen.getByText('agritech.marketplace.verify.notStarted')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.verification' }));
-    expect(navigate).toHaveBeenLastCalledWith('/verification');
-  });
-
-  it('names who may still consent on a contract, and when nobody can', () => {
-    const navigate = vi.fn();
-    const page = (contract: ContractViewDto | undefined, status: 'loading' | 'ready' = 'ready') => (
-      <MarketplaceContract
-        contract={contract}
-        identityStatus="ready"
-        locale="en"
-        navigate={navigate}
-        onQuote={vi.fn()}
-        onRetry={vi.fn()}
-        onSign={vi.fn()}
-        status={status}
-        t={t}
-      />
-    );
-
-    const view = render(page(undefined, 'loading'));
-    expect(document.querySelector('.dh-skeleton-grid')).toBeTruthy();
-
-    view.rerender(page(undefined));
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.back' }));
-    expect(navigate).toHaveBeenLastCalledWith('/account');
-
-    // A version nobody can act on any more: the page says what it is waiting for
-    // instead of offering a consent button that would be refused.
-    view.rerender(page(signedContract({ status: 'cancelled' })));
-    expect(screen.getByText('agritech.marketplace.contract.consentClosed')).toBeTruthy();
-
-    // The reader's own side already consented.
-    view.rerender(page(signedContract({ actorParty: 'seller', sellerSignedAt: '2026-08-10T10:00:00.000Z' })));
-    expect(screen.getByText('agritech.marketplace.contract.yourSignatureRecorded')).toBeTruthy();
-
-    // The buyer's signature is not this seller's, so consent is still open.
-    view.rerender(page(signedContract({ actorParty: 'seller', buyerSignedAt: '2026-08-10T10:00:00.000Z' })));
-    expect(screen.getByRole('button', { name: /agritech\.marketplace\.contract\.signOwnParty/u })).toBeTruthy();
-
-    view.rerender(page(signedContract({ status: 'legacy_review_required' })));
-    expect(screen.getByText('agritech.marketplace.contract.legacyReviewRequiredDescription')).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: /agritech\.marketplace\.back/u }));
-    expect(navigate).toHaveBeenLastCalledWith('/account');
-  });
-
-  // A basket line whose product the catalog no longer carries still has to be
-  // legible and removable: the identifier stands in for everything unknown.
-  it('keeps a basket line readable after its product leaves the catalog', () => {
-    render(
-      <MarketplaceCart
-        carts={{
-          data: [basket([{ listingPublicationId: 'ghost-1', quantity: 2, sourceKind: 'product' }], 'Seller Z')],
-          status: 'ready',
-        }}
-        locale="en"
-        navigate={vi.fn()}
-        onCheckout={vi.fn()}
-        onUpdate={vi.fn()}
-        products={[seed]}
-        t={t}
-      />,
-    );
-
-    expect(screen.getByText('agritech.marketplace.product.unavailable')).toBeTruthy();
-    expect(screen.getByText('ghost-1')).toBeTruthy();
-    // Nothing priced, so the line total and the basket total stay blank rather
-    // than claiming a number the page cannot stand behind.
-    expect(screen.getByText('—')).toBeTruthy();
-  });
-
-  it('accepts a request that clears every optional field it offered', () => {
-    const onCreate = vi.fn();
-    window.history.replaceState({}, '', '/requests?create=1');
-
-    render(
-      <MarketplaceRequests
-        isVerified
-        locale="en"
-        myRequests={emptyResource}
-        navigate={vi.fn()}
-        offersByRequest={{ data: {}, status: 'empty' }}
-        onChoose={vi.fn()}
-        onCreate={onCreate}
-        onOffer={vi.fn()}
-        onRetry={vi.fn()}
-        requests={emptyResource}
-        t={t}
-      />,
-    );
-
-    const form = panel('.dh-form');
-    const filled: ReadonlyArray<readonly [string, string]> = [
-      ['agritech.marketplace.orders.product', 'Corn seed'],
-      ['agritech.marketplace.orders.volume', '40 t'],
-      ['agritech.marketplace.orders.deadline', '2026-09-01'],
-      ['agritech.marketplace.orders.budget', '2500000'],
-      ['agritech.marketplace.orders.requirements', 'Certified seed only.'],
-    ];
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.requestTitle'), {
-      target: { value: 'Barley for spring' },
-    });
-    for (const [field, value] of filled) {
-      const input = within(form).getByLabelText(field);
-      fireEvent.change(input, { target: { value } });
-      fireEvent.change(input, { target: { value: '' } });
-    }
-    fireEvent.submit(form);
-
-    // Only the title is required, and every cleared field is sent as absent
-    // rather than as an empty string the API would have to interpret.
-    expect(onCreate).toHaveBeenCalledWith({
-      budgetUzs: undefined,
-      deadline: undefined,
-      product: undefined,
-      region: '',
-      requirements: undefined,
-      title: 'Barley for spring',
-      volume: undefined,
-    });
-  });
-
-  it('sends a bare offer once the seller clears the terms it filled in', () => {
-    const onOffer = vi.fn();
-
-    render(
-      <MarketplaceRequests
-        isVerified
-        locale="en"
-        myRequests={emptyResource}
-        navigate={vi.fn()}
-        offersByRequest={{ data: {}, status: 'empty' }}
-        onChoose={vi.fn()}
-        onCreate={vi.fn()}
-        onOffer={onOffer}
-        onRetry={vi.fn()}
-        requests={{ data: [ownedRequest({ id: 'request-9' })], status: 'ready' }}
-        role="seller"
-        t={t}
-      />,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }));
-    const form = panel('.dh-inline-form');
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.price'), {
-      target: { value: '2400000' },
-    });
-    const timing = within(form).getByLabelText('agritech.marketplace.orders.timing');
-    const note = within(form).getByLabelText('agritech.marketplace.orders.deliveryNote');
-    fireEvent.change(timing, { target: { value: '7' } });
-    fireEvent.change(timing, { target: { value: '' } });
-    fireEvent.change(note, { target: { value: 'Delivered to the gate.' } });
-    fireEvent.change(note, { target: { value: '' } });
-    fireEvent.submit(form);
-
-    expect(onOffer).toHaveBeenCalledWith(ownedRequest({ id: 'request-9' }), {
-      deliveryDays: undefined,
-      deliveryNote: undefined,
-      deliveryTerms: 'by_agreement',
-      priceUzs: 2_400_000,
-    });
-  });
-
-  it('reads a request feed entry that carries neither a budget nor requirements', () => {
-    render(
-      <MarketplaceRequests
-        isVerified
-        locale="en"
-        myRequests={emptyResource}
-        navigate={vi.fn()}
-        offersByRequest={{ data: {}, status: 'empty' }}
-        onChoose={vi.fn()}
-        onCreate={vi.fn()}
-        onOffer={vi.fn()}
-        onRetry={vi.fn()}
-        requests={{ data: [ownedRequest({ id: 'request-9' })], status: 'ready' }}
-        t={t}
-      />,
-    );
-
-    expect(screen.getByText('Corn seed for autumn')).toBeTruthy();
-    expect(screen.queryByText('agritech.marketplace.orders.budget')).toBeNull();
-  });
-
-  it('prices a request feed entry that states a budget and its requirements', () => {
-    render(
-      <MarketplaceRequests
-        isVerified
-        locale="en"
-        myRequests={emptyResource}
-        navigate={vi.fn()}
-        offersByRequest={{ data: {}, status: 'empty' }}
-        onChoose={vi.fn()}
-        onCreate={vi.fn()}
-        onOffer={vi.fn()}
-        onRetry={vi.fn()}
-        requests={{
-          data: [
-            ownedRequest({
-              budgetUzs: 45_000_000,
-              id: 'request-9',
-              requirements: 'Certified seed only',
-            }),
-          ],
-          status: 'ready',
-        }}
-        t={t}
-      />,
-    );
-
-    expect(screen.getByText('Certified seed only')).toBeTruthy();
-    expect(document.querySelector('.dh-request-card__head strong')?.textContent).toContain('45');
-  });
-
-  it('states a rejected identity that came back without a stated reason', () => {
-    render(
-      <MarketplaceVerification
-        navigate={vi.fn()}
-        onRetry={vi.fn()}
-        t={t}
-        verification={{ data: identity({ status: 'rejected' }), status: 'ready' }}
-      />,
-    );
-
-    expect(screen.getByText('agritech.marketplace.verify.rejectedDescription')).toBeTruthy();
-  });
-
-  // A contract that is running: both signatures are on it, the delivery window is
-  // fixed, and nobody outside the two parties has anything left to consent to.
-  it('reads an active contract as a record rather than a pending signature', () => {
-    const active = signedContract({
-      buyerSignedAt: '2026-08-10T09:00:00.000Z',
-      deliveryDays: 5,
-      deliveryPriceUzs: 150_000,
-      deliveryTerms: 'seller_delivery',
-      sellerSignedAt: '2026-08-10T10:00:00.000Z',
-      status: 'active',
-    });
-
-    render(
-      <MarketplaceContract
-        contract={active}
-        identityStatus="ready"
-        locale="en"
-        navigate={vi.fn()}
-        onQuote={vi.fn()}
-        onRetry={vi.fn()}
-        onSign={vi.fn()}
-        status="ready"
-        t={t}
-      />,
-    );
-
-    expect(screen.queryByRole('button', { name: 'agritech.marketplace.contract.signOwnParty' })).toBeNull();
-    expect(screen.getByText('agritech.marketplace.contract.yourSignatureRecorded')).toBeTruthy();
-    expect(screen.getAllByText('agritech.marketplace.contract.signedAt')).toHaveLength(2);
-    expect(screen.getByText('agritech.marketplace.orders.deliveryDays')).toBeTruthy();
-    expect(document.querySelector('.dh-inline-form')).toBeNull();
-  });
-
-  // The document is where a reader decides whether to sign, so it names the two
-  // organizations. It printed their raw uuids before, and a contract that
-  // outlived a party's organization falls back to a label rather than an id.
-  it('names both parties and falls back to a label for an unnamed one', () => {
-    const named = signedContract({
-      buyerPartySnapshot: { legalName: 'Xaridor Demo Savdo', region: 'Samarqand' },
-      sellerPartySnapshot: { legalName: 'Dehqon Bozori Kooperativi', region: 'Tashkent' },
-    });
-    const { unmount } = render(
-      <MarketplaceContract
-        contract={named}
-        identityStatus="ready"
-        locale="en"
-        navigate={vi.fn()}
-        onQuote={vi.fn()}
-        onRetry={vi.fn()}
-        onSign={vi.fn()}
-        status="ready"
-        t={t}
-      />,
-    );
-
-    expect(screen.getByText('Xaridor Demo Savdo')).toBeTruthy();
-    expect(screen.getByText('Dehqon Bozori Kooperativi')).toBeTruthy();
-    expect(screen.queryByText('buyer-1')).toBeNull();
-    expect(screen.queryByText('seller-a')).toBeNull();
-    unmount();
-
-    render(
-      <MarketplaceContract
-        contract={signedContract({
-          buyerPartySnapshot: { legalName: '', region: 'Samarqand' },
-          sellerPartySnapshot: { legalName: '', region: 'Tashkent' },
-        })}
-        identityStatus="ready"
-        locale="en"
-        navigate={vi.fn()}
-        onQuote={vi.fn()}
-        onRetry={vi.fn()}
-        onSign={vi.fn()}
-        status="ready"
-        t={t}
-      />,
-    );
-
-    // Neither snapshot carries a legal name, so both sides read as unnamed rather
-    // than as an empty line where a party belongs.
-    expect(screen.getAllByText('agritech.marketplace.contract.partyUnnamed').length).toBe(2);
-  });
-
-  it('quotes a delivery the seller owes without inventing optional terms', () => {
-    const onQuote = vi.fn();
-    const quotable = signedContract({ actorParty: 'seller', deliveryTerms: 'seller_delivery' });
-
-    render(
-      <MarketplaceContract
-        contract={quotable}
-        identityStatus="ready"
-        locale="en"
-        navigate={vi.fn()}
-        onQuote={onQuote}
-        onRetry={vi.fn()}
-        onSign={vi.fn()}
-        status="ready"
-        t={t}
-      />,
-    );
-
-    const form = panel('.dh-inline-form');
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.contract.deliveryPrice'), {
-      target: { value: '150000' },
-    });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.timing'), { target: { value: '3' } });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.timing'), { target: { value: '' } });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.deliveryNote'), {
-      target: { value: 'By the gate.' },
-    });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.deliveryNote'), {
-      target: { value: '' },
-    });
-    fireEvent.submit(form);
-
-    expect(onQuote).toHaveBeenCalledWith(quotable, {
-      deliveryDays: undefined,
-      deliveryNote: undefined,
-      deliveryPriceUzs: 150_000,
-    });
-  });
-
-  it('holds the quantity at one when the stepper field is emptied', () => {
-    const onAdd = vi.fn();
-
-    render(
-      <MarketplaceProductDetail
-        {...discoveryActions()}
-        canReview={false}
-        navigate={vi.fn()}
-        onAdd={onAdd}
-        onReview={vi.fn()}
-        onRetry={vi.fn()}
-        onSample={vi.fn()}
-        product={seed}
-        reviews={emptyResource}
-        sampleUsage={{ data: { limit: 5, remaining: 5, used: 0 }, status: 'ready' }}
-        similar={[]}
-      />,
-    );
-
-    fireEvent.change(screen.getByLabelText('agritech.marketplace.product.quantity'), { target: { value: '' } });
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }));
-
-    expect(onAdd).toHaveBeenCalledWith(seed, 1);
-  });
-
-  it('keeps the assistant open on any key but Escape, and says when nothing matched', async () => {
-    const onAsk = vi.fn().mockResolvedValue({ kind: 'cheapest', listingPublicationIds: [] });
-
-    render(<MarketplaceAi locale="en" onAsk={onAsk} onOpenProduct={vi.fn()} products={[seed]} t={t} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.open' }));
-    fireEvent.keyDown(window, { key: 'Enter' });
-    expect(document.querySelector('.dh-ai-panel')).toBeTruthy();
-
-    fireEvent.change(screen.getByRole('textbox', { name: 'agritech.marketplace.ai.placeholder' }), {
-      target: { value: 'cheapest gold' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.send' }));
-
-    expect(await screen.findByText('agritech.marketplace.ai.noMatch')).toBeTruthy();
-
-    fireEvent.keyDown(window, { key: 'Escape' });
-    expect(document.querySelector('.dh-ai-panel')).toBeNull();
-  });
-
-  // The quick prompts are the assistant's own suggestions: one click has to ask the
-  // question for the visitor, carrying the kind that prompt stands for.
-  it('asks a quick prompt on the visitor behalf without typing anything', async () => {
-    const onAsk = vi.fn().mockResolvedValue({ id: 'ai-quick', kind: 'find_cheaper', listingPublicationIds: [seed.id] });
-
-    render(<MarketplaceAi locale="en" onAsk={onAsk} onOpenProduct={vi.fn()} products={[seed]} t={t} />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.open' }));
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.q.cheaper' }));
-
-    expect(onAsk).toHaveBeenCalledWith('agritech.marketplace.ai.q.cheaper', 'find_cheaper');
-    expect(await screen.findByText('agritech.marketplace.ai.result.findCheaper')).toBeTruthy();
   });
 });

@@ -10,7 +10,6 @@ export * from './user';
 
 export * from './client-registry';
 export * from './service-options';
-export * from './toast-rule-catalog';
 export * from './toast-rules';
 
 // Better-Auth client integrations (our additions)

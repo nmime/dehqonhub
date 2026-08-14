@@ -332,6 +332,7 @@ initialize() {
 
   if [[ ! -e "${PRODUCTION_ENV}" ]]; then
     install -m 600 "${SOURCE_ROOT}/.env.production.example" "${PRODUCTION_ENV}"
+    upsert_environment_value "${PRODUCTION_ENV}" PRIMARY_APP user-app
     upsert_environment_value "${PRODUCTION_ENV}" COMPOSE_DOMAIN_MODE external-proxy
     upsert_environment_value "${PRODUCTION_ENV}" COMPOSE_TLS_MODE external
     upsert_environment_value "${PRODUCTION_ENV}" EXTERNAL_PROXY_PUBLIC_MODE per-app-domains
@@ -439,16 +440,42 @@ install_node() {
     log "installed Node.js ${expected} from the checksummed official binary"
   fi
 
-  if ! command -v corepack >/dev/null 2>&1 || [[ "$(corepack --version)" != "${COREPACK_VERSION}" ]]; then
-    npm_config_prefix=/usr/local npm install --global "corepack@${COREPACK_VERSION}"
-  fi
-  corepack install --global "pnpm@${PNPM_VERSION}"
-  corepack enable --install-directory /usr/local/bin pnpm
+  install_corepack
   [[ "$(pnpm --version)" == "${PNPM_VERSION}" ]] || die 'pnpm activation failed'
 }
 
+install_corepack() {
+  # Keep the pinned Corepack package in a controller-owned prefix. Installing it
+  # into /usr/local directly makes npm create every package-manager shim and
+  # abort with EEXIST when an operator or an earlier Node installation already
+  # owns /usr/local/bin/corepack. --no-bin-links installs only the package; the
+  # pinned CLI then enables pnpm explicitly without replacing that existing
+  # Corepack command (or the unrelated yarn shims).
+  local install_root="${1:-/usr/local/lib/nrb-corepack}"
+  local shim_root="${2:-/usr/local/bin}"
+  local node_binary="${3:-/usr/local/bin/node}"
+  local corepack_cli="${install_root}/lib/node_modules/corepack/dist/corepack.js"
+
+  if [[ -e "${install_root}" && ( ! -d "${install_root}" || -L "${install_root}" ) ]]; then
+    die "Corepack install root must be a real directory: ${install_root}"
+  fi
+  install -d -m 0755 "${install_root}"
+
+  if [[ ! -f "${corepack_cli}" ]] || \
+    [[ "$("${node_binary}" "${corepack_cli}" --version 2>/dev/null)" != "${COREPACK_VERSION}" ]]; then
+    npm_config_prefix="${install_root}" npm install --global --no-bin-links --no-audit --no-fund \
+      "corepack@${COREPACK_VERSION}"
+  fi
+
+  [[ -f "${corepack_cli}" ]] || die "Corepack installation missing CLI: ${corepack_cli}"
+  [[ "$("${node_binary}" "${corepack_cli}" --version)" == "${COREPACK_VERSION}" ]] || \
+    die 'Corepack version verification failed'
+  "${node_binary}" "${corepack_cli}" install --global "pnpm@${PNPM_VERSION}"
+  "${node_binary}" "${corepack_cli}" enable --install-directory "${shim_root}" pnpm
+}
+
 install_firewall() {
-  [[ "${ENABLE_UFW}" == 'true' ]] || return
+  [[ "${ENABLE_UFW}" == 'true' ]] || return 0
   apt_install ufw
   ufw allow "${SSH_PORT}/tcp"
   ufw allow 80/tcp
@@ -638,7 +665,7 @@ validate_configuration() {
   database_mode="$(environment_value COMPOSE_DATABASE_MODE)"
   database_engine="$(environment_value DATABASE_ENGINE)"
   database_engine="${database_engine:-postgres}"
-  configured_profiles=",$(environment_value COMPOSE_PROFILES),"
+  configured_profiles=",$(selected_profiles),"
   public_domain="$(environment_value PUBLIC_DOMAIN)"
   # An immutable published tag is the deployment identity only when images are pulled.
   # Locally built images carry the same tag without a registry, and a native host has
@@ -802,10 +829,25 @@ public_hosts() {
     --server-env "${SERVER_ENV}" --production-env "${PRODUCTION_ENV}"
 }
 
+certificate_dns_names() {
+  local certificate="${1}"
+  openssl x509 -in "${certificate}" -noout -ext subjectAltName |
+    tr ',' '\n' |
+    sed -n 's/^[[:space:]]*DNS:\([^[:space:]]*\)[[:space:]]*$/\1/p' |
+    sort -u
+}
+
 certificate_covers_domains() {
-  local certificate="/etc/letsencrypt/live/${CERTIFICATE_NAME}/fullchain.pem" required
+  local certificate="${1:-/etc/letsencrypt/live/${CERTIFICATE_NAME}/fullchain.pem}" required
   [[ -f "${certificate}" ]] || return 1
   openssl x509 -checkend 604800 -noout -in "${certificate}" >/dev/null || return 1
+  if [[ "${CERTIFICATE_MODE}" == 'exact-hosts' ]]; then
+    local actual_names required_names
+    actual_names="$(certificate_dns_names "${certificate}")" || return 1
+    required_names="$(public_hosts | sed '/^[[:space:]]*$/d' | sort -u)" || return 1
+    [[ -n "${required_names}" && "${actual_names}" == "${required_names}" ]] || return 1
+    return 0
+  fi
   while IFS= read -r required; do
     openssl x509 -in "${certificate}" -noout -checkhost "${required}" >/dev/null || return 1
   done < <(public_hosts)
@@ -858,18 +900,16 @@ ensure_certificate() {
 }
 
 install_compose_unit() {
-  local deploy_group deploy_home pull_line no_build
+  local deploy_group deploy_home pull_line
   deploy_group="$(id -gn "${DEPLOY_USER}")"
   deploy_home="$(resolve_deploy_home)"
-  # Registry provenance pulls immutable tags before starting and never builds.
-  # Local provenance has nothing to pull, and the wrapper adds --build itself — so
-  # passing --no-build too would make Compose reject the invocation outright.
+  # Registry provenance pulls immutable tags before starting. Local provenance
+  # is built once by deploy() before systemd starts. In both cases the unit only
+  # activates the already-resolved immutable images and must never rebuild them.
   if [[ "${IMAGE_SOURCE}" == 'registry' ]]; then
     pull_line="ExecStartPre=/usr/local/bin/node ${APP_ROOT}/scripts/compose-production.mjs pull --env-file=${PRODUCTION_ENV}"
-    no_build=' --no-build'
   else
-    pull_line="# COMPOSE_IMAGE_SOURCE=local builds images on this host; nothing to pull."
-    no_build=''
+    pull_line="# COMPOSE_IMAGE_SOURCE=local was prebuilt by nrb-server deploy; nothing to pull."
   fi
   cat >/etc/systemd/system/nest-react-boilerplate.service <<UNIT
 [Unit]
@@ -887,7 +927,7 @@ SupplementaryGroups=docker
 WorkingDirectory=${APP_ROOT}
 Environment="HOME=${deploy_home}"
 ${pull_line}
-ExecStart=/usr/local/bin/node ${APP_ROOT}/scripts/compose-production.mjs up --env-file=${PRODUCTION_ENV} -d --remove-orphans --wait --wait-timeout=300${no_build}
+ExecStart=/usr/local/bin/node ${APP_ROOT}/scripts/compose-production.mjs up --env-file=${PRODUCTION_ENV} -d --remove-orphans --wait --wait-timeout=300 --no-build
 TimeoutStartSec=600
 
 [Install]
@@ -928,7 +968,7 @@ release_native() {
   # Which optional processes this topology needs, derived from the rendered edge
   # rather than restated: the SSR site is a process even when SPAs come from disk.
   local profiles
-  profiles="$(environment_value COMPOSE_PROFILES)"
+  profiles="$(selected_profiles)"
   [[ "${profiles}" != *discord* ]] || flags+=(--pm2-flag=PM2_ENABLE_DISCORD)
   [[ "${profiles}" != *telegram* ]] || flags+=(--pm2-flag=PM2_ENABLE_TELEGRAM)
   [[ "${profiles}" != *notification-* ]] || flags+=(--pm2-flag=PM2_ENABLE_NOTIFICATIONS)
@@ -1126,6 +1166,16 @@ expected_ports() {
     --server-env "${SERVER_ENV}" --production-env "${PRODUCTION_ENV}"
 }
 
+deselected_apps() {
+  /usr/local/bin/node "${APP_ROOT}/scripts/single-server-deployment.mjs" deselected-apps \
+    --server-env "${SERVER_ENV}" --production-env "${PRODUCTION_ENV}"
+}
+
+selected_profiles() {
+  /usr/local/bin/node "${APP_ROOT}/scripts/single-server-deployment.mjs" enabled-profiles \
+    --server-env "${SERVER_ENV}" --production-env "${PRODUCTION_ENV}"
+}
+
 check_loopback_bindings() {
   local entries=() entry port addresses
   mapfile -t entries < <(expected_ports)
@@ -1163,6 +1213,22 @@ check_application_readiness() {
   done
 }
 
+check_no_deselected_compose_apps() {
+  local deselected running_services service
+  deselected="$(deselected_apps)" || die 'could not derive deselected production applications'
+  running_services="$(
+    run_as_deploy docker ps \
+      --filter "label=com.docker.compose.project.working_dir=${APP_ROOT}" \
+      --format '{{.Label "com.docker.compose.service"}}'
+  )" || die 'could not inspect running production Compose services'
+  while IFS= read -r service; do
+    [[ -n "${service}" ]] || continue
+    if grep -Fxq "${service}" <<<"${running_services}"; then
+      die "deselected production application is still running: ${service}"
+    fi
+  done <<<"${deselected}"
+}
+
 check_compose_health() {
   local state
   state="$(run_as_deploy /usr/local/bin/node "${APP_ROOT}/scripts/compose-production.mjs" ps \
@@ -1177,13 +1243,14 @@ check_compose_health() {
       end
     )
   ' <<<"${state}" >/dev/null || die 'one or more production Compose services are stopped or unhealthy'
+  check_no_deselected_compose_apps
 }
 
 # The PM2 apps this topology is supposed to be running, derived from the same flags
 # release_native passes, so the health check cannot pass with a worker missing.
 expected_pm2_apps() {
   local profiles flags=()
-  profiles="$(environment_value COMPOSE_PROFILES)"
+  profiles="$(selected_profiles)"
   [[ "${profiles}" != *discord* ]] || flags+=(--pm2-flag=PM2_ENABLE_DISCORD)
   [[ "${profiles}" != *telegram* ]] || flags+=(--pm2-flag=PM2_ENABLE_TELEGRAM)
   [[ "${profiles}" != *notification-* ]] || flags+=(--pm2-flag=PM2_ENABLE_NOTIFICATIONS)

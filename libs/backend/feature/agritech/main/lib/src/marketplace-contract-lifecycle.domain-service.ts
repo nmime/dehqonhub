@@ -53,16 +53,14 @@ const defaultTimeouts: MarketplaceContractProviderTimeouts = {
 
 function hasUnsafeEvidenceFileNameCharacter(value: string): boolean {
   return [...value].some((character) => {
-    // Every rejected code point below is inside the BMP, so the first UTF-16 unit of a
-    // whole character identifies it and a surrogate pair can never match either range.
-    const codeUnit = character.charCodeAt(0);
+    const codePoint = character.codePointAt(0) ?? 0;
     return (
       character === '/' ||
       character === '\\' ||
-      codeUnit <= 0x1f ||
-      codeUnit === 0x7f ||
-      (codeUnit >= 0x202a && codeUnit <= 0x202e) ||
-      (codeUnit >= 0x2066 && codeUnit <= 0x2069)
+      codePoint <= 0x1f ||
+      codePoint === 0x7f ||
+      (codePoint >= 0x202a && codePoint <= 0x202e) ||
+      (codePoint >= 0x2066 && codePoint <= 0x2069)
     );
   });
 }
@@ -104,7 +102,9 @@ async function callProvider<T>(timeoutMs: number, invoke: (signal: AbortSignal) 
       }),
     ]);
   } finally {
-    clearTimeout(timer);
+    if (timer) {
+      clearTimeout(timer);
+    }
   }
 }
 
@@ -567,6 +567,12 @@ export class MarketplaceContractLifecycleDomainService {
   getLifecycle(owner: AgriTechOwner, contractId: string): Promise<MarketplaceContractLifecycle> {
     return this.lifecycleRepository
       .getLifecycle(owner, contractId)
+      .then((result) => unwrap(result, 'contract-lifecycle'));
+  }
+
+  getLifecycleForAdmin(tenantId: string, contractId: string): Promise<MarketplaceContractLifecycle> {
+    return this.lifecycleRepository
+      .getLifecycleForAdmin(tenantId, contractId)
       .then((result) => unwrap(result, 'contract-lifecycle'));
   }
 

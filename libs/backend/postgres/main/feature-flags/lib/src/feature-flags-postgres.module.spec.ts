@@ -1,4 +1,4 @@
-// @requirements REQ-NOTIFY-PREFERENCE-006
+// @requirements REQ-AGRITECH-DEMO-024
 import { describe, expect, it } from 'vitest';
 import { FeatureFlagProviderToken, FeatureFlagRepositoryToken } from '@app/common-feature-flags';
 import { FeatureFlagEntity } from './infrastructure/data-access/entities';

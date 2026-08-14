@@ -309,7 +309,7 @@ falling back to example domains.
 | Variable                     | Supported values                                                                                                                       |
 | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
 | `PUBLIC_DOMAIN`              | Base domain such as `example.com`; no scheme, path, port, or wildcard.                                                                 |
-| `PRIMARY_APP`                | `landing-app` or `site-app`; owns the apex domain.                                                                                     |
+| `PRIMARY_APP`                | Selected root-capable frontend that owns the apex. DehqonHub requires `user-app`.                                                      |
 | `DATABASE_ENGINE`            | `postgres` or `mongodb`; independent from ownership but must match auth persistence and provider secrets.                              |
 | `COMPOSE_DATABASE_MODE`      | `bundled-db` or `external-db`.                                                                                                         |
 | `COMPOSE_DOMAIN_MODE`        | `single-domain`, `per-app-domains`, or `external-proxy`.                                                                               |

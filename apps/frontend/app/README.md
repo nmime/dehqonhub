@@ -4,8 +4,9 @@
 
 This app owns the DehqonHub marketplace and authenticated user SPA shell. Keep reusable user
 features, API wrappers, runtime helpers, and shared UI in `libs/frontend/**`.
-`site-app` is the Vike SSR surface; do not retire or replace `user-app` without
-explicit parity work.
+For this product, `user-app` is the only selected public web application and
+owns the apex. The repository's landing and Vike site projects remain
+unselected reference renderers.
 
 ## Commands
 
@@ -18,15 +19,18 @@ pnpm run test:storybook
 pnpm run frontend:fsd:check
 ```
 
-`storybook/home.stories.tsx` composes the DehqonHub home screen with deterministic
-providers and an honest empty catalog. Keep routing, authentication, API
-behavior, Telegram integration, and complete account flows in `user-app:e2e`.
+`storybook/home.stories.tsx` composes the DehqonHub home and catalog with a
+deterministic, realistic multi-category review catalog. Those records are
+Storybook-only fixtures; production continues to render API data and the
+explicitly labelled, feature-flagged demo catalog. Keep routing,
+authentication, API behavior, Telegram integration, local-favorite behavior,
+and complete account flows in `user-app:e2e` and `user-app:e2e-authenticated`.
 
 ## Telegram Mini App and browser shell
 
 The same `user-app` bundle is the canonical Telegram Mini App and normal web
 application. Configure BotFather with
-`https://user-app.example.com/telegram-mini-app`; `/tma` and `/tma/auth` remain
+`https://dehqonhub.uz/telegram-mini-app`; `/tma` and `/tma/auth` remain
 supported launch aliases.
 
 - `MiniAppProvider` in `@app/frontend-runtime` detects Telegram without making

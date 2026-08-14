@@ -1,9 +1,7 @@
 # AgriTech Platform
 
-This is the canonical product and operator guide for the AgriTech marketplace
-derived from the Uzbekistan market research in `docs/research/report_en.html`
-and `docs/research/report_ru.html`. The selected product is intentionally larger
-than the research report's twelve-week MVP: it owns the input marketplace,
+This is the canonical product and operator guide for DehqonHub. The platform
+owns the input marketplace,
 output aggregation, partner controls, farmer field operations, fulfillment,
 payments, advisories, analytics, and pilot governance as one tenant-isolated
 platform.

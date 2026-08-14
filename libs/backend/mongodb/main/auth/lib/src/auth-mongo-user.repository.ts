@@ -65,6 +65,20 @@ export class MongoAuthUserRepository implements AuthUserRepositoryPort {
   ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError> {
     return repositoryResult(this.update(id, tenantId, { lastLoginAt: loggedInAt }));
   }
+  verifyEmail(
+    id: string,
+    tenantId = DefaultAuthTenantId,
+    verifiedAt = new Date(),
+  ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError> {
+    return repositoryResult(this.verifyEmailOnce(id, tenantId, verifiedAt));
+  }
+  replacePassword(
+    id: string,
+    passwordHash: string,
+    tenantId = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError> {
+    return repositoryResult(this.replacePasswordAndAdvanceRevision(id, tenantId, passwordHash));
+  }
   setAvatar(
     id: string,
     input: { url: string; hash: string; status: AuthUserAvatarStatus },
@@ -96,6 +110,8 @@ export class MongoAuthUserRepository implements AuthUserRepositoryPort {
       email: input.email?.trim().toLowerCase() || null,
       displayName: input.displayName ?? '',
       passwordHash: input.passwordHash ?? '',
+      emailVerifiedAt: input.emailVerifiedAt ?? null,
+      credentialRevision: input.credentialRevision ?? 0,
       status: input.status ?? 'active',
       locale: input.locale ?? defaultLocale,
       theme: input.theme ?? 'system',
@@ -166,6 +182,30 @@ export class MongoAuthUserRepository implements AuthUserRepositoryPort {
     );
     return document ? toMongoAuthUserRecord(this.database, document) : null;
   }
+  private async verifyEmailOnce(
+    id: string,
+    tenantId: string,
+    verifiedAt: Date,
+  ): Promise<AuthUserPersistenceRecord | null> {
+    const document = await collection(this.database, AuthMongoCollections.users).findOneAndUpdate(
+      { _id: id, tenantId },
+      { $set: { emailVerifiedAt: verifiedAt, updatedAt: new Date() } },
+      { returnDocument: 'after', includeResultMetadata: false },
+    );
+    return document ? toMongoAuthUserRecord(this.database, document) : null;
+  }
+  private async replacePasswordAndAdvanceRevision(
+    id: string,
+    tenantId: string,
+    passwordHash: string,
+  ): Promise<AuthUserPersistenceRecord | null> {
+    const document = await collection(this.database, AuthMongoCollections.users).findOneAndUpdate(
+      { _id: id, tenantId },
+      { $inc: { credentialRevision: 1 }, $set: { passwordHash, updatedAt: new Date() } },
+      { returnDocument: 'after', includeResultMetadata: false },
+    );
+    return document ? toMongoAuthUserRecord(this.database, document) : null;
+  }
   private async syncAvatar(
     id: string,
     tenantId: string,
@@ -202,6 +242,8 @@ export async function toMongoAuthUserRecord(
     email: document.email as string | null,
     displayName: String(document.displayName),
     passwordHash: String(document.passwordHash),
+    emailVerifiedAt: document.emailVerifiedAt instanceof Date ? document.emailVerifiedAt : null,
+    credentialRevision: Number.isSafeInteger(document.credentialRevision) ? Number(document.credentialRevision) : 0,
     status: document.status as AuthUserPersistenceRecord['status'],
     roles: access.roleKeys,
     permissions: access.permissionKeys,

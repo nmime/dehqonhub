@@ -53,7 +53,7 @@ describe('WebSocketResponseTransformer', () => {
 
     expect(response.id).toBe('req-3');
     expect(response.error).toMatchObject({
-      code: 'https://example.com/problems#resource-conflict',
+      code: 'https://dehqonhub.uz/problems#resource-conflict',
       message: 'The request conflicts with the current state of the resource.',
     });
     expect(response.error?.data).toMatchObject({ status: 409 });

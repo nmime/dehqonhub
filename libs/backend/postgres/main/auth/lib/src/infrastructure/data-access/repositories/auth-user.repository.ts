@@ -86,6 +86,22 @@ export class AuthUserRepository {
     return ResultAsync.fromPromise(this.updateLastLoginAt(id, loggedInAt, tenantId), mapAuthUserRepositoryError);
   }
 
+  verifyEmail(
+    id: string,
+    tenantId: string = DefaultAuthTenantId,
+    verifiedAt: Date = new Date(),
+  ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(this.updateEmailVerification(id, tenantId, verifiedAt), mapAuthUserRepositoryError);
+  }
+
+  replacePassword(
+    id: string,
+    passwordHash: string,
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserEntity | null, AuthUserRepositoryError> {
+    return ResultAsync.fromPromise(this.updatePassword(id, tenantId, passwordHash), mapAuthUserRepositoryError);
+  }
+
   /**
    * Set the user's canonical avatar.
    * If status is "manual", always write (user intent overrides provider).
@@ -175,6 +191,34 @@ export class AuthUserRepository {
     entity.lastLoginAt = loggedInAt;
     await this.entityManager.flush();
     return this.hydrateAccess(entity);
+  }
+
+  private async updateEmailVerification(
+    id: string,
+    tenantId: string,
+    verifiedAt: Date,
+  ): Promise<AuthUserEntity | null> {
+    const entity = await this.entityManager.findOne(AuthUserEntity, { id, tenantId });
+    if (!entity) {
+      return null;
+    }
+    entity.emailVerifiedAt ??= verifiedAt;
+    await this.entityManager.flush();
+    return this.hydrateAccess(entity);
+  }
+
+  private async updatePassword(id: string, tenantId: string, passwordHash: string): Promise<AuthUserEntity | null> {
+    const entity = await this.entityManager.transactional(async (em) => {
+      const locked = await em.findOne(AuthUserEntity, { id, tenantId }, { lockMode: 2 });
+      if (!locked) {
+        return null;
+      }
+      locked.passwordHash = passwordHash;
+      locked.credentialRevision += 1;
+      await em.flush();
+      return locked;
+    });
+    return entity ? this.hydrateAccess(entity) : null;
   }
 
   private async updateAvatar(

@@ -67,6 +67,7 @@ assert.equal(packageJson.engines.node, '>=24 <25');
 assert.equal(packageJson.engines.pnpm, value(serverExample, 'PNPM_VERSION'));
 
 for (const contract of [
+  'PRIMARY_APP=user-app',
   'COMPOSE_DOMAIN_MODE=external-proxy',
   'COMPOSE_TLS_MODE=external',
   externalProxyModeContract,
@@ -104,7 +105,7 @@ for (const requirement of [
   'apt_install ca-certificates certbot',
   'nodejs.org/dist/v${NODE_VERSION}',
   'sha256sum --check --strict',
-  'corepack install --global',
+  'install --global "pnpm@${PNPM_VERSION}"',
   'pnpm@${PNPM_VERSION}',
   'certbot.timer',
   'nginx -t',
@@ -117,7 +118,13 @@ for (const requirement of [
   'prepare_runtime_permissions',
   'must be empty in same-origin mode',
   'openssl x509 -in "${certificate}" -noout -checkhost',
+  'certificate_dns_names',
+  '"${actual_names}" == "${required_names}"',
   'check_compose_health',
+  'deselected-apps',
+  'enabled-profiles',
+  'com.docker.compose.project.working_dir=${APP_ROOT}',
+  'deselected production application is still running',
   'current-image-tag',
   'previous-image-tag',
   'configure_secret SESSION_SECRET_FILE session_secret.txt hex',
@@ -141,6 +148,20 @@ for (const requirement of [
 ]) {
   assert.ok(controller.includes(requirement), `controller missing safety contract: ${requirement}`);
 }
+assert.ok(
+  controller.includes('npm_config_prefix="${install_root}" npm install --global --no-bin-links'),
+  'Corepack must install in its dedicated prefix without creating global package-manager shims',
+);
+assert.ok(
+  controller.includes('local install_root="${1:-/usr/local/lib/nrb-corepack}"'),
+  'Corepack must use the controller-owned install root',
+);
+assert.doesNotMatch(controller, /npm[^\n]*--force/u, 'Corepack convergence must not force-overwrite existing binaries');
+assert.doesNotMatch(
+  controller,
+  /rm[^\n]*\/usr\/local\/bin\/(?:corepack|yarn|yarnpkg)/u,
+  'Corepack convergence must not delete existing package-manager commands',
+);
 assert.ok(bootstrap.includes('status --porcelain'));
 assert.ok(bootstrap.includes('merge --ff-only'));
 // One-line unattended bootstrap: a single command must be able to supply the only
@@ -207,10 +228,22 @@ assert.match(controllerFunction('release_native'), /9>&-/u, 'PM2 must not inheri
 const unit = controllerFunction('install_compose_unit');
 assert.match(unit, /IMAGE_SOURCE/u, 'the systemd unit must branch on image provenance');
 assert.match(unit, /compose-production\.mjs pull/u, 'registry provenance must pull before starting');
-assert.match(unit, /--no-build/u, 'registry provenance must never build');
+assert.match(
+  unit,
+  /compose-production\.mjs up[^\n]*--no-build/u,
+  'the systemd unit must activate both registry and prebuilt-local images without rebuilding',
+);
 assert.ok(
-  /nothing to pull/u.test(unit),
+  /prebuilt by nrb-server deploy; nothing to pull/u.test(unit),
   'local provenance must omit the pull step instead of pulling tags that do not exist',
+);
+const composeDeploy = controllerFunction('deploy');
+const localBuildPosition = composeDeploy.indexOf('compose-production.mjs" build');
+const unitInstallPosition = composeDeploy.indexOf('install_compose_unit');
+assert.ok(localBuildPosition >= 0, 'local provenance must build immutable images before systemd starts');
+assert.ok(
+  unitInstallPosition > localBuildPosition,
+  'the controller must finish its one local build before installing and restarting the no-build unit',
 );
 // Docker is a compose-only dependency; a native host must not join the docker group.
 assert.match(
@@ -225,6 +258,10 @@ assert.ok(
 assert.ok(value(serverExample, 'RUNTIME_MODE') === 'compose', 'the example must default to the compose runtime');
 assert.ok(value(serverExample, 'PM2_VERSION'), 'the native runtime needs a pinned PM2 version');
 assert.ok(bootstrap.includes('--runtime'), 'bootstrap must be able to select the runtime');
+assert.ok(
+  controller.includes('upsert_environment_value "${PRODUCTION_ENV}" PRIMARY_APP user-app'),
+  'fresh single-server configuration must select the user application as the apex owner',
+);
 
 // The shared native sequence, used by both serverctl and `pnpm deploy --preset=native`.
 const nativeRelease = read('scripts/native-release.mjs');
@@ -249,8 +286,15 @@ assert.ok(
 );
 assert.ok(renderer.includes("'single-domain', 'per-app-domains'"));
 assert.ok(renderer.includes('127.0.0.1'));
+assert.ok(
+  renderer.includes('proxy_redirect ~^http://[^/:]+:8080(/.*)$ $1;'),
+  'frontend proxy redirects must remain relative instead of exposing the inner HTTP listener',
+);
 assert.ok(renderer.includes('ssl_reject_handshake on'));
 assert.ok(!renderer.includes('proxy_pass http://${'));
+assert.ok(renderer.includes('readProductionClosure'));
+assert.ok(renderer.includes("{ path: '/marketplace' }"));
+assert.ok(renderer.includes("{ path: '/farmer', prefix: false }"));
 
 for (const heading of [
   'Fresh server bootstrap',

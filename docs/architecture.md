@@ -65,7 +65,7 @@ const NotFoundException = Exception({
 });
 ```
 
-- **Custom type registry**: `@app/common-problem-details` owns URI, title, status, safe default detail, resolution guidance, and extension documentation. The `landing-app` (Astro) and `site-app` (Vike) frontends serve the registry documentation at `/problems`.
+- **Custom type registry**: `@app/common-problem-details` owns URI, title, status, safe default detail, resolution guidance, and extension documentation. The selected DehqonHub `user-app` serves that registry at `https://dehqonhub.uz/problems`; unselected reference frontends are not public registry owners.
 - **Generic HTTP errors**: omit `problemType`; they serialize with `type: "about:blank"` and status-defined semantics.
 - **Runtime context** only accepts `{ extensions? (explicitly public), meta? (private diagnostics), cause? }`.
 - **Occurrence identity**: the HTTP boundary derives an absolute opaque `instance` URI from a validated request ID; request paths are never used as occurrence identifiers.

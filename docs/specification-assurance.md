@@ -9,16 +9,20 @@ claim mathematical proof that the original requirement is correct or complete.
 
 Each layer has one job:
 
-| Layer                    | Canonical source                                     | Owns                                                              |
-| ------------------------ | ---------------------------------------------------- | ----------------------------------------------------------------- |
-| Normative behavior       | `openspec/specs/<capability>/spec.md`                | stable `REQ-*` requirements, invariants, failures, examples       |
-| Discovery/change history | `openspec/changes/**`                                | proposals, counterexamples, design, verification policy, tasks    |
-| Evidence mapping         | `openspec/specs/<capability>/verification.yaml`      | requirement-level projects, risk, Cucumber disposition, evidence  |
-| Stakeholder examples     | `apps/e2e/acceptance/features/**/*.feature`          | declarative `@REQ-*` / `@SCN-*` Cucumber examples                 |
-| Domain and failure rules | owning project Vitest suites                         | algorithms, state transitions, boundaries, negative paths         |
-| Public API invariants    | OpenAPI, contract, property, and fuzz suites         | provider/consumer shape and generated-client compatibility        |
-| User journeys            | Playwright projects                                  | behavior in the real browser or full product stack                |
-| Runtime confidence       | component, security, mutation, and operations suites | infrastructure, adversarial, test-strength, and recovery evidence |
+| Layer                    | Canonical source                                     | Owns                                                               |
+| ------------------------ | ---------------------------------------------------- | ------------------------------------------------------------------ |
+| Normative behavior       | `openspec/specs/<capability>/spec.md`                | stable `REQ-*` requirements, invariants, failures, examples        |
+| Change history           | Git history                                          | reviewed proposals, design decisions, and completed implementation |
+| Evidence mapping         | `openspec/specs/<capability>/verification.yaml`      | requirement-level projects, risk, Cucumber disposition, evidence   |
+| Stakeholder examples     | `apps/e2e/acceptance/features/**/*.feature`          | declarative `@REQ-*` / `@SCN-*` Cucumber examples                  |
+| Domain and failure rules | owning project Vitest suites                         | algorithms, state transitions, boundaries, negative paths          |
+| Public API invariants    | OpenAPI, contract, property, and fuzz suites         | provider/consumer shape and generated-client compatibility         |
+| User journeys            | Playwright projects                                  | behavior in the real browser or full product stack                 |
+| Runtime confidence       | component, security, mutation, and operations suites | infrastructure, adversarial, test-strength, and recovery evidence  |
+
+OpenSpec change directories are transient working material. Once the durable
+specification and evidence mapping own the delivered behavior, completed change
+history remains in Git rather than an in-tree archive.
 
 The layers are complementary. Do not restate every Vitest assertion in Gherkin
 or hide stakeholder behavior inside low-level tests.
@@ -33,7 +37,7 @@ flowchart LR
   examples --> focused
   focused --> dossier["Exact-SHA evidence dossier"]
   deep --> dossier
-  dossier --> release["CI summary and release provenance"]
+  dossier --> release["Release provenance"]
   incidents["Canaries, telemetry, incidents"] --> discovery
 ```
 

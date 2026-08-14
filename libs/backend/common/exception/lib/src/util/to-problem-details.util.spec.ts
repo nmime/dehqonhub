@@ -35,14 +35,14 @@ describe('getProblemStatus / toProblemDetails', () => {
     });
     const problem = toProblemDetails(
       new ConflictException({ extensions: { resourceType: 'account' }, meta: { secret: true } }),
-      'https://example.com/problem-instances/request-1',
+      'https://dehqonhub.uz/problem-instances/request-1',
     );
     expect(getProblemStatus(new ConflictException())).toBe(409);
 
     expect(problem).toMatchObject({
-      type: 'https://example.com/problems#resource-conflict',
+      type: 'https://dehqonhub.uz/problems#resource-conflict',
       status: 409,
-      instance: 'https://example.com/problem-instances/request-1',
+      instance: 'https://dehqonhub.uz/problem-instances/request-1',
       resourceType: 'account',
       code: 'resource-conflict',
     });

@@ -13,6 +13,7 @@ import type {
 import type { MarketplaceProviderConfig } from './marketplace-provider.config';
 
 type Clock = () => Date;
+type RequiredInputFields<T, K extends keyof T> = Pick<T, K> & Partial<Omit<T, K>>;
 const systemClock: Clock = () => new Date();
 
 class DisabledContractArtifactStorageProvider implements MarketplaceContractArtifactStorageProvider {
@@ -61,12 +62,12 @@ export class MockContractArtifactStorageProvider implements MarketplaceContractA
 
   constructor(private readonly clock: Clock = systemClock) {}
 
-  storeContractArtifact(input: {
-    artifactChecksum: string;
-    byteSize: number;
-    contractId: string;
-    operationId: string;
-  }): Promise<MarketplaceContractArtifactStorageProviderResult> {
+  storeContractArtifact(
+    input: RequiredInputFields<
+      Parameters<MarketplaceContractArtifactStorageProvider['storeContractArtifact']>[0],
+      'artifactChecksum' | 'byteSize' | 'contractId' | 'operationId'
+    >,
+  ): Promise<MarketplaceContractArtifactStorageProviderResult> {
     const storageReference = `mock-artifact:${input.contractId}:${input.artifactChecksum}`;
     return Promise.resolve({
       completedAt: this.clock(),
@@ -90,12 +91,12 @@ export class MockQualifiedSignatureProvider implements MarketplaceQualifiedSigna
 
   constructor(private readonly clock: Clock = systemClock) {}
 
-  qualifyContractSignature(input: {
-    artifactChecksum: string;
-    operationId: string;
-    party: 'buyer' | 'seller';
-    snapshotRevision: number;
-  }): Promise<MarketplaceQualifiedSignatureProviderResult> {
+  qualifyContractSignature(
+    input: RequiredInputFields<
+      Parameters<MarketplaceQualifiedSignatureProvider['qualifyContractSignature']>[0],
+      'artifactChecksum' | 'operationId' | 'party' | 'snapshotRevision'
+    >,
+  ): Promise<MarketplaceQualifiedSignatureProviderResult> {
     const completedAt = this.clock();
     return Promise.resolve({
       completedAt,
@@ -119,15 +120,12 @@ export class MockDisputeEvidenceStorageProvider implements MarketplaceDisputeEvi
 
   constructor(private readonly clock: Clock = systemClock) {}
 
-  storeDisputeEvidence(input: {
-    checksumSha256: string;
-    content: Uint8Array;
-    contractId: string;
-    disputeId: string;
-    fileName: string;
-    mediaType: 'application/pdf' | 'image/jpeg' | 'image/png';
-    operationId: string;
-  }): Promise<MarketplaceDisputeEvidenceStorageProviderResult> {
+  storeDisputeEvidence(
+    input: RequiredInputFields<
+      Parameters<MarketplaceDisputeEvidenceStorageProvider['storeDisputeEvidence']>[0],
+      'checksumSha256' | 'content' | 'contractId' | 'disputeId' | 'fileName' | 'mediaType' | 'operationId'
+    >,
+  ): Promise<MarketplaceDisputeEvidenceStorageProviderResult> {
     const storageReference = `mock-dispute-evidence:${input.contractId}:${input.disputeId}:${input.checksumSha256}`;
     return Promise.resolve({
       completedAt: this.clock(),
@@ -153,13 +151,12 @@ export class MockDirectPaymentProvider implements MarketplaceDirectPaymentProvid
 
   constructor(private readonly clock: Clock = systemClock) {}
 
-  recordDirectPayment(input: {
-    amountUzs: number;
-    command: 'confirm_buyer_payment' | 'confirm_seller_receipt';
-    contractId: string;
-    operationId: string;
-    party: 'buyer' | 'seller';
-  }): Promise<MarketplaceSettlementProviderResult> {
+  recordDirectPayment(
+    input: RequiredInputFields<
+      Parameters<MarketplaceDirectPaymentProvider['recordDirectPayment']>[0],
+      'amountUzs' | 'command' | 'contractId' | 'operationId' | 'party'
+    >,
+  ): Promise<MarketplaceSettlementProviderResult> {
     const completedAt = this.clock();
     return Promise.resolve({
       completedAt,
@@ -186,13 +183,12 @@ export class MockFactoringProvider implements MarketplaceFactoringProvider {
 
   constructor(private readonly clock: Clock = systemClock) {}
 
-  recordFactoring(input: {
-    amountUzs: number;
-    command: 'request_decision' | 'record_seller_payout' | 'record_buyer_repayment' | 'close';
-    contractId: string;
-    operationId: string;
-    party: 'buyer' | 'seller';
-  }): Promise<MarketplaceSettlementProviderResult> {
+  recordFactoring(
+    input: RequiredInputFields<
+      Parameters<MarketplaceFactoringProvider['recordFactoring']>[0],
+      'amountUzs' | 'command' | 'contractId' | 'operationId' | 'party'
+    >,
+  ): Promise<MarketplaceSettlementProviderResult> {
     const completedAt = this.clock();
     const outcome = input.command === 'request_decision' ? 'approved' : input.command;
     return Promise.resolve({

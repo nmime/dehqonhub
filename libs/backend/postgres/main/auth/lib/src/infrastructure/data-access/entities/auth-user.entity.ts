@@ -29,6 +29,8 @@ export interface AuthUserEntityInput extends AuthUserAccessPolicyInput {
   email: string | null;
   displayName?: string | null;
   passwordHash?: string;
+  emailVerifiedAt?: Date | null;
+  credentialRevision?: number;
   locale?: Locale | null;
   theme?: AuthUserThemePreference | null;
   lastLoginAt?: Date | null;
@@ -43,6 +45,8 @@ export class AuthUserEntity {
   email!: string;
   displayName = '';
   passwordHash = '';
+  emailVerifiedAt: Date | null = null;
+  credentialRevision = 0;
   status: AuthUserStatus = 'active';
   // Derived from normalized RBAC joins by repositories. These fields are part
   // of the domain/API view but are deliberately not persisted on auth_users.
@@ -63,6 +67,8 @@ export class AuthUserEntity {
       this.email = input.email as string;
       this.displayName = input.displayName ?? '';
       this.passwordHash = input.passwordHash ?? '';
+      this.emailVerifiedAt = input.emailVerifiedAt ?? null;
+      this.credentialRevision = input.credentialRevision ?? 0;
       this.status = input.status ?? 'active';
       this.roles = input.roles ?? [];
       this.permissions = input.permissions ?? [];
@@ -98,6 +104,16 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
       fieldName: 'password_hash',
       length: 255,
       default: '',
+    },
+    emailVerifiedAt: {
+      type: 'timestamptz',
+      fieldName: 'email_verified_at',
+      nullable: true,
+    },
+    credentialRevision: {
+      type: 'integer',
+      fieldName: 'credential_revision',
+      default: 0,
     },
     status: { type: 'varchar', length: 32, default: 'active' },
     roles: { type: 'json', persist: false },
@@ -155,6 +171,10 @@ export const AuthUserEntitySchema = new EntitySchema<AuthUserEntity>({
     {
       name: 'ck__auth_users__avatar_status',
       expression: `"avatar_status" in ('none', 'provider', 'manual', 'deleted')`,
+    },
+    {
+      name: 'ck__auth_users__credential_revision',
+      expression: '"credential_revision" >= 0',
     },
   ],
 });

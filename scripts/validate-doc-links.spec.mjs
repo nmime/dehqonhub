@@ -141,7 +141,7 @@ test('requires every documentation file to be reachable from the documentation i
   assert.match(result.failures[0], /docs\/orphan\.md:1: documentation is not reachable/);
 });
 
-test('exempts the archived working-spec area from documentation validation', () => {
+test('validates documentation in every tracked subtree', () => {
   write('docs/README.md', '# Documentation\n\n[Guide](guide.md)\n');
   write('docs/guide.md', '# Guide\n');
   write(
@@ -158,7 +158,9 @@ test('exempts the archived working-spec area from documentation validation', () 
     ],
   });
 
-  assert.deepEqual(result.failures, []);
+  assert.equal(result.failures.length, 2);
+  assert.ok(result.failures.some((failure) => failure.includes('nowhere.md')));
+  assert.ok(result.failures.some((failure) => /not reachable/u.test(failure)));
 });
 
 test('collects untracked documentation and repo-local skill files', () => {

@@ -87,15 +87,15 @@
       "dependsOn": ["build"],
       "options": {
         "cwd": "apps/frontend/landing",
-        "command": "node scripts/smoke-astro-build.mjs"
+        "command": "node scripts/smoke-astro-build.mjs && playwright test --config playwright.config.mjs"
       },
       "inputs": [
         "production",
         {
-          "externalDependencies": ["astro", "@astrojs/react", "@astrojs/mdx", "@astrojs/sitemap"]
+          "externalDependencies": ["@playwright/test", "astro", "@astrojs/react", "@astrojs/mdx", "@astrojs/sitemap"]
         }
       ],
-      "outputs": ["{workspaceRoot}/dist/apps/frontend/landing"]
+      "outputs": ["{workspaceRoot}/dist/apps/frontend/landing", "{projectRoot}/test-results/landing-browser"]
     }
   }
 }

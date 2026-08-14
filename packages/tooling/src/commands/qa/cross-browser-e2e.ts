@@ -20,8 +20,6 @@ const fixedRuntimeStackPorts = {
   AUTH_APP_API_PORT: "3003",
   ADMIN_APP_PORT: "8081",
   USER_APP_PORT: "8082",
-  LANDING_APP_PORT: "8083",
-  SITE_APP_PORT: "8084",
 };
 const externalRuntimeUrls = [
   { names: ["FULLSTACK_ADMIN_API_URL", "ADMIN_APP_API_URL"], port: "ADMIN_APP_API_PORT" },
@@ -32,15 +30,15 @@ const externalRuntimeUrls = [
     names: ["FULLSTACK_USER_APP_URL", "USER_APP_URL", "FULLSTACK_BASE_URL"],
     port: "USER_APP_PORT",
   },
-  { names: ["FULLSTACK_LANDING_APP_URL", "LANDING_APP_URL"], port: "LANDING_APP_PORT" },
-  { names: ["FULLSTACK_SITE_APP_URL", "SITE_APP_URL"], port: "SITE_APP_PORT" },
 ] as const;
 const hasAnyExplicitRuntimeUrl = externalRuntimeUrls.some(({ names }) => names.some((name) => process.env[name]?.trim()));
 const hasCompleteExplicitRuntimeUrls = externalRuntimeUrls.every(({ names }) =>
   names.some((name) => process.env[name]?.trim()),
 );
 if (hasAnyExplicitRuntimeUrl && !hasCompleteExplicitRuntimeUrls && !process.env.PLAYWRIGHT_BASE_URL) {
-  console.error('External Playwright mode requires either PLAYWRIGHT_BASE_URL or every FULLSTACK_*_URL.');
+  console.error(
+    "External Playwright mode requires either PLAYWRIGHT_BASE_URL or the complete selected user/admin app and admin/user/auth API URL set.",
+  );
   process.exit(2);
 }
 const usesExternalRuntimeStack = Boolean(process.env.PLAYWRIGHT_BASE_URL) || hasCompleteExplicitRuntimeUrls;
@@ -82,7 +80,8 @@ if (!usesExternalRuntimeStack && process.env.PLAYWRIGHT_MANAGE_STACK !== "1") {
   console.log(JSON.stringify({
     status: "skipped",
     preset: "cross-browser-e2e",
-    reason: "Set PLAYWRIGHT_BASE_URL, every FULLSTACK_*_URL, or PLAYWRIGHT_MANAGE_STACK=1 to run the matrix",
+    reason:
+      "Set PLAYWRIGHT_BASE_URL, the complete selected user/admin app and admin/user/auth API URL set, or PLAYWRIGHT_MANAGE_STACK=1 to run the matrix",
     report: reportPath,
   }));
   // Exiting 0 here made this an unfalsifiable gate: world-class-gates' real-user-journey check
@@ -90,7 +89,7 @@ if (!usesExternalRuntimeStack && process.env.PLAYWRIGHT_MANAGE_STACK !== "1") {
   // stays available for interactive local runs only.
   if (process.env.CI === "true" || process.env.PLAYWRIGHT_REQUIRE_STACK === "1") {
     console.error(
-      "cross-browser-e2e: refusing to report success without a runtime stack. Set PLAYWRIGHT_BASE_URL, every FULLSTACK_*_URL, or PLAYWRIGHT_MANAGE_STACK=1.",
+      "cross-browser-e2e: refusing to report success without a runtime stack. Set PLAYWRIGHT_BASE_URL, the complete selected user/admin app and admin/user/auth API URL set, or PLAYWRIGHT_MANAGE_STACK=1.",
     );
     process.exit(2);
   }

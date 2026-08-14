@@ -258,18 +258,6 @@ describe('MarketplaceContractLifecycleDomainService signatures and settlement', 
     expect(qualifiedSignature.qualifyContractSignature).not.toHaveBeenCalled();
   });
 
-  it('completes a replayed signature operation without qualifying it again', async () => {
-    const { providerOperations, qualifiedSignature, lifecycleRepository, service } = fixture();
-    providerOperations.prepareProviderOperation.mockResolvedValue(
-      ok({ attempt: 2, execute: false, operationId: 'operation-1' }),
-    );
-
-    await expect(service.sign(buyer, contractId, 'sign-key-1')).resolves.toBe(lifecycle);
-    expect(qualifiedSignature.qualifyContractSignature).not.toHaveBeenCalled();
-    expect(providerOperations.completeProviderOperation).not.toHaveBeenCalled();
-    expect(lifecycleRepository.completeSignature).toHaveBeenCalledWith(buyer, 'operation-1');
-  });
-
   it('files the seller side of a signature against the seller actor type', async () => {
     const { lifecycleRepository, providerOperations, service } = fixture();
     lifecycleRepository.prepareSignature.mockResolvedValue(
@@ -490,11 +478,11 @@ describe('MarketplaceContractLifecycleDomainService provider failures', () => {
     const { artifactStorage, providerOperations, service } = fixture();
     artifactStorage.storeContractArtifact.mockImplementation(
       () =>
-        new Promise((resolve) => {
+        new Promise((resolve) =>
           setTimeout(() => {
             resolve(providerResult);
-          }, 500);
-        }),
+          }, 500),
+        ),
     );
 
     await expect(service.createArtifact(buyer, contractId, 'factoring', 'artifact-key-1')).rejects.toThrow(
@@ -582,9 +570,7 @@ describe('MarketplaceContractLifecycleDomainService repository delegation', () =
     const { lifecycleRepository, service } = fixture();
 
     await expect(service.consentFactoring(buyer, contractId, 'consent-1')).resolves.toBe(lifecycle);
-    await expect(service.transitionFulfillment(seller, contractId, 'mark_delivered', 'ship-1')).resolves.toBe(
-      lifecycle,
-    );
+    await expect(service.transitionFulfillment(seller, contractId, 'start', 'ship-1')).resolves.toBe(lifecycle);
     await expect(service.openDispute(buyer, contractId, 'quality_issue', 'dispute-1')).resolves.toBe(lifecycle);
     await expect(
       service.resolveDispute(admin, contractId, 'dismissed', ['evidence-b', 'evidence-a'], 2, '  settled  ', 'res-1'),

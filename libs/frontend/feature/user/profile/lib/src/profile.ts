@@ -1,5 +1,5 @@
 import { getApiErrorDisplayMessage } from '@app/frontend-api-support';
-import type { UserProfilePayload } from '@app/frontend-feature-shared-preferences';
+import type { AuthMePayload, UserProfilePayload } from '@app/frontend-feature-shared-preferences';
 
 // The auth-session preference primitives (payload readers + payload/patch types)
 // now live in the shared session-preferences library so the admin console can
@@ -20,7 +20,7 @@ export type {
 export type ProfileState =
   | { status: 'loading' }
   | { status: 'unauthenticated'; reason: string }
-  | { status: 'ready'; email?: string; subject: string }
+  | { status: 'ready'; email?: string; emailVerified?: boolean; subject: string }
   | { status: 'forbidden'; reason: string };
 
 export const getProfileState = (
@@ -29,6 +29,7 @@ export const getProfileState = (
   profileRequestFailedMessage: string,
   profileUnknownMessage: string,
   error?: unknown,
+  auth?: AuthMePayload,
 ): ProfileState => {
   if (loading) {
     return { status: 'loading' };
@@ -40,6 +41,7 @@ export const getProfileState = (
     };
   }
 
+  const emailVerified = auth?.user?.emailVerified ?? profile?.user?.emailVerified;
   return {
     status: 'ready',
     subject:
@@ -49,5 +51,6 @@ export const getProfileState = (
       profile?.principal?.subject ??
       profileUnknownMessage,
     email: profile?.profile?.email ?? profile?.principal?.email,
+    ...(emailVerified === undefined ? {} : { emailVerified }),
   };
 };

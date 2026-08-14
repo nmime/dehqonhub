@@ -48,6 +48,8 @@ type TestAuthUser = Pick<
   | 'id'
   | 'tenantId'
   | 'email'
+  | 'emailVerifiedAt'
+  | 'credentialRevision'
   | 'displayName'
   | 'passwordHash'
   | 'status'
@@ -95,6 +97,8 @@ const createUser = (partial: Partial<TestAuthUser> = {}): TestAuthUser => ({
   id: 'user-id',
   tenantId,
   email: 'user@example.com',
+  emailVerifiedAt: null,
+  credentialRevision: 0,
   displayName: 'User',
   passwordHash: 'redacted-hash',
   status: 'active',

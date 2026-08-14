@@ -19,7 +19,7 @@ cp .env.example .env
 
 ## Branch, commit, and PR workflow
 
-1. Branch from current `main` as `<type>/<kebab-case>`, for example `feat/billing-settings` or `fix/auth-cookie-flags`. Allowed types are `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `build`, `revert`, `release`, and `hotfix`. Never use `codex`, `claude`, or another assistant/vendor identity as a branch segment. Dependabot's generated prefix is the only automation exception.
+1. Branch from current `main` as `<type>/<kebab-case>`, for example `feat/billing-settings` or `fix/auth-cookie-flags`. Allowed types are `feat`, `fix`, `docs`, `chore`, `refactor`, `test`, `ci`, `perf`, `build`, `revert`, `release`, and `hotfix`. Never use `codex`, `claude`, or another assistant/vendor identity as a branch segment.
 2. Use Conventional Commits: `<type>(<optional-scope>)!: <lowercase description>`. Use the same types as branches except `release` and `hotfix`; express release metadata as `chore(release): <version>`.
 3. Human contributors keep their real Git author and committer identity. Commits produced by repository agents must use author and committer exactly `nmime <66474195+nmime@users.noreply.github.com>`.
 4. Agent-produced commits must not add assistant, model, executor, or automation attribution trailers. Legitimate human contribution trailers remain allowed.
@@ -103,28 +103,11 @@ Run `pnpm run check` for release-risk, security-sensitive, or broad cross-cuttin
 
 Coverage thresholds are defined in `packages/tooling/src/testing/vitest-coverage.mts`; run `pnpm run test:coverage` for runtime TypeScript changes. New projects default to 100%. Existing negative thresholds are maximum uncovered-item budgets and must only move toward zero as coverage improves.
 
-## Changelog
+## Release notes
 
-Every PR that changes user-facing behavior MUST include a changelog entry:
-
-1. Edit `CHANGELOG.md`
-2. Add your change under `[Unreleased]` with the appropriate heading:
-   - `### Added` for new features
-   - `### Changed` for changes in existing functionality
-   - `### Fixed` for bug fixes
-   - `### Removed` for deprecated/removed features
-3. Follow the format: `- Brief description of the change (#PR_NUMBER)`
-
-Example:
-
-```markdown
-## [Unreleased]
-
-### Fixed
-
-- Deploy workflow now gated on CI success (#42)
-- Docker Node.js version corrected to 24.18.0 (#43)
-```
+Use clear conventional commit subjects and a focused pull-request description.
+Git history and published GitHub releases are the release-note source; this
+repository does not maintain a duplicate hand-edited changelog.
 
 ## Backend changes
 

@@ -56,7 +56,6 @@ export function validateBranchName(branch: string): string[] {
 
   if (
     !protectedBranches.has(branch) &&
-    !branch.startsWith("dependabot/") &&
     !branchPattern.test(branch)
   ) {
     failures.push(

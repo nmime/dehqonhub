@@ -35,6 +35,36 @@
         }
       ],
       "outputs": ["{workspaceRoot}/coverage/e2e/apps/frontend/admin"]
+    },
+    "e2e-marketplace": {
+      "executor": "nx:run-commands",
+      "cache": false,
+      "dependsOn": ["e2e-typecheck"],
+      "options": {
+        "command": "VITE_API_BASE_URL_MODE=same-origin node_modules/.bin/vite build --config apps/frontend/admin/vite.config.mts && PLAYWRIGHT_HTML_OPEN=never node_modules/.bin/playwright test --config apps/frontend/admin/playwright.config.ts"
+      },
+      "inputs": [
+        "production",
+        {
+          "externalDependencies": ["@playwright/test"]
+        }
+      ],
+      "outputs": ["{projectRoot}/test-results/admin-marketplace"]
+    },
+    "e2e-typecheck": {
+      "executor": "nx:run-commands",
+      "cache": true,
+      "options": {
+        "cwd": "apps/frontend/admin",
+        "command": "tsc --noEmit -p tsconfig.e2e.json"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        {
+          "externalDependencies": ["@playwright/test", "typescript"]
+        }
+      ]
     }
   }
 }

@@ -7,7 +7,9 @@ describe('public api-contracts import surface', () => {
     const session = {
       authProvider: 'password',
       user: {
+        credentialRevision: 0,
         email: 'ada@example.com',
+        emailVerified: false,
         id: 'user-1',
         permissions: [],
         roles: ['user'],

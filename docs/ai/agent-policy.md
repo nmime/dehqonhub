@@ -7,7 +7,7 @@ file as the next policy layer.
 
 ## Repository And Safety Rules
 
-- Work only in `nmime/nest-react-boilerplate` unless a maintainer explicitly
+- Work only in `nmime/dehqonhub` unless a maintainer explicitly
   assigns another repository.
 - Verify the target repo, branch, and current `main` SHA before edits, commits,
   pushes, or deployment work.
@@ -245,7 +245,7 @@ All exceptions flow through the `@app/backend-common-exception` library.
 - Frontend FSD boundaries: [docs/frontend-fsd.md](../frontend-fsd.md).
 - Frontend state rules: [docs/frontend-state.md](../frontend-state.md).
 - UI/UX/design workflow:
-  [docs/frontend-uiux-pro-max-lazyweb.md](../frontend-uiux-pro-max-lazyweb.md),
+  [docs/frontend-ux.md](../frontend-ux.md),
   [docs/frontend-ux.md](../frontend-ux.md), and
   [docs/agent-skills.md](../agent-skills.md).
 - Database migrations: [docs/database-migrations.md](../database-migrations.md).

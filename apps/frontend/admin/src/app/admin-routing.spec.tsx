@@ -1,5 +1,5 @@
-// @requirements REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015
-// Evidence for: REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015
+// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-ROUTING-015 REQ-FRONTEND-SHELL-004
+// Evidence for: REQ-AGRITECH-ADMIN-025 REQ-FRONTEND-SHELL-004 REQ-AGRITECH-ROUTING-015
 import type { ReactElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
@@ -41,10 +41,38 @@ describe('admin route base handling', () => {
     expect(normalizeAdminPath('/profile')).toBe('/profile');
   });
 
-  it('renders the AgriTech product root, dashboard, and profile under /admin', () => {
+  it('renders the marketplace root, all operator workspaces, dashboard, and profile under /admin', () => {
     expect(
       renderAdminMarkup(
         renderAdminRoute('/admin', { status: 'ready', payload, access }, undefined, { requestOptions: {} }),
+      ),
+    ).toContain('Marketplace overview');
+    expect(
+      renderAdminMarkup(
+        renderAdminRoute('/admin/marketplace/moderation', { status: 'ready', payload, access }, undefined, {
+          requestOptions: {},
+        }),
+      ),
+    ).toContain('Marketplace moderation');
+    expect(
+      renderAdminMarkup(
+        renderAdminRoute('/admin/marketplace/commerce', { status: 'ready', payload, access }, undefined, {
+          requestOptions: {},
+        }),
+      ),
+    ).toContain('Marketplace commerce');
+    expect(
+      renderAdminMarkup(
+        renderAdminRoute('/admin/marketplace/engagement', { status: 'ready', payload, access }, undefined, {
+          requestOptions: {},
+        }),
+      ),
+    ).toContain('Marketplace engagement');
+    expect(
+      renderAdminMarkup(
+        renderAdminRoute('/admin/marketplace/operations', { status: 'ready', payload, access }, undefined, {
+          requestOptions: {},
+        }),
       ),
     ).toContain('AgriTech control center');
     expect(renderAdminMarkup(renderAdminRoute('/admin/dashboard', { status: 'ready', payload, access }))).toContain(
@@ -106,6 +134,11 @@ describe('admin route base handling', () => {
     expect(html).toContain('href="/admin/users"');
     expect(html).toContain('href="/admin"');
     expect(html).toContain('href="/admin/dashboard"');
+    expect(html).toContain('href="/admin/marketplace/overview"');
+    expect(html).toContain('href="/admin/marketplace/moderation"');
+    expect(html).toContain('href="/admin/marketplace/commerce"');
+    expect(html).toContain('href="/admin/marketplace/engagement"');
+    expect(html).toContain('href="/admin/marketplace/operations"');
     expect(html).not.toContain('href="/admin/agritech"');
     expect(html).toContain('href="/admin/roles"');
     expect(html).toContain('href="/admin/audit"');

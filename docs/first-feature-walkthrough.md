@@ -101,6 +101,5 @@ For cross-app behavior, add `pnpm test:e2e`. For release-risk work, run `pnpm ch
 
 ## Next steps
 
-- [Adding a New Service](usage/adding-a-new-service.md) — create and wire a NestJS backend service.
-- [Adding a New Frontend Page](usage/adding-a-new-frontend-page.md) — add a route, page, and tests to a frontend app.
-- [CLI Reference](setup/cli-reference.md) — full reference for `pnpm nrb add` and related commands.
+- [CLI Reference](setup/cli-reference.md) — application, library, and feature generation commands.
+- [Scaffolding and Extension](scaffolding-and-extension.md) — completion and production-registration contract.

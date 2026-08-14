@@ -1,5 +1,5 @@
-// @requirements REQ-FRONTEND-NATIVE-006
-// Evidence for: REQ-FRONTEND-NATIVE-006
+// @requirements REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-NATIVE-006 REQ-FRONTEND-SHELL-004
+// Evidence for: REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-NATIVE-006 REQ-FRONTEND-SHELL-004
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it } from 'vitest';
 import { useI18n } from '@app/frontend-runtime';

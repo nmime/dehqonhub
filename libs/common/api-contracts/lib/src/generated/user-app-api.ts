@@ -1799,8 +1799,9 @@ export interface components {
       id: string;
       displayName: string;
       region: string;
-      /** @enum {boolean} */
-      verified: true;
+      verified: boolean;
+      /** @enum {string} */
+      provenance: 'live' | 'demo';
       description?: string;
     };
     MarketplacePublicProductListingDto: {
@@ -1817,6 +1818,9 @@ export interface components {
       region: string;
       images: string[];
       promoted: boolean;
+      /** @enum {string} */
+      provenance: 'live' | 'demo';
+      transactional: boolean;
       sampleAvailable: boolean;
       seller: components['schemas']['MarketplacePublicSellerDto'];
       /** Format: date-time */
@@ -1847,6 +1851,9 @@ export interface components {
       region: string;
       images: string[];
       promoted: boolean;
+      /** @enum {string} */
+      provenance: 'live' | 'demo';
+      transactional: boolean;
       sampleAvailable: boolean;
       seller: components['schemas']['MarketplacePublicSellerDto'];
       /** Format: date-time */
@@ -2085,7 +2092,7 @@ export interface components {
        * @description discriminator enum property added by openapi-typescript
        * @enum {string}
        */
-      kind: 'DirectPaymentSettlementDto';
+      kind: 'direct_payment';
       /** @enum {string} */
       status: 'awaiting_buyer_confirmation' | 'buyer_confirmed' | 'seller_received';
       amountUzs: number;
@@ -2108,7 +2115,7 @@ export interface components {
        * @description discriminator enum property added by openapi-typescript
        * @enum {string}
        */
-      kind: 'FactoringSettlementDto';
+      kind: 'factoring';
       /** @enum {string} */
       status:
         'awaiting_consents' | 'ready_to_request' | 'approved' | 'rejected' | 'seller_paid' | 'buyer_repaid' | 'closed';

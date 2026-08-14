@@ -13,6 +13,8 @@ export interface AuthenticatedUserView {
   id: string;
   tenantId: string;
   email: string | null;
+  emailVerified: boolean;
+  credentialRevision: number;
   displayName?: string;
   locale?: Locale;
   theme: UserThemePreference;
@@ -35,6 +37,8 @@ export function toAuthenticatedUserView(input: {
   id: string;
   tenantId?: string | null;
   email: string | null;
+  emailVerifiedAt?: Date | null;
+  credentialRevision?: number;
   displayName?: string | null;
   locale?: Locale | null;
   theme?: string | null;
@@ -47,6 +51,8 @@ export function toAuthenticatedUserView(input: {
     id: input.id,
     tenantId: resolveTenantId(input.tenantId),
     email: input.email,
+    emailVerified: Boolean(input.emailVerifiedAt),
+    credentialRevision: input.credentialRevision ?? 0,
     ...(input.displayName ? { displayName: input.displayName } : {}),
     ...(input.locale ? { locale: input.locale } : {}),
     theme: normalizeUserThemePreference(input.theme) ?? AuthenticatedTheme.System,

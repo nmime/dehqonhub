@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017
+// @requirements REQ-AGRITECH-MARKETPLACE-016
 import { describe, expect, it } from 'vitest';
 import {
   BadRequestException,

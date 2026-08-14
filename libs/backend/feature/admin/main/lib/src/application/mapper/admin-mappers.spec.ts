@@ -13,6 +13,8 @@ const baseUser = (partial: Partial<AuthUserPersistenceRecord> = {}): AuthUserPer
   id: 'user-id',
   tenantId: 'tenant-1',
   email: 'user@example.com',
+  emailVerifiedAt: null,
+  credentialRevision: 0,
   displayName: 'User',
   passwordHash: 'redacted',
   status: 'active',

@@ -1,4 +1,4 @@
-// @requirements REQ-API-CLIENT-005
+// @requirements REQ-API-CLIENT-005 REQ-AUTH-RECOVERY-010 REQ-AGRITECH-ONBOARDING-023 REQ-AGRITECH-DEMO-024 REQ-AGRITECH-ADMIN-025
 // Evidence for: REQ-API-CLIENT-005
 import { configureApiLocale } from '@app/frontend-api-support';
 import { describe, expect, expectTypeOf, it, vi } from 'vitest';
@@ -64,10 +64,15 @@ import {
   adminUsersControllerListUsers,
   adminUsersControllerUpdateUserAccessPolicy,
   adminUsersControllerUpdateUserStatus,
+  agriTechAdminControllerListPendingMarketplacePublications,
+  agriTechAdminControllerReviewVerification,
   getAdminUsersControllerListUsersQueryKey,
   getAdminProblemPresentationsControllerListQueryKey,
   getAdminUsersControllerUpdateUserAccessPolicyMutationKey,
   getAdminUsersControllerUpdateUserStatusMutationKey,
+  marketplaceContractLifecycleAdminControllerActivateCommissionPolicy,
+  marketplaceContractLifecycleAdminControllerGetContractLifecycle,
+  marketplaceEngagementAdminControllerModerateReviewReport,
   type UpdateAdminUserAccessPolicyDto,
   type UpdateAdminUserStatusDto,
 } from './admin';
@@ -101,6 +106,8 @@ const session: AuthSessionViewDto = {
   authProvider: 'password',
   user: {
     email: 'ada@example.com',
+    emailVerified: false,
+    credentialRevision: 0,
     id: 'user-1',
     permissions: ['profile:read'],
     roles: ['user'],
@@ -577,6 +584,57 @@ describe('generated api clients', () => {
     expect(policyRequest.method).toBe('PATCH');
     expect(policyRequest.url).toBe(`${globalThis.location.origin}/admin/users/user-id/access-policy`);
     await expect(policyRequest.clone().json()).resolves.toEqual(policyBody);
+  });
+
+  it('uses the canonical admin marketplace routes with replay and revision metadata', async () => {
+    const options = (fetchImpl: FetchMock) => ({ baseUrl: '/admin-api', fetchImpl });
+    const moderationFetch = mockFetch({ data: { listings: [], requests: [], sellerProfiles: [] } });
+    await agriTechAdminControllerListPendingMarketplacePublications(options(moderationFetch));
+    expect(firstRequest(moderationFetch).url).toBe(
+      `${globalThis.location.origin}/admin-api/admin/marketplace/publications/pending`,
+    );
+
+    const verificationFetch = mockFetch({ data: { id: 'verification-1' } });
+    await agriTechAdminControllerReviewVerification(
+      'verification-1',
+      { decision: 'verified', expectedRevision: 3 },
+      'admin-verification-1',
+      options(verificationFetch),
+    );
+    const verificationRequest = firstRequest(verificationFetch);
+    expect(verificationRequest.url).toBe(`${globalThis.location.origin}/admin-api/admin/verifications/verification-1`);
+    expect(verificationRequest.headers.get('idempotency-key')).toBe('admin-verification-1');
+    await expect(verificationRequest.clone().json()).resolves.toEqual({
+      decision: 'verified',
+      expectedRevision: 3,
+    });
+
+    const lifecycleFetch = mockFetch({ data: { contractId: 'contract-1' } });
+    await marketplaceContractLifecycleAdminControllerGetContractLifecycle('contract-1', options(lifecycleFetch));
+    expect(firstRequest(lifecycleFetch).url).toBe(
+      `${globalThis.location.origin}/admin-api/admin/marketplace/contracts/contract-1/lifecycle`,
+    );
+
+    const policyFetch = mockFetch({ data: { version: 'rates-v2' } });
+    await marketplaceContractLifecycleAdminControllerActivateCommissionPolicy(
+      { rates: { produce: 200, product: 250, request: 300 }, version: 'rates-v2' },
+      'admin-policy-1',
+      options(policyFetch),
+    );
+    expect(firstRequest(policyFetch).headers.get('idempotency-key')).toBe('admin-policy-1');
+
+    const reviewFetch = mockFetch({ data: { reportId: 'report-1' } });
+    await marketplaceEngagementAdminControllerModerateReviewReport(
+      'report-1',
+      { decision: 'hidden', expectedRevision: 4 },
+      'admin-review-1',
+      options(reviewFetch),
+    );
+    const reviewRequest = firstRequest(reviewFetch);
+    expect(reviewRequest.url).toBe(
+      `${globalThis.location.origin}/admin-api/admin/marketplace/engagement/review-reports/report-1`,
+    );
+    expect(reviewRequest.headers.get('idempotency-key')).toBe('admin-review-1');
   });
 
   it('loads and mutates typed problem presentation rules', async () => {

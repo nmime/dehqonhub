@@ -10,6 +10,8 @@ const baseUser = {
   displayName: null,
   avatarUrl: 'https://cdn.example.test/avatar.png',
   passwordHash: 'hash',
+  emailVerifiedAt: null,
+  credentialRevision: 0,
   roles: ['user'],
   permissions: ['profile:read'],
   locale: 'uz' as never,

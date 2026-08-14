@@ -1,4 +1,4 @@
-import { cleanup, configure } from '@testing-library/react';
+import { cleanup } from '@testing-library/react';
 import { afterEach } from 'vitest';
 
 /**
@@ -13,14 +13,3 @@ import { afterEach } from 'vitest';
 afterEach(() => {
   cleanup();
 });
-
-/**
- * `findBy*`/`waitFor` give up after one second by default, which is generous for
- * a rendered component and tight for one that has to fetch its route chunk
- * first. A lazily loaded page resolves in milliseconds when the machine is idle
- * and can take considerably longer when every spec file in the project is
- * running at once, so the ceiling is raised to five seconds — still well inside
- * each project's test timeout, and only reached by a query that would otherwise
- * have failed.
- */
-configure({ asyncUtilTimeout: 5000 });

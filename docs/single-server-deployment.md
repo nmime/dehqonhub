@@ -11,10 +11,10 @@ and operates host Nginx + Certbot in front of the application, which stays in
 else in this document — Nginx, Certbot, DNS modes, secret handling, loopback
 binds, the rerun guarantees — is shared by both.
 
-| `RUNTIME_MODE`      | What runs                                                                   | Image/artifact source                                                                                  |
-| ------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| `compose` (default) | Docker Compose services under `nest-react-boilerplate.service`              | `COMPOSE_IMAGE_SOURCE=registry` pulls immutable `sha-<git-sha>` tags; `local` builds them on this host |
-| `native`            | PM2-supervised Node processes, host PostgreSQL/Redis, SPAs served from disk | built from the checkout on every deploy                                                                |
+| `RUNTIME_MODE`      | What runs                                                                   | Image/artifact source                                                                                                                                   |
+| ------------------- | --------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `compose` (default) | Docker Compose services under `nest-react-boilerplate.service`              | `COMPOSE_IMAGE_SOURCE=registry` pulls immutable `sha-<git-sha>` tags; `local` builds them once before systemd activates the same tags with `--no-build` |
+| `native`            | PM2-supervised Node processes, host PostgreSQL/Redis, SPAs served from disk | built from the checkout on every deploy                                                                                                                 |
 
 Select it at bootstrap time:
 
@@ -126,10 +126,24 @@ VITE_API_BASE_URL_MODE=same-origin
 ```
 
 Choose either `single-domain` or `per-app-domains` for
-`EXTERNAL_PROXY_PUBLIC_MODE`. Choose `landing-app` or `site-app` for
-`PRIMARY_APP`. Set the real `PUBLIC_DOMAIN`, registry, verified full-SHA image tag,
+`EXTERNAL_PROXY_PUBLIC_MODE`. `PRIMARY_APP` must name a selected root-capable
+frontend. Set the real `PUBLIC_DOMAIN`, registry, verified full-SHA image tag,
 `DATABASE_ENGINE`, database ownership mode, and optional profiles. Engine and
 ownership are independent, producing four supported pairs:
+
+DehqonHub uses the selected per-app topology and makes the complete user
+application its only public product frontend:
+
+```dotenv
+PUBLIC_DOMAIN=dehqonhub.uz
+PRIMARY_APP=user-app
+EXTERNAL_PROXY_PUBLIC_MODE=per-app-domains
+```
+
+The user app and Telegram Mini App use the apex; admin, mobile, API, and enabled
+Telegram API surfaces retain their selected hosts and canonical paths. The
+landing app, site app, full-stack reference harness, and a user-app subdomain
+are not part of the DehqonHub release topology.
 
 | Engine     | `bundled-db`                                                                  | `external-db`                                                                      |
 | ---------- | ----------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- |
@@ -175,29 +189,46 @@ sudo -u nrb docker login ghcr.io --username YOUR_USER --password-stdin
 
 ## DNS and certificate modes
 
-### One public domain
+### One public domain (reduced topology)
 
 Set:
 
 ```dotenv
 PUBLIC_DOMAIN=example.com
-PRIMARY_APP=landing-app
+PRIMARY_APP=user-app
 EXTERNAL_PROXY_PUBLIC_MODE=single-domain
 ```
 
 Create an A record, and an AAAA record only when the host actually has working
-public IPv6, for `example.com`. Nginx serves the selected landing/site app and
+public IPv6, for `example.com`. Nginx serves the selected primary frontend and
 routes canonical API, Better Auth/OAuth, Telegram, and Discord paths on the same
-origin. Other frontend containers remain private.
+origin. Other selected frontend containers remain private. DehqonHub uses the
+per-app mode because its admin, mobile, API, and Telegram API hosts remain
+independently addressable.
 
 ### Exact app domains, with explicit or wildcard DNS
 
 Set `EXTERNAL_PROXY_PUBLIC_MODE=per-app-domains`. The exact public contract is:
 
-The selected landing/site application owns the apex. Every other enabled
-deployable uses the exact mapping in the
-[Project Catalog](project-catalog.md), with the configured base domain
-substituted for `example.com`.
+The selected primary frontend owns the apex. Every other selected public
+deployable uses the exact mapping in the [Project Catalog](project-catalog.md),
+with the configured base domain substituted for `example.com`. Unselected apps
+produce no container expectation, listener, virtual host, trusted origin,
+readiness check, or exact-host certificate SAN.
+
+The approved DehqonHub mapping is:
+
+| Public destination                                       | Owner / behavior                                      |
+| -------------------------------------------------------- | ----------------------------------------------------- |
+| `https://dehqonhub.uz/`                                  | Complete selected `user-app`                          |
+| `https://dehqonhub.uz/telegram-mini-app`                 | Telegram Mini App route owned by `user-app`           |
+| `https://dehqonhub.uz/problems`                          | RFC 9457 problem registry owned by `user-app`         |
+| `https://admin-app.dehqonhub.uz/admin`                   | `admin-app` at its required router base path          |
+| `https://mobile-app.dehqonhub.uz/`                       | Selected mobile web export                            |
+| `https://auth-app-api.dehqonhub.uz/`                     | `auth-app-api`                                        |
+| `https://user-app-api.dehqonhub.uz/`                     | `user-app-api`                                        |
+| `https://admin-app-api.dehqonhub.uz/`                    | `admin-app-api`                                       |
+| `https://telegram-bot-api.dehqonhub.uz/telegram/webhook` | Telegram webhook when the Telegram profile is enabled |
 
 Create all exact A/AAAA records, or create apex A/AAAA plus
 `*.example.com` pointing to the same server. Wildcard DNS is only a DNS
@@ -241,7 +272,14 @@ Nginx is generated from the same public topology as Compose. It provides:
 - HTTP ACME challenge and HTTPS redirect;
 - TLS 1.2/1.3, HSTS, secure baseline headers, and WebSocket forwarding;
 - original host, scheme, client address, and a proxy-generated request ID;
-- `/api/auth`, OAuth, auth docs/callbacks, profile, and admin API routing;
+- the selected `user-app` renderer at the DehqonHub apex with no marketing or
+  user-app compatibility hostname;
+- relative normalization of inner frontend directory redirects so public HTTPS
+  responses never expose the container's HTTP scheme or port `8080`;
+- the user application at the apex root and the admin application at `/admin`
+  on its selected host;
+- `/api/auth`, OAuth, auth docs/callbacks, marketplace, all direct user API
+  roots, and admin API routing before the SPA fallback;
 - browser navigation fallback to each owning frontend;
 - Telegram webhook/Mini App and Discord interaction routes only when enabled;
 - exact virtual hosts, an explicit unknown-host rejection vhost, and
@@ -253,6 +291,11 @@ ports `4200` through `4300` remain bound to `127.0.0.1` by Compose. Observabilit
 ports are also loopback-only. Docker `json-file` logs are size/file bounded by
 `DOCKER_LOG_MAX_SIZE` and `DOCKER_LOG_MAX_FILES`. Do not add public firewall
 rules for private ports.
+
+Backend processes listen on `0.0.0.0:80` inside their containers so Docker's
+bridge and loopback port publishing can reach Fastify. This does not widen host
+exposure: every application/API published port above remains fixed to host
+`127.0.0.1` and is reached externally only through Nginx.
 
 ## Safe reruns and updates
 
@@ -277,6 +320,13 @@ SHA-256 manifest, and installed only when the configured exact version differs.
 `init`, `apply`, `deploy`, `update`, and `rollback` also converge any newly
 introduced machine-generatable secret without rotating an existing file.
 
+With `COMPOSE_IMAGE_SOURCE=local`, `deploy` builds the selected immutable image
+tags exactly once before installing and restarting the Compose systemd unit.
+The generated unit always starts with `--no-build`: local provenance skips the
+registry pull and reuses those tags, while registry provenance pulls first and
+uses the same bounded activation path. A missing local tag therefore fails
+activation instead of starting a second compilation inside systemd.
+
 For an application update, first verify the CI-built full-SHA image set and a
 current database backup, then run:
 
@@ -299,11 +349,11 @@ publishes the built SPAs into `FRONTEND_DIST_ROOT`, migrates, and reloads PM2.
 Everything else — dirty-checkout refusal, fast-forward-only, secret handling,
 Nginx, Certbot — is identical.
 
-At boot, `nest-react-boilerplate.service` reruns the same production Compose
-wrapper after Docker and network readiness. Containers also use restart
-policies. On a native host that unit is absent; `pm2-<DEPLOY_USER>.service`
-resurrects the saved process list instead. Nginx and Certbot timers are
-independently enabled in both runtimes.
+At boot, `nest-react-boilerplate.service` reruns the production Compose wrapper
+with `--no-build` after Docker and network readiness. Containers also use
+restart policies. On a native host that unit is absent;
+`pm2-<DEPLOY_USER>.service` resurrects the saved process list instead. Nginx and
+Certbot timers are independently enabled in both runtimes.
 
 ## Rollback boundary
 
@@ -357,7 +407,12 @@ Agents extending this template must preserve these boundaries:
 - do not create a generic or starter app/domain;
 - `auth-app-api` always maps to `auth-app-api.<PUBLIC_DOMAIN>` in per-app mode,
   and the same rule applies to every app ID;
-- only `landing-app` or `site-app` may own the apex;
+- the configured primary app must be selected; DehqonHub selects `user-app` at
+  the apex and publishes no landing, site, or user-app subdomain;
+- selected closure state controls images, services, ports, hosts, exact-host
+  certificate SANs, trusted origins, and readiness checks;
+- the user app owns `/` on the apex, the admin app owns `/admin` on its host,
+  and enabled Telegram routes use the apex user route and generated API host;
 - add new public apps to the Compose domain derivation and Nginx renderer in one
   change, with renderer tests and documentation;
 - keep all container ports loopback-only when host Nginx owns the edge;

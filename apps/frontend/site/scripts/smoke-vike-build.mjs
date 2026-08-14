@@ -58,7 +58,7 @@ if (!searchable.includes(expectedCopy)) {
   throw new Error(`[${appName}] expected Vike site copy not found in build.`);
 }
 
-if (!containsExactUrl(searchable, 'https://example.com/problems') || !searchable.includes('client-data-validation')) {
+if (!containsExactUrl(searchable, 'https://dehqonhub.uz/problems') || !searchable.includes('client-data-validation')) {
   throw new Error(`[${appName}] RFC 9457 problem registry is missing from the Vike build.`);
 }
 

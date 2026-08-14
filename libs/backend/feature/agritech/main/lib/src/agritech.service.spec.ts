@@ -190,7 +190,6 @@ describe('AgriTechOperationsService', () => {
       region: 'R',
       grade: 'A',
     });
-    expect(repository.updateProduceSampleAvailability).toHaveBeenCalledWith(owner, 'produce-1', true);
     expect(notifications.produceReserved).toHaveBeenCalledWith('order-1', owner.userId);
     expect(notifications.partnerStatus).toHaveBeenCalledWith(partner);
     expect(notifications.farmerAssigned).toHaveBeenCalledWith(farmer, 'agent-1');

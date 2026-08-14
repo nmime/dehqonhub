@@ -58,9 +58,7 @@ function ProviderIdentitiesPanelBase({ onLink, t }: Readonly<ProviderIdentitiesP
     <UiCard className="user-settings__card" title={t('user.settings.connections.title')}>
       <p>{t('user.settings.connections.description')}</p>
       {!authStore.isAuthenticated ? (
-        // "Profile state" was the wrong heading inside the connected-accounts
-        // card; what the panel is reporting is that nobody is signed in.
-        <UiEmptyState description={t('user.state.unauthenticated')} title={t('user.profile.guestTitle')} />
+        <UiEmptyState description={t('user.state.unauthenticated')} title={t('user.profile.title')} />
       ) : null}
       {identitiesQuery.isLoading ? <UiLoading label={t('user.loadingProfile')} /> : null}
       {identitiesQuery.isError ? (

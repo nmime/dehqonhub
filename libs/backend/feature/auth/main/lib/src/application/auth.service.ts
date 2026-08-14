@@ -159,6 +159,31 @@ export class AuthService {
     return consumed.isOk() && Boolean(consumed.value);
   }
 
+  async confirmEmailVerification(token: string, tenantId?: string | null): Promise<AuthenticatedUserView> {
+    const resolvedTenantId = parseTenantId(tenantId);
+    const consumed = await this.tokens.consumeUserActionToken(token, 'email_verification', resolvedTenantId);
+    if (consumed.isErr() || !consumed.value) {
+      throw new BadRequestException('Verification code is invalid or expired.');
+    }
+    const verified = await this.users.verifyEmail(consumed.value.userId, resolvedTenantId, new Date());
+    if (verified.isErr() || !verified.value) {
+      throw new BadRequestException('Verification code is invalid or expired.');
+    }
+    return toAuthenticatedUserView(verified.value);
+  }
+
+  async confirmPasswordReset(token: string, password: string, tenantId?: string | null): Promise<void> {
+    const resolvedTenantId = parseTenantId(tenantId);
+    const consumed = await this.tokens.consumeUserActionToken(token, 'password_reset', resolvedTenantId);
+    if (consumed.isErr() || !consumed.value) {
+      throw new BadRequestException('Reset code is invalid or expired.');
+    }
+    const replaced = await this.users.replacePassword(consumed.value.userId, hashPassword(password), resolvedTenantId);
+    if (replaced.isErr() || !replaced.value) {
+      throw new BadRequestException('Reset code is invalid or expired.');
+    }
+  }
+
   async getUserById(id: string, tenantId?: string | null): Promise<AuthenticatedUserView | null> {
     const resolvedTenantId = parseTenantId(tenantId);
     const user = await this.users.findById(id, resolvedTenantId);

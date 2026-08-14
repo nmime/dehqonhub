@@ -277,7 +277,8 @@ A generated app is complete only after the applicable items are explicit:
   proportional to the surface. Screen stories do not replace routing,
   authentication, provider, API, or complete-flow browser tests.
 
-Use [Adding a New Service](usage/adding-a-new-service.md) for backend details.
+Use the [CLI Reference](setup/cli-reference.md) for backend application and
+feature generation details.
 
 ## Add a library
 

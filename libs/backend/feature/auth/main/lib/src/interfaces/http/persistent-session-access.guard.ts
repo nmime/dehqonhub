@@ -60,6 +60,9 @@ export class PersistentSessionAccessGuard implements CanActivate {
     if (!user.value || user.value.status !== 'active') {
       throw new UnauthorizedException();
     }
+    if ((principal.credentialRevision ?? 0) !== user.value.credentialRevision) {
+      throw new UnauthorizedException();
+    }
 
     const effectiveAccess = await this.roles.resolveEffectiveAccess(principal.subject, principal.tenantId);
     if (effectiveAccess.isErr()) {
@@ -68,6 +71,8 @@ export class PersistentSessionAccessGuard implements CanActivate {
 
     const resolvedPrincipal: AuthenticatedPrincipal = {
       ...principal,
+      emailVerified: Boolean(user.value.emailVerifiedAt),
+      credentialRevision: user.value.credentialRevision,
       roles: effectiveAccess.value.roleKeys,
       permissions: effectiveAccess.value.permissionKeys,
     };

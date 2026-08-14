@@ -185,6 +185,33 @@ atomic failure behavior, idempotency, and tenant boundaries.
 
 Docker, Compose, Helm, GitOps, PM2, and single-server artifacts SHALL derive
 from validated source and render deterministic, secret-safe runtime topology.
+The DehqonHub single-server per-app topology SHALL expose selected `user-app`
+at `PUBLIC_DOMAIN`, and every image, service, listener, virtual host,
+certificate name, trusted origin, readiness check, and runtime URL SHALL be
+restricted to the fresh selected closure. Deselected landing/site applications,
+their containers, and the `user-app.<domain>` compatibility hostname SHALL be
+absent. Exact-host certificate mode SHALL reconcile the SAN set exactly rather
+than accepting stale extra names. Generated Nginx SHALL use the 1.24-compatible
+`listen ... http2` syntax from the documented Ubuntu baseline instead of the
+unsupported standalone `http2 on` directive.
+When single-server Compose uses local image provenance, the controller SHALL
+build the selected immutable image tags exactly once before systemd activation,
+and the generated unit SHALL start those prebuilt tags with `--no-build`
+without pulling or loading source-build configuration.
+Production backend processes SHALL bind `0.0.0.0:80` inside their containers so
+Docker network and published-port traffic reaches the listener, while every
+application and API host publication SHALL remain bound to `127.0.0.1`.
+The host TLS renderer SHALL convert inner frontend `Location` values shaped as
+`http://<host>:8080/<path>` into relative paths without applying that rewrite
+to API proxy locations. The standalone migrator image SHALL assign its runtime
+dependencies and TypeScript migration sources to the numeric non-root runtime
+user independently of the host checkout umask. Every final backend, worker,
+SSR, and static frontend image SHALL likewise make its staged dependencies and
+runtime assets readable by its numeric non-root user and SHALL verify a
+representative runtime entrypoint only after switching to that user. Static
+frontend images SHALL normalize the selected Nginx configuration to a
+world-readable, non-writable mode and SHALL verify it after switching to the
+numeric Nginx runtime user.
 
 **Evidence profile:** operations, security
 
@@ -194,15 +221,105 @@ from validated source and render deterministic, secret-safe runtime topology.
 - Bundled and external database modes remain explicit.
 - Generated build outputs do not re-enter Nx source-project discovery before
   deployment artifacts are staged.
+- Selected user, admin, API, mobile, and enabled integration hosts retain their
+  canonical application ownership; deselected applications produce no public
+  or runtime artifact.
+- Activation stops and removes known application containers that are absent
+  from the fresh selected closure before readiness is evaluated.
+- Exact-host certificates contain the exact derived public host set; stale
+  landing/site/user-app subdomain SANs are not accepted as healthy.
+- Disabled UFW provisioning is an idempotent successful no-op, including under
+  shell `errexit` behavior.
+- Image provenance remains local while prebuilt unit activation omits both a
+  registry pull and a second build.
+- Container listener reachability does not widen the host exposure boundary.
+- Frontend canonical redirects preserve the public TLS scheme and never expose
+  the inner port.
+- Restrictive host checkout permissions cannot make staged migration sources
+  unreadable by the non-root migrator process.
+- Restrictive host checkout permissions cannot make staged locale, server,
+  static bundle, or selected Nginx configuration assets unreadable by any final
+  non-root runtime process.
 
 **Failure behavior:**
 
-- Missing tools, invalid manifests, or unsafe secret placement blocks readiness.
+- Missing tools, invalid manifests, unsupported proxy syntax, or unsafe secret
+  placement blocks readiness before traffic reload.
+- A failed Nginx render restores the previous valid configuration.
+- A stale unselected application container, listener, virtual host, or exact
+  certificate SAN blocks convergence.
+- A missing prebuilt local image fails activation instead of triggering an
+  implicit build inside systemd.
+- A backend listener that is unreachable through its loopback-published host
+  port blocks readiness.
+- An inner frontend redirect that exposes HTTP or port `8080` on a public HTTPS
+  response blocks readiness.
+- An image whose non-root migrator cannot read every staged runtime source
+  blocks deployment before application services start.
+- An API, worker, SSR, or static frontend image whose final non-root user cannot
+  read its staged runtime assets or selected Nginx configuration blocks the
+  image build before activation.
 
 #### Scenario: Deployment validation
 
 - **WHEN** the supported deployment profiles are rendered
 - **THEN** each produces a valid topology without publishing or deploying it
+
+#### Scenario: Non-root migrator source ownership
+
+- **WHEN** a source checkout created under a restrictive host umask is staged
+  into the standalone migration image
+- **THEN** every runtime dependency and migration source is owned and readable
+  by the numeric non-root migrator user
+
+#### Scenario: Non-root final runtime asset readability
+
+- **WHEN** backend, worker, SSR, and static frontend artifacts built from a
+  restrictive source checkout are copied into their final images
+- **THEN** each numeric non-root runtime user can read its staged entrypoint and
+  assets, the Nginx runtime can read its selected server configuration, and the
+  build verifies that access after the user switch
+
+#### Scenario: Selected user application owns the apex
+
+- **WHEN** the DehqonHub selected closure and per-app routing choose `user-app`
+  as the primary application
+- **THEN** `user-app` serves the apex, stale landing/site containers and
+  landing/site/user-app subdomain hosts and SANs are absent, and the selected
+  admin, mobile, API, and Telegram owners retain their derived destinations
+
+#### Scenario: Supported Nginx baseline
+
+- **WHEN** generated TLS virtual hosts are validated by the supported Ubuntu
+  Nginx 1.24 package
+- **THEN** every HTTP/2 listener uses `listen ... http2`, no standalone
+  `http2 on` directive is emitted, and configuration parses before reload
+
+#### Scenario: Disabled UFW provisioning
+
+- **WHEN** host provisioning runs with UFW explicitly disabled under shell
+  `errexit` behavior
+- **THEN** firewall installation returns success without changing firewall state
+  and provisioning continues
+
+#### Scenario: Prebuilt local image activation
+
+- **WHEN** the single-server controller deploys with local image provenance
+- **THEN** it builds the selected immutable tags once before systemd and the unit
+  activates those tags with `--no-build` without pulling or rebuilding them
+
+#### Scenario: Reachable private backend listener
+
+- **WHEN** production Compose starts a backend service on container port 80
+- **THEN** the process accepts container-network traffic on `0.0.0.0` and Docker
+  publishes that port only on host `127.0.0.1`
+
+#### Scenario: HTTPS-safe frontend directory redirect
+
+- **WHEN** an inner frontend server returns
+  `Location: http://dehqonhub.uz:8080/problems/` through the host TLS proxy
+- **THEN** the public response returns `Location: /problems/` so the browser
+  retains the outer HTTPS origin, while API redirects remain unchanged
 
 ### Requirement: [REQ-RUNTIME-BOUNDARY-010] Static and network boundaries are constrained
 

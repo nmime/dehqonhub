@@ -1,4 +1,4 @@
-import { lazy, Suspense, type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import type { ApiClientRequestOptions } from '@app/frontend-api-client';
 import { UiLoading, UiSection } from '@app/frontend-ui-web';
 import { AuditPage } from '../../pages/audit';
@@ -10,10 +10,11 @@ import { NotFoundPage } from '../../pages/not-found';
 import { NotificationBroadcastsPage } from '../../pages/notification-broadcasts';
 import { NotificationSegmentsPage } from '../../pages/notification-segments';
 import { NotificationTemplatesPage } from '../../pages/notification-templates';
+import { ProblemPresentationsPage } from '../../pages/problem-presentations';
 import { ProfilePage } from '../../pages/profile';
 import { RolesPage } from '../../pages/roles';
 import { UsersPage } from '../../pages/users';
-import { AgriTechAdminPage } from '../../pages/agritech';
+import { AgriTechAdminPage, MarketplaceAdminPage, type MarketplaceAdminView } from '../../pages/agritech';
 import {
   fallbackTranslate,
   isUsersRoute,
@@ -25,19 +26,6 @@ import {
 export interface AdminRouteRuntime {
   requestOptions?: ApiClientRequestOptions;
 }
-
-/**
- * The presentation console is fetched when its route opens, unlike every other
- * screen here. It is the one page that reads the whole generated toast-rule
- * catalog — all three apps' configs, some 460 kB beyond the admin and auth rules
- * the console already needs for its own toasts — and it is a settings screen a
- * session may well never visit. The rest stay eager: they carry no comparable
- * payload, and several are asserted as synchronous markup by the specs that call
- * this matrix directly.
- */
-const ProblemPresentationsPage = lazy(async () => ({
-  default: (await import('../../pages/problem-presentations')).ProblemPresentationsPage,
-}));
 
 /**
  * RBAC route matrix: single source of truth mapping a normalized admin path +
@@ -53,7 +41,29 @@ function renderReadyAdminRoute(
   runtime: AdminRouteRuntime,
 ): ReactElement {
   const routePath = normalizeAdminPath(path);
-  if (routePath === '/') {
+  if (routePath === '/' || routePath === '/marketplace/overview') {
+    return state.access.canReadAgriTech ? (
+      <MarketplaceAdminPage access={state.access} requestOptions={runtime.requestOptions} view="overview" />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.agritechMissing')} />
+    );
+  }
+  if (
+    routePath === '/marketplace/moderation' ||
+    routePath === '/marketplace/commerce' ||
+    routePath === '/marketplace/engagement'
+  ) {
+    return state.access.canReadAgriTech ? (
+      <MarketplaceAdminPage
+        access={state.access}
+        requestOptions={runtime.requestOptions}
+        view={routePath.slice('/marketplace/'.length) as MarketplaceAdminView}
+      />
+    ) : (
+      <ForbiddenPage reason={t('admin.permission.agritechMissing')} />
+    );
+  }
+  if (routePath === '/marketplace/operations') {
     return state.access.canReadAgriTech ? (
       <AgriTechAdminPage access={state.access} requestOptions={runtime.requestOptions} />
     ) : (
@@ -104,9 +114,7 @@ function renderReadyAdminRoute(
   }
   if (routePath === '/settings/errors') {
     return state.access.canReadSettings ? (
-      <Suspense fallback={<UiLoading />}>
-        <ProblemPresentationsPage access={state.access} requestOptions={runtime.requestOptions} />
-      </Suspense>
+      <ProblemPresentationsPage access={state.access} requestOptions={runtime.requestOptions} />
     ) : (
       <ForbiddenPage reason={t('admin.permission.settingsMissing')} />
     );

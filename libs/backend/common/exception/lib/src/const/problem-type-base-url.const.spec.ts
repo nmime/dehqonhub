@@ -6,8 +6,8 @@ describe('problem type namespace', () => {
   it('uses a product-domain placeholder without repository identity', () => {
     const repositoryIdentity = ['nest', 'react', 'boilerplate'].join('-');
 
-    expect(ProblemTypeBaseUrl).toBe('https://example.com/problems');
-    expect(problemTypeForCode('resource-not-found')).toBe('https://example.com/problems#resource-not-found');
+    expect(ProblemTypeBaseUrl).toBe('https://dehqonhub.uz/problems');
+    expect(problemTypeForCode('resource-not-found')).toBe('https://dehqonhub.uz/problems#resource-not-found');
     expect(problemTypeForCode('resource-not-found')).not.toContain(repositoryIdentity);
   });
 

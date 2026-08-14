@@ -140,9 +140,8 @@ durable validation/import and atomically replaces segment membership only on
 success. The current HTTP contract uses a base64 JSON body rather than a
 multipart stream, so keep `NOTIFICATION_CSV_MAX_BYTES` conservative.
 
-The full product/technical contract and product-specific category extension
-points are documented in
-[Admin notification broadcasts](admin-notification-broadcasts-spec.md).
+Product-specific categories extend the shared notification contract through
+the owning feature's typed event and template catalogs.
 
 ## Providers and authentication delivery
 

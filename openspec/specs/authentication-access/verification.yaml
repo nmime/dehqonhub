@@ -323,3 +323,87 @@ requirements:
         target: fullstack-e2e:e2e
         lanes:
           - runtime
+  - id: REQ-AUTH-RECOVERY-010
+    projects:
+      - auth-app-api
+      - user-app
+      - '@app/backend-feature-auth-main'
+      - '@app/backend-feature-auth-shared'
+      - '@app/backend-feature-auth-test'
+      - '@app/backend-postgres-main-auth'
+      - '@app/backend-mongodb-main-auth'
+      - '@app/frontend-api-client'
+      - '@app/frontend-feature-user-auth'
+      - '@app/frontend-feature-user-profile'
+      - '@app/frontend-feature-user-i18n'
+    risk: critical
+    profiles: [api, domain, persistence, security, journey]
+    cucumber:
+      disposition: not-applicable
+      reason: Single-use token persistence, credential-revision fencing, enumeration resistance, and recovery forms require direct domain, persistent component, contract, security, and UI evidence.
+      alternativeEvidence: [vitest, component, contract, security]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/auth/main/lib/src/application/auth.service.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes: [pr, main]
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/interfaces/http/persistent-session-access.guard.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/backend/feature/auth/main/lib/src/interfaces/http/auth.controller.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes: [pr, main]
+      - kind: static
+        file: libs/backend/postgres/main/auth/lib/src/infrastructure/data-access/migrations/auth-account-assurance.migration.spec.ts
+        target: '@app/backend-postgres-main-auth:test'
+        lanes: [pr, main]
+      - kind: component
+        file: libs/backend/feature/auth/test/lib/src/auth-user.repository.component-spec.ts
+        target: '@app/backend-feature-auth-test:component-test'
+        lanes: [main, nightly]
+      - kind: component
+        file: libs/backend/mongodb/main/auth/lib/src/auth-mongo.repository.component-spec.ts
+        target: '@app/backend-mongodb-main-auth:component-test'
+        lanes: [main, nightly]
+      - kind: vitest
+        file: apps/frontend/app/src/features/auth/ui/auth-recovery-card.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/generated-api-client.spec.ts
+        target: '@app/frontend-api-client:test'
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
+        target: user-app:e2e-authenticated
+        lanes: [main, nightly]
+  - id: REQ-AUTH-PROVISIONING-011
+    projects:
+      - auth-app-api
+      - user-app
+      - '@app/backend-feature-auth-main'
+      - '@app/backend-feature-auth-shared'
+      - '@app/backend-postgres-main-auth'
+      - '@app/backend-mongodb-main-auth'
+      - '@app/frontend-feature-user-social-auth'
+    risk: critical
+    profiles: [domain, security, operations]
+    cucumber:
+      disposition: not-applicable
+      reason: OIDC issuer, signature, nonce, subject, opt-in provisioning, and link behavior require adversarial provider-boundary and configuration evidence.
+      alternativeEvidence: [vitest, security, operations]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/auth/main/lib/src/application/external-auth.service.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes: [pr, main]
+      - kind: security
+        file: libs/backend/feature/auth/main/lib/src/application/external-auth.service.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes: [pr, main]
+      - kind: operations
+        file: libs/backend/feature/auth/main/lib/src/application/better-auth.config.spec.ts
+        target: '@app/backend-feature-auth-main:test'
+        lanes: [pr, main]

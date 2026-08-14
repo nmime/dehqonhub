@@ -45,10 +45,12 @@ plus mapped alternative evidence everywhere else.
 
 Run heavier suites intentionally: `test:component`, `test:e2e`, `test:storybook`, `test:visual`, `test:docker-smoke`, `test:fullstack`, and the nightly/manual presets (`api:openapi:fuzz`, `test:a11y`, `test:e2e:matrix`, `test:perf`, `test:security:dast`, `test:mutation`).
 
-`pnpm run test:fullstack` fails closed unless `fullstack-e2e` belongs to the
-fresh selected closure. Its Compose graph, database provider, applications, and
-capability infrastructure come from that closure; environment profile overrides
-cannot reduce the selected service set or add stale applications.
+`pnpm run test:fullstack` runs the repository-owned harness against a fresh
+selected product closure without adding the harness as a product root. The
+closure must contain the user, admin, and auth applications/APIs that the
+journey exercises. Its Compose graph, database provider, applications, and
+capability infrastructure come from that closure; environment profile
+overrides cannot reduce the selected service set or add stale applications.
 
 ## Durable-provider proof
 

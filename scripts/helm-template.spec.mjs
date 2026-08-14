@@ -68,6 +68,7 @@ function writeReferenceSelection() {
 
 const selectionValues = writeReferenceSelection();
 const prodValues = resolve(chart, 'values-production.yaml');
+const productSelectionValues = resolve(chart, 'values-selection.yaml');
 const otelEnabledArgs = [
   '--set',
   'monitoring.enabled=true',
@@ -146,6 +147,26 @@ function render(releaseName, extraArgs = []) {
   );
 }
 
+/** Render the checked-in product selection exactly as the production Helm path does. */
+function renderProductSelection(releaseName, extraArgs = []) {
+  return execFileSync(
+    'helm',
+    [
+      'template',
+      releaseName,
+      chart,
+      '--namespace',
+      'nrb',
+      '-f',
+      prodValues,
+      '-f',
+      productSelectionValues,
+      ...extraArgs,
+    ],
+    { encoding: 'utf8', maxBuffer: 32 * 1024 * 1024 },
+  );
+}
+
 /** Render with default values (+ synthetic in-chart secret), like validate-helm.sh. */
 function renderDefault(releaseName, extraArgs = []) {
   return execFileSync(
@@ -177,6 +198,48 @@ function docFor(rendered, kind, nameFragment) {
   const docs = rendered.split(/^---$/m);
   return docs.find((d) => d.includes(`kind: ${kind}`) && d.includes(nameFragment)) ?? '';
 }
+
+test('DehqonHub product render publishes user-app at the apex without obsolete public hosts', { skip: !HELM }, () => {
+  const out = renderProductSelection('dehqonhub');
+  const ingress = docFor(out, 'Ingress', 'name: dehqonhub');
+  const config = docFor(out, 'ConfigMap', 'name: dehqonhub-config');
+  const expectedHosts = [
+    'dehqonhub.uz',
+    'mobile-app.dehqonhub.uz',
+    'admin-app.dehqonhub.uz',
+    'auth-app-api.dehqonhub.uz',
+    'user-app-api.dehqonhub.uz',
+    'admin-app-api.dehqonhub.uz',
+    'telegram-bot-api.dehqonhub.uz',
+  ];
+  const ingressHosts = [...ingress.matchAll(/^    - host: "([^"]+)"$/gmu)].map((match) => match[1]);
+  const tlsHosts = [...ingress.matchAll(/^        - "([^"]+)"$/gmu)].map((match) => match[1]);
+
+  assert.deepEqual(ingressHosts, expectedHosts, 'Ingress rules must expose exactly the selected DehqonHub hosts');
+  assert.deepEqual(tlsHosts, expectedHosts, 'TLS must cover exactly the same selected DehqonHub hosts');
+  assert.match(
+    ingress,
+    /host: "dehqonhub\.uz"[\s\S]*name: dehqonhub-user-app/u,
+    'the apex must route to the selected user-app Service',
+  );
+  assert.match(out, /app\.kubernetes\.io\/component: user-app/u);
+  assert.doesNotMatch(out, /app\.kubernetes\.io\/component: (?:landing-app|site-app)/u);
+
+  for (const expected of [
+    'CORS_ORIGINS: "https://dehqonhub.uz,https://admin-app.dehqonhub.uz,https://mobile-app.dehqonhub.uz"',
+    'BETTER_AUTH_URL: "https://dehqonhub.uz"',
+    'BETTER_AUTH_TRUSTED_ORIGINS: "https://dehqonhub.uz,https://admin-app.dehqonhub.uz,https://mobile-app.dehqonhub.uz"',
+    'AUTH_ALLOWED_RETURN_URLS: "https://dehqonhub.uz,https://admin-app.dehqonhub.uz,https://mobile-app.dehqonhub.uz"',
+    'PAYMENT_RETURN_URL_ORIGINS: "https://dehqonhub.uz"',
+    'TELEGRAM_BOT_WEBHOOK_URL: "https://telegram-bot-api.dehqonhub.uz/telegram/webhook"',
+    'TELEGRAM_MINI_APP_URL: "https://dehqonhub.uz/telegram-mini-app"',
+  ]) {
+    assert.ok(config.includes(expected), `production ConfigMap must contain ${expected}`);
+  }
+
+  assert.doesNotMatch(out, /(?:user-app|landing-app|site-app)\.dehqonhub\.uz/u);
+  assert.doesNotMatch(config, /(?:user-app|landing-app|site-app)\.example\.com|https:\/\/example\.com/u);
+});
 
 test('PodDisruptionBudget honors minAvailable from production values', { skip: !HELM }, () => {
   const out = render('nrbtest');
@@ -349,12 +412,12 @@ test(
   'landing runtime destinations are derived from split ingress hosts without a baked-in domain',
   { skip: !HELM },
   () => {
-    const out = render('nrbtest', [
-      '--set-string',
-      'ingress.hosts[2].host=accounts.product.test',
-      '--set-string',
-      'ingress.hosts[4].host=control.product.test',
-    ]);
+    const hosts = [
+      { host: 'www.product.test', paths: ['/'], service: 'landing-app' },
+      { host: 'accounts.product.test', paths: ['/'], service: 'user-app' },
+      { host: 'control.product.test', paths: ['/'], service: 'admin-app' },
+    ];
+    const out = render('nrbtest', ['--set-json', `ingress.hosts=${JSON.stringify(hosts)}`]);
     const landingApp = docFor(out, 'Deployment', 'nrbtest-landing-app');
     const userApp = docFor(out, 'Deployment', 'nrbtest-user-app');
 

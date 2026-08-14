@@ -7,7 +7,7 @@ describe('localizeProblemDetails', () => {
     expect(
       localizeProblemDetails(
         {
-          type: 'https://example.com/problems#client-data-validation',
+          type: 'https://dehqonhub.uz/problems#client-data-validation',
           title: 'Client Data Validation Failed',
           status: 400,
           detail: 'One or more request members are invalid.',
@@ -17,7 +17,7 @@ describe('localizeProblemDetails', () => {
         'ru',
       ),
     ).toEqual({
-      type: 'https://example.com/problems#client-data-validation',
+      type: 'https://dehqonhub.uz/problems#client-data-validation',
       title: 'Ошибка валидации данных клиента',
       status: 400,
       detail: 'Одно или несколько полей запроса недействительны.',
@@ -81,7 +81,7 @@ describe('localizeProblemDetails', () => {
 
   it('localizes registered authentication problems and reports the translated content language', () => {
     const problem = {
-      type: 'https://example.com/problems#step-up-required',
+      type: 'https://dehqonhub.uz/problems#step-up-required',
       title: 'Step-up Authentication Required',
       status: 403,
       detail: 'Recent authentication is required to perform this security-sensitive action.',

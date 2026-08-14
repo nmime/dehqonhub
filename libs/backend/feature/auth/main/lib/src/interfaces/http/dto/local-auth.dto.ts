@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { IsEmail, IsIn, IsOptional, IsString, IsUUID, MinLength } from 'class-validator';
+import { IsEmail, IsIn, IsOptional, IsString, IsUUID, MaxLength, MinLength } from 'class-validator';
 import { supportedLocales } from '@app/backend-common-i18n';
 import { userThemePreferences } from '@app/backend-feature-auth-shared';
 
@@ -55,6 +55,27 @@ export class UserActionTokenRequestDto {
   @ApiProperty({ example: 'user@example.com', format: 'email' })
   @IsEmail()
   email!: string;
+}
+
+export class UserActionTokenConfirmDto {
+  @ApiPropertyOptional({ format: 'uuid' })
+  @IsOptional()
+  @IsUUID()
+  tenantId?: string;
+
+  @ApiProperty({ maxLength: 512, minLength: 16, writeOnly: true })
+  @IsString()
+  @MinLength(16)
+  @MaxLength(512)
+  token!: string;
+}
+
+export class PasswordResetConfirmDto extends UserActionTokenConfirmDto {
+  @ApiProperty({ maxLength: 256, minLength: 8, writeOnly: true })
+  @IsString()
+  @MinLength(8)
+  @MaxLength(256)
+  password!: string;
 }
 
 export class UpdateLocaleDto {

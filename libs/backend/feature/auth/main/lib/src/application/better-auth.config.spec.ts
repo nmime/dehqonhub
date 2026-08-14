@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-ACCESS-001
+// @requirements REQ-AUTH-ACCESS-001 REQ-AUTH-PROVISIONING-011
 import { describe, expect, it, beforeEach, afterEach } from 'vitest';
 import { DefaultAuthTenantId } from '@app/backend-feature-auth-shared';
 import { getBetterAuthConfig } from './better-auth';

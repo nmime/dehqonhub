@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-PERSISTENCE-007
+// @requirements REQ-AUTH-PERSISTENCE-007 REQ-AUTH-RECOVERY-010
 // Evidence for: REQ-AUTH-PERSISTENCE-007
 import { MikroORM } from '@mikro-orm/core';
 import { MikroOrmModule } from '@mikro-orm/nestjs';
@@ -166,6 +166,35 @@ describeIfDocker('AuthUserRepository component', () => {
       roles: ['admin'],
     });
     expect(login._unsafeUnwrap()?.lastLoginAt.toISOString()).toBe(loggedInAt.toISOString());
+  });
+
+  it('persists email assurance and fences earlier password sessions with a credential revision', async () => {
+    const previousCredentialDigest = ['credential', 'hash', 'v1'].join(':');
+    const nextCredentialDigest = ['credential', 'hash', 'v2'].join(':');
+    const user = (
+      await authUsers.createUser({
+        email: 'assurance@example.com',
+        passwordHash: previousCredentialDigest,
+      })
+    )._unsafeUnwrap();
+    expect(user.emailVerifiedAt).toBeNull();
+    expect(user.credentialRevision).toBe(0);
+
+    const verifiedAt = new Date('2026-08-11T08:00:00.000Z');
+    const verified = (await authUsers.verifyEmail(user.id, undefined, verifiedAt))._unsafeUnwrap();
+    expect(verified?.emailVerifiedAt?.toISOString()).toBe(verifiedAt.toISOString());
+
+    const replaced = (await authUsers.replacePassword(user.id, nextCredentialDigest))._unsafeUnwrap();
+    expect(replaced).toMatchObject({
+      credentialRevision: 1,
+      passwordHash: nextCredentialDigest,
+    });
+
+    orm.em.clear();
+    expect((await authUsers.findById(user.id))._unsafeUnwrap()).toMatchObject({
+      credentialRevision: 1,
+      passwordHash: nextCredentialDigest,
+    });
   });
 
   it('persists supported locales and rejects unsupported locales', async () => {

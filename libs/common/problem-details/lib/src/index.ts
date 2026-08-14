@@ -1,5 +1,5 @@
-export const ProblemTypeDocumentationUrl = 'https://example.com/problems';
-export const ProblemInstanceBaseUrl = 'https://example.com/problem-instances';
+export const ProblemTypeDocumentationUrl = 'https://dehqonhub.uz/problems';
+export const ProblemInstanceBaseUrl = 'https://dehqonhub.uz/problem-instances';
 
 const ProblemCodePattern = /^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$/u;
 const RequestIdPattern = /^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/u;

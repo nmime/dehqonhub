@@ -155,9 +155,46 @@ requirements:
         file: apps/frontend/app/src/pages/marketplace/ui/marketplace-components.spec.tsx
         target: user-app:test
         lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-management.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
       - kind: contract
         file: libs/frontend/api-client/lib/src/user.ts
         target: '@app/frontend-api-client:build'
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
+        target: user-app:e2e-authenticated
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-EXPERIENCE-026
+    projects: [user-app, '@app/frontend-feature-user-i18n']
+    risk: high
+    profiles: [domain, journey]
+    cucumber:
+      disposition: not-applicable
+      reason: Renderer-owned reference fidelity, responsive layout, theme parity, local-storage behavior, and filter interaction are directly falsified by component and browser evidence.
+      alternativeEvidence: [vitest, playwright]
+    evidence:
+      - kind: vitest
+        file: apps/frontend/app/src/app/app.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/shared/mini-app/mini-app-shell.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/model/use-guest-favorites.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-components.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-page.spec.tsx
+        target: user-app:test
         lanes: [pr, main]
       - kind: playwright
         file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
@@ -288,8 +325,8 @@ requirements:
         '@app/backend-feature-agritech-shared',
         '@app/backend-feature-agritech-admin',
         '@app/backend-postgres-main-agritech',
-        mobile-app,
         acceptance-e2e,
+        mobile-app,
       ]
     risk: critical
     profiles: [acceptance, domain, api]
@@ -347,7 +384,6 @@ requirements:
         '@app/common-i18n-runtime',
         '@app/backend-common-i18n',
         '@repo/tooling',
-        mobile-app,
         '@app/frontend-feature-user-i18n',
         '@app/frontend-feature-admin-i18n',
         '@app/backend-feature-telegram-bot',
@@ -558,9 +594,17 @@ requirements:
     profiles: [operations, security]
     cucumber:
       disposition: not-applicable
-      reason: Secret mounting, immutable deployment inputs, migration ordering, and readiness are deployment configuration contracts.
+      reason: Selected-app derivation, apex browser destinations, exact certificate coverage, reverse-proxy behavior, trusted origins, secret mounting, and readiness are deployment configuration contracts.
       alternativeEvidence: [operations, security]
     evidence:
+      - kind: operations
+        file: scripts/single-server-deployment.spec.mjs
+        script: test:deploy
+        lanes: [pr, main]
+      - kind: security
+        file: scripts/single-server-deployment.spec.mjs
+        script: test:deploy
+        lanes: [pr, main]
       - kind: operations
         file: scripts/compose-production.spec.mjs
         script: test:deploy
@@ -578,8 +622,6 @@ requirements:
       [
         user-app,
         admin-app,
-        mobile-app,
-        fullstack-e2e,
         user-app-api,
         admin-app-api,
         '@repo/tooling',
@@ -593,11 +635,11 @@ requirements:
         '@app/backend-feature-product-main',
       ]
     risk: high
-    profiles: [api]
+    profiles: [api, journey, operations]
     cucumber:
       disposition: not-applicable
-      reason: Exact product-root provider and consumer paths are more faithfully verified through route metadata, rendered route boundaries, and generated contract freshness.
-      alternativeEvidence: [vitest, playwright, contract, static]
+      reason: Exact apex ownership, SPA and API precedence, provider and consumer paths, and deselected-host behavior require direct route, browser, contract, static, and deployment-renderer assertions.
+      alternativeEvidence: [vitest, playwright, contract, static, operations]
     evidence:
       - kind: vitest
         file: apps/frontend/app/src/app/app.spec.tsx
@@ -616,8 +658,16 @@ requirements:
         target: admin-app-api:test
         lanes: [pr, main]
       - kind: playwright
-        file: apps/e2e/fullstack/src/fullstack.spec.ts
-        target: fullstack-e2e:e2e
+        file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
+        target: user-app:e2e-authenticated
+        lanes: [pr, main]
+      - kind: operations
+        file: scripts/single-server-deployment.spec.mjs
+        script: test:deploy
+        lanes: [pr, main]
+      - kind: operations
+        file: scripts/compose-production.spec.mjs
+        script: test:deploy
         lanes: [pr, main]
       - kind: contract
         file: libs/frontend/api-client/lib/src/user.ts
@@ -766,6 +816,14 @@ requirements:
         target: user-app:test
         lanes: [pr, main]
       - kind: vitest
+        file: apps/frontend/app/src/app/app.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
+        target: user-app:e2e-authenticated
+        lanes: [pr, main]
+      - kind: vitest
         file: apps/frontend/app/src/pages/marketplace/ui/marketplace-components.spec.tsx
         target: user-app:test
         lanes: [pr, main]
@@ -872,6 +930,7 @@ requirements:
   - id: REQ-AGRITECH-ENGAGEMENT-019
     projects:
       [
+        admin-app,
         user-app,
         user-app-api,
         admin-app-api,
@@ -941,9 +1000,18 @@ requirements:
         file: apps/frontend/app/src/pages/marketplace/ui/marketplace-page.spec.tsx
         target: user-app:test
         lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/admin/src/pages/agritech/marketplace-admin-page.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/admin/e2e/marketplace-operations.e2e-spec.ts
+        target: admin-app:e2e-marketplace
+        lanes: [pr, main]
   - id: REQ-AGRITECH-LIFECYCLE-020
     projects:
       [
+        admin-app,
         user-app-api,
         admin-app-api,
         '@app/backend-feature-agritech-main',
@@ -990,6 +1058,14 @@ requirements:
         file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-contract-lifecycle.component-spec.ts
         target: '@app/backend-postgres-main-agritech:component-test'
         lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/admin/src/pages/agritech/marketplace-admin-page.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/admin/e2e/marketplace-operations.e2e-spec.ts
+        target: admin-app:e2e-marketplace
+        lanes: [pr, main]
       - kind: static
         file: libs/backend/postgres/main/agritech/lib/src/migrations/marketplace-dispute-evidence.migration.spec.ts
         target: '@app/backend-postgres-main-agritech:test'
@@ -997,6 +1073,7 @@ requirements:
   - id: REQ-AGRITECH-NOTIFICATION-022
     projects:
       [
+        admin-app,
         '@app/backend-common-i18n',
         '@app/common-i18n-keys',
         '@app/backend-feature-agritech-main',
@@ -1053,6 +1130,14 @@ requirements:
         file: packages/tooling/src/setup/planner.test.ts
         target: '@repo/tooling:test'
         lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/admin/src/pages/agritech/marketplace-admin-page.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/admin/e2e/marketplace-operations.e2e-spec.ts
+        target: admin-app:e2e-marketplace
+        lanes: [pr, main]
       - kind: operations
         file: scripts/compose-production.spec.mjs
         script: test:deploy
@@ -1061,3 +1146,156 @@ requirements:
         file: scripts/single-server-deployment.spec.mjs
         script: test:deploy
         lanes: [pr, main]
+  - id: REQ-AGRITECH-ONBOARDING-023
+    projects:
+      - user-app
+      - user-app-api
+      - '@app/frontend-api-client'
+      - '@app/frontend-feature-user-i18n'
+      - '@app/backend-feature-agritech-main'
+      - '@app/backend-feature-agritech-shared'
+      - '@app/backend-postgres-main-agritech'
+    risk: critical
+    profiles: [api, domain, persistence, security, journey]
+    cucumber:
+      disposition: not-applicable
+      reason: Progressive visible-disabled controls and hints require component accessibility evidence while server authority is exercised through direct API and PostgreSQL boundaries.
+      alternativeEvidence: [vitest, contract, security, component]
+    evidence:
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-page.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-components.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-management.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/generated-api-client.spec.ts
+        target: '@app/frontend-api-client:test'
+        lanes: [pr, main]
+      - kind: security
+        file: apps/backend/user/user-app-api/src/marketplace.e2e-spec.ts
+        target: user-app-api:e2e
+        lanes: [pr, main]
+      - kind: component
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-commerce.component-spec.ts
+        target: '@app/backend-postgres-main-agritech:component-test'
+        lanes: [main, nightly]
+      - kind: playwright
+        file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
+        target: user-app:e2e-authenticated
+        lanes: [main, nightly]
+  - id: REQ-AGRITECH-ADMIN-025
+    projects:
+      - admin-app
+      - admin-app-api
+      - '@app/frontend-api-client'
+      - '@app/frontend-feature-admin-i18n'
+      - '@app/backend-feature-agritech-admin'
+      - '@app/backend-feature-agritech-main'
+      - '@app/backend-feature-agritech-shared'
+      - '@app/backend-postgres-main-agritech'
+    risk: critical
+    profiles: [api, journey, security]
+    cucumber:
+      disposition: not-applicable
+      reason: Privileged responsive queues, keyboard focus, exact generated request construction, tenant-scoped lifecycle projection, and PostgreSQL isolation are more directly challenged by component, contract, security, and browser evidence.
+      alternativeEvidence: [vitest, contract, security, component, playwright]
+    evidence:
+      - kind: vitest
+        file: apps/frontend/admin/src/pages/agritech/marketplace-admin-page.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/admin/src/app/admin-routing.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: playwright
+        file: apps/frontend/admin/e2e/marketplace-operations.e2e-spec.ts
+        target: admin-app:e2e-marketplace
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/generated-api-client.spec.ts
+        target: '@app/frontend-api-client:test'
+        lanes: [pr, main]
+      - kind: contract
+        file: apps/backend/admin/admin-app-api/src/agritech-marketplace.e2e-spec.ts
+        target: admin-app-api:e2e
+        lanes: [pr, main]
+      - kind: contract
+        file: apps/backend/admin/admin-app-api/src/marketplace-contract-lifecycle.e2e-spec.ts
+        target: admin-app-api:e2e
+        lanes: [pr, main]
+      - kind: security
+        file: apps/backend/admin/admin-app-api/src/marketplace-contract-lifecycle.e2e-spec.ts
+        target: admin-app-api:e2e
+        lanes: [pr, main]
+      - kind: security
+        file: libs/backend/feature/agritech/admin/lib/src/marketplace-contract-lifecycle-admin.controller.spec.ts
+        target: '@app/backend-feature-agritech-admin:test'
+        lanes: [pr, main]
+      - kind: component
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-contract-lifecycle.component-spec.ts
+        target: '@app/backend-postgres-main-agritech:component-test'
+        lanes: [pr, main]
+  - id: REQ-AGRITECH-DEMO-024
+    projects:
+      - admin-app
+      - user-app
+      - user-app-api
+      - '@app/frontend-api-client'
+      - '@app/frontend-feature-admin-i18n'
+      - '@app/frontend-feature-user-i18n'
+      - '@app/backend-feature-agritech-main'
+      - '@app/backend-feature-agritech-shared'
+      - '@app/backend-postgres-main-agritech'
+      - '@app/backend-postgres-main-feature-flags'
+      - '@app/common-feature-flags'
+    risk: high
+    profiles: [api, domain, persistence, security, journey]
+    cucumber:
+      disposition: not-applicable
+      reason: The derived browse-only projection, malformed flag behavior, audited permission boundary, and disabled transaction controls require direct domain, repository, admin, and user UI evidence.
+      alternativeEvidence: [vitest, contract, security, component]
+    evidence:
+      - kind: vitest
+        file: libs/backend/feature/agritech/main/lib/src/marketplace-public.domain-service.spec.ts
+        target: '@app/backend-feature-agritech-main:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-public.repository.spec.ts
+        target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/common/feature-flags/lib/src/index.spec.ts
+        target: '@app/common-feature-flags:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/postgres/main/feature-flags/lib/src/feature-flag-postgres.service.spec.ts
+        target: '@app/backend-postgres-main-feature-flags:test'
+        lanes: [pr, main]
+      - kind: security
+        file: apps/frontend/admin/src/pages/feature-flags/feature-flags-page.spec.tsx
+        target: admin-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-components.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: contract
+        file: libs/frontend/api-client/lib/src/generated-api-client.spec.ts
+        target: '@app/frontend-api-client:test'
+        lanes: [pr, main]
+      - kind: component
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-commerce.component-spec.ts
+        target: '@app/backend-postgres-main-agritech:component-test'
+        lanes: [main, nightly]
+      - kind: playwright
+        file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
+        target: user-app:e2e-authenticated
+        lanes: [main, nightly]

@@ -1,0 +1,14 @@
+{
+  "admin.marketplace.engagement.eyebrow": "Савдодан кейинги ишонч",
+  "admin.marketplace.engagement.title": "Маркетплейс фаоллиги",
+  "admin.marketplace.engagement.description": "Намуна лимитлари, шарҳ шикоятлари ва шартнома билдиришномалари етказилишини бошқаринг.",
+  "admin.marketplace.engagement.samplePolicy": "Намуна сўрови сиёсати",
+  "admin.marketplace.engagement.version": "Сиёсат версияси",
+  "admin.marketplace.engagement.monthlyLimit": "Ойлик намуна лимити",
+  "admin.marketplace.engagement.activatePolicy": "Намуна сиёсатини фаоллаштириш",
+  "admin.marketplace.engagement.reviewReports": "Шарҳ шикоятлари",
+  "admin.marketplace.engagement.dismissReport": "Шикоятни рад этиш",
+  "admin.marketplace.engagement.hideReview": "Шарҳни яшириш",
+  "admin.marketplace.engagement.notifications": "Шартнома билдиришномаларини етказиш",
+  "admin.marketplace.engagement.attempts": "Уринишлар"
+}

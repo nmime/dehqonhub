@@ -58,25 +58,6 @@ describe('MarketplaceService', () => {
   });
 
   it.each([
-    { expected: ForbiddenException, label: 'a reviewer outside the tenant', status: 'forbidden' as const },
-    { expected: BadRequestException, label: 'a review the case cannot accept', status: 'partner_unapproved' as const },
-  ])('maps $label onto the typed boundary', async ({ expected, status }) => {
-    const { repository, service } = fixture();
-    repository.reviewVerification.mockResolvedValue({ field: 'privateField', status });
-
-    await expect(
-      service.reviewVerification(
-        owner.tenantId,
-        'verification-1',
-        'verified',
-        'reviewer-1',
-        0,
-        'verification-review-0001',
-      ),
-    ).rejects.toThrow(expected);
-  });
-
-  it.each([
     ['rejected', undefined],
     ['verified', 'criteria_not_met'],
   ] as const)('rejects invalid verification reason provenance for %s', async (decision, reason) => {

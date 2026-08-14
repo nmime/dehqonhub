@@ -4,11 +4,9 @@ deployment:
     - admin-app
     - admin-app-api
     - auth-app-api
-    - landing-app
     - mobile-app
     - notification-consumer
     - notification-scheduler
-    - site-app
     - telegram-bot-api
     - user-app
     - user-app-api
@@ -18,7 +16,7 @@ selection:
   frontendApiMode: same-origin
   mobileTargets: [web]
   deploymentTargets: [docker]
-  publicTopology: single-domain
+  publicTopology: per-app-domains
   kubernetesDelivery: direct
   infrastructure:
     redis: bundled
@@ -34,9 +32,9 @@ apps:
   userApp:
     enabled: true
   landingApp:
-    enabled: true
+    enabled: false
   siteApp:
-    enabled: true
+    enabled: false
   mobileApp:
     enabled: true
   adminAppApi:

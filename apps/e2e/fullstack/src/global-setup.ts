@@ -26,8 +26,6 @@ export default async function globalSetup(): Promise<void> {
     ['admin-app-api', () => waitForText('admin api', `${urls.adminApi}/health`, 'admin-app-api')],
     ['user-app', () => waitForText('user app', `${urls.userApp}/`, 'DehqonHub')],
     ['admin-app', () => waitForText('admin app', `${urls.adminApp}/`, 'Admin App')],
-    ['landing-app', () => waitForText('landing app', `${urls.landingApp}/`, 'Nest React Boilerplate')],
-    ['site-app', () => waitForText('site app', `${urls.siteApp}/ready`, 'site-app')],
   ] as const;
   await Promise.all(readinessChecks.filter(([service]) => stackIncludes(service)).map(([, check]) => check()));
 }

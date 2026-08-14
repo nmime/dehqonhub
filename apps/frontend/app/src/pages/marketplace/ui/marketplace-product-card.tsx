@@ -1,22 +1,26 @@
 import { useEffect, useState } from 'react';
 import type { Locale } from '@app/frontend-runtime';
-import type { ProductViewDto } from '@app/frontend-api-client';
 import { MarketplaceIcon, type MarketplaceIconName } from './marketplace-icon';
-import { formatMoney, localizedProductName, type MarketplaceTranslate } from './marketplace-ui';
+import {
+  formatMoney,
+  localizedProductName,
+  type MarketplaceListing,
+  type MarketplaceTranslate,
+} from './marketplace-ui';
 
 interface ProductMediaProps {
   compact?: boolean;
   locale: Locale;
-  product: ProductViewDto;
+  product: MarketplaceListing;
   t: MarketplaceTranslate;
 }
 
-const productCategoryIcons: Record<ProductViewDto['category'], MarketplaceIconName> = {
+const productCategoryIcons: Record<MarketplaceListing['category'], MarketplaceIconName> = {
   equipment: 'equipment',
-  fertilizer: 'produce',
+  fertilizer: 'fertilizer',
   irrigation: 'equipment',
-  other: 'produce',
-  pesticide: 'produce',
+  other: 'input',
+  pesticide: 'pesticide',
   seed: 'seeds',
 };
 
@@ -54,17 +58,22 @@ export function ProductMedia({ compact = false, locale, product, t }: Readonly<P
 }
 
 interface ProductCardProps {
+  canTransact?: boolean;
   favorite: boolean;
   locale: Locale;
-  onAdd: (product: ProductViewDto) => void;
-  onFavorite: (product: ProductViewDto) => void;
-  onOpen: (product: ProductViewDto) => void;
+  onAdd: (product: MarketplaceListing) => void;
+  onFavorite: (product: MarketplaceListing) => void;
+  onOpen: (product: MarketplaceListing) => void;
   pendingAction?: string;
-  product: ProductViewDto;
+  product: MarketplaceListing;
   t: MarketplaceTranslate;
+  transactionActionLabel?: string;
+  transactionHint?: string;
+  onTransactionAction?: () => void;
 }
 
 export function MarketplaceProductCard({
+  canTransact = true,
   favorite,
   locale,
   onAdd,
@@ -73,11 +82,18 @@ export function MarketplaceProductCard({
   pendingAction,
   product,
   t,
+  transactionActionLabel,
+  transactionHint,
+  onTransactionAction,
 }: Readonly<ProductCardProps>) {
   const name = localizedProductName(product, locale);
   const outOfStock = product.status !== 'active' || product.stockQuantity <= 0;
   const favoritePending = pendingAction === `favorite:${product.id}`;
   const cartPending = pendingAction === `cart:${product.id}`;
+  const isDemo = product.provenance === 'demo';
+  const transactionRestricted = !canTransact || product.transactional === false;
+  const restrictionHint = isDemo ? t('agritech.marketplace.access.demo') : transactionHint;
+  const restrictionId = `marketplace-product-${product.id}-restriction`;
 
   return (
     <article className="dh-product-card">
@@ -112,6 +128,11 @@ export function MarketplaceProductCard({
           </span>
           <span className="dh-caption">{product.region}</span>
         </div>
+        {isDemo ? (
+          <span className="dh-badge dh-badge--neutral dh-product-card__demo">
+            {t('agritech.marketplace.access.demoBadge')}
+          </span>
+        ) : null}
         <button
           className="dh-product-card__title"
           onClick={() => {
@@ -127,8 +148,9 @@ export function MarketplaceProductCard({
           <span>/ {product.unit}</span>
         </div>
         <button
+          aria-describedby={transactionRestricted ? restrictionId : undefined}
           className="dh-button dh-button--primary dh-button--block"
-          disabled={outOfStock || cartPending}
+          disabled={transactionRestricted || outOfStock || cartPending}
           onClick={() => {
             onAdd(product);
           }}
@@ -137,6 +159,16 @@ export function MarketplaceProductCard({
           <MarketplaceIcon name={cartPending ? 'check' : 'cart'} />
           {cartPending ? t('agritech.marketplace.loading') : t('agritech.marketplace.product.addToCart')}
         </button>
+        {transactionRestricted && restrictionHint ? (
+          <div className="dh-state-inline" id={restrictionId}>
+            <span>{restrictionHint}</span>
+            {!isDemo && transactionActionLabel && onTransactionAction ? (
+              <button className="dh-text-button" onClick={onTransactionAction} type="button">
+                {transactionActionLabel}
+              </button>
+            ) : null}
+          </div>
+        ) : null}
       </div>
     </article>
   );

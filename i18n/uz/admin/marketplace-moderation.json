@@ -1,0 +1,16 @@
+{
+  "admin.marketplace.moderation.eyebrow": "Ishonch va eʼlon xavfsizligi",
+  "admin.marketplace.moderation.title": "Marketpleys moderatsiyasi",
+  "admin.marketplace.moderation.description": "Ommaga chiqarishdan oldin tenant hujjatlari va o‘zgarmas eʼlon nusxalarini tekshiring.",
+  "admin.marketplace.moderation.verifications": "Foydalanuvchi tekshiruvlari",
+  "admin.marketplace.moderation.sellers": "Sotuvchi profillari",
+  "admin.marketplace.moderation.listings": "Eʼlonlar",
+  "admin.marketplace.moderation.requests": "Xaridor so‘rovlari",
+  "admin.marketplace.moderation.revision": "Reviziya",
+  "admin.marketplace.moderation.provider": "Dalil provayderi",
+  "admin.marketplace.moderation.documents": "Hujjatlar",
+  "admin.marketplace.moderation.rejectionReason": "Rad etish sababi",
+  "admin.marketplace.moderation.reason.criteria": "Mezonlar bajarilmagan",
+  "admin.marketplace.moderation.reason.documents": "Hujjatlar o‘qilmaydi",
+  "admin.marketplace.moderation.reason.identity": "Shaxs mos kelmaydi"
+}

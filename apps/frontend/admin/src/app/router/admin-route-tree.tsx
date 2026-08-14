@@ -35,6 +35,11 @@ function AdminRouteComponent() {
 const paths = [
   '/',
   '/dashboard',
+  '/marketplace/overview',
+  '/marketplace/moderation',
+  '/marketplace/commerce',
+  '/marketplace/engagement',
+  '/marketplace/operations',
   '/users',
   '/users/$userId',
   '/roles',

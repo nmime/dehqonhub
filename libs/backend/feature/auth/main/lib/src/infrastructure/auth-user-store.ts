@@ -18,6 +18,8 @@ export interface AuthUserRecord {
   email: string | null;
   displayName: string | null;
   passwordHash: string;
+  emailVerifiedAt: Date | null;
+  credentialRevision: number;
   roles: string[];
   permissions: string[];
   locale: Locale | null;
@@ -39,6 +41,8 @@ export interface CreateAuthUserInput {
   email: string | null;
   displayName?: string | null;
   passwordHash: string;
+  emailVerifiedAt?: Date | null;
+  credentialRevision?: number;
   roles: string[];
   permissions: string[];
   locale?: Locale | null;
@@ -59,6 +63,12 @@ export interface AuthUserStore {
     tenantId?: string,
   ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
   recordLogin(id: string, loggedInAt?: Date, tenantId?: string): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
+  verifyEmail(id: string, tenantId?: string, verifiedAt?: Date): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
+  replacePassword(
+    id: string,
+    passwordHash: string,
+    tenantId?: string,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError>;
   syncProviderAvatar(
     id: string,
     input: { url: string | null; hash: string | null },
@@ -74,6 +84,8 @@ export function toAuthUserRecord(entity: {
   email: string | null;
   displayName: string | null;
   passwordHash: string;
+  emailVerifiedAt?: Date | null;
+  credentialRevision?: number;
   roles: string[];
   permissions: string[];
   locale: Locale | null;
@@ -90,6 +102,8 @@ export function toAuthUserRecord(entity: {
     email: entity.email,
     displayName: entity.displayName,
     passwordHash: entity.passwordHash,
+    emailVerifiedAt: entity.emailVerifiedAt ?? null,
+    credentialRevision: entity.credentialRevision ?? 0,
     roles: entity.roles,
     permissions: entity.permissions,
     locale: entity.locale,
@@ -159,6 +173,26 @@ export class PostgresAuthUserStore implements AuthUserStore {
       .map((entity: PersistedAuthUserRecord | null) => (entity ? toAuthUserRecord(entity) : null));
   }
 
+  verifyEmail(
+    id: string,
+    tenantId: string = DefaultAuthTenantId,
+    verifiedAt: Date = new Date(),
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    return this.repository
+      .verifyEmail(id, tenantId, verifiedAt)
+      .map((entity: PersistedAuthUserRecord | null) => (entity ? toAuthUserRecord(entity) : null));
+  }
+
+  replacePassword(
+    id: string,
+    passwordHash: string,
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    return this.repository
+      .replacePassword(id, passwordHash, tenantId)
+      .map((entity: PersistedAuthUserRecord | null) => (entity ? toAuthUserRecord(entity) : null));
+  }
+
   syncProviderAvatar(
     id: string,
     input: { url: string | null; hash: string | null },
@@ -199,6 +233,8 @@ export class InMemoryAuthUserStore implements AuthUserStore {
       email,
       displayName: input.displayName ?? null,
       passwordHash: input.passwordHash,
+      emailVerifiedAt: input.emailVerifiedAt ?? null,
+      credentialRevision: input.credentialRevision ?? 0,
       roles: input.roles,
       permissions: input.permissions,
       locale: input.locale ?? null,
@@ -269,6 +305,34 @@ export class InMemoryAuthUserStore implements AuthUserStore {
       return okAsync(null);
     }
     const updated = { ...record, lastLoginAt: loggedInAt };
+    this.usersById.set(id, updated);
+    return okAsync(updated);
+  }
+
+  verifyEmail(
+    id: string,
+    tenantId: string = DefaultAuthTenantId,
+    verifiedAt: Date = new Date(),
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    const record = this.usersById.get(id);
+    if (!record || record.tenantId !== tenantId) {
+      return okAsync(null);
+    }
+    const updated = { ...record, emailVerifiedAt: record.emailVerifiedAt ?? verifiedAt };
+    this.usersById.set(id, updated);
+    return okAsync(updated);
+  }
+
+  replacePassword(
+    id: string,
+    passwordHash: string,
+    tenantId: string = DefaultAuthTenantId,
+  ): ResultAsync<AuthUserRecord | null, AuthUserStoreError> {
+    const record = this.usersById.get(id);
+    if (!record || record.tenantId !== tenantId) {
+      return okAsync(null);
+    }
+    const updated = { ...record, passwordHash, credentialRevision: record.credentialRevision + 1 };
     this.usersById.set(id, updated);
     return okAsync(updated);
   }

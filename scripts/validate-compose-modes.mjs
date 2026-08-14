@@ -375,6 +375,7 @@ const providerFreeModel = render({
   database: undefined,
   domains: 'external-proxy',
   engine: null,
+  environment: { PRIMARY_APP: 'landing-app' },
   tls: 'external',
 });
 const backendOnlyEnvironment = {
@@ -642,7 +643,7 @@ const singleEdge = singleDomainModel.services.edge;
 assert.equal(singleEdge.image, 'caddy:2.11.4-alpine');
 assert.equal(singleEdge.command[3], '/nrb/Caddyfile.selected');
 assert.equal(singleEdge.environment.PUBLIC_DOMAIN, 'example.com');
-assert.equal(singleEdge.environment.PRIMARY_APP_UPSTREAM, 'landing-app:8080');
+assert.equal(singleEdge.environment.PRIMARY_APP_UPSTREAM, 'user-app:8080');
 assert.equal(singleDomainModel.services['auth-app-api'].environment.CORS_ORIGINS, 'https://example.com');
 assert.equal(singleDomainModel.services['auth-app-api'].environment.AUTH_ALLOWED_RETURN_URLS, 'https://example.com');
 assert.equal(singleDomainModel.services['landing-app'].environment.LANDING_USER_APP_URL, '/app');
@@ -658,15 +659,13 @@ assert.deepEqual(
 
 const perAppEdge = perAppDomainModel.services.edge;
 assert.equal(perAppEdge.command[3], '/nrb/Caddyfile.selected');
-assert.equal(perAppEdge.environment.LANDING_APP_DOMAIN, 'example.com');
+assert.equal(perAppEdge.environment.LANDING_APP_DOMAIN, 'landing-app.example.com');
+assert.equal(perAppEdge.environment.USER_APP_DOMAIN, 'example.com');
 assert.equal(perAppEdge.environment.AUTH_APP_API_DOMAIN, 'auth-app-api.example.com');
-assert.equal(
-  perAppDomainModel.services['landing-app'].environment.LANDING_USER_APP_URL,
-  'https://user-app.example.com',
-);
+assert.equal(perAppDomainModel.services['landing-app'].environment.LANDING_USER_APP_URL, 'https://example.com');
 assert.equal(
   perAppDomainModel.services['landing-app'].environment.LANDING_ADMIN_APP_URL,
-  'https://admin-app.example.com',
+  'https://admin-app.example.com/admin',
 );
 assert.equal(
   Object.hasOwn(perAppDomainModel.services['user-app'].environment, 'LANDING_USER_APP_URL'),

@@ -35,11 +35,15 @@ export function readFullstackSelection(workspaceRoot: string): FullstackSelectio
 }
 
 export function resolveFullstackSelection(closure: FullstackClosureLike): FullstackSelection {
-  if (!closure.roots.includes('fullstack-e2e')) {
-    throw new Error('Fullstack e2e requires fullstack-e2e in the fresh selected closure.');
-  }
   if (closure.provider !== 'postgres' && closure.provider !== 'mongodb') {
     throw new Error('Fullstack e2e requires an explicitly selected PostgreSQL or MongoDB provider.');
+  }
+  const requiredApplications = ['admin-app', 'admin-app-api', 'auth-app-api', 'user-app', 'user-app-api'];
+  const missingApplications = requiredApplications.filter(
+    (application) => !closure.roots.includes(application) || !closure.services.includes(application),
+  );
+  if (missingApplications.length > 0) {
+    throw new Error(`Fullstack e2e requires the selected product stack: missing ${missingApplications.join(', ')}.`);
   }
   const databaseService = closure.provider;
   const migrationService = closure.provider === 'mongodb' ? 'mongodb-migrate' : 'migrate';
@@ -48,17 +52,18 @@ export function resolveFullstackSelection(closure: FullstackClosureLike): Fullst
       throw new Error(`Fullstack e2e closure is missing selected service "${required}".`);
     }
   }
+  const services = closure.services.filter((service) => service !== 'landing-app' && service !== 'site-app');
   const applicationServices = closure.roots.filter(
-    (project) => project !== 'fullstack-e2e' && closure.services.includes(project),
+    (project) => project !== 'fullstack-e2e' && services.includes(project),
   );
   const profiles = new Set<string>();
-  for (const service of closure.services) {
+  for (const service of services) {
     profiles.add(profileForService(service));
   }
   return {
     provider: closure.provider,
     applicationServices,
-    services: [...closure.services],
+    services,
     profiles: [...profiles].sort((left, right) => left.localeCompare(right)),
     migrationService,
     databaseService,

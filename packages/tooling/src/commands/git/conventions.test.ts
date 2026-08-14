@@ -26,20 +26,20 @@ describe("git conventions", () => {
     assert.equal(normalizeRange("origin/main..HEAD", () => false), "origin/main..HEAD");
   });
 
-  it("accepts protected, typed, and Dependabot branches", () => {
+  it("accepts protected and typed branches", () => {
     assert.deepEqual(validateBranchName("main"), []);
     assert.deepEqual(validateBranchName("feat/passkey-login"), []);
     assert.deepEqual(validateBranchName("hotfix/session-rotation"), []);
-    assert.deepEqual(validateBranchName("dependabot/npm_and_yarn/nx-23"), []);
   });
 
   it("rejects agent prefixes and untyped branch names", () => {
     assert.notDeepEqual(validateBranchName("codex/passkey-login"), []);
     assert.notDeepEqual(validateBranchName("Claude/passkey-login"), []);
+    assert.notDeepEqual(validateBranchName("bot/dependency-updates"), []);
     assert.notDeepEqual(validateBranchName("feature/passkey-login"), []);
   });
 
-  it("accepts owner, human contributor, and trusted bot Conventional Commits", () => {
+  it("accepts owner and human contributor Conventional Commits", () => {
     assert.deepEqual(validateCommit(validCommit), []);
     assert.deepEqual(
       validateCommit({ ...validCommit, message: "feat(api)!: remove legacy sessions" }),
@@ -53,17 +53,6 @@ describe("git conventions", () => {
         committerName: "Grace Hopper",
         committerEmail: "grace@example.com",
         message: "fix(api): preserve contributor attribution\n\nCo-authored-by: Alan Turing <alan@example.com>",
-      }),
-      [],
-    );
-    assert.deepEqual(
-      validateCommit({
-        ...validCommit,
-        authorName: "dependabot[bot]",
-        authorEmail: "49699333+dependabot[bot]@users.noreply.github.com",
-        committerName: "GitHub",
-        committerEmail: "noreply@github.com",
-        message: "chore(deps): update workspace dependencies",
       }),
       [],
     );

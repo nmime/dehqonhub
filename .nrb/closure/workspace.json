@@ -1,17 +1,14 @@
 {
   "schemaVersion": 1,
-  "configHash": "d7b5d7fc151f0cc6391f14d286c6c9be5038969c3d3c0c443a3fce3d34de509e",
+  "configHash": "d05e95c047339148a4f755e7ca5bd3ccfcc176887229c6a36188bb9a806cf047",
   "preset": null,
   "apps": [
     "admin-app",
     "admin-app-api",
     "auth-app-api",
-    "fullstack-e2e",
-    "landing-app",
     "mobile-app",
     "notification-consumer",
     "notification-scheduler",
-    "site-app",
     "telegram-bot-api",
     "user-app",
     "user-app-api"
@@ -39,7 +36,7 @@
     "targets": [
       "docker"
     ],
-    "publicTopology": "single-domain",
+    "publicTopology": "per-app-domains",
     "kubernetesDelivery": "direct",
     "infrastructure": {
       "redis": "bundled",
@@ -56,14 +53,10 @@
       "telegram-bot-api",
       "user-app-api"
     ],
-    "e2e": [
-      "fullstack-e2e"
-    ],
+    "e2e": [],
     "frontend": [
       "admin-app",
-      "landing-app",
       "mobile-app",
-      "site-app",
       "user-app"
     ]
   }

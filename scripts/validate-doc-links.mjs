@@ -17,16 +17,6 @@ const ignoredDirectories = new Set([
   'test-results',
   'tmp',
 ]);
-// Archived implementation records are not canonical repository documentation.
-// Exempt that subtree from link and index-reachability validation while keeping
-// all other documentation checks active.
-const workingSpecPrefixes = ['docs/archive/working-specs/'];
-
-function isWorkingSpecDoc(filePath, workspaceRoot) {
-  const workspacePath = relative(workspaceRoot, filePath).replaceAll('\\', '/');
-  return workingSpecPrefixes.some((prefix) => workspacePath.startsWith(prefix));
-}
-
 const markdownLinkPattern = /!?(?:\[[^\]]*\])\(([^)]+)\)/gu;
 /**
  * Documented root-script invocations, in both spellings docs actually use.
@@ -74,7 +64,7 @@ export function collectTrackedMarkdown(workspaceRoot) {
 export function validateWorkspace({ workspaceRoot, markdownFiles = collectTrackedMarkdown(workspaceRoot) }) {
   const rootScripts = readRootScripts(workspaceRoot);
   const failures = [];
-  const includedFiles = markdownFiles.filter((filePath) => !isWorkingSpecDoc(filePath, workspaceRoot));
+  const includedFiles = markdownFiles;
   const counts = { anchors: 0, files: includedFiles.length, links: 0, scripts: 0 };
   const headingCache = new Map();
 

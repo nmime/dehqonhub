@@ -57,9 +57,8 @@ const statusTone = (severity: ProblemPresentationSeverity): 'info' | 'success' |
 
 const mergeCatalog = (overrides: readonly OverrideRow[]): PresentationRow[] => {
   const overridesByRuleId = new Map(overrides.map((override) => [override.ruleId, override]));
-  const catalog = apiToastRuleCatalog();
-  const generatedRuleIds = new Set(catalog.map((rule) => rule.id));
-  const active = catalog.map((rule) => {
+  const generatedRuleIds = new Set(apiToastRuleCatalog.map((rule) => rule.id));
+  const active = apiToastRuleCatalog.map((rule) => {
     const override = overridesByRuleId.get(rule.id);
     return {
       ...rule,

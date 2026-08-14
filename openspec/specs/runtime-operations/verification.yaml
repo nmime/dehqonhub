@@ -255,11 +255,35 @@ requirements:
       - security
     cucumber:
       disposition: not-applicable
-      reason: Deployment manifest and secret-handling guarantees require operational and security inspection.
+      reason: Selected-closure image, host, port, exact-certificate, trusted-origin, renderer, activation, listener, provisioning, and secret boundaries require direct operations and security inspection.
       alternativeEvidence:
         - operations
         - security
     evidence:
+      - kind: operations
+        file: scripts/single-server-deployment.spec.mjs
+        script: test:deploy
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: scripts/single-server-deployment.spec.mjs
+        script: test:deploy
+        lanes:
+          - pr
+          - main
+      - kind: operations
+        file: scripts/compose-production.spec.mjs
+        script: test:deploy
+        lanes:
+          - pr
+          - main
+      - kind: security
+        file: scripts/compose-production.spec.mjs
+        script: test:deploy
+        lanes:
+          - pr
+          - main
       - kind: operations
         file: scripts/deploy.spec.mjs
         script: test:deploy

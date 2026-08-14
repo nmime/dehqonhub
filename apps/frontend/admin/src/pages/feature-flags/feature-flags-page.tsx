@@ -19,6 +19,7 @@ import { errorText } from '../../shared';
 
 type FeatureFlag = adminApi.AdminFeatureFlagViewDto;
 type ValueType = 'boolean' | 'number' | 'string';
+const marketplaceDemoFlagKey = 'marketplace.demo';
 
 export const valueTypeFor = (value: FeatureFlag['value']): ValueType => {
   if (typeof value === 'boolean') {
@@ -69,6 +70,20 @@ export const FeatureFlagsPage = ({
     },
   });
 
+  const demoFlag = flags.data?.items.find((flag) => flag.key === marketplaceDemoFlagKey);
+  const demoEnabled = demoFlag?.enabled === true && demoFlag.value === true;
+
+  const setDemoEnabled = (nextEnabled: boolean) => {
+    mutation.mutate({
+      flagKey: marketplaceDemoFlagKey,
+      body: {
+        description: t('admin.featureFlags.demo.auditDescription'),
+        enabled: nextEnabled,
+        value: true,
+      },
+    });
+  };
+
   const edit = (flag: FeatureFlag) => {
     const nextType = valueTypeFor(flag.value);
     setEditingKey(flag.key);
@@ -110,6 +125,16 @@ export const FeatureFlagsPage = ({
     >
       <p>{t('admin.featureFlags.description')}</p>
       {notice ? <UiNotification message={notice.message} tone={notice.tone} /> : null}
+      <UiCard className="admin-form-card" title={t('admin.featureFlags.demo.title')}>
+        <p>{t('admin.featureFlags.demo.description')}</p>
+        <UiSwitch
+          checked={demoEnabled}
+          description={t('admin.featureFlags.demo.hint')}
+          disabled={!access.canWriteFeatureFlags || flags.isLoading || mutation.isPending}
+          label={t('admin.featureFlags.demo.label')}
+          onCheckedChange={setDemoEnabled}
+        />
+      </UiCard>
       {access.canWriteFeatureFlags ? (
         <UiCard
           className="admin-form-card admin-feature-flag-form-card"

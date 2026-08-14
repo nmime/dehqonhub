@@ -1,4 +1,4 @@
-// @requirements REQ-AUTH-PERSISTENCE-007
+// @requirements REQ-AUTH-PERSISTENCE-007 REQ-AUTH-RECOVERY-010
 // Evidence for: REQ-AUTH-SESSION-002
 import { MikroORM } from '@mikro-orm/core';
 // Persistence evidence for REQ-AUTH-SESSION-002 and component recovery
@@ -165,6 +165,8 @@ describeIfDocker('AuthMainModule postgres component', () => {
       'avatar_url',
       'avatar_hash',
       'avatar_status',
+      'email_verified_at',
+      'credential_revision',
     ]);
 
     const tokenTables = (await orm.em.getConnection().execute(`

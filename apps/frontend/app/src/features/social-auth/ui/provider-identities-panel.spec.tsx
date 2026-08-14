@@ -104,7 +104,7 @@ describe('ProviderIdentitiesPanel', () => {
             detail: 'The last usable authentication method cannot be unlinked from the account.',
             status: 409,
             title: 'Last Authentication Method Cannot Be Unlinked',
-            type: 'https://example.com/problems#last-auth-method-unlink-forbidden',
+            type: 'https://dehqonhub.uz/problems#last-auth-method-unlink-forbidden',
           },
           false,
           409,
@@ -180,7 +180,7 @@ describe('ProviderIdentitiesPanel', () => {
             detail: 'Recent authentication is required to perform this security-sensitive action.',
             status: 403,
             title: 'Step-up Authentication Required',
-            type: 'https://example.com/problems#step-up-required',
+            type: 'https://dehqonhub.uz/problems#step-up-required',
           },
           false,
           403,
@@ -196,6 +196,15 @@ describe('ProviderIdentitiesPanel', () => {
     );
 
     expect(await screen.findByText('auth.social.stepUp.required')).toBeTruthy();
+
+    cleanup();
+    const genericFailure = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(jsonResponse({ data: { identities: [{ id: 'discord-identity', provider: 'discord' }] } }))
+      .mockResolvedValueOnce(jsonResponse({}, false, 500));
+    renderPanel(genericFailure);
+    fireEvent.click(await screen.findByRole('button', { name: 'auth.social.button.unlinkDiscord' }));
+    expect(await screen.findByText('auth.social.unlink.error')).toBeTruthy();
   });
 
   it('keeps last-method identities linked and disables destructive unlink', async () => {
@@ -207,7 +216,6 @@ describe('ProviderIdentitiesPanel', () => {
               id: 'telegram-identity',
               isLastMethod: true,
               provider: 'telegram',
-              username: 'telegram-user',
             },
           ],
         },
@@ -217,38 +225,11 @@ describe('ProviderIdentitiesPanel', () => {
     renderPanel(fetchMock);
 
     expect(await screen.findByText('auth.social.lastMethod.warning')).toBeTruthy();
+    expect(screen.getByText('user.profile.emailFallback')).toBeTruthy();
     const unlinkButton = screen.getByRole('button', {
       name: 'auth.social.button.unlinkTelegram',
     });
     expect((unlinkButton as HTMLButtonElement).disabled).toBe(true);
-  });
-
-  it('states a plain unlink failure when the API names no reason for it', async () => {
-    const fetchMock = vi
-      .fn<typeof fetch>()
-      .mockResolvedValueOnce(
-        jsonResponse({
-          data: {
-            identities: [
-              {
-                id: 'discord-identity',
-                provider: 'discord',
-              },
-            ],
-          },
-        }),
-      )
-      .mockResolvedValueOnce(jsonResponse({ detail: 'Unlink failed.', status: 500 }, false, 500));
-
-    renderPanel(fetchMock);
-
-    fireEvent.click(
-      await screen.findByRole('button', {
-        name: 'auth.social.button.unlinkDiscord',
-      }),
-    );
-
-    expect(await screen.findByText('auth.social.unlink.error')).toBeTruthy();
   });
 
   it('renders provider unavailable errors from the identities query', async () => {

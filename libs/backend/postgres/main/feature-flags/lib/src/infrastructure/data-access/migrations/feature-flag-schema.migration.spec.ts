@@ -1,4 +1,4 @@
-// @requirements REQ-NOTIFY-PREFERENCE-006
+// @requirements REQ-AGRITECH-DEMO-024
 import { describe, expect, it } from 'vitest';
 import { Migration20260609100000CreateFeatureFlags } from './Migration20260609100000CreateFeatureFlags';
 import { featureFlagMigrationOptions, featureFlagMigrations } from './index';

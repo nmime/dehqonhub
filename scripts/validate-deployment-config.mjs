@@ -144,11 +144,15 @@ has(
 );
 has(
   dockerfile,
-  'COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf',
-  'frontend nginx config copy is build-arg selectable',
+  'COPY --chmod=0644 ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf',
+  'frontend nginx config copy is build-arg selectable and readable by the runtime uid',
 );
 const nginxFullstack = read('docker/nginx-fullstack.conf');
 const nginxSpa = read('docker/nginx-spa.conf');
+const caddyUserRoutes = read('docker/caddy/routes/core/user.caddy');
+const caddyUserPathLine = caddyUserRoutes.split('\n').find((line) => line.trimStart().startsWith('path '));
+assert.ok(caddyUserPathLine, 'Caddy user API matcher must declare public paths.');
+const caddyUserPaths = new Set(caddyUserPathLine.trim().split(/\s+/u).slice(1));
 const landingAstroConfig = read('apps/frontend/landing/astro.config.mjs');
 has(landingAstroConfig, 'csp: true', 'Astro landing emits a hash-based hydration CSP');
 has(
@@ -166,19 +170,6 @@ has(
   `sed -i "s/script-src 'self';/script-src 'self' 'unsafe-inline';/g"`,
   'frontend image admits Astro hydration only behind the generated hash policy',
 );
-const ciWorkflow = read('.github/workflows/ci.yml');
-const runtimeOpsJob = section(ciWorkflow, '  ops-gates:', '  fullstack-e2e:');
-for (const expected of [
-  "AUTH_TELEGRAM_ENABLED: 'true'",
-  "TELEGRAM_BOT_TOKEN: '123456789:test-bot-token'",
-  "VITE_TELEGRAM_AUTH_ENABLED: 'true'",
-  "NOTIFICATION_PAYLOAD_ENCRYPTION_KEY: 'BwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwcHBwc='",
-  'CONTAINER_DATABASE_URL: postgres://postgres:postgres@postgres:5432/nest_react_boilerplate',
-  "SITE_APP_PORT: '4203'",
-  'COMPOSE_PROFILES: postgres,redis,nats,admin-app-api,user-app-api,auth-app-api,admin-app,user-app,landing-app',
-]) {
-  has(runtimeOpsJob, expected, `runtime QA Telegram TMA fixture ${expected}`);
-}
 const assertNginxHardening = (text, label) => {
   for (const required of [
     'add_header X-Content-Type-Options "nosniff" always;',
@@ -209,6 +200,21 @@ has(
   'migrator stages only the selected provider dependency manifest',
 );
 has(migratorStage, 'USER 1000:1000', 'migrator image defaults to the numeric non-root node user');
+for (const runtimeSource of [
+  '--from=migrator-deps /migrator/node_modules ./node_modules',
+  'packages/tooling ./packages/tooling',
+  'libs ./libs',
+  'config ./config',
+  'i18n ./i18n',
+  'tsconfig.base.json ./tsconfig.base.json',
+  'docker/migrator-run.mjs ./docker/migrator-run.mjs',
+]) {
+  has(
+    migratorStage,
+    `COPY --chown=1000:1000 ${runtimeSource}`,
+    `migrator runtime source is owned by its non-root user: ${runtimeSource}`,
+  );
+}
 has(
   migratorStage,
   'ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]',
@@ -308,15 +314,24 @@ const backendStage = section(dockerfile, 'FROM node:${NODE_VERSION} AS backend',
 has(backendStage, 'USER 1000:1000', 'backend image defaults to the numeric non-root node user');
 has(
   backendStage,
-  'COPY --from=backend-deps /runtime/node_modules ./node_modules',
+  'COPY --chown=1000:1000 --from=backend-deps /runtime/node_modules ./node_modules',
   'backend copies only the staged per-app node_modules',
 );
 has(
   backendStage,
-  'COPY --from=backend-deps /runtime/package.json ./package.json',
+  'COPY --chown=1000:1000 --from=backend-deps /runtime/package.json ./package.json',
   "backend copies the app's generated package.json alongside its node_modules",
 );
-has(backendStage, 'COPY --from=backend-deps /runtime/dist ./dist', 'backend copies only the staged output closure');
+has(
+  backendStage,
+  'COPY --chown=1000:1000 --from=backend-deps /runtime/dist ./dist',
+  'backend copies only the staged output closure for its numeric runtime user',
+);
+has(
+  backendStage,
+  'COPY --chown=1000:1000 --from=backend-deps /runtime/i18n ./i18n',
+  'backend owns staged locale assets as its numeric runtime user',
+);
 assert.ok(
   !dockerfile.includes('pnpm prune --prod'),
   'Backend images must install per-app dependencies instead of pruning the whole workspace tree.',
@@ -346,6 +361,11 @@ has(
   "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')",
   'backend image verifies the canonical backend i18n runtime output',
 );
+assert.ok(
+  backendStage.indexOf('USER 1000:1000') <
+    backendStage.indexOf("require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"),
+  'backend verifies the locale output after switching to its numeric non-root runtime user',
+);
 const siteStage = section(dockerfile, 'FROM node:${NODE_VERSION} AS site-runtime', 'FROM nginxinc/nginx-unprivileged');
 has(
   siteStage,
@@ -354,10 +374,52 @@ has(
   PORT=80`,
   'site runtime explicitly assigns container port 80',
 );
-has(siteStage, 'COPY --from=site-deps /site-deploy/dist ./dist', 'site runtime copies only staged Vike output');
+has(
+  siteStage,
+  'COPY --chown=1000:1000 --from=site-deps /site-deploy/package.json ./package.json',
+  'site runtime owns its staged package contract as the numeric node user',
+);
+has(
+  siteStage,
+  'COPY --chown=1000:1000 --from=site-deps /site-deploy/node_modules ./node_modules',
+  'site runtime owns its staged dependencies as the numeric node user',
+);
+has(
+  siteStage,
+  'COPY --chown=1000:1000 --from=site-deps /site-deploy/dist ./dist',
+  'site runtime owns only staged Vike output as the numeric node user',
+);
 assert.ok(!siteStage.includes('/workspace/dist'), 'Site runtime must not copy the full workspace dist tree.');
 has(siteStage, 'USER node', 'site runtime runs as the non-root node user');
+has(
+  siteStage,
+  'RUN test -r ./dist/apps/frontend/site/server/index.js',
+  'site runtime verifies its entrypoint after switching to the non-root node user',
+);
 has(siteStage, 'EXPOSE 80', 'site runtime exposes the Vike server port');
+
+const frontendStage = section(dockerfile, 'FROM nginxinc/nginx-unprivileged', 'HEALTHCHECK');
+has(
+  frontendStage,
+  'chmod -R a=rX /usr/share/nginx/html',
+  'frontend runtime makes every immutable bundle asset readable independently of source checkout modes',
+);
+has(
+  frontendStage,
+  'chmod 0644 /usr/share/nginx/html/runtime-config.js',
+  'frontend runtime keeps only the generated runtime configuration writable by nginx',
+);
+has(frontendStage, 'USER 101', 'frontend runtime uses the nginx numeric non-root user');
+has(
+  frontendStage,
+  'RUN test -r /usr/share/nginx/html/index.html',
+  'frontend runtime verifies its entry document after switching to the nginx user',
+);
+has(
+  frontendStage,
+  'test -r /etc/nginx/conf.d/default.conf',
+  'frontend runtime verifies the selected nginx configuration after switching to the nginx user',
+);
 
 const devCompose = read('docker/docker-compose.yml');
 has(devCompose, 'http://127.0.0.1:8080/nginx-health', 'dev frontend healthcheck targets container port 8080');
@@ -542,8 +604,8 @@ const prodRedisCompose = read('docker/docker-compose.prod.redis.yml');
 
 const assertNamedClosureBuilds = (compose, label) => {
   has(compose, 'nrb-closure: ${NRB_CLOSURE_CONTEXT:?', `${label} required named closure context`);
-  const buildCount = compose.match(/^    build:$/gmu)?.length ?? 0;
-  const namedBuildCount = compose.match(/^      <<: \*nrb-build$/gmu)?.length ?? 0;
+  const buildCount = compose.match(/^ {4}build:$/gmu)?.length ?? 0;
+  const namedBuildCount = compose.match(/^ {6}<<: \*nrb-build$/gmu)?.length ?? 0;
   assert.ok(buildCount > 0, `${label} must define Dockerfile builds.`);
   assert.equal(namedBuildCount, buildCount, `${label} has a Dockerfile build without the nrb-closure anchor.`);
 };
@@ -591,6 +653,7 @@ has(
   'production source-build overlay defaults frontend builds to same-origin API routing',
 );
 const prodBackendEnv = section(prodCompose, 'x-backend-env:', '\nx-backend-command:');
+has(prodBackendEnv, 'HOST: 0.0.0.0', 'production Compose binds backend listeners to the container interface');
 has(prodBackendEnv, 'PORT: 80', 'production Compose explicitly assigns backend container port 80');
 has(prodBackendEnv, 'NODE_ENV: production', 'production Compose fixes NODE_ENV before provider resolution');
 for (const variable of marketplaceProviderModeVariables) {
@@ -881,17 +944,81 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
   has(text, 'location ^~ /auth/', 'auth API prefix route cannot be shadowed by regex static assets');
   has(text, 'location ^~ /api/auth/', 'Better Auth API prefix must be proxied to auth-app-api');
   has(text, 'location ^~ /profile/', 'profile/user API prefix route cannot be shadowed by regex static assets');
+  assert.ok(
+    !section(text, 'location ^~ /profile/ {', 'location ^~ /marketplace/ {').includes('$frontend_spa_navigation'),
+    'Nested profile API paths must not negotiate into the SPA.',
+  );
   has(
     text,
     'location ^~ /marketplace/',
     'marketplace API prefix route cannot be shadowed by SPA or regex static assets',
   );
+  before(
+    text,
+    'location = /marketplace {',
+    'location ^~ /marketplace/ {',
+    'exact marketplace API route precedes its API prefix',
+  );
+  for (const [route, label] of [
+    [
+      'location ~ ^/(?:advisories|deliveries|field-agent|field-visits|orders|partners|payments|produce|supplier)(?:/|$)',
+      'business user API roots',
+    ],
+    ['location = /farmer {', 'exact farmer API root'],
+    ['location = /marketplace {', 'exact marketplace API root'],
+  ]) {
+    has(text, route, `${label} are proxied before the SPA fallback`);
+  }
+  for (const operationalRoute of ['/health', '/live', '/ready']) {
+    assert.ok(
+      !text.includes(`location = ${operationalRoute} {`) && !text.includes(`location ^~ ${operationalRoute}/ {`),
+      `Operational route ${operationalRoute} must remain on the dedicated user API host.`,
+    );
+  }
   has(text, 'location ^~ /admin/', 'admin API prefix route cannot be shadowed by regex static assets');
   for (const service of ['auth-app-api', 'user-app-api', 'admin-app-api']) {
     has(text, helm ? `-${service}:` : `${service}:80`, `${service} upstream`);
   }
 };
 assertNginxRoutes(read('docker/nginx-fullstack.conf'));
+
+for (const route of [
+  '/advisories',
+  '/advisories/*',
+  '/deliveries',
+  '/deliveries/*',
+  '/farmer',
+  '/field-agent',
+  '/field-agent/*',
+  '/field-visits',
+  '/field-visits/*',
+  '/marketplace',
+  '/marketplace/*',
+  '/orders',
+  '/orders/*',
+  '/partners',
+  '/partners/*',
+  '/payments',
+  '/payments/*',
+  '/produce',
+  '/produce/*',
+  '/profile/*',
+  '/supplier',
+  '/supplier/*',
+]) {
+  assert.ok(caddyUserPaths.has(route), `Caddy must proxy user API route ${route}.`);
+}
+assert.ok(
+  !caddyUserPaths.has('/farmer/*'),
+  'Caddy must keep the /farmer/register SPA route out of the user API proxy.',
+);
+for (const operationalRoute of ['/health', '/health/*', '/live', '/ready']) {
+  assert.ok(
+    !caddyUserPaths.has(operationalRoute),
+    `Caddy must keep operational route ${operationalRoute} on the dedicated user API host.`,
+  );
+}
+has(caddyUserRoutes, 'reverse_proxy user-app-api:80', 'Caddy proxies user API routes to user-app-api');
 
 if (validateHelmStatic) {
   assertNginxRoutes(read('.helm/templates/configmap.yaml'), { helm: true });
@@ -1110,14 +1237,8 @@ if (validateHelmStatic) {
 
   const productionValues = read('.helm/values-production.yaml');
   has(productionValues, 'readSecrets: false', 'production Coroot Secret access remains disabled');
-  const releaseWorkflow = read('.github/workflows/release-images.yml');
   const releaseImagePlan = read('scripts/release-image-plan.mjs');
   const setupCatalog = read('packages/tooling/src/setup/catalog.ts');
-  has(
-    releaseWorkflow,
-    "VITE_TELEGRAM_AUTH_ENABLED: ${{ vars.VITE_TELEGRAM_AUTH_ENABLED || 'false' }}",
-    'release user-app supports an explicit Telegram auth build flag',
-  );
   const frontendDomainAssignments = [
     ['landingApp', 'landing-app', 'example.com'],
     ['siteApp', 'site-app', 'site-app.example.com'],
@@ -1134,6 +1255,15 @@ if (validateHelmStatic) {
     ['discordAppApi', 'discord-app-api', 'discord-app-api.example.com'],
     ['telegramBotApi', 'telegram-bot-api', 'telegram-bot-api.example.com'],
   ];
+  const productionPublicDomainAssignments = [
+    ['userApp', 'user-app', 'dehqonhub.uz'],
+    ['mobileApp', 'mobile-app', 'mobile-app.dehqonhub.uz'],
+    ['adminApp', 'admin-app', 'admin-app.dehqonhub.uz'],
+    ['authAppApi', 'auth-app-api', 'auth-app-api.dehqonhub.uz'],
+    ['userAppApi', 'user-app-api', 'user-app-api.dehqonhub.uz'],
+    ['adminAppApi', 'admin-app-api', 'admin-app-api.dehqonhub.uz'],
+    ['telegramBotApi', 'telegram-bot-api', 'telegram-bot-api.dehqonhub.uz'],
+  ];
   const publicDomainAssignments = [...frontendDomainAssignments, ...coreApiDomainAssignments];
   assert.equal(
     new Set([...publicDomainAssignments, ...optionalApiDomainAssignments].map(([, , host]) => host)).size,
@@ -1146,23 +1276,6 @@ if (validateHelmStatic) {
   has(setupCatalog, 'releaseImage:', 'setup catalog owns immutable release image metadata');
   has(releaseImagePlan, 'Object.values(appCatalog)', 'release image plan derives app images from the setup catalog');
   has(setupCatalog, "target: 'site-runtime'", 'setup catalog uses the actual Vike runtime Docker target');
-  has(releaseWorkflow, 'image-plan', 'release workflow selects affected images before build');
-  has(
-    releaseWorkflow,
-    'pnpm nrb closure install',
-    'release workflow fails closed and installs a clean selected dependency tree',
-  );
-  has(releaseWorkflow, 'generate-bake-file.mjs --only', 'release workflow generates its selected Bake plan');
-  has(releaseWorkflow, 'docker buildx bake -f docker-bake.json', 'release workflow builds through selected Bake only');
-  assert.ok(
-    !releaseWorkflow.includes('docker/build-push-action') && !releaseWorkflow.includes('target: workspace'),
-    'release workflow must not prime an unscoped direct Docker target',
-  );
-  has(
-    releaseWorkflow,
-    'cache-to=type=gha,mode=max,scope=release-',
-    'release workflow persists the shared BuildKit dependency cache for reuse across the bake build',
-  );
   for (const [, service, host] of [...publicDomainAssignments, ...optionalApiDomainAssignments]) {
     const expectedHost = service === 'landing-app' ? 'example.com' : `${service}.example.com`;
     assert.equal(host, expectedHost, `${service} default domain must match the public domain contract`);
@@ -1173,7 +1286,9 @@ if (validateHelmStatic) {
   ]) {
     const ingressBlock = yamlMapEntry(values, 'ingress', 0);
     const configBlock = yamlMapEntry(values, 'config', 0);
-    for (const [app, service, host] of publicDomainAssignments) {
+    const expectedDomainAssignments =
+      label === 'production' ? productionPublicDomainAssignments : publicDomainAssignments;
+    for (const [app, service, host] of expectedDomainAssignments) {
       const appBlock = yamlMapEntry(values, app);
       has(ingressBlock, `host: ${host}`, `${label} ${app} ingress host`);
       has(ingressBlock, `service: ${service}`, `${label} ${app} ingress service`);
@@ -1194,7 +1309,7 @@ if (validateHelmStatic) {
       }
     }
 
-    for (const [app, service, host] of optionalApiDomainAssignments) {
+    for (const [app, service, host] of label === 'default' ? optionalApiDomainAssignments : []) {
       const appBlock = yamlMapEntry(values, app);
       has(appBlock, 'enabled: false', `${label} ${app} remains opt-in`);
       const hostEntry = section(ingressBlock, `- host: ${host}`, '\n    - host:');

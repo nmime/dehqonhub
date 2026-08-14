@@ -29,5 +29,10 @@
   "admin.featureFlags.error.keyInvalid": "Use a dotted lowercase key such as checkout.newflow.",
   "admin.featureFlags.error.numberInvalid": "Enter a finite numeric value.",
   "admin.featureFlags.error.loadFailed": "Feature flags could not be loaded.",
-  "admin.featureFlags.error.saveFailed": "Feature flag could not be saved."
+  "admin.featureFlags.error.saveFailed": "Feature flag could not be saved.",
+  "admin.featureFlags.demo.title": "Marketplace preview data",
+  "admin.featureFlags.demo.description": "Give new deployments a polished sample catalog without creating users, orders, reviews, or business metrics.",
+  "admin.featureFlags.demo.label": "Show synthetic marketplace catalog",
+  "admin.featureFlags.demo.hint": "Preview listings are marked Demo and cannot be purchased, sampled, promoted, reviewed, or used in analytics.",
+  "admin.featureFlags.demo.auditDescription": "Synthetic browse-only marketplace catalog controlled by an audited operator flag."
 }

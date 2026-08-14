@@ -117,7 +117,7 @@ describe('frontend API client', () => {
         {
           code: 'resource-conflict',
           detail: 'Conflicting profile',
-          type: 'https://example.com/problems#resource-conflict',
+          type: 'https://dehqonhub.uz/problems#resource-conflict',
         },
         false,
         409,
@@ -128,7 +128,7 @@ describe('frontend API client', () => {
       body: {
         code: 'resource-conflict',
         detail: 'Conflicting profile',
-        type: 'https://example.com/problems#resource-conflict',
+        type: 'https://dehqonhub.uz/problems#resource-conflict',
       },
       code: 'resource-conflict',
       message: 'The request conflicts with the current state of the resource.',
@@ -136,7 +136,7 @@ describe('frontend API client', () => {
         body: {
           code: 'resource-conflict',
           detail: 'Conflicting profile',
-          type: 'https://example.com/problems#resource-conflict',
+          type: 'https://dehqonhub.uz/problems#resource-conflict',
         },
         code: 'resource-conflict',
         detail: 'Conflicting profile',
@@ -144,11 +144,11 @@ describe('frontend API client', () => {
         kind: 'client',
         message: 'The request conflicts with the current state of the resource.',
         status: 409,
-        type: 'https://example.com/problems#resource-conflict',
+        type: 'https://dehqonhub.uz/problems#resource-conflict',
         validation: [],
       },
       status: 409,
-      type: 'https://example.com/problems#resource-conflict',
+      type: 'https://dehqonhub.uz/problems#resource-conflict',
     } satisfies Partial<ApiError>);
   });
 

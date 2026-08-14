@@ -100,10 +100,11 @@ trusted external runner without changing their source-revision contract.
 - **WHEN** release evidence is prepared locally or on a trusted runner
 - **THEN** it verifies and records only the clean checked-out source SHA
 
-#### Scenario: Main moved after validation
+#### Scenario: Requested revision is not checked out
 
-- **WHEN** the verified SHA is no longer current main
-- **THEN** release automation refuses to continue
+- **WHEN** evidence collection requests a revision that does not resolve to the
+  clean checked-out source SHA
+- **THEN** assurance fails before running the selected evidence commands
 
 ### Requirement: [REQ-ASSURANCE-INVENTORY-004] Executable tests are fully traceable
 

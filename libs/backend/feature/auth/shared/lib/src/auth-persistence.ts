@@ -43,6 +43,8 @@ export interface AuthUserPersistenceRecord extends Required<AuthUserAccessPolicy
   email: string | null;
   displayName: string;
   passwordHash: string;
+  emailVerifiedAt: Date | null;
+  credentialRevision: number;
   locale: Locale;
   theme: AuthUserThemePreference;
   lastLoginAt: Date;
@@ -58,6 +60,8 @@ export interface AuthUserCreateInput extends AuthUserAccessPolicyInput {
   email: string | null;
   displayName?: string | null;
   passwordHash?: string;
+  emailVerifiedAt?: Date | null;
+  credentialRevision?: number;
   locale?: Locale | null;
   theme?: AuthUserThemePreference | null;
   lastLoginAt?: Date | null;
@@ -103,6 +107,16 @@ export interface AuthUserRepositoryPort {
   recordLogin(
     id: string,
     loggedInAt?: Date,
+    tenantId?: string,
+  ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError>;
+  verifyEmail(
+    id: string,
+    tenantId?: string,
+    verifiedAt?: Date,
+  ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError>;
+  replacePassword(
+    id: string,
+    passwordHash: string,
     tenantId?: string,
   ): ResultAsync<AuthUserPersistenceRecord | null, AuthRepositoryError>;
   setAvatar(

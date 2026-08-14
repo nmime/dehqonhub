@@ -28,25 +28,22 @@ export function ProfileStatusCard({ state, t }: Readonly<ProfileStatusCardProps>
               <dt>{t('user.form.email')}</dt>
               <dd>{state.email ?? t('user.profile.emailFallback')}</dd>
             </div>
-            {/* `subject` falls back to the email, so for an email session this row
-                repeated the value directly above it under a label that was really the
-                value fallback string ("unknown"). Show it only when it carries
-                something the email row does not. */}
-            {state.subject === state.email ? null : (
+            {state.emailVerified !== undefined ? (
               <div>
-                <dt>{t('user.profile.subject')}</dt>
-                <dd>{state.subject}</dd>
+                <dt>{t('user.profile.emailStatus')}</dt>
+                <dd>{t(state.emailVerified ? 'user.profile.emailVerified' : 'user.profile.emailUnverified')}</dd>
               </div>
-            )}
+            ) : null}
+            <div>
+              <dt>{t('user.profile.unknown')}</dt>
+              <dd>{state.subject}</dd>
+            </div>
           </dl>
         </div>
       ) : null}
       {state.status === 'unauthenticated' ? (
         <div className="xr-state-panel xr-state-panel--empty">
-          {/* Its own title, not the card's: repeating `user.profile.title` printed
-              "Profile state" twice, once as the card header and again as a large
-              heading right beneath it. */}
-          <UiEmptyState description={state.reason} title={t('user.profile.guestTitle')} />
+          <UiEmptyState description={state.reason} title={t('user.profile.title')} />
         </div>
       ) : null}
       {state.status === 'forbidden' ? (

@@ -442,8 +442,9 @@ describe('planner — M1 validateSelection rejection', () => {
     // but doesn't add its required capabilities.
     // Actually expandDependencies WILL add required caps. So we need
     // a case where an app's requiresApps are missing.
-    // fullstack-e2e declares the exact Docker/runtime stack it starts. If we
-    // list only the E2E project, dependency expansion must add that stack.
+    // fullstack-e2e declares the exact product stack it starts. If we list only
+    // the E2E project, dependency expansion must add that stack without the
+    // independent landing and site reference renderers.
     const config = parseNrbConfig({
       schemaVersion,
       apps: ['fullstack-e2e'],
@@ -455,10 +456,8 @@ describe('planner — M1 validateSelection rejection', () => {
       'admin-app-api',
       'auth-app-api',
       'fullstack-e2e',
-      'landing-app',
       'notification-consumer',
       'notification-scheduler',
-      'site-app',
       'user-app',
       'user-app-api',
     ]);

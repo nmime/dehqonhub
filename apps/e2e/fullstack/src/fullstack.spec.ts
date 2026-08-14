@@ -1,5 +1,5 @@
-// @requirements REQ-AGRITECH-ROUTING-015 REQ-FRONTEND-JOURNEY-001
-// Evidence for: REQ-AGRITECH-ROUTING-015 REQ-AUTH-FRONTEND-009 REQ-AUTH-IDENTITY-005 REQ-AUTH-SESSION-002 REQ-FRONTEND-ACCESSIBILITY-003 REQ-FRONTEND-ERROR-005 REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-SHELL-004 REQ-FRONTEND-SSR-007 REQ-NOTIFY-PREFERENCE-006
+// @requirements REQ-FRONTEND-JOURNEY-001
+// Evidence for: REQ-AUTH-FRONTEND-009 REQ-AUTH-IDENTITY-005 REQ-AUTH-SESSION-002 REQ-FRONTEND-ERROR-005 REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-SHELL-004
 import { randomUUID } from 'node:crypto';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 // Runtime journey evidence for REQ-AUTH-SESSION-002 and
@@ -168,36 +168,6 @@ async function applyTelegramSafeArea(page: Page, insets: PixelInsets): Promise<v
   }, insets);
 }
 
-async function focusWithKeyboard(page: Page, target: Locator, label: string): Promise<void> {
-  const traversalKeys = ['Tab', 'Alt+Tab'] as const;
-
-  /* eslint-disable no-await-in-loop -- keyboard focus order and its presentation must be inspected sequentially */
-  for (const traversalKey of traversalKeys) {
-    await page.evaluate(() => {
-      if (document.activeElement instanceof HTMLElement) {
-        document.activeElement.blur();
-      }
-    });
-
-    for (let index = 0; index < 30; index += 1) {
-      await page.keyboard.press(traversalKey);
-      if (await target.evaluate((element) => element === document.activeElement)) {
-        await expect(target, `${label} should remain visible when keyboard-focused`).toBeVisible();
-        const focusPresentation = await target.evaluate((element) => ({
-          boxShadow: getComputedStyle(element).boxShadow,
-          focusVisible: element.matches(':focus-visible'),
-        }));
-        expect(focusPresentation.focusVisible, `${label} should match :focus-visible`).toBe(true);
-        expect(focusPresentation.boxShadow, `${label} should render a visible focus indicator`).not.toBe('none');
-        return;
-      }
-    }
-  }
-  /* eslint-enable no-await-in-loop */
-
-  throw new Error(`${label} was not reachable through the keyboard focus order.`);
-}
-
 async function register(baseUrl: string, email: string): Promise<SessionResponse> {
   const response = await fetch(`${baseUrl}/auth/register`, {
     method: 'POST',
@@ -237,7 +207,7 @@ test('@critical @api-critical registration and login preserve the durable API se
   await expect(sessionResponse.json()).resolves.toMatchObject({ data: { user: { email } } });
 });
 
-test('API and SSR readiness endpoints identify the Docker services', async () => {
+test('API readiness endpoints identify the selected Docker services', async () => {
   const health = await Promise.all([
     fetch(`${urls.authApi}/health`).then(async (response) => ({
       label: 'auth api',
@@ -258,85 +228,6 @@ test('API and SSR readiness endpoints identify the Docker services', async () =>
   for (const { label, body, appName } of health) {
     assertHealthyApp(label, body, appName);
   }
-
-  const siteReady = await fetch(`${urls.siteApp}/ready`);
-  expect(siteReady.status).toBe(200);
-  await expect(siteReady.json()).resolves.toEqual({ runtime: 'node', service: 'site-app', status: 'ok' });
-});
-
-test('landing journey exposes public destinations at the 320px viewport floor', async ({ page }) => {
-  await page.setViewportSize({ width: 320, height: 720 });
-  await gotoWithRetry(page, urls.landingApp);
-  await expect(
-    page.getByRole('heading', {
-      level: 1,
-      name: 'A focused foundation for your next product.',
-    }),
-  ).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Public presence' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Customer account' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Admin workspace' })).toBeVisible();
-  await expectPageQuality(page, 'landing app');
-
-  const userAppLink = page.getByRole('link', { name: 'Preview user app' });
-  await expect(userAppLink).toHaveAttribute('href', urls.userApp);
-  await focusWithKeyboard(page, userAppLink, 'landing user-app link');
-  await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(`${urls.userApp}/`);
-  await expect(page.getByRole('heading', { level: 1, name: 'Agriculture, coordinated from one place.' })).toBeVisible();
-
-  await gotoWithRetry(page, urls.landingApp);
-  const adminAppLink = page.getByRole('link', { name: 'Preview admin app' });
-  await expect(adminAppLink).toHaveAttribute('href', urls.adminApp);
-  await focusWithKeyboard(page, adminAppLink, 'landing admin-app link');
-  await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(`${urls.adminApp}/`);
-  await expect(page.getByRole('heading', { name: 'Authentication required' })).toBeVisible();
-});
-
-test('site sends meaningful SSR HTML and hydrates client-side navigation without replacing the document', async ({
-  page,
-  request,
-}) => {
-  const serverResponse = await request.get(urls.siteApp);
-  expect(serverResponse.status()).toBe(200);
-  expect(serverResponse.headers()['content-type']).toContain('text/html');
-  const serverHtml = await serverResponse.text();
-  expect(serverHtml).toContain('A dependable home for the pages people return to.');
-  expect(serverHtml).toMatch(/<script\b/iu);
-
-  const hydrationErrors: string[] = [];
-  page.on('console', (message) => {
-    if (message.type() === 'error' && /hydration|did not match|server html/iu.test(message.text())) {
-      hydrationErrors.push(message.text());
-    }
-  });
-  page.on('pageerror', (error) => {
-    if (/hydration|did not match|server html/iu.test(error.message)) {
-      hydrationErrors.push(error.message);
-    }
-  });
-
-  await page.setViewportSize({ width: 320, height: 720 });
-  await gotoWithRetry(page, `${urls.siteApp}/problems`);
-  await expect(page.getByRole('heading', { level: 1, name: 'API problem types' })).toBeVisible();
-  await page.evaluate(() => {
-    document.documentElement.dataset['hydrationNavigationProof'] = 'preserved';
-  });
-  await page.getByRole('link', { name: 'AgriTech' }).click();
-  await expect(
-    page.getByRole('heading', {
-      level: 1,
-      name: 'A dependable home for the pages people return to.',
-    }),
-  ).toBeVisible();
-  await expect(page).toHaveURL(`${urls.siteApp}/`);
-  expect(
-    await page.evaluate(() => document.documentElement.dataset['hydrationNavigationProof']),
-    'hydrated navigation should preserve the current document',
-  ).toBe('preserved');
-  expect(hydrationErrors).toEqual([]);
-  await expectPageQuality(page, 'site app');
 });
 
 test('user frontend renders a safe authentication failure without leaking credential diagnostics', async ({ page }) => {

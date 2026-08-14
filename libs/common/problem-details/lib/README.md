@@ -5,10 +5,10 @@
 Defines framework-neutral RFC 9457 problem type identities and documentation metadata for API producers and root-domain documentation.
 
 Add a custom type here before using it in an exception. Each entry owns the
-stable kebab-case code, `https://example.com/problems#<code>` identity, title,
+stable kebab-case code, `https://dehqonhub.uz/problems#<code>` identity, title,
 status, safe default detail, resolution guidance, and documented extension
-members. `pnpm nrb init` replaces `example.com` with the product root domain.
-Both apex-capable frontends render this registry at `/problems`.
+members. The selected DehqonHub user application renders this registry at
+`/problems` on the product apex.
 
 Frontend response-presentation overrides use the shared `toast`/`silent` and
 severity vocabularies, but are keyed by generated API response rule IDs. Problem

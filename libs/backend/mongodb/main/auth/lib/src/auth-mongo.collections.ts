@@ -76,6 +76,8 @@ export const AuthMongoCollectionDefinitions: Array<{
         email: nullableText,
         displayName: text,
         passwordHash: text,
+        emailVerifiedAt: nullableDate,
+        credentialRevision: { bsonType: 'int', minimum: 0 },
         status: { enum: ['active', 'disabled', 'invited'] },
         locale: text,
         theme: { enum: ['system', 'light', 'dark'] },

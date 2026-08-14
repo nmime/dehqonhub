@@ -278,7 +278,7 @@ class ContractReviewEligibilityDto {
 }
 
 @ApiExtraModels(DirectPaymentSettlementDto, FactoringSettlementDto)
-class ContractLifecycleDto {
+export class ContractLifecycleDto {
   @ApiPropertyOptional({ type: ContractArtifactDto }) artifact?: ContractArtifactDto;
   @ApiPropertyOptional({ type: ContractCommissionDto }) commission?: ContractCommissionDto;
   @ApiProperty({ format: 'uuid' }) contractId!: string;
@@ -291,7 +291,13 @@ class ContractLifecycleDto {
   @ApiProperty({ isArray: true, type: ContractReputationSignalDto })
   reputationSignals!: ContractReputationSignalDto[];
   @ApiProperty({
-    discriminator: { propertyName: 'kind' },
+    discriminator: {
+      mapping: {
+        direct_payment: getSchemaPath(DirectPaymentSettlementDto),
+        factoring: getSchemaPath(FactoringSettlementDto),
+      },
+      propertyName: 'kind',
+    },
     oneOf: [{ $ref: getSchemaPath(DirectPaymentSettlementDto) }, { $ref: getSchemaPath(FactoringSettlementDto) }],
   })
   settlement!: DirectPaymentSettlementDto | FactoringSettlementDto;
@@ -523,7 +529,7 @@ function toContractArtifactDto(artifact: MarketplaceContractArtifact): ContractA
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity -- this explicit allowlist mapper keeps every private lifecycle field out of the user DTO
-function toContractLifecycleDto(lifecycle: MarketplaceContractLifecycle): ContractLifecycleDto {
+export function toContractLifecycleDto(lifecycle: MarketplaceContractLifecycle): ContractLifecycleDto {
   const settlementCommon = {
     amountUzs: lifecycle.settlement.amountUzs,
     createdAt: lifecycle.settlement.createdAt,

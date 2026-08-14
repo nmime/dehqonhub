@@ -46,7 +46,7 @@ const UserAppApiClientProvider = observer(function UserAppApiClientProvider({
       createApiRuntimeFetch({
         emitUnauthenticatedAuthRequired: true,
         redirectTo: '/auth',
-        toastRules: () => [...authApiToastRules(), ...userApiToastRules(), ...createDefaultApiToastRules()],
+        toastRules: () => [...authApiToastRules, ...userApiToastRules, ...createDefaultApiToastRules()],
       }),
     [],
   );
@@ -109,16 +109,12 @@ const UserAppRouterProviders = observer(function UserAppRouterProviders() {
   const preferences = useUserPreferenceControls();
 
   return (
-    // DehqonHub ships a single light palette, so the stored profile theme is
-    // deliberately not pushed into the shell: an account saved as `dark` — or a
-    // visitor on a dark-mode machine resolving `system` — would otherwise flip
-    // `data-theme` on the document and repaint the shared chrome (toasts,
-    // dialogs, native controls via `color-scheme`) in a palette the marketplace
-    // has no design for. Locale still round-trips to the profile.
     <FrontendI18nProvider
       onLocaleChange={preferences.persistUserLocale}
+      onThemeChange={preferences.persistUserTheme}
       translations={userFrontendTranslations}
       userLocale={preferences.userLocale}
+      userTheme={preferences.userTheme}
     >
       <ApiClientLocaleBridge>
         <UserRouter applyUserLocale={preferences.applyUserLocale} applyUserTheme={preferences.applyUserTheme} />
@@ -134,10 +130,7 @@ export function AppProviders({ children }: Readonly<{ children?: ReactNode }> = 
       bottomBarColor={dehqonHubChrome.bottomBar}
       headerColor={dehqonHubChrome.header}
     >
-      {/* `light` is passed explicitly rather than left at `system`: the default
-          resolves the document theme from `prefers-color-scheme`, which painted
-          the whole shell dark on dark-mode machines. */}
-      <FrontendStateProvider initialTheme="light">
+      <FrontendStateProvider>
         <UserAppApiClientProvider>
           <FrontendQueryProvider>
             <UiErrorBoundary>

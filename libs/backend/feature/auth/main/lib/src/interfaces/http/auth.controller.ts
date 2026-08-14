@@ -42,12 +42,14 @@ import {
   LinkTokenDto,
   LoginDto,
   RegisterDto,
+  PasswordResetConfirmDto,
   TelegramBotLinkDto,
   TelegramOidcSessionDto,
   TelegramTmaDto,
   UpdateLocaleDto,
   UpdatePreferencesDto,
   UserActionTokenRequestDto,
+  UserActionTokenConfirmDto,
 } from './dto';
 import {
   AuthenticatedUserViewDto,
@@ -61,8 +63,15 @@ import {
   SupportedLocalesPayloadDto,
   UnlinkProviderIdentityPayloadDto,
   UserActionTokenPayloadDto,
+  UserActionConfirmationPayloadDto,
 } from './dto/auth-response.swagger';
-import type { LogoutPayload, MePayload, SupportedLocalesPayload, UserActionTokenPayload } from './type/auth-http.type';
+import type {
+  LogoutPayload,
+  MePayload,
+  SupportedLocalesPayload,
+  UserActionConfirmationPayload,
+  UserActionTokenPayload,
+} from './type/auth-http.type';
 import {
   callSessionMethod,
   clearRequestSession,
@@ -333,6 +342,28 @@ export class AuthController {
   async requestPasswordReset(@Body() input: UserActionTokenRequestDto): Promise<OkResponse<UserActionTokenPayload>> {
     await this.auth.issuePasswordResetToken(input);
     return createOkResponse({ issued: true });
+  }
+
+  @Post('email-verification/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @ApiOkDataResponse(UserActionConfirmationPayloadDto)
+  async confirmEmailVerification(
+    @Body() input: UserActionTokenConfirmDto,
+  ): Promise<OkResponse<UserActionConfirmationPayload>> {
+    await this.auth.confirmEmailVerification(input.token, input.tenantId);
+    return createOkResponse({ confirmed: true });
+  }
+
+  @Post('password-reset/confirm')
+  @HttpCode(HttpStatus.OK)
+  @Public()
+  @ApiOkDataResponse(UserActionConfirmationPayloadDto)
+  async confirmPasswordReset(
+    @Body() input: PasswordResetConfirmDto,
+  ): Promise<OkResponse<UserActionConfirmationPayload>> {
+    await this.auth.confirmPasswordReset(input.token, input.password, input.tenantId);
+    return createOkResponse({ confirmed: true });
   }
 
   @Get('me')

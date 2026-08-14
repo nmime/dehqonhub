@@ -56,15 +56,17 @@ WORKDIR /app
 RUN apk add --no-cache su-exec \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
-COPY --from=migrator-deps /migrator/node_modules ./node_modules
+COPY --chown=1000:1000 --from=migrator-deps /migrator/node_modules ./node_modules
 # TypeScript sources the migration transpiles on the fly (@swc-node/register +
-# tsconfig-paths); source files carry no package CVEs.
-COPY packages/tooling ./packages/tooling
-COPY libs ./libs
-COPY config ./config
-COPY i18n ./i18n
-COPY tsconfig.base.json ./tsconfig.base.json
-COPY docker/migrator-run.mjs ./docker/migrator-run.mjs
+# tsconfig-paths); source files carry no package CVEs. Explicit ownership keeps
+# them readable by the numeric non-root runtime user even when the host checkout
+# was created under a restrictive umask.
+COPY --chown=1000:1000 packages/tooling ./packages/tooling
+COPY --chown=1000:1000 libs ./libs
+COPY --chown=1000:1000 config ./config
+COPY --chown=1000:1000 i18n ./i18n
+COPY --chown=1000:1000 tsconfig.base.json ./tsconfig.base.json
+COPY --chown=1000:1000 docker/migrator-run.mjs ./docker/migrator-run.mjs
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
 USER 1000:1000
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
@@ -142,13 +144,16 @@ RUN apk add --no-cache libcap su-exec \
     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
 # Placed at /app so both the app and the libs it inlines resolve modules from
 # a shared ancestor node_modules.
-COPY --from=backend-deps /runtime/package.json ./package.json
-COPY --from=backend-deps /runtime/node_modules ./node_modules
-COPY --from=backend-deps /runtime/dist ./dist
-COPY --from=backend-deps /runtime/i18n ./i18n
+COPY --chown=1000:1000 --from=backend-deps /runtime/package.json ./package.json
+COPY --chown=1000:1000 --from=backend-deps /runtime/node_modules ./node_modules
+COPY --chown=1000:1000 --from=backend-deps /runtime/dist ./dist
+COPY --chown=1000:1000 --from=backend-deps /runtime/i18n ./i18n
 COPY --chmod=0555 docker/secret-entrypoint.sh /usr/local/bin/secret-entrypoint
-RUN node -e "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"
 USER 1000:1000
+# Execute the same locale import every API and worker performs, after the UID
+# switch. This makes image construction fail when restrictive checkout modes
+# survive staging into any backend runtime asset.
+RUN node -e "require('./dist/libs/backend/common/i18n/libs/backend/common/i18n/lib/src')"
 ENTRYPOINT ["/usr/local/bin/secret-entrypoint"]
 EXPOSE 80
 CMD ["sh", "-c", "node \"$BUILD_OUTPUT\""]
@@ -180,10 +185,11 @@ RUN apk add --no-cache libcap \
   && setcap 'cap_net_bind_service=+ep' "$(which node)" \
   && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
     /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack
-COPY --from=site-deps /site-deploy/package.json ./package.json
-COPY --from=site-deps /site-deploy/node_modules ./node_modules
-COPY --from=site-deps /site-deploy/dist ./dist
+COPY --chown=1000:1000 --from=site-deps /site-deploy/package.json ./package.json
+COPY --chown=1000:1000 --from=site-deps /site-deploy/node_modules ./node_modules
+COPY --chown=1000:1000 --from=site-deps /site-deploy/dist ./dist
 USER node
+RUN test -r ./dist/apps/frontend/site/server/index.js
 EXPOSE 80
 CMD ["node", "dist/apps/frontend/site/server/index.js"]
 
@@ -193,7 +199,7 @@ ARG FRONTEND_OUTPUT=dist/apps/frontend/admin
 ARG NGINX_CONFIG=docker/nginx-fullstack.conf
 USER root
 RUN apk add --no-cache wget
-COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
+COPY --chmod=0644 ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
 # Astro emits a hash-based meta CSP for its inline hydration bootstrap. Relax
 # only the landing image's outer nginx policy when that stricter generated
@@ -208,9 +214,13 @@ RUN if [ "${NX_PROJECT}" = landing-app ]; then \
 # by the runtime user — the rest of the bundle stays immutable.
 COPY docker/frontend-runtime-config.sh /docker-entrypoint.d/40-frontend-runtime-config.sh
 RUN chmod +x /docker-entrypoint.d/40-frontend-runtime-config.sh \
+  && chmod -R a=rX /usr/share/nginx/html \
   && touch /usr/share/nginx/html/runtime-config.js \
-  && chown 101:101 /usr/share/nginx/html/runtime-config.js
+  && chown 101:101 /usr/share/nginx/html/runtime-config.js \
+  && chmod 0644 /usr/share/nginx/html/runtime-config.js
 USER 101
+RUN test -r /usr/share/nginx/html/index.html \
+  && test -r /etc/nginx/conf.d/default.conf
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://localhost:8080/nginx-health || exit 1

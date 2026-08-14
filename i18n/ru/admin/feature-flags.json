@@ -29,5 +29,10 @@
   "admin.featureFlags.error.keyInvalid": "Используйте ключ в нижнем регистре с точками, например checkout.newflow.",
   "admin.featureFlags.error.numberInvalid": "Введите конечное числовое значение.",
   "admin.featureFlags.error.loadFailed": "Не удалось загрузить флаги функций.",
-  "admin.featureFlags.error.saveFailed": "Не удалось сохранить флаг функции."
+  "admin.featureFlags.error.saveFailed": "Не удалось сохранить флаг функции.",
+  "admin.featureFlags.demo.title": "Демонстрационные данные маркетплейса",
+  "admin.featureFlags.demo.description": "Добавляет в новую установку аккуратный пример каталога, не создавая пользователей, заказов, отзывов и бизнес-метрик.",
+  "admin.featureFlags.demo.label": "Показывать синтетический каталог маркетплейса",
+  "admin.featureFlags.demo.hint": "Позиции помечены как демо: их нельзя купить, заказать как образец, продвигать, оценивать или учитывать в аналитике.",
+  "admin.featureFlags.demo.auditDescription": "Синтетический каталог только для просмотра, управляемый аудируемым флагом оператора."
 }

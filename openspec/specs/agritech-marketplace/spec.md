@@ -113,13 +113,7 @@ evidence.
   create an authenticated marketplace outcome.
 - Desktop and responsive browser layouts down to 320 px, in English, Russian,
   Uzbek Latin, and Uzbek Cyrillic, expose equivalent state and recovery
-  semantics, keyboard only, with reduced motion, and at WCAG AA normal-text
-  contrast without horizontal overflow.
-- DehqonHub ships one light palette: a stored dark preference or a dark-mode
-  machine MUST NOT repaint the product in a palette it has no design for.
-- The display-language control MUST be reachable from the header at every width
-  without scrolling: a visitor who cannot read the current language cannot be
-  asked to read their way down the page to change it.
+  semantics.
 - The user web app exposes guest search/suggestions, catalog, product, seller,
   reviews, and public-request discovery plus authenticated verification,
   bounded recent publication status, promotions, carts, purchase requests, offers,
@@ -144,6 +138,103 @@ evidence.
 
 - **WHEN** a non-production deployment uses an approved mock external provider
 - **THEN** the user web app displays its simulation status while all internal records, guards, idempotency, and state transitions remain authoritative
+
+### Requirement: [REQ-AGRITECH-EXPERIENCE-026] DehqonHub user experience is coherent, responsive, and honestly previewable
+
+The selected user web application SHALL present every DehqonHub marketplace
+route through one reference-led product system with Poppins-compatible
+typography, warm cream and green light surfaces, a deliberate black theme,
+pill-shaped controls, rounded cards and panels, transparent wordmark treatment,
+clear line icons, consistent field and button padding, and restrained
+print-like elevation. Both themes SHALL preserve the same content hierarchy,
+localized semantics, interaction states, and generated-API authority across
+desktop, 375 px Russian, and the 320 px supported floor.
+
+The home experience SHALL expose the compact marketplace header, search,
+category chips, gradient hero, quick scenarios, real or governed-demo product
+shelves, purchase-request explanation, verification entry, and footer without
+duplicated category blocks or a separate marketing renderer. Catalog filters
+SHALL be labelled, populated from current authoritative results, visibly active,
+keyboard operable, resettable, and available in a mobile bottom sheet. Empty
+text and price filter controls SHALL render localized example placeholders
+without substituting those examples as submitted values. Order,
+contract, verification, account, cart, favorites, and AI surfaces SHALL retain
+their owning real state machines while following the same spacing, typography,
+icon, card, and responsive rules.
+
+**Ownership:** `user-app` and `@app/frontend-feature-user-i18n`.
+
+**Evidence profile:** domain and journey evidence.
+
+**Invariants:**
+
+- The light reference palette uses warm cream, white, DehqonHub green, soft
+  green, charcoal ink, and sand borders; the black theme uses explicit near-black
+  green surfaces and readable contrast rather than an automatic color inversion.
+- The header/footer render a transparent text wordmark and MUST NOT display the
+  white-backed legacy raster mark.
+- Controls expose visible hover, focus, selected, disabled, loading, empty,
+  validation, denied, error, and success states with a consistent 44 px minimum
+  target where space permits.
+- Guest favorites store only opaque public listing IDs in a versioned
+  browser-local set, are described as device-local, and grant no authenticated
+  authority. Signed-in live-listing favorites remain server-authoritative.
+- Production catalog, seller, offer, order, contract, verification, account,
+  payment, provider, and AI facts come only from generated API responses.
+  Storybook/browser fixtures are test-only, and API-empty/error states never
+  fall back to them.
+- Governed demo listings retain explicit demo provenance, remain browse-only,
+  and may be bookmarked only through the local guest/demo favorite boundary.
+- Public marketplace routes remain public when an optional authentication
+  presentation or session bootstrap returns an anonymous response.
+- Language and theme changes update presentation preferences without changing
+  the current route or manufacturing an authentication redirect.
+
+**Failure behavior:**
+
+- Missing product media renders an intentional category illustration rather
+  than a broken image, white box, or unlabeled placeholder.
+- Empty filters or result sets render labelled recovery/reset guidance; they do
+  not show blank panels, empty-looking controls, or fabricate listings.
+- Unsupported width, locale expansion, or either theme MUST NOT create
+  horizontal page overflow, clipped primary actions, invisible focus, or
+  unreadable text.
+- Local-storage denial or malformed stored data fails safely to an empty local
+  favorite set and never redirects, crashes, or changes server state.
+
+#### Scenario: Reference-led home and catalog
+
+- **WHEN** a visitor opens the home or catalog in light or black theme on a
+  desktop, 375 px Russian, or 320 px viewport
+- **THEN** the compact DehqonHub shell, hero, product content, labelled filters,
+  localized placeholder examples, active controls, equal-padding actions, and
+  responsive navigation remain readable and operable without duplicate
+  marketing content or horizontal overflow
+
+#### Scenario: Guest bookmark remains local
+
+- **WHEN** a signed-out visitor bookmarks and later removes a public live or
+  governed-demo listing
+- **THEN** the favorite route and header count update from a versioned local
+  opaque-ID set, the UI identifies the device-local boundary, no authentication
+  redirect occurs, and no marketplace API mutation or commercial authority is
+  claimed
+
+#### Scenario: Authoritative empty and demo states stay honest
+
+- **WHEN** the public catalog API returns no records, an error, or explicitly
+  governed demo listings
+- **THEN** the UI respectively renders an actionable empty state, a retry state,
+  or visibly labelled browse-only demo cards and never substitutes a frontend
+  production fixture
+
+#### Scenario: Complete workflow visual parity
+
+- **WHEN** an authorized actor opens an order, contract, verification, account,
+  cart, favorites, or AI workflow
+- **THEN** its authoritative state and actions remain unchanged while typography,
+  spacing, icons, cards, status treatments, responsive behavior, and both themes
+  follow the same DehqonHub product system
 
 ### Requirement: [REQ-AGRITECH-PARTNER-007] Suppliers and buyers are approved organizations
 
@@ -250,22 +341,62 @@ The selected Docker topology SHALL include every AgriTech runtime dependency,
 migration, immutable build input, secret reference, public/internal route,
 health/readiness probe, resource boundary, telemetry signal, backup/restore
 contract, and rollback instruction required for staging and production
-validation without embedding credentials or applying infrastructure.
+validation without embedding credentials or applying infrastructure. The
+DehqonHub per-app deployment SHALL expose selected `user-app` at the configured
+`PUBLIC_DOMAIN` apex and its root, SHALL exclude landing/site deployables and
+their full-stack reference harness from the product selection and release set,
+SHALL preserve the administrator application at `/admin` on its host, and SHALL
+derive browser destinations, certificates, reverse-proxy hosts, allowed
+origins, and enabled Telegram routes from that same selected topology.
+
+**Evidence profile:** operations, security
+
+**Invariants:**
+
+- Public browser destinations never embed credentials, query strings, or
+  fragments.
+- The Admin destination includes its `/admin` router base path.
+- The user application and Telegram Mini App use the apex origin; no
+  `user-app.<domain>` compatibility host is published.
+- Unselected landing/site applications contribute no image, listener, host,
+  certificate name, trusted origin, or readiness expectation.
+- CORS, Better Auth trusted/return origins, payment return origins, and public
+  runtime URLs include the selected apex and exclude deselected or unknown
+  landing/site/user-app hosts.
+- Secret values remain file-backed and absent from rendered public
+  configuration.
+
+**Failure behavior:**
+
+- Missing routes, invalid host derivation, incomplete certificate coverage, or
+  unsupported proxy configuration fails validation before traffic changes.
 
 #### Scenario: Deployment validation
 
 - **WHEN** operators render and validate the selected deployment without secrets
 - **THEN** all AgriTech services, migrations, routes, probes, and required secret references are internally consistent and no live change occurs
 
+#### Scenario: Canonical selected destinations
+
+- **WHEN** the public apex and application hosts are derived for production
+- **THEN** users enter the complete user application at the apex `/`,
+  administrators enter the admin host at `/admin`, Telegram opens the apex Mini
+  App route, and no landing, site, or user-app subdomain is published or trusted
+
 ### Requirement: [REQ-AGRITECH-ROUTING-015] Product routes use the repository root ownership boundary
 
-The platform SHALL expose the canonical user AgriTech workflow at `/`, SHALL
-expose general AgriTech user API resources without an `agritech` prefix, SHALL
+The platform SHALL expose the canonical user AgriTech workflow at `/` on the
+configured `PUBLIC_DOMAIN` apex, SHALL expose general AgriTech user API
+resources without an `agritech` prefix, SHALL
 expose DehqonHub commerce APIs below `/marketplace/*`, SHALL expose the canonical
 operator workflow at `/admin`, and SHALL expose privileged AgriTech API
-resources directly below `/admin`. The `/marketplace/*` API namespace MUST keep
-same-origin JSON resources distinct from SPA deep links such as `/catalog` and
-`/cart`; `/marketplace` itself MUST NOT become a second product route.
+resources directly below `/admin`, including marketplace operations below
+`/admin/marketplace/*`. The `/marketplace/*` API namespace MUST keep
+same-origin JSON resources distinct from SPA deep links such as `/catalog`,
+`/cart`, and `/problems`; `/marketplace` itself MUST NOT become a second product
+route. The apex MUST serve selected `user-app` and MUST NOT publish
+`user-app.<domain>` or a
+landing/site renderer as another first-party product entry point.
 First-party web routes, API controllers, reverse proxies, OpenAPI contracts,
 generated clients, navigation, and payment return URLs MUST agree on those
 canonical paths and MUST NOT register redirects or compatibility aliases for
@@ -277,15 +408,18 @@ authentication, concurrency, and idempotency behavior SHALL remain unchanged.
 Domain identifiers and the Telegram `/agritech` command are outside the HTTP
 path prohibition and SHALL retain their existing semantics.
 
-**Evidence profile:** api
+**Evidence profile:** api, journey, operations
 
 **Invariants:**
 
 - Every canonical first-party HTTP path has one owner and no old-path alias.
+- The selected user SPA and Telegram Mini App share the apex origin; no user-app
+  subdomain or marketing renderer is a second product entry point.
 - No user/admin OpenAPI path or generated client path contains `/agritech` or
   `/admin/agritech`.
 - Every DehqonHub commerce operation uses `/marketplace/*`, while DehqonHub
-  browser deep links remain SPA-owned without that prefix.
+  browser deep links, including `/problems`, remain SPA-owned without that
+  prefix.
 - `/admin` remains the privileged application and API boundary; collapsing the
   product namespace MUST NOT weaken RBAC or tenant isolation.
 - Route migration MUST NOT alter write idempotency, callback replay handling,
@@ -295,8 +429,9 @@ path prohibition and SHALL retain their existing semantics.
 
 **Failure behavior:**
 
-- A removed web or API path receives the owning runtime's normal not-found
-  outcome and is not redirected or rewritten.
+- A removed web path, API path, or unselected application host receives the
+  edge/owner's normal rejection or not-found outcome and is not redirected or
+  rewritten into a compatibility entry point.
 - A stale generated artifact or client path fails contract freshness or
   product-route verification before release.
 - A stale independently deployed consumer may receive a not-found response and
@@ -307,17 +442,18 @@ path prohibition and SHALL retain their existing semantics.
 
 #### Scenario: User product and resources are rooted directly
 
-- **WHEN** a user opens the product or a generated client addresses an
+- **WHEN** a user opens the public product or a generated client addresses an
   authorized AgriTech resource
-- **THEN** the product uses `/`, general APIs use direct resource paths such as
+- **THEN** `user-app` owns the configured apex `/`, general APIs use direct resource paths such as
   `/orders`, `/produce`, or `/payments`, and DehqonHub commerce APIs use paths
   such as `/marketplace/catalog`, `/marketplace/cart`, or
-  `/marketplace/contracts/{id}`
+  `/marketplace/contracts/{id}` without publishing a user-app subdomain or
+  marketing renderer
 
 #### Scenario: Same-origin marketplace APIs do not collide with browser routes
 
-- **WHEN** a same-origin deployment serves the `/catalog` or `/cart` browser
-  deep link and the client requests the corresponding marketplace data
+- **WHEN** the apex serves the `/catalog`, `/cart`, or `/problems` browser deep
+  link and the client requests any corresponding marketplace data
 - **THEN** the browser route resolves to the SPA, the generated client uses
   `/marketplace/*`, and every supported frontend reverse proxy sends that API
   namespace to `user-app-api` rather than returning `index.html`
@@ -327,8 +463,10 @@ path prohibition and SHALL retain their existing semantics.
 - **WHEN** an authorized operator opens the product or a generated admin client
   addresses an AgriTech resource
 - **THEN** the product uses `/admin` and the API uses a direct privileged path
-  such as `/admin/partners`, `/admin/analytics`, or `/admin/integrations` with
-  the existing guard and endpoint permission
+  such as `/admin/partners`, `/admin/analytics`,
+  `/admin/marketplace/commission-policies`, or
+  `/admin/marketplace/engagement/review-reports` with the existing guard and
+  endpoint permission
 
 #### Scenario: Removed namespaces do not survive as aliases
 
@@ -336,21 +474,22 @@ path prohibition and SHALL retain their existing semantics.
   `/admin/agritech`, an `/agritech/*` API path, or an `/admin/agritech/*` API
   path
 - **THEN** no product route, redirect, or compatibility shim recognizes that
-  old path, while only the documented `/marketplace/*` API resources remain
-  valid
+  old path, while only the documented `/marketplace/*` user APIs and
+  `/admin/marketplace/*` privileged APIs remain valid
 
 #### Scenario: Payment returns to the canonical product
 
 - **WHEN** an authorized user initiates a configured payment handoff
-- **THEN** the client supplies a return URL whose pathname is `/` while all
+- **THEN** the client supplies an apex return URL whose pathname is `/` while all
   payment amount, provider, authentication, idempotency, and replay rules remain
   unchanged
 
 #### Scenario: Stale consumer is observable
 
-- **WHEN** post-rollout telemetry records a request for a removed HTTP path
+- **WHEN** post-rollout telemetry records a request for a removed HTTP path or
+  unselected application hostname
 - **THEN** operators can identify it as a stale consumer from the normal
-  not-found request telemetry without a redirect masking the mismatch
+  rejection/not-found telemetry without a redirect masking the mismatch
 
 ### Requirement: [REQ-AGRITECH-MARKETPLACE-016] DehqonHub marketplace transactions are real, isolated, and recoverable
 
@@ -397,9 +536,7 @@ evidence.
 - Product seller identity, request ownership, offer authorship, verification,
   approved buyer/supplier organization membership, contract parties, and
   signing actor MUST be derived from authenticated and persisted state, never a
-  display label or caller-selected authority field. The organization named on a
-  contract MUST be the one the contracted goods are sold by, not another
-  organization the same party happens to own.
+  display label or caller-selected authority field.
 - An open cart MUST contain products from exactly one server-derived seller;
   adding a different seller's product creates or updates another cart.
 - Catalog checkout and selected offers MUST resolve to persisted, reviewable
@@ -868,7 +1005,7 @@ opaque public identifiers and persisted idempotency, authorization, quota, and
 moderation state; they SHALL NOT accept or expose private product, produce,
 tenant, owner, partner, provider, or lifecycle identifiers.
 
-**Ownership:** `user-app`, `user-app-api`, `admin-app-api`, `acceptance-e2e`,
+**Ownership:** `user-app`, `admin-app`, `user-app-api`, `admin-app-api`, `acceptance-e2e`,
 `@app/backend-feature-agritech-main`,
 `@app/backend-feature-agritech-admin`,
 `@app/backend-feature-agritech-shared`, and
@@ -990,7 +1127,7 @@ outside production; mock execution SHALL preserve every internal authorization,
 idempotency, ordering, and persistence guard and SHALL never claim legal effect
 or money movement.
 
-**Ownership:** `user-app-api`, `admin-app-api`,
+**Ownership:** `admin-app`, `user-app-api`, `admin-app-api`,
 `@app/backend-feature-agritech-main`,
 `@app/backend-feature-agritech-admin`,
 `@app/backend-feature-agritech-shared`, and
@@ -1096,7 +1233,7 @@ transaction commits and SHALL preserve a stable intent identity, tenant and
 party authorization, bounded retries, explicit provider provenance, and an
 auditable terminal or reconciliation state.
 
-**Ownership:** `@app/backend-common-i18n`, `@app/common-i18n-keys`,
+**Ownership:** `admin-app`, `@app/backend-common-i18n`, `@app/common-i18n-keys`,
 `@app/backend-feature-agritech-main`,
 `@app/backend-feature-agritech-admin`,
 `@app/backend-feature-agritech-shared`,
@@ -1173,3 +1310,171 @@ operations evidence.
 
 - **WHEN** buyer, seller, foreign member, and tenant administrator read notification status in each supported locale
 - **THEN** each active party sees only its safe localized in-app records, the administrator sees only the derived tenant scope, and internal lease, template, provider, receipt, and error fields remain absent from recipient responses
+
+### Requirement: [REQ-AGRITECH-ONBOARDING-023] Marketplace access is progressive and explains restricted actions
+
+The responsive user marketplace SHALL remain useful before marketplace
+verification while every commercial mutation remains server-authoritative.
+Public discovery SHALL remain anonymous. Signed-in users SHALL retain profile,
+favorites, organization application, and verification readiness/history.
+Controls for unavailable commercial actions SHALL remain visible when they aid
+task understanding, SHALL be disabled, and SHALL state the exact missing
+identity or approved-organization prerequisite with a next action.
+
+**Evidence profile:** API, domain, security, journey, accessibility
+
+**Invariants:**
+
+- UI hints are not authority; every command repeats the persistent identity,
+  role, organization, tenant, resource, and state checks it requires.
+- Email assurance, Telegram authentication, marketplace identity verification,
+  and organization approval are distinct facts and never imply one another.
+- A pending, rejected, expired, disabled, or unavailable verification provider
+  does not hide public discovery or safe authenticated account capabilities.
+- Commercial commands retain the verified-role and organization prerequisites
+  owned by their existing requirements.
+
+**Failure behavior:**
+
+- An unavailable capability is disabled before submission with localized
+  guidance, while a direct API attempt still returns safe RFC 9457 denial.
+- Stale cached verification or organization state never enables a command; a
+  denial refreshes the authoritative readiness state.
+
+#### Scenario: Unverified user keeps safe marketplace access
+
+- **WHEN** a signed-in user has no verified marketplace identity
+- **THEN** public discovery, favorites, profile, organization application, and verification remain usable while commercial controls show a verification-required hint
+
+#### Scenario: Verified user still needs an approved organization
+
+- **WHEN** a verified buyer or seller lacks the matching approved organization membership
+- **THEN** role-specific commercial controls remain disabled with a link to create or review the organization application
+
+#### Scenario: Fully eligible actor receives only role capabilities
+
+- **WHEN** a verified actor has an approved buyer, seller, or farmer organization relationship
+- **THEN** the UI enables only that role's commands and the backend independently authorizes every submitted mutation
+
+### Requirement: [REQ-AGRITECH-DEMO-024] Administrator-governed demo catalog is honest and isolated
+
+The platform SHALL expose a deterministic versioned demo catalog only while an
+authorized tenant administrator enables the dedicated demo-catalog feature
+flag. Demo listings SHALL be clearly labelled, browse-only, and carried through
+the generated public API contract with explicit demo provenance and
+non-transactional state. Disabling the flag SHALL remove the projection
+immediately without creating, changing, or deleting real marketplace records.
+
+**Evidence profile:** API, domain, persistence, security, journey
+
+**Invariants:**
+
+- Demo data creates no user, organization, source row, publication, inventory
+  mutation, cart, order, contract, payment, review, notification, provider
+  receipt, or authoritative metric.
+- Demo identifiers are stable and disjoint from persisted publication sources.
+- Repeated enable or disable writes are idempotent because the projection is
+  derived from current flag state rather than materialized as commerce rows.
+- Only the existing tenant-scoped, audited feature-flag admin permission can
+  change demo visibility.
+
+**Failure behavior:**
+
+- Missing, disabled, malformed, or unreadable feature-flag state fails closed
+  to no demo records while authoritative public records remain available.
+- Any attempted transaction against a demo identifier returns safe not-found or
+  denied behavior and creates no commercial state.
+
+#### Scenario: Admin enables the demo catalog
+
+- **WHEN** an authorized administrator enables the dedicated demo-catalog toggle
+- **THEN** guests and users see localized labelled demo listings with disabled commercial actions and no change to authoritative marketplace metrics
+
+#### Scenario: Admin disables the demo catalog
+
+- **WHEN** the administrator disables the toggle
+- **THEN** demo listings disappear immediately and all real publications, carts, orders, and analytics remain unchanged
+
+#### Scenario: Unauthorized demo toggle is denied
+
+- **WHEN** a caller without feature-flag write permission attempts to change demo visibility
+- **THEN** the backend denies the request and the admin UI exposes no writable toggle
+
+### Requirement: [REQ-AGRITECH-ADMIN-025] Administrator web completes marketplace operations
+
+The responsive administrator web application SHALL provide authorized tenant
+operators with deep-linkable overview, moderation, commerce, engagement, and
+delivery workspaces that consume the generated admin API contract for every
+supported marketplace administration workflow. The application SHALL expose
+tenant-scoped analytics, partners, farmers, verification cases, seller/listing/
+request moderation queues, contracts and dispute evidence, commission policy,
+sample policy, review reports, lifecycle notifications, orders, deliveries,
+advisories, pilots, integrations, and the governed demo toggle without browser-
+authored operational state or hidden-identifier entry.
+
+**Ownership:** `admin-app`, `admin-app-api`, `@app/frontend-api-client`,
+`@app/frontend-feature-admin-i18n`, `@app/backend-feature-agritech-admin`,
+`@app/backend-feature-agritech-main`, `@app/backend-feature-agritech-shared`,
+and `@app/backend-postgres-main-agritech`.
+
+**Evidence profile:** API, journey, and security evidence.
+
+**Invariants:**
+
+- Read-only, write, and approve controls exactly follow the existing AgriTech
+  admin permissions; absent UI controls never replace backend authorization.
+- Every mutation uses the authoritative queued revision, fingerprint, evidence
+  identity, and a safe idempotency key where the contract requires one.
+- A tenant-scoped lifecycle projection exposes only the safe contract party
+  snapshots, open dispute, evidence metadata, fulfillment state, and timeline
+  needed for moderation; provider receipts, leases, private storage references,
+  and foreign-tenant records remain absent.
+- All four supported locales provide equivalent state, action, failure, and
+  recovery semantics at desktop and the 320 px responsive floor.
+- Empty, loading, denied, conflict, provider simulation, reconciliation, and
+  failed-read states remain distinct and never fall back to fabricated records.
+- Native operator presentation and cross-tenant support tooling are excluded.
+
+**Failure behavior:**
+
+- A failed workspace read renders the owning retry state without fabricating
+  fallback records or retaining stale privileged data.
+- A stale revision/fingerprint, contradictory input, duplicate concurrent
+  decision, or changed input under an idempotency key renders conflict recovery,
+  refreshes authoritative data, and claims no optimistic success.
+- A missing permission returns the existing safe denial and reveals no
+  mutation control or foreign resource.
+
+#### Scenario: Moderator clears authoritative queues
+
+- **WHEN** an approving tenant operator opens verification and publication
+  moderation, reviews the pinned identity/content context, and decides the
+  current revisions
+- **THEN** the generated commands submit the exact revisions, fingerprints,
+  reasons, and idempotency keys, successful items leave their queues after
+  refresh, and stale or concurrent decisions recover without duplicate effects
+
+#### Scenario: Dispute moderator uses persisted evidence
+
+- **WHEN** an approving tenant operator opens a disputed contract, selects
+  persisted evidence from its current evidence revision, and records a valid
+  resolution
+- **THEN** the contract, safe parties, fulfillment state, evidence metadata,
+  and outcome remain tenant-scoped, the resolution commits once, and no hidden
+  evidence identifier must be typed
+
+#### Scenario: Policies and engagement remain compare-and-set
+
+- **WHEN** a writing operator activates commission or sample policy and an
+  approving operator decides a reported review
+- **THEN** the UI submits the displayed policy/report revision with a stable
+  command key, presents exact basis-point or quota values, and refreshes the
+  authoritative result after success or conflict
+
+#### Scenario: Read-only operator has a complete safe view
+
+- **WHEN** an operator with read but without write or approve permission opens
+  every marketplace workspace at 320 px or desktop width in any supported locale
+- **THEN** all tenant-scoped queues, contracts, notifications, analytics, and
+  operational readiness remain inspectable and recoverable while every mutation
+  control is absent

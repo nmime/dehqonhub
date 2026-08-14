@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-LIFECYCLE-020
+// @requirements REQ-AGRITECH-ADMIN-025 REQ-AGRITECH-LIFECYCLE-020
 import { createHash, randomUUID } from 'node:crypto';
 import { MikroORM, type EntityManager } from '@mikro-orm/core';
 import { Migrator } from '@mikro-orm/migrations';

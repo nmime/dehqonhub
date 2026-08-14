@@ -46,6 +46,8 @@ prerequisite unless the selected path renders or deploys the Helm chart.
 - [ ] `AUTH_ALLOWED_RETURN_URLS` contains only the real absolute HTTPS frontend origins and is present in the auth runtime.
 - [ ] `PUBLIC_DOMAIN`, `PRIMARY_APP`, DNS, Caddy/external-proxy routes, Better
       Auth URLs, cookie domains, and TLS SANs describe the same app-ID host map.
+- [ ] DehqonHub serves `user-app` at the apex, excludes landing/site/user-app
+      subdomain origins, and exact-host TLS contains no stale SANs.
 - [ ] `SESSION_SECRET` is generated with high entropy and stored in Docker
       secret files, Kubernetes Secrets, Vault, or External Secrets Operator.
 - [ ] Session cookie domain, `SameSite`, `Secure`, and proxy settings match the

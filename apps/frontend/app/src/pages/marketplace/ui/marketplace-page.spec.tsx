@@ -1,50 +1,56 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-WEB-006 REQ-AGRITECH-ENGAGEMENT-019
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+// @requirements REQ-AGRITECH-WEB-006 REQ-AGRITECH-EXPERIENCE-026 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-ENGAGEMENT-019 REQ-AGRITECH-ONBOARDING-023
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type {
-  BuyerRequestViewDto,
-  CartViewDto,
-  ContractViewDto,
-  MarketplaceFavoriteDto,
-  MarketplaceReviewDto,
-  MarketplaceSampleDto,
-  OfferViewDto,
-  PartnerViewDto,
-  ProductViewDto,
-} from '@app/frontend-api-client';
+import type { ContractLifecycleDto, VerificationViewDto } from '@app/frontend-api-client';
 import type { MarketplaceData } from '../model/use-marketplace-data';
 import { MarketplacePage } from './marketplace-page';
 
 const testState = vi.hoisted(() => {
-  const api = {
-    marketplaceControllerAddFavorite: vi.fn(),
-    marketplaceControllerAddReview: vi.fn(),
-    marketplaceControllerAddToCart: vi.fn(),
-    marketplaceControllerAskAi: vi.fn(),
-    marketplaceControllerCheckoutCart: vi.fn(),
-    marketplaceControllerChooseOffer: vi.fn(),
-    marketplaceControllerCreateRequest: vi.fn(),
-    marketplacePublicControllerListReviews: vi.fn(),
-    marketplaceControllerMakeOffer: vi.fn(),
-    marketplaceControllerRemoveCartItem: vi.fn(),
-    marketplaceControllerRemoveFavorite: vi.fn(),
-    marketplaceControllerRequestSample: vi.fn(),
-    marketplaceControllerSignContract: vi.fn(),
-    marketplaceControllerUpdateCartItem: vi.fn(),
-    marketplaceControllerUpdateContractDeliveryQuote: vi.fn(),
-  };
+  const addToCart = vi.fn();
+  const createContractArtifact = vi.fn();
+  const createVerification = vi.fn();
+  const consentFactoring = vi.fn();
+  const getContractLifecycle = vi.fn();
+  const linkOneId = vi.fn();
+  const listReviews = vi.fn();
+  const listSuggestions = vi.fn();
+  const storeVerificationDocument = vi.fn();
+  const submitVerification = vi.fn();
+  const signContract = vi.fn();
+  const recordSettlementEvent = vi.fn();
+  const transitionContractFulfillment = vi.fn();
   return {
-    addToCart: api.marketplaceControllerAddToCart,
-    api,
-    localActions: {
-      addToCart: vi.fn(),
-      checkout: vi.fn(),
-      toggleFavorite: vi.fn(),
-      updateCart: vi.fn(),
+    addToCart,
+    api: {
+      marketplaceControllerAddToCart: addToCart,
+      marketplaceControllerCreateContractArtifact: createContractArtifact,
+      marketplaceControllerCreateVerification: createVerification,
+      marketplaceControllerConsentFactoring: consentFactoring,
+      marketplaceControllerGetContractLifecycle: getContractLifecycle,
+      marketplaceControllerLinkOneId: linkOneId,
+      marketplaceControllerStoreVerificationDocument: storeVerificationDocument,
+      marketplaceControllerSubmitVerification: submitVerification,
+      marketplaceControllerSignContract: signContract,
+      marketplaceControllerRecordSettlementEvent: recordSettlementEvent,
+      marketplaceControllerTransitionContractFulfillment: transitionContractFulfillment,
+      marketplacePublicControllerListReviews: listReviews,
+      marketplacePublicControllerListSuggestions: listSuggestions,
     },
+    createVerification,
+    consentFactoring,
+    createContractArtifact,
+    getContractLifecycle,
+    linkOneId,
+    listReviews,
+    listSuggestions,
     marketplaceData: undefined as MarketplaceData | undefined,
     refresh: vi.fn(),
     requestOptions: {},
+    storeVerificationDocument,
+    submitVerification,
+    signContract,
+    recordSettlementEvent,
+    transitionContractFulfillment,
     translate: (key: string) => key,
   };
 });
@@ -73,109 +79,214 @@ vi.mock('../model/use-marketplace-data', () => ({
 }));
 
 vi.mock('../../../shared/ui', () => ({
-  // A stand-in with an identity, so a test can say where the control is rendered
-  // without reaching into the shared component's own markup.
-  LanguageSwitcher: () => <span data-testid="language-switcher" />,
+  LanguageSwitcher: () => null,
+  ThemeSwitcher: () => null,
 }));
 
 const product = {
   category: 'seed' as const,
-  createdAt: '2026-08-09T10:00:00.000Z',
   description: 'Certified corn seed',
   id: 'seed-1',
   images: [],
+  kind: 'product' as const,
   name: 'Corn seed',
   priceUzs: 1_250_000,
+  promoted: false,
+  provenance: 'live' as const,
   region: 'Samarqand',
+  sampleAvailable: true,
+  section: 'seeds' as const,
   status: 'active' as const,
   stockQuantity: 20,
-  sampleAvailable: true,
   supplierId: 'seller-1',
   supplierName: 'Seed cooperative',
+  transactional: true,
   unit: 't',
-  updatedAt: '2026-08-09T10:00:00.000Z',
 };
 
 const emptyList = { data: [], status: 'empty' as const };
 
-/**
- * The organizations the signed-in account may act for. Every commerce command
- * names one, so the page needs an approved buyer and an approved supplier before
- * a basket, a purchase request or an offer can be composed at all.
- */
-const partner = (kind: 'buyer' | 'supplier', overrides: Partial<PartnerViewDto> = {}): PartnerViewDto => ({
+const lifecycleFixture = (contractId: string, factoring = false): ContractLifecycleDto => ({
+  contractId,
+  disputeEvidence: [],
+  fulfillment: {
+    createdAt: '2026-08-09T10:00:00.000Z',
+    revision: 1,
+    status: 'awaiting_settlement',
+    updatedAt: '2026-08-09T10:00:00.000Z',
+  },
+  notificationIntents: [],
+  reputationSignals: [],
+  reviewEligibility: { eligible: false, sourceCount: 0 },
+  settlement: factoring
+    ? {
+        amountUzs: product.priceUzs,
+        createdAt: '2026-08-09T10:00:00.000Z',
+        currency: 'UZS',
+        kind: 'FactoringSettlementDto',
+        latestProviderMode: 'mock',
+        reconciliationState: 'clear',
+        revision: 1,
+        simulation: true,
+        status: 'awaiting_consents',
+        updatedAt: '2026-08-09T10:00:00.000Z',
+      }
+    : {
+        amountUzs: product.priceUzs,
+        createdAt: '2026-08-09T10:00:00.000Z',
+        currency: 'UZS',
+        kind: 'DirectPaymentSettlementDto',
+        latestProviderMode: 'mock',
+        reconciliationState: 'clear',
+        revision: 1,
+        simulation: true,
+        status: 'awaiting_buyer_confirmation',
+        updatedAt: '2026-08-09T10:00:00.000Z',
+      },
+  settlementEvents: [],
+  signatures: [],
+  timeline: [],
+});
+
+const apiSuccess = <T,>(data: T) => ({ data: { data }, response: new Response() });
+
+const verificationFixture = (revision: number, oneIdLinked: boolean): VerificationViewDto => ({
   createdAt: '2026-08-09T10:00:00.000Z',
-  id: `partner-${kind}`,
-  kind,
-  legalName: kind === 'buyer' ? 'Bahor Savdo MChJ' : 'Zamin Agro MChJ',
-  ownerUserId: 'buyer-1',
-  phone: '+998901234567',
-  region: 'Samarqand',
-  status: 'approved',
-  taxId: '300123456',
-  tenantId: 'tenant-1',
+  documents: [],
+  id: 'verification-1',
+  identityAssurance: 'mock' as const,
+  level: 'basic' as const,
+  oneIdLinked,
+  providerMode: 'mock' as const,
+  revision,
+  role: 'buyer' as const,
+  simulation: true,
+  status: 'none',
+  step: oneIdLinked ? 'documents' : 'identity',
   updatedAt: '2026-08-09T10:00:00.000Z',
-  ...overrides,
-});
-
-const signedInData = (): MarketplaceData => ({
-  auth: 'signed-in',
-  carts: emptyList,
-  catalog: { data: [product], status: 'ready' },
-  contracts: emptyList,
-  demo: 'none',
-  favorites: emptyList,
-  local: false,
-  localActions: testState.localActions,
-  myRequests: emptyList,
-  offersByRequest: { data: {}, status: 'empty' },
-  partners: { data: [partner('buyer'), partner('supplier')], status: 'ready' },
-  refresh: testState.refresh,
-  requests: emptyList,
-  samples: emptyList,
-  sampleUsage: {
-    data: { limit: 5, period: '2026-08', policyVersion: 1, remaining: 5, used: 0 },
-    status: 'ready',
-  },
-  verification: {
-    data: {
-      createdAt: '2026-08-09T10:00:00.000Z',
-      documents: [],
-      id: 'verification-1',
-      identityAssurance: 'provider_verified',
-      level: 'verified',
-      oneIdLinked: false,
-      providerMode: 'mock',
-      revision: 1,
-      role: 'buyer',
-      simulation: true,
-      status: 'verified',
-      step: 'complete',
-      updatedAt: '2026-08-09T10:00:00.000Z',
-    },
-    status: 'ready',
-  },
-});
-
-/** Nobody signed in: cart and favourite writes stay in this browser. */
-const guestData = (): MarketplaceData => ({
-  ...signedInData(),
-  auth: 'signed-out',
-  demo: 'guest',
-  local: true,
-  partners: emptyList,
-  verification: { data: null, status: 'empty' },
 });
 
 describe('MarketplacePage mutations', () => {
   beforeEach(() => {
     testState.refresh.mockReset();
     testState.addToCart.mockReset();
-    testState.localActions.addToCart.mockReset();
-    testState.localActions.checkout.mockReset();
-    testState.localActions.toggleFavorite.mockReset();
-    testState.localActions.updateCart.mockReset();
-    testState.marketplaceData = signedInData();
+    testState.createContractArtifact.mockReset();
+    testState.createVerification.mockReset();
+    testState.consentFactoring.mockReset();
+    testState.getContractLifecycle.mockReset();
+    testState.linkOneId.mockReset();
+    testState.listReviews.mockReset();
+    testState.listSuggestions.mockReset();
+    testState.storeVerificationDocument.mockReset();
+    testState.submitVerification.mockReset();
+    testState.signContract.mockReset();
+    testState.recordSettlementEvent.mockReset();
+    testState.transitionContractFulfillment.mockReset();
+    testState.createContractArtifact.mockResolvedValue({ id: 'artifact-1' });
+    testState.createVerification.mockResolvedValue(apiSuccess(verificationFixture(1, false)));
+    testState.linkOneId.mockResolvedValue(apiSuccess(verificationFixture(2, true)));
+    testState.listReviews.mockResolvedValue({ items: [] });
+    testState.listSuggestions.mockResolvedValue(
+      apiSuccess({ items: [{ id: 'seller-1', kind: 'seller', label: 'Seed cooperative' }] }),
+    );
+    testState.storeVerificationDocument.mockImplementation(() =>
+      Promise.resolve(apiSuccess(verificationFixture(2 + testState.storeVerificationDocument.mock.calls.length, true))),
+    );
+    testState.submitVerification.mockResolvedValue(apiSuccess({ ...verificationFixture(5, true), status: 'pending' }));
+    testState.signContract.mockResolvedValue({ id: 'contract-1' });
+    testState.getContractLifecycle.mockResolvedValue(apiSuccess(lifecycleFixture('contract-1')));
+    testState.consentFactoring.mockResolvedValue(apiSuccess(lifecycleFixture('contract-1', true)));
+    testState.recordSettlementEvent.mockResolvedValue(apiSuccess(lifecycleFixture('contract-1')));
+    testState.transitionContractFulfillment.mockResolvedValue(apiSuccess(lifecycleFixture('contract-1')));
+    testState.marketplaceData = {
+      aiConsultations: emptyList,
+      auth: 'signed-in',
+      carts: emptyList,
+      catalog: { data: [product], status: 'ready' },
+      contracts: emptyList,
+      dashboard: { data: null, status: 'empty' },
+      favorites: emptyList,
+      myRequests: emptyList,
+      notifications: emptyList,
+      offersByRequest: { data: {}, status: 'empty' },
+      ownedListingPublications: emptyList,
+      ownedRequestPublications: emptyList,
+      partners: {
+        data: [
+          {
+            createdAt: '2026-08-09T10:00:00.000Z',
+            id: 'buyer-partner',
+            kind: 'buyer',
+            legalName: 'Buyer cooperative',
+            ownerUserId: 'buyer-1',
+            phone: '+998901234567',
+            region: 'Samarqand',
+            status: 'approved',
+            taxId: '123456789',
+            tenantId: 'tenant-1',
+            updatedAt: '2026-08-09T10:00:00.000Z',
+          },
+        ],
+        status: 'ready',
+      },
+      produceListings: emptyList,
+      promotionPlans: emptyList,
+      promotions: emptyList,
+      providerReadiness: {
+        data: Object.fromEntries(
+          [
+            'contractArtifactStorage',
+            'directPayment',
+            'factoring',
+            'notificationDelivery',
+            'oneId',
+            'promotionBilling',
+            'qualifiedSignature',
+            'verificationDocuments',
+          ].map((capability) => [
+            capability,
+            {
+              mode: 'mock',
+              providerName: 'test',
+              ready: true,
+              reconciliation: 'idempotent-retry',
+              simulation: true,
+              timeoutMs: 5_000,
+            },
+          ]),
+        ) as MarketplaceData['providerReadiness']['data'],
+        status: 'ready',
+      },
+      refresh: testState.refresh,
+      requests: emptyList,
+      samples: emptyList,
+      seller: { data: null, status: 'idle' },
+      sellerCatalog: emptyList,
+      sampleUsage: {
+        data: { limit: 5, period: '2026', policyVersion: 1, remaining: 5, used: 0 },
+        status: 'ready',
+      },
+      selectedListing: { data: product, status: 'ready' },
+      supplierProducts: emptyList,
+      verification: {
+        data: {
+          createdAt: '2026-08-09T10:00:00.000Z',
+          documents: [],
+          id: 'verification-1',
+          identityAssurance: 'mock',
+          level: 'verified',
+          oneIdLinked: true,
+          providerMode: 'mock',
+          revision: 1,
+          role: 'buyer',
+          simulation: true,
+          status: 'verified',
+          step: 'complete',
+          updatedAt: '2026-08-09T10:00:00.000Z',
+        },
+        status: 'ready',
+      },
+    };
   });
 
   afterEach(() => {
@@ -200,1290 +311,498 @@ describe('MarketplacePage mutations', () => {
     });
   });
 
-  // 404 and 409 mean the page is out of date; anything else is just a failure,
-  // and re-reading the lists would not change what the visitor sees.
-  it('states a plain failure for a status it cannot explain, and re-reads nothing', async () => {
-    testState.addToCart.mockResolvedValue({
-      error: { detail: 'The service is unavailable.' },
-      response: new Response(null, { status: 503 }),
+  it('reuses the command key after an unknown response for the same logical action', async () => {
+    testState.addToCart
+      .mockRejectedValueOnce(new TypeError('connection closed after send'))
+      .mockResolvedValueOnce(apiSuccess({ id: 'cart-1' }));
+
+    render(<MarketplacePage />);
+    const addButton = screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' });
+    fireEvent.click(addButton);
+    await screen.findByRole('alert');
+    await waitFor(() => {
+      expect(addButton.hasAttribute('disabled')).toBe(false);
     });
+    fireEvent.click(addButton);
 
-    render(<MarketplacePage />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }));
-
-    expect((await screen.findByRole('alert')).textContent).toContain('agritech.marketplace.error');
-    expect(testState.refresh).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(testState.addToCart).toHaveBeenCalledTimes(2);
+    });
+    expect(testState.addToCart.mock.calls[0]?.[1]).toBe(testState.addToCart.mock.calls[1]?.[1]);
   });
 
-  it('keeps a guest basket and favourites in the browser instead of asking for an account', async () => {
-    testState.marketplaceData = guestData();
+  it('uses a new command key when the user edits the command input after an unknown response', async () => {
+    testState.addToCart
+      .mockRejectedValueOnce(new TypeError('connection closed after send'))
+      .mockResolvedValueOnce(apiSuccess({ id: 'cart-1' }));
 
-    render(<MarketplacePage />);
+    render(<MarketplacePage navigate={vi.fn()} productId={product.id} view="product" />);
+    const addButton = screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' });
+    fireEvent.click(addButton);
+    await screen.findByRole('alert');
+    await waitFor(() => {
+      expect(addButton.hasAttribute('disabled')).toBe(false);
+    });
+    fireEvent.change(screen.getByLabelText('agritech.marketplace.product.quantity'), { target: { value: '2' } });
+    fireEvent.click(addButton);
 
-    // The credential banner is part of the home page, below the hero.
-    expect(screen.getByText('agritech.marketplace.demo.title')).toBeTruthy();
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }));
-    expect(testState.localActions.addToCart).toHaveBeenCalledWith(product, 1);
-    expect((await screen.findByRole('status')).textContent).toContain('agritech.marketplace.cart.addedToSellerCart');
-    expect(testState.addToCart).not.toHaveBeenCalled();
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addFavorite' }));
-    expect(testState.localActions.toggleFavorite).toHaveBeenCalledWith(product);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.close' }));
-    expect(screen.queryByRole('status')).toBeNull();
+    await waitFor(() => {
+      expect(testState.addToCart).toHaveBeenCalledTimes(2);
+    });
+    expect(testState.addToCart.mock.calls[0]?.[1]).not.toBe(testState.addToCart.mock.calls[1]?.[1]);
   });
 
-  it('runs a guest checkout to an emptied basket and says what signing needs', async () => {
+  it('contains confirmation focus, hides the background, and restores the invoking control', async () => {
+    if (!testState.marketplaceData) {
+      throw new Error('Marketplace fixture is unavailable.');
+    }
     testState.marketplaceData = {
-      ...guestData(),
+      ...testState.marketplaceData,
       carts: {
-        data: [{ ...cart([line(product.id, 2)]), id: 'guest-cart-seller-1' }],
+        data: [
+          {
+            createdAt: '2026-08-09T10:00:00.000Z',
+            id: 'cart-confirmation',
+            items: [{ listingPublicationId: product.id, quantity: 1, sourceKind: 'product' }],
+            seller: { displayName: product.supplierName, region: product.region },
+            status: 'open',
+            updatedAt: '2026-08-09T10:00:00.000Z',
+          },
+        ],
         status: 'ready',
       },
     };
 
-    render(<MarketplacePage view="cart" />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.cart.reviewContract' }));
+    render(<MarketplacePage navigate={vi.fn()} view="cart" />);
+    const trigger = screen.getByRole('button', { name: /agritech.marketplace.cart.reviewContract/u });
+    trigger.focus();
+    fireEvent.click(trigger);
+    const dialog = screen.getByRole('dialog');
+    const confirmButton = within(dialog).getByRole('button', {
+      name: 'agritech.marketplace.cart.reviewContract',
+    });
+    const closeButton = within(dialog).getByRole('button', { name: 'agritech.marketplace.close' });
+    expect(document.activeElement).toBe(confirmButton);
+    const header = document.querySelector<HTMLElement>('.dh-header');
+    expect(header?.inert).toBe(true);
+    expect(header?.getAttribute('aria-hidden')).toBe('true');
 
-    const dialog = await screen.findByRole('dialog');
-    expect(dialog.textContent).toContain('agritech.marketplace.cart.checkoutConfirmation');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'agritech.marketplace.cart.reviewContract' }));
+    fireEvent.keyDown(globalThis, { key: 'Tab' });
+    expect(document.activeElement).toBe(closeButton);
+    fireEvent.keyDown(globalThis, { key: 'Tab', shiftKey: true });
+    expect(document.activeElement).toBe(confirmButton);
+    fireEvent.keyDown(globalThis, { key: 'Escape' });
 
     await waitFor(() => {
-      expect(testState.localActions.checkout).toHaveBeenCalledWith('guest-cart-seller-1');
+      expect(screen.queryByRole('dialog')).toBeNull();
+      expect(document.activeElement).toBe(trigger);
     });
-    expect(await screen.findByText('agritech.marketplace.demo.checkoutDone')).toBeTruthy();
-  });
-
-  it('explains the account-only surfaces to a guest instead of an empty page', () => {
-    testState.marketplaceData = guestData();
-    const navigate = vi.fn();
-    window.history.replaceState({}, '', '/account');
-
-    render(<MarketplacePage navigate={navigate} view="account" />);
-
-    expect(screen.getByText('agritech.marketplace.auth.title')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /agritech\.marketplace\.signIn/u }));
-    expect(navigate).toHaveBeenCalledWith(`/auth?returnUrl=${encodeURIComponent('/account')}`);
-
-    window.history.replaceState({}, '', '/');
-  });
-
-  it('searches the catalog from the header and browses its sections', () => {
-    const navigate = vi.fn();
-
-    render(<MarketplacePage navigate={navigate} />);
-
-    const searchBox = screen.getByRole('searchbox', { name: 'agritech.marketplace.search' });
-    fireEvent.change(searchBox, { target: { value: '  wheat seed  ' } });
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.search' }));
-    expect(navigate).toHaveBeenLastCalledWith(`/catalog?q=${encodeURIComponent('wheat seed')}`);
-
-    // A blank query is a request for the whole catalog, not for an empty result.
-    fireEvent.change(searchBox, { target: { value: '   ' } });
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.search' }));
-    expect(navigate).toHaveBeenLastCalledWith('/catalog');
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.section.seeds' }));
-    expect(navigate).toHaveBeenLastCalledWith('/catalog?section=seeds');
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.section.all' }));
-    expect(navigate).toHaveBeenLastCalledWith('/catalog');
-  });
-
-  it('offers the display language in the header and nowhere else', () => {
-    render(<MarketplacePage navigate={vi.fn()} />);
-
-    // Reachable without scrolling, in the row a visitor who cannot read the page
-    // looks at first. It used to sit above the footer, where finding it meant
-    // scrolling the whole page in a language the visitor could not read.
-    const switchers = screen.getAllByTestId('language-switcher');
-    expect(switchers).toHaveLength(1);
-    expect(within(screen.getByRole('banner')).getByTestId('language-switcher')).toBe(switchers[0]);
-  });
-
-  it('reaches every site area from one header, and sends unverified accounts to identity first', () => {
-    const navigate = vi.fn();
-
-    render(<MarketplacePage navigate={navigate} />);
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.brand' })[0] as HTMLElement);
-    expect(navigate).toHaveBeenLastCalledWith('/');
-    fireEvent.click(screen.getAllByRole('button', { name: /agritech\.marketplace\.catalog$/u })[0] as HTMLElement);
-    expect(navigate).toHaveBeenLastCalledWith('/catalog');
-    fireEvent.click(screen.getAllByRole('button', { name: /agritech\.marketplace\.orders/u })[0] as HTMLElement);
-    expect(navigate).toHaveBeenLastCalledWith('/requests');
-    fireEvent.click(screen.getAllByRole('button', { name: /agritech\.marketplace\.favorites/u })[0] as HTMLElement);
-    expect(navigate).toHaveBeenLastCalledWith('/favorites');
-    fireEvent.click(screen.getAllByRole('button', { name: /agritech\.marketplace\.cart$/u })[0] as HTMLElement);
-    expect(navigate).toHaveBeenLastCalledWith('/cart');
-    // Verified in this fixture, so the same slot opens the account page.
-    fireEvent.click(screen.getAllByRole('button', { name: /agritech\.marketplace\.account/u })[0] as HTMLElement);
-    expect(navigate).toHaveBeenLastCalledWith('/account');
-
-    cleanup();
-    testState.marketplaceData = guestData();
-    render(<MarketplacePage navigate={navigate} />);
-
-    fireEvent.click(screen.getAllByRole('button', { name: /agritech\.marketplace\.verification/u })[0] as HTMLElement);
-    expect(navigate).toHaveBeenLastCalledWith('/verification');
-  });
-
-  it('keeps the profile and preferences pages reachable from the footer', () => {
-    const navigate = vi.fn();
-
-    render(<MarketplacePage navigate={navigate} />);
-
-    const footer = document.querySelector('.dh-footer');
-
-    if (!(footer instanceof HTMLElement)) {
-      throw new Error('The site footer is missing.');
-    }
-
-    fireEvent.click(within(footer).getByRole('button', { name: 'agritech.marketplace.brand' }));
-    expect(navigate).toHaveBeenLastCalledWith('/');
-
-    for (const [name, target] of [
-      ['agritech.marketplace.footer.forBuyers: agritech.marketplace.catalog', '/catalog'],
-      ['agritech.marketplace.footer.forBuyers: agritech.marketplace.orders', '/requests'],
-      ['agritech.marketplace.footer.forSellers: agritech.marketplace.orders.feed', '/requests'],
-      ['agritech.marketplace.verification', '/verification'],
-      ['agritech.marketplace.account', '/account'],
-      ['user.nav.profile', '/profile'],
-      ['user.nav.settings', '/settings'],
-    ] as const) {
-      fireEvent.click(within(footer).getByRole('button', { name }));
-      expect(navigate).toHaveBeenLastCalledWith(target);
-    }
-
-    const mobileNav = document.querySelector('.dh-mobile-nav');
-
-    if (!(mobileNav instanceof HTMLElement)) {
-      throw new Error('The mobile navigation is missing.');
-    }
-
-    fireEvent.click(within(mobileNav).getByRole('button', { name: 'agritech.marketplace.home' }));
-    expect(navigate).toHaveBeenLastCalledWith('/');
-    fireEvent.click(within(mobileNav).getByRole('button', { name: 'agritech.marketplace.cart' }));
-    expect(navigate).toHaveBeenLastCalledWith('/cart');
-  });
-
-  it('shows one loading state while the session or the catalog is still in flight', () => {
-    testState.marketplaceData = { ...signedInData(), auth: 'checking' };
-    const view = render(<MarketplacePage />);
-
-    expect(screen.getByLabelText('agritech.marketplace.loading')).toBeTruthy();
-
-    testState.marketplaceData = { ...signedInData(), catalog: { data: [], status: 'loading' } };
-    view.rerender(<MarketplacePage />);
-    expect(screen.getByLabelText('agritech.marketplace.loading')).toBeTruthy();
-  });
-
-  it('wraps other routes in the same chrome without reading the catalog', () => {
-    testState.marketplaceData = { ...signedInData(), catalog: { data: [], status: 'loading' } };
-
-    render(
-      <MarketplacePage view="embedded">
-        <p>Preferences</p>
-      </MarketplacePage>,
-    );
-
-    expect(screen.getByText('Preferences')).toBeTruthy();
-    expect(screen.queryByLabelText('agritech.marketplace.loading')).toBeNull();
-    // One header for the whole site, so the embedded route keeps the search field.
-    expect(screen.getByRole('searchbox', { name: 'agritech.marketplace.search' })).toBeTruthy();
-  });
-});
-
-const ok = <T,>(data: T) => ({ data, response: new Response(null, { status: 200 }) });
-const failed = (status: number) => ({
-  error: { detail: 'The marketplace refused the write.' },
-  response: new Response(null, { status }),
-});
-
-const secondSeed: ProductViewDto = {
-  ...product,
-  description: 'Certified wheat seed',
-  id: 'seed-2',
-  name: 'Wheat seed',
-  priceUzs: 900_000,
-};
-
-const cart = (items: CartViewDto['items']): CartViewDto => ({
-  createdAt: '2026-08-09T10:00:00.000Z',
-  id: 'cart-1',
-  items,
-  seller: { displayName: product.supplierName, region: product.region },
-  status: 'open',
-  updatedAt: '2026-08-09T10:00:00.000Z',
-});
-
-/** A saved listing, as the favourites endpoint returns it: the summary, not an id. */
-const favorite = (listing: ProductViewDto): MarketplaceFavoriteDto => ({
-  createdAt: '2026-08-10T10:00:00.000Z',
-  listing: {
-    id: listing.id,
-    kind: 'product',
-    sampleAvailable: listing.sampleAvailable,
-    seller: { displayName: listing.supplierName, id: listing.supplierId },
-    title: listing.name,
-  },
-});
-
-/** One basket line, as the API files it: a publication and how much of it. */
-const line = (listingPublicationId: string, quantity: number): CartViewDto['items'][number] => ({
-  listingPublicationId,
-  quantity,
-  sourceKind: 'product',
-});
-
-const contract = (overrides: Partial<ContractViewDto> = {}): ContractViewDto => ({
-  actorParty: 'buyer',
-  amountUzs: 2_500_000,
-  buyerPartySnapshot: { legalName: 'Bahor Savdo MChJ', region: 'Samarqand' },
-  createdAt: '2026-08-09T10:00:00.000Z',
-  deliveryTerms: 'pickup',
-  factoringEnabled: false,
-  id: 'contract-1',
-  lines: [
-    {
-      lineTotalUzs: 2_500_000,
-      name: product.name,
-      quantity: 2,
-      sourceKind: 'product',
-      sourcePublicationId: product.id,
-      sourceRevision: 1,
-      unit: product.unit,
-      unitPriceUzs: product.priceUzs,
-    },
-  ],
-  revision: 1,
-  sellerPartySnapshot: { legalName: 'Zamin Agro MChJ', region: 'Samarqand' },
-  status: 'draft',
-  subject: 'Corn seed supply',
-  updatedAt: '2026-08-10T10:00:00.000Z',
-  ...overrides,
-});
-
-const request = (overrides: Partial<BuyerRequestViewDto> = {}): BuyerRequestViewDto => ({
-  createdAt: '2026-08-09T10:00:00.000Z',
-  id: 'request-1',
-  region: 'Samarqand',
-  status: 'open',
-  title: 'Corn seed for autumn',
-  updatedAt: '2026-08-09T10:00:00.000Z',
-  ...overrides,
-});
-
-const offer = (overrides: Partial<OfferViewDto> = {}): OfferViewDto => ({
-  createdAt: '2026-08-09T11:00:00.000Z',
-  deliveryTerms: 'pickup',
-  id: 'offer-1',
-  priceUzs: 2_400_000,
-  requestPublicId: 'request-1',
-  seller: { displayName: 'Zamin Agro MChJ', region: 'Samarqand' },
-  status: 'pending',
-  ...overrides,
-});
-
-const review = (overrides: Partial<MarketplaceReviewDto> = {}): MarketplaceReviewDto => ({
-  assetReferences: [],
-  createdAt: '2026-08-10T10:00:00.000Z',
-  id: 'review-1',
-  listingPublicationId: product.id,
-  rating: 4,
-  revision: 1,
-  updatedAt: '2026-08-10T10:00:00.000Z',
-  verifiedDeal: true,
-  ...overrides,
-});
-
-const sample = (overrides: Partial<MarketplaceSampleDto> = {}): MarketplaceSampleDto => ({
-  actorRole: 'requester',
-  createdAt: '2026-08-10T10:00:00.000Z',
-  delivery: { itemPriceUzs: 0, method: 'pickup', requesterPays: true },
-  id: 'sample-1',
-  listing: {
-    id: product.id,
-    kind: 'product',
-    sampleAvailable: true,
-    seller: { displayName: product.supplierName, id: product.supplierId },
-    title: product.name,
-  },
-  policyVersion: 1,
-  revision: 1,
-  seasonKey: '2026-Q3',
-  status: 'requested',
-  updatedAt: '2026-08-10T10:00:00.000Z',
-  ...overrides,
-});
-
-/** The identity record with one field moved, so unverified runs stay readable. */
-const withIdentity = (
-  base: MarketplaceData,
-  overrides: Partial<NonNullable<MarketplaceData['verification']['data']>>,
-): MarketplaceData => {
-  const current = signedInData().verification.data;
-
-  if (!current) {
-    throw new Error('The signed-in fixture lost its identity record.');
-  }
-
-  return { ...base, verification: { data: { ...current, ...overrides }, status: 'ready' } };
-};
-
-/** Lets a released promise chain finish before the page is inspected again. */
-const settle = async () => {
-  await act(async () => {
-    await new Promise((resolve) => {
-      setTimeout(resolve, 0);
-    });
-  });
-};
-
-const panel = (selector: string): HTMLElement => {
-  const found = document.querySelector(selector);
-
-  if (!(found instanceof HTMLElement)) {
-    throw new Error(`The ${selector} region is missing from the page.`);
-  }
-
-  return found;
-};
-
-describe('MarketplacePage journeys', () => {
-  beforeEach(() => {
-    testState.refresh.mockReset();
-    testState.localActions.addToCart.mockReset();
-    testState.localActions.checkout.mockReset();
-    testState.localActions.toggleFavorite.mockReset();
-    testState.localActions.updateCart.mockReset();
-    for (const call of Object.values(testState.api)) {
-      call.mockReset();
-    }
-    testState.api.marketplacePublicControllerListReviews.mockResolvedValue(ok({ items: [] }));
-    testState.marketplaceData = signedInData();
-  });
-
-  afterEach(() => {
-    cleanup();
-    vi.useRealTimers();
-    vi.unstubAllGlobals();
-    window.history.replaceState({}, '', '/');
-  });
-
-  it('loads the public ratings of a product and appends the review a buyer just wrote', async () => {
-    testState.api.marketplacePublicControllerListReviews.mockResolvedValue(ok({ items: [review()] }));
-    testState.api.marketplaceControllerAddReview.mockResolvedValue(
-      ok(review({ comment: 'Germinated well.', id: 'review-2', rating: 4 })),
-    );
-    testState.marketplaceData = {
-      ...signedInData(),
-      catalog: { data: [product, secondSeed], status: 'ready' },
-      contracts: { data: [contract({ status: 'completed' })], status: 'ready' },
-    };
-
-    render(<MarketplacePage productId={product.id} view="product" />);
-
-    await waitFor(() => {
-      expect(testState.api.marketplacePublicControllerListReviews).toHaveBeenCalledWith(product.id, {});
-    });
-    await waitFor(() => {
-      expect(within(panel('.dh-review-list')).getByText('4/5')).toBeTruthy();
-    });
-
-    // The contract fixture is a completed purchase of this product by this
-    // account, which is exactly the condition the review form is gated on.
-    const form = panel('.dh-review-form');
-    fireEvent.change(within(form).getByRole('combobox'), { target: { value: '4' } });
-    fireEvent.change(within(form).getByRole('textbox'), { target: { value: '  Germinated well.  ' } });
-    fireEvent.submit(form);
-
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerAddReview).toHaveBeenCalledWith(
-        { assetReferences: [], comment: 'Germinated well.', listingPublicationId: product.id, rating: 4 },
-        expect.any(String),
-        {},
-      );
-    });
-    expect(await screen.findByText('agritech.marketplace.reviews.submitted')).toBeTruthy();
-    expect(screen.getByText('Germinated well.')).toBeTruthy();
-    // Same category, different record: the page offers it as an alternative.
-    expect(screen.getByRole('button', { name: secondSeed.name })).toBeTruthy();
-  });
-
-  it('says the ratings are unavailable rather than reporting a product with none', async () => {
-    testState.api.marketplacePublicControllerListReviews.mockResolvedValue(failed(503));
-
-    render(<MarketplacePage productId={product.id} view="product" />);
-
-    expect(await screen.findByText('agritech.marketplace.reviews.unavailable')).toBeTruthy();
-    // Nothing gates the rest of the page on the rating request.
-    expect(screen.getByRole('button', { name: /agritech\.marketplace\.product\.addToCart/u })).toBeTruthy();
-  });
-
-  it('adds the chosen quantity to the basket and moves the favourite both ways', async () => {
-    testState.api.marketplaceControllerAddToCart.mockResolvedValue(ok({ cartId: 'cart-1' }));
-    testState.api.marketplaceControllerAddFavorite.mockResolvedValue(ok(favorite(product)));
-    testState.api.marketplaceControllerRemoveFavorite.mockResolvedValue(ok({}));
-
-    const view = render(<MarketplacePage productId={product.id} view="product" />);
-
-    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '3' } });
-    fireEvent.click(screen.getByRole('button', { name: /agritech\.marketplace\.product\.addToCart/u }));
-
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerAddToCart).toHaveBeenCalledWith(
-        { actingPartnerId: 'partner-buyer', listingPublicationId: product.id, quantity: 3 },
-        expect.any(String),
-        {},
-      );
-    });
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addFavorite' }));
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerAddFavorite).toHaveBeenCalledWith(product.id, expect.any(String), {});
-    });
-
-    testState.marketplaceData = {
-      ...signedInData(),
-      favorites: { data: [favorite(product)], status: 'ready' },
-    };
-    view.rerender(<MarketplacePage productId={product.id} view="product" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.removeFavorite' }));
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerRemoveFavorite).toHaveBeenCalledWith(
-        product.id,
-        expect.any(String),
-        {},
-      );
-    });
+    expect(header?.inert).not.toBe(true);
+    expect(header?.hasAttribute('aria-hidden')).toBe(false);
   });
 
   it.each([
-    [401, 'agritech.marketplace.auth.required'],
-    [403, 'agritech.marketplace.cart.verifyRequired'],
-  ] as const)('names what a %s refusal needs instead of a bare failure', async (status, message) => {
-    testState.api.marketplaceControllerAddToCart.mockResolvedValue(failed(status));
-
-    render(<MarketplacePage />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }));
-
-    expect((await screen.findByRole('alert')).textContent).toContain(message);
-    // Only 404 and 409 mean the state on screen is stale, so nothing refetches.
-    expect(testState.refresh).not.toHaveBeenCalled();
-  });
-
-  it('reports a transport failure as one error and keeps the page usable', async () => {
-    testState.api.marketplaceControllerAddToCart.mockRejectedValue(new Error('The network went away.'));
-
-    render(<MarketplacePage />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }));
-
-    expect((await screen.findByRole('alert')).textContent).toContain('agritech.marketplace.error');
-  });
-
-  it('retires a notice on its own so it does not sit on the page forever', () => {
-    vi.useFakeTimers();
-    testState.marketplaceData = guestData();
-
-    render(<MarketplacePage />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }));
-    expect(screen.getByRole('status')).toBeTruthy();
-
-    act(() => {
-      vi.advanceTimersByTime(5000);
-    });
-    expect(screen.queryByRole('status')).toBeNull();
-  });
-
-  it('opens a product from the catalog grid', () => {
-    const navigate = vi.fn();
-
-    render(<MarketplacePage navigate={navigate} />);
-    fireEvent.click(screen.getByRole('button', { name: `agritech.marketplace.product.openDetails` }));
-
-    expect(navigate).toHaveBeenCalledWith(`/products/${product.id}`);
-  });
-
-  it('hands the route to the browser when the site chrome is mounted without one', () => {
-    const assign = vi.fn();
-    vi.stubGlobal('location', { ...window.location, assign, pathname: '/', search: '' });
-
-    render(<MarketplacePage />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.brand' })[0] as HTMLElement);
-
-    expect(assign).toHaveBeenCalledWith('/');
-  });
-
-  // The sign-in invitation is typed against a browser, but it also renders where
-  // there is no `location` to name the page being returned to.
-  it('invites a guest to sign in and come back to the site root when there is no page to name', () => {
-    const navigate = vi.fn();
-    testState.marketplaceData = guestData();
-    vi.stubGlobal('location', undefined);
-
-    render(<MarketplacePage navigate={navigate} view="account" />);
-    fireEvent.click(screen.getByRole('button', { name: /agritech\.marketplace\.signIn/u }));
-
-    expect(navigate).toHaveBeenCalledWith(`/auth?returnUrl=${encodeURIComponent('/')}`);
-  });
-
-  it('sends an unverified account to identity before a sample, and confirms it once verified', async () => {
-    const navigate = vi.fn();
-    testState.marketplaceData = withIdentity(signedInData(), { level: 'basic', status: 'pending' });
-
-    const view = render(<MarketplacePage navigate={navigate} productId={product.id} view="product" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.sample' }));
-    expect(navigate).toHaveBeenCalledWith('/verification');
-    expect(testState.api.marketplaceControllerRequestSample).not.toHaveBeenCalled();
-    expect(screen.getByRole('status').textContent).toContain('agritech.marketplace.cart.verifyRequired');
-
-    testState.api.marketplaceControllerRequestSample.mockResolvedValue(ok(sample()));
-    testState.marketplaceData = signedInData();
-    view.rerender(<MarketplacePage navigate={navigate} productId={product.id} view="product" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.sample' }));
-    const dialog = await screen.findByRole('dialog');
-    expect(dialog.textContent).toContain('agritech.marketplace.samples.confirmDescription');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'agritech.marketplace.samples.confirm' }));
-
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerRequestSample).toHaveBeenCalledWith(
-        { deliveryMethod: 'pickup', listingPublicationId: product.id },
-        expect.any(String),
-        {},
-      );
-    });
-    expect(await screen.findByText('agritech.marketplace.samples.requested')).toBeTruthy();
-  });
-
-  // Once the visitor has confirmed, the dialog is the only thing telling them a
-  // write is running: Escape and a click outside must not take it away mid-flight.
-  it('holds a confirmation open while the write it started is still running', async () => {
-    let land!: (value: { data: MarketplaceSampleDto; response: Response }) => void;
-    testState.api.marketplaceControllerRequestSample.mockReturnValue(
-      new Promise<{ data: MarketplaceSampleDto; response: Response }>((resolve) => {
-        land = resolve;
-      }),
-    );
-
-    render(<MarketplacePage productId={product.id} view="product" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.sample' }));
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'agritech.marketplace.samples.confirm' }));
-
-    fireEvent.keyDown(window, { key: 'Escape' });
-    expect(screen.queryByRole('dialog')).not.toBeNull();
-    fireEvent.mouseDown(panel('.dh-dialog-backdrop'));
-    expect(screen.queryByRole('dialog')).not.toBeNull();
-
-    land(ok(sample()));
-    await waitFor(() => {
-      expect(screen.queryByRole('dialog')).toBeNull();
-    });
-    expect(await screen.findByText('agritech.marketplace.samples.requested')).toBeTruthy();
-  });
-
-  it('drops a rating list that lands after the visitor left the product', async () => {
-    let land!: (value: { data: { items: MarketplaceReviewDto[] }; response: Response }) => void;
-    let fail!: (reason: Error) => void;
-    testState.api.marketplacePublicControllerListReviews
-      .mockReturnValueOnce(
-        new Promise<{ data: { items: MarketplaceReviewDto[] }; response: Response }>((resolve) => {
-          land = resolve;
-        }),
-      )
-      .mockReturnValueOnce(
-        new Promise<never>((_resolve, reject) => {
-          fail = reject;
-        }),
-      );
+    ['active', false],
+    ['completed', true],
+  ] as const)('shows review authoring only for a completed purchase, not %s', async (status, expected) => {
+    if (!testState.marketplaceData) {
+      throw new Error('Marketplace fixture is unavailable.');
+    }
     testState.marketplaceData = {
-      ...signedInData(),
-      contracts: { data: [contract({ status: 'completed' })], status: 'ready' },
-    };
-
-    const view = render(<MarketplacePage productId={product.id} view="product" />);
-    view.rerender(<MarketplacePage view="catalog" />);
-    land(ok({ items: [review()] }));
-    await settle();
-
-    expect(screen.queryByText('4/5')).toBeNull();
-
-    view.rerender(<MarketplacePage productId={product.id} view="product" />);
-    view.rerender(<MarketplacePage view="catalog" />);
-    fail(new Error('The ratings service is unreachable.'));
-    await settle();
-
-    expect(screen.queryByText('agritech.marketplace.reviews.unavailable')).toBeNull();
-  });
-
-  it('records a rating with no comment attached to it', async () => {
-    testState.api.marketplaceControllerAddReview.mockResolvedValue(ok(review({ rating: 5 })));
-    testState.marketplaceData = {
-      ...signedInData(),
-      contracts: { data: [contract({ status: 'completed' })], status: 'ready' },
-    };
-
-    render(<MarketplacePage productId={product.id} view="product" />);
-
-    const form = await waitFor(() => panel('.dh-review-form'));
-    fireEvent.change(within(form).getByRole('combobox'), { target: { value: '5' } });
-    fireEvent.submit(form);
-
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerAddReview).toHaveBeenCalledWith(
-        { assetReferences: [], listingPublicationId: product.id, rating: 5 },
-        expect.any(String),
-        {},
-      );
-    });
-  });
-
-  it('names the seller by identifier when the basket holds a product the catalog dropped', async () => {
-    testState.marketplaceData = {
-      ...signedInData(),
-      carts: { data: [cart([line('ghost-1', 2)])], status: 'ready' },
-    };
-
-    render(<MarketplacePage view="cart" />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.cart.reviewContract' }));
-
-    const dialog = await screen.findByRole('dialog');
-    expect(dialog.textContent).toContain('agritech.marketplace.cart.checkoutConfirmation');
-    expect(screen.getByText('agritech.marketplace.product.unavailable')).toBeTruthy();
-  });
-
-  it('closes a confirmation with Escape and with a click outside it', async () => {
-    render(<MarketplacePage productId={product.id} view="product" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.sample' }));
-    await screen.findByRole('dialog');
-    fireEvent.keyDown(window, { key: 'Escape' });
-    expect(screen.queryByRole('dialog')).toBeNull();
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.sample' }));
-    await screen.findByRole('dialog');
-    fireEvent.mouseDown(panel('.dh-dialog-backdrop'));
-    expect(screen.queryByRole('dialog')).toBeNull();
-    expect(testState.api.marketplaceControllerRequestSample).not.toHaveBeenCalled();
-  });
-
-  it('changes a basket quantity, drops a line at zero and drafts the contract', async () => {
-    const navigate = vi.fn();
-    testState.api.marketplaceControllerUpdateCartItem.mockResolvedValue(ok(cart([])));
-    testState.api.marketplaceControllerRemoveCartItem.mockResolvedValue(ok(cart([])));
-    testState.api.marketplaceControllerCheckoutCart.mockResolvedValue(
-      ok({ cartId: 'cart-1', contractId: 'contract-1' }),
-    );
-    testState.marketplaceData = {
-      ...signedInData(),
-      carts: {
-        data: [cart([line(product.id, 2), line(secondSeed.id, 1)])],
+      ...testState.marketplaceData,
+      contracts: {
+        data: [
+          {
+            actorParty: 'buyer',
+            amountUzs: product.priceUzs,
+            buyerPartySnapshot: { legalName: 'Buyer cooperative', region: 'Samarqand' },
+            createdAt: '2026-08-09T10:00:00.000Z',
+            deliveryPriceUzs: 0,
+            deliveryTerms: 'pickup',
+            factoringEnabled: false,
+            id: `contract-${status}`,
+            revision: 1,
+            lines: [
+              {
+                lineTotalUzs: product.priceUzs,
+                name: product.name,
+                quantity: 1,
+                sourceKind: 'product',
+                sourcePublicationId: product.id,
+                sourceRevision: 1,
+                unit: product.unit,
+                unitPriceUzs: product.priceUzs,
+              },
+            ],
+            sellerPartySnapshot: { legalName: 'Seed cooperative', region: 'Toshkent' },
+            sourceType: 'cart_checkout',
+            status,
+            subject: product.name,
+            updatedAt: '2026-08-09T10:00:00.000Z',
+          },
+        ],
         status: 'ready',
       },
-      catalog: { data: [product, secondSeed], status: 'ready' },
     };
 
-    render(<MarketplacePage navigate={navigate} view="cart" />);
-
-    const increases = screen.getAllByRole('button', { name: 'agritech.marketplace.cart.increase' });
-    fireEvent.click(increases[0] as HTMLElement);
+    render(<MarketplacePage navigate={vi.fn()} productId={product.id} view="product" />);
     await waitFor(() => {
-      expect(testState.api.marketplaceControllerUpdateCartItem).toHaveBeenCalledWith(
-        'cart-1',
-        product.id,
-        { quantity: 3 },
-        expect.any(String),
-        {},
-      );
+      expect(testState.listReviews).toHaveBeenCalledOnce();
     });
 
-    // The last unit leaves the basket rather than being written back as zero.
-    const decreases = screen.getAllByRole('button', { name: 'agritech.marketplace.cart.decrease' });
-    fireEvent.click(decreases[1] as HTMLElement);
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerRemoveCartItem).toHaveBeenCalledWith(
-        'cart-1',
-        secondSeed.id,
-        expect.any(String),
-        {},
-      );
-    });
-
-    fireEvent.click(screen.getByLabelText('agritech.marketplace.product.pickup'));
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.cart.reviewContract' }));
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'agritech.marketplace.cart.reviewContract' }));
-
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerCheckoutCart).toHaveBeenCalledWith(
-        'cart-1',
-        { deliveryTerms: 'pickup' },
-        expect.any(String),
-        {},
-      );
-    });
-    expect(navigate).toHaveBeenCalledWith('/contracts/contract-1');
+    const rating = screen.queryByLabelText('agritech.marketplace.reviews.rating');
+    expect(Boolean(rating)).toBe(expected);
   });
 
-  it('stops an unverified basket at the identity step instead of at a draft contract', () => {
-    const navigate = vi.fn();
-    testState.marketplaceData = withIdentity(
-      { ...signedInData(), carts: { data: [cart([line(product.id, 1)])], status: 'ready' } },
-      { level: 'basic', status: 'pending' },
-    );
-
-    render(<MarketplacePage navigate={navigate} view="cart" />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.cart.reviewContract' }));
-
-    expect(navigate).toHaveBeenCalledWith('/verification');
-    expect(panel('.dh-notice').textContent).toContain('agritech.marketplace.cart.verifyRequired');
-    expect(testState.api.marketplaceControllerCheckoutCart).not.toHaveBeenCalled();
-  });
-
-  it('keeps a guest basket quantity change in this browser', () => {
+  it('renders the public catalog and local favorites for an anonymous visitor', () => {
+    if (!testState.marketplaceData) {
+      throw new Error('Marketplace fixture is unavailable.');
+    }
     testState.marketplaceData = {
-      ...guestData(),
-      carts: { data: [cart([line(product.id, 2)])], status: 'ready' },
+      ...testState.marketplaceData,
+      auth: 'signed-out',
+      partners: emptyList,
+      verification: { data: null, status: 'empty' },
     };
 
-    render(<MarketplacePage view="cart" />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.cart.increase' }));
+    const catalogView = render(<MarketplacePage navigate={vi.fn()} view="catalog" />);
+    expect(screen.getByText(product.name)).toBeTruthy();
+    expect(screen.queryByText('agritech.marketplace.auth.title')).toBeNull();
 
-    expect(testState.localActions.updateCart).toHaveBeenCalledWith(product.id, 3);
-    expect(panel('.dh-notice').textContent).toContain('agritech.marketplace.cart.updated');
-    expect(testState.api.marketplaceControllerUpdateCartItem).not.toHaveBeenCalled();
+    catalogView.rerender(<MarketplacePage navigate={vi.fn()} view="favorites" />);
+    expect(screen.queryByText('agritech.marketplace.auth.title')).toBeNull();
+    expect(screen.getByText('agritech.marketplace.favorites.localOnly')).toBeTruthy();
   });
 
-  it('publishes a purchase request, and asks an unverified buyer for identity first', async () => {
-    const navigate = vi.fn();
-    testState.api.marketplaceControllerCreateRequest.mockResolvedValue(ok(request()));
-    testState.marketplaceData = withIdentity(signedInData(), { level: 'basic', status: 'pending' });
-
-    const view = render(<MarketplacePage navigate={navigate} view="requests" />);
-
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0] as HTMLElement);
-    expect(navigate).toHaveBeenLastCalledWith('/verification');
-
-    testState.marketplaceData = signedInData();
-    view.rerender(<MarketplacePage navigate={navigate} view="requests" />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0] as HTMLElement);
-
-    const form = panel('.dh-form');
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.requestTitle'), {
-      target: { value: 'Corn seed for autumn' },
-    });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.product'), {
-      target: { value: 'Corn seed' },
-    });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.volume'), {
-      target: { value: '40 t' },
-    });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.region'), {
-      target: { value: 'Samarqand' },
-    });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.deadline'), {
-      target: { value: '2026-09-01' },
-    });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.budget'), {
-      target: { value: '2500000' },
-    });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.requirements'), {
-      target: { value: 'Certified seed only.' },
-    });
-    fireEvent.submit(form);
-
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerCreateRequest).toHaveBeenCalledWith(
-        {
-          actingPartnerId: 'partner-buyer',
-          budgetUzs: 2_500_000,
-          deadline: '2026-09-01',
-          product: 'Corn seed',
-          region: 'Samarqand',
-          requirements: 'Certified seed only.',
-          title: 'Corn seed for autumn',
-          volume: '40 t',
-        },
-        expect.any(String),
-        {},
-      );
-    });
-    expect(await screen.findByText('agritech.marketplace.orders.created')).toBeTruthy();
-  });
-
-  it('lets an eligible seller quote a delivered offer and abandon the form', async () => {
-    testState.api.marketplaceControllerMakeOffer.mockResolvedValue(ok(offer()));
-    testState.marketplaceData = withIdentity(
-      {
-        ...signedInData(),
-        requests: { data: [request({ id: 'request-9' })], status: 'ready' },
+  it('renders the public purchase-request feed without a session', () => {
+    if (!testState.marketplaceData) {
+      throw new Error('Marketplace fixture is unavailable.');
+    }
+    testState.marketplaceData = {
+      ...testState.marketplaceData,
+      auth: 'signed-out',
+      partners: emptyList,
+      requests: {
+        data: [
+          {
+            buyerDisplayName: 'Regional buyer',
+            createdAt: '2026-08-09T10:00:00.000Z',
+            id: 'request-publication-1',
+            region: 'Samarqand',
+            status: 'open',
+            title: 'Need certified corn seed',
+            updatedAt: '2026-08-09T10:00:00.000Z',
+          },
+        ],
+        status: 'ready',
       },
-      { role: 'seller' },
-    );
+      verification: { data: null, status: 'empty' },
+    };
 
-    render(<MarketplacePage view="requests" />);
-
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }));
-    const form = panel('.dh-inline-form');
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.price'), {
-      target: { value: '2400000' },
-    });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.product.delivery'), {
-      target: { value: 'seller_delivery' },
-    });
-    // Choosing to deliver adds the price of doing so, and it is required.
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.contract.deliveryPrice'), {
-      target: { value: '150000' },
-    });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.timing'), { target: { value: '7' } });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.deliveryNote'), {
-      target: { value: 'Delivered to the gate.' },
-    });
-    fireEvent.submit(form);
-
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerMakeOffer).toHaveBeenCalledWith(
-        'request-9',
-        {
-          actingPartnerId: 'partner-supplier',
-          deliveryDays: 7,
-          deliveryNote: 'Delivered to the gate.',
-          deliveryPriceUzs: 150_000,
-          deliveryTerms: 'seller_delivery',
-          priceUzs: 2_400_000,
-        },
-        expect.any(String),
-        {},
-      );
-    });
-
-    // The form stays open after a send, so abandoning it is its own action.
-    fireEvent.click(within(panel('.dh-inline-form')).getByRole('button', { name: 'agritech.marketplace.cancel' }));
-    expect(document.querySelector('.dh-inline-form')).toBeNull();
-    expect(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' })).toBeTruthy();
+    render(<MarketplacePage navigate={vi.fn()} view="requests" />);
+    expect(screen.getByText('Need certified corn seed')).toBeTruthy();
+    expect(screen.queryByText('agritech.marketplace.auth.title')).toBeNull();
   });
 
-  it('chooses the cheapest offer and opens the contract it drafted', async () => {
-    const navigate = vi.fn();
-    testState.api.marketplaceControllerChooseOffer.mockResolvedValue(
-      ok({ contractId: 'contract-1', offerId: 'offer-2', requestPublicId: 'request-1' }),
-    );
-    testState.marketplaceData = {
-      ...signedInData(),
-      myRequests: { data: [request({ status: 'offering' })], status: 'ready' },
-      offersByRequest: {
-        data: {
-          'request-1': [
-            offer({ deliveryDays: 4, deliveryPriceUzs: 120_000, deliveryTerms: 'seller_delivery', id: 'offer-1' }),
-            offer({ id: 'offer-2', priceUzs: 2_100_000 }),
-            offer({ id: 'offer-3', priceUzs: 2_900_000, status: 'declined' }),
+  it.each(['pending', 'rejected'] as const)(
+    'fails closed for %s verification even when approved partner records remain',
+    (verificationStatus) => {
+      if (!testState.marketplaceData) {
+        throw new Error('Marketplace fixture is unavailable.');
+      }
+      const currentVerification = testState.marketplaceData.verification.data;
+      if (!currentVerification) {
+        throw new Error('Verification fixture is unavailable.');
+      }
+      testState.marketplaceData = {
+        ...testState.marketplaceData,
+        partners: {
+          data: [
+            ...testState.marketplaceData.partners.data,
+            {
+              createdAt: '2026-08-09T10:00:00.000Z',
+              id: 'supplier-partner',
+              kind: 'supplier',
+              legalName: 'Seed cooperative',
+              ownerUserId: 'seller-1',
+              phone: '+998901234568',
+              region: 'Samarqand',
+              status: 'approved',
+              taxId: '987654321',
+              tenantId: 'tenant-1',
+              updatedAt: '2026-08-09T10:00:00.000Z',
+            },
           ],
+          status: 'ready',
         },
+        promotionPlans: {
+          data: [{ code: 'catalog_7d', currency: 'UZS', durationDays: 7, priceUzs: 100_000 }],
+          status: 'ready',
+        },
+        supplierProducts: {
+          data: [
+            {
+              category: 'seed',
+              description: 'Certified corn seed',
+              id: 'source-product-1',
+              name: 'Corn seed source',
+              partnerId: 'supplier-partner',
+              priceUzs: product.priceUzs,
+              region: product.region,
+              sampleAvailable: true,
+              status: 'active',
+              stockQuantity: product.stockQuantity,
+              unit: product.unit,
+            },
+          ],
+          status: 'ready',
+        },
+        verification: {
+          data: {
+            ...currentVerification,
+            level: 'basic',
+            role: 'seller',
+            status: verificationStatus,
+            step: 'review',
+          },
+          status: 'ready',
+        },
+      };
+
+      const view = render(<MarketplacePage navigate={vi.fn()} view="catalog" />);
+      const addToCart = screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' });
+      expect(addToCart.hasAttribute('disabled')).toBe(true);
+      expect(screen.getByText('agritech.marketplace.access.verify')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'agritech.marketplace.access.action.verify' })).toBeTruthy();
+
+      view.rerender(<MarketplacePage navigate={vi.fn()} view="account" />);
+      expect(
+        screen
+          .getAllByRole('button', { name: 'agritech.marketplace.publication.publish' })
+          .every((button) => button.hasAttribute('disabled')),
+      ).toBe(true);
+      expect(screen.getByRole('heading', { name: 'agritech.marketplace.promotion.title' })).toBeTruthy();
+      expect(screen.getAllByText('agritech.marketplace.access.verify').length).toBeGreaterThan(0);
+    },
+  );
+
+  it('loads public search suggestions and follows a seller result with keyboard-accessible controls', async () => {
+    const navigate = vi.fn();
+    render(<MarketplacePage navigate={navigate} />);
+
+    fireEvent.change(screen.getByRole('searchbox', { name: 'agritech.marketplace.search' }), {
+      target: { value: 'seed' },
+    });
+    const suggestion = await screen.findByRole('button', { name: /Seed cooperative/u });
+    expect(testState.listSuggestions).toHaveBeenCalledWith({ limit: 6, q: 'seed' }, testState.requestOptions);
+    fireEvent.click(suggestion);
+    expect(navigate).toHaveBeenCalledWith('/sellers/seller-1');
+  });
+
+  it('starts verification only after the user explicitly chooses a role and continues', async () => {
+    if (!testState.marketplaceData) {
+      throw new Error('Marketplace fixture is unavailable.');
+    }
+    testState.marketplaceData = {
+      ...testState.marketplaceData,
+      verification: { data: null, status: 'empty' },
+    };
+
+    render(<MarketplacePage navigate={vi.fn()} view="verification" />);
+    fireEvent.click(screen.getByRole('button', { name: /agritech.marketplace.account.role.buyer/u }));
+    expect(testState.createVerification).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.verify.start' }));
+
+    await waitFor(() => {
+      expect(testState.createVerification).toHaveBeenCalledOnce();
+    });
+    expect(testState.createVerification).toHaveBeenCalledWith(
+      { expectedRevision: 0, role: 'buyer' },
+      expect.any(String),
+      testState.requestOptions,
+    );
+    expect(testState.linkOneId).not.toHaveBeenCalled();
+    expect(testState.storeVerificationDocument).not.toHaveBeenCalled();
+    expect(testState.submitVerification).not.toHaveBeenCalled();
+  });
+
+  it('uploads the exact user-selected evidence instead of browser-authored operational claims', async () => {
+    if (!testState.marketplaceData) {
+      throw new Error('Marketplace fixture is unavailable.');
+    }
+    testState.marketplaceData = {
+      ...testState.marketplaceData,
+      verification: { data: verificationFixture(2, true), status: 'ready' },
+    };
+
+    render(<MarketplacePage navigate={vi.fn()} view="verification" />);
+    const evidence = new File(['real identity evidence'], 'identity.pdf', { type: 'application/pdf' });
+    const identityInput = screen.getAllByLabelText(/agritech.marketplace.verify.uploadDocument/u)[0];
+    if (!identityInput) {
+      throw new Error('Identity evidence input is unavailable.');
+    }
+    Object.defineProperty(identityInput, 'files', { configurable: true, value: [evidence] });
+    fireEvent.change(identityInput);
+
+    await waitFor(() => {
+      expect(testState.storeVerificationDocument).toHaveBeenCalledOnce();
+    });
+    const [document, idempotencyKey, requestOptions] = testState.storeVerificationDocument.mock.calls[0] ?? [];
+    expect(document).toMatchObject({
+      contentBase64: globalThis.btoa('real identity evidence'),
+      fileName: 'identity.pdf',
+      kind: 'id',
+      mimeType: 'application/pdf',
+    });
+    expect(document.contentBase64).not.toContain('DehqonHub mock verification evidence');
+    expect(idempotencyKey).toEqual(expect.any(String));
+    expect(requestOptions).toBe(testState.requestOptions);
+    expect(testState.submitVerification).not.toHaveBeenCalled();
+  });
+
+  it('submits a complete verification case at the current persisted revision', async () => {
+    if (!testState.marketplaceData) {
+      throw new Error('Marketplace fixture is unavailable.');
+    }
+    const completeVerification: VerificationViewDto = {
+      ...verificationFixture(4, true),
+      documents: [
+        { fileName: 'identity.pdf', kind: 'id', mimeType: 'application/pdf', simulation: true },
+        { fileName: 'business.pdf', kind: 'business', mimeType: 'application/pdf', simulation: true },
+      ],
+    };
+    testState.marketplaceData = {
+      ...testState.marketplaceData,
+      verification: { data: completeVerification, status: 'ready' },
+    };
+
+    render(<MarketplacePage navigate={vi.fn()} view="verification" />);
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.verify.submit' }));
+
+    await waitFor(() => {
+      expect(testState.submitVerification).toHaveBeenCalledOnce();
+    });
+    expect(testState.submitVerification).toHaveBeenCalledWith(
+      { expectedRevision: 4 },
+      expect.any(String),
+      testState.requestOptions,
+    );
+    expect(testState.refresh).toHaveBeenCalledOnce();
+  });
+
+  it('prepares the mock factoring artifact before recording a contract signature', async () => {
+    if (!testState.marketplaceData) {
+      throw new Error('Marketplace fixture is unavailable.');
+    }
+    testState.marketplaceData = {
+      ...testState.marketplaceData,
+      contracts: {
+        data: [
+          {
+            actorParty: 'buyer',
+            amountUzs: product.priceUzs,
+            buyerPartySnapshot: { legalName: 'Buyer cooperative', region: 'Samarqand' },
+            createdAt: '2026-08-09T10:00:00.000Z',
+            deliveryPriceUzs: 0,
+            deliveryTerms: 'pickup',
+            factoringEnabled: true,
+            id: 'contract-1',
+            revision: 1,
+            lines: [
+              {
+                lineTotalUzs: product.priceUzs,
+                name: product.name,
+                quantity: 1,
+                sourceKind: 'product',
+                sourcePublicationId: product.id,
+                sourceRevision: 1,
+                unit: product.unit,
+                unitPriceUzs: product.priceUzs,
+              },
+            ],
+            sellerPartySnapshot: { legalName: 'Seed cooperative', region: 'Toshkent' },
+            sourceType: 'cart_checkout',
+            status: 'draft',
+            subject: product.name,
+            updatedAt: '2026-08-09T10:00:00.000Z',
+          },
+        ],
         status: 'ready',
       },
     };
 
-    render(<MarketplacePage navigate={navigate} view="requests" />);
-
-    // Sorted by price, so the cheapest carries the best-offer marker.
-    const offers = panel('.dh-offer-list');
-    expect(panel('.dh-offer-list > div').textContent).toContain('agritech.marketplace.orders.bestOffer');
-    const declined = within(offers).getByRole<HTMLButtonElement>('button', {
-      name: 'agritech.marketplace.orders.offerStatus.declined',
-    });
-    expect(declined.disabled).toBe(true);
-
-    fireEvent.click(
-      within(offers).getAllByRole('button', { name: 'agritech.marketplace.orders.choose' })[0] as HTMLElement,
-    );
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'agritech.marketplace.orders.confirmOffer' }));
-
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerChooseOffer).toHaveBeenCalledWith(
-        'request-1',
-        'offer-2',
-        expect.any(String),
-        {},
-      );
-    });
-    expect(navigate).toHaveBeenCalledWith('/contracts/contract-1');
-  });
-
-  it('routes a seller page to that seller storefront', () => {
-    const navigate = vi.fn();
-    const rival = { ...secondSeed, supplierId: 'seller-2', supplierName: 'Rival cooperative' };
-    testState.marketplaceData = { ...signedInData(), catalog: { data: [product, rival], status: 'ready' } };
-
-    render(<MarketplacePage navigate={navigate} sellerId={product.supplierId} view="seller" />);
-
-    expect(screen.getByRole('heading', { level: 1, name: product.supplierName })).toBeTruthy();
-    expect(screen.getByRole('button', { name: product.name })).toBeTruthy();
-    // The second record belongs to another seller, so this storefront omits it.
-    expect(screen.queryByRole('button', { name: rival.name })).toBeNull();
-  });
-
-  // Identity and an approved organization are separate gates: an account can pass
-  // verification and still have no partner to act for, and every command that names
-  // one has to stop there rather than send a request without it.
-  it('sends a verified account with no approved organization to the identity page', async () => {
-    const navigate = vi.fn();
-    testState.marketplaceData = { ...signedInData(), partners: emptyList };
-
-    const view = render(<MarketplacePage navigate={navigate} />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }));
-
-    expect(navigate).toHaveBeenLastCalledWith('/verification');
-    expect(screen.getByRole('status').textContent).toContain('agritech.marketplace.cart.verifyRequired');
-    expect(testState.api.marketplaceControllerAddToCart).not.toHaveBeenCalled();
-
-    view.rerender(<MarketplacePage navigate={navigate} view="requests" />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0] as HTMLElement);
-    const requestForm = panel('.dh-form');
-    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.requestTitle'), {
-      target: { value: 'Corn seed for autumn' },
-    });
-    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.product'), {
-      target: { value: product.name },
-    });
-    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.volume'), {
-      target: { value: '40 t' },
-    });
-    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.region'), {
-      target: { value: product.region },
-    });
-    fireEvent.submit(requestForm);
-
-    await settle();
-    expect(testState.api.marketplaceControllerCreateRequest).not.toHaveBeenCalled();
-    expect(navigate).toHaveBeenLastCalledWith('/verification');
-  });
-
-  it('stops an offer from an account with no approved supplier organization', async () => {
-    const navigate = vi.fn();
-    testState.marketplaceData = withIdentity(
-      { ...signedInData(), partners: emptyList, requests: { data: [request({ id: 'request-9' })], status: 'ready' } },
-      { role: 'seller' },
-    );
-
-    render(<MarketplacePage navigate={navigate} view="requests" />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }));
-    const offerForm = panel('.dh-inline-form');
-    fireEvent.change(within(offerForm).getByLabelText('agritech.marketplace.orders.price'), {
-      target: { value: '2400000' },
-    });
-    fireEvent.change(within(offerForm).getByLabelText('agritech.marketplace.orders.timing'), {
-      target: { value: '7' },
-    });
-    fireEvent.submit(offerForm);
-
-    await settle();
-    expect(testState.api.marketplaceControllerMakeOffer).not.toHaveBeenCalled();
-    expect(navigate).toHaveBeenLastCalledWith('/verification');
-  });
-
-  // A retry of the same command reuses its key so the server can recognize it; a
-  // command the visitor has since edited is a different command, and the edited
-  // one must not be able to land under the key the abandoned one still holds.
-  it('reuses an idempotency key for a retry and retires the key of an edited command', async () => {
-    testState.api.marketplaceControllerAddReview.mockResolvedValue(failed(503));
-    testState.marketplaceData = {
-      ...signedInData(),
-      contracts: { data: [contract({ status: 'completed' })], status: 'ready' },
-    };
-
-    render(<MarketplacePage productId={product.id} view="product" />);
-
-    const submitReview = async (rating: string) => {
-      const form = panel('.dh-review-form');
-      fireEvent.change(within(form).getByRole('combobox'), { target: { value: rating } });
-      fireEvent.submit(form);
-      await settle();
-    };
-    const keys = () =>
-      testState.api.marketplaceControllerAddReview.mock.calls.map((call: unknown[]) => call[1] as string);
-
-    await submitReview('4');
-    await submitReview('4');
-    const [first, retry] = keys();
-    expect(retry).toBe(first);
-
-    await submitReview('5');
-    const edited = keys()[2];
-    expect(edited).not.toBe(first);
-
-    // Back to the first rating: its key was retired when the edit took over, so
-    // this is a new command rather than a replay of the abandoned one.
-    await submitReview('4');
-    expect(keys()[3]).not.toBe(first);
-    expect(keys()[3]).not.toBe(edited);
-  });
-
-  it('states which order lists are unavailable instead of showing them as empty', () => {
-    testState.marketplaceData = {
-      ...signedInData(),
-      myRequests: { data: [], status: 'error' },
-      requests: { data: [], status: 'error' },
-    };
-
-    const view = render(<MarketplacePage view="requests" />);
-    expect(screen.getAllByText('agritech.marketplace.orders.unavailable').length).toBe(2);
-
-    testState.marketplaceData = {
-      ...signedInData(),
-      myRequests: { data: [], status: 'loading' },
-      requests: { data: [], status: 'loading' },
-    };
-    view.rerender(<MarketplacePage view="requests" />);
-    expect(document.querySelectorAll('.dh-skeleton-grid').length).toBe(2);
-  });
-
-  it('opens the request form from the empty state a buyer lands on', () => {
-    render(<MarketplacePage view="requests" />);
-
-    expect(screen.getByText('agritech.marketplace.orders.feedEmpty')).toBeTruthy();
-    expect(screen.getByText('agritech.marketplace.orders.empty')).toBeTruthy();
-
-    // The heading button is first; this is the one inside the empty state.
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[1] as HTMLElement);
-    expect(panel('.dh-form')).toBeTruthy();
-    fireEvent.click(within(panel('.dh-form')).getByRole('button', { name: 'agritech.marketplace.cancel' }));
-    expect(document.querySelector('.dh-form')).toBeNull();
-  });
-
-  it('records the buyer signature on a draft contract', async () => {
-    testState.api.marketplaceControllerSignContract.mockResolvedValue(ok(contract({ status: 'signed' })));
-    testState.marketplaceData = {
-      ...signedInData(),
-      contracts: { data: [contract()], status: 'ready' },
-    };
-
-    render(<MarketplacePage contractId="contract-1" view="contract" />);
-
+    render(<MarketplacePage contractId="contract-1" navigate={vi.fn()} view="contract" />);
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.contract.signOwnParty' }));
-    const dialog = await screen.findByRole('dialog');
-    fireEvent.click(within(dialog).getByRole('button', { name: 'agritech.marketplace.contract.signOwnParty' }));
-
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerSignContract).toHaveBeenCalledWith(
-        'contract-1',
-        expect.any(String),
-        {},
-      );
-    });
-    expect(await screen.findByText('agritech.marketplace.contract.signatureRecorded')).toBeTruthy();
-  });
-
-  it('lets the seller price a pending delivery before either party signs', async () => {
-    testState.api.marketplaceControllerUpdateContractDeliveryQuote.mockResolvedValue(
-      ok(contract({ deliveryPriceUzs: 150_000 })),
-    );
-    testState.marketplaceData = withIdentity(
-      {
-        ...signedInData(),
-        contracts: { data: [contract({ actorParty: 'seller', deliveryTerms: 'seller_delivery' })], status: 'ready' },
-      },
-      { role: 'seller' },
-    );
-
-    render(<MarketplacePage contractId="contract-1" view="contract" />);
-
-    const form = panel('.dh-inline-form');
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.contract.deliveryPrice'), {
-      target: { value: '150000' },
-    });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.timing'), { target: { value: '5' } });
-    fireEvent.change(within(form).getByLabelText('agritech.marketplace.orders.deliveryNote'), {
-      target: { value: 'Two trucks.' },
-    });
-    fireEvent.submit(form);
-
-    await waitFor(() => {
-      expect(testState.api.marketplaceControllerUpdateContractDeliveryQuote).toHaveBeenCalledWith(
-        'contract-1',
-        { deliveryDays: 5, deliveryNote: 'Two trucks.', deliveryPriceUzs: 150_000, expectedRevision: 1 },
-        expect.any(String),
-        {},
-      );
-    });
-    // Consent stays blocked while the delivery price is missing from the terms.
-    expect(screen.getAllByText('agritech.marketplace.contract.deliveryQuoteRequired').length).toBeGreaterThan(0);
-  });
-
-  it('reads the account dashboard and opens a contract listed on it', () => {
-    const navigate = vi.fn();
-    testState.marketplaceData = {
-      ...signedInData(),
-      contracts: { data: [contract({ status: 'active' })], status: 'ready' },
-      myRequests: { data: [request()], status: 'ready' },
-      samples: { data: [sample()], status: 'ready' },
-    };
-
-    render(<MarketplacePage navigate={navigate} view="account" />);
-
-    expect(screen.getByText('agritech.marketplace.account.role.buyer')).toBeTruthy();
-    expect(screen.getByText('agritech.marketplace.samples.status.requested')).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: /Corn seed supply/u }));
-    expect(navigate).toHaveBeenCalledWith('/contracts/contract-1');
-  });
-
-  it('keeps the account dashboard readable while contracts and samples are still loading', () => {
-    testState.marketplaceData = {
-      ...signedInData(),
-      contracts: { data: [], status: 'loading' },
-      samples: { data: [], status: 'loading' },
-    };
-
-    render(<MarketplacePage view="account" />);
-
-    expect(document.querySelectorAll('.dh-skeleton-grid').length).toBe(2);
-  });
-
-  it('browses the catalog, the favourites page and the identity page as their own routes', () => {
-    const navigate = vi.fn();
-    testState.marketplaceData = {
-      ...signedInData(),
-      catalog: { data: [product, secondSeed], status: 'ready' },
-      favorites: { data: [favorite(secondSeed)], status: 'ready' },
-    };
-
-    const view = render(<MarketplacePage locationSearch="?q=wheat" navigate={navigate} view="catalog" />);
-    expect(screen.getByRole('button', { name: secondSeed.name })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: product.name })).toBeNull();
-
-    view.rerender(<MarketplacePage navigate={navigate} view="favorites" />);
-    expect(screen.getByRole('button', { name: secondSeed.name })).toBeTruthy();
-    expect(screen.queryByRole('button', { name: product.name })).toBeNull();
-
-    testState.marketplaceData = withIdentity(signedInData(), { level: 'basic', status: 'pending' });
-    view.rerender(<MarketplacePage navigate={navigate} view="verification" />);
-    expect(screen.getAllByText('agritech.marketplace.verify.pending').length).toBeGreaterThan(0);
-  });
-
-  it('asks the grounded assistant from the site chrome', async () => {
-    testState.api.marketplaceControllerAskAi.mockResolvedValue(
-      ok({
-        answer: 'catalog_match',
-        createdAt: '2026-08-10T10:00:00.000Z',
-        id: 'consultation-1',
-        kind: 'generic',
-        listingPublicationIds: [product.id],
-        question: 'What corn seed do you have?',
-        updatedAt: '2026-08-10T10:00:00.000Z',
+    fireEvent.click(
+      within(screen.getByRole('dialog')).getByRole('button', {
+        name: 'agritech.marketplace.contract.signOwnParty',
       }),
     );
 
-    render(<MarketplacePage />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.open' }));
-    fireEvent.change(screen.getByLabelText('agritech.marketplace.ai.placeholder'), {
-      target: { value: 'What corn seed do you have?' },
-    });
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.ai.send' }));
-
     await waitFor(() => {
-      expect(testState.api.marketplaceControllerAskAi).toHaveBeenCalledWith(
-        { kind: 'generic', question: 'What corn seed do you have?' },
-        expect.any(String),
-        {},
-      );
+      expect(testState.signContract).toHaveBeenCalledOnce();
     });
+    expect(testState.createContractArtifact).toHaveBeenCalledOnce();
+    expect(testState.createContractArtifact.mock.invocationCallOrder[0]).toBeLessThan(
+      testState.signContract.mock.invocationCallOrder[0]!,
+    );
+    const artifactCall = testState.createContractArtifact.mock.calls[0]!;
+    const signatureCall = testState.signContract.mock.calls[0]!;
+    expect(artifactCall[0]).toBe('contract-1');
+    expect(artifactCall[1]).toEqual({ settlementKind: 'factoring' });
+    expect(artifactCall[2]).toMatch(/:artifact$/u);
+    expect(signatureCall[0]).toBe('contract-1');
+    expect(signatureCall[1]).toBe(String(artifactCall[2]).replace(/:artifact$/u, ':signature'));
+    expect(testState.refresh).toHaveBeenCalledOnce();
   });
 
-  it('explains an expired session instead of writing through it', async () => {
-    // The session probe has dropped to guest, but the lists it read before that
-    // are still on screen. Every write has to say so rather than 401 quietly.
+  it('advances the actor-authorized mock factoring lifecycle from the existing contract panel', async () => {
+    if (!testState.marketplaceData) {
+      throw new Error('Marketplace fixture is unavailable.');
+    }
+    const lifecycle = lifecycleFixture('contract-factoring', true);
+    testState.getContractLifecycle.mockResolvedValue(apiSuccess(lifecycle));
+    testState.consentFactoring.mockResolvedValue(apiSuccess(lifecycle));
     testState.marketplaceData = {
-      ...guestData(),
-      contracts: { data: [contract({ status: 'completed' })], status: 'ready' },
-      myRequests: { data: [request({ status: 'offering' })], status: 'ready' },
-      offersByRequest: { data: { 'request-1': [offer()] }, status: 'ready' },
-      requests: { data: [request({ id: 'request-9' })], status: 'ready' },
+      ...testState.marketplaceData,
+      contracts: {
+        data: [
+          {
+            actorParty: 'buyer',
+            amountUzs: product.priceUzs,
+            buyerPartySnapshot: { legalName: 'Buyer cooperative', region: 'Samarqand' },
+            buyerSignedAt: '2026-08-09T10:02:00.000Z',
+            createdAt: '2026-08-09T10:00:00.000Z',
+            deliveryPriceUzs: 0,
+            deliveryTerms: 'pickup',
+            factoringEnabled: true,
+            id: 'contract-factoring',
+            revision: 1,
+            lines: [],
+            sellerPartySnapshot: { legalName: 'Seed cooperative', region: 'Toshkent' },
+            sellerSignedAt: '2026-08-09T10:03:00.000Z',
+            signedAt: '2026-08-09T10:03:00.000Z',
+            sourceType: 'cart_checkout',
+            status: 'active',
+            subject: product.name,
+            updatedAt: '2026-08-09T10:03:00.000Z',
+          },
+        ],
+        status: 'ready',
+      },
     };
 
-    const view = render(<MarketplacePage view="requests" />);
+    render(<MarketplacePage contractId="contract-factoring" navigate={vi.fn()} view="contract" />);
+    fireEvent.click(await screen.findByRole('button', { name: 'agritech.marketplace.contract.settlement.advance' }));
 
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.choose' })[0] as HTMLElement);
-    expect(screen.getByRole('status').textContent).toContain('agritech.marketplace.demo.signInRequired');
-    expect(testState.api.marketplaceControllerChooseOffer).not.toHaveBeenCalled();
-
-    testState.api.marketplacePublicControllerListReviews.mockResolvedValue(ok({ items: [] }));
-    view.rerender(<MarketplacePage productId={product.id} view="product" />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.product.sample' }));
-    expect(testState.api.marketplaceControllerRequestSample).not.toHaveBeenCalled();
     await waitFor(() => {
-      expect(screen.getByRole('status').textContent).toContain('agritech.marketplace.demo.signInRequired');
+      expect(testState.consentFactoring).toHaveBeenCalledOnce();
     });
-  });
-
-  // The same lapsed session, on the three forms a verified account unlocks: the
-  // identity record read before the session dropped still says "verified", so the
-  // forms are on screen and each submit has to be stopped with an explanation.
-  it('stops a review, a request and an offer that a lapsed session cannot carry', async () => {
-    const staleSession = (overrides: Partial<MarketplaceData> = {}): MarketplaceData =>
-      withIdentity(
-        {
-          ...guestData(),
-          contracts: { data: [contract({ status: 'completed' })], status: 'ready' },
-          requests: { data: [request({ id: 'request-9' })], status: 'ready' },
-          ...overrides,
-        },
-        {},
-      );
-    testState.marketplaceData = staleSession();
-
-    const view = render(<MarketplacePage productId={product.id} view="product" />);
-
-    const reviewForm = await waitFor(() => panel('.dh-review-form'));
-    fireEvent.change(within(reviewForm).getByRole('combobox'), { target: { value: '5' } });
-    fireEvent.submit(reviewForm);
-
-    expect(testState.api.marketplaceControllerAddReview).not.toHaveBeenCalled();
-    expect(panel('.dh-notice').textContent).toContain('agritech.marketplace.demo.signInRequired');
-
-    view.rerender(<MarketplacePage view="requests" />);
-    fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0] as HTMLElement);
-    const requestForm = panel('.dh-form');
-    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.requestTitle'), {
-      target: { value: 'Corn seed for autumn' },
-    });
-    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.product'), {
-      target: { value: 'Corn seed' },
-    });
-    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.volume'), {
-      target: { value: '40 t' },
-    });
-    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.region'), {
-      target: { value: 'Samarqand' },
-    });
-    fireEvent.change(within(requestForm).getByLabelText('agritech.marketplace.orders.deadline'), {
-      target: { value: '2026-09-01' },
-    });
-    fireEvent.submit(requestForm);
-
-    expect(testState.api.marketplaceControllerCreateRequest).not.toHaveBeenCalled();
-    expect(panel('.dh-notice').textContent).toContain('agritech.marketplace.demo.signInRequired');
-
-    // The stale record reads as a seller, so the feed offers the quote form.
-    testState.marketplaceData = withIdentity(staleSession(), { role: 'seller' });
-    view.rerender(<MarketplacePage view="requests" />);
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }));
-    const offerForm = panel('.dh-inline-form');
-    fireEvent.change(within(offerForm).getByLabelText('agritech.marketplace.orders.price'), {
-      target: { value: '2400000' },
-    });
-    fireEvent.change(within(offerForm).getByLabelText('agritech.marketplace.orders.timing'), {
-      target: { value: '7' },
-    });
-    fireEvent.submit(offerForm);
-
-    expect(testState.api.marketplaceControllerMakeOffer).not.toHaveBeenCalled();
-    expect(panel('.dh-notice').textContent).toContain('agritech.marketplace.demo.signInRequired');
+    expect(testState.consentFactoring).toHaveBeenCalledWith(
+      'contract-factoring',
+      expect.any(String),
+      testState.requestOptions,
+    );
+    expect(testState.refresh).toHaveBeenCalledOnce();
   });
 });

@@ -33,11 +33,11 @@ Standalone MongoDB is rejected.
 
 ### Public domain ownership
 
-| `COMPOSE_DOMAIN_MODE` | Public behavior                                                                                                                                                                                        |
-| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `single-domain`       | The Compose Caddy edge publishes one hostname. It routes core APIs by path and sends all remaining requests to the selected `landing-app` or `site-app`. Other frontend containers stay loopback-only. |
-| `per-app-domains`     | The Compose Caddy edge publishes every frontend and API on its deterministic app-ID hostname. The selected landing/site app owns the apex. This is the full multi-app topology.                        |
-| `external-proxy`      | Compose publishes no edge. Every app/API port remains loopback-only for an operator-owned reverse proxy or load balancer.                                                                              |
+| `COMPOSE_DOMAIN_MODE` | Public behavior                                                                                                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `single-domain`       | The Compose Caddy edge publishes one hostname, routes same-origin APIs first, and sends remaining requests to the selected primary frontend. Other selected frontends stay loopback-only.  |
+| `per-app-domains`     | The Compose Caddy edge publishes the selected primary frontend at the apex and every other selected frontend/API on its deterministic app-ID hostname. Unselected apps contribute no host. |
+| `external-proxy`      | Compose publishes no edge. Every selected app/API port remains loopback-only for an operator-owned reverse proxy or load balancer.                                                         |
 
 `single-domain` deliberately means one public frontend, not multiple SPAs hidden
 under invented path prefixes. Vite, Astro, Vike, and Expo assets have different
@@ -50,6 +50,12 @@ Optional Telegram and Discord profiles require `per-app-domains` when Compose
 owns the edge. Their user-facing app and API/webhook endpoints must both be
 reachable. An `external-proxy` deployment may provide an equivalent operator-
 owned routing contract.
+
+DehqonHub's turnkey single-server deployment uses `external-proxy` with
+`EXTERNAL_PROXY_PUBLIC_MODE=per-app-domains` and `PRIMARY_APP=user-app`. Host
+Nginx serves the user application directly at the apex. Landing, site, and the
+full-stack reference harness are absent from the selected closure; no
+`user-app.<domain>` compatibility host or stale marketing host is generated.
 
 ### TLS ownership
 
@@ -79,6 +85,22 @@ pnpm nrb init --name "Acme" --domain acme.example --owner acme-org --apex-app la
 
 `--apex-app` accepts exactly `landing-app` or `site-app`. The initializer updates
 `PRIMARY_APP` and every documented hostname together.
+
+That initializer behavior is for a fresh generic template. DehqonHub's
+committed product selection deliberately removes both reference marketing
+frontends and the reference full-stack harness:
+
+```bash
+pnpm nrb setup \
+  --remove-app fullstack-e2e \
+  --remove-app landing-app \
+  --remove-app site-app \
+  --public-topology per-app-domains \
+  --non-interactive
+pnpm nrb closure install
+```
+
+Its production environment then sets `PRIMARY_APP=user-app`.
 
 Scaffold the environment file and secret storage. The recommended way is the
 init helper, which copies `.env.production` from the example, generates every
@@ -121,8 +143,19 @@ The only hostname inputs are:
 
 ```dotenv
 PUBLIC_DOMAIN=example.com
-PRIMARY_APP=landing-app
+PRIMARY_APP=user-app
 COMPOSE_DOMAIN_MODE=per-app-domains
+```
+
+For the supported DehqonHub single-server deployment, Compose delegates the
+edge and TLS to host Nginx and Certbot while retaining per-app derivation:
+
+```dotenv
+PUBLIC_DOMAIN=dehqonhub.uz
+PRIMARY_APP=user-app
+COMPOSE_DOMAIN_MODE=external-proxy
+COMPOSE_TLS_MODE=external
+EXTERNAL_PROXY_PUBLIC_MODE=per-app-domains
 ```
 
 Do not include a scheme, port, path, or `*.` wildcard in `PUBLIC_DOMAIN`. The
@@ -130,17 +163,16 @@ wrapper validates it and derives the complete mapping documented in the
 [Project Catalog](project-catalog.md). Optional bot hosts are included only
 when their application profiles are enabled.
 
-With `PRIMARY_APP=site-app`, the site owns the apex and landing moves to its
-app-ID subdomain; API hostnames do not change. In particular, an app called
-`auth-app-api` always keeps its exact app ID in the hostname, never a starter or
-generic name.
+`PRIMARY_APP` must be present in the selected closure. DehqonHub selects
+`user-app`, so `USER_APP_DOMAIN` is the apex and no user-app subdomain is
+derived. API hostnames do not change: an app called `auth-app-api` keeps its
+exact app ID in the hostname.
 
 The edge modes derive `CORS_ORIGINS`, `BETTER_AUTH_URL`,
-`BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_ALLOWED_RETURN_URLS`, Telegram webhook URLs,
-bot web-app URLs, and the landing page's user/admin destinations from this
-mapping. Per-app mode emits the derived HTTPS app origins into the landing
-container's public runtime config; single-domain mode emits same-origin `/app`
-and `/admin` paths. Add exceptional origins through
+`BETTER_AUTH_TRUSTED_ORIGINS`, `AUTH_ALLOWED_RETURN_URLS`, payment return
+origins, Telegram webhook URLs, and bot web-app URLs from the selected mapping.
+When landing is not selected, no `LANDING_*` destination is emitted. Add
+exceptional origins through
 `CORS_EXTRA_ORIGINS` and `BETTER_AUTH_EXTRA_TRUSTED_ORIGINS`. External-proxy mode
 can derive the same contract when `EXTERNAL_PROXY_PUBLIC_MODE` is set to
 `single-domain` or `per-app-domains`; without it, compatibility mode requires
@@ -194,9 +226,16 @@ EXTERNAL_PROXY_PUBLIC_MODE=per-app-domains
 
 In external-proxy mode, route only to the documented loopback ports and keep
 API/navigation matching equivalent to `docker/nginx-fullstack.conf`.
+Backend processes listen on `0.0.0.0:80` inside their containers so Docker can
+forward bridge and published-port traffic; every application/API host
+publication remains fixed to `127.0.0.1`, so the listener setting does not make
+those ports public.
 For the supported turnkey host Nginx + Certbot implementation, use
 [single-server-deployment.md](single-server-deployment.md) instead of creating a
-second hand-maintained proxy map.
+second hand-maintained proxy map. That renderer serves `user-app` at
+`dehqonhub.uz`, serves the admin app from `admin-app.dehqonhub.uz/admin`, and
+keeps API and enabled Telegram hosts on their derived app-ID domains. It emits
+no landing, site, or user-app subdomain virtual host or certificate name.
 
 ### Operator-provided or wildcard certificate
 
@@ -337,10 +376,10 @@ issuance. For Telegram, also create the bot/OIDC/webhook secret files and set
 per-app callback is:
 
 ```text
-https://user-app.example.com/api/auth/oauth2/callback/telegram
+https://example.com/api/auth/oauth2/callback/telegram
 ```
 
-The TMA URL is `https://user-app.example.com/telegram-mini-app` and the webhook
+The TMA URL is `https://example.com/telegram-mini-app` and the webhook
 is `https://telegram-bot-api.example.com/telegram/webhook`. The wrapper derives
 both from `PUBLIC_DOMAIN`.
 

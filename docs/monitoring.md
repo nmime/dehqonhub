@@ -41,8 +41,7 @@ OTEL_METRIC_EXPORT_INTERVAL=60000
 
 There is no `otel-collector` service in local Compose; for local development,
 apps export OTLP directly to Tempo (`OTEL_EXPORTER_OTLP_ENDPOINT=http://tempo:4317`)
-via `docker-compose.override.yml`. See
-[the observability guide](observability.md) for the local wiring.
+via `docker-compose.override.yml`.
 
 The base endpoint is expanded to `/v1/traces` and `/v1/metrics`. Signal-specific
 endpoint and header variables are documented in
@@ -79,6 +78,16 @@ Before adding or changing an alert, enable telemetry in a representative
 environment, inspect the collector endpoint, and verify the exact metric name
 and labels. Do not document an intended custom metric as implemented until its
 instrument and test exist.
+
+## Local Grafana stack
+
+Local Compose includes Grafana, Loki, and Tempo. `docker compose up` starts the
+selected applications plus the observability services; `docker compose up
+grafana loki tempo` starts only that stack. Grafana is available at
+`http://localhost:3000`, Tempo receives OTLP gRPC on `localhost:4317` and OTLP
+HTTP on `localhost:4318`, and containerized applications use the internal
+`http://tempo:4317` endpoint. Grafana data sources are provisioned from
+`docker/grafana/provisioning`.
 
 ## Availability checks
 

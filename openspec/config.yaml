@@ -1,10 +1,11 @@
 schema: nrb-verifiable
 
 context: |
-  Repository: nmime/nest-react-boilerplate
+  Repository: nmime/dehqonhub
   Runtime: Node.js 24, pnpm 11.15.1, TypeScript, Nx
   Backend: NestJS/Fastify, PostgreSQL/MikroORM, Redis, NATS
-  Frontend: Vite, Astro, Vike, Expo
+  Frontend: responsive React/Vite user and administrator web; Astro/Vike
+    support surfaces; native product workflows are deferred
   Verification: Vitest, Cucumber.js, Playwright, OpenAPI contracts,
     property tests, mutation tests, Testcontainers, and runtime QA.
   Public API failures use RFC 9457 Problem Details.
@@ -12,7 +13,7 @@ context: |
   A normative change is not complete until its required evidence is fresh
   and passing for the exact source commit.
   Every executable test names at least one durable requirement, and each
-  requirement owns its exact Nx project scope in a version 2 evidence sidecar.
+  requirement owns its exact Nx project scope in a version 3 evidence sidecar.
 
 rules:
   proposal:

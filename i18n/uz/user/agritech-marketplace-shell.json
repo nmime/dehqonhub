@@ -2,7 +2,6 @@
   "agritech.marketplace.brand": "DehqonHub",
   "agritech.marketplace.title": "DehqonHub marketpleysi",
   "agritech.marketplace.search": "Mahsulot, sotuvchi va xarid so'rovlarini qidirish…",
-  "agritech.marketplace.search.placeholder": "Mahsulot qidirish…",
   "agritech.marketplace.verification": "Tasdiqlash",
   "agritech.marketplace.signIn": "Kirish",
   "agritech.marketplace.home": "Bosh sahifa",
@@ -26,5 +25,18 @@
   "agritech.marketplace.auth.required": "Davom etish uchun tizimga kiring.",
   "agritech.marketplace.auth.title": "DehqonHub tizimiga kirish",
   "agritech.marketplace.footer.description": "DehqonHub joriy marketpleys ma'lumotlari va bitim jarayonlarini tartibga soladi.",
-  "agritech.marketplace.footer.providerBoundary": "To'lov, moliyalashtirish va shaxsni tekshirish provayderi ulangan deb aniq ko'rsatilmaguncha mavjud emas."
+  "agritech.marketplace.footer.providerBoundary": "To'lov, moliyalashtirish va shaxsni tekshirish provayderi ulangan deb aniq ko'rsatilmaguncha mavjud emas.",
+  "agritech.marketplace.access.demoBadge": "Namuna",
+  "agritech.marketplace.access.demo": "Bu tanishish uchun sunʼiy maʼlumot. Uni erkin ko‘ring; bitim va o‘zaro amallar o‘chirilgan.",
+  "agritech.marketplace.access.signIn": "Bu marketpleys amalidan foydalanish uchun tizimga kiring.",
+  "agritech.marketplace.access.checking": "Marketpleysga kirish huquqingiz tekshirilmoqda…",
+  "agritech.marketplace.access.verify": "Bu amal uchun marketpleys tekshiruvini yakunlang.",
+  "agritech.marketplace.access.buyerRole": "Tasdiqlangan rolingiz xarid qilishga ruxsat bermaydi. Xaridor yoki fermer sifatida tekshiruvdan o‘ting.",
+  "agritech.marketplace.access.sellerRole": "Tasdiqlangan rolingiz sotishga ruxsat bermaydi. Sotuvchi yoki fermer sifatida tekshiruvdan o‘ting.",
+  "agritech.marketplace.access.organization": "Bu amal uchun tasdiqlangan xaridor tashkiloti kerak.",
+  "agritech.marketplace.access.sellerOrganization": "Bu amal uchun tasdiqlangan sotuvchi tashkiloti kerak.",
+  "agritech.marketplace.access.action.signIn": "Tizimga kirish",
+  "agritech.marketplace.access.action.verify": "Tekshiruvni ochish",
+  "agritech.marketplace.access.action.organization": "Tashkilot profilini ochish",
+  "agritech.marketplace.search.placeholder": "Mahsulot qidirish…"
 }

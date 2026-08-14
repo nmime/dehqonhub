@@ -18,6 +18,8 @@ export interface AuthenticatedPrincipal {
   subject: string;
   tenantId: string;
   email?: string;
+  emailVerified?: boolean;
+  credentialRevision?: number;
   displayName?: string;
   avatarUrl?: string;
   locale?: AuthenticatedLocale;

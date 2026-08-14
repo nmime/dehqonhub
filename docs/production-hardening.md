@@ -76,7 +76,7 @@ OpenAPI is disabled by default. Enable it only for trusted environments or behin
 OPENAPI_ENABLED=true
 OPENAPI_ALLOW_PRODUCTION=true
 OPENAPI_PATH=docs
-OPENAPI_TITLE=Nest React Boilerplate API
+OPENAPI_TITLE=DehqonHub API
 OPENAPI_VERSION=1.0.0
 ```
 

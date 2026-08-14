@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017
+// @requirements REQ-AGRITECH-MARKETPLACE-016
 import { describe, expect, it } from 'vitest';
 import {
   BadRequestException,
@@ -81,18 +81,18 @@ describe('MarketplaceInMemoryAdapter fixture guards', () => {
   it('refuses a membership that does not match its tenant-scoped organization', () => {
     const { adapter } = createCommerceFixture();
 
-    const mismatched: readonly [typeof buyer, string, 'buyer' | 'seller'][] = [
-      [buyer, 'unknown-partner', 'buyer'],
-      [buyer, sellerPartnerId, 'seller'],
-      [seller, sellerPartnerId, 'buyer'],
-      [buyer, buyerPartnerId, 'seller'],
-    ];
-
-    for (const [actor, partnerId, role] of mismatched) {
-      expect(() => {
-        adapter.registerPartnerMembership(actor, partnerId, role);
-      }).toThrow('membership must match its tenant-scoped organization');
-    }
+    expect(() => {
+      adapter.registerPartnerMembership(buyer, 'unknown-partner', 'buyer');
+    }).toThrow('membership must match its tenant-scoped organization');
+    expect(() => {
+      adapter.registerPartnerMembership(buyer, sellerPartnerId, 'seller');
+    }).toThrow('membership must match its tenant-scoped organization');
+    expect(() => {
+      adapter.registerPartnerMembership(seller, sellerPartnerId, 'buyer');
+    }).toThrow('membership must match its tenant-scoped organization');
+    expect(() => {
+      adapter.registerPartnerMembership(buyer, buyerPartnerId, 'seller');
+    }).toThrow('membership must match its tenant-scoped organization');
   });
 
   it('ignores revocation and suspension of organizations that were never registered', () => {

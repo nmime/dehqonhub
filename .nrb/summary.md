@@ -1,18 +1,15 @@
 # Setup Plan Summary
 
-**Configuration hash:** `d7b5d7fc151f0cc6391f14d286c6c9be5038969c3d3c0c443a3fce3d34de509e`
+**Configuration hash:** `d05e95c047339148a4f755e7ca5bd3ccfcc176887229c6a36188bb9a806cf047`
 
 ## Applications
 
 - admin-app
 - admin-app-api
 - auth-app-api
-- fullstack-e2e
-- landing-app
 - mobile-app
 - notification-consumer
 - notification-scheduler
-- site-app
 - telegram-bot-api
 - user-app
 - user-app-api
@@ -39,7 +36,7 @@
 ## Deployment
 
 - Targets: docker
-- Public topology: single-domain
+- Public topology: per-app-domains
 - Kubernetes delivery: direct
 - Redis ownership: bundled
 - NATS ownership: bundled

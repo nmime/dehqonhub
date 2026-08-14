@@ -19,17 +19,17 @@ services:
       - caddyfile
     environment:
       PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?set PUBLIC_DOMAIN to the product base domain}
-      PRIMARY_APP_UPSTREAM: ${PRIMARY_APP_UPSTREAM:?select landing-app or site-app through PRIMARY_APP}
-      LANDING_APP_DOMAIN: ${LANDING_APP_DOMAIN:?derived by scripts/compose-production.mjs}
-      SITE_APP_DOMAIN: ${SITE_APP_DOMAIN:?derived by scripts/compose-production.mjs}
-      USER_APP_DOMAIN: ${USER_APP_DOMAIN:?derived by scripts/compose-production.mjs}
-      ADMIN_APP_DOMAIN: ${ADMIN_APP_DOMAIN:?derived by scripts/compose-production.mjs}
-      MOBILE_APP_DOMAIN: ${MOBILE_APP_DOMAIN:?derived by scripts/compose-production.mjs}
-      AUTH_APP_API_DOMAIN: ${AUTH_APP_API_DOMAIN:?derived by scripts/compose-production.mjs}
-      USER_APP_API_DOMAIN: ${USER_APP_API_DOMAIN:?derived by scripts/compose-production.mjs}
-      ADMIN_APP_API_DOMAIN: ${ADMIN_APP_API_DOMAIN:?derived by scripts/compose-production.mjs}
-      DISCORD_APP_API_DOMAIN: ${DISCORD_APP_API_DOMAIN:?derived by scripts/compose-production.mjs}
-      TELEGRAM_BOT_API_DOMAIN: ${TELEGRAM_BOT_API_DOMAIN:?derived by scripts/compose-production.mjs}
+      PRIMARY_APP_UPSTREAM: ${PRIMARY_APP_UPSTREAM:?select landing-app, site-app, or user-app through PRIMARY_APP}
+      LANDING_APP_DOMAIN: ${LANDING_APP_DOMAIN:-}
+      SITE_APP_DOMAIN: ${SITE_APP_DOMAIN:-}
+      USER_APP_DOMAIN: ${USER_APP_DOMAIN:-}
+      ADMIN_APP_DOMAIN: ${ADMIN_APP_DOMAIN:-}
+      MOBILE_APP_DOMAIN: ${MOBILE_APP_DOMAIN:-}
+      AUTH_APP_API_DOMAIN: ${AUTH_APP_API_DOMAIN:-}
+      USER_APP_API_DOMAIN: ${USER_APP_API_DOMAIN:-}
+      ADMIN_APP_API_DOMAIN: ${ADMIN_APP_API_DOMAIN:-}
+      DISCORD_APP_API_DOMAIN: ${DISCORD_APP_API_DOMAIN:-}
+      TELEGRAM_BOT_API_DOMAIN: ${TELEGRAM_BOT_API_DOMAIN:-}
       EDGE_OPTIONAL_ROUTES: ${EDGE_OPTIONAL_ROUTES:-default}
       EDGE_TLS_MODE: ${COMPOSE_TLS_MODE:-automatic}
     ports:

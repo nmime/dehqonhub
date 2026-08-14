@@ -16,7 +16,7 @@ if [[ -z "${SELECTION_VALUES}" || ! -f "${SELECTION_VALUES}" ]]; then
 fi
 
 if ! command -v helm >/dev/null 2>&1; then
-  echo "helm is required. Install Helm 4 or run in CI where azure/setup-helm is used." >&2
+  echo "helm is required. Install Helm 4 on the trusted validation runner." >&2
   exit 127
 fi
 

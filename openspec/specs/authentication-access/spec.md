@@ -206,3 +206,75 @@ client state as authority.
 
 - **WHEN** the backend rejects an expired session
 - **THEN** the UI clears protected state and offers a safe sign-in path
+
+### Requirement: [REQ-AUTH-RECOVERY-010] Account assurance and recovery are complete and one-time
+
+The platform SHALL expose the authenticated user's email-assurance state and
+SHALL provide enumeration-safe email-verification and password-reset request
+and confirmation flows. Confirmation artifacts MUST be tenant-bound, hashed,
+purpose-bound, expiring, and single-use. A successful password reset MUST
+invalidate every session created under the previous credential revision.
+
+**Evidence profile:** API, domain, persistence, security, journey
+
+**Invariants:**
+
+- Request responses do not reveal whether an email exists.
+- Email verification never grants marketplace identity verification.
+- Password confirmation never returns or logs a credential artifact.
+- A consumed, expired, wrong-purpose, wrong-tenant, or malformed token changes
+  no user or session state.
+
+**Failure behavior:**
+
+- Invalid confirmation returns safe RFC 9457 Problem Details and a recoverable
+  UI state without distinguishing token absence from prior consumption.
+- Delivery failure does not reveal account existence and can be requested again.
+
+#### Scenario: Email verification is completed once
+
+- **WHEN** a registered user submits a valid email-verification code
+- **THEN** the account records verified email assurance, the session projection exposes it, and replay changes nothing
+
+#### Scenario: Password reset revokes prior sessions
+
+- **WHEN** a user submits a valid password-reset code and a policy-compliant new password
+- **THEN** the password and credential revision advance once, all older sessions are denied, and the new password can create a fresh session
+
+#### Scenario: Recovery request is enumeration-safe
+
+- **WHEN** a caller requests verification or reset for either a known or unknown email
+- **THEN** both requests return the same public acknowledgement without disclosing account existence or a token
+
+### Requirement: [REQ-AUTH-PROVISIONING-011] Explicit Telegram OIDC provisioning creates a safe local account
+
+The platform SHALL create a local account for an unlinked Telegram OIDC subject
+only when provider validation succeeds and the operator explicitly enables
+external-auth auto-provisioning. The issuer and subject SHALL own the identity;
+display name, username, photo, and unverified email claims MUST NOT select or
+merge another account.
+
+**Evidence profile:** domain, security, journey, operations
+
+**Invariants:**
+
+- Provisioning is off unless the explicit environment value is `true`.
+- One provider issuer/subject cannot own two users in one tenant.
+- A provider-created account has no password-based login method until the user
+  completes a separate credential flow.
+
+**Failure behavior:**
+
+- Disabled provisioning returns a safe link-required outcome.
+- Invalid callback state, nonce, issuer, audience, signature, subject, or return
+  URL creates no user, method, identity, or session.
+
+#### Scenario: Enabled Telegram provisioning
+
+- **WHEN** an unlinked Telegram user completes a valid OIDC callback while auto-provisioning is enabled
+- **THEN** one local user, one Telegram identity, one authentication method, and one server session are created without claiming email verification
+
+#### Scenario: Disabled Telegram provisioning
+
+- **WHEN** the same validated Telegram subject returns while auto-provisioning is disabled
+- **THEN** the platform returns a link-required result and creates no local account

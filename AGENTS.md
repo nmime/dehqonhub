@@ -1,7 +1,7 @@
 # AI Agent Instructions
 
 Always-loaded policy for human and AI contributors to
-`nmime/nest-react-boilerplate`. Detailed workflow and architecture docs live in
+`nmime/dehqonhub`. Detailed workflow and architecture docs live in
 [docs/ai/agent-policy.md](docs/ai/agent-policy.md) and
 [docs/ai/repo-map.md](docs/ai/repo-map.md).
 

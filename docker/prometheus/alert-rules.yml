@@ -9,7 +9,7 @@ groups:
         annotations:
           summary: 'Service {{ $labels.job }} is down'
           description: '{{ $labels.job }} has been unreachable for more than 2 minutes.'
-          runbook_url: 'https://github.com/nmime/nest-react-boilerplate/blob/main/docs/operations/observability-dr.md'
+          runbook_url: 'https://github.com/nmime/dehqonhub/blob/main/docs/operations/observability-dr.md'
 
       - alert: APIHighErrorRate
         expr: |

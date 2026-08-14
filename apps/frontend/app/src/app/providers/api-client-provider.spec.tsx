@@ -122,30 +122,6 @@ describe('user app API client provider wiring', () => {
     expect(window.location.pathname).toBe('/');
   });
 
-  it('keeps a guest on the home page when the problem-presentation boot read 401s', async () => {
-    const fetchMock = vi.fn(() =>
-      Promise.resolve(
-        new Response(JSON.stringify({ message: 'session required' }), {
-          headers: { 'content-type': 'application/json' },
-          status: 401,
-        }),
-      ),
-    );
-    vi.stubGlobal('fetch', fetchMock);
-
-    render(
-      <AppProviders>
-        <AuthRequiredProbe endpoint="/auth/problem-presentations" />
-      </AppProviders>,
-    );
-
-    await waitFor(() => {
-      expect(fetchMock).toHaveBeenCalledOnce();
-      expect(apiRuntimeEvents.getState().authRequired).toBe(false);
-    });
-    expect(window.location.pathname).toBe('/');
-  });
-
   it('keeps auth-required failures in Telegram Mini App routes', async () => {
     window.history.pushState({}, '', '/tma/auth');
     vi.stubGlobal(

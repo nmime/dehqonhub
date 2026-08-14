@@ -198,14 +198,12 @@ assert.deepEqual(
     'admin-app-api',
     'auth-app-api',
     'fullstack-e2e',
-    'landing-app',
     'notification-consumer',
     'notification-scheduler',
-    'site-app',
     'user-app',
     'user-app-api',
   ],
-  'Selecting fullstack-e2e must include the complete stack that its runtime starts.',
+  'Selecting fullstack-e2e must include only the product stack that its runtime starts.',
 );
 
 const verifiedPresets = [];
