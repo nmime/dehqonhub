@@ -57,6 +57,26 @@ describe('MarketplaceService', () => {
     ).rejects.toThrow(ConflictException);
   });
 
+  it('admits only an account the verification ledger already knows', async () => {
+    const { repository, service } = fixture();
+
+    repository.roleOf.mockResolvedValue('buyer');
+    await expect(service.requireVerified(owner)).resolves.toBeUndefined();
+
+    repository.roleOf.mockResolvedValue(undefined);
+    await expect(service.requireVerified(owner)).rejects.toThrow(ForbiddenException);
+    expect(repository.roleOf).toHaveBeenCalledWith(owner);
+  });
+
+  it('maps an unclassified repository refusal to a bare bad request', async () => {
+    const { repository, service } = fixture();
+    repository.reviewVerification.mockResolvedValue({ status: 'partner_unapproved' });
+
+    await expect(
+      service.reviewVerification(owner.tenantId, 'verification-1', 'verified', 'reviewer-1', 0, 'review-key-0002'),
+    ).rejects.toThrow(BadRequestException);
+  });
+
   it.each([
     ['rejected', undefined],
     ['verified', 'criteria_not_met'],

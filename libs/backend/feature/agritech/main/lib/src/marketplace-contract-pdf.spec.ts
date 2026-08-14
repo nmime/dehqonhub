@@ -74,4 +74,36 @@ describe('marketplace contract PDF', () => {
     // Two full PDF renders are compute-bound; the default 5s budget is not enough
     // when the whole instrumented suite competes for the same cores.
   }, 30_000);
+
+  it('paginates a long direct-payment contract and keeps every script and unpriced term legible', async () => {
+    // One snapshot deliberately combining every alternate rendering path: direct
+    // payment terms, a delivery with nothing but its terms, an unbreakable word
+    // wider than the text column, Cyrillic Extended-B and Latin Extended
+    // letters, and enough frozen lines to spill onto further pages.
+    const unbreakable = 'M'.repeat(240);
+    const long: MarketplaceContractArtifactSnapshot = {
+      ...snapshot,
+      buyer: { ...snapshot.buyer, legalName: 'Ꙋсмонов ōilaviy fermer xоʻjaligi' },
+      delivery: { terms: 'by_agreement' },
+      lines: Array.from({ length: 32 }, (_, index) => ({
+        lineTotalUzs: 1_000_000 * (index + 1),
+        name: `Партия ${index + 1} — маккажўхори уруғи, ẽkstra sinf`,
+        quantity: index + 1,
+        sourceId: `11111111-1111-4111-8111-${String(index).padStart(12, '0')}`,
+        sourceKind: 'product' as const,
+        sourcePublicationId: `33333333-3333-4333-8333-${String(index).padStart(12, '0')}`,
+        sourceRevision: index + 1,
+        unit: 'тонна',
+        unitPriceUzs: 1_000_000,
+      })),
+      settlementKind: 'direct_payment',
+      subject: `Маккажўхори уруғи ${unbreakable} партияси`,
+    };
+
+    const generated = await generateMarketplaceContractPdf(long, marketplaceProviderFingerprint(long));
+
+    expect(generated.mediaType).toBe('application/pdf');
+    expect(generated.content.byteLength).toBeGreaterThan(snapshot.lines.length * 1024);
+    expect(Buffer.from(generated.content).includes(Buffer.from('/Count 3'))).toBe(true);
+  }, 30_000);
 });

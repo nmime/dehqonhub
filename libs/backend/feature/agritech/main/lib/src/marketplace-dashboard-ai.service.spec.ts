@@ -1,6 +1,11 @@
 // @requirements REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-STAGE2-017
 import { describe, expect, it, vi } from 'vitest';
-import { BadRequestException, ConflictException, ForbiddenException } from '@app/backend-common-exception';
+import {
+  BadRequestException,
+  ConflictException,
+  ForbiddenException,
+  ResourceNotFoundException,
+} from '@app/backend-common-exception';
 import type { MarketplaceDashboardAiRepository } from '@app/backend-feature-agritech-shared';
 import { MarketplaceDashboardAiDomainService } from './marketplace-dashboard-ai.service';
 
@@ -52,6 +57,16 @@ describe('MarketplaceDashboardAiDomainService', () => {
     repository.getRoleDashboard.mockResolvedValue({ status: 'forbidden', field: 'organization' });
 
     await expect(service.getRoleDashboard(owner)).rejects.toThrow(ForbiddenException);
+  });
+
+  it('maps a missing dashboard and every other refusal onto their own typed boundary', async () => {
+    const { repository, service } = fixture();
+
+    repository.getRoleDashboard.mockResolvedValue({ status: 'not_found' });
+    await expect(service.getRoleDashboard(owner)).rejects.toThrow(ResourceNotFoundException);
+
+    repository.getRoleDashboard.mockResolvedValue({ status: 'invalid_state', field: 'role' });
+    await expect(service.getRoleDashboard(owner)).rejects.toThrow(BadRequestException);
   });
 
   it('preserves the consultation semantic code and opaque public listing IDs', async () => {

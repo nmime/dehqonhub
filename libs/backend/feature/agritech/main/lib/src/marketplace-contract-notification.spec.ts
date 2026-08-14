@@ -67,6 +67,33 @@ describe('marketplace contract lifecycle notification delivery', () => {
     expect(value.message).not.toContain('script');
   });
 
+  it('falls back to English generic copy for a template key from outside the contract namespace', () => {
+    expect(renderMarketplaceContractNotification('billing.invoice.paid', null)).toEqual({
+      locale: 'en',
+      message: 'Contract status updated',
+    });
+    expect(renderMarketplaceContractNotification('marketplace.contract.contract.completed', 'kl')).toMatchObject({
+      locale: 'en',
+    });
+  });
+
+  it('names an unknown event generically and omits the attempt timestamp until one exists', async () => {
+    const persistence = repository();
+    const { claimToken, ...intentView } = claim;
+    expect(claimToken).toBe('test-claim-dispatch');
+    const internal = { ...intentView, templateKey: 'billing.invoice.paid' };
+    vi.mocked(persistence.listForRecipient).mockResolvedValue([internal]);
+    vi.mocked(persistence.listForAdmin).mockResolvedValue([internal]);
+    const query = new MarketplaceContractNotificationQueryService(persistence);
+
+    const [recipient] = await query.listForRecipient({ tenantId: 'tenant-a', userId: 'user-a' }, 'uz-cyrl');
+    const [admin] = await query.listForAdmin('tenant-a', 'uz-cyrl');
+
+    expect(recipient).toMatchObject({ event: 'contract.updated', message: 'Шартнома ҳолати янгиланди' });
+    expect(recipient).not.toHaveProperty('attemptedAt');
+    expect(admin).toMatchObject({ event: 'contract.updated' });
+  });
+
   it('keeps recipient DTOs safe while retaining provider diagnostics only for tenant administrators', async () => {
     const persistence = repository();
     const { claimToken, ...intentView } = claim;

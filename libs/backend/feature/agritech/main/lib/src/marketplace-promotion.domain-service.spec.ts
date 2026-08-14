@@ -92,9 +92,43 @@ describe('MarketplacePromotionDomainService', () => {
     expect(repository.activatePromotion).not.toHaveBeenCalled();
   });
 
+  it('accepts a start date inside the scheduling window and refuses every date outside it', async () => {
+    const { repository, service } = fixture();
+    const request = { actingPartnerId, listingPublicId, planCode: 'catalog_7d' } as const;
+
+    await expect(
+      service.activatePromotion(owner, 'promotion-key-0003', { ...request, startsAt: new Date(Number.NaN) }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(
+      service.activatePromotion(owner, 'promotion-key-0004', {
+        ...request,
+        startsAt: new Date('2029-12-01T00:00:00.000Z'),
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+
+    // Left to itself the service reads the real clock, so a start date years in
+    // the past stays refused whatever the wall clock happens to say.
+    const withRealClock = new MarketplacePromotionDomainService(
+      repository as unknown as MarketplacePromotionRepository,
+    );
+    await expect(
+      withRealClock.activatePromotion(owner, 'promotion-key-0005', {
+        ...request,
+        startsAt: new Date('2020-01-01T00:00:00.000Z'),
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(repository.activatePromotion).not.toHaveBeenCalled();
+
+    repository.activatePromotion.mockResolvedValue({ status: 'ok', value: promotion });
+    await expect(service.activatePromotion(owner, 'promotion-key-0006', { ...request, startsAt: now })).resolves.toBe(
+      promotion,
+    );
+  });
+
   it.each([
     ['conflict', ConflictException],
     ['forbidden', ForbiddenException],
+    ['invalid_state', BadRequestException],
     ['not_found', ResourceNotFoundException],
   ] as const)('maps repository %s without leaking persistence details', async (status, ErrorType) => {
     const { repository, service } = fixture();

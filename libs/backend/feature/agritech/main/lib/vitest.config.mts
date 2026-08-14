@@ -18,15 +18,14 @@ export default defineConfig({
       'coverage/libs/backend/feature/agritech/main/lib',
       ['src/**/*.ts'],
       ['src/index.ts', 'src/**/*.module.ts', 'src/**/*.controller.ts', 'src/**/*.view-dto.ts'],
-      // Budget for the defence-in-depth guards in the in-memory marketplace store
-      // that no command can reach through its own public surface: the second
-      // product lookup and the non-positive total in `checkoutCart`, the request
-      // and contract transition re-checks in `makeOffer`/`signContract`, the
-      // self-selection guard and the terminal-status guard they sit behind, the
-      // empty-lines and vanished-product checks around the inventory commit, and
-      // the document clone in `cloneVerification` (no fixture carries documents).
-      // Deleting them to reach 100% would remove the guard, not the risk.
-      { branches: -8, functions: -1, lines: -9, statements: -9 },
+      // Budget for four guards no input can falsify. Two `codePointAt(0) ?? 0`
+      // fallbacks (the evidence file-name scan and the PDF font picker) read a
+      // character produced by iterating a string, which always has a code point.
+      // Two `if (current)` else-paths in the PDF text wrapper cannot run either:
+      // the accumulator is empty only before the first word, and a word wider
+      // than the column always leaves a remainder behind. Deleting them to reach
+      // 100% would remove the guard, not the risk.
+      { branches: -4 },
     ),
   },
 });

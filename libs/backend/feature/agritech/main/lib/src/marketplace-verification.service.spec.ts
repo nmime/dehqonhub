@@ -238,6 +238,30 @@ describe('MarketplaceVerificationService', () => {
     });
   }, 15_000);
 
+  it('still reports an unavailable document provider when the failure ledger write also fails', async () => {
+    const { documentProvider, repository, service } = fixture();
+    const content = new Uint8Array(1024);
+    content.set(Buffer.from('%PDF-'));
+    repository.prepareProviderOperation.mockResolvedValue({
+      status: 'ok',
+      value: { attempt: 1, execute: true, operationId: 'operation-3' },
+    });
+    documentProvider.storeVerificationDocuments.mockRejectedValue(new Error('storage refused the upload'));
+    // The attempt row stays fenced and lease expiry quarantines it: a failed
+    // bookkeeping write must not mask the provider outcome from the caller.
+    repository.failProviderOperation.mockRejectedValue(new Error('database unavailable'));
+
+    await expect(
+      service.storeDocuments(
+        owner,
+        [{ content, fileName: 'farm.pdf', kind: 'farm', mimeType: 'application/pdf' }],
+        'document-key-0003',
+      ),
+    ).rejects.toBeInstanceOf(MarketplaceProviderUnavailableException);
+    expect(repository.failProviderOperation).toHaveBeenCalledWith(owner, 'operation-3', 1, 'document_provider_failed');
+    expect(repository.completeVerificationDocuments).not.toHaveBeenCalled();
+  });
+
   it('aborts a timed-out provider attempt, marks it retryable, and fences a late result', async () => {
     vi.useFakeTimers();
     try {

@@ -1,6 +1,7 @@
 // @requirements REQ-FRONTEND-ERROR-005
 import { beforeEach, describe, expect, it } from 'vitest';
 
+import { problemTypeForCode } from '@app/common-problem-details';
 import { configureApiLocale } from './api-locale';
 import {
   FrontendErrorKey,
@@ -96,19 +97,19 @@ describe('normalizeApiError', () => {
     expect(
       normalizeApiError({
         body: {
-          type: 'https://example.com/problems#resource-conflict',
+          type: problemTypeForCode('resource-conflict'),
           code: 'spoofed',
         },
         response: { status: 409, statusText: '' },
       }),
     ).toMatchObject({
       code: 'resource-conflict',
-      type: 'https://example.com/problems#resource-conflict',
+      type: problemTypeForCode('resource-conflict'),
     });
 
     expect(
       normalizeApiError({
-        body: { type: 'https://example.com/problems#resource-not-found' },
+        body: { type: problemTypeForCode('resource-not-found') },
         response: { status: 404, statusText: '' },
       }).code,
     ).toBe('resource-not-found');
@@ -144,7 +145,7 @@ describe('normalizeApiError', () => {
 
   it('translates registered problem details locally instead of trusting server prose', () => {
     const body = {
-      type: 'https://example.com/problems#step-up-required',
+      type: problemTypeForCode('step-up-required'),
       detail: 'Server-side English copy',
     };
 
@@ -162,7 +163,7 @@ describe('normalizeApiError', () => {
       normalizeApiError({
         body: {
           detail: 'Untrusted provider text',
-          type: 'https://example.com/problems#marketplace-provider-unavailable',
+          type: problemTypeForCode('marketplace-provider-unavailable'),
         },
         response: { status: 503, statusText: '' },
       }).message,

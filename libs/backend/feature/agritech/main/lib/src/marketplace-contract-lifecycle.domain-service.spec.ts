@@ -88,6 +88,7 @@ function fixture(overrides: { mode?: 'mock' | 'live' | 'disabled' } = {}) {
     downloadArtifact: vi.fn().mockResolvedValue(ok({ content: pdfMagic() })),
     findArtifact: vi.fn().mockResolvedValue(ok(artifact)),
     getLifecycle: vi.fn().mockResolvedValue(ok(lifecycle)),
+    getLifecycleForAdmin: vi.fn().mockResolvedValue(ok(lifecycle)),
     listCommissionRatePolicies: vi.fn().mockResolvedValue([{ version: 'v1' }]),
     openDispute: vi.fn().mockResolvedValue(ok(lifecycle)),
     prepareArtifact: vi.fn().mockResolvedValue(ok({ snapshot, snapshotFingerprint: 'snapshot-fingerprint' })),
@@ -256,6 +257,46 @@ describe('MarketplaceContractLifecycleDomainService signatures and settlement', 
     await expect(service.sign(buyer, contractId, 'sign-key-1')).resolves.toBe(lifecycle);
     expect(lifecycleRepository.getLifecycle).toHaveBeenCalledWith(buyer, contractId);
     expect(qualifiedSignature.qualifyContractSignature).not.toHaveBeenCalled();
+  });
+
+  it('completes a replayed signature without calling the signature provider again', async () => {
+    const { providerOperations, qualifiedSignature, service } = fixture();
+    providerOperations.prepareProviderOperation.mockResolvedValue(
+      ok({ attempt: 3, execute: false, operationId: 'operation-1' }),
+    );
+
+    await expect(service.sign(buyer, contractId, 'sign-key-1')).resolves.toBe(lifecycle);
+    expect(qualifiedSignature.qualifyContractSignature).not.toHaveBeenCalled();
+    expect(providerOperations.completeProviderOperation).not.toHaveBeenCalled();
+    expect(providerOperations.failProviderOperation).not.toHaveBeenCalled();
+  });
+
+  it('files an adapter that throws synchronously as an unavailable provider, not a timeout', async () => {
+    const { providerOperations, qualifiedSignature, service } = fixture();
+    // A misbehaving adapter can throw before it ever returns a promise. The
+    // provider race must still fail the attempt and leave no timer behind.
+    qualifiedSignature.qualifyContractSignature.mockImplementation(() => {
+      throw new Error('adapter threw before returning');
+    });
+
+    await expect(service.sign(buyer, contractId, 'sign-key-1')).rejects.toThrow(
+      MarketplaceProviderUnavailableException,
+    );
+    expect(providerOperations.failProviderOperation).toHaveBeenCalledWith(
+      buyer,
+      'operation-1',
+      1,
+      'qualified_signature_failed',
+      undefined,
+    );
+  });
+
+  it('reads a tenant-scoped lifecycle for an administrator without an owning account', async () => {
+    const { lifecycleRepository, service } = fixture();
+
+    await expect(service.getLifecycleForAdmin('buyer-tenant', contractId)).resolves.toBe(lifecycle);
+    expect(lifecycleRepository.getLifecycleForAdmin).toHaveBeenCalledWith('buyer-tenant', contractId);
+    expect(lifecycleRepository.getLifecycle).not.toHaveBeenCalled();
   });
 
   it('files the seller side of a signature against the seller actor type', async () => {

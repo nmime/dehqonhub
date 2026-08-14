@@ -532,6 +532,9 @@ describe('marketplace HTTP contract', () => {
         description: 'Verified seed cooperative',
         displayName: 'Zarafshon Agro',
         id: publicSellerId,
+        // A seller read from the repository is always live: the demo shelf is
+        // synthesised separately and never reaches this projection.
+        provenance: 'live',
         region: 'Samarkand',
         verified: true,
       },

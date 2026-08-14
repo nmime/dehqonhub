@@ -53,6 +53,11 @@ describe('auth locale schema migration', () => {
     expect(upSql).toContain(`check ("locale" in ('en', 'ru', 'uz', 'uz-cyrl'))`);
     expect(downSql).toContain(`update "auth_users" set "locale" = 'uz' where "locale" = 'uz-cyrl'`);
     expect(downSql).toContain(`check ("locale" in ('en', 'ru', 'uz'))`);
-    expect(authMigrations.at(-1)).toBe(Migration20260810120000AddUzbekCyrillicLocale);
+    // Ordering, not position: the Cyrillic constraint only widens a constraint
+    // the Latin migration already installed, and later migrations keep landing
+    // after it.
+    expect(authMigrations.indexOf(Migration20260810120000AddUzbekCyrillicLocale)).toBeGreaterThan(
+      authMigrations.indexOf(Migration20260802170000AddUzbekLocale),
+    );
   });
 });
