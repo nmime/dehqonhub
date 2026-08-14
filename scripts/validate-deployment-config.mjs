@@ -945,10 +945,8 @@ const assertNginxRoutes = (text, { helm = false } = {}) => {
   has(text, 'location ^~ /api/auth/', 'Better Auth API prefix must be proxied to auth-app-api');
   has(text, 'location ^~ /profile/', 'profile/user API prefix route cannot be shadowed by regex static assets');
   assert.ok(
-    section(text, 'location ^~ /profile/ {', 'location ^~ /marketplace/ {').includes(
-      '$frontend_spa_navigation',
-    ),
-    'Shared profile browser navigations must negotiate into the SPA while non-navigation requests stay API-owned.',
+    !section(text, 'location ^~ /profile/ {', 'location ^~ /marketplace/ {').includes('$frontend_spa_navigation'),
+    'Nested profile API paths must not negotiate into the SPA.',
   );
   has(
     text,

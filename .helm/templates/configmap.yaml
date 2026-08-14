@@ -270,10 +270,6 @@ data:
       }
 
       location ^~ /profile/ {
-        if ($frontend_spa_navigation) {
-          return 418;
-        }
-
         {{- if eq (include "boilerplate.appEnabled" (dict "root" . "appId" "user-app-api")) "true" }}
         proxy_http_version 1.1;
         proxy_set_header Host $host;
