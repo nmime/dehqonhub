@@ -1242,6 +1242,15 @@ describe('MarketplacePage route action orchestration', () => {
     viewProps<ProductActions>('home').onFavorite(product);
     expect(navigate).not.toHaveBeenCalledWith(expect.stringMatching(/^\/auth\?returnUrl=/u));
 
+    testState.marketplaceData = { ...buildMarketplaceData(refresh), auth: 'signed-out' };
+    apiMock('marketplaceControllerAddReview').mockClear();
+    window.history.replaceState({}, '', '/products/seed-1?from=shelf');
+    renderPage({ productId: product.id, view: 'product' });
+    await expect(viewProps<ProductDetailActions>('product').onReview(product, 5, 'Guest opinion')).resolves.toBe(false);
+    expect(navigate).toHaveBeenCalledWith(`/auth?returnUrl=${encodeURIComponent('/products/seed-1?from=shelf')}`);
+    expect(apiMock('marketplaceControllerAddReview')).not.toHaveBeenCalled();
+    window.history.replaceState({}, '', '/');
+
     testState.marketplaceData = {
       ...buildMarketplaceData(refresh),
       verification: { data: null, status: 'loading' },

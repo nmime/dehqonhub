@@ -262,6 +262,50 @@ describe('marketplace projections and discovery interactions', () => {
     expect(screen.queryByText(inactiveStock.name)).toBeNull();
   });
 
+  it('promotes the demo shelf and clears every active catalog filter from its own chip', () => {
+    const home = baseActions();
+    render(<MarketplaceHome {...home} products={[listing({ id: 'demo-seed', provenance: 'demo' })]} />);
+
+    expect(screen.getByRole('heading', { level: 2, name: 'agritech.marketplace.demo.title' })).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.demo.cta' }));
+    expect(home.navigate).toHaveBeenCalledWith('/catalog');
+
+    cleanup();
+    const sampled = listing({ id: 'sampled', name: 'Sampled seed', region: 'Buxoro' });
+    const unsampled = listing({ id: 'unsampled', name: 'Unsampled seed', region: 'Buxoro', sampleAvailable: false });
+    render(<MarketplaceCatalog {...baseActions()} locationSearch="" products={[sampled, unsampled]} />);
+
+    const panel = screen.getByRole('complementary', { name: 'agritech.marketplace.filter.title' });
+    const price = within(panel).getAllByRole('spinbutton');
+    const query = within(panel).getByRole('searchbox');
+    const region = within(panel).getByRole('combobox');
+    fireEvent.change(query, { target: { value: 'seed' } });
+    fireEvent.change(region, { target: { value: 'Buxoro' } });
+    fireEvent.change(price[0]!, { target: { value: '10' } });
+    fireEvent.change(price[1]!, { target: { value: '10000000' } });
+    fireEvent.click(within(panel).getByRole('checkbox', { name: 'agritech.marketplace.filter.inStock' }));
+    fireEvent.click(within(panel).getByRole('checkbox', { name: 'agritech.marketplace.filter.sampleAvailable' }));
+    expect(screen.getByText(sampled.name)).toBeTruthy();
+    expect(screen.queryByText(unsampled.name)).toBeNull();
+
+    for (const chip of [
+      'agritech.marketplace.filter.queryChip',
+      'agritech.marketplace.filter.regionChip',
+      'agritech.marketplace.filter.priceChip',
+      'agritech.marketplace.filter.inStock',
+      'agritech.marketplace.filter.sampleAvailable',
+    ]) {
+      const active = screen.getByLabelText('agritech.marketplace.filter.active');
+      fireEvent.click(within(active).getByRole('button', { name: chip }));
+    }
+
+    expect(screen.queryByLabelText('agritech.marketplace.filter.active')).toBeNull();
+    expect((query as HTMLInputElement).value).toBe('');
+    expect((region as HTMLSelectElement).value).toBe('');
+    expect(price.map((input) => (input as HTMLInputElement).value)).toEqual(['', '']);
+    expect(screen.getByText(unsampled.name)).toBeTruthy();
+  });
+
   it('covers product-detail navigation, sampling, review toggles, similar products, and missing products', async () => {
     const actions = baseActions();
     const seed = listing();

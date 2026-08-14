@@ -3,6 +3,12 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { guestFavoritesStorageKey, useGuestFavorites } from './use-guest-favorites';
 
+const storedFavoriteLimit = 200;
+
+const storeFavorites = (ids: readonly string[], version = 1) => {
+  globalThis.localStorage.setItem(guestFavoritesStorageKey, JSON.stringify({ ids, version }));
+};
+
 afterEach(() => {
   globalThis.localStorage.clear();
   vi.restoreAllMocks();
@@ -41,5 +47,52 @@ describe('guest marketplace favorites', () => {
     });
     expect(result.current.ids).toEqual(new Set(['safe-public-id']));
     expect(setItem).toHaveBeenCalledTimes(1);
+  });
+
+  it('discards a payload from another version or shape and unreadable storage', () => {
+    storeFavorites(['listing-1'], 2);
+    expect(renderHook(() => useGuestFavorites()).result.current.ids.size).toBe(0);
+
+    globalThis.localStorage.setItem(guestFavoritesStorageKey, JSON.stringify({ ids: 'listing-1', version: 1 }));
+    expect(renderHook(() => useGuestFavorites()).result.current.ids.size).toBe(0);
+
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('denied');
+    });
+    expect(renderHook(() => useGuestFavorites()).result.current.ids.size).toBe(0);
+  });
+
+  it('drops unsafe stored ids and never grows past the stored favorite limit', () => {
+    const stored = Array.from({ length: storedFavoriteLimit + 4 }, (_, index) => `listing-${index}`);
+    storeFavorites(['../private', ...stored]);
+    const { result } = renderHook(() => useGuestFavorites());
+
+    expect(result.current.ids.size).toBe(storedFavoriteLimit);
+    expect(result.current.ids.has('../private')).toBe(false);
+
+    act(() => {
+      result.current.toggle('one-listing-too-many');
+    });
+    expect(result.current.ids.has('one-listing-too-many')).toBe(false);
+    expect(result.current.ids.size).toBe(storedFavoriteLimit);
+  });
+
+  it('adopts favorites written by another tab and ignores every other key', () => {
+    const { result } = renderHook(() => useGuestFavorites());
+
+    act(() => {
+      globalThis.dispatchEvent(
+        new StorageEvent('storage', {
+          key: guestFavoritesStorageKey,
+          newValue: JSON.stringify({ ids: ['listing-from-another-tab'], version: 1 }),
+        }),
+      );
+    });
+    expect(result.current.ids).toEqual(new Set(['listing-from-another-tab']));
+
+    act(() => {
+      globalThis.dispatchEvent(new StorageEvent('storage', { key: 'dehqonhub.unrelated', newValue: '{}' }));
+    });
+    expect(result.current.ids).toEqual(new Set(['listing-from-another-tab']));
   });
 });
