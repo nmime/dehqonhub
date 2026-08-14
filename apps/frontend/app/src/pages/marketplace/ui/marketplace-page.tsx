@@ -21,6 +21,7 @@ import {
   type VerificationViewDto,
 } from '@app/frontend-api-client';
 import { LanguageSwitcher, ThemeSwitcher } from '../../../shared/ui';
+import { useGuestCart } from '../model/use-guest-cart';
 import { useGuestFavorites } from '../model/use-guest-favorites';
 import { useMarketplaceData, type Resource } from '../model/use-marketplace-data';
 import { MarketplaceAi } from './marketplace-ai';
@@ -45,6 +46,7 @@ import {
   MarketplaceSkeleton,
 } from './marketplace-discovery';
 import { MarketplaceIcon } from './marketplace-icon';
+import { MarketplaceBrandLockup } from './marketplace-brand';
 import { MarketplaceUserManagement } from './marketplace-management';
 import {
   type MarketplaceNavigate,
@@ -56,6 +58,7 @@ import {
 } from './marketplace-ui';
 
 export interface MarketplacePageProps {
+  children?: ReactNode;
   contractId?: string;
   locationSearch?: string;
   navigate?: MarketplaceNavigate;
@@ -127,8 +130,16 @@ const verificationStatusForContract = (verification: Resource<VerificationViewDt
   return status === 'verified' && !canMutate ? 'none' : status;
 };
 
+export const MarketplacePage = observer(function MarketplacePage(props: Readonly<MarketplacePageProps>) {
+  if (props.view === 'embedded') {
+    return <MarketplaceEmbeddedPage {...props} />;
+  }
+  return <MarketplaceDataPage {...props} />;
+});
+
 // eslint-disable-next-line sonarjs/cognitive-complexity -- this owner coordinates fail-closed command handlers across the complete marketplace route surface
-export const MarketplacePage = observer(function MarketplacePage({
+const MarketplaceDataPage = observer(function MarketplaceDataPage({
+  children,
   contractId,
   locationSearch = '',
   navigate = defaultNavigate,
@@ -143,6 +154,7 @@ export const MarketplacePage = observer(function MarketplacePage({
   );
   const { api, requestOptions } = useUserApiClient();
   const data = useMarketplaceData(productId, sellerId);
+  const guestCart = useGuestCart();
   const guestFavorites = useGuestFavorites();
   const [notice, setNotice] = useState<MarketplaceNotice>();
   const [pendingAction, setPendingAction] = useState<string>();
@@ -285,6 +297,14 @@ export const MarketplacePage = observer(function MarketplacePage({
       .filter((id) => guestFavorites.ids.has(id));
     return new Set([...serverIds, ...localIds]);
   }, [data.auth, data.catalog.data, data.favorites.data, guestFavorites.ids]);
+  const visibleCarts = useMemo<Resource<CartViewDto[]>>(
+    () =>
+      data.auth === 'signed-in'
+        ? { ...data.carts, data: [...data.carts.data, ...guestCart.carts] }
+        : { data: guestCart.carts, status: 'ready' },
+    [data.auth, data.carts, guestCart.carts],
+  );
+  const previewCartIds = useMemo(() => new Set(guestCart.carts.map((cart) => cart.id)), [guestCart.carts]);
   const selectedProduct = data.selectedListing.data ?? data.catalog.data.find((product) => product.id === productId);
   const selectedContract = data.contracts.data.find((contract) => contract.id === contractId);
   const buyerPartner = data.partners.data.find((partner) => partner.kind === 'buyer' && partner.status === 'approved');
@@ -383,13 +403,9 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const addToCart = (product: MarketplaceListing, quantity = 1) => {
-    if (!product.transactional) {
-      flash(translate('agritech.marketplace.access.demo'), 'info');
-      return;
-    }
-    if (!canBuy || !buyerPartner) {
-      flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
-      navigate('/verification');
+    if (!product.transactional || !canBuy || !buyerPartner) {
+      guestCart.add(product, quantity);
+      flash(translate('agritech.marketplace.cart.previewAdded'), 'info');
       return;
     }
     void runMutation(
@@ -502,6 +518,11 @@ export const MarketplacePage = observer(function MarketplacePage({
     );
 
   const updateCart = (cart: CartViewDto, productIdToUpdate: string, quantity: number) => {
+    if (guestCart.owns(cart.id)) {
+      guestCart.update(cart.id, productIdToUpdate, quantity);
+      flash(translate('agritech.marketplace.cart.updated'), 'info');
+      return;
+    }
     void runMutation(
       `cart-update:${productIdToUpdate}`,
       (idempotencyKey) =>
@@ -554,6 +575,13 @@ export const MarketplacePage = observer(function MarketplacePage({
   };
 
   const checkout = (cart: CartViewDto, deliveryTerms: DeliveryTerms) => {
+    if (guestCart.owns(cart.id)) {
+      flash(translate('agritech.marketplace.demo.checkoutDone'), 'info');
+      if (data.auth !== 'signed-in') {
+        navigate('/auth?returnUrl=%2Fcart');
+      }
+      return;
+    }
     if (!canBuy) {
       flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
       navigate('/verification');
@@ -1185,7 +1213,7 @@ export const MarketplacePage = observer(function MarketplacePage({
     ...(transactionAccess?.hint ? { transactionHint: transactionAccess.hint } : {}),
   };
 
-  const privateView = view === 'account' || view === 'cart' || view === 'contract' || view === 'verification';
+  const privateView = view === 'account' || view === 'contract' || view === 'verification';
   const catalogView = view === 'catalog' || view === 'home';
   const authChecking = privateView && data.auth === 'checking';
   const authSignedOut = privateView && data.auth === 'signed-out';
@@ -1216,6 +1244,9 @@ export const MarketplacePage = observer(function MarketplacePage({
       rendered = <MarketplaceLoading t={translate} />;
     } else {
       switch (view) {
+        case 'embedded':
+          rendered = children;
+          break;
         case 'catalog':
           rendered = <MarketplaceCatalog {...productActions} locationSearch={locationSearch} />;
           break;
@@ -1264,7 +1295,7 @@ export const MarketplacePage = observer(function MarketplacePage({
               canCheckout={canBuy}
               {...(transactionAccess?.actionLabel ? { checkoutActionLabel: transactionAccess.actionLabel } : {})}
               {...(transactionAccess?.hint ? { checkoutHint: transactionAccess.hint } : {})}
-              carts={data.carts}
+              carts={visibleCarts}
               locale={locale}
               navigate={navigate}
               onCheckout={checkout}
@@ -1276,12 +1307,13 @@ export const MarketplacePage = observer(function MarketplacePage({
                   }
                 : {})}
               onUpdate={(cartId, itemProductId, quantity) => {
-                const cart = data.carts.data.find((entry) => entry.id === cartId);
+                const cart = visibleCarts.data.find((entry) => entry.id === cartId);
                 if (cart) {
                   updateCart(cart, itemProductId, quantity);
                 }
               }}
               pendingAction={pendingAction}
+              previewCartIds={previewCartIds}
               products={data.catalog.data}
               t={translate}
             />
@@ -1441,7 +1473,7 @@ export const MarketplacePage = observer(function MarketplacePage({
   return (
     <div className="dh-marketplace">
       <MarketplaceHeader
-        cartCount={data.carts.data.reduce((count, cart) => count + cart.items.length, 0)}
+        cartCount={visibleCarts.data.reduce((count, cart) => count + cart.items.length, 0)}
         favoriteCount={favoriteIds.size}
         navigate={navigate}
         onSearch={submitSearch}
@@ -1488,7 +1520,7 @@ export const MarketplacePage = observer(function MarketplacePage({
         />
       )}
       <MarketplaceMobileNav
-        cartCount={data.carts.data.reduce((count, cart) => count + cart.items.length, 0)}
+        cartCount={visibleCarts.data.reduce((count, cart) => count + cart.items.length, 0)}
         navigate={navigate}
         t={translate}
         view={view}
@@ -1505,6 +1537,44 @@ export const MarketplacePage = observer(function MarketplacePage({
   );
 });
 
+function MarketplaceEmbeddedPage({
+  children,
+  navigate = defaultNavigate,
+}: Readonly<Pick<MarketplacePageProps, 'children' | 'navigate'>>) {
+  const { t } = useI18n();
+  const translate = useCallback(
+    (key: string, params?: Record<string, number | string>) => t(key as never, params as never),
+    [t],
+  );
+  const [search, setSearch] = useState('');
+  const submitSearch = (event: SyntheticEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    navigate(search.trim() ? `/catalog?q=${encodeURIComponent(search.trim())}` : '/catalog');
+  };
+
+  return (
+    <div className="dh-marketplace">
+      <MarketplaceHeader
+        cartCount={0}
+        favoriteCount={0}
+        navigate={navigate}
+        onSearch={submitSearch}
+        onSelectSuggestion={() => undefined}
+        search={search}
+        setSearch={setSearch}
+        suggestions={{ data: [], status: 'idle' }}
+        t={translate}
+        view="embedded"
+      />
+      <main className="dh-main" id="dh-main">
+        {children}
+      </main>
+      <MarketplaceFooter navigate={navigate} t={translate} />
+      <MarketplaceMobileNav cartCount={0} navigate={navigate} t={translate} view="embedded" />
+    </div>
+  );
+}
+
 interface HeaderProps {
   cartCount: number;
   favoriteCount: number;
@@ -1517,18 +1587,6 @@ interface HeaderProps {
   t: MarketplaceTranslate;
   verificationStatus?: string;
   view: MarketplaceView;
-}
-
-function MarketplaceBrand({ t }: Readonly<{ t: MarketplaceTranslate }>) {
-  const brand = t('agritech.marketplace.brand');
-  const accentStart = Math.max(0, brand.length - 3);
-
-  return (
-    <span className="dh-brand__wordmark">
-      <span>{brand.slice(0, accentStart)}</span>
-      <strong>{brand.slice(accentStart)}</strong>
-    </span>
-  );
 }
 
 function MarketplaceHeader({
@@ -1558,7 +1616,7 @@ function MarketplaceHeader({
           }}
           type="button"
         >
-          <MarketplaceBrand t={t} />
+          <MarketplaceBrandLockup t={t} />
         </button>
         <button
           className={`dh-button dh-button--catalog${view === 'catalog' ? ' is-active' : ''}`}
@@ -1663,7 +1721,7 @@ function MarketplaceHeader({
           />
         </nav>
         <div className="dh-header__preferences">
-          <LanguageSwitcher variant="menu" />
+          <LanguageSwitcher compact variant="menu" />
           <ThemeSwitcher variant="menu" />
         </div>
       </div>
@@ -1681,7 +1739,7 @@ function MarketplaceHeader({
         ))}
       </nav>
       <div className="dh-header__mobile-preferences">
-        <LanguageSwitcher variant="menu" />
+        <LanguageSwitcher compact variant="menu" />
         <ThemeSwitcher variant="menu" />
       </div>
     </header>
@@ -1887,7 +1945,7 @@ function MarketplaceFooter({ navigate, t }: Readonly<{ navigate: MarketplaceNavi
           }}
           type="button"
         >
-          <MarketplaceBrand t={t} />
+          <MarketplaceBrandLockup t={t} />
         </button>
         <p>{t('agritech.marketplace.footer.description')}</p>
       </div>

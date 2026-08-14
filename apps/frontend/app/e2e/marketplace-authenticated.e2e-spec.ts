@@ -784,8 +784,8 @@ test('account entry stays focused while progressive registration preserves its n
   await expect(page.getByLabel('Register email')).toHaveValue('dilnoza@example.com');
 
   await page.setViewportSize({ height: 812, width: 760 });
-  await page.getByRole('combobox', { name: 'Theme' }).click();
-  await page.getByRole('option', { name: 'Dark' }).click();
+  await page.getByRole('button', { name: 'Theme' }).last().click();
+  await page.getByRole('menuitem', { name: 'Dark' }).click();
   await expect(page).toHaveURL(accountRoute);
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.setViewportSize({ height: 812, width: 375 });
@@ -835,8 +835,13 @@ test('reference-led public marketplace keeps local favorites and a polished blac
     page.getByRole('heading', { level: 1, name: "Uzbekistan's entire agro market — on one platform" }),
   ).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Explore the governed demo catalog' })).toBeVisible();
+  await expect(page.getByText('dehqon@demo.dehqonhub.uz')).toBeVisible();
+  await expect(page.getByText('sotuvchi@demo.dehqonhub.uz')).toBeVisible();
+  await expect(page.getByText('xaridor@demo.dehqonhub.uz')).toBeVisible();
   await expect(page.locator('.dh-brand__wordmark').first()).toContainText('DehqonHub');
   await expect(page.locator('.dh-brand__mark img')).toHaveCount(0);
+  await expect(page.locator('svg.dh-brand__mark')).toHaveCount(2);
+  await expect(page.getByRole('button', { name: 'Language' }).last()).toContainText('EN');
   await expectNoHorizontalOverflow(page, '375px reference home');
 
   const favorite = page
@@ -855,6 +860,26 @@ test('reference-led public marketplace keeps local favorites and a polished blac
       page.evaluate((id) => localStorage.getItem('dehqonhub.marketplace.guest-favorites.v1')?.includes(id), listingId),
     )
     .toBe(true);
+
+  const demoCard = page.locator('article').filter({ hasText: demoListing.title });
+  await demoCard.getByRole('button', { name: 'Add to preview cart' }).click();
+  await expect
+    .poll(() =>
+      page.evaluate((id) => localStorage.getItem('dehqonhub.marketplace.guest-cart.v1')?.includes(id), demoListing.id),
+    )
+    .toBe(true);
+  await page.getByRole('button', { name: 'Cart' }).last().click();
+  await expect(page).toHaveURL(/\/cart$/u);
+  await expect(
+    page.getByText(
+      'This preview stays on this device. Sign in and complete verification before a server cart can create a contract.',
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Continue to sign in' })).toBeVisible();
+  await page.getByRole('button', { name: 'DehqonHub' }).first().click();
+  await expect(
+    page.getByRole('heading', { level: 1, name: "Uzbekistan's entire agro market — on one platform" }),
+  ).toBeVisible();
 
   const theme = page.getByRole('button', { name: 'Theme' }).last();
   const publicRouteBeforeThemeChange = page.url();
@@ -967,12 +992,12 @@ for (const viewport of viewports) {
 
     await page.goto('/catalog');
     const liveListingCard = page.locator('article').filter({ hasText: listing.title });
-    await expect(liveListingCard.getByRole('button', { name: 'Add to cart' })).toBeDisabled();
+    await expect(liveListingCard.getByRole('button', { name: 'Add to preview cart' })).toBeEnabled();
     await expect(liveListingCard.getByText('Complete marketplace verification to use this action.')).toBeVisible();
     await expect(liveListingCard.getByRole('button', { name: 'Open verification' })).toBeVisible();
     const demoListingCard = page.locator('article').filter({ hasText: demoListing.title });
     await expect(demoListingCard.getByText('Demo', { exact: true })).toBeVisible();
-    await expect(demoListingCard.getByRole('button', { name: 'Add to cart' })).toBeDisabled();
+    await expect(demoListingCard.getByRole('button', { name: 'Add to preview cart' })).toBeEnabled();
     await expect(
       demoListingCard.getByText(
         'This is synthetic preview data. Browse it freely; transactions and engagement are disabled.',

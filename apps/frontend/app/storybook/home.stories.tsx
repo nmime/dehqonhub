@@ -279,7 +279,8 @@ export const Default: Story = {
       await canvas.findByRole('heading', { name: "Uzbekistan's entire agro market — on one platform" }),
     ).toBeVisible();
     await expect(canvas.getAllByRole('button', { name: 'DehqonHub' })).toHaveLength(2);
-    await expect(canvasElement.querySelectorAll('.dh-brand__mark')).toHaveLength(0);
+    await expect(canvasElement.querySelectorAll('svg.dh-brand__mark')).toHaveLength(2);
+    await expect(canvasElement.querySelectorAll('.dh-brand img')).toHaveLength(0);
     await expect(canvas.getAllByRole('button', { name: /^Catalog$/u })).toHaveLength(1);
     await expect(canvas.getByRole('button', { name: 'For buyers: Catalog' })).toBeVisible();
     await expect(canvas.getByText('Samarqand corn seed')).toBeVisible();
@@ -346,7 +347,17 @@ export const Authentication: Story = {
     await expect(await canvas.findByRole('heading', { name: 'Sign in to DehqonHub' })).toBeVisible();
     await expect(canvas.getByLabelText('Login email')).toHaveAttribute('placeholder', 'user@example.com');
     await expect(canvas.getByLabelText('Login password')).toHaveAttribute('placeholder', 'password');
-    await expect(canvas.getByRole('navigation', { name: 'DehqonHub bottom navigation' })).toBeVisible();
-    await expect(canvasElement.querySelector('.xr-brand__mark')).not.toBeVisible();
+    const loginButton = canvasElement.querySelector<HTMLButtonElement>('.xr-submit-button');
+    if (!loginButton) {
+      throw new Error('The sign-in submit button must be rendered.');
+    }
+    await expect(getComputedStyle(loginButton).color).toBe('rgb(255, 255, 255)');
+    const recoverySectionGaps = Array.from(
+      canvasElement.querySelectorAll<HTMLElement>('.user-auth__recovery section[aria-labelledby]'),
+      (section) => getComputedStyle(section).gap,
+    );
+    await expect(recoverySectionGaps).toEqual(['16px', '16px']);
+    await expect(canvas.getByRole('navigation', { name: 'Primary marketplace navigation' })).toBeVisible();
+    await expect(canvasElement.querySelectorAll('.xr-brand__mark')).toHaveLength(0);
   },
 };

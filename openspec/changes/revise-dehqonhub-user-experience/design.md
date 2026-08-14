@@ -24,8 +24,8 @@ maps onto the existing React owners and state machines.
 - Remove crowded controls, boxed logo artwork, uneven field/button spacing,
   ambiguous icons, empty-looking filters, and unnecessary duplicate home
   category blocks.
-- Let guests bookmark public listings locally while keeping authenticated
-  favorites persisted and API-owned.
+- Let guests bookmark public listings and assemble a seller-grouped preview cart
+  locally while keeping authenticated commercial state persisted and API-owned.
 - Make governed API demo data and frontend test fixtures useful for evaluation
   without ever inventing a transactional production record.
 
@@ -33,11 +33,12 @@ maps onto the existing React owners and state machines.
 
 - No static replacement app, cross-import from landing/site, or new renderer.
 - No browser fixture fallback after an API failure or empty API response.
-- No client-authored cart, order, offer, contract, verification, payment,
-  provider, seller, or account outcome.
-- No public demo credential embedded in source. Test-account credentials require
-  separately provisioned accounts and an explicitly public operator-owned
-  delivery channel.
+- No client-authored commercial cart, order, offer, contract, verification,
+  payment, provider, seller, or account outcome. The browser cart is an
+  explicitly local preview and checkout remains server-gated.
+- No secret or production credential embedded in source. The three published
+  review identities are fixed demo-only accounts created by the guarded
+  non-production seed and are shown only with API-governed demo provenance.
 - No backend API schema, persistence, tenancy, or deployment-topology change.
 
 ## Decisions
@@ -62,9 +63,9 @@ the existing theme control.
 ### Use a transparent text wordmark and owned line icons
 
 The header/footer use the DehqonHub text wordmark from the approved reference.
-The current white-backed raster logo is not rendered. Existing app-owned SVG
-line icons remain the semantic icon source and are normalized through consistent
-containers, stroke weight, and control sizing.
+The current white-backed raster logo is not rendered. Lucide remains the single
+semantic line-icon source and is normalized through consistent containers,
+stroke weight, and control sizing.
 
 ### Separate local bookmarks from server favorites
 
@@ -72,6 +73,15 @@ Signed-out visitors and demo listings may use a versioned local-storage set of
 opaque public listing IDs. The UI labels this as device-local behavior and never
 uses it to authorize a mutation or claim server persistence. Signed-in live
 listing favorites continue to use the generated API and persisted domain state.
+
+### Keep a browser-local cart strictly at the preview boundary
+
+Guests and unverified visitors may add public listings to a versioned local
+seller-grouped cart so the product can be evaluated before account creation.
+The local projection uses the same safe public listing fields as the cart UI,
+is labelled as device-local, and never calls add/update/checkout endpoints.
+Checkout directs the visitor to sign in or verification; only a generated API
+cart may create a contract.
 
 ### Keep demo data honest
 
@@ -81,6 +91,10 @@ demo provenance and disables commerce while allowing local bookmarks. Storybook
 and Playwright use deterministic multi-category fixtures solely as test
 evidence. An API error or genuinely empty authoritative catalog remains an
 explicit recoverable/empty state.
+The home disclosure may list the three fixed reviewer identities provisioned by
+the guarded demo seed, but only while governed demo listings are present. Their
+copy identifies them as demo accounts and never represents them as production
+inventory or production credentials.
 
 ### Make account entry progressive without changing auth authority
 

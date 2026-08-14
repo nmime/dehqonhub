@@ -9,11 +9,12 @@
   more directly falsified by Vitest, Storybook composition, and Playwright.
 - Evidence:
   - marketplace component tests prove semantic structure, populated/active
-    filters with localized example placeholders, local favorites, demo
-    disclosure, and preserved API gates.
+    filters with localized example placeholders, local favorites, the
+    seller-grouped preview cart, demo disclosure, and preserved API gates.
   - the selected user-app Playwright lane proves route navigation, light/black
     theme parity without navigation or authentication redirects, keyboard
-    interaction, and narrow-layout behavior.
+    interaction, narrow-layout behavior, one browser marketplace chrome, and
+    the separate Telegram Mini App boundary.
   - Storybook renders deterministic realistic multi-category API fixtures for
     visual review while production empty/error behavior remains authoritative;
     it also covers filtered, empty-catalog, and signed-out authentication states.
@@ -44,27 +45,41 @@ browser-authored commercial record.
   journey proves the 375 px light/black flow, exact route retention, recovery
   availability, and no horizontal overflow.
 
-- `user-app:test` passed 191 tests; shared `ui-web` passed 116 tests.
+- Normal browser routes now render one marketplace chrome with a transparent
+  inline emblem, compact locale/theme menus, and Lucide navigation icons.
+  Telegram launch routes alone retain the Mini App shell and host controls.
+  The governed demo banner renders only when the public catalog contains demo
+  provenance, while the versioned guest cart persists bounded seller-grouped
+  preview state locally and routes checkout to authentication without calling
+  cart, order, contract, payment, or offer mutation APIs.
+
+- `user-app:test` passed all 196 tests, including the live-only catalog banner
+  exclusion and malformed/version-mismatched local-cart recovery.
 - `user-app:lint`, `user-app:typecheck`, the selected user-app build, and the
   common i18n key build passed without cache reuse.
 - `user-app:e2e-authenticated` passed all eight Chromium journeys, including
   320 px and 375 px layouts, keyboard focus behavior, reduced motion, local
-  favorites, progressive account entry, Russian copy, both approved themes, and
-  horizontal-overflow checks.
+  favorites, persistent preview cart, reviewer identities, progressive account
+  entry, Russian copy, both approved themes, and horizontal-overflow checks.
 - Storybook built successfully and its interaction suite passed 35 stories.
   Manual Chromium review covered the populated, filtered, and empty catalog,
   the purchase-request steps, and the authentication shell at desktop and
   375 px widths in both the cream/green and explicit black palettes. It also
   confirmed continuous search borders, visible placeholders, balanced button
-  padding, transparent wordmarks, icon navigation, and zero horizontal overflow.
-- The selected visual-regression story passed after its reviewed Darwin Chromium
-  baseline was updated. The user-app CLI browser lane passed its 18% function
-  threshold at 21.2% (155/731 functions).
+  padding, transparent wordmarks, icon navigation, white-on-green form-button
+  contrast, 16 px recovery-form rhythm, and zero horizontal overflow.
+- The complete 22-story Chromium visual-regression suite passed after the
+  reviewed user-home baseline and the stale current-main admin-navigation
+  baseline were synchronized. The user-app CLI browser lane passed its 18%
+  function threshold at 21.11% (163/772 functions) using the real marketplace
+  chrome instead of removed Mini App Share/Back controls.
 - FSD, documentation, strict OpenSpec, specification trace validation,
   repository tooling static checks, dependency audit, package-scoped licence
   review, selected closure validation, workspace doctor, formatting, and
-  `git diff --check` passed. The trace inventory is 116 projects, 620 behavior
-  tests, 84 requirements, and 400 evidence entries.
+  `git diff --check` passed. The native secret scan passed with the explicitly
+  public demo identities, and the licence gate recognizes only the four shipped
+  OFL font packages. The trace inventory is 116 projects, 621 behavior tests,
+  84 requirements, and 401 evidence entries.
 - The first exact-SHA PR lane exposed three repository-wide blockers that the
   focused frontend lane could not see. Frontend proxy parity now keeps nested
   `/profile/*` paths API-owned (114 tests passed); the PostgreSQL review seed
@@ -78,12 +93,13 @@ browser-authored commercial record.
 
 ## Demo identity boundary
 
-The governed Storybook and browser fixtures provide realistic catalog and
-signed-out account states without creating publicly reusable production
-credentials. Passwords are not embedded in the application or announced in a
-public banner; authenticated identities remain isolated to test and seed
-environments, while the home-page demo banner identifies browse-only fixture
-data and disables commercial mutations.
+The three fixed reviewer email/password pairs are intentionally public,
+non-secret demo seed identities and are shown in the home-page banner only when
+the API catalog proves demo provenance. They are not production credentials.
+Live-only catalogs do not render the banner, and demo/browse-only users remain
+unable to create commercial server records; favorites and seller-grouped cart
+previews stay in bounded browser storage until the user authenticates into an
+eligible account.
 
 ## Release boundary
 

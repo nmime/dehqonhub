@@ -14,7 +14,12 @@ test('an allow-listed inventory produces no violations', () => {
       MIT: [{ name: 'react' }],
       'Apache-2.0': [{ name: 'typescript' }],
       ISC: [{ name: 'semver' }],
-      'OFL-1.1': [{ name: '@fontsource/noto-sans' }],
+      'OFL-1.1': [
+        { name: '@fontsource-variable/manrope' },
+        { name: '@fontsource-variable/montserrat' },
+        { name: '@fontsource/noto-sans' },
+        { name: '@fontsource/poppins' },
+      ],
       '(MIT AND Zlib)': [{ name: 'pako' }],
     }),
     [],

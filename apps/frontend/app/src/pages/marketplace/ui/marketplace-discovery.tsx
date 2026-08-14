@@ -8,6 +8,7 @@ import type {
 } from '@app/frontend-api-client';
 import type { Resource, ResourceStatus } from '../model/use-marketplace-data';
 import { MarketplaceIcon, type MarketplaceIconName } from './marketplace-icon';
+import { MarketplaceDemoBanner } from './marketplace-demo-banner';
 import { MarketplaceProductCard, ProductMedia } from './marketplace-product-card';
 import {
   formatDate,
@@ -222,28 +223,7 @@ export function MarketplaceHome(props: Readonly<SharedDiscoveryProps>) {
         ))}
       </section>
 
-      {hasDemoProducts ? (
-        <section aria-labelledby="dh-demo-title" className="dh-demo-banner">
-          <span className="dh-seal dh-seal--small">
-            <MarketplaceIcon name="spark" />
-          </span>
-          <div>
-            <p className="dh-eyebrow">{t('agritech.marketplace.access.demoBadge')}</p>
-            <h2 id="dh-demo-title">{t('agritech.marketplace.demo.title')}</h2>
-            <p>{t('agritech.marketplace.demo.description')}</p>
-          </div>
-          <button
-            className="dh-button dh-button--secondary"
-            onClick={() => {
-              navigate('/catalog');
-            }}
-            type="button"
-          >
-            {t('agritech.marketplace.demo.cta')}
-            <MarketplaceIcon name="arrow" />
-          </button>
-        </section>
-      ) : null}
+      {hasDemoProducts ? <MarketplaceDemoBanner navigate={navigate} t={t} /> : null}
 
       <Shelf actions={actions} locale={locale} navigate={navigate} products={products} section="seeds" t={t} />
       <Shelf actions={actions} locale={locale} navigate={navigate} products={products} section="equipment" t={t} />
@@ -1002,7 +982,6 @@ export function MarketplaceProductDetail({
             <label className="dh-quantity">
               <span>{t('agritech.marketplace.product.quantity')}</span>
               <input
-                disabled={transactionRestricted}
                 min="1"
                 onChange={(event) => {
                   setQuantity(Math.max(1, Number(event.target.value) || 1));
@@ -1014,14 +993,18 @@ export function MarketplaceProductDetail({
             <button
               aria-describedby={transactionRestricted ? restrictionId : undefined}
               className="dh-button dh-button--primary"
-              disabled={transactionRestricted || outOfStock || pendingAction === `cart:${product.id}`}
+              disabled={outOfStock || pendingAction === `cart:${product.id}`}
               onClick={() => {
                 onAdd(product, quantity);
               }}
               type="button"
             >
               <MarketplaceIcon name="cart" />
-              {t('agritech.marketplace.product.addToCart')}
+              {t(
+                transactionRestricted
+                  ? 'agritech.marketplace.product.addToPreviewCart'
+                  : 'agritech.marketplace.product.addToCart',
+              )}
             </button>
           </div>
           {transactionRestricted && restrictionHint ? (

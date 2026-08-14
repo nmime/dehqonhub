@@ -245,6 +245,15 @@
   gap: 1rem;
 }
 
+.user-auth__recovery section[aria-labelledby] {
+  display: grid;
+  gap: 1rem;
+}
+
+.user-auth__recovery section[aria-labelledby] > h3 {
+  margin: 0;
+}
+
 .xr-auth-form {
   margin-top: 0.25rem;
 }

@@ -570,8 +570,8 @@ describe('MarketplacePage mutations', () => {
       };
 
       const view = render(<MarketplacePage navigate={vi.fn()} view="catalog" />);
-      const addToCart = screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' });
-      expect(addToCart.hasAttribute('disabled')).toBe(true);
+      const addToCart = screen.getByRole('button', { name: 'agritech.marketplace.product.addToPreviewCart' });
+      expect(addToCart.hasAttribute('disabled')).toBe(false);
       expect(screen.getByText('agritech.marketplace.access.verify')).toBeTruthy();
       expect(screen.getByRole('button', { name: 'agritech.marketplace.access.action.verify' })).toBeTruthy();
 

@@ -17,7 +17,7 @@ import { useUserRuntime } from './user-runtime-context';
 /**
  * Everything outside the marketplace is fetched when its route is first opened.
  * The marketplace itself stays in the entry bundle because it renders `/` and
- * supplies the chrome every other route is embedded in, but the sign-in flow,
+ * supplies the chrome every non-Telegram route is embedded in, but the sign-in flow,
  * the OAuth callbacks, account preferences, the Telegram mini-app views, the
  * problem registry and the farmer consoles are each a screen most visits never
  * reach — and between them they were pulling their whole feature graph,

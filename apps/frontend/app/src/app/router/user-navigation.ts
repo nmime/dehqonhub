@@ -16,6 +16,10 @@ export const normalizePath = (path: string): string => {
 };
 
 const marketplaceRoutes = new Set(['/', '/account', '/cart', '/catalog', '/favorites', '/requests', '/verification']);
+const bareRoutes = new Set(['/link/telegram', '/telegram-mini-app', '/tma', '/tma/auth']);
+
+/** Telegram owns the outer host chrome for these launch and linking routes. */
+export const isBareRoute = (path: string): boolean => bareRoutes.has(normalizePath(path));
 
 /**
  * Marketplace routes own their complete DehqonHub chrome. Keeping the matcher

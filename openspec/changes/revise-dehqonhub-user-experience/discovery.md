@@ -12,9 +12,9 @@
 
 ## Actors and Outcomes
 
-- A signed-out visitor can browse, search, filter, change language or theme, and
-  bookmark public or governed-demo listings locally without being redirected to
-  authentication by presentation-only behavior.
+- A signed-out visitor can browse, search, filter, change language or theme,
+  bookmark public or governed-demo listings, and assemble a browser-local
+  preview cart without being redirected by presentation-only behavior.
 - A visitor entering an account can sign in without seeing registration fields,
   or create an account through a short method, identity, and credentials flow
   that preserves drafted non-secret identity values when stepping backward.
@@ -41,6 +41,13 @@
 - Guest favorites persist only opaque public listing IDs in versioned local
   storage. They grant no commercial authority and never replace authenticated
   server-owned favorites.
+- A guest preview cart persists bounded public listing and seller projections in
+  versioned local storage, groups lines by seller, and never calls commercial
+  mutation or checkout endpoints. Signing in or verification is required before
+  a server cart can create a contract.
+- The demo banner may show only the three fixed identities created by the
+  guarded demo seed, only when the API returns governed demo listings, and must
+  label them as reviewer accounts rather than production users.
 - Language and theme changes apply locally first. An anonymous rejection from
   optional preference persistence must not change the current route or create
   an authentication requirement; backend authorization remains unchanged.
@@ -60,6 +67,12 @@
   never receives horizontal page overflow.
 - A guest bookmarks a governed-demo seed listing, sees the device-local favorite
   count and Favorites route update, then removes it without a marketplace write.
+- A guest adds listings from two sellers, sees two device-local preview carts,
+  changes quantities, and is sent to focused account entry rather than a
+  browser-authored checkout when requesting a contract.
+- A governed demo catalog shows the farmer, seller, and buyer reviewer accounts
+  with copy controls; a live-only or empty catalog does not publish the account
+  list.
 - A visitor chooses Create account, selects email, enters a name and address,
   advances to credentials, steps back, and finds the identity draft intact;
   choosing Telegram instead delegates to the configured provider.
@@ -76,8 +89,9 @@
 - A white-backed raster logo, text glyphs used as unexplained navigation icons,
   unequal button padding, clipped placeholders, empty filter affordances, or an
   automatic dark-color inversion do not satisfy the reference.
-- Storybook and Playwright fixtures cannot appear as authoritative production
-  inventory, orders, contracts, verification, payment, or provider results.
+- Storybook, Playwright, local preview carts, and reviewer identities cannot
+  appear as authoritative production inventory, orders, contracts,
+  verification, payment, or provider results.
 - Rendering sign-in, registration, connected providers, profile status, and all
   recovery controls as one form wall is invalid; account entry asks one focused
   question set at a time and keeps recovery independently reachable.
@@ -87,8 +101,8 @@
 ## Failure and Operational Modes
 
 - Missing media uses an intentional category illustration; malformed or denied
-  local storage fails to an empty guest-favorite set without navigation or
-  server mutation.
+  local storage fails to empty guest-favorite and preview-cart state without
+  navigation or server mutation.
 - Public API empty/error results remain explicit and recoverable. Protected API
   401 responses still fail closed and preserve the sanitized return URL.
 - Production release requires an immutable source/image SHA, database and
@@ -105,9 +119,9 @@
   generated APIs and route owners remain authoritative for functionality.
 - Both light and black themes are required; black is intentionally designed,
   not removed.
-- Public demo credentials are not required and must not be embedded in source or
-  a public banner; realistic fixtures and governed demo provenance are the safe
-  evaluation boundary.
+- The three fixed reviewer identities are intentionally public demo data, not
+  secrets. They are valid only in explicitly seeded demo environments and are
+  disclosed only next to governed demo provenance.
 - English, Russian, Uzbek Latin, and Uzbek Cyrillic remain the supported locale
   set.
 

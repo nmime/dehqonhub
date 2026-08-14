@@ -162,6 +162,13 @@ contract, verification, account, cart, favorites, and AI surfaces SHALL retain
 their owning real state machines while following the same spacing, typography,
 icon, card, and responsive rules.
 
+Guests and unverified visitors MAY assemble a versioned browser-local preview
+cart grouped by seller. That preview SHALL be explicitly local, SHALL use only
+safe public listing projections, and SHALL NOT invoke add-to-cart, update-cart,
+checkout, contract, or verification mutations. The governed demo home MAY show
+the three fixed reviewer identities created by the guarded demo seed, but only
+while API-governed demo listings are present and only with explicit demo copy.
+
 The account entry route SHALL present one focused task at a time. Returning
 visitors SHALL receive a compact sign-in form and connected-provider choices;
 new visitors SHALL receive a separate registration flow ordered as method,
@@ -189,6 +196,9 @@ return-route behavior.
 - Guest favorites store only opaque public listing IDs in a versioned
   browser-local set, are described as device-local, and grant no authenticated
   authority. Signed-in live-listing favorites remain server-authoritative.
+- Guest preview carts are bounded and versioned, remain device-local, group
+  public listing projections by seller, and cannot create a server cart,
+  checkout, contract, or authorization outcome.
 - Production catalog, seller, offer, order, contract, verification, account,
   payment, provider, and AI facts come only from generated API responses.
   Storybook/browser fixtures are test-only, and API-empty/error states never
@@ -201,7 +211,9 @@ return-route behavior.
   the current route or manufacturing an authentication redirect.
 - Account-entry mode or registration-step changes remain on `/auth`, preserve
   drafted non-secret identity values, and never bypass authentication or expose
-  credentials in URLs, browser storage, public fixtures, or page copy.
+  secret or production credentials in URLs, browser storage, fixtures, or page
+  copy. The fixed reviewer identities are explicitly public demo data and appear
+  only with API-governed demo provenance.
 
 **Failure behavior:**
 
@@ -212,8 +224,9 @@ return-route behavior.
 - Unsupported width, locale expansion, or either theme MUST NOT create
   horizontal page overflow, clipped primary actions, invisible focus, or
   unreadable text.
-- Local-storage denial or malformed stored data fails safely to an empty local
-  favorite set and never redirects, crashes, or changes server state.
+- Local-storage denial or malformed stored data fails safely to empty local
+  favorite and preview-cart state and never redirects, crashes, or changes
+  server state.
 - Changing account-entry mode or registration step MUST NOT trigger an
   unrelated navigation, discard drafted name or email fields, duplicate all
   registration questions on one screen, or replace a failed auth response with
@@ -236,6 +249,21 @@ return-route behavior.
   opaque-ID set, the UI identifies the device-local boundary, no authentication
   redirect occurs, and no marketplace API mutation or commercial authority is
   claimed
+
+#### Scenario: Guest cart remains a local preview
+
+- **WHEN** a guest adds public listings from one or more sellers, changes a
+  quantity, and requests checkout
+- **THEN** seller-grouped cart lines persist only in versioned browser storage,
+  the header and cart update without a marketplace mutation, and contract review
+  requires focused sign-in or verification instead of a browser-authored order
+
+#### Scenario: Governed demo exposes reviewer entry honestly
+
+- **WHEN** the API supplies governed demo listings on the home route
+- **THEN** the farmer, seller, and buyer reviewer identities are visibly labelled
+  as demo accounts with copy controls, while a live-only, empty, or failed
+  catalog does not publish the identity list
 
 #### Scenario: Authoritative empty and demo states stay honest
 

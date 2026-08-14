@@ -6,6 +6,7 @@ export type MarketplaceView =
   | 'cart'
   | 'catalog'
   | 'contract'
+  | 'embedded'
   | 'favorites'
   | 'home'
   | 'product'

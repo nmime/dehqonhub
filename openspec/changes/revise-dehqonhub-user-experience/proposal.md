@@ -22,8 +22,12 @@ force authentication even though a clearly local bookmark is sufficient.
   contrast, spacing, and component states.
 - Keep catalog filters labelled, populated from authoritative catalog values,
   visibly active, keyboard-operable, and responsive through a mobile sheet.
-- Add guest-only browser-local favorites without fabricating authenticated
-  marketplace records; signed-in favorites remain server-authoritative.
+- Add guest-only browser-local favorites and a seller-grouped preview cart
+  without fabricating authenticated marketplace records; signed-in live
+  favorites and commercial carts remain server-authoritative.
+- Surface the three explicitly seeded review identities only alongside the
+  governed demo catalog so evaluators can exercise role-specific flows without
+  treating those identities as production users.
 - Present API-provided demo listings as clearly labelled browse-only preview
   data and provide deterministic realistic Storybook/browser fixtures for
   frontend evaluation without a production fixture fallback.

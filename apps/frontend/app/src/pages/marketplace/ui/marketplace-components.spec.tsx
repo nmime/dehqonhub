@@ -19,6 +19,8 @@ import {
   MarketplaceVerification,
 } from './marketplace-commerce';
 import { MarketplaceCatalog, MarketplaceProductDetail, MarketplaceSellerProfile } from './marketplace-discovery';
+import { MarketplaceDemoBanner } from './marketplace-demo-banner';
+import { MarketplaceIcon } from './marketplace-icon';
 import { MarketplaceProductCard, ProductMedia } from './marketplace-product-card';
 import type { MarketplaceListing, MarketplaceTranslate } from './marketplace-ui';
 
@@ -260,7 +262,16 @@ afterEach(() => {
 });
 
 describe('DehqonHub marketplace components', () => {
-  it('keeps synthetic catalog content browseable while every transaction control is disabled', () => {
+  it('uses the approved Lucide line-icon set without text or emoji fallbacks', () => {
+    const { container } = render(<MarketplaceIcon name="cart" />);
+    const icon = container.querySelector('[data-marketplace-icon="cart"]');
+
+    expect(icon?.classList.contains('lucide-shopping-cart')).toBe(true);
+    expect(icon?.getAttribute('stroke-width')).toBe('1.8');
+    expect(icon?.textContent).toBe('');
+  });
+
+  it('keeps governed demo content browseable with a local preview cart boundary', () => {
     const onAdd = vi.fn();
     const onFavorite = vi.fn();
     render(
@@ -279,12 +290,21 @@ describe('DehqonHub marketplace components', () => {
     expect(screen.getByText('agritech.marketplace.access.demo')).toBeTruthy();
     const favorite = screen.getByRole('button', { name: 'agritech.marketplace.product.addFavorite' });
     expect(favorite.hasAttribute('disabled')).toBe(false);
-    expect(
-      screen.getByRole('button', { name: 'agritech.marketplace.product.addToCart' }).hasAttribute('disabled'),
-    ).toBe(true);
-    expect(onAdd).not.toHaveBeenCalled();
+    const previewCart = screen.getByRole('button', { name: 'agritech.marketplace.product.addToPreviewCart' });
+    expect(previewCart.hasAttribute('disabled')).toBe(false);
+    fireEvent.click(previewCart);
+    expect(onAdd).toHaveBeenCalledWith(demoSeed);
     fireEvent.click(favorite);
     expect(onFavorite).toHaveBeenCalledWith(demoSeed);
+  });
+
+  it('publishes all three guarded reviewer identities in the governed demo banner', () => {
+    render(<MarketplaceDemoBanner navigate={vi.fn()} t={t} />);
+
+    expect(screen.getByText('dehqon@demo.dehqonhub.uz')).toBeTruthy();
+    expect(screen.getByText('sotuvchi@demo.dehqonhub.uz')).toBeTruthy();
+    expect(screen.getByText('xaridor@demo.dehqonhub.uz')).toBeTruthy();
+    expect(screen.getAllByRole('button', { name: /^agritech\.marketplace\.demo\.copy:/u })).toHaveLength(3);
   });
   it('keeps catalog branches distinct and applies real record filters', () => {
     window.history.replaceState({}, '', '/catalog?section=seeds');

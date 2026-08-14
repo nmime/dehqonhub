@@ -41,20 +41,49 @@ function installRadixPointerMocks() {
 }
 
 function chooseSelectOption(label: string | RegExp, option: string) {
-  const trigger = screen.getByRole('combobox', { name: label });
-
   installRadixPointerMocks();
-  fireEvent.pointerDown(trigger, {
+  const selectTrigger = screen.queryByRole('combobox', { name: label });
+  if (selectTrigger) {
+    fireEvent.pointerDown(selectTrigger, {
+      button: 0,
+      ctrlKey: false,
+      pointerType: 'mouse',
+    });
+
+    const optionElement = document.querySelector<HTMLElement>(`[role="option"][data-value="${option}"]`);
+
+    expect(optionElement).toBeTruthy();
+    fireEvent.click(optionElement as HTMLElement);
+    return;
+  }
+
+  const menuTrigger = screen.getAllByRole('button', { name: label })[0];
+  const menuLabels: Record<string, string> = {
+    dark: 'Dark',
+    en: 'English',
+    light: 'Light',
+    ru: 'Russian',
+    system: 'System',
+    uz: 'Uzbek (Latin)',
+    'uz-Cyrl': 'Uzbek (Cyrillic)',
+  };
+
+  expect(menuTrigger).toBeTruthy();
+  fireEvent.pointerDown(menuTrigger as HTMLElement, {
     button: 0,
     ctrlKey: false,
     pointerType: 'mouse',
   });
-
-  const optionElement = document.querySelector<HTMLElement>(`[role="option"][data-value="${option}"]`);
-
-  expect(optionElement).toBeTruthy();
-  fireEvent.click(optionElement as HTMLElement);
+  fireEvent.click(screen.getByRole('menuitem', { name: menuLabels[option] ?? option }));
 }
+
+const getSubmitButton = (name: string | RegExp): HTMLButtonElement => {
+  const button = screen
+    .getAllByRole('button', { name })
+    .find((candidate) => candidate.getAttribute('type') === 'submit');
+  expect(button).toBeTruthy();
+  return button as HTMLButtonElement;
+};
 
 type FetchReply = Response | { rejectsWith: Error };
 
@@ -217,22 +246,18 @@ const expectFetchRequest = (
   return init as FetchInit;
 };
 
-// Waits for the async router to render the persistent shell (its nav is present
-// on every route) so the outlet content is available to query.
-const awaitShell = () => screen.findAllByRole('link', { name: 'Home' });
+// Waits for either the marketplace or Telegram shell to mount its route outlet.
+const awaitShell = () => screen.findByRole('main');
 
 const submitLogin = async (email = 'user@example.com') => {
   await awaitShell();
-  if (!screen.queryByLabelText('Login email')) {
-    fireEvent.click(screen.getAllByRole('link', { name: /^(Auth|Вход)$/u })[0]!);
-  }
   fireEvent.change(await screen.findByLabelText('Login email'), {
     target: { value: email },
   });
   fireEvent.change(screen.getByLabelText('Login password'), {
     target: { value: 'password123' },
   });
-  fireEvent.click(screen.getByRole('button', { name: 'Login' }));
+  fireEvent.click(getSubmitButton('Login'));
 };
 
 const openEmailRegistration = async () => {
@@ -281,7 +306,12 @@ describe('User app shell', () => {
 
     expect(container.querySelectorAll('.dh-marketplace')).toHaveLength(1);
     expect(container.querySelectorAll('.dh-brand__mark img')).toHaveLength(0);
+    expect(container.querySelectorAll('svg.dh-brand__mark')).toHaveLength(2);
     expect(container.querySelectorAll('.dh-brand__wordmark')).toHaveLength(2);
+    expect(screen.getAllByRole('button', { name: 'Language' })).toHaveLength(2);
+    expect(
+      screen.getAllByRole('button', { name: 'Language' }).every((button) => button.textContent.includes('EN')),
+    ).toBe(true);
     expect(html).toContain('Dehqon');
     expect(html).not.toContain('xr-mini-app-bottom-bar');
     expect(html).not.toContain('design v3');
@@ -418,38 +448,34 @@ describe('User app shell', () => {
     expect(failed.container.innerHTML).not.toContain('xr-mini-app-bottom-bar');
   });
 
-  it('returns through browser history for routes opened by the app', async () => {
+  it('keeps focused account entry inside the marketplace chrome', async () => {
     window.history.replaceState({}, '', '/auth');
     vi.stubGlobal(
       'fetch',
       vi.fn(() => Promise.resolve(jsonResponse({}, false, 401))),
     );
-    render(<App />);
+    const { container } = render(<App />);
     await awaitShell();
-    fireEvent.click(screen.getAllByRole('link', { name: 'Settings' })[0]!);
-    await screen.findByText('Preferences');
 
-    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
-
-    expect(back).toHaveBeenCalledOnce();
-    back.mockRestore();
+    expect(await screen.findByRole('heading', { name: 'Sign in to DehqonHub' })).toBeTruthy();
+    expect(container.querySelector('.dh-marketplace')).toBeTruthy();
+    expect(container.querySelector('.xr-mini-app-bottom-bar')).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Back' })).toBeNull();
   });
 
-  it('falls back to home when there is no in-app history to pop', async () => {
-    installSignedOutMarketplaceFetch();
-    window.history.pushState({}, '', '/settings');
-    const back = vi.spyOn(window.history, 'back').mockImplementation(() => undefined);
+  it('keeps direct settings navigation on its route without Telegram chrome', async () => {
+    window.history.replaceState({}, '', '/settings');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() => Promise.resolve(jsonResponse({}, false, 401))),
+    );
 
-    render(<App />);
-    await awaitShell();
-    fireEvent.click(screen.getByRole('button', { name: 'Back' }));
+    const { container } = render(<App />);
 
-    expect(
-      await screen.findByRole('heading', { name: "Uzbekistan's entire agro market — on one platform" }),
-    ).toBeTruthy();
-    expect(back).not.toHaveBeenCalled();
-    back.mockRestore();
+    expect(await screen.findByText('Preferences')).toBeTruthy();
+    expect(window.location.pathname).toBe('/settings');
+    expect(container.querySelector('.dh-marketplace')).toBeTruthy();
+    expect(container.querySelector('.xr-mini-app-bottom-bar')).toBeNull();
   });
 
   it('hydrates an authenticated session when settings is loaded directly', async () => {
@@ -489,7 +515,7 @@ describe('User app shell', () => {
     const fetchMock = vi.fn(() => Promise.resolve(jsonResponse({}, false, 401)));
     vi.stubGlobal('fetch', fetchMock);
 
-    render(<App />);
+    const settingsView = render(<App />);
 
     await screen.findByText('Preferences');
     await waitFor(() => {
@@ -499,7 +525,9 @@ describe('User app shell', () => {
     expect(events).not.toContain('auth-required');
     expect(apiRuntimeEvents.getState().authRequired).toBe(false);
 
-    fireEvent.click(screen.getAllByRole('link', { name: 'Profile' })[0]!);
+    settingsView.unmount();
+    window.history.replaceState({}, '', '/profile');
+    render(<App />);
 
     await waitFor(() => {
       expect(events).toContain('auth-required');
@@ -529,9 +557,11 @@ describe('User app shell', () => {
       // eslint-disable-next-line no-await-in-loop -- routes render sequentially; each is unmounted before the next.
       await awaitShell();
       const html = container.innerHTML;
+      const isTelegramRoute = ['/tma', '/tma/auth', '/telegram-mini-app', '/link/telegram'].includes(route);
 
       expect(html).toContain('<main');
-      expect(html).toContain('xr-mini-app-bottom-bar');
+      expect(html.includes('xr-mini-app-bottom-bar')).toBe(isTelegramRoute);
+      expect(html.includes('dh-marketplace')).toBe(!isTelegramRoute);
       expect(html).not.toContain('data-design-marker');
       expect(html).not.toContain('route readiness');
       expect(html).not.toContain('nonblank smoke');
@@ -806,7 +836,7 @@ describe('User app shell', () => {
     fireEvent.change(screen.getByLabelText('Login password'), {
       target: { value: 'password123' },
     });
-    fireEvent.click(screen.getByRole('button', { name: 'Login' }));
+    fireEvent.click(getSubmitButton('Login'));
 
     expect(await screen.findByText('Ready: profile-subject')).toBeTruthy();
   });
@@ -834,7 +864,8 @@ describe('User app shell', () => {
     setFetch(jsonResponse({ data: {} }));
     window.history.pushState({}, '', '/auth');
     render(<App />);
-    fireEvent.click(await screen.findByRole('button', { name: 'Login' }));
+    await screen.findByLabelText('Login email');
+    fireEvent.click(getSubmitButton('Login'));
     await waitFor(() => {
       expect(screen.getByText('Sign in or register to continue.')).toBeTruthy();
     });

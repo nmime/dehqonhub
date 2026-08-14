@@ -264,11 +264,20 @@ describe('marketplace projections and discovery interactions', () => {
 
   it('promotes the demo shelf and clears every active catalog filter from its own chip', () => {
     const home = baseActions();
+
+    render(<MarketplaceHome {...home} products={[listing({ id: 'live-seed', provenance: 'live' })]} />);
+    expect(screen.queryByRole('heading', { level: 2, name: 'agritech.marketplace.demo.title' })).toBeNull();
+    expect(screen.queryByText('dehqon@demo.dehqonhub.uz')).toBeNull();
+
+    cleanup();
     render(<MarketplaceHome {...home} products={[listing({ id: 'demo-seed', provenance: 'demo' })]} />);
 
     expect(screen.getByRole('heading', { level: 2, name: 'agritech.marketplace.demo.title' })).toBeTruthy();
-    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.demo.cta' }));
-    expect(home.navigate).toHaveBeenCalledWith('/catalog');
+    expect(screen.getByText('dehqon@demo.dehqonhub.uz')).toBeTruthy();
+    expect(screen.getByText('sotuvchi@demo.dehqonhub.uz')).toBeTruthy();
+    expect(screen.getByText('xaridor@demo.dehqonhub.uz')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.demo.signIn' }));
+    expect(home.navigate).toHaveBeenCalledWith('/auth');
 
     cleanup();
     const sampled = listing({ id: 'sampled', name: 'Sampled seed', region: 'Buxoro' });
@@ -470,7 +479,11 @@ describe('marketplace projections and discovery interactions', () => {
         similar={[]}
       />,
     );
-    expect(screen.getByLabelText('agritech.marketplace.product.quantity').hasAttribute('disabled')).toBe(true);
+    expect(screen.getByLabelText('agritech.marketplace.product.quantity').hasAttribute('disabled')).toBe(false);
+    expect(screen.getByRole('button', { name: 'agritech.marketplace.product.addToPreviewCart' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'agritech.marketplace.product.sample' }).hasAttribute('disabled')).toBe(
+      true,
+    );
 
     cleanup();
     render(

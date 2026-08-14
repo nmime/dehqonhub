@@ -189,7 +189,7 @@ describe('social auth and TMA UI', () => {
   });
 
   it('uses browser back and Web Share from the same shell outside Telegram', async () => {
-    resetPath('/profile?tgWebAppData=secret&ref=friend');
+    resetPath('/tma?tgWebAppData=secret&ref=friend');
     const share = vi.fn(() => Promise.resolve());
     vi.stubGlobal('navigator', { share });
 
@@ -203,7 +203,7 @@ describe('social auth and TMA UI', () => {
     expect(share).toHaveBeenCalledWith({
       text: 'Manage partners, inputs, produce, orders, delivery, payments, and field operations.',
       title: 'DehqonHub',
-      url: 'https://app.local.test/profile?ref=friend',
+      url: 'https://app.local.test/tma?ref=friend',
     });
     fireEvent.click(screen.getByRole('button', { name: 'Back' }));
     await waitFor(() => {
@@ -666,10 +666,10 @@ describe('social auth and TMA UI', () => {
     resetPath('/auth');
     render(<App />);
 
-    fireEvent.click((await screen.findAllByRole('link', { name: 'Settings' }))[0]!);
+    fireEvent.click(await screen.findByRole('button', { name: 'API problem types' }));
 
     await waitFor(() => {
-      expect(window.location.pathname).toBe('/settings');
+      expect(window.location.pathname).toBe('/problems');
     });
   });
 });

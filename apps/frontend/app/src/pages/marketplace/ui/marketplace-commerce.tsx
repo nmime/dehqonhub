@@ -72,6 +72,7 @@ interface CartProps {
   onCheckoutAction?: () => void;
   onUpdate: (cartId: string, listingPublicationId: string, quantity: number) => void;
   pendingAction?: string;
+  previewCartIds?: ReadonlySet<string>;
   products: MarketplaceListing[];
   t: MarketplaceTranslate;
 }
@@ -87,12 +88,14 @@ export function MarketplaceCart({
   onCheckoutAction,
   onUpdate,
   pendingAction,
+  previewCartIds,
   products,
   t,
 }: Readonly<CartProps>) {
   const [activeId, setActiveId] = useState<string>();
   const [delivery, setDelivery] = useState<Record<string, DeliveryTerms>>({});
   const selected = carts.data.find((cart) => cart.id === activeId) ?? carts.data[0];
+  const selectedIsPreview = selected ? previewCartIds?.has(selected.id) === true : false;
   const checkoutHintId = 'marketplace-cart-checkout-hint';
   const productById = useMemo(() => new Map(products.map((product) => [product.id, product])), [products]);
   const sellerNameFor = (cart: CartViewDto): string => cart.seller.displayName;
@@ -251,20 +254,24 @@ export function MarketplaceCart({
             ))}
           </fieldset>
           <button
-            aria-describedby={!canCheckout && checkoutHint ? checkoutHintId : undefined}
+            aria-describedby={
+              (!canCheckout || selectedIsPreview) && (checkoutHint || selectedIsPreview) ? checkoutHintId : undefined
+            }
             className="dh-button dh-button--primary dh-button--block"
-            disabled={!canCheckout || pendingAction === `checkout:${selected.id}`}
+            disabled={(!canCheckout && !selectedIsPreview) || pendingAction === `checkout:${selected.id}`}
             onClick={() => {
               onCheckout(selected, selectedDelivery);
             }}
             type="button"
           >
             <MarketplaceIcon name="contract" />
-            {t('agritech.marketplace.cart.reviewContract')}
+            {selectedIsPreview
+              ? t('agritech.marketplace.cart.previewCheckout')
+              : t('agritech.marketplace.cart.reviewContract')}
           </button>
-          {!canCheckout && checkoutHint ? (
+          {selectedIsPreview || (!canCheckout && checkoutHint) ? (
             <div className="dh-state-inline" id={checkoutHintId}>
-              <span>{checkoutHint}</span>
+              <span>{selectedIsPreview ? t('agritech.marketplace.cart.previewHint') : checkoutHint}</span>
               {checkoutActionLabel && onCheckoutAction ? (
                 <button className="dh-text-button" onClick={onCheckoutAction} type="button">
                   {checkoutActionLabel}

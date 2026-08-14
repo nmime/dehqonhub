@@ -72,6 +72,15 @@ interface ProductCardProps {
   onTransactionAction?: () => void;
 }
 
+const cartActionLabel = (pending: boolean, transactionRestricted: boolean, t: MarketplaceTranslate): string => {
+  if (pending) {
+    return t('agritech.marketplace.loading');
+  }
+  return t(
+    transactionRestricted ? 'agritech.marketplace.product.addToPreviewCart' : 'agritech.marketplace.product.addToCart',
+  );
+};
+
 export function MarketplaceProductCard({
   canTransact = true,
   favorite,
@@ -150,14 +159,14 @@ export function MarketplaceProductCard({
         <button
           aria-describedby={transactionRestricted ? restrictionId : undefined}
           className="dh-button dh-button--primary dh-button--block"
-          disabled={transactionRestricted || outOfStock || cartPending}
+          disabled={outOfStock || cartPending}
           onClick={() => {
             onAdd(product);
           }}
           type="button"
         >
           <MarketplaceIcon name={cartPending ? 'check' : 'cart'} />
-          {cartPending ? t('agritech.marketplace.loading') : t('agritech.marketplace.product.addToCart')}
+          {cartActionLabel(cartPending, transactionRestricted, t)}
         </button>
         {transactionRestricted && restrictionHint ? (
           <div className="dh-state-inline" id={restrictionId}>

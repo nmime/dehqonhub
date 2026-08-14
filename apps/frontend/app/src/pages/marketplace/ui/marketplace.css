@@ -20,6 +20,45 @@
   --dh-shadow-soft: 0 1px 0 rgb(43 43 43 / 4%);
   --dh-font-body: 'Poppins', 'Manrope Variable', sans-serif;
   --dh-font-display: 'Poppins', 'Montserrat Variable', sans-serif;
+  --xr-color-background: var(--dh-cream);
+  --xr-color-background-accent: var(--dh-green-soft);
+  --xr-color-surface: var(--dh-surface);
+  --xr-color-surface-strong: var(--dh-surface);
+  --xr-color-border: var(--dh-border);
+  --xr-color-text: var(--dh-ink);
+  --xr-color-muted: var(--dh-muted);
+  --xr-color-primary: var(--dh-green);
+  --xr-color-primary-strong: var(--dh-green-hover);
+  --xr-color-primary-contrast: #fff;
+  --xr-color-info: var(--dh-green-strong);
+  --xr-color-success: var(--dh-green-strong);
+  --xr-color-warning: var(--dh-warning);
+  --xr-color-destructive: var(--dh-danger);
+  --xr-border: var(--dh-border);
+  --xr-muted: var(--dh-muted);
+  --xr-text: var(--dh-ink);
+  --xr-surface: var(--dh-surface);
+  --xr-control-background: var(--dh-surface-muted);
+  --xr-input-background: var(--dh-surface);
+  --xr-card-background: var(--dh-surface);
+  --xr-feedback-background: var(--dh-surface);
+  --background: var(--xr-color-surface-strong);
+  --foreground: var(--xr-color-text);
+  --card: var(--xr-card-background);
+  --card-foreground: var(--xr-color-text);
+  --popover: var(--xr-color-surface-strong);
+  --popover-foreground: var(--xr-color-text);
+  --primary: var(--xr-color-primary);
+  --primary-foreground: var(--xr-color-primary-contrast);
+  --secondary: var(--xr-control-background);
+  --secondary-foreground: var(--xr-color-text);
+  --muted: var(--xr-control-background);
+  --muted-foreground: var(--xr-color-muted);
+  --accent: color-mix(in srgb, var(--xr-color-primary) 12%, transparent);
+  --accent-foreground: var(--xr-color-primary-strong);
+  --border: var(--xr-color-border);
+  --input: var(--xr-color-border);
+  --ring: var(--xr-color-primary);
   background: var(--dh-cream);
   color: var(--dh-ink);
   font-family: var(--dh-font-body);
@@ -49,6 +88,7 @@
   --dh-footer-muted: #b9cabb;
   --dh-shadow: 0 1rem 3rem rgb(0 0 0 / 34%);
   --dh-shadow-soft: 0 1px 0 rgb(255 255 255 / 5%);
+  --xr-color-primary-contrast: #07170d;
   background: var(--dh-cream);
 }
 
@@ -60,8 +100,11 @@
 }
 
 .dh-marketplace :where(button, input, select, textarea) {
-  color: inherit;
   font: inherit;
+}
+
+.dh-marketplace :where(button:not(.xr-button), input, select, textarea) {
+  color: inherit;
 }
 
 .dh-marketplace button {
@@ -169,9 +212,16 @@
   display: inline-flex;
   font-size: 1.45rem;
   font-weight: 800;
-  gap: 0;
+  gap: 0.5rem;
   min-height: 2.75rem;
   padding: 0.5rem 0;
+}
+
+.dh-brand__mark {
+  color: var(--brand-gold);
+  flex: 0 0 auto;
+  height: 2rem;
+  width: 2rem;
 }
 
 .dh-brand__wordmark {
@@ -751,7 +801,6 @@
   line-height: 1.4;
 }
 
-.dh-demo-banner,
 .dh-local-favorites-note {
   align-items: center;
   background: var(--dh-green-soft);
@@ -762,9 +811,20 @@
   padding: 1rem 1.25rem;
 }
 
-.dh-demo-banner > div {
-  flex: 1;
-  min-width: 0;
+.dh-demo-banner {
+  background: var(--dh-surface-muted);
+  border: 1px solid var(--dh-border);
+  border-radius: 1.5rem;
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
+.dh-demo-banner__intro {
+  align-items: center;
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
 .dh-demo-banner h2,
@@ -777,10 +837,60 @@
   font-size: clamp(1.1rem, 2vw, 1.4rem);
 }
 
-.dh-demo-banner > div > p:last-child {
+.dh-demo-banner__intro > div > p:last-child {
   color: var(--dh-muted);
   line-height: 1.5;
   margin-top: 0.25rem;
+}
+
+.dh-demo-banner__accounts {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-demo-banner__accounts li {
+  align-items: center;
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  border-radius: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  min-width: 0;
+  padding: 0.85rem;
+}
+
+.dh-demo-banner__accounts li > div {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.dh-demo-banner__accounts strong {
+  font-size: 0.84rem;
+  overflow-wrap: anywhere;
+}
+
+.dh-demo-banner__accounts code {
+  color: var(--dh-green-strong);
+  font-size: 0.8rem;
+  overflow-wrap: anywhere;
+}
+
+.dh-demo-banner__accounts small {
+  color: var(--dh-muted);
+  font-size: 0.72rem;
+  line-height: 1.4;
+}
+
+.dh-demo-banner__accounts .dh-button {
+  min-height: 2.5rem;
+  padding: 0.55rem 0.8rem;
 }
 
 .dh-local-favorites-note {
@@ -2782,10 +2892,15 @@
 
   .dh-demo-banner {
     align-items: flex-start;
-    flex-wrap: wrap;
   }
 
-  .dh-demo-banner .dh-button {
+  .dh-demo-banner__intro {
+    align-items: start;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .dh-demo-banner__intro > .dh-button {
+    grid-column: 1 / -1;
     width: 100%;
   }
 

@@ -1,14 +1,14 @@
 import { useCallback, useEffect } from 'react';
 import { Outlet, useRouter, useRouterState } from '@tanstack/react-router';
 import { observer, useI18n } from '@app/frontend-runtime';
+import { MarketplacePage } from '../../pages/marketplace';
 import { MiniAppShell } from '../../shared/ui';
-import { getLinkRoute, isMarketplaceRoute, normalizePath, useUserNavigate } from './user-navigation';
+import { getLinkRoute, isBareRoute, isMarketplaceRoute, normalizePath, useUserNavigate } from './user-navigation';
 
 /**
- * Layout route rendered for every user route. DehqonHub marketplace routes own
- * their complete product chrome; preserved account/auth/TMA routes retain the
- * generic `MiniAppShell` navigation and Back control. In-app anchors are still
- * delegated to the router in both shells so they route client-side.
+ * Every browser route shares the DehqonHub marketplace chrome. Telegram launch
+ * routes are the only exception because MiniAppShell owns native Back, Share,
+ * safe-area and host integration there.
  */
 export const UserShell = observer(function UserShell() {
   const { t } = useI18n();
@@ -97,20 +97,28 @@ export const UserShell = observer(function UserShell() {
     },
   ];
 
+  if (isBareRoute(route)) {
+    return (
+      <MiniAppShell
+        activePath={linkRoute ?? route}
+        actions={actions}
+        appName={t('user.appName')}
+        description={t('user.description')}
+        eyebrow={t('user.eyebrow')}
+        heroActions={[]}
+        onBack={onBack}
+        shareText={t('user.description')}
+        shareTitle={t('user.appName')}
+        title={t('user.title')}
+      >
+        <Outlet />
+      </MiniAppShell>
+    );
+  }
+
   return (
-    <MiniAppShell
-      activePath={linkRoute ?? route}
-      actions={actions}
-      appName={t('user.appName')}
-      description={t('user.description')}
-      eyebrow={t('user.eyebrow')}
-      heroActions={[]}
-      onBack={onBack}
-      shareText={t('user.description')}
-      shareTitle={t('user.appName')}
-      title={t('user.title')}
-    >
+    <MarketplacePage navigate={navigate} view="embedded">
       <Outlet />
-    </MiniAppShell>
+    </MarketplacePage>
   );
 });

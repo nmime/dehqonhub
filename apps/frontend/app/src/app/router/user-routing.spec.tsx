@@ -7,7 +7,13 @@ import { UserRouter } from './user-router';
 const marketplaceRender = vi.hoisted(() => vi.fn());
 
 vi.mock('../../pages/marketplace', () => ({
-  MarketplacePage: (props: { contractId?: string; productId?: string; sellerId?: string; view?: string }) => {
+  MarketplacePage: (props: {
+    children?: ReactNode;
+    contractId?: string;
+    productId?: string;
+    sellerId?: string;
+    view?: string;
+  }) => {
     marketplaceRender(props);
 
     return (
@@ -17,7 +23,9 @@ vi.mock('../../pages/marketplace', () => ({
         data-seller-id={props.sellerId}
         data-testid="marketplace-route"
         data-view={props.view}
-      />
+      >
+        {props.children}
+      </div>
     );
   },
 }));
@@ -144,12 +152,12 @@ describe('DehqonHub marketplace routes', () => {
     expect(screen.queryByTestId('generic-user-shell')).toBeNull();
   });
 
-  it('keeps a non-canonical legacy path inside the generic user shell', async () => {
+  it('keeps a non-canonical legacy path inside the marketplace shell', async () => {
     window.history.replaceState({}, '', '/marketplace');
     render(<UserRouter applyUserLocale={vi.fn()} applyUserTheme={vi.fn()} />);
 
-    expect(await screen.findByTestId('generic-user-shell')).toBeTruthy();
-    expect(screen.queryByTestId('marketplace-route')).toBeNull();
+    expect((await screen.findByTestId('marketplace-route')).dataset['view']).toBe('embedded');
+    expect(screen.queryByTestId('generic-user-shell')).toBeNull();
 
     const dispatchAnchorClick = (configure?: (anchor: HTMLAnchorElement) => void, init?: MouseEventInit) => {
       const anchor = document.createElement('a');

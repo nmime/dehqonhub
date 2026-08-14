@@ -1282,7 +1282,7 @@ describe('MarketplacePage route action orchestration', () => {
       auth: 'checking',
     };
     renderPage({ view: 'cart' });
-    expect(screen.getByTestId('marketplace-skeleton')).toBeTruthy();
+    expect(screen.getByTestId('cart-view')).toBeTruthy();
     testState.marketplaceData = {
       ...buildMarketplaceData(refresh),
       catalog: { data: [], status: 'loading' },
@@ -1300,7 +1300,7 @@ describe('MarketplacePage route action orchestration', () => {
       auth: 'error',
     };
     renderPage({ view: 'cart' });
-    expect(screen.getByTestId('empty-view')).toBeTruthy();
+    expect(screen.getByTestId('cart-view')).toBeTruthy();
 
     testState.marketplaceData = buildMarketplaceData(refresh);
     renderPage({ productId: product.id, view: 'product' });

@@ -39,10 +39,14 @@ supported launch aliases.
   disables Telegram's vertical close/minimize swipe through the Bot API 7.7
   swipe-behavior method, requests Bot API 8.0 fullscreen when available, and
   sets the branded header, background, and bottom-bar colors.
-- `MiniAppShell` in `@app/frontend-ui-web` is the single visual shell for both
-  environments. It owns safe-area spacing, the colored header and bottom
+- `MarketplacePage` owns the normal browser chrome for marketplace, auth,
+  profile, settings, and product-support routes. It keeps the transparent
+  DehqonHub brand, compact preference controls, catalog navigation, and footer
+  consistent while nested routes retain their feature ownership.
+- `MiniAppShell` in `@app/frontend-ui-web` is reserved for Telegram launch and
+  linking routes. It owns safe-area spacing, the colored header and bottom
   navigation, native Telegram or browser back behavior, and Telegram/Web
-  Share/clipboard fallback behavior.
+  Share/clipboard fallback behavior there.
 - Safe-area CSS consumes both Telegram's official
   `--tg-safe-area-inset-*`/`--tg-content-safe-area-inset-*` variables and the
   equivalent `@tma.js` viewport variables. The HTML viewport includes
@@ -50,9 +54,16 @@ supported launch aliases.
 - Share URLs strip all `tgWebApp*` launch parameters before leaving the app so
   raw Telegram launch data is never copied or shared.
 
-Do not initialize Telegram SDK features inside a page or feature. Add product
-content below `MiniAppShell`, and use `useMiniApp()` only when a feature needs a
-platform action beyond the shell's built-in back and share controls.
+Do not initialize Telegram SDK features inside a page or feature. Add Telegram
+product content below `MiniAppShell`, and use `useMiniApp()` only when a feature
+needs a platform action beyond the shell's built-in back and share controls.
+
+The public marketplace may persist guest favorites and a versioned,
+seller-grouped preview cart in browser storage. That preview state never calls
+commercial cart, checkout, contract, or authorization mutations. The reviewer
+account banner is rendered only when the API returns governed demo listings;
+its fixed identities are explicitly public demo data created by the guarded
+demo seed.
 
 ## Docs
 
