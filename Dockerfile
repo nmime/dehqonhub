@@ -199,7 +199,7 @@ ARG FRONTEND_OUTPUT=dist/apps/frontend/admin
 ARG NGINX_CONFIG=docker/nginx-fullstack.conf
 USER root
 RUN apk add --no-cache wget
-COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
+COPY --chmod=0644 ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf
 COPY --from=builder /workspace/${FRONTEND_OUTPUT} /usr/share/nginx/html
 # Astro emits a hash-based meta CSP for its inline hydration bootstrap. Relax
 # only the landing image's outer nginx policy when that stricter generated
@@ -219,7 +219,8 @@ RUN chmod +x /docker-entrypoint.d/40-frontend-runtime-config.sh \
   && chown 101:101 /usr/share/nginx/html/runtime-config.js \
   && chmod 0644 /usr/share/nginx/html/runtime-config.js
 USER 101
-RUN test -r /usr/share/nginx/html/index.html
+RUN test -r /usr/share/nginx/html/index.html \
+  && test -r /etc/nginx/conf.d/default.conf
 EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
   CMD wget -qO- http://localhost:8080/nginx-health || exit 1

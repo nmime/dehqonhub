@@ -108,7 +108,11 @@ test('final runtime assets remain readable by their non-root image users', () =>
 
   assert.match(frontend, /chmod -R a=rX \/usr\/share\/nginx\/html/u);
   assert.match(frontend, /chmod 0644 \/usr\/share\/nginx\/html\/runtime-config\.js/u);
-  assert.match(frontend, /USER 101\s+RUN test -r \/usr\/share\/nginx\/html\/index\.html/u);
+  assert.match(frontend, /COPY --chmod=0644 \$\{NGINX_CONFIG\} \/etc\/nginx\/conf\.d\/default\.conf/u);
+  assert.match(
+    frontend,
+    /USER 101\s+RUN test -r \/usr\/share\/nginx\/html\/index\.html \\\s+&& test -r \/etc\/nginx\/conf\.d\/default\.conf/u,
+  );
 });
 
 test('every documented target is plannable', () => {

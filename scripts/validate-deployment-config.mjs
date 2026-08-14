@@ -144,8 +144,8 @@ has(
 );
 has(
   dockerfile,
-  'COPY ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf',
-  'frontend nginx config copy is build-arg selectable',
+  'COPY --chmod=0644 ${NGINX_CONFIG} /etc/nginx/conf.d/default.conf',
+  'frontend nginx config copy is build-arg selectable and readable by the runtime uid',
 );
 const nginxFullstack = read('docker/nginx-fullstack.conf');
 const nginxSpa = read('docker/nginx-spa.conf');
@@ -414,6 +414,11 @@ has(
   frontendStage,
   'RUN test -r /usr/share/nginx/html/index.html',
   'frontend runtime verifies its entry document after switching to the nginx user',
+);
+has(
+  frontendStage,
+  'test -r /etc/nginx/conf.d/default.conf',
+  'frontend runtime verifies the selected nginx configuration after switching to the nginx user',
 );
 
 const devCompose = read('docker/docker-compose.yml');

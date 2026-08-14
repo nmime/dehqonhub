@@ -36,6 +36,9 @@
   their numeric non-root image users when the deployment checkout was created
   under a restrictive umask; representative asset checks run after each final
   image user switch.
+- The production frontend failure showed that bundle readability alone is not
+  sufficient: the selected Nginx server configuration also inherits build
+  context modes unless the image normalizes it before switching to UID 101.
 
 ## Examples
 
@@ -62,8 +65,8 @@
 - Deriving a problem type or occurrence from a request host, repository/package
   identity, removed subdomain, or unsafe identifier is not accepted.
 - Passing an image smoke check as root before its final numeric runtime user
-  attempts to load restrictive-mode locale, server, or static assets is not
-  accepted.
+  attempts to load restrictive-mode locale, server, static, or Nginx
+  configuration assets is not accepted.
 
 ## Failure and rollback
 

@@ -20,8 +20,9 @@
     the image switches to its non-root user.
   - The same deployment evidence proves backend and SSR artifacts are assigned
     to UID 1000, static frontend bundles are immutable and readable by UID 101,
-    and representative locale/server/index assets are checked after each final
-    runtime user switch.
+    the selected Nginx configuration is normalized to mode `0644`, and
+    representative locale/server/index/configuration assets are checked after
+    each final runtime user switch.
 
 ## REQ-AGRITECH-DEPLOYMENT-014
 
