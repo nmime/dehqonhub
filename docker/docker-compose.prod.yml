@@ -209,6 +209,7 @@ x-frontend-service: &frontend-service
   environment: &frontend-runtime-env
     TELEGRAM_AUTH_ENABLED: ${AUTH_TELEGRAM_ENABLED:-false}
     DISCORD_AUTH_ENABLED: ${DISCORD_AUTH_ENABLED:-false}
+    REVIEWER_ACCESS_ENABLED: ${REVIEWER_ACCESS_ENABLED:-true}
 
 x-notification-scheduler-service: &notification-scheduler-service
   restart: unless-stopped

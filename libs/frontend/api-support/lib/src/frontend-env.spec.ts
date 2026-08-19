@@ -176,6 +176,14 @@ describe('runtime feature flags', () => {
     expect(resolveFeatureFlag(undefined, undefined)).toBe(false);
   });
 
+  it('applies an explicit default only when neither side states a value', () => {
+    // Flags that ship enabled still have to be switchable off by a deployment.
+    expect(resolveFeatureFlag(undefined, undefined, true)).toBe(true);
+    expect(resolveFeatureFlag('maybe', '', true)).toBe(true);
+    expect(resolveFeatureFlag('false', undefined, true)).toBe(false);
+    expect(resolveFeatureFlag(undefined, 'false', true)).toBe(false);
+  });
+
   it('treats flags case-insensitively and ignores surrounding whitespace', () => {
     expect(resolveFeatureFlag('  TRUE ', undefined)).toBe(true);
     expect(resolveFeatureFlag(' False ', 'true')).toBe(false);
