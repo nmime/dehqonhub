@@ -18,6 +18,7 @@ describe('shared UI Storybook coverage', () => {
       readSource('./component/button.stories.tsx'),
       readSource('./component/feedback-display.stories.tsx'),
       readSource('./component/form-controls.stories.tsx'),
+      readSource('./component/mini-app-primitives.stories.tsx'),
       readSource('./layout/shells.stories.tsx'),
     ].join('\n');
 
