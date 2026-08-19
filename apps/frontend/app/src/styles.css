@@ -1,7 +1,7 @@
 /* User-app composition only. Shared tokens and primitives live in @app/frontend-ui-web. */
 
 .xr-mini-app-shell .xr-shell {
-  --xr-font-family: 'Poppins', 'Manrope Variable', sans-serif;
+  --xr-font-family: 'Manrope Variable', 'Manrope', sans-serif;
   --xr-radius-md: 0.9rem;
   --xr-radius-lg: 1.35rem;
   --xr-color-background: #fbf3e3;
@@ -43,27 +43,6 @@
   background: #fbf3e3;
   font-family: var(--xr-font-family);
 }
-
-.xr-mini-app-shell .xr-shell[data-theme='dark'] {
-  --xr-color-background: #0d110e;
-  --xr-color-background-accent: rgb(46 205 100 / 10%);
-  --xr-color-surface: rgb(21 26 22 / 96%);
-  --xr-color-surface-strong: #151a16;
-  --xr-color-border: #2b382e;
-  --xr-color-text: #f5f7f2;
-  --xr-color-muted: #a8b0a9;
-  --xr-color-primary: #55d77e;
-  --xr-color-primary-strong: #2db862;
-  --xr-color-primary-contrast: #07140b;
-  --xr-control-background: #19221b;
-  --xr-input-background: #151a16;
-  --xr-card-background: #151a16;
-  --xr-feedback-background: #151a16;
-  --xr-mini-app-header-color: #111612;
-  --xr-mini-app-bottom-color: #111612;
-  background: #0d110e;
-}
-
 .xr-mini-app-shell .xr-shell .xr-header {
   background: color-mix(in srgb, var(--xr-color-surface-strong) 94%, transparent);
   border-bottom-color: var(--xr-color-border);
@@ -112,7 +91,7 @@
 
 .xr-mini-app-shell .xr-section h1,
 .xr-mini-app-shell .xr-section h2 {
-  font-family: 'Poppins', 'Manrope Variable', sans-serif;
+  font-family: 'Manrope Variable', 'Manrope', sans-serif;
   font-size: clamp(1.8rem, 4vw, 3rem);
   font-weight: 600;
   letter-spacing: -0.045em;
@@ -171,24 +150,6 @@
   background: #e5f7e9;
   color: #08783a;
 }
-
-:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar {
-  border-color: #2b382e;
-  background: rgb(17 22 18 / 96%);
-  box-shadow: 0 14px 36px rgb(0 0 0 / 32%);
-}
-
-:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action {
-  color: #a8b0a9;
-}
-
-:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action[data-current='true'],
-:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action:hover,
-:root[data-theme='dark'] .xr-mini-app-shell .xr-mini-app-bottom-bar__action:focus-visible {
-  background: #1d3424;
-  color: #55d77e;
-}
-
 .xr-mini-app-shell .xr-hero {
   padding-block: clamp(1.75rem, 5vw, 3.5rem) clamp(1rem, 3vw, 2rem);
 }
