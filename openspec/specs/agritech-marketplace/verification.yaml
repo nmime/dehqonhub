@@ -197,17 +197,45 @@ requirements:
         target: user-app:test
         lanes: [pr, main]
       - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-seller-carts.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
         file: apps/frontend/app/src/pages/marketplace/ui/marketplace-components.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-gallery.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-product-specs.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-loading.spec.tsx
         target: user-app:test
         lanes: [pr, main]
       - kind: vitest
         file: apps/frontend/app/src/pages/marketplace/ui/marketplace-page.spec.tsx
         target: user-app:test
         lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-cabinet.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-preview-cart-adoption.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
       - kind: playwright
         file: apps/frontend/app/e2e/marketplace-authenticated.e2e-spec.ts
         target: user-app:e2e-authenticated
         lanes: [pr, main]
+      - kind: playwright
+        file: apps/e2e/fullstack/src/fullstack.spec.ts
+        target: fullstack-e2e:e2e
+        lanes: [runtime]
   - id: REQ-AGRITECH-PARTNER-007
     projects:
       [
@@ -763,6 +791,16 @@ requirements:
         file: libs/backend/feature/agritech/main/lib/src/marketplace-verification.service.spec.ts
         target: '@app/backend-feature-agritech-main:test'
         lanes: [pr, main]
+      - kind: vitest
+        description: The publication identifier, not the request identifier, reaches the offer reads and offer selection.
+        file: apps/frontend/app/src/pages/marketplace/model/use-marketplace-data.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
+        description: An owned request without a publication is reported as awaiting moderation instead of choosing an offer.
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-page-actions.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
       - kind: contract
         file: apps/backend/user/user-app-api/src/marketplace.e2e-spec.ts
         target: user-app-api:e2e
@@ -796,11 +834,21 @@ requirements:
         target: '@app/backend-feature-agritech-main:test'
         lanes: [pr, main]
       - kind: component
+        description: A farmer-verified party reaches a cart, a contract and a published purchase request on either side against the real migrated schema, and restoring the pre-migration buying predicate inside a rolled-back transaction reproduces the 23514 the widened trigger removed.
         file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-commerce.component-spec.ts
         target: '@app/backend-postgres-main-agritech:component-test'
         lanes: [pr, main]
       - kind: static
         file: libs/backend/postgres/main/agritech/lib/src/migrations/marketplace-commerce.migration.spec.ts
+        target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
+      - kind: static
+        file: libs/backend/postgres/main/agritech/lib/src/migrations/marketplace-seller-party-role.migration.spec.ts
+        target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
+      - kind: static
+        description: The buying side of every persisted party-coherence trigger accepts the two roles the role policy authorizes, and rollback restores the previous predicate without dropping a trigger.
+        file: libs/backend/postgres/main/agritech/lib/src/migrations/marketplace-buyer-party-role.migration.spec.ts
         target: '@app/backend-postgres-main-agritech:test'
         lanes: [pr, main]
       - kind: static
@@ -924,6 +972,14 @@ requirements:
         target: admin-app-api:e2e
         lanes: [pr, main]
       - kind: security
+        file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-public.repository.spec.ts
+        target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
+      # Truncated-page keyset behaviour: the same file also proves that a page
+      # smaller than the result set returns a well-formed next cursor built from
+      # the raw-SQL timestamp, and that a following page continues without
+      # repeating or skipping a row.
+      - kind: vitest
         file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-public.repository.spec.ts
         target: '@app/backend-postgres-main-agritech:test'
         lanes: [pr, main]
