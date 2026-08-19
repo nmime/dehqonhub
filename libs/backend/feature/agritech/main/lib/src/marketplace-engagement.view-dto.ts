@@ -8,6 +8,7 @@ import type {
   MarketplaceReviewModerationResult,
   MarketplaceReviewPage,
   MarketplaceReviewReportReceipt,
+  MarketplaceReviewSelfState,
   MarketplaceReviewView,
   MarketplaceSamplePolicyView,
   MarketplaceSampleUsageView,
@@ -121,6 +122,18 @@ export class MarketplaceReviewAggregateDto {
 export class MarketplaceReviewPageDto {
   @ApiProperty({ type: MarketplaceReviewAggregateDto }) aggregate!: MarketplaceReviewAggregateDto;
   @ApiProperty({ isArray: true, type: MarketplaceReviewDto }) items!: MarketplaceReviewDto[];
+}
+
+/**
+ * The signed-in visitor's own standing with one listing's ratings. It carries no
+ * eligibility, contract or count internals: `canReview` answers whether an unused
+ * completed-contract eligibility exists, and `review` is the caller's own row,
+ * which the author-free public projection cannot identify for them.
+ */
+export class MarketplaceReviewSelfStateDto {
+  @ApiProperty({ format: 'uuid' }) listingPublicationId!: string;
+  @ApiProperty() canReview!: boolean;
+  @ApiPropertyOptional({ type: MarketplaceReviewDto }) review?: MarketplaceReviewDto;
 }
 
 export class MarketplaceReviewReportReceiptDto {
@@ -237,6 +250,12 @@ export const toMarketplaceReviewPageDto = (value: MarketplaceReviewPage): Market
     revision: value.aggregate.revision,
   },
   items: value.items.map(toMarketplaceReviewDto),
+});
+
+export const toMarketplaceReviewSelfStateDto = (value: MarketplaceReviewSelfState): MarketplaceReviewSelfStateDto => ({
+  canReview: value.canReview,
+  listingPublicationId: value.listingPublicationId,
+  ...(value.review ? { review: toMarketplaceReviewDto(value.review) } : {}),
 });
 
 export const toMarketplaceReviewReportReceiptDto = (

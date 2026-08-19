@@ -13,6 +13,7 @@ import {
   marketplacePromotionActivationFingerprint,
   marketplacePromotionPlans,
 } from '@app/backend-feature-agritech-shared';
+import { marketplaceSellerRoleFilter } from './marketplace-role-predicates';
 import { MarketplacePartnerMembershipEntity } from '../entities/marketplace-commerce.entity';
 import { VerificationEntity } from '../entities/marketplace.entity';
 import { MarketplaceListingPromotionEntity } from '../entities/marketplace-promotion.entity';
@@ -224,7 +225,7 @@ export class PostgresMarketplacePromotionRepository implements MarketplacePromot
     const verification = await em.findOne(
       VerificationEntity,
       {
-        role: { $in: ['farmer', 'seller'] },
+        role: marketplaceSellerRoleFilter(),
         status: 'verified',
         tenantId: owner.tenantId,
         userId: owner.userId,

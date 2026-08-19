@@ -1,3 +1,4 @@
+import { marketplaceReviewAverageRating } from './marketplace-engagement';
 import type { MarketplaceReviewPage, MarketplaceReviewView } from './marketplace-engagement';
 import type { BuyerRequest } from './marketplace.types';
 
@@ -16,9 +17,12 @@ import type { BuyerRequest } from './marketplace.types';
  * purpose — it stands in for what a buyer or a farmer typed, not for app copy.
  *
  * Identifiers are v4-shaped because the marketplace routes parse ids as UUIDs.
- * The `dec0de01`/`dec0de02` prefixes mark demo content, matching the `dec0de00`
- * product ids the demo catalog uses; the review rows point at the first demo
- * product (`…000000000001`) and the drip-irrigation kit (`…000000000011`).
+ * The `dec0de01`/`dec0de02` prefixes mark demo content. Ratings are keyed by the
+ * `9d000000-…-0000000001NN` **publication** ids the demo catalog publishes, which
+ * is what `marketplace/public/catalog/:listingPublicationId/reviews` is addressed
+ * by; keying them by private product id — as they were — pointed the fixture at
+ * ids that never reach this read, so the demo ratings could not be fetched at all
+ * and every demo product answered the ratings request with a 404.
  */
 
 /** Fixed timestamps keep the dataset deterministic across requests and tests. */
@@ -83,15 +87,27 @@ export const DemoBuyerRequests: readonly BuyerRequest[] = [
 /**
  * Demo ratings, keyed by the publication a visitor is looking at. Free text is
  * what a farmer typed, so it stays single-language; every row is marked as a
- * verified deal because only a settled contract can produce a review here.
+ * verified deal because only a settled contract can produce a review here. Two of
+ * the six demo listings are deliberately left unrated, so the empty ratings block
+ * is reachable in the preview instead of only in a test.
  */
+const demoRatedListingIds = {
+  cottonSeed: '9d000000-0000-4000-8000-000000000101',
+  dripIrrigationKit: '9d000000-0000-4000-8000-000000000102',
+  tomatoes: '9d000000-0000-4000-8000-000000000104',
+  seedDrill: '9d000000-0000-4000-8000-000000000106',
+} as const;
+
+/** Every publication id a demo rating is filed under. */
+export const DemoRatedListingPublicationIds: readonly string[] = Object.values(demoRatedListingIds);
+
 const demoReviews: readonly MarketplaceReviewView[] = [
   {
     assetReferences: [],
     comment: 'Всхожесть совпала с заявленной, посеяли 12 га — вышло ровно.',
     createdAt: new Date('2026-05-18T09:12:00.000Z'),
     id: demoId('02', 1),
-    listingPublicationId: 'dec0de00-0000-4000-8000-000000000001',
+    listingPublicationId: demoRatedListingIds.cottonSeed,
     rating: 5,
     revision: 1,
     updatedAt: new Date('2026-05-18T09:12:00.000Z'),
@@ -102,7 +118,7 @@ const demoReviews: readonly MarketplaceReviewView[] = [
     comment: 'Партия пришла на четыре дня позже срока, в остальном без нареканий.',
     createdAt: new Date('2026-06-02T14:40:00.000Z'),
     id: demoId('02', 2),
-    listingPublicationId: 'dec0de00-0000-4000-8000-000000000001',
+    listingPublicationId: demoRatedListingIds.cottonSeed,
     rating: 4,
     revision: 1,
     updatedAt: new Date('2026-06-02T14:40:00.000Z'),
@@ -110,20 +126,82 @@ const demoReviews: readonly MarketplaceReviewView[] = [
   },
   {
     assetReferences: [],
-    comment: 'Фильтростанция в комплекте, монтаж заняли один день. Расход воды упал заметно.',
-    createdAt: new Date('2026-04-21T11:05:00.000Z'),
+    comment: 'Брали второй раз на следующий сезон, качество то же.',
+    createdAt: new Date('2026-07-11T07:25:00.000Z'),
     id: demoId('02', 3),
-    listingPublicationId: 'dec0de00-0000-4000-8000-000000000011',
+    listingPublicationId: demoRatedListingIds.cottonSeed,
+    rating: 5,
+    revision: 1,
+    updatedAt: new Date('2026-07-11T07:25:00.000Z'),
+    verifiedDeal: true,
+  },
+  {
+    assetReferences: [],
+    comment: 'Фильтростанция в комплекте, монтаж занял один день. Расход воды упал заметно.',
+    createdAt: new Date('2026-04-21T11:05:00.000Z'),
+    id: demoId('02', 4),
+    listingPublicationId: demoRatedListingIds.dripIrrigationKit,
     rating: 5,
     revision: 1,
     updatedAt: new Date('2026-04-21T11:05:00.000Z'),
     verifiedDeal: true,
   },
+  {
+    assetReferences: [],
+    comment: 'Капельницы работают, но инструкция только на английском.',
+    createdAt: new Date('2026-06-19T16:30:00.000Z'),
+    id: demoId('02', 5),
+    listingPublicationId: demoRatedListingIds.dripIrrigationKit,
+    rating: 4,
+    revision: 1,
+    updatedAt: new Date('2026-06-19T16:30:00.000Z'),
+    verifiedDeal: true,
+  },
+  {
+    assetReferences: [],
+    comment: 'Калибр ровный, довезли без боя.',
+    createdAt: new Date('2026-07-02T06:50:00.000Z'),
+    id: demoId('02', 6),
+    listingPublicationId: demoRatedListingIds.tomatoes,
+    rating: 5,
+    revision: 1,
+    updatedAt: new Date('2026-07-02T06:50:00.000Z'),
+    verifiedDeal: true,
+  },
+  {
+    assetReferences: [],
+    comment: 'Два ящика из двадцати пришли перезревшими.',
+    createdAt: new Date('2026-07-24T13:15:00.000Z'),
+    id: demoId('02', 7),
+    listingPublicationId: demoRatedListingIds.tomatoes,
+    rating: 3,
+    revision: 1,
+    updatedAt: new Date('2026-07-24T13:15:00.000Z'),
+    verifiedDeal: true,
+  },
+  {
+    assetReferences: [],
+    comment: 'Сеялка настраивается быстро, шланги бы покрепче.',
+    createdAt: new Date('2026-05-05T08:40:00.000Z'),
+    id: demoId('02', 8),
+    listingPublicationId: demoRatedListingIds.seedDrill,
+    rating: 4,
+    revision: 1,
+    updatedAt: new Date('2026-05-05T08:40:00.000Z'),
+    verifiedDeal: true,
+  },
 ];
 
-/** Demo ratings for one publication, or nothing when it has none. */
+/**
+ * Demo ratings for one publication, newest first, or nothing when it has none.
+ * The order mirrors `PostgresMarketplaceEngagementRepository.listPublicReviews`,
+ * which reads `created_at desc`, so the demo block and a live block cannot
+ * disagree about which review a visitor reads first.
+ */
 export const demoProductReviews = (listingPublicationId: string): MarketplaceReviewView[] =>
-  demoReviews.filter((review) => review.listingPublicationId === listingPublicationId);
+  demoReviews
+    .filter((review) => review.listingPublicationId === listingPublicationId)
+    .sort((left, right) => right.createdAt.valueOf() - left.createdAt.valueOf());
 
 /**
  * The demo ratings block for one publication, aggregate included, or nothing
@@ -138,7 +216,7 @@ export function demoReviewPage(listingPublicationId: string): MarketplaceReviewP
   const total = items.reduce((sum, review) => sum + review.rating, 0);
   return {
     aggregate: {
-      averageRating: Math.round((total / items.length) * 10) / 10,
+      averageRating: marketplaceReviewAverageRating(total, items.length),
       listingPublicationId,
       reviewCount: items.length,
       revision: 1,

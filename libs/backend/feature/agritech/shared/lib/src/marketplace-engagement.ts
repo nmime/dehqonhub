@@ -136,6 +136,42 @@ export interface MarketplaceReviewPage {
   items: MarketplaceReviewView[];
 }
 
+/**
+ * What the authenticated visitor may do with one listing's ratings, plus the one
+ * review they have already left on it.
+ *
+ * The public review projection is deliberately author-free, so a browser cannot
+ * work out which visible row is its own and therefore cannot tell "you already
+ * rated this" apart from "you were never able to". This read answers both
+ * questions from persisted eligibility instead of from a client guess, and stays
+ * one boolean plus the caller's own review: eligibility rows, contract ids and
+ * remaining counts stay private.
+ */
+export interface MarketplaceReviewSelfState {
+  listingPublicationId: string;
+  /** An unconsumed completed-contract eligibility exists for this caller. */
+  canReview: boolean;
+  /** The caller's own review of this governed source, when they left one. */
+  review?: MarketplaceReviewView;
+}
+
+/**
+ * The published average of a rating aggregate: one decimal place, or nothing at
+ * all while no visible deal-verified review exists.
+ *
+ * `rating_sum / review_count` is exact but unreadable - 5 + 4 + 5 over three
+ * reviews is 4.666666666666667. Rounding here rather than in each renderer keeps
+ * the demo block, the catalog card, the product page and the seller profile
+ * quoting one number, and the review count always travels beside it so the
+ * rounding stays checkable rather than a claim.
+ */
+export const marketplaceReviewAverageRating = (ratingSum: number, reviewCount: number): number | null => {
+  if (!Number.isFinite(ratingSum) || !Number.isInteger(reviewCount) || reviewCount <= 0) {
+    return null;
+  }
+  return Math.round((ratingSum / reviewCount) * 10) / 10;
+};
+
 export interface SubmitMarketplaceReviewInput {
   listingPublicationId: string;
   rating: number;
@@ -233,6 +269,10 @@ export interface MarketplaceEngagementRepository {
     idempotencyKey: string,
   ): Promise<OperationResult<MarketplaceReviewView>>;
   listPublicReviews(listingPublicationId: string): Promise<OperationResult<MarketplaceReviewPage>>;
+  getReviewSelfState(
+    owner: AgriTechOwner,
+    listingPublicationId: string,
+  ): Promise<OperationResult<MarketplaceReviewSelfState>>;
   replyToReview(
     owner: AgriTechOwner,
     reviewId: string,
