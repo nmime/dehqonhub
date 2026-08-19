@@ -14,7 +14,12 @@ import type {
   SupplierProductViewDto,
 } from '@app/frontend-api-client';
 import type { Resource } from '../model/use-marketplace-data';
-import { MarketplaceSkeleton } from './marketplace-discovery';
+import {
+  MarketplaceBusyButton,
+  MarketplaceFactsSkeleton,
+  MarketplaceListSkeleton,
+  MarketplaceLoadingStatus,
+} from './marketplace-loading';
 import { formatDate, formatMoney, type MarketplaceNavigate, type MarketplaceTranslate } from './marketplace-ui';
 
 type PromotionPlanCode = MarketplacePromotionPlanDto['code'];
@@ -76,36 +81,50 @@ const localizedPublicationTitle = (publication: MarketplaceOwnedListingPublicati
   return publication.title;
 };
 
+/**
+ * The loading, error and empty account of one management list. Every management
+ * list is a column of `.dh-management-list article` rows, so its placeholder is a
+ * column of rows of that height rather than a grid of catalog tiles.
+ *
+ * The component stays mounted across the whole transition — the parent renders
+ * it in every state — so the same status element announces the region as loading
+ * and then as ready instead of disappearing without a word.
+ */
 function ResourceMessage({
   emptyKey,
   errorKey,
+  labelKey,
   onRetry,
   resource,
+  rows = 2,
   t,
 }: Readonly<{
   emptyKey: string;
   errorKey: string;
+  labelKey: string;
   onRetry: () => void;
   resource: Resource<unknown[]>;
+  rows?: number;
   t: MarketplaceTranslate;
 }>) {
-  if (resource.status === 'loading' || resource.status === 'idle') {
-    return <MarketplaceSkeleton count={2} />;
-  }
-  if (resource.status === 'error') {
-    return (
-      <div>
-        <p className="dh-state-inline dh-state-inline--error">{t(errorKey)}</p>
-        <button className="dh-text-button" onClick={onRetry} type="button">
-          {t('ui.runtime.retry')}
-        </button>
-      </div>
-    );
-  }
-  if (resource.data.length === 0) {
-    return <p className="dh-muted">{t(emptyKey)}</p>;
-  }
-  return null;
+  const busy = resource.status === 'loading' || resource.status === 'idle';
+  return (
+    <>
+      <MarketplaceLoadingStatus busy={busy} label={t(labelKey)} t={t} />
+      {busy ? <MarketplaceListSkeleton count={rows} /> : null}
+      {!busy && resource.status === 'error' ? (
+        <div>
+          <p className="dh-state-inline dh-state-inline--error">{t(errorKey)}</p>
+          <button className="dh-text-button" onClick={onRetry} type="button">
+            {t('ui.runtime.retry')}
+          </button>
+        </div>
+      ) : null}
+      {!busy && resource.status !== 'error' && resource.data.length === 0 ? (
+        <p className="dh-muted">{t(emptyKey)}</p>
+      ) : null}
+    </>
+  );
 }
 
 function SourceResourceMessage({
@@ -114,30 +133,31 @@ function SourceResourceMessage({
   supplierProducts,
   t,
 }: Readonly<Pick<MarketplaceManagementProps, 'onRetry' | 'produceListings' | 'supplierProducts' | 't'>>) {
-  if (
+  const busy =
     supplierProducts.status === 'loading' ||
     supplierProducts.status === 'idle' ||
     produceListings.status === 'loading' ||
-    produceListings.status === 'idle'
-  ) {
-    return <MarketplaceSkeleton count={2} />;
-  }
-  if (supplierProducts.status === 'error' || produceListings.status === 'error') {
-    return (
-      <div>
-        <p className="dh-state-inline dh-state-inline--error">
-          {t('agritech.marketplace.publication.sourcesUnavailable')}
-        </p>
-        <button className="dh-text-button" onClick={onRetry} type="button">
-          {t('ui.runtime.retry')}
-        </button>
-      </div>
-    );
-  }
-  if (supplierProducts.data.length + produceListings.data.length === 0) {
-    return <p className="dh-muted">{t('agritech.marketplace.publication.productsEmpty')}</p>;
-  }
-  return null;
+    produceListings.status === 'idle';
+  const failed = supplierProducts.status === 'error' || produceListings.status === 'error';
+  return (
+    <>
+      <MarketplaceLoadingStatus busy={busy} label={t('agritech.marketplace.publication.products')} t={t} />
+      {busy ? <MarketplaceListSkeleton count={2} /> : null}
+      {!busy && failed ? (
+        <div>
+          <p className="dh-state-inline dh-state-inline--error">
+            {t('agritech.marketplace.publication.sourcesUnavailable')}
+          </p>
+          <button className="dh-text-button" onClick={onRetry} type="button">
+            {t('ui.runtime.retry')}
+          </button>
+        </div>
+      ) : null}
+      {!busy && !failed && supplierProducts.data.length + produceListings.data.length === 0 ? (
+        <p className="dh-muted">{t('agritech.marketplace.publication.productsEmpty')}</p>
+      ) : null}
+    </>
+  );
 }
 
 function PublicationWorkspace({
@@ -234,17 +254,19 @@ function PublicationWorkspace({
                     <option value="seeds">{t('agritech.marketplace.section.seeds')}</option>
                     <option value="equipment">{t('agritech.marketplace.section.equipment')}</option>
                   </select>
-                  <button
-                    className="dh-button dh-button--secondary"
+                  <MarketplaceBusyButton
                     aria-describedby={!canPublishListings ? 'marketplace-listing-publication-access' : undefined}
-                    disabled={!canPublishListings || pendingAction === `publish-listing:${product.id}`}
+                    busy={pendingAction === `publish-listing:${product.id}`}
+                    busyLabel={t('agritech.marketplace.loading')}
+                    className="dh-button dh-button--secondary"
+                    disabled={!canPublishListings}
                     onClick={() => {
                       onPublishListing(product.id, 'product', section);
                     }}
                     type="button"
                   >
                     {t('agritech.marketplace.publication.publish')}
-                  </button>
+                  </MarketplaceBusyButton>
                 </article>
               );
             })}
@@ -258,17 +280,19 @@ function PublicationWorkspace({
                     </small>
                   </div>
                   <span className="dh-badge dh-badge--soft">{t('agritech.marketplace.section.produce')}</span>
-                  <button
-                    className="dh-button dh-button--secondary"
+                  <MarketplaceBusyButton
                     aria-describedby={!canPublishListings ? 'marketplace-listing-publication-access' : undefined}
-                    disabled={!canPublishListings || pendingAction === `publish-listing:${produce.id}`}
+                    busy={pendingAction === `publish-listing:${produce.id}`}
+                    busyLabel={t('agritech.marketplace.loading')}
+                    className="dh-button dh-button--secondary"
+                    disabled={!canPublishListings}
                     onClick={() => {
                       onPublishListing(produce.id, 'produce', 'produce');
                     }}
                     type="button"
                   >
                     {t('agritech.marketplace.publication.publish')}
-                  </button>
+                  </MarketplaceBusyButton>
                 </article>
               );
             })}
@@ -291,6 +315,7 @@ function PublicationWorkspace({
         <ResourceMessage
           emptyKey="agritech.marketplace.orders.empty"
           errorKey="agritech.marketplace.orders.unavailable"
+          labelKey="agritech.marketplace.publication.requests"
           onRetry={onRetry}
           resource={myRequests}
           t={t}
@@ -303,17 +328,19 @@ function PublicationWorkspace({
                   <strong>{request.title}</strong>
                   <small>{t(`agritech.marketplace.orders.${request.status}`)}</small>
                 </div>
-                <button
-                  className="dh-button dh-button--secondary"
+                <MarketplaceBusyButton
                   aria-describedby={!canPublishRequests ? 'marketplace-request-publication-access' : undefined}
-                  disabled={!canPublishRequests || pendingAction === `publish-request:${request.id}`}
+                  busy={pendingAction === `publish-request:${request.id}`}
+                  busyLabel={t('agritech.marketplace.loading')}
+                  className="dh-button dh-button--secondary"
+                  disabled={!canPublishRequests}
                   onClick={() => {
                     onPublishRequest(request.id);
                   }}
                   type="button"
                 >
                   {t('agritech.marketplace.publication.publish')}
-                </button>
+                </MarketplaceBusyButton>
               </article>
             );
           })}
@@ -335,7 +362,12 @@ function PublicationReceipts({
   t: MarketplaceTranslate;
 }>) {
   if (listings.status === 'loading' || requests.status === 'loading') {
-    return <MarketplaceSkeleton count={2} />;
+    return (
+      <>
+        <MarketplaceLoadingStatus busy label={t('agritech.marketplace.publication.status')} t={t} />
+        <MarketplaceListSkeleton count={2} />
+      </>
+    );
   }
   if (listings.status === 'error' || requests.status === 'error') {
     return (
@@ -435,6 +467,7 @@ function PromotionWorkspace({
       <ResourceMessage
         emptyKey="agritech.marketplace.publication.historyEmpty"
         errorKey="agritech.marketplace.publication.historyUnavailable"
+        labelKey="agritech.marketplace.promotion.listing"
         onRetry={onRetry}
         resource={listingPublications}
         t={t}
@@ -442,6 +475,7 @@ function PromotionWorkspace({
       <ResourceMessage
         emptyKey="agritech.marketplace.promotion.plansEmpty"
         errorKey="agritech.marketplace.promotion.plansUnavailable"
+        labelKey="agritech.marketplace.promotion.plan"
         onRetry={onRetry}
         resource={promotionPlans}
         t={t}
@@ -485,23 +519,21 @@ function PromotionWorkspace({
             ))}
           </select>
         </label>
-        <button
-          className="dh-button dh-button--primary"
+        <MarketplaceBusyButton
           aria-describedby={!canActivatePromotions ? 'marketplace-promotion-access' : undefined}
-          disabled={
-            !canActivatePromotions ||
-            !listingId ||
-            promotionPlans.status !== 'ready' ||
-            pendingAction === 'promotion:activate'
-          }
+          busy={pendingAction === 'promotion:activate'}
+          busyLabel={t('agritech.marketplace.loading')}
+          className="dh-button dh-button--primary"
+          disabled={!canActivatePromotions || !listingId || promotionPlans.status !== 'ready'}
           type="submit"
         >
           {t('agritech.marketplace.promotion.activate')}
-        </button>
+        </MarketplaceBusyButton>
       </form>
       <ResourceMessage
         emptyKey="agritech.marketplace.promotion.empty"
         errorKey="agritech.marketplace.promotion.unavailable"
+        labelKey="agritech.marketplace.promotion.title"
         onRetry={onRetry}
         resource={promotions}
         t={t}
@@ -528,7 +560,12 @@ function PromotionWorkspace({
           </article>
         ))}
       </div>
-      {promotionDetail.status === 'loading' ? <MarketplaceSkeleton count={1} /> : null}
+      {promotionDetail.status === 'loading' ? (
+        <>
+          <MarketplaceLoadingStatus busy label={t('agritech.marketplace.promotion.details')} t={t} />
+          <MarketplaceFactsSkeleton rows={2} />
+        </>
+      ) : null}
       {promotionDetail.status === 'error' ? (
         <div>
           <p className="dh-state-inline dh-state-inline--error">
@@ -597,6 +634,7 @@ function SampleWorkspace({
       <ResourceMessage
         emptyKey="agritech.marketplace.samples.empty"
         errorKey="agritech.marketplace.samples.unavailable"
+        labelKey="agritech.marketplace.samples.manage"
         onRetry={onRetry}
         resource={samples}
         t={t}
@@ -612,9 +650,10 @@ function SampleWorkspace({
             </div>
             <div className="dh-management-actions">
               {sampleActions(sample).map((action) => (
-                <button
+                <MarketplaceBusyButton
+                  busy={pendingAction === `sample-transition:${sample.id}`}
+                  busyLabel={t('agritech.marketplace.loading')}
                   className="dh-button dh-button--secondary"
-                  disabled={pendingAction === `sample-transition:${sample.id}`}
                   key={action}
                   onClick={() => {
                     onSampleTransition(sample, action);
@@ -622,7 +661,7 @@ function SampleWorkspace({
                   type="button"
                 >
                   {t(`agritech.marketplace.samples.action.${action}`)}
-                </button>
+                </MarketplaceBusyButton>
               ))}
               {sample.actorRole === 'requester' && sample.status === 'received' && !sample.feedback ? (
                 <button
@@ -718,6 +757,7 @@ function ActivityWorkspace({
     <ResourceMessage
       emptyKey="agritech.marketplace.notifications.empty"
       errorKey="agritech.marketplace.notifications.unavailable"
+      labelKey="agritech.marketplace.notifications.title"
       onRetry={onRetry}
       resource={notifications}
       t={t}
@@ -744,6 +784,7 @@ function ActivityWorkspace({
         <ResourceMessage
           emptyKey="agritech.marketplace.ai.historyEmpty"
           errorKey="agritech.marketplace.ai.unavailable"
+          labelKey="agritech.marketplace.ai.history"
           onRetry={onRetry}
           resource={aiConsultations}
           t={t}
