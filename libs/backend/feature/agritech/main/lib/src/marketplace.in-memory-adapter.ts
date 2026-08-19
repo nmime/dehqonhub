@@ -344,6 +344,21 @@ class InMemoryMarketplaceRepository implements MarketplaceRepository {
     return [...this.requestPublications.values()].find((publication) => publication.requestId === requestId)?.id;
   }
 
+  /**
+   * Mirrors the Postgres left join onto the request publications: the publication id
+   * is what the offer endpoints are keyed by, and an unpublished request keeps all
+   * three fields absent instead of pretending its request id is addressable.
+   */
+  private requestWithPublication(request: BuyerRequest): BuyerRequest {
+    const publication = [...this.requestPublications.values()].find((candidate) => candidate.requestId === request.id);
+    return {
+      ...cloneRequest(request),
+      moderationStatus: publication?.moderationStatus,
+      publicationId: publication?.id,
+      publicationStatus: publication?.status,
+    };
+  }
+
   getVerification(owner: AgriTechOwner): Promise<Verification | undefined> {
     const verification = this.verifications.get(actorKey(owner));
     return Promise.resolve(verification ? cloneVerification(verification) : undefined);
@@ -683,7 +698,7 @@ class InMemoryMarketplaceRepository implements MarketplaceRepository {
           requestId: request.id,
           status: 'published',
         });
-        return ok(cloneRequest(request));
+        return ok(this.requestWithPublication(request));
       }),
     );
   }
@@ -694,7 +709,7 @@ class InMemoryMarketplaceRepository implements MarketplaceRepository {
         .filter(
           (request) => request.tenantId === tenantId && (!status || status === 'all' || request.status === status),
         )
-        .map(cloneRequest),
+        .map((request) => this.requestWithPublication(request)),
     );
   }
 
@@ -702,7 +717,7 @@ class InMemoryMarketplaceRepository implements MarketplaceRepository {
     return Promise.resolve(
       [...this.requests.values()]
         .filter((request) => request.tenantId === owner.tenantId && request.buyerUserId === owner.userId)
-        .map(cloneRequest),
+        .map((request) => this.requestWithPublication(request)),
     );
   }
 

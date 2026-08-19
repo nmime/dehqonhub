@@ -32,6 +32,8 @@ const verificationStatuses = ['none', 'pending', 'verified', 'rejected'] as cons
 const cartStatuses = ['open', 'ordered', 'abandoned'] as const;
 const requestStatuses = ['open', 'offering', 'selected', 'closed', 'expired'] as const;
 const offerStatuses = ['pending', 'accepted', 'declined'] as const;
+const publicationStatuses = ['published', 'paused', 'rejected'] as const;
+const publicationModerationStatuses = ['pending', 'approved', 'rejected'] as const;
 const contractStatuses = ['draft', 'signed', 'active', 'completed', 'cancelled', 'legacy_review_required'] as const;
 const deliveryTerms = ['pickup', 'seller_delivery', 'by_agreement'] as const;
 const maximumDeliveryDays = 365;
@@ -194,6 +196,22 @@ export class BuyerRequestViewDto {
   @ApiPropertyOptional({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) budgetUzs?: number;
   @ApiPropertyOptional() requirements?: string;
   @ApiProperty({ enum: requestStatuses }) status!: string;
+  @ApiPropertyOptional({
+    description:
+      'Public request publication id. The offer endpoints are keyed by it, never by the request id. Absent until the request is published, which means it is still awaiting moderation and cannot receive offers yet.',
+    format: 'uuid',
+  })
+  publicationId?: string;
+  @ApiPropertyOptional({
+    description: 'Publication lifecycle state. Present only together with publicationId.',
+    enum: publicationStatuses,
+  })
+  publicationStatus?: string;
+  @ApiPropertyOptional({
+    description: 'Moderation decision on the publication. Present only together with publicationId.',
+    enum: publicationModerationStatuses,
+  })
+  moderationStatus?: string;
   @ApiProperty({ format: 'date-time' }) createdAt!: Date;
   @ApiProperty({ format: 'date-time' }) updatedAt!: Date;
 }
@@ -397,7 +415,10 @@ export const toBuyerRequestView = (request: BuyerRequest): BuyerRequestViewDto =
   createdAt: request.createdAt,
   ...(request.deadline === undefined ? {} : { deadline: request.deadline }),
   id: request.id,
+  ...(request.moderationStatus === undefined ? {} : { moderationStatus: request.moderationStatus }),
   ...(request.product === undefined ? {} : { product: request.product }),
+  ...(request.publicationId === undefined ? {} : { publicationId: request.publicationId }),
+  ...(request.publicationStatus === undefined ? {} : { publicationStatus: request.publicationStatus }),
   region: request.region,
   ...(request.requirements === undefined ? {} : { requirements: request.requirements }),
   status: request.status,

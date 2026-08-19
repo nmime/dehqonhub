@@ -41,6 +41,7 @@ import {
   marketplaceProviderOperationScopes,
   type AgriTechOwner,
 } from '@app/backend-feature-agritech-shared';
+import { marketplaceCapabilityRoleFilter } from './marketplace-role-predicates';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   BuyerRequestEntity,
@@ -439,7 +440,7 @@ const toCart = (e: CartEntity, seller: Pick<AgriTechPartnerEntity, 'legalName' |
   updatedAt: e.updatedAt,
 });
 
-const toRequest = (e: BuyerRequestEntity): BuyerRequest => ({
+const toRequest = (e: BuyerRequestEntity, publication?: MarketplaceRequestPublicationEntity): BuyerRequest => ({
   id: e.id,
   tenantId: e.tenantId,
   buyerUserId: e.buyerUserId,
@@ -452,9 +453,34 @@ const toRequest = (e: BuyerRequestEntity): BuyerRequest => ({
   budgetUzs: e.budgetUzs === null ? undefined : Number(e.budgetUzs),
   requirements: e.requirements ?? undefined,
   status: e.status,
+  // The offer endpoints are keyed by the publication, never by the request row, so
+  // a reader that never sees this id cannot reach its own offers. It stays absent
+  // while the request is unpublished rather than falling back to the request id.
+  publicationId: publication?.id,
+  publicationStatus: publication?.status,
+  moderationStatus: publication?.moderationStatus,
   createdAt: e.createdAt,
   updatedAt: e.updatedAt,
 });
+
+/**
+ * The left side of the request-to-publication join. A request without a publication
+ * keeps its entry absent, which is what marks it as still awaiting moderation.
+ */
+const findRequestPublications = async (
+  em: EntityManager,
+  tenantId: string,
+  requests: readonly BuyerRequestEntity[],
+): Promise<Map<string, MarketplaceRequestPublicationEntity>> => {
+  if (requests.length === 0) {
+    return new Map();
+  }
+  const rows = await em.find(MarketplaceRequestPublicationEntity, {
+    requestId: { $in: requests.map((request) => request.id) },
+    tenantId,
+  });
+  return new Map(rows.map((row) => [row.requestId, row]));
+};
 
 const toOffer = (e: RequestOfferEntity, seller: Pick<AgriTechPartnerEntity, 'legalName' | 'region'>): RequestOffer => ({
   buyerPartnerId: e.buyerPartnerId as string,
@@ -700,7 +726,7 @@ const lockAuthorizedMarketplaceParty = async (
   const verification = await em.findOne(
     VerificationEntity,
     {
-      role: capability === 'buyer' ? 'buyer' : { $in: ['farmer', 'seller'] },
+      role: marketplaceCapabilityRoleFilter(capability),
       status: 'verified',
       tenantId: owner.tenantId,
       userId: owner.userId,
@@ -1966,24 +1992,24 @@ export class PostgresMarketplaceRepository
     );
   }
 
-  listRequests(tenantId: string, status?: string): Promise<BuyerRequest[]> {
+  async listRequests(tenantId: string, status?: string): Promise<BuyerRequest[]> {
     const where: Record<string, unknown> = { bindingStatus: 'resolved', tenantId };
     if (status && status !== 'all') {
       where.status = status;
     }
-    return this.em
-      .find(BuyerRequestEntity, where, { orderBy: { createdAt: 'DESC' } })
-      .then((rows) => rows.map(toRequest));
+    const rows = await this.em.find(BuyerRequestEntity, where, { orderBy: { createdAt: 'DESC' } });
+    const publications = await findRequestPublications(this.em, tenantId, rows);
+    return rows.map((row) => toRequest(row, publications.get(row.id)));
   }
 
-  listMyRequests(owner: AgriTechOwner): Promise<BuyerRequest[]> {
-    return this.em
-      .find(
-        BuyerRequestEntity,
-        { bindingStatus: 'resolved', tenantId: owner.tenantId, buyerUserId: owner.userId },
-        { orderBy: { createdAt: 'DESC' } },
-      )
-      .then((rows) => rows.map(toRequest));
+  async listMyRequests(owner: AgriTechOwner): Promise<BuyerRequest[]> {
+    const rows = await this.em.find(
+      BuyerRequestEntity,
+      { bindingStatus: 'resolved', tenantId: owner.tenantId, buyerUserId: owner.userId },
+      { orderBy: { createdAt: 'DESC' } },
+    );
+    const publications = await findRequestPublications(this.em, owner.tenantId, rows);
+    return rows.map((row) => toRequest(row, publications.get(row.id)));
   }
 
   async makeOffer(
