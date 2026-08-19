@@ -19,6 +19,7 @@ import {
   type MarketplaceReviewModerationResult,
   type MarketplaceReviewPage,
   type MarketplaceReviewReportReceipt,
+  type MarketplaceReviewSelfState,
   type MarketplaceReviewView,
   type MarketplaceSamplePolicyView,
   type MarketplaceSampleUsageView,
@@ -32,6 +33,7 @@ import {
   type SubmitMarketplaceSampleFeedbackInput,
   type TransitionMarketplaceSampleInput,
 } from '@app/backend-feature-agritech-shared';
+import { findMarketplaceDemoListing } from './marketplace-demo-catalog';
 
 const maximumUzsAmount = 9_999_999_999_999;
 const idempotencyKeyPattern = /^[A-Za-z0-9:_-]{8,100}$/u;
@@ -203,21 +205,38 @@ export class MarketplaceEngagementDomainService {
   }
 
   /**
-   * The ratings block for one publication. A publication nobody has reviewed yet
-   * — including a demo listing that exists only as a fixture, so the repository
-   * cannot find it at all — falls back to the demo ratings, so the block reads as
-   * a working surface rather than an empty one. A publication with even a single
-   * real review only ever shows real reviews.
+   * The ratings block for one publication.
+   *
+   * The demo fallback is gated on the demo catalog owning the publication, not on
+   * the ratings coming back empty. A governed listing that nobody has reviewed is
+   * a listing with no reviews, and it now says so with a null average and a zero
+   * count instead of borrowing a fixture's stars; only a listing that exists
+   * solely as a demo fixture can answer with demo ratings, and a demo listing
+   * without any answers with its own empty block rather than a 404. A publication
+   * with even one real review only ever shows real reviews.
    */
   async listPublicReviews(listingPublicationId: string): Promise<MarketplaceReviewPage> {
     const result = await this.repository.listPublicReviews(listingPublicationId);
-    if (result.status === 'not_found' || (result.status === 'ok' && result.value.items.length === 0)) {
-      const demo = demoReviewPage(listingPublicationId);
-      if (demo) {
-        return demo;
-      }
+    if (result.status === 'ok' && result.value.items.length > 0) {
+      return result.value;
+    }
+    if (findMarketplaceDemoListing(listingPublicationId)) {
+      return demoReviewPage(listingPublicationId) ?? emptyReviewPage(listingPublicationId);
     }
     return unwrap(result, 'marketplace-public-review');
+  }
+
+  /**
+   * Whether this caller may still rate the listing, and the review they already
+   * left on it. A demo listing is never transactional, so it can never produce
+   * the completed contract this read looks for.
+   */
+  async getReviewSelfState(owner: AgriTechOwner, listingPublicationId: string): Promise<MarketplaceReviewSelfState> {
+    const result = await this.repository.getReviewSelfState(owner, listingPublicationId);
+    if (result.status === 'not_found' && findMarketplaceDemoListing(listingPublicationId)) {
+      return { canReview: false, listingPublicationId };
+    }
+    return unwrap(result, 'marketplace-review-state');
   }
 
   replyToReview(
@@ -282,6 +301,12 @@ export class MarketplaceEngagementDomainService {
       .then((result) => unwrap(result, 'marketplace-review-report'));
   }
 }
+
+/** A listing with no ratings at all, stated rather than implied. */
+const emptyReviewPage = (listingPublicationId: string): MarketplaceReviewPage => ({
+  aggregate: { averageRating: null, listingPublicationId, reviewCount: 0, revision: 0 },
+  items: [],
+});
 
 const requireIdempotencyKey = (value: string): string => {
   if (!idempotencyKeyPattern.test(value)) {

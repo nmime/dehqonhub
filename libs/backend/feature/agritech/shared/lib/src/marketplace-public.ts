@@ -89,6 +89,18 @@ export interface MarketplacePublicSeller {
   provenance: MarketplacePublicProvenance;
 }
 
+/**
+ * The rating block a listing carries wherever it is shown: a one-decimal average
+ * derived from visible deal-verified reviews, plus the count it was derived from.
+ * A listing nobody has reviewed carries `average: null` and `count: 0` - never a
+ * placeholder number - so the card can say "no reviews yet" instead of implying
+ * one.
+ */
+export interface MarketplacePublicListingRating {
+  average: number | null;
+  count: number;
+}
+
 interface MarketplacePublicListingBase {
   id: string;
   section: MarketplaceListingSection;
@@ -106,6 +118,7 @@ interface MarketplacePublicListingBase {
   promoted: boolean;
   provenance: MarketplacePublicProvenance;
   transactional: boolean;
+  rating: MarketplacePublicListingRating;
   seller: MarketplacePublicSeller;
   publishedAt: Date;
   updatedAt: Date;
@@ -281,6 +294,7 @@ export interface MarketplacePublishedListingRecord {
   productCategory?: MarketplacePublicProductListing['category'];
   produceCrop?: string;
   produceGrade?: MarketplacePublicProduceListing['grade'];
+  rating: MarketplacePublicListingRating;
   publishedAt: Date;
   updatedAt: Date;
   sellerPublicId: string;

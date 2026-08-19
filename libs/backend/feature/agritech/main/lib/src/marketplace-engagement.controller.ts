@@ -39,6 +39,7 @@ import {
   MarketplaceReviewDto,
   MarketplaceReviewPageDto,
   MarketplaceReviewReportReceiptDto,
+  MarketplaceReviewSelfStateDto,
   MarketplaceSampleDto,
   MarketplaceSampleListDto,
   MarketplaceSampleUsageDto,
@@ -47,6 +48,7 @@ import {
   toMarketplaceReviewDto,
   toMarketplaceReviewPageDto,
   toMarketplaceReviewReportReceiptDto,
+  toMarketplaceReviewSelfStateDto,
   toMarketplaceSampleDto,
   toMarketplaceSampleUsageDto,
 } from './marketplace-engagement.view-dto';
@@ -274,6 +276,26 @@ export class MarketplaceEngagementController {
     return createOkResponse(
       toMarketplaceReviewDto(
         await this.service.submitReview(ownerFrom(principal), input, requireIdempotencyKey(idempotencyKey)),
+      ),
+    );
+  }
+
+  /**
+   * The caller's own standing with one listing's ratings. The public review read
+   * is author-free by design, so a browser cannot infer from it whether the review
+   * it is looking at is its own; this read says so from persisted eligibility
+   * instead, which is also what the write path enforces.
+   */
+  @Get('reviews/state/:listingPublicationId')
+  @ApiParam({ format: 'uuid', name: 'listingPublicationId' })
+  @ApiOkDataResponse(MarketplaceReviewSelfStateDto)
+  async getReviewSelfState(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Param('listingPublicationId', ParseUUIDPipe) listingPublicationId: string,
+  ) {
+    return createOkResponse(
+      toMarketplaceReviewSelfStateDto(
+        await this.service.getReviewSelfState(ownerFrom(principal), listingPublicationId),
       ),
     );
   }

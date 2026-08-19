@@ -237,6 +237,7 @@ export const toMarketplacePublicListing = (record: MarketplacePublishedListingRe
     priceUzs: record.priceUzs,
     promoted: record.promoted,
     provenance: 'live' as const,
+    rating: { average: record.rating.average, count: record.rating.count },
     transactional: true,
     sampleAvailable: record.sampleAvailable,
     publishedAt: record.publishedAt,

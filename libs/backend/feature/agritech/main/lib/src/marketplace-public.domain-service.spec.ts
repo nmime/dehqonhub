@@ -28,6 +28,7 @@ const productRecord: MarketplacePublishedListingRecord = {
   priceUzs: 4_200_000,
   productCategory: 'seed',
   promoted: false,
+  rating: { average: 4.7, count: 3 },
   sampleAvailable: false,
   publicId: '11111111-1111-4111-8111-111111111111',
   publishedAt: new Date('2030-01-01T00:00:00.000Z'),
@@ -193,6 +194,9 @@ describe('MarketplacePublicDomainService', () => {
           promoted: false,
           provenance: 'live',
           publishedAt: productRecord.publishedAt,
+          // The record's own aggregate travels with the listing; the projection
+          // neither rounds it again nor substitutes anything when it is empty.
+          rating: { average: 4.7, count: 3 },
           region: 'Samarkand',
           sampleAvailable: false,
           section: 'seeds',
@@ -661,6 +665,7 @@ describe('MarketplacePublicDomainService projections', () => {
     produceCrop: 'corn',
     produceGrade: 'A',
     promoted: true,
+    rating: { average: null, count: 0 },
     publicId: '77777777-7777-4777-8777-777777777777',
     publishedAt: productRecord.publishedAt,
     region: 'Fergana',
@@ -691,6 +696,9 @@ describe('MarketplacePublicDomainService projections', () => {
       promoted: true,
       provenance: 'live',
       publishedAt: produceRecord.publishedAt,
+      // A harvest nobody has reviewed publishes no score at all, rather than a
+      // zero that would read as a bad one.
+      rating: { average: null, count: 0 },
       region: 'Fergana',
       sampleAvailable: true,
       section: 'produce',
