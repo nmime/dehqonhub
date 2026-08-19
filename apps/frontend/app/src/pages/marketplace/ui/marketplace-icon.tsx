@@ -18,6 +18,7 @@ import {
   Sparkles,
   SprayCan,
   Sprout,
+  Star,
   Tractor,
   TriangleAlert,
   User,
@@ -51,6 +52,7 @@ export type MarketplaceIconName =
   | 'send'
   | 'shield'
   | 'spark'
+  | 'star'
   | 'tune';
 
 /** Product names stay stable while every glyph comes from one linear icon set. */
@@ -78,6 +80,7 @@ const icons: Record<MarketplaceIconName, LucideIcon> = {
   send: Send,
   shield: ShieldCheck,
   spark: Sparkles,
+  star: Star,
   tune: SlidersHorizontal,
 };
 
