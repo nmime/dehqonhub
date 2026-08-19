@@ -6,6 +6,7 @@ import '@fontsource-variable/montserrat';
 import '@fontsource-variable/manrope';
 import './styles.css';
 
+export * from './asset';
 export * from './component';
 export * from './layout';
 export * from './util';

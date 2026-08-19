@@ -1,6 +1,17 @@
 import { useState, type ReactNode } from 'react';
-import { ArrowLeft, Check, Home, LogIn, Send, Settings, Share2, UserRound, type LucideIcon } from 'lucide-react';
-import { ProductShell, type ProductShellAction, type ProductShellProps } from '@app/frontend-ui-web';
+import { ArrowLeft, Check, Share2 } from 'lucide-react';
+import {
+  ProductShell,
+  UiBottomNav,
+  UiNavLeadersIcon,
+  UiNavMarketIcon,
+  UiNavOffersIcon,
+  UiNavOrdersIcon,
+  UiNavProfileIcon,
+  type ProductShellAction,
+  type ProductShellProps,
+  type UiBottomNavItem,
+} from '@app/frontend-ui-web';
 import { useMiniApp, useMiniAppBackButton } from './mini-app-provider';
 
 export interface MiniAppShellProps extends Omit<ProductShellProps, 'children' | 'headerLeading' | 'headerTrailing'> {
@@ -21,23 +32,35 @@ const getShareUrl = (): string => {
   return location.href;
 };
 
-const bottomActionKey = (action: ProductShellAction) => `${action.href}:${action.label}`;
-
-const iconForAction = (href: string): LucideIcon => {
-  if (href === '/') {
-    return Home;
+/**
+ * Route-to-glyph mapping for the bottom navigation.
+ *
+ * The filled marks from the shared asset pack replace lucide's strokes here
+ * only: at nav size, inside a filled active plate, a 2px stroke loses too much
+ * contrast on a low-DPI screen. Lucide still owns every other icon in the app.
+ */
+const iconForAction = (href: string): ReactNode => {
+  if (href.startsWith('/profile') || href.startsWith('/auth')) {
+    return <UiNavProfileIcon />;
   }
-  if (href.startsWith('/auth')) {
-    return LogIn;
+  if (href.startsWith('/orders') || href.startsWith('/settings') || href.startsWith('/link/')) {
+    return <UiNavOrdersIcon />;
   }
-  if (href.startsWith('/profile')) {
-    return UserRound;
+  if (href.startsWith('/offers') || href.startsWith('/requests')) {
+    return <UiNavOffersIcon />;
   }
-  if (href.startsWith('/settings') || href.startsWith('/link/')) {
-    return Settings;
+  if (href.startsWith('/leaders') || href.startsWith('/ratings')) {
+    return <UiNavLeadersIcon />;
   }
-  return Send;
+  return <UiNavMarketIcon />;
 };
+
+const toNavItem = (action: ProductShellAction): UiBottomNavItem => ({
+  href: action.href,
+  icon: iconForAction(action.href),
+  isCurrent: action.isCurrent,
+  label: action.label,
+});
 
 export function MiniAppShell({
   activePath,
@@ -111,38 +134,20 @@ export function MiniAppShell({
       >
         {children}
       </ProductShell>
-      <nav aria-label={`${appName} bottom navigation`} className="xr-mini-app-bottom-bar">
-        {actions.map((action) => {
-          const ActionIcon = iconForAction(action.href);
-          return (
-            <a
-              aria-current={action.isCurrent ? 'page' : undefined}
-              className="xr-mini-app-bottom-bar__action"
-              data-current={action.isCurrent ?? false}
-              href={action.href}
-              key={bottomActionKey(action)}
-              title={action.label}
-            >
-              <ActionIcon aria-hidden="true" size={20} strokeWidth={2} />
-              <span className="sr-only">{action.label}</span>
-            </a>
-          );
-        })}
-        <button
-          aria-label={shareLabel}
-          className="xr-mini-app-bottom-bar__action xr-mini-app-bottom-bar__share"
-          onClick={() => void handleShare()}
-          title={shareLabel}
-          type="button"
-        >
-          {shareResult === 'copied' ? (
-            <Check aria-hidden="true" size={20} strokeWidth={2} />
-          ) : (
-            <Share2 aria-hidden="true" size={20} strokeWidth={2} />
-          )}
-          <span className="sr-only">{shareResult === 'copied' ? 'Copied' : shareLabel}</span>
-        </button>
-      </nav>
+      <UiBottomNav
+        action={{
+          icon:
+            shareResult === 'copied' ? (
+              <Check aria-hidden="true" size={20} strokeWidth={2.5} />
+            ) : (
+              <Share2 aria-hidden="true" size={20} strokeWidth={2.5} />
+            ),
+          label: shareLabel,
+          onClick: () => void handleShare(),
+        }}
+        ariaLabel={`${appName} bottom navigation`}
+        items={actions.map(toNavItem)}
+      />
       <span aria-live="polite" className="sr-only">
         {shareResult === 'copied' ? 'Share link copied to clipboard.' : null}
       </span>

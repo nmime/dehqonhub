@@ -23,6 +23,9 @@ export const buttonVariants = cva(
     variants: {
       variant: {
         primary: 'xr-button--primary border-transparent bg-primary text-primary-foreground',
+        // Warm secondary emphasis: value-bearing confirmations ("collect",
+        // "accept offer") where primary blue would read as just another link.
+        accent: 'xr-button--accent border-transparent',
         secondary:
           'xr-button--secondary border-border bg-secondary text-secondary-foreground hover:bg-accent hover:text-accent-foreground',
         outline:

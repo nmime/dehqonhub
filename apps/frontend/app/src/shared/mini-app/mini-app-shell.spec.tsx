@@ -72,8 +72,12 @@ describe('MiniAppShell', () => {
         url: window.location.href,
       });
     });
-    expect(await screen.findAllByText('Copied')).toHaveLength(2);
-    expect(screen.getByText('Share link copied to clipboard.')).not.toBeNull();
+    // Copy confirmation is announced once, by the live region. Both share
+    // controls keep a stable accessible name — a button whose name flips to a
+    // status message ("Send" -> "Copied") is announced as a different control.
+    expect(await screen.findByText('Share link copied to clipboard.')).not.toBeNull();
+    expect(document.querySelector('[data-share-result="copied"]')).not.toBeNull();
+    expect(screen.getAllByRole('button', { name: 'Send' })).toHaveLength(2);
     expect(runtime.useMiniAppBackButton).toHaveBeenCalledWith({ isVisible: true, onBack });
   });
 
