@@ -130,7 +130,7 @@ export function AppProviders({ children }: Readonly<{ children?: ReactNode }> = 
       bottomBarColor={dehqonHubChrome.bottomBar}
       headerColor={dehqonHubChrome.header}
     >
-      <FrontendStateProvider>
+      <FrontendStateProvider initialTheme="light">
         <UserAppApiClientProvider>
           <FrontendQueryProvider>
             <UiErrorBoundary>

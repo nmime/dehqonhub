@@ -2,7 +2,7 @@ import { useI18n, type Locale, type UiTheme } from '@app/frontend-runtime';
 import { useAuthSessionProbe } from '../../../features/auth';
 import { LogoutButton } from '../../../features/logout';
 import { ProviderIdentitiesPanel, SocialAuthProvider, useSocialAuth } from '../../../features/social-auth';
-import { LanguageSwitcher, ThemeSwitcher, UiCard, UiSection } from '../../../shared/ui';
+import { LanguageSwitcher, UiCard, UiSection } from '../../../shared/ui';
 
 interface SettingsPageProps {
   applyUserLocale: (locale: Locale) => void;
@@ -33,7 +33,6 @@ export function SettingsPage({ applyUserLocale, applyUserTheme, navigate }: Read
           <p>{t('user.settings.preferences.description')}</p>
           <div className="user-settings__controls">
             <LanguageSwitcher />
-            <ThemeSwitcher />
           </div>
           <div className="user-settings__sign-out">
             <LogoutButton navigate={navigate} t={t} />

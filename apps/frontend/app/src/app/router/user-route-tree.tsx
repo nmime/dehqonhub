@@ -60,8 +60,19 @@ function createMarketplaceRouteComponent(view: MarketplaceRouteView) {
   return function MarketplaceRouteComponent() {
     const navigate = useUserNavigate();
     const locationSearch = useRouterState({ select: (state) => state.location.searchStr });
+    // Subscribed rather than read from `globalThis.location`, so a panel switch
+    // inside one route — `/account/buying` to `/account/selling` — re-renders the
+    // page instead of leaving it showing the section it first mounted with.
+    const locationPathname = useRouterState({ select: (state) => state.location.pathname });
 
-    return <MarketplacePage locationSearch={locationSearch} navigate={navigate} view={view} />;
+    return (
+      <MarketplacePage
+        locationPathname={locationPathname}
+        locationSearch={locationSearch}
+        navigate={navigate}
+        view={view}
+      />
+    );
   };
 }
 
@@ -239,6 +250,39 @@ const requestsRoute = createRoute({
   component: createMarketplaceRouteComponent('requests'),
 });
 
+// The buyer's own purchase requests and the seller's incoming feed are separate
+// deep links rather than one mixed list, and a single request has its own address.
+// All three reuse the marketplace chrome, so they stay on the same page component.
+const requestsIncomingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/requests/incoming',
+  component: createMarketplaceRouteComponent('requests'),
+});
+
+const requestsNewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/requests/new',
+  component: createMarketplaceRouteComponent('requests'),
+});
+
+function MarketplaceRequestRouteComponent() {
+  const navigate = useUserNavigate();
+  const locationSearch = useRouterState({ select: (state) => state.location.searchStr });
+  const requestId = useRouterState({
+    select: (state) => decodeURIComponent(state.location.pathname.slice('/requests/'.length)),
+  });
+
+  // The page reads the addressed request from the path, so switching between two
+  // requests has to remount it rather than reuse the previous request's state.
+  return <MarketplacePage key={requestId} locationSearch={locationSearch} navigate={navigate} view="requests" />;
+}
+
+const singleRequestRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/requests/$requestId',
+  component: MarketplaceRequestRouteComponent,
+});
+
 const verificationRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/verification',
@@ -248,6 +292,19 @@ const verificationRoute = createRoute({
 const accountRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/account',
+  component: createMarketplaceRouteComponent('account'),
+});
+
+// The personal cabinet keeps every section on its own address, so a reviewer can
+// be sent straight to `/account/finance` instead of to a screen they then have to
+// navigate. Both routes share the account component: it derives the section from
+// the path it is handed, and an unknown segment resolves to the overview rather
+// than to an empty frame. Moving between two sections is a re-render driven by
+// the subscribed pathname, not a remount, so switching panels does not re-read
+// the dashboard.
+const accountSectionRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/account/$cabinetSection',
   component: createMarketplaceRouteComponent('account'),
 });
 
@@ -277,8 +334,12 @@ const routeTree = rootRoute.addChildren([
   favoritesRoute,
   cartRoute,
   requestsRoute,
+  requestsIncomingRoute,
+  requestsNewRoute,
+  singleRequestRoute,
   verificationRoute,
   accountRoute,
+  accountSectionRoute,
   contractRoute,
   operationsRoute,
   problemsRoute,

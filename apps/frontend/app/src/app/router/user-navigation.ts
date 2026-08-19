@@ -32,6 +32,13 @@ export const isMarketplaceRoute = (path: string): boolean => {
   return (
     marketplaceRoutes.has(normalized) ||
     /^\/contracts\/[^/]+$/u.test(normalized) ||
+    // `/requests/incoming`, `/requests/new` and a single `/requests/<id>` are all
+    // marketplace-owned purchase-request surfaces.
+    /^\/requests\/[^/]+$/u.test(normalized) ||
+    // A cabinet section is the account route plus one segment, so it owns the same
+    // chrome. Without this the shell wrapped it in a second page and rendered a
+    // second header below the first.
+    /^\/account\/[^/]+$/u.test(normalized) ||
     /^\/products\/[^/]+$/u.test(normalized) ||
     /^\/sellers\/[^/]+$/u.test(normalized)
   );
