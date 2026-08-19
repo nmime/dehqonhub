@@ -2,7 +2,7 @@
 
 import { spawnSync } from 'node:child_process';
 import { readdirSync } from 'node:fs';
-import { relative, resolve } from 'node:path';
+import { relative, resolve, sep } from 'node:path';
 
 const workspaceRoot = resolve(import.meta.dirname, '../../..');
 const testRoot = resolve(workspaceRoot, 'packages/tooling/src');
@@ -31,7 +31,7 @@ function collectTests(directory) {
     if (entry.isDirectory()) {
       tests.push(...collectTests(path));
     } else if (entry.name.endsWith('.test.ts')) {
-      tests.push(relative(workspaceRoot, path));
+      tests.push(relative(workspaceRoot, path).split(sep).join('/'));
     }
   }
   return tests.sort();
