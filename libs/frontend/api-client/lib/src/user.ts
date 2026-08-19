@@ -92,6 +92,7 @@ export type MarketplaceSampleUsageDto = components['schemas']['MarketplaceSample
 export type RequestMarketplaceSampleDto = components['schemas']['RequestMarketplaceSampleDto'];
 export type MarketplaceReviewDto = components['schemas']['MarketplaceReviewDto'];
 export type MarketplaceReviewPageDto = components['schemas']['MarketplaceReviewPageDto'];
+export type MarketplaceReviewSelfStateDto = components['schemas']['MarketplaceReviewSelfStateDto'];
 export type SubmitMarketplaceReviewDto = components['schemas']['SubmitMarketplaceReviewDto'];
 export type TransitionMarketplaceSampleDto = components['schemas']['TransitionMarketplaceSampleDto'];
 export type SubmitMarketplaceSampleFeedbackDto = components['schemas']['SubmitMarketplaceSampleFeedbackDto'];
@@ -172,6 +173,7 @@ const sampleFeedbackPath = '/marketplace/samples/{sampleId}/feedback';
 const favoritesPath = '/marketplace/favorites';
 const favoritePath = '/marketplace/favorites/{listingPublicationId}';
 const reviewsPath = '/marketplace/reviews';
+const reviewSelfStatePath = '/marketplace/reviews/state/{listingPublicationId}';
 const reviewReplyPath = '/marketplace/reviews/{reviewId}/reply';
 const reviewReportsPath = '/marketplace/reviews/{reviewId}/reports';
 const publicCatalogPath = '/marketplace/public/catalog';
@@ -487,6 +489,14 @@ export const marketplaceControllerAddReview = (
     ...toOpenApiFetchOptions(options),
     body,
     params: { header: commandHeader(idempotencyKey) },
+  });
+export const marketplaceControllerGetReviewSelfState = (
+  listingPublicationId: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.GET(reviewSelfStatePath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { listingPublicationId } },
   });
 export const marketplaceControllerReplyToReview = (
   reviewId: string,
