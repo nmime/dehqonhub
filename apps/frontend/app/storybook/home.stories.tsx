@@ -21,6 +21,7 @@ const catalogProducts = [
     promoted: false,
     provenance: 'live',
     publishedAt: '2026-08-09T10:00:00.000Z',
+    rating: { average: 4.8, count: 24 },
     region: 'Samarqand',
     sampleAvailable: true,
     section: 'seeds',
@@ -47,6 +48,7 @@ const catalogProducts = [
     promoted: false,
     provenance: 'live',
     publishedAt: '2026-08-09T10:00:00.000Z',
+    rating: { average: 4.5, count: 11 },
     region: 'Jizzakh',
     sampleAvailable: true,
     section: 'seeds',
@@ -73,6 +75,7 @@ const catalogProducts = [
     promoted: true,
     provenance: 'live',
     publishedAt: '2026-08-08T10:00:00.000Z',
+    rating: { average: 4.9, count: 6 },
     region: 'Fargʻona',
     sampleAvailable: true,
     section: 'seeds',
@@ -99,6 +102,7 @@ const catalogProducts = [
     promoted: false,
     provenance: 'live',
     publishedAt: '2026-08-07T10:00:00.000Z',
+    rating: { average: null, count: 0 },
     region: 'Toshkent',
     sampleAvailable: false,
     section: 'equipment',
@@ -125,6 +129,7 @@ const catalogProducts = [
     promoted: false,
     provenance: 'demo',
     publishedAt: '2026-08-06T10:00:00.000Z',
+    rating: { average: 4.7, count: 3 },
     region: 'Samarqand',
     sampleAvailable: false,
     section: 'equipment',
@@ -152,6 +157,7 @@ const catalogProducts = [
     promoted: false,
     provenance: 'live',
     publishedAt: '2026-08-05T10:00:00.000Z',
+    rating: { average: 4.2, count: 8 },
     region: 'Fargʻona',
     sampleAvailable: true,
     section: 'produce',
@@ -179,6 +185,7 @@ const catalogProducts = [
     promoted: false,
     provenance: 'live',
     publishedAt: '2026-08-04T10:00:00.000Z',
+    rating: { average: null, count: 0 },
     region: 'Namangan',
     sampleAvailable: false,
     section: 'produce',
@@ -279,14 +286,16 @@ export const Default: Story = {
       await canvas.findByRole('heading', { name: "Uzbekistan's entire agro market — on one platform" }),
     ).toBeVisible();
     await expect(canvas.getAllByRole('button', { name: 'DehqonHub' })).toHaveLength(2);
-    await expect(canvasElement.querySelectorAll('svg.dh-brand__mark')).toHaveLength(2);
-    await expect(canvasElement.querySelectorAll('.dh-brand img')).toHaveLength(0);
+    await expect(canvasElement.querySelectorAll('svg.dh-brand__mark')).toHaveLength(0);
+    await expect(canvasElement.querySelectorAll('img.dh-brand__mark[alt=""]')).toHaveLength(2);
+    await expect(canvasElement.querySelectorAll('img.dh-brand__mark[src="/dehqonhub-emblem-96.png"]')).toHaveLength(2);
     await expect(canvas.getAllByRole('button', { name: /^Catalog$/u })).toHaveLength(1);
     await expect(canvas.getByRole('button', { name: 'For buyers: Catalog' })).toBeVisible();
     await expect(canvas.getByText('Samarqand corn seed')).toBeVisible();
     await expect(canvas.getByText('Compact farm tractor 24 hp')).toBeVisible();
     await expect(canvas.getByText('Grade A wholesale tomatoes')).toBeVisible();
-    await expect(canvas.getByRole('heading', { name: 'Explore the governed demo catalog' })).toBeVisible();
+    await expect(canvas.getByRole('heading', { name: 'Demo reviewer accounts' })).toBeVisible();
+    await expect(canvas.getByText('Demo accounts')).toBeVisible();
     await expect(canvas.getByRole('heading', { name: 'How purchase requests work' })).toBeVisible();
     await expect(canvasElement.querySelectorAll('.dh-how__steps > li')).toHaveLength(3);
     await expect(canvas.queryByText('01')).not.toBeInTheDocument();

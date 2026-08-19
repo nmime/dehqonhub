@@ -305,8 +305,12 @@ describe('User app shell', () => {
     const html = container.innerHTML;
 
     expect(container.querySelectorAll('.dh-marketplace')).toHaveLength(1);
-    expect(container.querySelectorAll('.dh-brand__mark img')).toHaveLength(0);
-    expect(container.querySelectorAll('svg.dh-brand__mark')).toHaveLength(2);
+    expect(container.querySelectorAll('svg.dh-brand__mark')).toHaveLength(0);
+    const brandMarks = [...container.querySelectorAll<HTMLImageElement>('img.dh-brand__mark')];
+    expect(brandMarks).toHaveLength(2);
+    expect(brandMarks.every((mark) => mark.getAttribute('src') === '/dehqonhub-emblem-96.png')).toBe(true);
+    expect(brandMarks.every((mark) => mark.getAttribute('srcset')?.includes('/dehqonhub-emblem.png 512w'))).toBe(true);
+    expect(brandMarks.every((mark) => mark.getAttribute('alt') === '')).toBe(true);
     expect(container.querySelectorAll('.dh-brand__wordmark')).toHaveLength(2);
     expect(screen.getAllByRole('button', { name: 'Language' })).toHaveLength(2);
     expect(
@@ -775,14 +779,11 @@ describe('User app shell', () => {
     });
   });
 
-  it('persists theme switches for authenticated users', async () => {
+  it('offers no theme control because the product ships one light palette', async () => {
     window.history.pushState({}, '', '/auth');
-    const fetchMock = setFetch(
+    setFetch(
       jsonResponse({ data: { user: {} } }),
       jsonResponse({ data: { user: { locale: 'en', theme: 'system' } } }),
-      jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
-      jsonResponse({ data: { theme: 'dark' } }),
-      jsonResponse({ data: { user: { locale: 'en', theme: 'dark' } } }),
       jsonResponse({ data: { principal: { subject: 'profile-subject' } } }),
     );
 
@@ -790,34 +791,8 @@ describe('User app shell', () => {
     await submitLogin();
     expect(await screen.findByText('Ready: profile-subject')).toBeTruthy();
 
-    chooseSelectOption('Theme', 'dark');
-
-    expect(window.location.pathname).toBe('/auth');
-
-    await waitFor(() => {
-      expect(
-        findFetchInit(
-          fetchMock,
-          '/auth/me/preferences',
-          {
-            'Accept-Language': 'en',
-            'Content-Type': 'application/json',
-          },
-          'PATCH',
-        ),
-      ).toBeTruthy();
-    });
-    await expect(
-      readFetchBody(
-        fetchMock,
-        '/auth/me/preferences',
-        {
-          'Accept-Language': 'en',
-          'Content-Type': 'application/json',
-        },
-        'PATCH',
-      ),
-    ).resolves.toBe(JSON.stringify({ theme: 'dark' }));
+    expect(screen.queryByRole('button', { name: 'Theme' })).toBeNull();
+    expect(screen.queryByRole('combobox', { name: 'Theme' })).toBeNull();
   });
 
   it('logs in then loads the protected profile', async () => {

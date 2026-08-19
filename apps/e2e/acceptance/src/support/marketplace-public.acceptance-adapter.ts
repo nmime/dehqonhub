@@ -44,6 +44,7 @@ const approvedListings: MarketplacePublishedListingRecord[] = [
     productCategory: 'seed',
     promoted: false,
     publicId: '11111111-1111-4111-8111-111111111111',
+    rating: { average: 4.5, count: 2 },
     publishedAt: publicationTime,
     region: 'Samarkand',
     sampleAvailable: true,
@@ -68,6 +69,7 @@ const approvedListings: MarketplacePublishedListingRecord[] = [
     produceGrade: 'A',
     promoted: false,
     publicId: '22222222-2222-4222-8222-222222222222',
+    rating: { average: null, count: 0 },
     publishedAt: publicationTime,
     region: 'Samarkand',
     sampleAvailable: false,
@@ -281,6 +283,7 @@ export class MarketplacePublicAcceptanceAdapter {
         this.catalogQueries.push(structuredClone(input));
         return Promise.resolve(visible ? listingPage(listingRecords, input) : { items: [] });
       },
+      isDemoCatalogEnabled: () => Promise.resolve(false),
       listPublishedRequests: () => Promise.resolve({ items: visible ? [approvedRequest] : [] }),
       listPublishedSellerListings: (sellerPublicId, input) =>
         Promise.resolve(

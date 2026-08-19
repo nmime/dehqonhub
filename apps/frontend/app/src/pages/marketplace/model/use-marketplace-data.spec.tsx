@@ -161,6 +161,7 @@ describe('useMarketplaceData', () => {
       kind: 'product',
       priceUzs: 500_000,
       promoted: false,
+      rating: { average: 4.6, count: 12 },
       region: 'Buxoro',
       sampleAvailable: true,
       section: 'seeds',
@@ -177,9 +178,23 @@ describe('useMarketplaceData', () => {
       title: 'Need seed',
       updatedAt: '2026-08-10T08:00:00.000Z',
     };
+    // Owned requests carry both ids: the request row id keys the offer map, while the
+    // publication id is the only value the offer endpoints accept.
     const ownedRequests = [
-      { ...publicRequest, id: 'owned-one' },
-      { ...publicRequest, id: 'owned-two' },
+      {
+        ...publicRequest,
+        id: 'owned-one',
+        moderationStatus: 'approved',
+        publicationId: 'publication-one',
+        publicationStatus: 'published',
+      },
+      {
+        ...publicRequest,
+        id: 'owned-two',
+        moderationStatus: 'approved',
+        publicationId: 'publication-two',
+        publicationStatus: 'published',
+      },
     ];
     api.marketplacePublicControllerListCatalog.mockResolvedValue(apiSuccess({ items: [publicListing] }));
     api.marketplacePublicControllerListRequests.mockResolvedValue(apiSuccess({ items: [publicRequest] }));
@@ -217,6 +232,10 @@ describe('useMarketplaceData', () => {
       expect(signedIn.result.current.providerReadiness.status).toBe('error');
       expect(signedIn.result.current.ownedListingPublications.status).toBe('error');
     });
+    expect(api.marketplaceControllerListOffers).toHaveBeenCalledWith('publication-one', requestOptions);
+    expect(api.marketplaceControllerListOffers).toHaveBeenCalledWith('publication-two', requestOptions);
+    expect(api.marketplaceControllerListOffers).not.toHaveBeenCalledWith('owned-one', requestOptions);
+    expect(api.marketplaceControllerListOffers).not.toHaveBeenCalledWith('owned-two', requestOptions);
     expect(signedIn.result.current.catalog.data[0]?.id).toBe('listing-public');
     expect(signedIn.result.current.requests.data[0]?.status).toBe('open');
     signedIn.result.current.refresh();
@@ -382,5 +401,36 @@ describe('useMarketplaceData', () => {
     };
     await staleResourceRun('resolve');
     await staleResourceRun('reject');
+  });
+
+  it('never asks for offers on a request that has no publication yet', async () => {
+    api.marketplaceControllerGetVerification.mockResolvedValue(apiSuccess(verifiedBuyer));
+    api.marketplaceControllerGetDashboard.mockResolvedValue(apiSuccess({ role: 'buyer' }));
+    api.marketplaceControllerSampleUsage.mockResolvedValue(
+      apiSuccess({ limit: 5, period: '2026-08', policyVersion: 1, remaining: 5, used: 0 }),
+    );
+    api.marketplaceControllerListMyRequests.mockResolvedValue(
+      apiSuccess({
+        items: [
+          {
+            createdAt: '2026-08-10T08:00:00.000Z',
+            id: 'awaiting-moderation',
+            region: 'Buxoro',
+            status: 'open',
+            title: 'Not published yet',
+            updatedAt: '2026-08-10T08:00:00.000Z',
+          },
+        ],
+      }),
+    );
+
+    const { result, unmount } = renderHook(() => useMarketplaceData());
+    await waitFor(() => {
+      expect(result.current.myRequests.status).toBe('ready');
+      expect(result.current.offersByRequest.status).toBe('empty');
+    });
+
+    expect(api.marketplaceControllerListOffers).not.toHaveBeenCalled();
+    unmount();
   });
 });

@@ -13,6 +13,7 @@ const testState = vi.hoisted(() => {
   const getContractLifecycle = vi.fn();
   const linkOneId = vi.fn();
   const listReviews = vi.fn();
+  const getReviewSelfState = vi.fn();
   const listSuggestions = vi.fn();
   const storeVerificationDocument = vi.fn();
   const submitVerification = vi.fn();
@@ -33,6 +34,7 @@ const testState = vi.hoisted(() => {
       marketplaceControllerSignContract: signContract,
       marketplaceControllerRecordSettlementEvent: recordSettlementEvent,
       marketplaceControllerTransitionContractFulfillment: transitionContractFulfillment,
+      marketplaceControllerGetReviewSelfState: getReviewSelfState,
       marketplacePublicControllerListReviews: listReviews,
       marketplacePublicControllerListSuggestions: listSuggestions,
     },
@@ -40,6 +42,7 @@ const testState = vi.hoisted(() => {
     consentFactoring,
     createContractArtifact,
     getContractLifecycle,
+    getReviewSelfState,
     linkOneId,
     listReviews,
     listSuggestions,
@@ -61,6 +64,10 @@ vi.mock('@app/frontend-runtime', () => ({
     locale: 'en',
     t: testState.translate,
   }),
+}));
+
+vi.mock('@app/frontend-feature-user-logout', () => ({
+  useLogout: () => ({ model: { isPending: false }, signOut: () => undefined }),
 }));
 
 vi.mock('@app/frontend-api-client', async (importOriginal) => {
@@ -93,6 +100,7 @@ const product = {
   priceUzs: 1_250_000,
   promoted: false,
   provenance: 'live' as const,
+  rating: { average: 4.6, count: 12 },
   region: 'Samarqand',
   sampleAvailable: true,
   section: 'seeds' as const,
@@ -175,6 +183,7 @@ describe('MarketplacePage mutations', () => {
     testState.consentFactoring.mockReset();
     testState.getContractLifecycle.mockReset();
     testState.linkOneId.mockReset();
+    testState.getReviewSelfState.mockReset();
     testState.listReviews.mockReset();
     testState.listSuggestions.mockReset();
     testState.storeVerificationDocument.mockReset();
@@ -185,6 +194,9 @@ describe('MarketplacePage mutations', () => {
     testState.createContractArtifact.mockResolvedValue({ id: 'artifact-1' });
     testState.createVerification.mockResolvedValue(apiSuccess(verificationFixture(1, false)));
     testState.linkOneId.mockResolvedValue(apiSuccess(verificationFixture(2, true)));
+    // Unanswered by default: the entry then falls back to what the shell derived
+    // from the caller's own completed contracts, which is what these cases pin.
+    testState.getReviewSelfState.mockRejectedValue(new Error('review state unavailable'));
     testState.listReviews.mockResolvedValue({ items: [] });
     testState.listSuggestions.mockResolvedValue(
       apiSuccess({ items: [{ id: 'seller-1', kind: 'seller', label: 'Seed cooperative' }] }),
@@ -450,8 +462,56 @@ describe('MarketplacePage mutations', () => {
       expect(testState.listReviews).toHaveBeenCalledOnce();
     });
 
-    const rating = screen.queryByLabelText('agritech.marketplace.reviews.rating');
+    const rating = screen.queryByRole('group', { name: 'agritech.marketplace.reviews.rating' });
     expect(Boolean(rating)).toBe(expected);
+  });
+
+  /**
+   * The server's own answer outranks the shell's reading of the contract list.
+   * A buyer who already spent the eligibility still holds a completed contract for
+   * the listing, so the contract-derived hint alone would keep offering an entry
+   * the API answers with a conflict.
+   */
+  it('shows a buyer their own review instead of an entry the server would refuse', async () => {
+    testState.getReviewSelfState.mockResolvedValue(
+      apiSuccess({
+        canReview: false,
+        listingPublicationId: product.id,
+        review: {
+          assetReferences: [],
+          comment: 'Delivered as described.',
+          createdAt: '2026-08-09T10:00:00.000Z',
+          id: 'review-own',
+          listingPublicationId: product.id,
+          rating: 5,
+          revision: 1,
+          updatedAt: '2026-08-09T10:00:00.000Z',
+          verifiedDeal: true,
+        },
+      }),
+    );
+
+    render(<MarketplacePage navigate={vi.fn()} productId={product.id} view="product" />);
+    await waitFor(() => {
+      expect(testState.getReviewSelfState).toHaveBeenCalledWith(product.id, expect.anything());
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('agritech.marketplace.reviews.yourReview')).toBeTruthy();
+    });
+    expect(screen.getByText('Delivered as described.')).toBeTruthy();
+    expect(screen.queryByRole('group', { name: 'agritech.marketplace.reviews.rating' })).toBeNull();
+  });
+
+  it('offers the entry when the server says the caller still holds an eligibility', async () => {
+    testState.getReviewSelfState.mockResolvedValue(apiSuccess({ canReview: true, listingPublicationId: product.id }));
+
+    render(<MarketplacePage navigate={vi.fn()} productId={product.id} view="product" />);
+
+    await waitFor(() => {
+      expect(screen.getByRole('group', { name: 'agritech.marketplace.reviews.rating' })).toBeTruthy();
+    });
+    expect(screen.queryByText('agritech.marketplace.reviews.gated')).toBeNull();
   });
 
   it('renders the public catalog and local favorites for an anonymous visitor', () => {
@@ -499,9 +559,16 @@ describe('MarketplacePage mutations', () => {
       verification: { data: null, status: 'empty' },
     };
 
-    render(<MarketplacePage navigate={vi.fn()} view="requests" />);
-    expect(screen.getByText('Need certified corn seed')).toBeTruthy();
-    expect(screen.queryByText('agritech.marketplace.auth.title')).toBeNull();
+    // The seller feed is its own deep link; the buyer's own requests live at /requests.
+    const previousPath = globalThis.location.pathname;
+    globalThis.history.replaceState({}, '', '/requests/incoming');
+    try {
+      render(<MarketplacePage navigate={vi.fn()} view="requests" />);
+      expect(screen.getByText('Need certified corn seed')).toBeTruthy();
+      expect(screen.queryByText('agritech.marketplace.auth.title')).toBeNull();
+    } finally {
+      globalThis.history.replaceState({}, '', previousPath);
+    }
   });
 
   it.each(['pending', 'rejected'] as const)(
@@ -548,6 +615,7 @@ describe('MarketplacePage mutations', () => {
               name: 'Corn seed source',
               partnerId: 'supplier-partner',
               priceUzs: product.priceUzs,
+              rating: { average: 4.6, count: 12 },
               region: product.region,
               sampleAvailable: true,
               status: 'active',
@@ -572,10 +640,15 @@ describe('MarketplacePage mutations', () => {
       const view = render(<MarketplacePage navigate={vi.fn()} view="catalog" />);
       const addToCart = screen.getByRole('button', { name: 'agritech.marketplace.product.addToPreviewCart' });
       expect(addToCart.hasAttribute('disabled')).toBe(false);
-      expect(screen.getByText('agritech.marketplace.access.verify')).toBeTruthy();
+      // One catalog-level notice carries the eligibility reason and its recovery
+      // action; the cards only announce the same reason on their own action.
+      expect(view.container.querySelectorAll('.dh-access-notice')).toHaveLength(1);
+      expect(screen.getAllByText('agritech.marketplace.access.verify').length).toBeGreaterThan(0);
       expect(screen.getByRole('button', { name: 'agritech.marketplace.access.action.verify' })).toBeTruthy();
 
-      view.rerender(<MarketplacePage navigate={vi.fn()} view="account" />);
+      // The cabinet shows one section at a time; the publishing workspace lives in
+      // the publications section, addressed here the way its deep link addresses it.
+      view.rerender(<MarketplacePage locationPathname="/account/publications" navigate={vi.fn()} view="account" />);
       expect(
         screen
           .getAllByRole('button', { name: 'agritech.marketplace.publication.publish' })
