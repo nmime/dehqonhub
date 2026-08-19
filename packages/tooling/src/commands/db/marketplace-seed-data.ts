@@ -55,37 +55,62 @@ export interface DemoProductFixture {
   id: string;
   name: string;
   /**
-   * Optional, as on `Product` and as in the `name_ru` / `name_uz` columns: a
-   * catalog row may carry only its own language. Every demo product happens to
-   * name all three, and requiring it here only forced a fabricated translation.
+   * Optional, as on `Product` and as in the `name_ru` / `name_uz` /
+   * `name_uz_cyrl` columns: a catalog row may carry only its own language. Every
+   * demo product happens to name all four, and requiring it here only forced a
+   * fabricated translation.
    */
   nameRu?: string;
   nameUz?: string;
+  nameUzCyrl?: string;
   category: string;
   description: string;
+  /**
+   * Root-relative photographs served from the user app's `public/` tree. The
+   * `products.images` column is uncapped jsonb, but the demo rows stay at one or
+   * two so a published snapshot never approaches the five-asset check constraint
+   * on `marketplace_listing_publications`.
+   */
+  images: readonly string[];
   /** The owning partner's id, which is what a cart and a checkout resolve. */
   supplierId: string;
   supplierName: string;
   priceUzs: number;
   unit: string;
   stockQuantity: number;
+  /**
+   * Whether a buyer may request a sample, which is a column on `products` and
+   * not a property the reader can infer. Left unwritten it defaults to `false`,
+   * so every seeded input listing answered "no samples" while the catalog said
+   * otherwise, and the public catalog's `sampleAvailable` filter had nothing to
+   * match on the product side.
+   */
+  sampleAvailable: boolean;
   region: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-const farmerEmail = "dehqon@demo.dehqonhub.uz";
-const sellerEmail = "sotuvchi@demo.dehqonhub.uz";
-const buyerEmail = "xaridor@demo.dehqonhub.uz";
+export const farmerEmail = "dehqon@demo.dehqonhub.uz";
+export const sellerEmail = "sotuvchi@demo.dehqonhub.uz";
+export const buyerEmail = "xaridor@demo.dehqonhub.uz";
 
 /**
- * Who owns which catalog supplier. The farmer login owns the co-operative that
- * lists produce, which is what makes it a seller as well as a buyer, and the
+ * Who owns which catalog supplier. The farmer login owns the co-operatives that
+ * list produce, which is what makes it a seller as well as a buyer, and the
  * seller login owns the input and machinery suppliers. Anything not named here
  * falls to the seller login, so adding a demo supplier needs no edit.
+ *
+ * A produce co-operative has to be owned by the farmer login and by no other:
+ * the public catalog joins a produce publication to `farmers` on
+ * `farmer.user_id = seller.owner_user_id`, so a harvest listed through an
+ * organization the farmer does not own is invisible however well-formed the rest
+ * of the chain is.
  */
-const catalogSupplierOwners: Record<string, string> = {
+export const catalogSupplierOwners: Record<string, string> = {
   "Dehqon Bozori Kooperativi": farmerEmail,
+  "Farg'ona Dehqon Kooperativi": farmerEmail,
+  "Xorazm Dehqon Kooperativi": farmerEmail,
 };
 
 /**
@@ -94,7 +119,7 @@ const catalogSupplierOwners: Record<string, string> = {
  * display text, and correcting the typography of `Urug'chilik` renumbered the
  * partner every listing points at, while the slug survives any such edit.
  */
-const supplierPartnerKey = (supplierSlug: string): string => `partner:supplier:${supplierSlug}`;
+export const supplierPartnerKey = (supplierSlug: string): string => `partner:supplier:${supplierSlug}`;
 
 /** The partner id a catalog listing is sold through — see `marketplaceFixtureUuid`. */
 const supplierPartnerId = (supplierSlug: string): string => marketplaceFixtureUuid(supplierPartnerKey(supplierSlug));
@@ -111,13 +136,55 @@ function fixtureTaxId(key: string): string {
   return `3${String(Number.parseInt(hex, 16) % 100_000_000).padStart(8, "0")}`;
 }
 
+/**
+ * The region each seeded organization trades from, pinned per supplier.
+ *
+ * It cannot be derived from the supplier's listings.
+ * `enforce_marketplace_public_seller_revision_immutability` refuses any change to
+ * an approved revision's `region`, so a value that follows whichever listing
+ * happens to come first in the catalog turns a re-seed into a failed transaction
+ * the moment a new listing is added ahead of the old one. Pinning it here makes
+ * the seeded value independent of catalog order.
+ *
+ * Two entries look wrong and are deliberate: `Samarqand Bog'dorchilik` and
+ * `Xorazm Hosil Eksport` record the regions that were derived and approved
+ * before this map existed. Correcting them needs a second seller revision rather
+ * than an edit, which is not this fixture's job.
+ */
+const supplierRegions: Record<string, string> = {
+  "Agro Kimyo Servis": "Navoiy",
+  "Andijon Urug'chilik": "Andijon",
+  "Buxoro Agro Ta'minot": "Buxoro",
+  "Dehqon Bozori Kooperativi": "Toshkent",
+  "Farg'ona Agrotexnika": "Farg'ona",
+  "Farg'ona Dehqon Kooperativi": "Farg'ona",
+  "Namangan Issiqxona Servis": "Namangan",
+  "Qashqadaryo Suv Tizim": "Qashqadaryo",
+  "Samarqand Bog'dorchilik": "Toshkent",
+  "Sirdaryo Don Terminali": "Sirdaryo",
+  "Surxon Meva Savdo": "Surxondaryo",
+  "Toshkent Agroservis Markazi": "Toshkent",
+  "Xorazm Dehqon Kooperativi": "Xorazm",
+  "Xorazm Hosil Eksport": "Farg'ona",
+};
+
 /** Distinct suppliers in catalog order, so their fixture numbering is stable. */
-const catalogSuppliers = DemoProducts.reduce<{ name: string; region: string; slug: string }[]>((suppliers, product) => {
-  if (!suppliers.some((supplier) => supplier.slug === product.supplierId)) {
-    suppliers.push({ name: product.supplierName, region: product.region, slug: product.supplierId });
-  }
-  return suppliers;
-}, []);
+export const catalogSuppliers = DemoProducts.reduce<{ name: string; region: string; slug: string }[]>(
+  (suppliers, product) => {
+    if (suppliers.some((supplier) => supplier.slug === product.supplierId)) {
+      return suppliers;
+    }
+    const region = supplierRegions[product.supplierName];
+    if (!region) {
+      throw new Error(
+        `Demo catalog supplier ${product.supplierName} has no pinned region; a seeded seller profile cannot change it later.`,
+      );
+    }
+    suppliers.push({ name: product.supplierName, region, slug: product.supplierId });
+    return suppliers;
+  },
+  [],
+);
 
 /**
  * Organizations a reviewer buys and sells through. The trade name doubles as the
@@ -196,13 +263,16 @@ export const demoMarketplaceProducts: readonly DemoProductFixture[] = DemoProduc
   name: product.name,
   nameRu: product.nameRu,
   nameUz: product.nameUz,
+  nameUzCyrl: product.nameUzCyrl,
   category: product.category,
   description: product.description,
+  images: product.images,
   supplierId: supplierPartnerId(product.supplierId),
   supplierName: product.supplierName,
   priceUzs: product.priceUzs,
   unit: product.unit,
   stockQuantity: product.stockQuantity,
+  sampleAvailable: product.sampleAvailable,
   region: product.region,
   createdAt: product.createdAt,
   updatedAt: product.updatedAt,
