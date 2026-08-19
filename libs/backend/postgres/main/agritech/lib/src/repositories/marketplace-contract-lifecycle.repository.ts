@@ -32,6 +32,7 @@ import {
   type PreparedMarketplaceContractSignature,
   type PreparedMarketplaceSettlementProviderCommand,
 } from '@app/backend-feature-agritech-shared';
+import { marketplaceCapabilityRoleFilter } from './marketplace-role-predicates';
 import { ContractEntity, MarketplaceProviderOperationEntity, VerificationEntity } from '../entities/marketplace.entity';
 import { MarketplacePartnerMembershipEntity } from '../entities/marketplace-commerce.entity';
 import {
@@ -301,7 +302,7 @@ async function authorizeParty(
     em.findOne(
       VerificationEntity,
       {
-        role: party === 'buyer' ? 'buyer' : { $in: ['farmer', 'seller'] },
+        role: marketplaceCapabilityRoleFilter(party),
         status: 'verified',
         tenantId: owner.tenantId,
         userId: owner.userId,

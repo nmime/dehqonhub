@@ -4,6 +4,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   marketplaceEngagementFingerprint,
+  marketplaceReviewAverageRating,
   marketplaceSampleDefaultMonthlyLimit,
   marketplaceSampleTransitionTarget,
   marketplaceUtcMonthKey,
@@ -20,6 +21,7 @@ import {
   type MarketplaceReviewModerationResult,
   type MarketplaceReviewPage,
   type MarketplaceReviewReportReceipt,
+  type MarketplaceReviewSelfState,
   type MarketplaceReviewView,
   type MarketplaceSamplePolicyView,
   type MarketplaceSampleUsageView,
@@ -33,6 +35,7 @@ import {
   type SubmitMarketplaceSampleFeedbackInput,
   type TransitionMarketplaceSampleInput,
 } from '@app/backend-feature-agritech-shared';
+import { marketplaceCapabilityRoleFilter, marketplaceSellerRoleFilter } from './marketplace-role-predicates';
 import { FarmerEntity } from '../entities/farmer.entity';
 import { MarketplacePartnerMembershipEntity } from '../entities/marketplace-commerce.entity';
 import { MarketplaceContractReviewEligibilityEntity } from '../entities/marketplace-contract-lifecycle.entity';
@@ -255,11 +258,17 @@ const reviewView = (
   verifiedDeal: true,
 });
 
+/**
+ * The published rating block for one publication. The average comes from the
+ * shared one-decimal rule rather than the raw quotient: `rating_sum` over
+ * `review_count` is exact but publishes values like 4.666666666666667, and the
+ * count travels with it so the rounding can be checked against the rows.
+ */
 const aggregateView = (
   listingPublicationId: string,
   entity?: MarketplaceReviewAggregateEntity,
 ): MarketplaceReviewAggregateView => ({
-  averageRating: entity && entity.reviewCount > 0 ? entity.ratingSum / entity.reviewCount : null,
+  averageRating: entity ? marketplaceReviewAverageRating(entity.ratingSum, entity.reviewCount) : null,
   listingPublicationId,
   reviewCount: entity?.reviewCount ?? 0,
   revision: entity?.revision ?? 0,
@@ -405,7 +414,7 @@ async function findAuthorizedParty(
     em.findOne(
       VerificationEntity,
       {
-        role: capability === 'buyer' ? 'buyer' : { $in: ['farmer', 'seller'] },
+        role: marketplaceCapabilityRoleFilter(capability),
         status: 'verified',
         tenantId: owner.tenantId,
         userId: owner.userId,
@@ -512,7 +521,7 @@ async function resolveEligibleListing(
     em.findOne(
       VerificationEntity,
       {
-        role: { $in: ['farmer', 'seller'] },
+        role: marketplaceSellerRoleFilter(),
         status: 'verified',
         tenantId: seller.tenantId,
         userId: seller.ownerUserId,
@@ -1213,6 +1222,75 @@ export class PostgresMarketplaceEngagementRepository implements MarketplaceEngag
       return ok({
         aggregate: aggregateView(listingPublicationId, aggregate ?? undefined),
         items: reviews.map((review) => reviewView(review, replyByReview.get(review.id))),
+      });
+    });
+  }
+
+  /**
+   * Whether this caller may still rate the listing, and the review they already
+   * left on it.
+   *
+   * It reads exactly the state `submitReview` writes against - one unconsumed
+   * completed-contract eligibility for this buyer and governed source - so the
+   * form the browser renders and the gate the server enforces cannot disagree.
+   * A caller with no active buyer membership is not an error here: they simply
+   * cannot review, and the ratings block still has to render for them.
+   */
+  async getReviewSelfState(
+    owner: AgriTechOwner,
+    listingPublicationId: string,
+  ): Promise<OperationResult<MarketplaceReviewSelfState>> {
+    return this.em.transactional(async (em) => {
+      const listing = await resolveEligibleListing(em, listingPublicationId, false);
+      if (!listing) {
+        return { status: 'not_found' as const };
+      }
+      const sourceId = listing.publication.productId ?? listing.publication.produceListingId;
+      const buyer = await deriveBuyerParty(em, owner);
+      if (!sourceId || buyer.status !== 'ok' || buyer.value.partner.id === listing.sellerPartner.id) {
+        return ok({ canReview: false, listingPublicationId });
+      }
+      const sourceFilter =
+        listing.publication.sourceKind === 'product'
+          ? { productId: sourceId, sourceKind: 'product' as const }
+          : { produceListingId: sourceId, sourceKind: 'produce' as const };
+      const own = await em.findOne(MarketplaceListingReviewEntity, {
+        buyerTenantId: owner.tenantId,
+        buyerUserId: owner.userId,
+        ...sourceFilter,
+      });
+      if (own) {
+        const reply = await em.findOne(MarketplaceReviewReplyEntity, { reviewId: own.id });
+        return ok({
+          canReview: false,
+          listingPublicationId,
+          review: reviewView(own, reply ?? undefined),
+        });
+      }
+      const eligibilities = await em.find(
+        MarketplaceContractReviewEligibilityEntity,
+        {
+          buyerPartnerId: buyer.value.partner.id,
+          buyerTenantId: owner.tenantId,
+          buyerUserId: owner.userId,
+          sellerPartnerId: listing.sellerPartner.id,
+          sellerTenantId: listing.seller.tenantId,
+          sourceId,
+          sourceKind: listing.publication.sourceKind,
+          sourcePublicationId: listing.publication.id,
+        },
+        { limit: 10, orderBy: { createdAt: 'ASC', id: 'ASC' } },
+      );
+      if (eligibilities.length === 0) {
+        return ok({ canReview: false, listingPublicationId });
+      }
+      const consumed = await em.find(MarketplaceListingReviewEntity, {
+        reviewEligibilityId: { $in: eligibilities.map((eligibility) => eligibility.id) },
+      });
+      const consumedIds = new Set(consumed.map((review) => review.reviewEligibilityId));
+      return ok({
+        canReview: eligibilities.some((eligibility) => !consumedIds.has(eligibility.id)),
+        listingPublicationId,
       });
     });
   }
