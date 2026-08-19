@@ -105,10 +105,32 @@ const toCarts = (lines: readonly StoredGuestCartLine[]): CartViewDto[] => {
   }));
 };
 
+/**
+ * One preview line as an authorized buyer needs to see it in order to hand it to
+ * the authenticated cart endpoints. It carries no display text: the seller name
+ * and region a guest saw are local labels, and the server derives the seller
+ * from the listing publication itself.
+ */
+export interface GuestCartLine {
+  listingPublicationId: string;
+  quantity: number;
+}
+
 export interface GuestCart {
   add: (listing: MarketplaceListing, quantity?: number) => void;
   carts: CartViewDto[];
+  /**
+   * Preview lines in stored order. Empty for a buyer who assembled nothing
+   * locally, which is what keeps the adoption pass a no-op after it has run.
+   */
+  lines: GuestCartLine[];
   owns: (cartId: string) => boolean;
+  /**
+   * Drops a line the server has accepted. Idempotent by construction: releasing
+   * a line that is already gone rewrites the same payload, so a reload after a
+   * half-finished adoption cannot re-submit or double it.
+   */
+  release: (listingPublicationId: string) => void;
   update: (cartId: string, listingPublicationId: string, quantity: number) => void;
 }
 
@@ -183,10 +205,22 @@ export function useGuestCart(): GuestCart {
     [persist],
   );
 
+  const release = useCallback(
+    (listingPublicationId: string) => {
+      persist((current) => current.filter((line) => line.listingPublicationId !== listingPublicationId));
+    },
+    [persist],
+  );
+
   return {
     add,
     carts: useMemo(() => toCarts(lines), [lines]),
+    lines: useMemo(
+      () => lines.map((line) => ({ listingPublicationId: line.listingPublicationId, quantity: line.quantity })),
+      [lines],
+    ),
     owns: useCallback((cartId: string) => cartId.startsWith(guestCartPrefix), []),
+    release,
     update,
   };
 }
