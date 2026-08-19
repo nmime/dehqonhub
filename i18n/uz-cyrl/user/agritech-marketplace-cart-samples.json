@@ -44,5 +44,11 @@
   "agritech.marketplace.samples.status.requested": "Сўралди",
   "agritech.marketplace.samples.status.approved": "Тасдиқланган",
   "agritech.marketplace.samples.status.declined": "Рад этилган",
-  "agritech.marketplace.samples.status.received": "Қабул қилинган"
+  "agritech.marketplace.samples.status.received": "Қабул қилинган",
+  "agritech.marketplace.cart.activeCart": "Фаол сават",
+  "agritech.marketplace.cart.activeCartAnnouncement": "Фаол сават: {{seller}}",
+  "agritech.marketplace.cart.cartTotal": "Сават суммаси",
+  "agritech.marketplace.cart.lineUnavailable": "Маҳсулот энди мавжуд эмас — сават суммасига кирмайди",
+  "agritech.marketplace.cart.switchTo": "{{seller}} саватига ўтиш",
+  "agritech.marketplace.cart.switcherHint": "Ҳар бир сотувчига битта буюртма. Фаол саватни танланг."
 }

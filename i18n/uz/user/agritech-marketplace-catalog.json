@@ -13,6 +13,9 @@
   "agritech.marketplace.filter.regionChip": "Hudud: {{value}}",
   "agritech.marketplace.filter.priceChip": "Narx oralig'i",
   "agritech.marketplace.filter.reset": "Tozalash",
+  "agritech.marketplace.filter.trust": "Ishonch",
+  "agritech.marketplace.filter.show": "{{count}} mahsulotni ko'rsatish",
+  "agritech.marketplace.filter.showOne": "1 mahsulotni ko'rsatish",
   "agritech.marketplace.sort": "Saralash",
   "agritech.marketplace.sort.priceAsc": "Narx: pastdan yuqoriga",
   "agritech.marketplace.sort.priceDesc": "Narx: yuqoridan pastga",
@@ -31,5 +34,16 @@
   "agritech.marketplace.filter.title": "Katalog filtrlari",
   "agritech.marketplace.filter.to": "Gacha",
   "agritech.marketplace.filter.toPlaceholder": "Cheklanmagan",
-  "agritech.marketplace.sort.name": "Nomi"
+  "agritech.marketplace.sort.name": "Nomi",
+  "agritech.marketplace.filter.verifiedOnly": "Faqat tasdiqlangan sotuvchilar",
+  "agritech.marketplace.filter.category": "Toifa",
+  "agritech.marketplace.filter.crop": "Ekin",
+  "agritech.marketplace.filter.grade": "Nav",
+  "agritech.marketplace.filter.gradeValue": "{{grade}} nav",
+  "agritech.marketplace.category.seed": "Urugʻlar",
+  "agritech.marketplace.category.fertilizer": "Oʻgʻitlar",
+  "agritech.marketplace.category.pesticide": "Oʻsimlik himoyasi",
+  "agritech.marketplace.category.equipment": "Texnika",
+  "agritech.marketplace.category.irrigation": "Sugʻorish",
+  "agritech.marketplace.sort.newest": "Avval yangilari"
 }

@@ -10,5 +10,22 @@
   "agritech.marketplace.orders.offerStatus.accepted": "Қабул қилинган",
   "agritech.marketplace.orders.offerStatus.declined": "Рад этилган",
   "agritech.marketplace.orders.offerStatus.pending": "Кутилмоқда",
-  "agritech.marketplace.orders.submitOffer": "Сотувчи таклифини юбориш"
+  "agritech.marketplace.orders.submitOffer": "Сотувчи таклифини юбориш",
+  "agritech.marketplace.orders.incoming": "Кирувчи сўровлар",
+  "agritech.marketplace.orders.step": "{{total}} қадамдан {{current}}-қадам",
+  "agritech.marketplace.orders.stepBasics": "Нима керак",
+  "agritech.marketplace.orders.stepLogistics": "Қаерда ва қачон",
+  "agritech.marketplace.orders.stepTerms": "Бюджет ва талаблар",
+  "agritech.marketplace.orders.next": "Кейинги қадам",
+  "agritech.marketplace.orders.previous": "Олдинги қадам",
+  "agritech.marketplace.orders.awaitingModeration": "Модерация кутилмоқда",
+  "agritech.marketplace.orders.awaitingModerationHint": "Сўров ҳали эълон қилинмаган, шунинг учун сотувчилар таклиф бера олмайди. Модерация эълонни тасдиқлагач, таклифлар шу ерда кўринади.",
+  "agritech.marketplace.orders.publicationPaused": "Эълон тўхтатилган",
+  "agritech.marketplace.orders.publicationRejected": "Эълон рад этилган",
+  "agritech.marketplace.orders.publicationRejectedHint": "Модерация бу эълонни рад этди, шунинг учун сўров таклиф йиғмайди. Маълумотларни тўғрилаб, қайта эълон қилинг.",
+  "agritech.marketplace.orders.openContract": "Шартномани очиш",
+  "agritech.marketplace.orders.offerVerified": "Тасдиқланган сотувчи",
+  "agritech.marketplace.orders.offerTotal": "Жами",
+  "agritech.marketplace.orders.offersSort": "Аввал арзонлари",
+  "agritech.marketplace.orders.offerReceived": "{{date}} да олинди"
 }

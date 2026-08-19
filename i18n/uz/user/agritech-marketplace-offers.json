@@ -10,5 +10,22 @@
   "agritech.marketplace.orders.offerStatus.accepted": "Qabul qilingan",
   "agritech.marketplace.orders.offerStatus.declined": "Rad etilgan",
   "agritech.marketplace.orders.offerStatus.pending": "Kutilmoqda",
-  "agritech.marketplace.orders.submitOffer": "Sotuvchi taklifini yuborish"
+  "agritech.marketplace.orders.submitOffer": "Sotuvchi taklifini yuborish",
+  "agritech.marketplace.orders.incoming": "Kiruvchi so'rovlar",
+  "agritech.marketplace.orders.step": "{{total}} qadamdan {{current}}-qadam",
+  "agritech.marketplace.orders.stepBasics": "Nima kerak",
+  "agritech.marketplace.orders.stepLogistics": "Qayerda va qachon",
+  "agritech.marketplace.orders.stepTerms": "Byudjet va talablar",
+  "agritech.marketplace.orders.next": "Keyingi qadam",
+  "agritech.marketplace.orders.previous": "Oldingi qadam",
+  "agritech.marketplace.orders.awaitingModeration": "Moderatsiya kutilmoqda",
+  "agritech.marketplace.orders.awaitingModerationHint": "So'rov hali e'lon qilinmagan, shuning uchun sotuvchilar taklif bera olmaydi. Moderatsiya e'lonni tasdiqlagach, takliflar shu yerda ko'rinadi.",
+  "agritech.marketplace.orders.publicationPaused": "E'lon to'xtatilgan",
+  "agritech.marketplace.orders.publicationRejected": "E'lon rad etilgan",
+  "agritech.marketplace.orders.publicationRejectedHint": "Moderatsiya bu e'lonni rad etdi, shuning uchun so'rov taklif yig'maydi. Ma'lumotlarni to'g'rilab, qayta e'lon qiling.",
+  "agritech.marketplace.orders.openContract": "Shartnomani ochish",
+  "agritech.marketplace.orders.offerVerified": "Tasdiqlangan sotuvchi",
+  "agritech.marketplace.orders.offerTotal": "Jami",
+  "agritech.marketplace.orders.offersSort": "Avval arzonlari",
+  "agritech.marketplace.orders.offerReceived": "{{date}} da olindi"
 }

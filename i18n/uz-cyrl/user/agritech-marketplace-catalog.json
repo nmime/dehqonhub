@@ -13,6 +13,9 @@
   "agritech.marketplace.filter.regionChip": "Ҳудуд: {{value}}",
   "agritech.marketplace.filter.priceChip": "Нарх оралиғи",
   "agritech.marketplace.filter.reset": "Тозалаш",
+  "agritech.marketplace.filter.trust": "Ишонч",
+  "agritech.marketplace.filter.show": "{{count}} маҳсулотни кўрсатиш",
+  "agritech.marketplace.filter.showOne": "1 маҳсулотни кўрсатиш",
   "agritech.marketplace.sort": "Саралаш",
   "agritech.marketplace.sort.priceAsc": "Нарх: пастдан юқорига",
   "agritech.marketplace.sort.priceDesc": "Нарх: юқоридан пастга",
@@ -31,5 +34,16 @@
   "agritech.marketplace.filter.title": "Каталог филтрлари",
   "agritech.marketplace.filter.to": "Гача",
   "agritech.marketplace.filter.toPlaceholder": "Чекланмаган",
-  "agritech.marketplace.sort.name": "Номи"
+  "agritech.marketplace.sort.name": "Номи",
+  "agritech.marketplace.filter.verifiedOnly": "Фақат тасдиқланган сотувчилар",
+  "agritech.marketplace.filter.category": "Тоифа",
+  "agritech.marketplace.filter.crop": "Экин",
+  "agritech.marketplace.filter.grade": "Нав",
+  "agritech.marketplace.filter.gradeValue": "{{grade}} нав",
+  "agritech.marketplace.category.seed": "Уруғлар",
+  "agritech.marketplace.category.fertilizer": "Ўғитлар",
+  "agritech.marketplace.category.pesticide": "Ўсимлик ҳимояси",
+  "agritech.marketplace.category.equipment": "Техника",
+  "agritech.marketplace.category.irrigation": "Суғориш",
+  "agritech.marketplace.sort.newest": "Аввал янгилари"
 }

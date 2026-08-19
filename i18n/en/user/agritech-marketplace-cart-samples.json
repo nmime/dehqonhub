@@ -44,5 +44,11 @@
   "agritech.marketplace.samples.status.requested": "Requested",
   "agritech.marketplace.samples.status.approved": "Approved",
   "agritech.marketplace.samples.status.declined": "Declined",
-  "agritech.marketplace.samples.status.received": "Received"
+  "agritech.marketplace.samples.status.received": "Received",
+  "agritech.marketplace.cart.activeCart": "Active cart",
+  "agritech.marketplace.cart.activeCartAnnouncement": "Active cart: {{seller}}",
+  "agritech.marketplace.cart.cartTotal": "Cart total",
+  "agritech.marketplace.cart.lineUnavailable": "No longer available — excluded from this cart total",
+  "agritech.marketplace.cart.switchTo": "Switch to the cart from {{seller}}",
+  "agritech.marketplace.cart.switcherHint": "One order per seller. Choose which cart is active."
 }

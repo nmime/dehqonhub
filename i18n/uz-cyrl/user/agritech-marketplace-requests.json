@@ -1,5 +1,5 @@
 {
-  "agritech.marketplace.orders": "Харид сўровлари",
+  "agritech.marketplace.orders": "Сўровлар",
   "agritech.marketplace.orders.title": "Харид сўровлари",
   "agritech.marketplace.orders.create": "Харид сўрови яратиш",
   "agritech.marketplace.orders.my": "Менинг харид сўровларим",
@@ -30,5 +30,18 @@
   "agritech.marketplace.orders.publish": "Харид сўровини эълон қилиш",
   "agritech.marketplace.orders.requestTitle": "Сўров номи",
   "agritech.marketplace.orders.reverseAuction": "Сотувчи таклифлари",
-  "agritech.marketplace.orders.unavailable": "Харид сўровлари мавжуд эмас. Қайта уриниб кўринг."
+  "agritech.marketplace.orders.unavailable": "Харид сўровлари мавжуд эмас. Қайта уриниб кўринг.",
+  "agritech.marketplace.orders.progress": "Сўров босқичи",
+  "agritech.marketplace.orders.stage.draft": "Қоралама",
+  "agritech.marketplace.orders.stage.moderation": "Модерация",
+  "agritech.marketplace.orders.stage.collecting": "Таклифлар йиғилмоқда",
+  "agritech.marketplace.orders.stage.selected": "Таклиф танланди",
+  "agritech.marketplace.orders.stage.contract": "Шартнома",
+  "agritech.marketplace.orders.details": "Сўров тафсилотлари",
+  "agritech.marketplace.orders.howItWorks": "Бу қандай ишлайди",
+  "agritech.marketplace.orders.howItWorksHint": "Сотувчилар сизнинг сўровингиз учун рақобатлашади. Таклифни танласангиз, шартлар шартномада қайд этилади.",
+  "agritech.marketplace.orders.backToMine": "Менинг харид сўровларимга қайтиш",
+  "agritech.marketplace.orders.viewRequest": "Сўровни очиш",
+  "agritech.marketplace.orders.notFound": "Харид сўрови топилмади",
+  "agritech.marketplace.orders.notFoundDescription": "Бу харид сўрови рўйхатингизда йўқ. Харид сўровларингизни очиб, керагини танланг."
 }

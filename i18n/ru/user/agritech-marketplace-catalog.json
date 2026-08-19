@@ -13,6 +13,9 @@
   "agritech.marketplace.filter.regionChip": "Регион: {{value}}",
   "agritech.marketplace.filter.priceChip": "Диапазон цены",
   "agritech.marketplace.filter.reset": "Сбросить",
+  "agritech.marketplace.filter.trust": "Доверие",
+  "agritech.marketplace.filter.show": "Показать {{count}} товаров",
+  "agritech.marketplace.filter.showOne": "Показать 1 товар",
   "agritech.marketplace.sort": "Сортировка",
   "agritech.marketplace.sort.priceAsc": "Цена: по возрастанию",
   "agritech.marketplace.sort.priceDesc": "Цена: по убыванию",
@@ -31,5 +34,16 @@
   "agritech.marketplace.filter.title": "Фильтры каталога",
   "agritech.marketplace.filter.to": "До",
   "agritech.marketplace.filter.toPlaceholder": "Без лимита",
-  "agritech.marketplace.sort.name": "Название"
+  "agritech.marketplace.sort.name": "Название",
+  "agritech.marketplace.filter.verifiedOnly": "Только проверенные продавцы",
+  "agritech.marketplace.filter.category": "Категория",
+  "agritech.marketplace.filter.crop": "Культура",
+  "agritech.marketplace.filter.grade": "Сорт",
+  "agritech.marketplace.filter.gradeValue": "Сорт {{grade}}",
+  "agritech.marketplace.category.seed": "Семена",
+  "agritech.marketplace.category.fertilizer": "Удобрения",
+  "agritech.marketplace.category.pesticide": "Защита растений",
+  "agritech.marketplace.category.equipment": "Техника",
+  "agritech.marketplace.category.irrigation": "Орошение",
+  "agritech.marketplace.sort.newest": "Сначала новые"
 }
