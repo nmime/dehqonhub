@@ -390,4 +390,190 @@ describe('PostgresMarketplacePublicRepository', () => {
     expect(em.findOne).not.toHaveBeenCalledWith(FarmerEntity, expect.anything());
     expect(em.findOne).not.toHaveBeenCalledWith(ProduceListingEntity, expect.anything(), expect.anything());
   });
+
+  /**
+   * The raw-SQL read path is the only place a timestamp is not hydrated by
+   * MikroORM: its PostgreSQL dialect installs `pg` type parsers that return the
+   * wire string, so `getConnection().execute()` yields `'2026-08-07 08:00:00+00'`
+   * rather than a `Date`. These rows therefore carry the driver's own string
+   * form, and both pages are asked for fewer rows than exist — the cursor is
+   * only built when the page is truncated, so a page larger than the data can
+   * never exercise it.
+   */
+  const driverTimestamp = '2026-08-07 08:00:00+00';
+
+  const listingRow = (publicId: string, publishedAt: string, rating = { ratingSum: 0, reviewCount: 0 }) => ({
+    public_id: publicId,
+    source_kind: 'product' as const,
+    section: 'seeds' as const,
+    title: 'Cotton seed',
+    title_ru: null,
+    title_uz: null,
+    title_uz_cyrl: null,
+    description: null,
+    price_uzs: '412000',
+    unit: '25 kg',
+    available_quantity: 480,
+    sample_available: true,
+    region: 'Andijon',
+    images: ['/media/marketplace/cotton-bolls.webp'],
+    promoted: false,
+    product_category: 'seed' as const,
+    produce_crop: null,
+    produce_grade: null,
+    // The aggregate join is a left join, so an unrated listing arrives as the
+    // coalesced zeroes rather than as absent columns.
+    review_count: rating.reviewCount,
+    rating_sum: rating.ratingSum,
+    published_at: publishedAt,
+    updated_at: publishedAt,
+    seller_public_id: '33333333-3333-4333-8333-333333333333',
+    seller_display_name: "Andijon Urug'chilik",
+    seller_region: 'Andijon',
+  });
+
+  const requestRow = (publicId: string, publishedAt: string) => ({
+    public_id: publicId,
+    title: 'Table grapes, 8 tonnes',
+    product: 'Table grapes, grade 1',
+    volume: '8 t',
+    region: 'Samarqand',
+    deadline: '2026-09-15',
+    budget_uzs: '96000000',
+    requirements: null,
+    buyer_display_name: 'Xaridor Demo Savdo',
+    published_at: publishedAt,
+    created_at: publishedAt,
+    updated_at: publishedAt,
+  });
+
+  it('returns a well-formed keyset cursor when the catalog page is truncated', async () => {
+    const { em, execute } = entityManager();
+    execute.mockResolvedValueOnce([
+      listingRow('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1', driverTimestamp),
+      listingRow('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '2026-08-06 08:00:00+00'),
+      listingRow('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', '2026-08-05 08:00:00+00'),
+    ]);
+    const repository = new PostgresMarketplacePublicRepository(em as unknown as EntityManager);
+
+    const page = await repository.listPublishedListings({ limit: 2, sort: 'newest' });
+
+    expect(page.items).toHaveLength(2);
+    expect(page.items.map((item) => item.publicId)).toEqual([
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1',
+      'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
+    ]);
+    expect(page.items[0]?.publishedAt).toBeInstanceOf(Date);
+    expect(page.items[0]?.publishedAt.toISOString()).toBe('2026-08-07T08:00:00.000Z');
+    expect(page.nextCursor).toEqual({
+      id: 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2',
+      kind: 'catalog',
+      promoted: false,
+      publishedAt: '2026-08-06T08:00:00.000Z',
+      sort: 'newest',
+    });
+  });
+
+  it('returns a price cursor when a price-sorted catalog page is truncated', async () => {
+    const { em, execute } = entityManager();
+    execute.mockResolvedValueOnce([
+      listingRow('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1', driverTimestamp),
+      listingRow('bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb2', driverTimestamp),
+    ]);
+    const repository = new PostgresMarketplacePublicRepository(em as unknown as EntityManager);
+
+    const page = await repository.listPublishedListings({ limit: 1, sort: 'price_asc' });
+
+    expect(page.items).toHaveLength(1);
+    expect(page.nextCursor).toEqual({
+      id: 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbb1',
+      kind: 'catalog',
+      priceUzs: 412_000,
+      sort: 'price_asc',
+    });
+  });
+
+  it('returns a well-formed keyset cursor when the public request feed is truncated', async () => {
+    const { em, execute } = entityManager();
+    execute.mockResolvedValueOnce([
+      requestRow('cccccccc-cccc-4ccc-8ccc-ccccccccccc1', driverTimestamp),
+      requestRow('cccccccc-cccc-4ccc-8ccc-ccccccccccc2', '2026-08-06 09:30:00+00'),
+      requestRow('cccccccc-cccc-4ccc-8ccc-ccccccccccc3', '2026-08-05 09:30:00+00'),
+    ]);
+    const repository = new PostgresMarketplacePublicRepository(em as unknown as EntityManager);
+
+    const page = await repository.listPublishedRequests({ limit: 2 });
+
+    expect(page.items).toHaveLength(2);
+    expect(page.items[0]?.createdAt).toBeInstanceOf(Date);
+    expect(page.nextCursor).toEqual({
+      id: 'cccccccc-cccc-4ccc-8ccc-ccccccccccc2',
+      kind: 'request',
+      publishedAt: '2026-08-06T09:30:00.000Z',
+    });
+  });
+
+  it('continues a truncated catalog page from the returned cursor without repeating a row', async () => {
+    const { em, execute } = entityManager();
+    execute.mockResolvedValueOnce([
+      listingRow('dddddddd-dddd-4ddd-8ddd-ddddddddddd1', driverTimestamp),
+      listingRow('dddddddd-dddd-4ddd-8ddd-ddddddddddd2', '2026-08-06 08:00:00+00'),
+    ]);
+    const repository = new PostgresMarketplacePublicRepository(em as unknown as EntityManager);
+
+    const first = await repository.listPublishedListings({ limit: 1, sort: 'newest' });
+    execute.mockResolvedValueOnce([listingRow('dddddddd-dddd-4ddd-8ddd-ddddddddddd2', '2026-08-06 08:00:00+00')]);
+    const second = await repository.listPublishedListings({
+      cursor: first.nextCursor!,
+      limit: 1,
+      sort: 'newest',
+    });
+
+    expect(second.items.map((item) => item.publicId)).toEqual(['dddddddd-dddd-4ddd-8ddd-ddddddddddd2']);
+    expect(second.nextCursor).toBeUndefined();
+    const [, parameters] = execute.mock.calls[1] as [string, unknown[]];
+    expect(parameters).toContain('2026-08-07T08:00:00.000Z');
+    expect(parameters).toContain('dddddddd-dddd-4ddd-8ddd-ddddddddddd1');
+  });
+
+  it('fails loudly when PostgreSQL returns a timestamp the cursor cannot represent', async () => {
+    const { em, execute } = entityManager();
+    execute.mockResolvedValueOnce([
+      listingRow('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee1', 'not-a-timestamp'),
+      listingRow('eeeeeeee-eeee-4eee-8eee-eeeeeeeeeee2', 'not-a-timestamp'),
+    ]);
+    const repository = new PostgresMarketplacePublicRepository(em as unknown as EntityManager);
+
+    await expect(repository.listPublishedListings({ limit: 1, sort: 'newest' })).rejects.toThrow(
+      /unparseable timestamp/u,
+    );
+  });
+
+  /**
+   * The rating a public listing publishes. This is the only place the aggregate
+   * columns become the number a catalog card prints, so both the rounding and
+   * the unrated case are pinned here rather than in the renderer.
+   */
+  it('publishes a one-decimal average beside the count it was derived from', async () => {
+    const { em, execute } = entityManager();
+    execute.mockResolvedValueOnce([
+      listingRow('ffffffff-ffff-4fff-8fff-fffffffffff1', driverTimestamp, { ratingSum: 14, reviewCount: 3 }),
+    ]);
+    const repository = new PostgresMarketplacePublicRepository(em as unknown as EntityManager);
+
+    const page = await repository.listPublishedListings({ limit: 10, sort: 'newest' });
+
+    // 14 / 3 is 4.666…: a true quotient and an unpublishable number.
+    expect(page.items[0]?.rating).toEqual({ average: 4.7, count: 3 });
+  });
+
+  it('publishes a null average and a zero count for a listing nobody has reviewed', async () => {
+    const { em, execute } = entityManager();
+    execute.mockResolvedValueOnce([listingRow('ffffffff-ffff-4fff-8fff-fffffffffff2', driverTimestamp)]);
+    const repository = new PostgresMarketplacePublicRepository(em as unknown as EntityManager);
+
+    const page = await repository.listPublishedListings({ limit: 10, sort: 'newest' });
+
+    expect(page.items[0]?.rating).toEqual({ average: null, count: 0 });
+  });
 });
