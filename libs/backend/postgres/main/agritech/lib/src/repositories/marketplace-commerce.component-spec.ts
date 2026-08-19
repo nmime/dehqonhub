@@ -31,7 +31,7 @@ import {
   VerificationEntitySchema,
   VerificationEvidenceEntitySchema,
 } from '../entities';
-import { agritechMigrationOptions } from '../migrations';
+import { agritechMigrationOptions, Migration20260811110000AlignMarketplaceBuyerPartyRole } from '../migrations';
 import { PostgresMarketplaceRepository } from './marketplace.repository';
 
 describe('Marketplace commerce PostgreSQL boundaries', () => {
@@ -346,7 +346,304 @@ describe('Marketplace commerce PostgreSQL boundaries', () => {
       },
     ]);
   });
+
+  /**
+   * `assert_marketplace_resolved_commerce_parties` used to demand a `seller`
+   * verification on the selling side while `marketplaceSellerRoles` — and the
+   * repository's own seller branch — authorize `farmer` as well. A farmer-owned
+   * supplier organization therefore passed every application check and then
+   * raised `23514` inside the transaction, so adding any produce listing to a
+   * cart answered HTTP 500 rather than a typed problem. The two authorities now
+   * agree, and a farmer co-operative's produce reaches a frozen contract.
+   */
+  it('accepts a farmer-verified supplier organization as the selling party of a cart and its contract', async () => {
+    const database = requireOrm(orm);
+    const buyer = { tenantId: 'produce-buyer-tenant', userId: 'produce-buyer' };
+    const seller = { tenantId: 'produce-seller-tenant', userId: 'produce-farmer' };
+    const buyerPartnerId = randomUUID();
+    const sellerPartnerId = randomUUID();
+    const farmerId = randomUUID();
+    const produceListingId = randomUUID();
+    await insertPartner(database.em, { id: buyerPartnerId, kind: 'buyer', owner: buyer });
+    await insertPartner(database.em, { id: sellerPartnerId, kind: 'supplier', owner: seller });
+    await insertVerification(database.em, { owner: buyer, role: 'buyer' });
+    await insertVerification(database.em, { owner: seller, role: 'farmer' });
+    await insertFarmer(database.em, { id: farmerId, owner: seller });
+    await insertProduce(database.em, { farmerId, id: produceListingId, owner: seller });
+    const listingPublicationId = await publishProduce(database.em, {
+      farmerId,
+      owner: seller,
+      produceListingId,
+      sellerPartnerId,
+    });
+
+    const repository = new PostgresMarketplaceRepository(database.em.fork());
+    const added = await repository.addToCart(
+      buyer,
+      { actingPartnerId: buyerPartnerId, listingPublicationId, quantity: 4 },
+      'produce-add-0001',
+    );
+    expect(added).toMatchObject({
+      status: 'ok',
+      value: {
+        buyerPartnerId,
+        items: [{ listingPublicationId, quantity: 4, sourceId: produceListingId, sourceKind: 'produce' }],
+        sellerPartnerId,
+        sellerTenantId: seller.tenantId,
+      },
+    });
+    if (added.status !== 'ok') {
+      throw new Error('The produce cart fixture must be persisted.');
+    }
+
+    const checkout = await repository.checkoutCart(
+      buyer,
+      added.value.id,
+      { deliveryTerms: 'pickup' },
+      'produce-checkout-0001',
+    );
+    expect(checkout).toMatchObject({ status: 'ok', value: { cartId: added.value.id } });
+    if (checkout.status !== 'ok') {
+      throw new Error('The produce checkout must be persisted.');
+    }
+    expect(
+      await rows(
+        database.em,
+        `select seller_partner_id as "sellerPartnerId", seller_tenant_id as "sellerTenantId",
+                binding_status as "bindingStatus", lines as "lines"
+           from marketplace_contracts where id = ?`,
+        [checkout.value.contractId],
+      ),
+    ).toEqual([
+      {
+        bindingStatus: 'resolved',
+        lines: [
+          expect.objectContaining({
+            quantity: 4,
+            sourceId: produceListingId,
+            sourceKind: 'produce',
+            sourcePublicationId: listingPublicationId,
+            unit: 'kg',
+            unitPriceUzs: 3400,
+          }),
+        ],
+        sellerPartnerId,
+        sellerTenantId: seller.tenantId,
+      },
+    ]);
+  });
+
+  /**
+   * The mirror image of the case above, on the buying side.
+   * `marketplaceBuyerRoles` is `['farmer', 'buyer']` and
+   * `canBuyInMarketplace` has always authorized a farmer to buy everything,
+   * but `lockAuthorizedMarketplaceParty` demanded the verification role be
+   * exactly `buyer`, and `assert_marketplace_resolved_commerce_parties` /
+   * `assert_marketplace_resolved_request_party` demanded the same. A farmer
+   * with an active `buyer` membership on an approved `buyer` organization
+   * could therefore not buy at all: the repository answered `forbidden` and,
+   * had it not, the constraint trigger would have raised `23514` inside the
+   * transaction. The policy unit test could not see either boundary, so this
+   * exercises a farmer buying end to end at the repository level — cart,
+   * contract, and a published purchase request.
+   */
+  it('accepts a farmer-verified buyer organization as the buying party of a cart, its contract and a request', async () => {
+    const database = requireOrm(orm);
+    const buyer = { tenantId: 'farmer-buyer-tenant', userId: 'farmer-buyer' };
+    const seller = { tenantId: 'farmer-buyer-seller-tenant', userId: 'farmer-buyer-seller' };
+    const buyerPartnerId = randomUUID();
+    const sellerPartnerId = randomUUID();
+    const productId = randomUUID();
+    await insertPartner(database.em, { id: buyerPartnerId, kind: 'buyer', owner: buyer });
+    await insertPartner(database.em, { id: sellerPartnerId, kind: 'supplier', owner: seller });
+    await insertVerification(database.em, { owner: buyer, role: 'farmer' });
+    await insertVerification(database.em, { owner: seller, role: 'seller' });
+    await insertProduct(database.em, { id: productId, owner: seller, sellerPartnerId });
+    const listingPublicationId = await publishProduct(database.em, {
+      owner: seller,
+      productId,
+      sellerPartnerId,
+    });
+
+    const repository = new PostgresMarketplaceRepository(database.em.fork());
+    const added = await repository.addToCart(
+      buyer,
+      { actingPartnerId: buyerPartnerId, listingPublicationId, quantity: 2 },
+      'farmer-buys-add-0001',
+    );
+    expect(added).toMatchObject({
+      status: 'ok',
+      value: {
+        buyerPartnerId,
+        buyerTenantId: buyer.tenantId,
+        items: [{ listingPublicationId, quantity: 2, sourceId: productId }],
+        sellerPartnerId,
+        sellerTenantId: seller.tenantId,
+      },
+    });
+    if (added.status !== 'ok') {
+      throw new Error('The farmer-buyer cart fixture must be persisted.');
+    }
+
+    const checkout = await repository.checkoutCart(
+      buyer,
+      added.value.id,
+      { deliveryTerms: 'pickup' },
+      'farmer-buys-checkout-0001',
+    );
+    expect(checkout).toMatchObject({ status: 'ok', value: { cartId: added.value.id } });
+    if (checkout.status !== 'ok') {
+      throw new Error('The farmer-buyer checkout must be persisted.');
+    }
+    expect(
+      await rows(
+        database.em,
+        `select buyer_partner_id as "buyerPartnerId", tenant_id as "tenantId",
+                binding_status as "bindingStatus"
+           from marketplace_contracts where id = ?`,
+        [checkout.value.contractId],
+      ),
+    ).toEqual([{ bindingStatus: 'resolved', buyerPartnerId, tenantId: buyer.tenantId }]);
+
+    // The request party trigger is the second persisted buying invariant: the
+    // organization binding resolves the request, and the constraint trigger
+    // then re-checks the buying party's verification role.
+    const request = await repository.createRequest(
+      buyer,
+      { actingPartnerId: buyerPartnerId, region: 'Samarkand', title: 'Certified seed for the next season' },
+      'farmer-buys-request-0001',
+    );
+    expect(request).toMatchObject({ status: 'ok' });
+    if (request.status !== 'ok') {
+      throw new Error('The farmer-buyer request fixture must be persisted.');
+    }
+    expect(
+      await rows(
+        database.em,
+        `select buyer_partner_id as "buyerPartnerId", binding_status as "bindingStatus"
+           from marketplace_requests where id = ?`,
+        [request.value.id],
+      ),
+    ).toEqual([{ bindingStatus: 'resolved', buyerPartnerId }]);
+
+    // Nothing was weakened: a seller-verified actor still cannot buy, even with
+    // an active membership on an approved buyer organization.
+    const sellerAsBuyerPartnerId = randomUUID();
+    await insertPartner(database.em, { id: sellerAsBuyerPartnerId, kind: 'buyer', owner: seller });
+    await expect(
+      repository.addToCart(
+        seller,
+        { actingPartnerId: sellerAsBuyerPartnerId, listingPublicationId, quantity: 1 },
+        'farmer-buys-denied-0001',
+      ),
+    ).resolves.toEqual({ status: 'forbidden', field: 'organization' });
+  });
+
+  /**
+   * The falsification for the widened buying predicate, run against the exact
+   * statement that used to fail.
+   *
+   * The two tests above prove the repository can now carry a farmer through a
+   * cart, a contract and a request, but they cannot show that the persisted
+   * trigger is what changed: a repository fix alone would satisfy them. So this
+   * one drives the trigger directly. It inserts the resolved cart row itself,
+   * with a farmer-verified buying party, and then restores the pre-migration
+   * predicate inside a transaction and inserts the same row again.
+   *
+   * The restored body is not retyped here — it is whatever
+   * `Migration20260811110000AlignMarketplaceBuyerPartyRole.down()` emits, so the
+   * reproduction cannot drift away from the defect it names. `create or replace
+   * function` is transactional in PostgreSQL, so rolling that transaction back
+   * takes the pre-migration predicate with it, and the third probe proves the
+   * database is left exactly as the migration made it. Every probe rolls back,
+   * so no cart survives any of them.
+   */
+  it('reproduces the pre-migration failure on the exact insert and leaves the widened predicate in place', async () => {
+    const database = requireOrm(orm);
+    const buyer = { tenantId: 'buying-predicate-tenant', userId: 'buying-predicate-farmer' };
+    const seller = { tenantId: 'buying-predicate-seller-tenant', userId: 'buying-predicate-seller' };
+    const buyerPartnerId = randomUUID();
+    const sellerPartnerId = randomUUID();
+    const productId = randomUUID();
+    await insertPartner(database.em, { id: buyerPartnerId, kind: 'buyer', owner: buyer });
+    await insertPartner(database.em, { id: sellerPartnerId, kind: 'supplier', owner: seller });
+    await insertVerification(database.em, { owner: buyer, role: 'farmer' });
+    await insertVerification(database.em, { owner: seller, role: 'seller' });
+    await insertProduct(database.em, { id: productId, owner: seller, sellerPartnerId });
+
+    const insertResolvedCart = `insert into marketplace_carts
+      (id, tenant_id, user_id, seller_id, items, status, binding_status,
+       buyer_partner_id, seller_tenant_id, seller_user_id, seller_partner_id)
+     values (?, ?, ?, ?, '[]'::jsonb, 'open', 'resolved', ?, ?, ?, ?)`;
+    const rollbackProbe = new Error('roll the probe back');
+    const probeResolvedCartInsert = async (before: readonly string[] = []): Promise<void> => {
+      try {
+        await database.em.fork().transactional(async (em) => {
+          if (before.length > 0) {
+            // One statement: the four function bodies are independent of each
+            // other, and the migration applies them to the same connection.
+            await em.execute(before.join('\n'));
+          }
+          await em.execute(insertResolvedCart, [
+            randomUUID(),
+            buyer.tenantId,
+            buyer.userId,
+            sellerPartnerId,
+            buyerPartnerId,
+            seller.tenantId,
+            seller.userId,
+            sellerPartnerId,
+          ]);
+          throw rollbackProbe;
+        });
+      } catch (error) {
+        if (error !== rollbackProbe) {
+          throw error;
+        }
+      }
+    };
+
+    await expect(probeResolvedCartInsert()).resolves.toBeUndefined();
+    await expect(probeResolvedCartInsert(preMigrationBuyingPredicates())).rejects.toThrow(
+      /marketplace resolved commerce party mismatch/u,
+    );
+    expect(await commercePartyPredicateState(database.em)).toEqual([
+      { name: 'assert_marketplace_resolved_commerce_parties', narrowed: false, widened: true },
+    ]);
+    await expect(probeResolvedCartInsert()).resolves.toBeUndefined();
+    expect(
+      await rows(database.em, 'select count(*)::int as "carts" from marketplace_carts where tenant_id = ?', [
+        buyer.tenantId,
+      ]),
+    ).toEqual([{ carts: 0 }]);
+  });
 });
+
+/**
+ * The four buying-side function bodies the migration's own `down()` restores.
+ * Taking them from the migration rather than restating them keeps the
+ * reproduction bound to the shipped rollback.
+ */
+function preMigrationBuyingPredicates(): readonly string[] {
+  const migration = new Migration20260811110000AlignMarketplaceBuyerPartyRole(undefined as never, undefined as never);
+  const statements: string[] = [];
+  migration.addSql = (sql: string) => statements.push(sql);
+  migration.down();
+  return statements;
+}
+
+async function commercePartyPredicateState(
+  em: EntityManager,
+): Promise<{ name: string; narrowed: boolean; widened: boolean }[]> {
+  return rows(
+    em,
+    `select p.proname as "name",
+            pg_get_functiondef(p.oid) like '%role" in (''buyer'', ''farmer'')%' as "widened",
+            pg_get_functiondef(p.oid) like '%role" = ''buyer''%' as "narrowed"
+       from pg_proc p
+      where p.proname = 'assert_marketplace_resolved_commerce_parties'`,
+  );
+}
 
 const commerceEntities = [
   AgriTechPartnerEntitySchema,
@@ -397,7 +694,7 @@ async function insertPartner(
 
 async function insertVerification(
   em: EntityManager,
-  input: { owner: { tenantId: string; userId: string }; role: 'buyer' | 'seller' },
+  input: { owner: { tenantId: string; userId: string }; role: 'buyer' | 'farmer' | 'seller' },
 ): Promise<void> {
   await em.getConnection().execute(
     `insert into marketplace_verifications
@@ -471,6 +768,98 @@ async function publishProduct(
       input.productId,
       listingFingerprint,
       `listing-${input.productId}`,
+      listingFingerprint,
+    ],
+  );
+  return listingId;
+}
+
+async function insertFarmer(
+  em: EntityManager,
+  input: { id: string; owner: { tenantId: string; userId: string } },
+): Promise<void> {
+  await em.getConnection().execute(
+    `insert into farmers
+      (id, tenant_id, user_id, phone, first_name, last_name, region, farm_size_hectares, crops,
+       status, created_at, updated_at)
+     values (?, ?, ?, '+998900000001', 'Produce', 'Farmer', 'Samarkand', 12.5, '[]'::jsonb,
+       'active', now(), now())`,
+    [input.id, input.owner.tenantId, input.owner.userId],
+  );
+}
+
+async function insertProduce(
+  em: EntityManager,
+  input: { farmerId: string; id: string; owner: { tenantId: string; userId: string } },
+): Promise<void> {
+  await em.getConnection().execute(
+    `insert into produce_listings
+      (id, tenant_id, farmer_id, crop, grade, quantity_kg, available_quantity_kg, price_per_kg_uzs,
+       region, available_from, available_until, status, sample_available, created_at, updated_at)
+     values (?, ?, ?, 'Cottonseed cake', 'A', 30000, 30000, 3400, 'Samarkand',
+       now() - interval '1 day', now() + interval '90 days', 'active', false, now(), now())`,
+    [input.id, input.owner.tenantId, input.farmerId],
+  );
+}
+
+/**
+ * Publishing a farmer's produce through a supplier organization needs the
+ * organization binding as well as the publication: without it the resolver
+ * refuses the listing, which is the same fail-closed rule a product listing gets
+ * from its `supplier_id`.
+ */
+async function publishProduce(
+  em: EntityManager,
+  input: {
+    farmerId: string;
+    owner: { tenantId: string; userId: string };
+    produceListingId: string;
+    sellerPartnerId: string;
+  },
+): Promise<string> {
+  const sellerPublicId = randomUUID();
+  const sellerRevisionId = randomUUID();
+  const listingId = randomUUID();
+  const sellerFingerprint = fingerprint(`seller:${input.sellerPartnerId}`);
+  const listingFingerprint = fingerprint(`produce:${input.produceListingId}`);
+  await em.getConnection().execute(
+    `insert into marketplace_produce_organization_bindings
+      (produce_listing_id, tenant_id, farmer_id, owner_user_id, supplier_partner_id, created_at)
+     values (?, ?, ?, ?, ?, now())`,
+    [input.produceListingId, input.owner.tenantId, input.farmerId, input.owner.userId, input.sellerPartnerId],
+  );
+  await em.getConnection().execute(
+    `insert into marketplace_public_sellers
+      (id, tenant_id, partner_id, partner_kind, owner_user_id, content_revision, status, created_at, updated_at)
+     values (?, ?, ?, 'supplier', ?, 1, 'published', now(), now())`,
+    [sellerPublicId, input.owner.tenantId, input.sellerPartnerId, input.owner.userId],
+  );
+  await em.getConnection().execute(
+    `insert into marketplace_public_seller_revisions
+      (id, seller_public_id, tenant_id, content_revision, content_fingerprint, display_name, region,
+       moderation_status, moderated_by, moderated_at, created_at, updated_at)
+     values (?, ?, ?, 1, ?, 'Produce co-operative', 'Samarkand', 'approved', 'reviewer', now(), now(), now())`,
+    [sellerRevisionId, sellerPublicId, input.owner.tenantId, sellerFingerprint],
+  );
+  await em.getConnection().execute(
+    `insert into marketplace_listing_publications
+      (id, tenant_id, owner_user_id, seller_public_id, seller_revision_id, seller_content_revision,
+       produce_listing_id, source_kind, section, public_title, public_description, public_crop, public_grade,
+       public_unit, public_region, public_images, content_fingerprint, content_revision, status, moderation_status,
+       moderated_by, moderated_at, idempotency_key, request_fingerprint, revision, published_at,
+       created_at, updated_at)
+     values (?, ?, ?, ?, ?, 1, ?, 'produce', 'produce', 'Cottonseed cake', 'Approved produce',
+       'Cottonseed cake', 'A', 'kg', 'Samarkand', '[]'::jsonb, ?, 1, 'published', 'approved', 'reviewer', now(), ?, ?,
+       0, now(), now(), now())`,
+    [
+      listingId,
+      input.owner.tenantId,
+      input.owner.userId,
+      sellerPublicId,
+      sellerRevisionId,
+      input.produceListingId,
+      listingFingerprint,
+      `produce-listing-${input.produceListingId}`,
       listingFingerprint,
     ],
   );
