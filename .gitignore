@@ -89,6 +89,10 @@ storybook-static
 
 # AI working artifacts (plans, specs) — local only
 
+# Nx writes generated tsconfigs here during a build, so every build dirtied the
+# working tree with files nobody wrote.
+tmp/
+
 .nx/
 .nrb/reference/
 
