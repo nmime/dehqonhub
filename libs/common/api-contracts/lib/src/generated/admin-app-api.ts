@@ -1992,6 +1992,10 @@ export interface components {
       actorParty: 'buyer' | 'seller';
       buyerPartySnapshot: components['schemas']['MarketplacePartySnapshotDto'];
       sellerPartySnapshot: components['schemas']['MarketplacePartySnapshotDto'];
+      /** @description Opaque public profile address of the buying organization, so a deal screen can link to the counterparty. It is derived, carries no partner, user or tenant identifier, and resolves only while that party keeps a moderated public presence. */
+      buyerProfileId: string;
+      /** @description Opaque public profile address of the selling organization. */
+      sellerProfileId: string;
       /** @enum {string} */
       sourceType?: 'cart_checkout' | 'offer_selection';
       subject: string;

@@ -70,6 +70,9 @@ export type MarketplacePublicCatalogPageDto = components['schemas']['Marketplace
 export type MarketplacePublicRequestDto = components['schemas']['MarketplacePublicRequestDto'];
 export type MarketplacePublicRequestPageDto = components['schemas']['MarketplacePublicRequestPageDto'];
 export type MarketplacePublicSellerDto = components['schemas']['MarketplacePublicSellerDto'];
+export type MarketplacePublicProfileDto = components['schemas']['MarketplacePublicProfileDto'];
+export type MarketplacePublicProfileReviewDto = components['schemas']['MarketplacePublicProfileReviewDto'];
+export type MarketplacePublicProfileReputationDto = components['schemas']['MarketplacePublicProfileReputationDto'];
 export type MarketplacePublicSuggestionDto = components['schemas']['MarketplacePublicSuggestionDto'];
 export type MarketplacePublicSuggestionListDto = components['schemas']['MarketplacePublicSuggestionListDto'];
 export type MarketplaceListingPublicationDto = components['schemas']['MarketplaceListingPublicationDto'];
@@ -93,6 +96,9 @@ export type RequestMarketplaceSampleDto = components['schemas']['RequestMarketpl
 export type MarketplaceReviewDto = components['schemas']['MarketplaceReviewDto'];
 export type MarketplaceReviewPageDto = components['schemas']['MarketplaceReviewPageDto'];
 export type MarketplaceReviewSelfStateDto = components['schemas']['MarketplaceReviewSelfStateDto'];
+export type MarketplaceOwnReviewDto = components['schemas']['MarketplaceOwnReviewDto'];
+export type MarketplaceOwnReviewInvitationDto = components['schemas']['MarketplaceOwnReviewInvitationDto'];
+export type MarketplaceOwnReviewsDto = components['schemas']['MarketplaceOwnReviewsDto'];
 export type SubmitMarketplaceReviewDto = components['schemas']['SubmitMarketplaceReviewDto'];
 export type TransitionMarketplaceSampleDto = components['schemas']['TransitionMarketplaceSampleDto'];
 export type SubmitMarketplaceSampleFeedbackDto = components['schemas']['SubmitMarketplaceSampleFeedbackDto'];
@@ -173,6 +179,7 @@ const sampleFeedbackPath = '/marketplace/samples/{sampleId}/feedback';
 const favoritesPath = '/marketplace/favorites';
 const favoritePath = '/marketplace/favorites/{listingPublicationId}';
 const reviewsPath = '/marketplace/reviews';
+const ownReviewsPath = '/marketplace/reviews/mine';
 const reviewSelfStatePath = '/marketplace/reviews/state/{listingPublicationId}';
 const reviewReplyPath = '/marketplace/reviews/{reviewId}/reply';
 const reviewReportsPath = '/marketplace/reviews/{reviewId}/reports';
@@ -181,6 +188,8 @@ const publicCatalogSuggestionsPath = '/marketplace/public/catalog/suggestions';
 const publicCatalogListingPath = '/marketplace/public/catalog/{listingId}';
 const publicSellerPath = '/marketplace/public/sellers/{sellerId}';
 const publicSellerCatalogPath = '/marketplace/public/sellers/{sellerId}/catalog';
+const publicProfilePath = '/marketplace/public/profiles/{profileId}';
+const publicSellerProfilePath = '/marketplace/public/sellers/{sellerId}/profile';
 const publicRequestsPath = '/marketplace/public/requests';
 const publicReviewsPath = '/marketplace/public/catalog/{listingPublicationId}/reviews';
 const listingPublicationPath = '/marketplace/publications/listings';
@@ -313,6 +322,19 @@ export const marketplacePublicControllerGetListing = (listingId: string, options
   });
 export const marketplacePublicControllerGetSeller = (sellerId: string, options?: ApiClientRequestOptions) =>
   client.GET(publicSellerPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { sellerId } },
+  });
+export const marketplacePublicProfileControllerGetProfile = (profileId: string, options?: ApiClientRequestOptions) =>
+  client.GET(publicProfilePath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { profileId } },
+  });
+export const marketplacePublicProfileControllerGetSellerProfile = (
+  sellerId: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.GET(publicSellerProfilePath, {
     ...toOpenApiFetchOptions(options),
     params: { path: { sellerId } },
   });
@@ -490,6 +512,8 @@ export const marketplaceControllerAddReview = (
     body,
     params: { header: commandHeader(idempotencyKey) },
   });
+export const marketplaceControllerListOwnReviews = (options?: ApiClientRequestOptions) =>
+  client.GET(ownReviewsPath, toOpenApiFetchOptions(options));
 export const marketplaceControllerGetReviewSelfState = (
   listingPublicationId: string,
   options?: ApiClientRequestOptions,
