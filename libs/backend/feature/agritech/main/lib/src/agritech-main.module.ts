@@ -14,6 +14,8 @@ import { AgriTechNotificationPublisher } from './agritech-notification.publisher
 import { AgriTechOperationsService } from './agritech.service';
 import { MarketplaceController } from './marketplace.controller';
 import { MarketplacePublicController } from './marketplace-public.controller';
+import { MarketplacePublicProfileController } from './marketplace-public-profile.controller';
+import { MarketplacePublicProfileService } from './marketplace-public-profile.service';
 import { MarketplacePublicationController } from './marketplace-publication.controller';
 import { MarketplacePromotionController } from './marketplace-promotion.controller';
 import { MarketplacePublicService } from './marketplace-public.service';
@@ -98,6 +100,7 @@ const marketplaceFactoringProvider = {
     AgriTechOperationsService,
     MarketplaceService,
     MarketplacePublicService,
+    MarketplacePublicProfileService,
     MarketplacePromotionService,
     MarketplaceVerificationService,
     MarketplaceContractLifecycleService,
@@ -117,6 +120,7 @@ const marketplaceFactoringProvider = {
     AgriTechOperationsService,
     MarketplaceService,
     MarketplacePublicService,
+    MarketplacePublicProfileService,
     MarketplacePromotionService,
     MarketplaceVerificationService,
     MarketplaceContractLifecycleService,
@@ -133,6 +137,7 @@ export class AgriTechCoreModule {}
     AgriTechOperationsController,
     MarketplaceController,
     MarketplacePublicController,
+    MarketplacePublicProfileController,
     MarketplacePublicationController,
     MarketplacePromotionController,
     MarketplaceContractLifecycleController,

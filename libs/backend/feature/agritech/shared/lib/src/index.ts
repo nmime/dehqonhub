@@ -8,6 +8,7 @@ export * from './marketplace.repository';
 export * from './marketplace-provider-operation';
 export * from './marketplace-verification';
 export * from './marketplace-public';
+export * from './marketplace-public-profile';
 export * from './marketplace-promotion';
 export * from './marketplace-dashboard-ai';
 export * from './marketplace-contract-lifecycle';

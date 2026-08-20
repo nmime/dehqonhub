@@ -5,6 +5,7 @@ export * from './payment.repository';
 export * from './order.repository';
 export * from './marketplace.repository';
 export * from './marketplace-public.repository';
+export * from './marketplace-public-profile.repository';
 export * from './marketplace-promotion.repository';
 export * from './marketplace-contract-lifecycle.repository';
 export * from './marketplace-contract-notification.repository';
