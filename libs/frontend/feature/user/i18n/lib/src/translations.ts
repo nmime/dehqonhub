@@ -19,6 +19,7 @@ import enAgriTechMarketplaceContractsCatalog from '@app/i18n-en-user/agritech-ma
 import enAgriTechMarketplaceEngagementCatalog from '@app/i18n-en-user/agritech-marketplace-engagement.json';
 import enAgriTechMarketplaceReviewsCatalog from '@app/i18n-en-user/agritech-marketplace-reviews.json';
 import enAgriTechMarketplaceDiscoveryCatalog from '@app/i18n-en-user/agritech-marketplace-discovery.json';
+import enAgriTechMarketplaceNewListingCatalog from '@app/i18n-en-user/agritech-marketplace-new-listing.json';
 import enAgriTechMarketplaceOffersCatalog from '@app/i18n-en-user/agritech-marketplace-offers.json';
 import enAgriTechMarketplaceProductCatalog from '@app/i18n-en-user/agritech-marketplace-product.json';
 import enAgriTechMarketplaceProfileCatalog from '@app/i18n-en-user/agritech-marketplace-profile.json';
@@ -47,6 +48,7 @@ import ruAgriTechMarketplaceContractsCatalog from '@app/i18n-ru-user/agritech-ma
 import ruAgriTechMarketplaceEngagementCatalog from '@app/i18n-ru-user/agritech-marketplace-engagement.json';
 import ruAgriTechMarketplaceReviewsCatalog from '@app/i18n-ru-user/agritech-marketplace-reviews.json';
 import ruAgriTechMarketplaceDiscoveryCatalog from '@app/i18n-ru-user/agritech-marketplace-discovery.json';
+import ruAgriTechMarketplaceNewListingCatalog from '@app/i18n-ru-user/agritech-marketplace-new-listing.json';
 import ruAgriTechMarketplaceOffersCatalog from '@app/i18n-ru-user/agritech-marketplace-offers.json';
 import ruAgriTechMarketplaceProductCatalog from '@app/i18n-ru-user/agritech-marketplace-product.json';
 import ruAgriTechMarketplaceProfileCatalog from '@app/i18n-ru-user/agritech-marketplace-profile.json';
@@ -75,6 +77,7 @@ import uzAgriTechMarketplaceContractsCatalog from '@app/i18n-uz-user/agritech-ma
 import uzAgriTechMarketplaceEngagementCatalog from '@app/i18n-uz-user/agritech-marketplace-engagement.json';
 import uzAgriTechMarketplaceReviewsCatalog from '@app/i18n-uz-user/agritech-marketplace-reviews.json';
 import uzAgriTechMarketplaceDiscoveryCatalog from '@app/i18n-uz-user/agritech-marketplace-discovery.json';
+import uzAgriTechMarketplaceNewListingCatalog from '@app/i18n-uz-user/agritech-marketplace-new-listing.json';
 import uzAgriTechMarketplaceOffersCatalog from '@app/i18n-uz-user/agritech-marketplace-offers.json';
 import uzAgriTechMarketplaceProductCatalog from '@app/i18n-uz-user/agritech-marketplace-product.json';
 import uzAgriTechMarketplaceProfileCatalog from '@app/i18n-uz-user/agritech-marketplace-profile.json';
@@ -103,6 +106,7 @@ import uzCyrlAgriTechMarketplaceContractsCatalog from '@app/i18n-uz-cyrl-user/ag
 import uzCyrlAgriTechMarketplaceEngagementCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-engagement.json';
 import uzCyrlAgriTechMarketplaceReviewsCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-reviews.json';
 import uzCyrlAgriTechMarketplaceDiscoveryCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-discovery.json';
+import uzCyrlAgriTechMarketplaceNewListingCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-new-listing.json';
 import uzCyrlAgriTechMarketplaceOffersCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-offers.json';
 import uzCyrlAgriTechMarketplaceProductCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-product.json';
 import uzCyrlAgriTechMarketplaceProfileCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-profile.json';
@@ -136,6 +140,7 @@ export const userFrontendCatalogFileNames = [
   'user/agritech-marketplace-contracts.json',
   'user/agritech-marketplace-lifecycle.json',
   'user/agritech-marketplace-management.json',
+  'user/agritech-marketplace-new-listing.json',
   'user/agritech-marketplace-engagement.json',
   'user/agritech-marketplace-reviews.json',
   'user/agritech-marketplace-verification.json',
@@ -165,6 +170,7 @@ const enFiles = [
   ['user/agritech-marketplace-contracts.json', enAgriTechMarketplaceContractsCatalog],
   ['user/agritech-marketplace-lifecycle.json', enAgriTechMarketplaceLifecycleCatalog],
   ['user/agritech-marketplace-management.json', enAgriTechMarketplaceManagementCatalog],
+  ['user/agritech-marketplace-new-listing.json', enAgriTechMarketplaceNewListingCatalog],
   ['user/agritech-marketplace-engagement.json', enAgriTechMarketplaceEngagementCatalog],
   ['user/agritech-marketplace-reviews.json', enAgriTechMarketplaceReviewsCatalog],
   ['user/agritech-marketplace-verification.json', enAgriTechMarketplaceVerificationCatalog],
@@ -196,6 +202,7 @@ const ruFiles = [
   ['user/agritech-marketplace-contracts.json', ruAgriTechMarketplaceContractsCatalog],
   ['user/agritech-marketplace-lifecycle.json', ruAgriTechMarketplaceLifecycleCatalog],
   ['user/agritech-marketplace-management.json', ruAgriTechMarketplaceManagementCatalog],
+  ['user/agritech-marketplace-new-listing.json', ruAgriTechMarketplaceNewListingCatalog],
   ['user/agritech-marketplace-engagement.json', ruAgriTechMarketplaceEngagementCatalog],
   ['user/agritech-marketplace-reviews.json', ruAgriTechMarketplaceReviewsCatalog],
   ['user/agritech-marketplace-verification.json', ruAgriTechMarketplaceVerificationCatalog],
@@ -227,6 +234,7 @@ const uzFiles = [
   ['user/agritech-marketplace-contracts.json', uzAgriTechMarketplaceContractsCatalog],
   ['user/agritech-marketplace-lifecycle.json', uzAgriTechMarketplaceLifecycleCatalog],
   ['user/agritech-marketplace-management.json', uzAgriTechMarketplaceManagementCatalog],
+  ['user/agritech-marketplace-new-listing.json', uzAgriTechMarketplaceNewListingCatalog],
   ['user/agritech-marketplace-engagement.json', uzAgriTechMarketplaceEngagementCatalog],
   ['user/agritech-marketplace-reviews.json', uzAgriTechMarketplaceReviewsCatalog],
   ['user/agritech-marketplace-verification.json', uzAgriTechMarketplaceVerificationCatalog],
@@ -258,6 +266,7 @@ const uzCyrlFiles = [
   ['user/agritech-marketplace-contracts.json', uzCyrlAgriTechMarketplaceContractsCatalog],
   ['user/agritech-marketplace-lifecycle.json', uzCyrlAgriTechMarketplaceLifecycleCatalog],
   ['user/agritech-marketplace-management.json', uzCyrlAgriTechMarketplaceManagementCatalog],
+  ['user/agritech-marketplace-new-listing.json', uzCyrlAgriTechMarketplaceNewListingCatalog],
   ['user/agritech-marketplace-engagement.json', uzCyrlAgriTechMarketplaceEngagementCatalog],
   ['user/agritech-marketplace-reviews.json', uzCyrlAgriTechMarketplaceReviewsCatalog],
   ['user/agritech-marketplace-verification.json', uzCyrlAgriTechMarketplaceVerificationCatalog],

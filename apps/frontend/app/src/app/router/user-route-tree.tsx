@@ -307,6 +307,16 @@ const dealsRoute = createRoute({
   component: createMarketplaceRouteComponent('deals'),
 });
 
+// Creating a listing is its own address, so a producer can be sent straight to
+// the form rather than through the cabinet's publish queue. The page decides
+// from the actor's own role which listing the form creates, and shows a stub for
+// a role that creates none.
+const newListingRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/listings/new',
+  component: createMarketplaceRouteComponent('newListing'),
+});
+
 const verificationRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/verification',
@@ -363,6 +373,7 @@ const routeTree = rootRoute.addChildren([
   requestsNewRoute,
   singleRequestRoute,
   dealsRoute,
+  newListingRoute,
   verificationRoute,
   accountRoute,
   accountSectionRoute,

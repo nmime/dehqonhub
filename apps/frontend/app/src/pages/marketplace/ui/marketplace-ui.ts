@@ -10,6 +10,8 @@ export type MarketplaceView =
   | 'embedded'
   | 'favorites'
   | 'home'
+  /** The seller's or farmer's own listing-creation screen at `/listings/new`. */
+  | 'newListing'
   | 'party'
   | 'product'
   | 'requests'
@@ -237,3 +239,49 @@ export type MarketplaceRole = 'buyer' | 'farmer' | 'seller';
 export const marketplaceRoleCanBuy = (role: string | undefined): boolean => role === 'buyer' || role === 'farmer';
 
 export const marketplaceRoleCanSell = (role: string | undefined): boolean => role === 'seller' || role === 'farmer';
+
+/** The two things a listing can be, as the publication source kinds name them. */
+export type MarketplaceListingKind = 'produce' | 'product';
+
+/**
+ * Which listing a role may create — the single home of the creation rule.
+ *
+ * Creating is narrower than selling, so it is expressed here rather than
+ * derived from {@link marketplaceRoleCanSell}. A seller lists what a supplier
+ * puts out: seeds, inputs and machinery, which is the `product` source kind. A
+ * farmer lists a harvest, which is the `produce` source kind. Those are not two
+ * halves of one permission: each role has exactly one kind, so the kind is
+ * decided here and never offered to the actor as a choice.
+ *
+ * A buyer gets `undefined`. That is the whole of the buyer rule: the header
+ * entry, the route and the form all read this one function, so the entry cannot
+ * appear on one surface while the route refuses on another.
+ */
+export const marketplaceListingKindForRole = (role: string | undefined): MarketplaceListingKind | undefined => {
+  if (role === 'seller') {
+    return 'product';
+  }
+  return role === 'farmer' ? 'produce' : undefined;
+};
+
+/** True for a role that may create a listing at all; see {@link marketplaceListingKindForRole}. */
+export const marketplaceRoleCanCreateListing = (role: string | undefined): boolean =>
+  marketplaceListingKindForRole(role) !== undefined;
+
+/**
+ * Which catalog section a created listing publishes into.
+ *
+ * The section is a property of the listing, not a choice: the discovery facets
+ * split machinery and irrigation from the remaining inputs, and a harvest is
+ * always produce. Deriving it here keeps the create screen and the cabinet's
+ * publish action agreeing on one answer.
+ */
+export const marketplaceListingSectionFor = (
+  kind: MarketplaceListingKind,
+  category: string | undefined,
+): 'equipment' | 'produce' | 'seeds' => {
+  if (kind === 'produce') {
+    return 'produce';
+  }
+  return category === 'equipment' || category === 'irrigation' ? 'equipment' : 'seeds';
+};

@@ -211,6 +211,39 @@ SHALL be a step-by-step flow whose fieldsets all remain mounted so moving betwee
 steps loses no entered value. Every purchase-request view SHALL carry explicit
 loading, empty, error, and awaiting-moderation states rather than a blank region.
 
+A verified producer SHALL reach one addressable screen that creates a listing,
+offered in the primary navigation immediately before the deals entry and absent
+for a role that creates none. Which listing that screen creates SHALL follow the
+actor's verified role rather than a control the actor operates: a seller creates
+the supplier-side product listing the seeds and machinery sections read, a farmer
+creates a produce listing, and a buyer creates none. A buyer reaching the address
+directly SHALL be told that creating a listing is outside a buying role rather
+than shown a blank region or a not-found page, and an account whose role is not
+settled yet SHALL be offered verification instead of being told its role forbids
+listing. The screen SHALL collect every member the catalog projection and its
+facets read for that kind — four localized names, description, category, unit,
+integer UZS price, stock and sample availability for a product; crop, grade,
+integer UZS price per kilogram, volume, sample availability and the availability
+window for produce; region for both — grouped as named field sets rather than one
+undifferentiated column, and SHALL refuse each invalid field with a message that
+names that field beside the control it belongs to. Submitting SHALL create the
+row and submit it for publication as one action, SHALL report which of the two
+commands succeeded, and SHALL state that a submitted listing stays invisible to
+shoppers until moderation approves it. A refusal the server types SHALL be shown
+with its own reason rather than a generic notice, and a refusal naming an API
+member SHALL be shown on the control that member belongs to. The submit control
+SHALL stay disabled while its commands are in flight so nothing is created twice.
+
+Listing photographs SHALL be limited to what storage actually holds. A product
+listing MAY carry at most five root-relative same-origin photographs drawn from
+the checked-in marketplace media directory, validated against that library in the
+browser and against the same path shape on the server, so no listing depends on a
+host the deployed content-security policy would refuse. A produce listing carries
+none, because produce has no image column, and the catalog draws its crop
+illustration instead. The screen SHALL state that a photograph from the actor's
+own device cannot be stored — this product has no blob storage — rather than
+accepting a file it would then discard.
+
 Guests and unverified visitors MAY assemble a versioned browser-local preview
 cart grouped by seller. That preview SHALL be explicitly local, SHALL use only
 safe public listing projections, and SHALL NOT invoke add-to-cart, update-cart,

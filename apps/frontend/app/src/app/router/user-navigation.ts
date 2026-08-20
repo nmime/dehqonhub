@@ -22,6 +22,9 @@ const marketplaceRoutes = new Set([
   '/catalog',
   '/deals',
   '/favorites',
+  // The seller's and farmer's own listing-creation screen. It must be listed
+  // here or the shell wraps it in a second page and renders two headers.
+  '/listings/new',
   '/requests',
   '/verification',
 ]);
