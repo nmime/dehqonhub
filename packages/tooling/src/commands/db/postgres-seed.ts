@@ -762,11 +762,22 @@ async function seed(
           ],
         );
       }
-      // The ratings themselves. `DO NOTHING` rather than an upsert because
+      // The ratings themselves. Insert-only rather than an upsert because
       // `tr__marketplace_listing_reviews__aggregate` adds to
       // `marketplace_review_aggregates` on insert and never recomputes: an
       // updated row would leave the published average quoting a rating no
-      // review carries any more.
+      // review carries any more. The aggregate is therefore never written by
+      // this seed at all — the trigger owns it, and letting it own it is what
+      // keeps every published average equal to the rows behind it.
+      //
+      // The guard is a `WHERE NOT EXISTS` rather than `ON CONFLICT` because
+      // three different uniqueness rules can already be satisfied by a review
+      // this fixture did not write: `uq__marketplace_listing_reviews__eligibility`
+      // and the two partial indexes on buyer plus source. A reviewer signed in
+      // as a demo login and rating a purchase through the API consumes exactly
+      // those, and a seeded row must never displace or duplicate a rating a real
+      // person left — so the fixture yields the eligibility instead of aborting
+      // the whole seed on a bare constraint name.
       for (const review of demoMarketplaceReviews(reviewNow)) {
         const buyerUserId = userIdsByEmail.get(review.buyerOwnerEmail);
         const sellerUserId = userIdsByEmail.get(review.sellerOwnerEmail);
@@ -780,16 +791,29 @@ async function seed(
           // three opaque `public-asset:<id>` handles, but nothing in this
           // repository uploads, stores or serves one, so a seeded handle would
           // render as a broken image.
+          //
+          // The casts in the `SELECT` list are load-bearing: in an
+          // `INSERT ... SELECT` Postgres deduces a parameter's type from every
+          // use, and `source_kind` is used both as an inserted value and as a
+          // comparison — which it refuses to reconcile without them.
           `INSERT INTO "marketplace_listing_reviews" (
              "id", "listing_publication_id", "source_kind", "product_id", "produce_listing_id",
              "review_eligibility_id",
              "buyer_tenant_id", "buyer_user_id", "buyer_partner_id", "seller_tenant_id",
              "seller_partner_id", "rating", "comment", "asset_references", "verified_deal",
              "visibility", "revision", "created_at", "updated_at"
-           ) VALUES (
-             $1, $2, $3, $4, $13, $5, $6, $7, $8, $6, $9, $10, $11, '[]'::jsonb, true,
-             'visible', 1, $12, $12
            )
+           SELECT $1::uuid, $2::uuid, $3::varchar, $4::uuid, $13::uuid, $5::uuid,
+                  $6::varchar, $7::varchar, $8::uuid, $6, $9::uuid, $10::int, $11::varchar,
+                  '[]'::jsonb, true, 'visible', 1, $12::timestamptz, $12
+            WHERE NOT EXISTS (
+              SELECT 1 FROM "marketplace_listing_reviews" "existing"
+               WHERE "existing"."review_eligibility_id" = $5
+                  OR ("existing"."buyer_tenant_id" = $6 AND "existing"."buyer_user_id" = $7
+                    AND "existing"."source_kind" = $3
+                    AND "existing"."product_id" IS NOT DISTINCT FROM $4
+                    AND "existing"."produce_listing_id" IS NOT DISTINCT FROM $13)
+            )
            ON CONFLICT ("id") DO NOTHING
            RETURNING ("xmax" = 0) AS "inserted"`,
           [
@@ -811,10 +835,17 @@ async function seed(
         if (!review.reply) continue;
         counts.demoReviewReplies += await insertedCount(
           client,
+          // A reply exists only for a review that exists, so the same guard that
+          // let a reviewer's own rating stand has to be honoured here: without
+          // the `EXISTS` the reply would fail the review foreign key on exactly
+          // the row the fixture just declined to write.
           `INSERT INTO "marketplace_review_replies" (
              "id", "review_id", "seller_tenant_id", "seller_user_id", "seller_partner_id",
              "comment", "revision", "created_at", "updated_at"
-           ) VALUES ($1, $2, $3, $4, $5, $6, 1, $7, $7)
+           )
+           SELECT $1, $2, $3, $4, $5, $6, 1, $7, $7
+            WHERE EXISTS (SELECT 1 FROM "marketplace_listing_reviews" WHERE "id" = $2)
+              AND NOT EXISTS (SELECT 1 FROM "marketplace_review_replies" WHERE "review_id" = $2)
            ON CONFLICT ("id") DO NOTHING
            RETURNING ("xmax" = 0) AS "inserted"`,
           [
