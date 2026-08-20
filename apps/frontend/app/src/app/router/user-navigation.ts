@@ -49,7 +49,10 @@ export const isMarketplaceRoute = (path: string): boolean => {
     // second header below the first.
     /^\/account\/[^/]+$/u.test(normalized) ||
     /^\/products\/[^/]+$/u.test(normalized) ||
-    /^\/sellers\/[^/]+$/u.test(normalized)
+    /^\/sellers\/[^/]+$/u.test(normalized) ||
+    // A counterparty's public profile, addressed by the opaque profile id a deal
+    // carries rather than by a seller id — a buying organization has no catalog.
+    /^\/parties\/[^/]+$/u.test(normalized)
   );
 };
 

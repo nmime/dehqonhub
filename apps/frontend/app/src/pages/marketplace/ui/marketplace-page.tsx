@@ -4,6 +4,7 @@ import './marketplace.css';
 import { observer, useI18n } from '@app/frontend-runtime';
 import { useLogout } from '@app/frontend-feature-user-logout';
 import { usePublicProfile } from '../model/use-public-profile';
+import { MarketplacePublicProfile } from './marketplace-public-profile';
 import {
   isApiClientError,
   throwOnOpenApiError,
@@ -74,6 +75,8 @@ export interface MarketplacePageProps {
   locationPathname?: string;
   locationSearch?: string;
   navigate?: MarketplaceNavigate;
+  /** Opaque public profile address of a counterparty, from a deal. */
+  partyId?: string;
   productId?: string;
   sellerId?: string;
   view?: MarketplaceView;
@@ -171,6 +174,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
   locationPathname,
   locationSearch = '',
   navigate = defaultNavigate,
+  partyId,
   productId,
   sellerId,
   view = 'home',
@@ -188,6 +192,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
   // Read here rather than inside the seller view: the page owns every resource this
   // tree renders, which is what keeps the views renderable from plain props.
   const sellerPublicProfile = usePublicProfile(data.seller.data?.id, 'seller');
+  const partyPublicProfile = usePublicProfile(partyId, 'profile');
   const guestCart = useGuestCart();
   const guestFavorites = useGuestFavorites();
   const { dismiss: dismissNotice, flash, notices } = useMarketplaceNotices();
@@ -1500,6 +1505,17 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
                 (product) =>
                   product.id !== productId && selectedProduct && product.category === selectedProduct.category,
               )}
+            />
+          );
+          break;
+        case 'party':
+          rendered = (
+            <MarketplacePublicProfile
+              identity
+              locale={locale}
+              navigate={navigate}
+              profile={partyPublicProfile}
+              t={translate}
             />
           );
           break;

@@ -94,6 +94,15 @@ function MarketplaceContractRouteComponent() {
   return <MarketplacePage contractId={contractId} navigate={navigate} view="contract" />;
 }
 
+function MarketplacePartyRouteComponent() {
+  const navigate = useUserNavigate();
+  const partyId = useRouterState({
+    select: (state) => decodeURIComponent(state.location.pathname.slice('/parties/'.length)),
+  });
+
+  return <MarketplacePage navigate={navigate} partyId={partyId} view="party" />;
+}
+
 function MarketplaceSellerRouteComponent() {
   const navigate = useUserNavigate();
   const sellerId = useRouterState({
@@ -232,6 +241,12 @@ const sellerRoute = createRoute({
   component: MarketplaceSellerRouteComponent,
 });
 
+const partyRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/parties/$partyId',
+  component: MarketplacePartyRouteComponent,
+});
+
 const favoritesRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/favorites',
@@ -340,6 +355,7 @@ const routeTree = rootRoute.addChildren([
   marketplaceCatalogRoute,
   productRoute,
   sellerRoute,
+  partyRoute,
   favoritesRoute,
   cartRoute,
   requestsRoute,

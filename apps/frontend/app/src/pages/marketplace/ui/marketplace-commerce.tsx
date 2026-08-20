@@ -23,6 +23,7 @@ import type { Resource, ResourceStatus } from '../model/use-marketplace-data';
 import { useActiveSellerCart } from '../model/use-active-seller-cart';
 import { MarketplaceIcon, type MarketplaceIconName } from './marketplace-icon';
 import { ProductMedia } from './marketplace-product-card';
+import { marketplacePartyProfileHref } from './marketplace-public-profile';
 import { MarketplaceEmpty, MarketplaceSkeleton } from './marketplace-discovery';
 import {
   MarketplaceCabinet,
@@ -2641,6 +2642,15 @@ export function MarketplaceContract({
               <span>{t('agritech.marketplace.contract.buyer')}</span>
               <strong>{contract.buyerPartySnapshot.legalName}</strong>
               <small>{contract.buyerPartySnapshot.region}</small>
+              <button
+                className="dh-text-button"
+                onClick={() => {
+                  navigate(marketplacePartyProfileHref(contract.buyerProfileId));
+                }}
+                type="button"
+              >
+                {t('agritech.marketplace.profile.openBuyer')}
+              </button>
               {contract.buyerSignedAt && (
                 <small>
                   <MarketplaceIcon name="check" />
@@ -2652,6 +2662,15 @@ export function MarketplaceContract({
               <span>{t('agritech.marketplace.contract.seller')}</span>
               <strong>{contract.sellerPartySnapshot.legalName}</strong>
               <small>{contract.sellerPartySnapshot.region}</small>
+              <button
+                className="dh-text-button"
+                onClick={() => {
+                  navigate(marketplacePartyProfileHref(contract.sellerProfileId));
+                }}
+                type="button"
+              >
+                {t('agritech.marketplace.profile.openSeller')}
+              </button>
               {contract.sellerSignedAt && (
                 <small>
                   <MarketplaceIcon name="check" />

@@ -10,6 +10,7 @@ export type MarketplaceView =
   | 'embedded'
   | 'favorites'
   | 'home'
+  | 'party'
   | 'product'
   | 'requests'
   | 'seller'

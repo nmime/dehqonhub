@@ -5,6 +5,7 @@ import type { ActiveDeal, ActiveDealLane, ActiveDealsModel } from '../model/use-
 import { activeDealLanes } from '../model/use-active-deals';
 import { MarketplaceIcon } from './marketplace-icon';
 import { MarketplaceBusyButton, MarketplaceListSkeleton } from './marketplace-loading';
+import { marketplacePartyProfileHref } from './marketplace-public-profile';
 import { formatDate, formatMoney, type MarketplaceNavigate, type MarketplaceTranslate } from './marketplace-ui';
 
 /**
@@ -107,7 +108,25 @@ function DealCard({
                 : 'agritech.marketplace.contract.buyer',
             )}
           </dt>
-          <dd>{deal.counterparty || t('agritech.marketplace.contract.partyUnnamed')}</dd>
+          <dd>
+            {deal.counterparty ? (
+              <button
+                className="dh-text-button"
+                onClick={() => {
+                  navigate(
+                    marketplacePartyProfileHref(
+                      contract.actorParty === 'buyer' ? contract.sellerProfileId : contract.buyerProfileId,
+                    ),
+                  );
+                }}
+                type="button"
+              >
+                {deal.counterparty}
+              </button>
+            ) : (
+              t('agritech.marketplace.contract.partyUnnamed')
+            )}
+          </dd>
         </div>
         <div>
           <dt>{t('agritech.marketplace.deals.updated')}</dt>
