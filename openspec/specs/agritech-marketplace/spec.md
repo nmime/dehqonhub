@@ -29,7 +29,11 @@ administrator.
 The platform SHALL expose active tenant catalog items, SHALL distinguish
 supplier-owned inputs from farmer-owned produce, SHALL validate category,
 region, availability, unit, grade, and inventory, and SHALL limit mutation to
-the owning approved actor or an authorized administrator.
+the owning approved actor or an authorized administrator. A supplier input and a
+farmer produce listing SHALL each carry at most five owner-supplied photograph
+references, validated against the allowlisted reference shapes governed by
+REQ-AGRITECH-PUBLIC-018 and accepted only when every uploaded reference resolves
+to an object the same tenant and account stored.
 
 #### Scenario: Supplier input publication
 
@@ -701,14 +705,19 @@ Latin and `uz-cyrl` SHALL be the canonical Uzbek Cyrillic locale.
 ### Requirement: [REQ-AGRITECH-INTEGRATION-013] External connectors fail closed and explicit mock providers remain isolated
 
 Weather, agronomy, export, government, identity, document, signing, payment,
-promotion billing, factoring, notification, and commercial provider adapters
+promotion billing, factoring, notification, listing and review photograph object
+storage, and commercial provider adapters
 SHALL have explicit
 configuration, bounded timeouts, source identity, idempotent cursor, command, or
 callback semantics, reconciliation status, readiness, and redacted telemetry.
 An absent live contract or credential SHALL disable the connector. Development,
 test, and staging runtimes MAY explicitly select a deterministic mock adapter to
 supply external-provider facts while all domain authorization and persistence
-remain real; production SHALL reject mock mode during startup.
+remain real; production SHALL reject mock mode during startup. Photograph object
+storage has no mock adapter: it is either configured, in which case an accepted
+upload is durably written before its reference exists, or unconfigured, in which
+case the upload command SHALL refuse with a localized typed problem, store
+nothing, mint no reference, and the client SHALL NOT offer the action.
 
 #### Scenario: Disabled government connector
 
@@ -1361,6 +1370,23 @@ evidence.
   REQ-AGRITECH-EXPERIENCE-026 rather than a broken or fabricated image. Public
   assets are served same-origin, so no public listing depends on a remote image
   host the deployed content-security policy would refuse.
+- A source asset reference is one of exactly two allowlisted root-relative
+  shapes: a checked-in same-origin media path, or an object this platform stored
+  from an authenticated upload and serves back under its own `/marketplace/*`
+  namespace. Both are anchored so no absolute URL, host, traversal segment, or
+  query string can satisfy either.
+- An upload command requires an authenticated account, bounds the request to one
+  file part and a stated byte ceiling, and decides the media type from the
+  container's own bytes rather than from the file name or the declared type. A
+  file whose structure cannot be parsed to its end is refused rather than stored.
+  Camera and comment metadata — including any recorded position — is removed
+  before the object is written, and only the written bytes are digested.
+- A stored object is addressed publicly by an opaque high-entropy identifier and
+  nothing else. No public response exposes its tenant, uploading account, bucket,
+  or storage key, and a missing object and an unknown identifier are
+  indistinguishable. Attaching an uploaded reference to any record requires that
+  the attaching party stored it; a foreign or unknown reference is refused
+  identically.
 - Seller-profile content revisions are immutable. A listing submission whose
   seller display or description differs from the last approved profile creates
   or reuses a pending seller revision and pins that revision/fingerprint; it
@@ -1548,6 +1574,13 @@ browser evidence.
   and optional allowlisted public asset references. Review text, assets, seller
   reply, and report reason reject control/bidirectional characters, contact
   leakage, private URLs, oversized content, and caller identity fields.
+- A review asset reference is accepted only when it resolves to an object the
+  reviewing party itself stored under REQ-AGRITECH-PUBLIC-018; a foreign or
+  unknown handle is refused with the field named and nothing disclosed about
+  whether it exists. Every accepted reference is rendered wherever that review is
+  shown, publicly and in the author's and the reviewed organization's own views,
+  and a reference that no longer resolves renders nothing rather than a broken
+  frame.
 - A deal-verified review is visible through the public listing/seller
   projection with an explicit verified-deal label. Rating count and average are
   derived only from visible deal-verified reviews and update transactionally
