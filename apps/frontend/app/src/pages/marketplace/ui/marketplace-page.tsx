@@ -55,6 +55,13 @@ import {
 import { MarketplaceDeals } from './marketplace-deals';
 import { MarketplaceIcon } from './marketplace-icon';
 import {
+  MarketplaceMobileDrawer,
+  MarketplaceSearch,
+  useCompactShell,
+  type MarketplaceNavEntry,
+  type MarketplaceNavIcon,
+} from './marketplace-mobile-drawer';
+import {
   MarketplaceListingCreate,
   type MarketplaceListingOutcome,
   type MarketplaceListingSubmission,
@@ -2101,12 +2108,6 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
           t={translate}
         />
       )}
-      <MarketplaceMobileNav
-        cartCount={visibleCarts.data.reduce((count, cart) => count + cart.items.length, 0)}
-        navigate={navigate}
-        t={translate}
-        view={view}
-      />
       {confirmation && (
         <MarketplaceConfirmation
           confirmation={confirmation}
@@ -2156,7 +2157,6 @@ function MarketplaceEmbeddedPage({
         {children}
       </main>
       <MarketplaceFooter navigate={navigate} t={translate} />
-      <MarketplaceMobileNav cartCount={0} navigate={navigate} t={translate} view="embedded" />
     </div>
   );
 }
@@ -2229,6 +2229,56 @@ function MarketplaceHeader({
   verificationStatus,
   view,
 }: Readonly<HeaderProps>) {
+  const compact = useCompactShell();
+  /*
+   * Derived once, for the header row and the drawer alike. Every condition the
+   * header applies — a create-listing entry only for a role that may create one,
+   * deals only for a signed-in actor, and the counter each entry carries — lives
+   * here, so the drawer can never offer an entry the header would have hidden.
+   */
+  const navEntries: MarketplaceNavEntry[] = [
+    ...(canCreateListing
+      ? [
+          {
+            active: view === 'newListing',
+            fullLabel: t('agritech.marketplace.newListing.title'),
+            icon: 'plus' as const,
+            label: t('agritech.marketplace.newListing.nav'),
+            path: '/listings/new',
+          },
+        ]
+      : []),
+    ...(signedIn
+      ? [
+          {
+            active: view === 'deals' || view === 'contract',
+            badge: dealsBadge,
+            badgeLabel: t('agritech.marketplace.deals.badge', { count: dealsBadge }),
+            icon: 'contract' as const,
+            label: t('agritech.marketplace.deals.nav'),
+            path: '/deals',
+          },
+        ]
+      : []),
+    { active: view === 'requests', icon: 'orders', label: t('agritech.marketplace.orders'), path: '/requests' },
+    {
+      active: view === 'favorites',
+      badge: favoriteCount,
+      icon: 'heart',
+      label: t('agritech.marketplace.favorites'),
+      path: '/favorites',
+    },
+    { active: view === 'cart', badge: cartCount, icon: 'cart', label: t('agritech.marketplace.cart'), path: '/cart' },
+    {
+      active: view === 'account' || view === 'verification',
+      icon: verificationStatus === 'verified' ? 'shield' : 'account',
+      label:
+        verificationStatus === 'verified' ? t('agritech.marketplace.account') : t('agritech.marketplace.verification'),
+      path: verificationStatus === 'verified' ? '/account' : '/verification',
+    },
+  ];
+  const searchProps = { onSearch, onSelectSuggestion, search, setSearch, suggestions, t };
+
   return (
     <header className="dh-header">
       <a className="dh-skip-link" href="#dh-main">
@@ -2245,152 +2295,86 @@ function MarketplaceHeader({
         >
           <MarketplaceBrandLockup t={t} />
         </button>
-        <button
-          className={`dh-button dh-button--catalog${view === 'catalog' ? ' is-active' : ''}`}
-          onClick={() => {
-            navigate('/catalog');
-          }}
-          type="button"
-        >
-          <MarketplaceIcon name="produce" />
-          {t('agritech.marketplace.catalog')}
-        </button>
-        <div className="dh-search-shell">
-          <form className="dh-search" onSubmit={onSearch} role="search">
-            <label className="dh-sr-only" htmlFor="dh-search">
-              {t('agritech.marketplace.search')}
-            </label>
-            <input
-              autoComplete="off"
-              id="dh-search"
-              onChange={(event) => {
-                setSearch(event.target.value);
+        {compact ? (
+          /*
+           * Below the breakpoint the row is the lockup and the burger, nothing
+           * else. Home and the catalog — carried on a wide row by the lockup and
+           * the catalog pill — join the drawer's own list so the panel really
+           * does hold every destination.
+           */
+          <MarketplaceMobileDrawer
+            activeSection={activeSection}
+            catalogView={view === 'catalog'}
+            entries={[
+              { active: view === 'home', icon: 'home', label: t('agritech.marketplace.home'), path: '/' },
+              {
+                active: view === 'catalog',
+                icon: 'produce',
+                label: t('agritech.marketplace.catalog'),
+                path: '/catalog',
+              },
+              ...navEntries,
+            ]}
+            navigate={navigate}
+            search={searchProps}
+            t={t}
+          />
+        ) : (
+          <>
+            <button
+              className={`dh-button dh-button--catalog${view === 'catalog' ? ' is-active' : ''}`}
+              onClick={() => {
+                navigate('/catalog');
               }}
-              placeholder={t('agritech.marketplace.search')}
-              type="search"
-              value={search}
-            />
-            <button aria-label={t('agritech.marketplace.search')} type="submit">
-              <MarketplaceIcon name="search" />
-            </button>
-          </form>
-          {suggestions.status === 'loading' ? (
-            <span aria-live="polite" className="dh-search-state" role="status">
-              {t('agritech.marketplace.search.loading')}
-            </span>
-          ) : null}
-          {suggestions.status === 'error' ? (
-            <span aria-live="polite" className="dh-search-state dh-search-state--error" role="status">
-              {t('agritech.marketplace.search.unavailable')}
-            </span>
-          ) : null}
-          {suggestions.status === 'ready' ? (
-            <ul
-              aria-label={t('agritech.marketplace.search.suggestions')}
-              aria-live="polite"
-              className="dh-search-suggestions"
-              id="dh-search-suggestions"
+              type="button"
             >
-              {suggestions.data.map((suggestion) => (
-                <li key={`${suggestion.kind}:${suggestion.id}`}>
-                  <button
-                    onClick={() => {
-                      onSelectSuggestion(suggestion);
-                    }}
-                    type="button"
-                  >
-                    <span>{suggestion.label}</span>
-                    <small>{t(`agritech.marketplace.search.kind.${suggestion.kind}`)}</small>
-                  </button>
-                </li>
+              <MarketplaceIcon name="produce" />
+              {t('agritech.marketplace.catalog')}
+            </button>
+            <MarketplaceSearch {...searchProps} />
+            <nav aria-label={t('agritech.marketplace.accessibility.primaryNavigation')} className="dh-header__nav">
+              {navEntries.map((entry) => (
+                <HeaderAction
+                  active={entry.active}
+                  badge={entry.badge}
+                  badgeLabel={entry.badgeLabel}
+                  fullLabel={entry.fullLabel}
+                  icon={entry.icon}
+                  key={entry.path}
+                  label={entry.label}
+                  onClick={() => {
+                    navigate(entry.path);
+                  }}
+                />
               ))}
-            </ul>
-          ) : null}
-        </div>
-        <nav aria-label={t('agritech.marketplace.accessibility.primaryNavigation')} className="dh-header__nav">
-          {canCreateListing ? (
-            <HeaderAction
-              active={view === 'newListing'}
-              fullLabel={t('agritech.marketplace.newListing.title')}
-              icon="plus"
-              label={t('agritech.marketplace.newListing.nav')}
-              onClick={() => {
-                navigate('/listings/new');
-              }}
-            />
-          ) : null}
-          {signedIn ? (
-            <HeaderAction
-              active={view === 'deals' || view === 'contract'}
-              badge={dealsBadge}
-              badgeLabel={t('agritech.marketplace.deals.badge', { count: dealsBadge })}
-              icon="contract"
-              label={t('agritech.marketplace.deals.nav')}
-              onClick={() => {
-                navigate('/deals');
-              }}
-            />
-          ) : null}
-          <HeaderAction
-            active={view === 'requests'}
-            icon="orders"
-            label={t('agritech.marketplace.orders')}
-            onClick={() => {
-              navigate('/requests');
-            }}
-          />
-          <HeaderAction
-            active={view === 'favorites'}
-            badge={favoriteCount}
-            icon="heart"
-            label={t('agritech.marketplace.favorites')}
-            onClick={() => {
-              navigate('/favorites');
-            }}
-          />
-          <HeaderAction
-            active={view === 'cart'}
-            badge={cartCount}
-            icon="cart"
-            label={t('agritech.marketplace.cart')}
-            onClick={() => {
-              navigate('/cart');
-            }}
-          />
-          <HeaderAction
-            active={view === 'account' || view === 'verification'}
-            icon={verificationStatus === 'verified' ? 'shield' : 'account'}
-            label={
-              verificationStatus === 'verified'
-                ? t('agritech.marketplace.account')
-                : t('agritech.marketplace.verification')
-            }
-            onClick={() => {
-              navigate(verificationStatus === 'verified' ? '/account' : '/verification');
-            }}
-          />
-        </nav>
-        <div className="dh-header__preferences">
-          <LanguageSwitcher compact variant="menu" />
-        </div>
+            </nav>
+            <div className="dh-header__preferences">
+              <LanguageSwitcher compact variant="menu" />
+            </div>
+          </>
+        )}
       </div>
-      <nav aria-label={t('agritech.marketplace.catalog.categories')} className="dh-header__categories">
-        {(['all', 'equipment', 'seeds', 'produce'] as const).map((section) => (
-          <button
-            aria-current={view === 'catalog' && activeSection === section}
-            key={section}
-            onClick={() => {
-              navigate(section === 'all' ? '/catalog' : `/catalog?section=${section}`);
-            }}
-            type="button"
-          >
-            {t(`agritech.marketplace.section.${section}`)}
-          </button>
-        ))}
-      </nav>
-      <div className="dh-header__mobile-preferences">
-        <LanguageSwitcher compact variant="menu" />
-      </div>
+      {compact ? null : (
+        <>
+          <nav aria-label={t('agritech.marketplace.catalog.categories')} className="dh-header__categories">
+            {(['all', 'equipment', 'seeds', 'produce'] as const).map((section) => (
+              <button
+                aria-current={view === 'catalog' && activeSection === section}
+                key={section}
+                onClick={() => {
+                  navigate(section === 'all' ? '/catalog' : `/catalog?section=${section}`);
+                }}
+                type="button"
+              >
+                {t(`agritech.marketplace.section.${section}`)}
+              </button>
+            ))}
+          </nav>
+          <div className="dh-header__mobile-preferences">
+            <LanguageSwitcher compact variant="menu" />
+          </div>
+        </>
+      )}
     </header>
   );
 }
@@ -2416,7 +2400,7 @@ function HeaderAction({
    * concatenated. Without it a long name is silently cut mid-word.
    */
   fullLabel?: string;
-  icon: 'account' | 'cart' | 'contract' | 'heart' | 'orders' | 'plus' | 'shield';
+  icon: MarketplaceNavIcon;
   label: string;
   onClick: () => void;
 }>) {
@@ -2732,55 +2716,5 @@ function MarketplaceFooter({ navigate, t }: Readonly<{ navigate: MarketplaceNavi
       </div>
       <p className="dh-footer__legal">{t('agritech.marketplace.footer.legal')}</p>
     </footer>
-  );
-}
-
-function MarketplaceMobileNav({
-  cartCount,
-  navigate,
-  t,
-  view,
-}: Readonly<{ cartCount: number; navigate: MarketplaceNavigate; t: MarketplaceTranslate; view: MarketplaceView }>) {
-  const items: Array<{
-    href: string;
-    icon: 'account' | 'cart' | 'home' | 'orders' | 'produce';
-    label: string;
-    views: MarketplaceView[];
-  }> = [
-    { href: '/', icon: 'home', label: t('agritech.marketplace.home'), views: ['home'] },
-    {
-      href: '/catalog',
-      icon: 'produce',
-      label: t('agritech.marketplace.catalog'),
-      views: ['catalog', 'product', 'seller'],
-    },
-    { href: '/requests', icon: 'orders', label: t('agritech.marketplace.orders'), views: ['requests'] },
-    { href: '/cart', icon: 'cart', label: t('agritech.marketplace.cart'), views: ['cart'] },
-    {
-      href: '/account',
-      icon: 'account',
-      label: t('agritech.marketplace.account'),
-      views: ['account', 'contract', 'favorites', 'verification'],
-    },
-  ];
-  return (
-    <nav aria-label={t('agritech.marketplace.accessibility.mobileNavigation')} className="dh-mobile-nav">
-      {items.map((item) => (
-        <button
-          aria-current={item.views.includes(view) ? 'page' : undefined}
-          key={item.href}
-          onClick={() => {
-            navigate(item.href);
-          }}
-          type="button"
-        >
-          <span>
-            <MarketplaceIcon name={item.icon} />
-            {item.icon === 'cart' && cartCount > 0 ? <em>{cartCount}</em> : null}
-          </span>
-          <small>{item.label}</small>
-        </button>
-      ))}
-    </nav>
   );
 }
