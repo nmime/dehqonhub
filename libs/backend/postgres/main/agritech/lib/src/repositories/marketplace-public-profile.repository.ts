@@ -236,9 +236,11 @@ export class PostgresMarketplacePublicProfileRepository implements MarketplacePu
     const roles = [...new Set(candidates.map((candidate) => candidate.role))];
     const asSeller = integerFrom(deals.as_seller);
     const asBuyer = integerFrom(deals.as_buyer);
+    // Seeded with the first candidate's own date rather than a sentinel: the fold
+    // then starts from a real value and needs no "no date yet" case to carry.
     const publicSince = candidates
       .map((candidate) => timestampFrom(candidate.public_since))
-      .reduce((earliest, value) => (value < earliest ? value : earliest));
+      .reduce((earliest, value) => (value < earliest ? value : earliest), timestampFrom(first.public_since));
 
     return {
       id: marketplacePublicProfileId(partnerId),
