@@ -2,6 +2,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canBuyInMarketplace,
+  canChooseRequestOffer,
   canOfferInMarketplace,
   isContractTransitionAllowed,
   isRequestTransitionAllowed,
@@ -65,5 +66,15 @@ describe('marketplace policies', () => {
     expect(isRequestTransitionAllowed('offering', 'selected')).toBe(true);
     expect(isRequestTransitionAllowed('open', 'selected')).toBe(false);
     expect(isRequestTransitionAllowed('selected', 'open')).toBe(false);
+    // Re-asserting the current stage is idempotent, which is what a repeat
+    // offer on an `offering` request needs. Awarding is not: it freezes a
+    // contract, so the award predicate refuses a request that already reached
+    // `selected` as well as one that never left `open`.
+    expect(isRequestTransitionAllowed('selected', 'selected')).toBe(true);
+    expect(canChooseRequestOffer('offering')).toBe(true);
+    expect(canChooseRequestOffer('open')).toBe(false);
+    expect(canChooseRequestOffer('selected')).toBe(false);
+    expect(canChooseRequestOffer('closed')).toBe(false);
+    expect(canChooseRequestOffer('expired')).toBe(false);
   });
 });

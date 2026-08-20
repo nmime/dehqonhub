@@ -17,6 +17,8 @@ import { Migration20260810138000AddMarketplaceEngagement } from './Migration2026
 import { Migration20260810139000HardenMarketplaceCommands } from './Migration20260810139000HardenMarketplaceCommands';
 import { Migration20260810140000AlignMarketplaceSellerPartyRole } from './Migration20260810140000AlignMarketplaceSellerPartyRole';
 import { Migration20260811110000AlignMarketplaceBuyerPartyRole } from './Migration20260811110000AlignMarketplaceBuyerPartyRole';
+import { Migration20260812120000GuardMarketplaceOfferSelection } from './Migration20260812120000GuardMarketplaceOfferSelection';
+import { Migration20260812130000RequireMarketplacePromotionBilling } from './Migration20260812130000RequireMarketplacePromotionBilling';
 
 export const agritechMigrations = [
   Migration20260802120000CreateAgriTechMarketplace,
@@ -37,6 +39,8 @@ export const agritechMigrations = [
   Migration20260810139000HardenMarketplaceCommands,
   Migration20260810140000AlignMarketplaceSellerPartyRole,
   Migration20260811110000AlignMarketplaceBuyerPartyRole,
+  Migration20260812120000GuardMarketplaceOfferSelection,
+  Migration20260812130000RequireMarketplacePromotionBilling,
 ] as const;
 export const agritechMigrationOptions: MigrationsOptions = {
   tableName: 'mikro_orm_migrations',
@@ -65,3 +69,5 @@ export * from './Migration20260810138000AddMarketplaceEngagement';
 export * from './Migration20260810139000HardenMarketplaceCommands';
 export * from './Migration20260810140000AlignMarketplaceSellerPartyRole';
 export * from './Migration20260811110000AlignMarketplaceBuyerPartyRole';
+export * from './Migration20260812120000GuardMarketplaceOfferSelection';
+export * from './Migration20260812130000RequireMarketplacePromotionBilling';

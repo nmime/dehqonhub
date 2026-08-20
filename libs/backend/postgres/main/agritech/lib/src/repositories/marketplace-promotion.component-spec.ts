@@ -16,9 +16,15 @@ import {
 import type {
   ActivateMarketplacePromotionInput,
   AgriTechOwner,
+  MarketplaceListingPromotion,
   MarketplaceListingPublication,
+  MarketplacePromotionReservation,
+  OperationResult,
 } from '@app/backend-feature-agritech-shared';
-import { marketplacePromotionActivationFingerprint } from '@app/backend-feature-agritech-shared';
+import {
+  marketplaceProviderFingerprint,
+  marketplacePromotionActivationFingerprint,
+} from '@app/backend-feature-agritech-shared';
 import {
   AgriTechPartnerEntitySchema,
   BuyerRequestEntitySchema,
@@ -27,6 +33,7 @@ import {
   MarketplaceListingPublicationEntitySchema,
   MarketplacePublicationModerationOperationEntitySchema,
   MarketplacePublicSellerEntitySchema,
+  MarketplaceProviderOperationEntitySchema,
   MarketplacePublicSellerRevisionEntitySchema,
   MarketplaceRequestPublicationEntitySchema,
   MarketplacePartnerMembershipEntitySchema,
@@ -39,6 +46,7 @@ import {
   MarketplaceAiConsultationOperationEntitySchema,
 } from '../entities/marketplace-dashboard-ai.entity';
 import { agritechMigrationOptions } from '../migrations';
+import { PostgresMarketplaceRepository } from './marketplace.repository';
 import { PostgresMarketplaceDashboardAiRepository } from './marketplace-dashboard-ai.repository';
 import { PostgresMarketplacePromotionRepository } from './marketplace-promotion.repository';
 import { PostgresMarketplacePublicRepository } from './marketplace-public.repository';
@@ -76,21 +84,23 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
     await insertAuthorizedSeller(database.em, owner, partnerId);
     await insertProduct(database.em, { id: productId, supplierId: partnerId, tenantId: owner.tenantId });
     const publication = await publishAndApproveProduct(database, owner, partnerId, productId, 'idempotency');
-    const [firstResult, replayResult] = await Promise.all([
-      activatePromotion(promotionRepository(database), owner, 'promotion-command-0001', {
+    // Replay is asserted sequentially because an exact replay must return the
+    // settled record; the concurrent case is its own scenario below, where the
+    // point is that a race resolves as exactly one charge.
+    const first = valueOf(
+      await activatePromotion(database, owner, 'promotion-command-0001', {
         actingPartnerId: partnerId,
         listingPublicId: publication.id,
         planCode: 'catalog_7d',
       }),
-      activatePromotion(promotionRepository(database), owner, 'promotion-command-0001', {
+    );
+    const replay = valueOf(
+      await activatePromotion(database, owner, 'promotion-command-0001', {
         actingPartnerId: partnerId,
         listingPublicId: publication.id,
         planCode: 'catalog_7d',
       }),
-    ]);
-    const first = valueOf(firstResult);
-    const replay = valueOf(replayResult);
-    const repository = promotionRepository(database);
+    );
 
     expect(replay).toEqual(first);
     expect(first).toMatchObject({
@@ -102,14 +112,14 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
       status: 'active',
     });
     await expect(
-      activatePromotion(repository, owner, 'promotion-command-0001', {
+      activatePromotion(database, owner, 'promotion-command-0001', {
         actingPartnerId: partnerId,
         listingPublicId: publication.id,
         planCode: 'catalog_14d',
       }),
     ).resolves.toMatchObject({ field: 'idempotencyKey', status: 'conflict' });
     await expect(
-      activatePromotion(repository, owner, 'promotion-command-0002', {
+      activatePromotion(database, owner, 'promotion-command-0002', {
         actingPartnerId: partnerId,
         listingPublicId: publication.id,
         planCode: 'catalog_7d',
@@ -181,12 +191,12 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
     }
 
     const changedInputRace = await Promise.all([
-      activatePromotion(promotionRepository(database), owner, 'promotion-race-shared-key', {
+      activatePromotion(database, owner, 'promotion-race-shared-key', {
         actingPartnerId: partnerId,
         listingPublicId: firstPublication.id,
         planCode: 'catalog_7d',
       }),
-      activatePromotion(promotionRepository(database), owner, 'promotion-race-shared-key', {
+      activatePromotion(database, owner, 'promotion-race-shared-key', {
         actingPartnerId: partnerId,
         listingPublicId: secondPublication.id,
         planCode: 'catalog_14d',
@@ -206,12 +216,12 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
     ).toEqual([{ count: 1 }]);
 
     const competingListingRace = await Promise.all([
-      activatePromotion(promotionRepository(database), owner, 'promotion-race-listing-a', {
+      activatePromotion(database, owner, 'promotion-race-listing-a', {
         actingPartnerId: partnerId,
         listingPublicId: thirdPublication.id,
         planCode: 'catalog_7d',
       }),
-      activatePromotion(promotionRepository(database), owner, 'promotion-race-listing-b', {
+      activatePromotion(database, owner, 'promotion-race-listing-b', {
         actingPartnerId: partnerId,
         listingPublicId: thirdPublication.id,
         planCode: 'catalog_7d',
@@ -270,7 +280,7 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
       'member-second',
     );
     const promotion = valueOf(
-      await activatePromotion(promotionRepository(database), member, 'promotion-member-0001', {
+      await activatePromotion(database, member, 'promotion-member-0001', {
         actingPartnerId: partnerId,
         listingPublicId: firstPublication.id,
         planCode: 'catalog_7d',
@@ -286,7 +296,7 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
     await expect(promotionRepository(database).findPromotion(member, promotion.id)).resolves.toBeUndefined();
     await expect(promotionRepository(database).listPromotions(member)).resolves.toEqual([]);
     await expect(
-      activatePromotion(promotionRepository(database), member, 'promotion-member-0002', {
+      activatePromotion(database, member, 'promotion-member-0002', {
         actingPartnerId: partnerId,
         listingPublicId: secondPublication.id,
         planCode: 'catalog_7d',
@@ -338,7 +348,7 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
       await aiRepository.createAiConsultation(owner, 'recommendation', 'seed', 'promotion-ai-before-0001'),
     ).listingPublicationIds;
     valueOf(
-      await activatePromotion(promotionRepository(database), owner, 'promotion-catalog-0001', {
+      await activatePromotion(database, owner, 'promotion-catalog-0001', {
         actingPartnerId: partnerId,
         listingPublicId: promotedPublication.id,
         planCode: 'catalog_14d',
@@ -444,7 +454,7 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
     await database.em.getConnection().execute(`select pg_sleep(1.7)`);
 
     const replacement = valueOf(
-      await activatePromotion(promotionRepository(database), owner, 'promotion-replacement-0001', {
+      await activatePromotion(database, owner, 'promotion-replacement-0001', {
         actingPartnerId: partnerId,
         listingPublicId: publication.id,
         planCode: 'catalog_30d',
@@ -466,7 +476,10 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
       database.em
         .getConnection()
         .execute(`update marketplace_listing_promotions set actor_user_id = 'attacker' where id = ?`, [replacement.id]),
-    ).rejects.toThrow(/marketplace listing promotion identity is immutable/u);
+      // Either guard is a refusal: the charge ledger anchors the promotion owner,
+      // so the provider-operation anchor trigger can fire before the promotion's
+      // own identity trigger.
+    ).rejects.toThrow(/(promotion identity is immutable|provider operation resource anchor is immutable)/u);
     await expect(
       database.em.getConnection().execute(
         `update marketplace_listing_promotions
@@ -492,6 +505,214 @@ describe('AgriTech marketplace promotion PostgreSQL boundary', () => {
       ),
     ).rejects.toThrow(/marketplace listing promotion status transition is invalid/u);
   });
+
+  it('keeps a reserved slot out of every read and out of the catalog until a charge settles it', async () => {
+    const database = requireOrm(orm);
+    const owner = { tenantId: 'tenant-promotion-billing', userId: 'seller-billing' };
+    const partnerId = randomUUID();
+    const productId = randomUUID();
+    await insertAuthorizedSeller(database.em, owner, partnerId);
+    await insertProduct(database.em, {
+      id: productId,
+      name: 'Billed seed',
+      supplierId: partnerId,
+      tenantId: owner.tenantId,
+    });
+    const publication = await publishAndApproveProduct(database, owner, partnerId, productId, 'billing');
+
+    const reservation = valueOf(
+      await reservePromotion(promotionRepository(database), owner, 'promotion-billing-0001', {
+        actingPartnerId: partnerId,
+        listingPublicId: publication.id,
+        planCode: 'catalog_7d',
+      }),
+    );
+
+    expect(reservation.settledPromotion).toBeUndefined();
+    expect(
+      await rows<{ billingOperationId: string | null; status: string }>(
+        database.em,
+        `select billing_operation_id as "billingOperationId", status
+           from marketplace_listing_promotions where id = ?`,
+        [reservation.id],
+      ),
+    ).toEqual([{ billingOperationId: null, status: 'pending_billing' }]);
+    await expect(promotionRepository(database).findPromotion(owner, reservation.id)).resolves.toBeUndefined();
+    await expect(promotionRepository(database).listPromotions(owner)).resolves.toEqual([]);
+    const beforeCharge = await new PostgresMarketplacePublicRepository(database.em.fork()).listPublishedListings({
+      limit: 20,
+      query: 'Billed seed',
+      sort: 'newest',
+    });
+    expect(beforeCharge.items.find(({ publicId }) => publicId === publication.id)).toMatchObject({ promoted: false });
+
+    // A reservation cannot promote itself: the database refuses the transition
+    // while no succeeded promotion_billing operation backs it.
+    await expect(
+      database.em.getConnection().execute(
+        `update marketplace_listing_promotions
+            set status = 'active', revision = revision + 1, updated_at = now()
+          where id = ?`,
+        [reservation.id],
+      ),
+    ).rejects.toThrow(/marketplace listing promotion status transition is invalid/u);
+    await expect(
+      promotionRepository(database).settlePromotion(owner, reservation.id, randomUUID()),
+    ).resolves.toMatchObject({ field: 'billingOperation', status: 'conflict' });
+
+    const charge = valueOf(await chargeReservation(database, owner, 'promotion-billing-0001', reservation));
+    const settled = valueOf(await promotionRepository(database).settlePromotion(owner, reservation.id, charge));
+
+    expect(settled).toMatchObject({ id: reservation.id, priceUzs: 150_000, revision: 1, status: 'active' });
+    expect(
+      await rows<{ capability: string; count: number; receipt: Record<string, unknown>; status: string }>(
+        database.em,
+        `select capability, status, receipt, count(*)::int as count
+           from marketplace_provider_operations
+          where resource_type = 'promotion' and resource_id = ?
+          group by capability, status, receipt`,
+        [reservation.id],
+      ),
+    ).toEqual([
+      {
+        capability: 'promotion_billing',
+        count: 1,
+        receipt: { amountUzs: 150_000, currency: 'UZS', moneyMoved: false, planCode: 'catalog_7d', simulated: true },
+        status: 'succeeded',
+      },
+    ]);
+    const afterCharge = await new PostgresMarketplacePublicRepository(database.em.fork()).listPublishedListings({
+      limit: 20,
+      query: 'Billed seed',
+      sort: 'newest',
+    });
+    expect(afterCharge.items.find(({ publicId }) => publicId === publication.id)).toMatchObject({ promoted: true });
+
+    // Settling the same charge again returns the persisted record instead of
+    // paying twice, and no further charge can be prepared for a serving slot.
+    await expect(promotionRepository(database).settlePromotion(owner, reservation.id, charge)).resolves.toMatchObject({
+      status: 'ok',
+      value: { revision: 1 },
+    });
+    await expect(chargeReservation(database, owner, 'promotion-billing-0003', reservation)).resolves.toMatchObject({
+      field: 'status',
+      status: 'conflict',
+    });
+  });
+
+  it('refuses to serve a slot whose charge is only started and refuses a second command key its own charge', async () => {
+    const database = requireOrm(orm);
+    const owner = { tenantId: 'tenant-promotion-started', userId: 'seller-started' };
+    const partnerId = randomUUID();
+    const productId = randomUUID();
+    await insertAuthorizedSeller(database.em, owner, partnerId);
+    await insertProduct(database.em, {
+      id: productId,
+      name: 'Started charge seed',
+      supplierId: partnerId,
+      tenantId: owner.tenantId,
+    });
+    const publication = await publishAndApproveProduct(database, owner, partnerId, productId, 'started-charge');
+    const reservation = valueOf(
+      await reservePromotion(promotionRepository(database), owner, 'promotion-started-0001', {
+        actingPartnerId: partnerId,
+        listingPublicId: publication.id,
+        planCode: 'catalog_7d',
+      }),
+    );
+    const descriptor = promotionBillingDescriptor(reservation);
+
+    const started = valueOf(
+      await new PostgresMarketplaceRepository(database.em.fork()).prepareProviderOperation(owner, {
+        actorType: 'promotion_owner',
+        capability: 'promotion_billing',
+        idempotencyKey: 'promotion-started-0001',
+        providerMode: 'mock',
+        providerName: 'mock-promotion-billing',
+        requestDescriptor: descriptor,
+        requestFingerprint: marketplaceProviderFingerprint(descriptor),
+        resourceId: reservation.id,
+        resourceRevision: reservation.revision,
+        resourceType: 'promotion',
+      }),
+    );
+
+    await expect(
+      promotionRepository(database).settlePromotion(owner, reservation.id, started.operationId),
+    ).resolves.toMatchObject({ field: 'billingOperation', status: 'conflict' });
+    await expect(chargeReservation(database, owner, 'promotion-started-0002', reservation)).resolves.toMatchObject({
+      status: 'conflict',
+    });
+    expect(
+      await rows<{ count: number }>(
+        database.em,
+        `select count(*)::int as count from marketplace_provider_operations
+          where capability = 'promotion_billing' and resource_id = ?`,
+        [reservation.id],
+      ),
+    ).toEqual([{ count: 1 }]);
+    expect(
+      await rows<{ status: string }>(database.em, `select status from marketplace_listing_promotions where id = ?`, [
+        reservation.id,
+      ]),
+    ).toEqual([{ status: 'pending_billing' }]);
+  });
+
+  it('resolves a concurrent double activation of one listing as exactly one charge', async () => {
+    const database = requireOrm(orm);
+    const owner = { tenantId: 'tenant-promotion-one-charge', userId: 'seller-one-charge' };
+    const partnerId = randomUUID();
+    const productId = randomUUID();
+    await insertAuthorizedSeller(database.em, owner, partnerId);
+    await insertProduct(database.em, {
+      id: productId,
+      name: 'Race seed',
+      supplierId: partnerId,
+      tenantId: owner.tenantId,
+    });
+    const publication = await publishAndApproveProduct(database, owner, partnerId, productId, 'one-charge');
+    const command = { actingPartnerId: partnerId, listingPublicId: publication.id, planCode: 'catalog_7d' } as const;
+
+    const distinctKeys = await Promise.all([
+      activatePromotion(database, owner, 'promotion-charge-race-a', command),
+      activatePromotion(database, owner, 'promotion-charge-race-b', command),
+    ]);
+    expect(distinctKeys.map(({ status }) => status).sort((left, right) => left.localeCompare(right))).toEqual([
+      'conflict',
+      'ok',
+    ]);
+
+    const [winningKey] = await rows<{ idempotencyKey: string }>(
+      database.em,
+      `select idempotency_key as "idempotencyKey" from marketplace_listing_promotions
+        where listing_publication_id = ?`,
+      [publication.id],
+    );
+    const settledKey = winningKey?.idempotencyKey ?? '';
+    const sameKey = await Promise.all([
+      activatePromotion(database, owner, settledKey, command),
+      activatePromotion(database, owner, settledKey, command),
+    ]);
+    expect(sameKey.map(({ status }) => status)).toEqual(['ok', 'ok']);
+
+    const promotions = await rows<{ billingOperationId: string; id: string; revision: number; status: string }>(
+      database.em,
+      `select billing_operation_id as "billingOperationId", id, revision, status
+         from marketplace_listing_promotions where listing_publication_id = ?`,
+      [publication.id],
+    );
+    expect(promotions).toHaveLength(1);
+    expect(promotions[0]).toMatchObject({ revision: 1, status: 'active' });
+    expect(
+      await rows<{ count: number }>(
+        database.em,
+        `select count(*)::int as count from marketplace_provider_operations
+          where capability = 'promotion_billing' and status = 'succeeded' and resource_id = ?`,
+        [promotions[0]?.id],
+      ),
+    ).toEqual([{ count: 1 }]);
+    expect(promotions[0]?.billingOperationId).toBeTruthy();
+  });
 });
 
 function requireOrm(orm: MikroORM<PostgreSqlDriver> | undefined): MikroORM<PostgreSqlDriver> {
@@ -505,17 +726,113 @@ function promotionRepository(database: MikroORM<PostgreSqlDriver>): PostgresMark
   return new PostgresMarketplacePromotionRepository(database.em.fork());
 }
 
-function activatePromotion(
+function reservePromotion(
   repository: PostgresMarketplacePromotionRepository,
   owner: AgriTechOwner,
   idempotencyKey: string,
   input: ActivateMarketplacePromotionInput,
-): ReturnType<PostgresMarketplacePromotionRepository['activatePromotion']> {
-  return repository.activatePromotion(owner, {
+): ReturnType<PostgresMarketplacePromotionRepository['reservePromotion']> {
+  return repository.reservePromotion(owner, {
     ...input,
     idempotencyKey,
     requestFingerprint: marketplacePromotionActivationFingerprint(input),
   });
+}
+
+function promotionBillingDescriptor(reservation: MarketplacePromotionReservation) {
+  return {
+    action: 'bill-listing-promotion' as const,
+    parametersFingerprint: marketplaceProviderFingerprint({
+      amountUzs: reservation.priceUzs,
+      currency: 'UZS',
+      listingPublicId: reservation.listingPublicId,
+      planCode: reservation.planCode,
+      sellerPartnerId: reservation.sellerPartnerId,
+    }),
+    resourceId: reservation.id,
+    resourceRevision: reservation.revision,
+    resourceType: 'promotion' as const,
+  };
+}
+
+/**
+ * The exact charge the promotion domain service records: one `promotion_billing`
+ * provider operation, prepared against the reservation and completed with a
+ * simulated receipt that never claims money moved.
+ */
+async function chargeReservation(
+  database: MikroORM<PostgreSqlDriver>,
+  owner: AgriTechOwner,
+  idempotencyKey: string,
+  reservation: MarketplacePromotionReservation,
+): Promise<OperationResult<string>> {
+  const descriptor = promotionBillingDescriptor(reservation);
+  const commerce = new PostgresMarketplaceRepository(database.em.fork());
+  const prepared = await commerce.prepareProviderOperation(owner, {
+    actorType: 'promotion_owner',
+    capability: 'promotion_billing',
+    idempotencyKey,
+    providerMode: 'mock',
+    providerName: 'mock-promotion-billing',
+    requestDescriptor: descriptor,
+    requestFingerprint: marketplaceProviderFingerprint(descriptor),
+    resourceId: reservation.id,
+    resourceRevision: reservation.revision,
+    resourceType: 'promotion',
+  });
+  if (prepared.status !== 'ok') {
+    return prepared;
+  }
+  if (!prepared.value.execute) {
+    return { status: 'ok', value: prepared.value.operationId };
+  }
+  const completion = await new PostgresMarketplaceRepository(database.em.fork()).completeProviderOperation(
+    owner,
+    prepared.value.operationId,
+    prepared.value.attempt,
+    {
+      providerEventId: `mock-promotion-billing-event:${reservation.id}`,
+      providerMode: 'mock',
+      providerName: 'mock-promotion-billing',
+      providerReference: `mock-promotion-billing:${prepared.value.operationId}`,
+      resultDescriptor: {
+        completedAt: new Date().toISOString(),
+        outcome: 'promotion_charged',
+        resourceId: reservation.id,
+        resourceRevision: reservation.revision,
+        resourceType: 'promotion',
+      },
+      safeReceipt: {
+        amountUzs: reservation.priceUzs,
+        currency: 'UZS',
+        moneyMoved: false,
+        planCode: reservation.planCode,
+        simulated: true,
+      },
+    },
+  );
+  return completion.status === 'ok' ? { status: 'ok', value: prepared.value.operationId } : completion;
+}
+
+async function activatePromotion(
+  database: MikroORM<PostgreSqlDriver>,
+  owner: AgriTechOwner,
+  idempotencyKey: string,
+  input: ActivateMarketplacePromotionInput,
+): Promise<OperationResult<MarketplaceListingPromotion>> {
+  const reservation = await reservePromotion(promotionRepository(database), owner, idempotencyKey, input);
+  if (reservation.status !== 'ok') {
+    return reservation;
+  }
+  const settled = reservation.value.settledPromotion;
+  if (settled) {
+    return { status: 'ok', value: settled };
+  }
+  const charge = await chargeReservation(database, owner, idempotencyKey, reservation.value);
+  if (charge.status !== 'ok') {
+    return charge;
+  }
+  return promotionRepository(database).settlePromotion(owner, reservation.value.id, charge.value);
 }
 
 function valueOf<T>(result: { status: string; value?: T }): T {
@@ -653,6 +970,7 @@ async function insertRawPromotion(
 
 const promotionEntities = [
   AgriTechPartnerEntitySchema,
+  MarketplaceProviderOperationEntitySchema,
   BuyerRequestEntitySchema,
   FarmerEntitySchema,
   MarketplaceListingPromotionEntitySchema,

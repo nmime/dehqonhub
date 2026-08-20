@@ -471,9 +471,9 @@ describe('AgriTech marketplace provider-operation PostgreSQL boundary', () => {
     ).toEqual([{ reconciliationReason: 'provider_status_unknown', reconciliationRequired: true }]);
   });
 
-  it('allows unanchored promotion expiry but fences identity mutation after a provider operation is anchored', async () => {
+  it('allows unanchored promotion expiry and refuses to charge a promotion that no longer awaits billing', async () => {
     const database = requireOrm(orm);
-    const promotion = await insertPromotionFixture(database.em);
+    const promotion = await insertPromotionFixture(database.em, { suffix: 'expiry' });
     await database.em.getConnection().execute(`select pg_sleep(0.15)`);
 
     await expect(
@@ -484,13 +484,34 @@ describe('AgriTech marketplace provider-operation PostgreSQL boundary', () => {
         [promotion.id],
       ),
     ).resolves.toBeDefined();
+    // A slot that already served — or lapsed — is not billable a second time.
+    await expect(
+      repository(database).prepareProviderOperation(
+        promotion.actor,
+        promotionBillingPreparation(promotion.id, 'promotion-billing-key-0001'),
+      ),
+    ).resolves.toMatchObject({ field: 'status', status: 'conflict' });
+  });
+
+  it('fences promotion identity mutation once a charge is anchored and claims the promotion once', async () => {
+    const database = requireOrm(orm);
+    const promotion = await insertPromotionFixture(database.em, { status: 'pending_billing', suffix: 'billing' });
+
     const prepared = preparedValue(
       await repository(database).prepareProviderOperation(
         promotion.actor,
         promotionBillingPreparation(promotion.id, 'promotion-billing-key-0001'),
       ),
     );
+
     expect(prepared.execute).toBe(true);
+    // A different command key cannot buy the same promotion a second charge.
+    await expect(
+      repository(database).prepareProviderOperation(
+        promotion.actor,
+        promotionBillingPreparation(promotion.id, 'promotion-billing-key-0002'),
+      ),
+    ).resolves.toMatchObject({ field: 'operationInProgress', status: 'conflict' });
     await expect(
       database.em
         .getConnection()
@@ -772,8 +793,13 @@ function partySnapshot(actor: AgriTechOwner, partnerId: string, legalName: strin
   return { legalName, partnerId, region: 'Samarkand', tenantId: actor.tenantId, userId: actor.userId };
 }
 
-async function insertPromotionFixture(em: EntityManager): Promise<{ actor: AgriTechOwner; id: string }> {
-  const actor = { tenantId: 'tenant-provider-promotion', userId: 'provider-promoter' };
+async function insertPromotionFixture(
+  em: EntityManager,
+  options: { status?: 'active' | 'pending_billing'; suffix?: string } = {},
+): Promise<{ actor: AgriTechOwner; id: string }> {
+  const suffix = options.suffix ?? 'default';
+  const status = options.status ?? 'active';
+  const actor = { tenantId: 'tenant-provider-promotion', userId: `provider-promoter-${suffix}` };
   const partnerId = randomUUID();
   await insertParty(em, actor, partnerId, 'supplier');
   const productId = randomUUID();
@@ -812,9 +838,17 @@ async function insertPromotionFixture(em: EntityManager): Promise<{ actor: AgriT
        published_at, created_at, updated_at)
      values (?, ?, ?, ?, ?, 1, ?, 'product', 'seeds', 'Provider promotion seed', 'seed',
              'kg', 'Samarkand', '[]'::jsonb, repeat('b', 64), 1, 'published', 'approved',
-             'provider-reviewer', now(), 'provider-listing-key-0001', repeat('c', 64), 0,
+             'provider-reviewer', now(), ?, repeat('c', 64), 0,
              now(), now(), now())`,
-    [listingPublicationId, actor.tenantId, actor.userId, sellerPublicId, sellerRevisionId, productId],
+    [
+      listingPublicationId,
+      actor.tenantId,
+      actor.userId,
+      sellerPublicId,
+      sellerRevisionId,
+      productId,
+      `provider-listing-key-${suffix}`,
+    ],
   );
   const id = randomUUID();
   await em.getConnection().execute(
@@ -822,13 +856,23 @@ async function insertPromotionFixture(em: EntityManager): Promise<{ actor: AgriT
       (id, tenant_id, actor_user_id, seller_partner_id, seller_public_id, listing_publication_id,
        plan_code, status, starts_at, ends_at, price_uzs, currency, idempotency_key,
        request_fingerprint, activation_reference, activated_at, revision, created_at, updated_at)
-     values (?, ?, ?, ?, ?, ?, 'catalog_7d', 'active',
+     values (?, ?, ?, ?, ?, ?, 'catalog_7d', ?,
              now() - interval '7 days' + interval '100 milliseconds',
-             now() + interval '100 milliseconds', 150000, 'UZS', 'provider-promotion-key-0001', repeat('d', 64),
+             now() + interval '100 milliseconds', 150000, 'UZS', ?, repeat('d', 64),
              ?, now() - interval '7 days' + interval '100 milliseconds', 0,
              now() - interval '7 days' + interval '100 milliseconds',
              now() - interval '7 days' + interval '100 milliseconds')`,
-    [id, actor.tenantId, actor.userId, partnerId, sellerPublicId, listingPublicationId, `promotion:${id}`],
+    [
+      id,
+      actor.tenantId,
+      actor.userId,
+      partnerId,
+      sellerPublicId,
+      listingPublicationId,
+      status,
+      `provider-promotion-key-${suffix}`,
+      `promotion:${id}`,
+    ],
   );
   return { actor, id };
 }

@@ -28,9 +28,25 @@ describe('marketplace Nest service wiring', () => {
     expect(new MarketplaceEngagementService(repository as MarketplaceEngagementRepository)).toBeInstanceOf(
       MarketplaceEngagementService,
     );
-    expect(new MarketplacePromotionService(repository as MarketplacePromotionRepository)).toBeInstanceOf(
-      MarketplacePromotionService,
-    );
+    const billingProvider = { billListingPromotion: vi.fn(), mode: 'disabled' as const, name: 'disabled' };
+    expect(
+      new MarketplacePromotionService(
+        repository as MarketplacePromotionRepository,
+        repository as MarketplaceProviderOperationRepository,
+        billingProvider,
+        {
+          contractArtifactStorage: { mode: 'mock', providerName: 'mock', timeoutMs: 1 },
+          directPayment: { mode: 'mock', providerName: 'mock', timeoutMs: 2 },
+          disputeEvidenceStorage: { mode: 'mock', providerName: 'mock', timeoutMs: 3 },
+          factoring: { mode: 'mock', providerName: 'mock', timeoutMs: 4 },
+          notificationDelivery: { mode: 'disabled', providerName: null, timeoutMs: 5 },
+          oneId: { mode: 'disabled', providerName: null, timeoutMs: 6 },
+          promotionBilling: { mode: 'disabled', providerName: null, timeoutMs: 7 },
+          qualifiedSignature: { mode: 'mock', providerName: 'mock', timeoutMs: 8 },
+          verificationDocuments: { mode: 'disabled', providerName: null, timeoutMs: 9 },
+        },
+      ),
+    ).toBeInstanceOf(MarketplacePromotionService);
     expect(new MarketplacePublicService(repository as MarketplacePublicRepository)).toBeInstanceOf(
       MarketplacePublicService,
     );

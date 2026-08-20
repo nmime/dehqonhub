@@ -61,6 +61,12 @@ interface MarketplaceManagementProps {
   readonly onSampleTransition: (sample: MarketplaceSampleDto, action: SampleAction, deliveryQuoteUzs?: number) => void;
   readonly pendingAction?: string;
   readonly produceListings: Resource<ProduceListingViewDto[]>;
+  /**
+   * Whether the server currently has a promotion billing capability. A paid
+   * action the platform cannot charge is never offered; `undefined` means
+   * readiness is not known yet and the action stays available.
+   */
+  readonly promotionBillingReady?: boolean;
   readonly promotionDetail: Resource<MarketplaceListingPromotionDto | null>;
   readonly promotionPlans: Resource<MarketplacePromotionPlanDto[]>;
   readonly promotions: Resource<MarketplaceListingPromotionDto[]>;
@@ -436,6 +442,7 @@ function PromotionWorkspace({
   onLoadPromotion,
   onRetry,
   pendingAction,
+  promotionBillingReady,
   promotionDetail,
   promotionPlans,
   promotions,
@@ -452,6 +459,7 @@ function PromotionWorkspace({
   | 'onLoadPromotion'
   | 'onRetry'
   | 'pendingAction'
+  | 'promotionBillingReady'
   | 'promotionDetail'
   | 'promotionPlans'
   | 'promotions'
@@ -462,9 +470,12 @@ function PromotionWorkspace({
 >) {
   const [listingId, setListingId] = useState('');
   const [planCode, setPlanCode] = useState<PromotionPlanCode>('catalog_7d');
+  const billable = promotionBillingReady !== false;
+  const canActivate = canActivatePromotions && billable;
+  const activateHint = billable ? 'marketplace-promotion-access' : 'marketplace-promotion-billing';
   const submit = (event: SyntheticEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (listingId) {
+    if (listingId && canActivate) {
       onActivatePromotion(listingId, planCode);
     }
   };
@@ -478,6 +489,11 @@ function PromotionWorkspace({
         </div>
       </div>
       <p>{t('agritech.marketplace.promotion.description')}</p>
+      {billable ? null : (
+        <p className="dh-state-inline dh-state-inline--error" id="marketplace-promotion-billing">
+          {t('agritech.marketplace.promotion.billingUnavailable')}
+        </p>
+      )}
       {!canActivatePromotions ? (
         <div className="dh-state-inline" id="marketplace-promotion-access">
           <span>{sellerAccessHint ?? t('agritech.marketplace.management.verificationRequired')}</span>
@@ -508,7 +524,7 @@ function PromotionWorkspace({
         <label>
           <span>{t('agritech.marketplace.promotion.listing')}</span>
           <select
-            disabled={!canActivatePromotions || listingPublications.status !== 'ready'}
+            disabled={!canActivate || listingPublications.status !== 'ready'}
             onChange={(event) => {
               setListingId(event.target.value);
             }}
@@ -530,7 +546,7 @@ function PromotionWorkspace({
         <label>
           <span>{t('agritech.marketplace.promotion.plan')}</span>
           <select
-            disabled={!canActivatePromotions}
+            disabled={!canActivate}
             onChange={(event) => {
               setPlanCode(event.target.value as PromotionPlanCode);
             }}
@@ -544,11 +560,11 @@ function PromotionWorkspace({
           </select>
         </label>
         <MarketplaceBusyButton
-          aria-describedby={!canActivatePromotions ? 'marketplace-promotion-access' : undefined}
+          aria-describedby={canActivate ? undefined : activateHint}
           busy={pendingAction === 'promotion:activate'}
           busyLabel={t('agritech.marketplace.loading')}
           className="dh-button dh-button--primary"
-          disabled={!canActivatePromotions || !listingId || promotionPlans.status !== 'ready'}
+          disabled={!canActivate || !listingId || promotionPlans.status !== 'ready'}
           type="submit"
         >
           {t('agritech.marketplace.promotion.activate')}

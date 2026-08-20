@@ -239,6 +239,15 @@ export const MarketplaceProviderOperationEntitySchema = new EntitySchema<Marketp
       where: `"status" in ('started', 'succeeded') and "capability" = 'qualified_signature'`,
     },
     {
+      /**
+       * One semantic charge per promotion, whatever command key asks for it and
+       * whatever revision the reservation carries.
+       */
+      name: 'uq__marketplace_provider_operations__resource_type_res_5a3eb243',
+      properties: ['resourceType', 'resourceId', 'capability'],
+      where: `"status" in ('started', 'succeeded') and "capability" = 'promotion_billing'`,
+    },
+    {
       name: 'uq__marketplace_provider_operations__resource_type_res_e15a456d',
       properties: [
         'resourceType',
@@ -741,6 +750,14 @@ export const RequestOfferEntitySchema = new EntitySchema<RequestOfferEntity>({
       name: 'uq__marketplace_request_offers__request_id_seller_tena_78eb02ed',
       properties: ['requestId', 'sellerTenantId', 'sellerPartnerId'],
       where: `status = 'pending' and binding_status = 'resolved'`,
+    },
+    // One purchase request awards one offer. The sibling index above constrains
+    // competing bids and says nothing about accepted ones, which is how one
+    // request came to hold four accepted offers and four contracts.
+    {
+      name: 'uq__marketplace_request_offers__request_id',
+      properties: ['requestId'],
+      where: `status = 'accepted'`,
     },
   ],
   checks: [

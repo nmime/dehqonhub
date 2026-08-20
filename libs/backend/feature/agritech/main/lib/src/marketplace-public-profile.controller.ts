@@ -59,7 +59,9 @@ class MarketplacePublicProfileReviewDto implements MarketplacePublicProfileRevie
   @ApiProperty() listingTitle!: string;
   @ApiProperty({ enum: listingSections }) section!: MarketplaceListingSection;
   @ApiPropertyOptional({ type: MarketplacePublicProfileReviewReplyDto })
-  reply?: MarketplacePublicProfileReview['reply'];
+  // The indexed type already includes undefined because the property it reads is
+  // optional, so it is stripped here rather than declaring absence twice.
+  reply?: NonNullable<MarketplacePublicProfileReview['reply']>;
   @ApiPropertyOptional({
     description: 'The reviewed seller. Present only on reviews this profile wrote, never on reviews it received.',
     type: MarketplacePublicProfilePartyDto,

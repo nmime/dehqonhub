@@ -31,7 +31,21 @@ describe('marketplace buyer party role migration', () => {
         migrationNames.indexOf(Migration20260811110000AlignMarketplaceBuyerPartyRole.name),
       );
     }
-    expect(migrationNames.at(-1)).toBe(Migration20260811110000AlignMarketplaceBuyerPartyRole.name);
+    // Later migrations are allowed, but none of them may redefine a buying-side
+    // coherence function this one owns, which is what `runs last` protected.
+    const laterStatements = agritechMigrations
+      .slice(migrationNames.indexOf(Migration20260811110000AlignMarketplaceBuyerPartyRole.name) + 1)
+      .flatMap((Later) => {
+        const migration = new Later(undefined as never, undefined as never);
+        const statements: string[] = [];
+        migration.addSql = (sql: string) => statements.push(sql);
+        migration.up();
+        return statements;
+      })
+      .join('\n');
+    for (const replaced of replacedFunctions) {
+      expect(laterStatements).not.toContain(replaced);
+    }
   });
 
   it('replaces every buying-side coherence function without dropping a trigger', () => {

@@ -1458,6 +1458,7 @@ export type TranslationKey =
   | 'agritech.marketplace.management.verificationRequired'
   | 'agritech.marketplace.promotion.activate'
   | 'agritech.marketplace.promotion.activated'
+  | 'agritech.marketplace.promotion.billingUnavailable'
   | 'agritech.marketplace.promotion.chooseListing'
   | 'agritech.marketplace.promotion.description'
   | 'agritech.marketplace.promotion.detailUnavailable'

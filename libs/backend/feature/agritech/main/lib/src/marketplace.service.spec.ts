@@ -265,14 +265,20 @@ describe('MarketplaceService', () => {
     });
   });
 
-  it('maps an already-decided offer selection to a canonical conflict', async () => {
+  it('maps an already-decided offer selection to a canonical conflict naming the refused field', async () => {
     const { repository, service } = fixture();
     repository.roleOf.mockResolvedValue('buyer');
     repository.chooseOffer.mockResolvedValue({ status: 'conflict', field: 'status' });
 
-    await expect(service.chooseOffer(owner, 'request-public-1', 'offer-1', 'choose-0001')).rejects.toThrow(
-      ConflictException,
-    );
+    const refusal = await service
+      .chooseOffer(owner, 'request-public-1', 'offer-1', 'choose-0001')
+      .then(() => undefined)
+      .catch((error: unknown) => error);
+    expect(refusal).toBeInstanceOf(ConflictException);
+    // The field reaches the wire as an RFC 9457 extension. Without it the buyer
+    // who lost the award reads the same body as one who reused an idempotency
+    // key with a different request.
+    expect((refusal as ConflictException).extensions).toEqual({ field: 'status', resourceType: 'offer' });
   });
 
   it('allows only a verified seller role to quote seller delivery', async () => {

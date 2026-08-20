@@ -1,7 +1,11 @@
 // @requirements REQ-AGRITECH-STAGE2-017
 import { randomUUID } from 'node:crypto';
 import { EntitySchema } from '@mikro-orm/core';
-import type { MarketplacePromotionPlanCode, MarketplacePromotionStatus } from '@app/backend-feature-agritech-shared';
+import type {
+  MarketplacePromotionLifecycleStatus,
+  MarketplacePromotionPlanCode,
+} from '@app/backend-feature-agritech-shared';
+import { MarketplaceProviderOperationEntity } from './marketplace.entity';
 import { MarketplaceListingPublicationEntity } from './marketplace-public.entity';
 import { MarketplacePublicSellerEntity } from './marketplace-public.entity';
 import { AgriTechPartnerEntity } from './operations.entity';
@@ -14,7 +18,9 @@ export class MarketplaceListingPromotionEntity {
   sellerPublicId!: string;
   listingPublicationId!: string;
   planCode!: MarketplacePromotionPlanCode;
-  status: MarketplacePromotionStatus = 'active';
+  status: MarketplacePromotionLifecycleStatus = 'pending_billing';
+  /** The succeeded `promotion_billing` operation that paid for this slot. */
+  billingOperationId: string | null = null;
   startsAt!: Date;
   endsAt!: Date;
   priceUzs!: number;
@@ -39,7 +45,8 @@ export const MarketplaceListingPromotionEntitySchema = new EntitySchema<Marketpl
     sellerPublicId: { type: 'uuid', fieldName: 'seller_public_id' },
     listingPublicationId: { type: 'uuid', fieldName: 'listing_publication_id' },
     planCode: { type: 'varchar', length: 30, fieldName: 'plan_code' },
-    status: { type: 'varchar', length: 20, default: 'active' },
+    status: { type: 'varchar', length: 20, default: 'pending_billing' },
+    billingOperationId: { type: 'uuid', nullable: true, fieldName: 'billing_operation_id' },
     startsAt: { type: 'timestamptz', fieldName: 'starts_at' },
     endsAt: { type: 'timestamptz', fieldName: 'ends_at' },
     priceUzs: { type: 'decimal', precision: 15, scale: 0, fieldName: 'price_uzs' },
@@ -60,11 +67,15 @@ export const MarketplaceListingPromotionEntitySchema = new EntitySchema<Marketpl
     {
       name: 'uq__marketplace_listing_promotions__listing_publication_id',
       properties: ['listingPublicationId'],
-      where: `"status" in ('scheduled', 'active')`,
+      where: `"status" in ('pending_billing', 'scheduled', 'active')`,
     },
     {
       name: 'uq__listing_promotions__activation_reference',
       properties: ['activationReference'],
+    },
+    {
+      name: 'uq__listing_promotions__billing_operation_id',
+      properties: ['billingOperationId'],
     },
   ],
   indexes: [
@@ -88,7 +99,11 @@ export const MarketplaceListingPromotionEntitySchema = new EntitySchema<Marketpl
     },
     {
       name: 'ck__listing_promotions__status',
-      expression: `"status" in ('scheduled', 'active', 'expired')`,
+      expression: `"status" in ('pending_billing', 'scheduled', 'active', 'expired')`,
+    },
+    {
+      name: 'ck__listing_promotions__billing',
+      expression: `"status" <> 'pending_billing' or "billing_operation_id" is null`,
     },
     {
       name: 'ck__listing_promotions__currency',
@@ -112,6 +127,18 @@ export const MarketplaceListingPromotionEntitySchema = new EntitySchema<Marketpl
     },
   ],
 });
+
+MarketplaceListingPromotionEntitySchema.addManyToOne<MarketplaceListingPromotionEntity>(
+  'billingOperationId',
+  MarketplaceProviderOperationEntity.name,
+  {
+    deleteRule: 'restrict',
+    fieldName: 'billing_operation_id',
+    foreignKeyName: 'fk__listing_promotions__billing_operation_id',
+    mapToPk: true,
+    nullable: true,
+  },
+);
 
 MarketplaceListingPromotionEntitySchema.addManyToOne<MarketplaceListingPromotionEntity>(
   'sellerPartnerId',

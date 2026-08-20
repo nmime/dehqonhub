@@ -591,13 +591,12 @@ describe('MarketplaceInMemoryAdapter defensive branch contract', () => {
         'choose-again-key',
       ),
     ).resolves.toMatchObject({ field: 'status', status: 'conflict' });
+    // An unknown offer identifier is reported against a request that can still
+    // award one. On the request just decided above, the stage refusal comes
+    // first and is the honest answer: nothing on a decided request is choosable,
+    // whether or not the identifier names a real offer.
     await expect(
-      requestFixture.repository.chooseOffer(
-        buyer,
-        requestFixture.requestPublicId,
-        'missing-offer',
-        'choose-missing-key',
-      ),
+      requestFixture.repository.chooseOffer(buyer, unrelatedRequestPublicId, 'missing-offer', 'choose-missing-key'),
     ).resolves.toMatchObject({ field: 'offerId', status: 'not_found' });
     expect(selection.contractId).toBeDefined();
 

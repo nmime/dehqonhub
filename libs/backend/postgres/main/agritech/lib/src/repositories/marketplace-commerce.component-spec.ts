@@ -31,7 +31,11 @@ import {
   VerificationEntitySchema,
   VerificationEvidenceEntitySchema,
 } from '../entities';
-import { agritechMigrationOptions, Migration20260811110000AlignMarketplaceBuyerPartyRole } from '../migrations';
+import {
+  agritechMigrationOptions,
+  Migration20260811110000AlignMarketplaceBuyerPartyRole,
+  Migration20260812120000GuardMarketplaceOfferSelection,
+} from '../migrations';
 import { PostgresMarketplaceRepository } from './marketplace.repository';
 
 describe('Marketplace commerce PostgreSQL boundaries', () => {
@@ -540,6 +544,240 @@ describe('Marketplace commerce PostgreSQL boundaries', () => {
   });
 
   /**
+   * One purchase request awards one offer and freezes one contract.
+   *
+   * Before `Migration20260812120000GuardMarketplaceOfferSelection` that was a
+   * property of one mutable column and nothing else. `chooseOffer` read
+   * `marketplace_requests."status"`, and the only unique index on offers is
+   * partial on `status = 'pending'`, so it constrains competing bids and says
+   * nothing about accepted ones. Anything that wrote a decided request back to
+   * a choosable stage — the demo seeder's
+   * `on conflict ... set "status" = excluded."status"` did it on every re-seed —
+   * re-armed the request for a second award. Observed on the development
+   * database: one grapes request holding four `accepted` offers and four draft
+   * contracts of 88M, 87M, 86M and 85M UZS, four sellers each believing they
+   * had won.
+   *
+   * The refusals are asserted first, one per persisted rule, and then the same
+   * double award is reproduced against the identical statements with the guards
+   * removed by whatever `down()` emits — so the reproduction cannot drift away
+   * from the defect it names, and a repository-only fix could not satisfy this
+   * test. Every probe rolls back or fails, so the request keeps exactly one
+   * award throughout.
+   */
+  it('awards a purchase request exactly once and reproduces the double award with the guards rolled back', async () => {
+    const database = requireOrm(orm);
+    const buyer = { tenantId: 'single-award-buyer-tenant', userId: 'single-award-buyer' };
+    const winner = { tenantId: 'single-award-winner-tenant', userId: 'single-award-winner' };
+    const loser = { tenantId: 'single-award-loser-tenant', userId: 'single-award-loser' };
+    const buyerPartnerId = randomUUID();
+    const winnerPartnerId = randomUUID();
+    const loserPartnerId = randomUUID();
+    await insertPartner(database.em, { id: buyerPartnerId, kind: 'buyer', owner: buyer });
+    await insertPartner(database.em, { id: winnerPartnerId, kind: 'supplier', owner: winner });
+    await insertPartner(database.em, { id: loserPartnerId, kind: 'supplier', owner: loser });
+    await insertVerification(database.em, { owner: buyer, role: 'buyer' });
+    await insertVerification(database.em, { owner: winner, role: 'seller' });
+    await insertVerification(database.em, { owner: loser, role: 'seller' });
+
+    const buyerRepository = new PostgresMarketplaceRepository(database.em.fork());
+    const request = await buyerRepository.createRequest(
+      buyer,
+      { actingPartnerId: buyerPartnerId, region: 'Samarkand', title: 'Table grapes, 8 tonnes' },
+      'single-award-request-0001',
+    );
+    if (request.status !== 'ok') {
+      throw new Error('The buyer request fixture must be persisted.');
+    }
+    const requestPublicId = await publishRequest(database.em, {
+      buyer,
+      buyerPartnerId,
+      requestId: request.value.id,
+      title: request.value.title,
+    });
+    const winningOffer = await new PostgresMarketplaceRepository(database.em.fork()).makeOffer(
+      winner,
+      requestPublicId,
+      { actingPartnerId: winnerPartnerId, deliveryTerms: 'pickup', priceUzs: 88_000_000 },
+      'single-award-offer-0001',
+    );
+    const losingOffer = await new PostgresMarketplaceRepository(database.em.fork()).makeOffer(
+      loser,
+      requestPublicId,
+      { actingPartnerId: loserPartnerId, deliveryTerms: 'pickup', priceUzs: 87_000_000 },
+      'single-award-offer-0002',
+    );
+    if (winningOffer.status !== 'ok' || losingOffer.status !== 'ok') {
+      throw new Error('Both seller offer fixtures must be persisted.');
+    }
+
+    const award = await buyerRepository.chooseOffer(
+      buyer,
+      requestPublicId,
+      winningOffer.value.id,
+      'single-award-choose-0001',
+    );
+    if (award.status !== 'ok') {
+      throw new Error('The first award must freeze a contract.');
+    }
+
+    // The second award is refused, and the refusal names the request stage
+    // instead of answering an unexpected server error from a constraint.
+    await expect(
+      buyerRepository.chooseOffer(buyer, requestPublicId, losingOffer.value.id, 'single-award-choose-0002'),
+    ).resolves.toEqual({ status: 'conflict', field: 'status' });
+    const singleAward = [{ acceptedOffers: 1, contracts: 1, status: 'selected' }];
+    expect(await awardState(database.em, request.value.id)).toEqual(singleAward);
+
+    const walkBack = `update marketplace_requests set status = 'offering' where id = '${request.value.id}'`;
+    const acceptTheLoser = `update marketplace_request_offers set status = 'accepted'
+                             where id = '${losingOffer.value.id}'`;
+    // The second contract a second award used to produce: the frozen row of the
+    // first one, re-pointed at the losing offer. Keeping the recorded parties
+    // satisfies the party-coherence and snapshot rules, so the only rule left
+    // to answer is the one this migration adds.
+    const secondContract = `insert into marketplace_contracts
+        (id, tenant_id, buyer_user_id, buyer_partner_id, buyer_party_snapshot, seller_tenant_id,
+         seller_user_id, seller_partner_id, seller_party_snapshot, binding_status, source_type,
+         source_id, subject, amount_uzs, lines, delivery_terms, delivery_price_uzs, factoring_enabled,
+         status, version, created_at, updated_at)
+       select '${randomUUID()}', tenant_id, buyer_user_id, buyer_partner_id, buyer_party_snapshot,
+              seller_tenant_id, seller_user_id, seller_partner_id, seller_party_snapshot, binding_status,
+              source_type, '${losingOffer.value.id}', subject, amount_uzs, lines, delivery_terms,
+              delivery_price_uzs, factoring_enabled, status, 0, now(), now()
+         from marketplace_contracts where id = '${award.value.contractId}'`;
+
+    const rollbackProbe = new Error('roll the probe back');
+    // One `execute` per probe: the statements carry no parameters, and the
+    // migration's own rollback arrives as one statement already.
+    const rolledBack = async (
+      statements: readonly string[],
+      observe?: (em: EntityManager) => Promise<void>,
+    ): Promise<void> => {
+      try {
+        await database.em.fork().transactional(async (em) => {
+          await em.getConnection().execute(statements.join(';\n'), [], 'all', em.getTransactionContext());
+          await observe?.(em);
+          throw rollbackProbe;
+        });
+      } catch (error) {
+        if (error !== rollbackProbe) {
+          throw error;
+        }
+      }
+    };
+
+    // Each persisted rule refuses the double award on its own.
+    await expect(rolledBack([walkBack])).rejects.toThrow(/marketplace request stage transition is not allowed/u);
+    await expect(rolledBack([acceptTheLoser])).rejects.toThrow(/uq__marketplace_request_offers__request_id/u);
+    // The contract rule is deferred to commit, because the repository accepts
+    // the offer and inserts the contract in the same flush; `set constraints
+    // all immediate` brings that check forward so the probe can still roll
+    // back. It answers on the count of live contracts the request holds, so it
+    // refuses the second one with the offer index dropped as well.
+    const fireDeferredRules = 'set constraints all immediate';
+    await expect(rolledBack([secondContract, fireDeferredRules])).rejects.toThrow(
+      /marketplace purchase request already has a contract/u,
+    );
+    await expect(
+      rolledBack([
+        `drop index "uq__marketplace_request_offers__request_id"`,
+        acceptTheLoser,
+        secondContract,
+        fireDeferredRules,
+      ]),
+    ).rejects.toThrow(/marketplace purchase request already has a contract/u);
+    expect(await awardState(database.em, request.value.id)).toEqual(singleAward);
+
+    // The reproduction: the same three statements, with the guards dropped by
+    // the migration's own rollback. `drop index` and `drop trigger` are
+    // transactional in PostgreSQL, so the outer rollback restores them.
+    let reproduced: unknown[] = [];
+    await rolledBack([rolledBackOfferSelectionGuards(), walkBack, acceptTheLoser, secondContract], async (em) => {
+      reproduced = await awardState(em, request.value.id);
+    });
+    expect(reproduced).toEqual([{ acceptedOffers: 2, contracts: 2, status: 'offering' }]);
+    expect(await awardState(database.em, request.value.id)).toEqual(singleAward);
+  });
+
+  /**
+   * Two concurrent awards on one request, each with its own idempotency key and
+   * its own connection: the pessimistic write lock on the request row decides
+   * the order, and the loser reads the decided stage and is refused with a
+   * typed conflict rather than a duplicated contract or a server error.
+   */
+  it('resolves two concurrent awards on one request with exactly one winner', async () => {
+    const database = requireOrm(orm);
+    const buyer = { tenantId: 'concurrent-award-buyer-tenant', userId: 'concurrent-award-buyer' };
+    const firstSeller = { tenantId: 'concurrent-award-first-tenant', userId: 'concurrent-award-first' };
+    const secondSeller = { tenantId: 'concurrent-award-second-tenant', userId: 'concurrent-award-second' };
+    const buyerPartnerId = randomUUID();
+    const firstSellerPartnerId = randomUUID();
+    const secondSellerPartnerId = randomUUID();
+    await insertPartner(database.em, { id: buyerPartnerId, kind: 'buyer', owner: buyer });
+    await insertPartner(database.em, { id: firstSellerPartnerId, kind: 'supplier', owner: firstSeller });
+    await insertPartner(database.em, { id: secondSellerPartnerId, kind: 'supplier', owner: secondSeller });
+    await insertVerification(database.em, { owner: buyer, role: 'buyer' });
+    await insertVerification(database.em, { owner: firstSeller, role: 'seller' });
+    await insertVerification(database.em, { owner: secondSeller, role: 'seller' });
+
+    const request = await new PostgresMarketplaceRepository(database.em.fork()).createRequest(
+      buyer,
+      { actingPartnerId: buyerPartnerId, region: 'Samarkand', title: 'Yellow onion, 12 tonnes' },
+      'concurrent-award-request-0001',
+    );
+    if (request.status !== 'ok') {
+      throw new Error('The buyer request fixture must be persisted.');
+    }
+    const requestPublicId = await publishRequest(database.em, {
+      buyer,
+      buyerPartnerId,
+      requestId: request.value.id,
+      title: request.value.title,
+    });
+    const offers = await Promise.all(
+      [
+        { key: 'concurrent-award-offer-0001', owner: firstSeller, partnerId: firstSellerPartnerId, price: 36_500_000 },
+        {
+          key: 'concurrent-award-offer-0002',
+          owner: secondSeller,
+          partnerId: secondSellerPartnerId,
+          price: 36_000_000,
+        },
+      ].map((seller) =>
+        new PostgresMarketplaceRepository(database.em.fork()).makeOffer(
+          seller.owner,
+          requestPublicId,
+          { actingPartnerId: seller.partnerId, deliveryTerms: 'pickup', priceUzs: seller.price },
+          seller.key,
+        ),
+      ),
+    );
+    const offerIds = offers.map((offer) => {
+      if (offer.status !== 'ok') {
+        throw new Error('Both seller offer fixtures must be persisted.');
+      }
+      return offer.value.id;
+    });
+
+    const awards = await Promise.all(
+      offerIds.map((offerId, index) =>
+        new PostgresMarketplaceRepository(database.em.fork()).chooseOffer(
+          buyer,
+          requestPublicId,
+          offerId,
+          `concurrent-award-choose-000${index + 1}`,
+        ),
+      ),
+    );
+    expect(awards.filter((result) => result.status === 'ok')).toHaveLength(1);
+    expect(awards.filter((result) => result.status !== 'ok')).toEqual([{ field: 'status', status: 'conflict' }]);
+    expect(await awardState(database.em, request.value.id)).toEqual([
+      { acceptedOffers: 1, contracts: 1, status: 'selected' },
+    ]);
+  });
+
+  /**
    * The falsification for the widened buying predicate, run against the exact
    * statement that used to fail.
    *
@@ -630,6 +868,44 @@ function preMigrationBuyingPredicates(): readonly string[] {
   migration.addSql = (sql: string) => statements.push(sql);
   migration.down();
   return statements;
+}
+
+/**
+ * The single-award state of one purchase request, read straight from the three
+ * tables the invariant spans.
+ */
+async function awardState(
+  em: EntityManager,
+  requestId: string,
+): Promise<{ acceptedOffers: number; contracts: number; status: string }[]> {
+  // The caller's transaction context is passed explicitly, because this read
+  // has to run inside it. Reading around it would take a second connection,
+  // which then blocks on the locks the probe itself is holding.
+  return (await em.getConnection().execute(
+    `select request."status",
+            (select count(*)::int from marketplace_request_offers offer
+              where offer."request_id" = request."id" and offer."status" = 'accepted') as "acceptedOffers",
+            (select count(*)::int from marketplace_contracts contract
+              join marketplace_request_offers offer on offer."id"::text = contract."source_id"
+             where offer."request_id" = request."id" and contract."source_type" = 'offer_selection'
+               and contract."status" <> 'cancelled') as "contracts"
+       from marketplace_requests request where request."id" = ?`,
+    [requestId],
+    'all',
+    em.getTransactionContext(),
+  )) as { acceptedOffers: number; contracts: number; status: string }[];
+}
+
+/**
+ * The guards removed by the shipped rollback, so the reproduction below cannot
+ * drift away from the migration it falsifies.
+ */
+function rolledBackOfferSelectionGuards(): string {
+  const migration = new Migration20260812120000GuardMarketplaceOfferSelection(undefined as never, undefined as never);
+  const statements: string[] = [];
+  migration.addSql = (sql: string) => statements.push(sql);
+  migration.down();
+  return statements.join('\n');
 }
 
 async function commercePartyPredicateState(

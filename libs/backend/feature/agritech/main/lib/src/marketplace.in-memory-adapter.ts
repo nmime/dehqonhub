@@ -1,5 +1,6 @@
 import {
   canBuyInMarketplace,
+  canChooseRequestOffer,
   canOfferInMarketplace,
   isRequestTransitionAllowed,
   isVerificationReviewReasonValid,
@@ -866,7 +867,7 @@ class InMemoryMarketplaceRepository implements MarketplaceRepository {
         ) {
           return missing();
         }
-        if (!isRequestTransitionAllowed(request.status, 'selected')) {
+        if (!canChooseRequestOffer(request.status)) {
           return { status: 'conflict', field: 'status' };
         }
         const offer = this.offers.get(offerId);

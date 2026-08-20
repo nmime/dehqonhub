@@ -536,6 +536,10 @@ requirements:
         file: libs/backend/postgres/main/agritech/lib/src/migrations/marketplace-promotion.migration.spec.ts
         target: '@app/backend-postgres-main-agritech:test'
         lanes: [pr, main]
+      - kind: static
+        file: libs/backend/postgres/main/agritech/lib/src/migrations/marketplace-promotion-billing.migration.spec.ts
+        target: '@app/backend-postgres-main-agritech:test'
+        lanes: [pr, main]
       - kind: contract
         file: apps/backend/user/user-app-api/src/marketplace-dashboard-ai.e2e-spec.ts
         target: user-app-api:e2e
@@ -610,6 +614,10 @@ requirements:
         lanes: [pr, main]
       - kind: vitest
         file: libs/backend/feature/agritech/main/lib/src/marketplace-provider.config.spec.ts
+        target: '@app/backend-feature-agritech-main:test'
+        lanes: [pr, main]
+      - kind: vitest
+        file: libs/backend/feature/agritech/main/lib/src/marketplace-promotion.mock-providers.spec.ts
         target: '@app/backend-feature-agritech-main:test'
         lanes: [pr, main]
       - kind: contract
@@ -838,7 +846,7 @@ requirements:
         target: '@app/backend-feature-agritech-main:test'
         lanes: [pr, main]
       - kind: component
-        description: A farmer-verified party reaches a cart, a contract and a published purchase request on either side against the real migrated schema, and restoring the pre-migration buying predicate inside a rolled-back transaction reproduces the 23514 the widened trigger removed.
+        description: A farmer-verified party reaches a cart, a contract and a published purchase request on either side against the real migrated schema; restoring the pre-migration buying predicate inside a rolled-back transaction reproduces the 23514 the widened trigger removed; and one request awards exactly one offer, with each single-award rule refused on its own, two concurrent awards resolving to one winner, and the double award reproduced only once the migration's own rollback removes the guards.
         file: libs/backend/postgres/main/agritech/lib/src/repositories/marketplace-commerce.component-spec.ts
         target: '@app/backend-postgres-main-agritech:component-test'
         lanes: [pr, main]
@@ -864,6 +872,7 @@ requirements:
         target: '@app/backend-postgres-main-agritech:test'
         lanes: [pr, main]
       - kind: static
+        description: The single-award migration repairs the surplus awards by demotion and cancellation before installing its rules, and its persisted request stage machine matches the request transition policy exactly.
         file: libs/backend/postgres/main/agritech/lib/src/migrations/agritech.migration.spec.ts
         target: '@app/backend-postgres-main-agritech:test'
         lanes: [pr, main]

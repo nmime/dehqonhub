@@ -701,7 +701,8 @@ Latin and `uz-cyrl` SHALL be the canonical Uzbek Cyrillic locale.
 ### Requirement: [REQ-AGRITECH-INTEGRATION-013] External connectors fail closed and explicit mock providers remain isolated
 
 Weather, agronomy, export, government, identity, document, signing, payment,
-factoring, notification, and commercial provider adapters SHALL have explicit
+promotion billing, factoring, notification, and commercial provider adapters
+SHALL have explicit
 configuration, bounded timeouts, source identity, idempotent cursor, command, or
 callback semantics, reconciliation status, readiness, and redacted telemetry.
 An absent live contract or credential SHALL disable the connector. Development,
@@ -716,7 +717,7 @@ remain real; production SHALL reject mock mode during startup.
 
 #### Scenario: Mock provider does not grant authority
 
-- **WHEN** a non-production user completes a mock identity, storage, signing, payment, or factoring provider operation
+- **WHEN** a non-production user completes a mock identity, storage, signing, payment, promotion-billing, or factoring provider operation
 - **THEN** the idempotent result persists `mock` provenance and remains subject to the same administrator, party, tenant, and state-machine authorization as a live result
 
 ### Requirement: [REQ-AGRITECH-DEPLOYMENT-014] Selected deployment is operationally prepared
@@ -956,6 +957,18 @@ evidence.
   identifier.
 - A purchase-request creator MUST NOT bid on their own request, and only the
   request owner can select a pending offer.
+- One purchase request MUST award at most one offer and MUST therefore produce at
+  most one live contract. The persisted schema, and not only the command path,
+  MUST make a second award impossible: at most one `accepted` offer per request,
+  at most one live `offer_selection` contract per request, and a request stage
+  that never returns to a choosable stage once it has been decided. A guarantee
+  that lives only in a mutable status column is not one, because any writer that
+  restores an earlier stage — a re-run demo fixture, a repair script, a second
+  API instance — re-arms the request and a second seller is told they won.
+- The request stage machine is one authority. The PostgreSQL repository, the
+  in-memory adapter, and the persisted stage guard MUST derive the permitted
+  transitions from it rather than restate them, so `offering -> selected` is the
+  only path to an award and no implementation disagrees about who may still win.
 - Contract creation freezes the reviewable commercial terms owned here. Artifact
   generation, qualified party signing, signature-triggered activation and
   inventory commit, settlement, fulfillment, dispute, commission, and review
@@ -992,6 +1005,12 @@ evidence.
 - Concurrent cart or offer conflicts reload authoritative state and do not
   duplicate or partially create the transaction. Post-freeze concurrency and
   inventory effects are governed by REQ-AGRITECH-LIFECYCLE-020.
+- Awarding an offer on a request that is already decided returns RFC 9457 409
+  naming the refused field, so the caller learns the request has a winner rather
+  than reading an unexplained conflict. Two concurrent awards resolve with
+  exactly one winner and one such conflict; a persisted single-award rule that
+  refuses the loser is reported as that same conflict and never as an
+  unexpected server error.
 
 #### Scenario: Canonical deep links and public discovery
 
@@ -1230,6 +1249,15 @@ and `@app/backend-postgres-main-agritech`.
   and fallback are governed exclusively by REQ-AGRITECH-NOTIFICATION-022.
 - Promotions have bounded plans/periods and visible `Ad` disclosure and affect
   catalog/shelf ordering only.
+- A promotion is a paid placement, so it is reserved before it is granted. The
+  activation command requires an enabled `promotion_billing` capability, records
+  exactly one charge per promotion in the provider-operation ledger with its own
+  idempotency key, fingerprint, mode, and safe receipt, and only then lets the
+  reserved slot serve. A reservation is invisible to the catalog and to the
+  seller's promotion reads until that charge succeeds, and the database refuses
+  the transition without it. Mock mode records a simulated charge that discloses
+  `simulated` and `moneyMoved: false`; no receipt of any mode is presented as a
+  payment confirmation, and production rejects mock during startup.
 - Supplier, farmer, and buyer dashboards derive authorized metrics from real
   current records; fixtures and source presence are not activity.
 - Notification intents are persisted transactionally with their triggering
@@ -1250,6 +1278,14 @@ and `@app/backend-postgres-main-agritech`.
   moderation, promotion ownership/period conflicts, fabricated dashboard scope,
   or stale/changed AI-cart input returns a localized typed error and leaves the
   previous authoritative state intact.
+- A disabled promotion billing capability refuses the activation with the
+  localized RFC 9457 `marketplace-provider-unavailable` 503 and reserves
+  nothing. A failed or timed-out charge records the failed operation, leaves the
+  reservation unserved, and refuses the command; the same command key retries the
+  charge and an exact replay of a settled command returns the original promotion.
+  A second command key cannot buy a second charge for one promotion, and a
+  concurrent double activation of one listing resolves as exactly one charge. The
+  client never offers a paid promotion action while the capability is unavailable.
 - Provider-mode failures and all delegated public, engagement, lifecycle,
   notification, client, locale, and assurance failures retain the fail-closed
   behavior of their owning requirements; this umbrella requirement adds no
@@ -1263,7 +1299,12 @@ and `@app/backend-postgres-main-agritech`.
 #### Scenario: Promotion is catalog-only
 
 - **WHEN** an approved seller activates a promoted listing
-- **THEN** the product receives a localized `Ad` label and catalog placement while matching, offers, and AI ignore promotion weight
+- **THEN** exactly one `promotion_billing` charge is recorded for the plan price, the product receives a localized `Ad` label and catalog placement, and matching, offers, and AI ignore promotion weight
+
+#### Scenario: Unbillable promotion refuses itself
+
+- **WHEN** the promotion billing capability is disabled or its charge fails
+- **THEN** the activation returns a localized 503 explaining the unavailable capability, no slot is promoted, and no receipt claims that money moved
 
 #### Scenario: Confirmed AI starter cart is exactly once
 

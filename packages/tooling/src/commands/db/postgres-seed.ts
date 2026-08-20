@@ -547,6 +547,15 @@ async function seed(
       //
       // A reverse auction a reviewer can read on arrival, instead of an empty feed
       // that only fills after they create something themselves.
+      //
+      // The fixture stage is an opening position, not an assertion about a
+      // request that has since been used. Writing `excluded."status"`
+      // unconditionally walked a `selected` request back to `offering` on every
+      // re-seed, which re-armed a decided request for a second award and is how
+      // one grapes request came to hold four accepted offers and four contracts.
+      // Only a request still sitting at `open` is moved by the fixture now;
+      // `tr__marketplace_requests__stage_authority` refuses the walk-back
+      // outright, so attempting it here would also fail the whole seed.
       const partnerIdsByKey = new Map(
         demoMarketplacePartners.map((partner) => [partner.legalName, partner.id] as const),
       );
@@ -567,7 +576,11 @@ async function seed(
              "product" = excluded."product", "volume" = excluded."volume",
              "region" = excluded."region", "deadline" = excluded."deadline",
              "budget_uzs" = excluded."budget_uzs", "requirements" = excluded."requirements",
-             "status" = excluded."status", "updated_at" = now()
+             "status" = case
+               when "marketplace_requests"."status" = 'open' then excluded."status"
+               else "marketplace_requests"."status"
+             end,
+             "updated_at" = now()
            RETURNING ("xmax" = 0) AS "inserted"`,
           [
             request.id,

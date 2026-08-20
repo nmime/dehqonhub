@@ -568,6 +568,18 @@ describe('Marketplace user management', () => {
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.promotion.activate' }));
     expect(onActivatePromotion).toHaveBeenCalledWith(localizedListing.id, 'catalog_14d');
 
+    // A paid action the server cannot charge is explained and never offered.
+    onActivatePromotion.mockClear();
+    view.rerender(<MarketplaceUserManagement {...readyProps} locale="ru" promotionBillingReady={false} />);
+    expect(screen.getByText('agritech.marketplace.promotion.billingUnavailable')).toBeTruthy();
+    const unbillableActivate = screen.getByRole('button', { name: 'agritech.marketplace.promotion.activate' });
+    expect(unbillableActivate.hasAttribute('disabled')).toBe(true);
+    expect(unbillableActivate.getAttribute('aria-describedby')).toBe('marketplace-promotion-billing');
+    fireEvent.submit(document.querySelector('form.dh-inline-form') as HTMLFormElement);
+    expect(onActivatePromotion).not.toHaveBeenCalled();
+    view.rerender(<MarketplaceUserManagement {...readyProps} locale="ru" />);
+    expect(screen.queryByText('agritech.marketplace.promotion.billingUnavailable')).toBeNull();
+
     for (const action of ['ship', 'cancel', 'receive'] as const) {
       fireEvent.click(screen.getByRole('button', { name: `agritech.marketplace.samples.action.${action}` }));
     }

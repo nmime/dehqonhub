@@ -26,11 +26,28 @@ const config = resolveMarketplaceProviderConfig({});
  * one is constructed here and asked to forward a call.
  */
 describe('Nest-injected marketplace services', () => {
-  it('hands the promotion repository straight to the domain service', async () => {
-    const repository = { activatePromotion: vi.fn(), findPromotion: vi.fn(), listPromotions: vi.fn() };
-    const service = new MarketplacePromotionService(repository as never);
+  it('hands the promotion repository, charge ledger, and billing timeout to the domain service', async () => {
+    const repository = {
+      findPromotion: vi.fn(),
+      listPromotions: vi.fn(),
+      reservePromotion: vi.fn(),
+      settlePromotion: vi.fn(),
+    };
+    const providerOperations = {
+      completeProviderOperation: vi.fn(),
+      failProviderOperation: vi.fn(),
+      prepareProviderOperation: vi.fn(),
+    };
+    const billing = { billListingPromotion: vi.fn(), mode: 'disabled', name: 'disabled' };
+    const service = new MarketplacePromotionService(
+      repository as never,
+      providerOperations as never,
+      billing as never,
+      { ...config, promotionBilling: { mode: 'disabled', providerName: null, timeoutMs: 4_321 } },
+    );
 
     expect(service).toBeInstanceOf(MarketplacePromotionDomainService);
+    expect(service).toMatchObject({ billingTimeoutMs: 4_321, billing, providerOperations, repository });
     await service.listPromotions(owner);
     expect(repository.listPromotions).toHaveBeenCalledWith(owner);
   });

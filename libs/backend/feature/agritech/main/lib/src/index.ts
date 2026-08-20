@@ -13,6 +13,7 @@ export * from './marketplace-public-profile.domain-service';
 export * from './marketplace-public-profile.service';
 export * from './marketplace-publication.controller';
 export * from './marketplace-promotion.controller';
+export * from './marketplace-promotion.mock-providers';
 export * from './marketplace-promotion.domain-service';
 export * from './marketplace-promotion.service';
 export * from './marketplace.service';

@@ -7,6 +7,7 @@ import {
   MarketplaceDisputeEvidenceStorageProviderInjectToken,
   MarketplaceFactoringProviderInjectToken,
   MarketplaceIdentityProviderInjectToken,
+  MarketplacePromotionBillingProviderInjectToken,
   MarketplaceQualifiedSignatureProviderInjectToken,
 } from '@app/backend-feature-agritech-shared';
 import { AgriTechOperationsController } from './agritech.controller';
@@ -46,6 +47,7 @@ import {
   createFactoringProvider,
   createQualifiedSignatureProvider,
 } from './marketplace-contract.mock-providers';
+import { createPromotionBillingProvider } from './marketplace-promotion.mock-providers';
 
 const marketplaceProviderConfig = {
   provide: MarketplaceProviderConfigInjectToken,
@@ -88,6 +90,12 @@ const marketplaceDisputeEvidenceStorageProvider = {
   useFactory: (config: MarketplaceProviderConfig) => createDisputeEvidenceStorageProvider(config),
 };
 
+const marketplacePromotionBillingProvider = {
+  provide: MarketplacePromotionBillingProviderInjectToken,
+  inject: [MarketplaceProviderConfigInjectToken],
+  useFactory: (config: MarketplaceProviderConfig) => createPromotionBillingProvider(config),
+};
+
 const marketplaceFactoringProvider = {
   provide: MarketplaceFactoringProviderInjectToken,
   inject: [MarketplaceProviderConfigInjectToken],
@@ -115,6 +123,7 @@ const marketplaceFactoringProvider = {
     marketplaceDirectPaymentProvider,
     marketplaceDisputeEvidenceStorageProvider,
     marketplaceFactoringProvider,
+    marketplacePromotionBillingProvider,
   ],
   exports: [
     AgriTechOperationsService,

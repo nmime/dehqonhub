@@ -148,6 +148,7 @@ Feature: AgriTech marketplace operations protect every actor
       Given an approved seller owns two moderated catalog listings
       When the seller activates a bounded promotion and retries the same command
       Then one promotion persists with the selected server plan and the promoted listing ranks first with an Ad disclosure
+      And exactly one simulated charge is recorded, no slot serves unpaid, and an unavailable billing capability refuses the paid action
 
     @SCN-AGRITECH-STAGE2-03
     Scenario: Confirmed AI starter cart is exactly once
