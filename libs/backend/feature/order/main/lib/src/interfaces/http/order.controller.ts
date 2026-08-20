@@ -1,5 +1,5 @@
 // REQ-AGRITECH-ORDER-003 REQ-AGRITECH-ROUTING-015: all order routes derive ownership from the authenticated principal.
-import { Body, Controller, Get, HttpCode, HttpStatus, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/backend-common-swagger';
 import { createOkResponse } from '@app/backend-common-response';
@@ -36,9 +36,13 @@ export class OrderController {
     return createOkResponse({ items: await this.listOrders.execute(ownerFrom(principal)) });
   }
 
+  // The id reaches a `uuid` column directly, so an unparsed value made Postgres
+  // raise `invalid input syntax for type uuid` and the route answered 500 instead
+  // of the 400 this controller already declares. Every other order-flow route
+  // parses its uuid params the same way.
   @Get(':id')
   @ApiOkDataResponse(OrderViewDto)
-  async get(@CurrentUser() principal: AuthenticatedPrincipal, @Param('id') id: string) {
+  async get(@CurrentUser() principal: AuthenticatedPrincipal, @Param('id', ParseUUIDPipe) id: string) {
     return createOkResponse(await this.getOrder.execute(ownerFrom(principal), id));
   }
 }
