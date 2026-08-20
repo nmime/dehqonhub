@@ -4,10 +4,12 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 const mocks = vi.hoisted(() => {
   const end = vi.fn(() => Promise.resolve());
+  const on = vi.fn();
   const query = vi.fn<(...args: unknown[]) => Promise<{ rows: unknown[] }>>(() => Promise.resolve({ rows: [] }));
-  const pool = { end, query };
+  const pool = { end, on, query };
   return {
     end,
+    on,
     pool,
     query,
     Pool: vi.fn(function PoolMock() {
@@ -36,6 +38,21 @@ describe('PostgresSessionStore', () => {
   afterEach(() => {
     vi.clearAllMocks();
     vi.useRealTimers();
+  });
+
+  it('survives an idle client whose connection dies', async () => {
+    // Without this listener pg lets the error reach the process as an uncaught
+    // exception, and stopping the database exited the service outright.
+    const store = new PostgresSessionStore('postgres://localhost/app', 60, 0);
+
+    const registration = mocks.on.mock.calls.find(([event]) => event === 'error');
+    expect(registration).toBeDefined();
+    expect(() => {
+      (registration?.[1] as (error: Error) => void)(new Error('terminating connection due to administrator command'));
+    }).not.toThrow();
+    // The pool opens a fresh client on the next request, so the store keeps
+    // serving rather than needing to be rebuilt.
+    await expect(getSession(store, 'sid-after-pool-error')).resolves.toMatchObject({ session: null });
   });
 
   it('initializes, persists, reads, and destroys sessions through PostgreSQL', async () => {
