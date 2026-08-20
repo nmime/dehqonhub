@@ -1,4 +1,4 @@
-// @requirements REQ-AGRITECH-PUBLIC-018 REQ-AGRITECH-ENGAGEMENT-019
+// @requirements REQ-AGRITECH-EXPERIENCE-026
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MarketplacePublicProfileDto } from '@app/frontend-api-client';
