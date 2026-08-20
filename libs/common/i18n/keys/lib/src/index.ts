@@ -1578,6 +1578,8 @@ export type TranslationKey =
   | 'agritech.marketplace.contract.artifactRefreshed'
   | 'agritech.marketplace.contract.artifactSize'
   | 'agritech.marketplace.contract.artifactUnavailable'
+  | 'agritech.marketplace.contract.settlement.notStarted'
+  | 'agritech.marketplace.contract.settlement.notStartedDescription'
   | 'agritech.marketplace.contract.artifactVersion'
   | 'agritech.marketplace.contract.dispute'
   | 'agritech.marketplace.contract.disputeEvidence'

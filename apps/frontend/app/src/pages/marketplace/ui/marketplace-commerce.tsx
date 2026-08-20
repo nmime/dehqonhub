@@ -2395,7 +2395,19 @@ function ContractLifecyclePanel({
     return <MarketplaceSkeleton count={1} />;
   }
   if (lifecycle.status === 'empty') {
-    return <p className="dh-muted">{t('agritech.marketplace.contract.artifactUnavailable')}</p>;
+    /*
+     * A deal nobody has signed yet has no settlement to show, and that is not a
+     * fault: the panel used to print the artifact's "unavailable" line here, and
+     * before the API separated the two cases it printed a failure with a retry
+     * button that could never succeed. It now says what is true and what unlocks
+     * it.
+     */
+    return (
+      <>
+        <h2>{t('agritech.marketplace.contract.settlement.notStarted')}</h2>
+        <p>{t('agritech.marketplace.contract.settlement.notStartedDescription')}</p>
+      </>
+    );
   }
   if (lifecycle.status === 'error' || !current) {
     return (

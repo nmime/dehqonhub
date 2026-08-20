@@ -11,6 +11,8 @@
   "agritech.marketplace.contract.simulationDisclosure": "Симуляция — внешнее действие провайдера не выполнялось",
   "agritech.marketplace.contract.simulationWatermark": "На созданный документ нанесён водяной знак симуляции.",
   "agritech.marketplace.contract.artifactUnavailable": "Сформированный файл договора пока недоступен.",
+  "agritech.marketplace.contract.settlement.notStarted": "Оплата ещё не началась",
+  "agritech.marketplace.contract.settlement.notStartedDescription": "Расчёты откроются, когда договор подпишут обе стороны.",
   "agritech.marketplace.contract.refreshArtifact": "Обновить сведения о файле",
   "agritech.marketplace.contract.artifactRefreshed": "Сведения о файле обновлены",
   "agritech.marketplace.contract.downloadArtifact": "Скачать PDF",

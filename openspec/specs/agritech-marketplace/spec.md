@@ -1629,6 +1629,10 @@ operations evidence.
   dispute evidence returns a safe localized 400, 403, 404, or 409 and commits no
   partial lifecycle, inventory, commission, eligibility, reputation, event, or
   notification state.
+- Reading a lifecycle a contract has not created yet reports an absent
+  sub-resource rather than a rejected request, so a client distinguishes a deal
+  still awaiting signature from a malformed or unauthorized call and renders the
+  explanatory waiting state instead of a failure with an impossible retry.
 - Provider disabled/live-unwired configuration fails before invocation. Mock
   configuration in production fails startup and deployment validation.
 - Timeout or unknown provider outcome is durably reconciliation-required;

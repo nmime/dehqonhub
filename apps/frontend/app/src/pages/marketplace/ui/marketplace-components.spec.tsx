@@ -2765,7 +2765,9 @@ describe('DehqonHub marketplace components', () => {
         t={t}
       />,
     );
-    expect(screen.getByText('agritech.marketplace.contract.artifactUnavailable')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.contract.settlement.notStarted')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.contract.settlement.notStartedDescription')).toBeTruthy();
+    expect(screen.queryByText('agritech.marketplace.error')).toBeNull();
     contractStates.unmount();
   });
 
