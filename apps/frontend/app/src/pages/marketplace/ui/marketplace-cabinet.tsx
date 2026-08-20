@@ -4,17 +4,21 @@ import type {
   ContractViewDto,
   MarketplaceOwnedListingPublicationDto,
   MarketplaceOwnedRequestPublicationDto,
+  MarketplaceOwnReviewDto,
+  MarketplaceOwnReviewsDto,
   MarketplaceRoleDashboardDto,
   MarketplaceSampleDto,
   OfferViewDto,
   VerificationViewDto,
 } from '@app/frontend-api-client';
 import type { Locale } from '@app/frontend-runtime';
+import { useMarketplaceCabinetReviews } from '../model/use-cabinet-reviews';
 import type { Resource } from '../model/use-marketplace-data';
 import { MarketplaceSkeleton } from './marketplace-discovery';
 import { MarketplaceIcon } from './marketplace-icon';
 import { MarketplaceBusyButton } from './marketplace-loading';
 import { MarketplaceCabinetChart, type MarketplaceCabinetChartSeries } from './marketplace-cabinet-chart';
+import { MarketplaceCabinetReviewInvitations, MarketplaceCabinetReviewList } from './marketplace-cabinet-reviews';
 import {
   formatDate,
   formatMoney,
@@ -44,7 +48,13 @@ import {
  * derived, padded or defaulted — a resource that failed says so and offers a
  * retry instead of showing a zero.
  *
- * All six sections stay listed for every role. A seller who has never bought
+ * The reviews section reads `/marketplace/reviews/mine` itself rather than
+ * taking a prop, because it is the one section whose data only one screen wants
+ * and which has to be re-read after a published reply rather than at the next
+ * shell refresh. It accepts an injected resource so a test can render either
+ * direction without a request.
+ *
+ * All seven sections stay listed for every role. A seller who has never bought
  * still owns the buying capability, and hiding a section until the dashboard
  * resolves would make its deep link work only after a round trip.
  */
@@ -53,6 +63,7 @@ export const marketplaceCabinetSections = [
   'overview',
   'buying',
   'selling',
+  'reviews',
   'finance',
   'publications',
   'account',
@@ -62,13 +73,14 @@ export type MarketplaceCabinetSection = (typeof marketplaceCabinetSections)[numb
 
 const cabinetSectionIcons: Record<
   MarketplaceCabinetSection,
-  'account' | 'cart' | 'contract' | 'orders' | 'produce' | 'shield'
+  'account' | 'cart' | 'contract' | 'orders' | 'produce' | 'shield' | 'star'
 > = {
   account: 'shield',
   buying: 'cart',
   finance: 'contract',
   overview: 'account',
   publications: 'produce',
+  reviews: 'star',
   selling: 'orders',
 };
 
@@ -102,6 +114,14 @@ export interface MarketplaceCabinetProps {
   readonly onSignOut?: () => void;
   readonly publicRequests: Resource<MarketplaceRequestFeedItem[]>;
   readonly requestPublications: Resource<MarketplaceOwnedRequestPublicationDto[]>;
+  /**
+   * The caller's own review record. Left out in the app, where the section reads
+   * it; supplied by tests so both directions render without a request.
+   */
+  readonly reviews?: Resource<MarketplaceOwnReviewsDto | null>;
+  /** Replaces the section's own reply command when `reviews` is injected. */
+  readonly onReplyToReview?: (entry: MarketplaceOwnReviewDto, comment: string) => Promise<boolean>;
+  readonly reviewsPendingAction?: string;
   readonly samples: Resource<MarketplaceSampleDto[]>;
   readonly section: MarketplaceCabinetSection;
   readonly signOutPending?: boolean;
@@ -699,6 +719,151 @@ function FinanceSection({
   );
 }
 
+interface ReviewsPanelProps {
+  readonly locale: Locale;
+  readonly navigate: MarketplaceNavigate;
+  readonly onReply: (entry: MarketplaceOwnReviewDto, comment: string) => Promise<boolean>;
+  readonly onRetry: () => void;
+  readonly replyPending?: string;
+  readonly resource: Resource<MarketplaceOwnReviewsDto | null>;
+  readonly t: MarketplaceTranslate;
+}
+
+/**
+ * The account's own review record, in both directions.
+ *
+ * `written` and `received` are two groups, never one merged feed: what this
+ * account said about its sellers and what its buyers said about it mean opposite
+ * things for reputation, and a single list ordered by date would put them beside
+ * one another with nothing but a per-row label between them.
+ *
+ * Each group states its own absence, because "you have not reviewed anything
+ * yet" and "nobody has reviewed you yet" are different facts about the same
+ * account and only one of them is ever actionable. A failed read still replaces
+ * both groups with a failure and a retry, so an unavailable record can never
+ * read as an account with no reviews.
+ */
+function ReviewsPanel({ locale, navigate, onReply, onRetry, replyPending, resource, t }: Readonly<ReviewsPanelProps>) {
+  // Hoisted out of the JSX: the busy key is only passed when there is one, and an
+  // `exactOptionalPropertyTypes` build cannot express that as `replyPending={x}`.
+  const busy = replyPending === undefined ? {} : { replyPending };
+  return (
+    <CabinetPanel
+      description={t('agritech.marketplace.cabinet.reviews.description')}
+      eyebrow={t('agritech.marketplace.product.reviewsTab')}
+      title={t('agritech.marketplace.cabinet.section.reviews')}
+    >
+      {/* No panel-level empty state: an account with nothing on either side still
+          has to be told which side is empty, and one "no reviews at all" line
+          would answer neither question. Only a failed read replaces the groups. */}
+      <CabinetResource
+        emptyMessage={t('agritech.marketplace.reviews.mine.unavailable')}
+        errorMessage={t('agritech.marketplace.reviews.mine.unavailable')}
+        onRetry={onRetry}
+        resource={resource}
+        t={t}
+      >
+        {(record) =>
+          record === null ? null : (
+            <>
+              <MarketplaceCabinetReviewInvitations
+                invitations={record.awaitingReview}
+                locale={locale}
+                navigate={navigate}
+                t={t}
+              />
+              <CabinetGroup title={t('agritech.marketplace.reviews.mine.written')}>
+                <MarketplaceCabinetReviewList
+                  direction="written"
+                  entries={record.written}
+                  locale={locale}
+                  navigate={navigate}
+                  t={t}
+                />
+              </CabinetGroup>
+              <CabinetGroup title={t('agritech.marketplace.reviews.mine.received')}>
+                <MarketplaceCabinetReviewList
+                  direction="received"
+                  entries={record.received}
+                  locale={locale}
+                  navigate={navigate}
+                  onReply={onReply}
+                  {...busy}
+                  t={t}
+                />
+              </CabinetGroup>
+            </>
+          )
+        }
+      </CabinetResource>
+    </CabinetPanel>
+  );
+}
+
+/**
+ * The same panel over its own read of `/marketplace/reviews/mine`, plus the
+ * reply command.
+ *
+ * The read and the reply live in this wrapper rather than in `ReviewsPanel` so
+ * the panel stays a function of its props: a caller that already holds the
+ * record renders `ReviewsPanel` and issues no request and needs no API client in
+ * context, which is what makes both directions and both empty states testable
+ * without a network stub.
+ */
+function ConnectedReviewsSection({
+  locale,
+  navigate,
+  t,
+}: Readonly<Pick<MarketplaceCabinetProps, 'locale' | 'navigate' | 't'>>) {
+  const own = useMarketplaceCabinetReviews(true);
+  return (
+    <ReviewsPanel
+      locale={locale}
+      navigate={navigate}
+      onReply={(entry, comment) => own.replyToReview(entry.review, comment)}
+      onRetry={own.reload}
+      {...(own.replyPending === undefined ? {} : { replyPending: own.replyPending })}
+      resource={own.resource}
+      t={t}
+    />
+  );
+}
+
+/**
+ * Which of the two the cabinet renders. The choice is made by the caller's props
+ * and never changes for a given caller, so the connected form owns the hook and
+ * the plain form has none at all.
+ */
+function ReviewsSection({
+  locale,
+  navigate,
+  onReplyToReview,
+  onRetry,
+  reviews,
+  reviewsPendingAction,
+  t,
+}: Readonly<
+  Pick<
+    MarketplaceCabinetProps,
+    'locale' | 'navigate' | 'onReplyToReview' | 'onRetry' | 'reviews' | 'reviewsPendingAction' | 't'
+  >
+>) {
+  if (reviews === undefined) {
+    return <ConnectedReviewsSection locale={locale} navigate={navigate} t={t} />;
+  }
+  return (
+    <ReviewsPanel
+      locale={locale}
+      navigate={navigate}
+      onReply={onReplyToReview ?? (() => Promise.resolve(false))}
+      onRetry={onRetry}
+      {...(reviewsPendingAction === undefined ? {} : { replyPending: reviewsPendingAction })}
+      resource={reviews}
+      t={t}
+    />
+  );
+}
+
 function PublicationsSection({
   listingPublications,
   locale,
@@ -922,6 +1087,9 @@ export function MarketplaceCabinet(props: Readonly<MarketplaceCabinetProps>) {
       break;
     case 'finance':
       panel = <FinanceSection {...props} />;
+      break;
+    case 'reviews':
+      panel = <ReviewsSection {...props} />;
       break;
     case 'publications':
       panel = <PublicationsSection {...props} />;

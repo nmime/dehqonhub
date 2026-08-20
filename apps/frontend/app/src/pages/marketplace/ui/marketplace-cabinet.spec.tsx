@@ -1,10 +1,12 @@
-// @requirements REQ-AGRITECH-EXPERIENCE-026
+// @requirements REQ-AGRITECH-EXPERIENCE-026 REQ-AGRITECH-ENGAGEMENT-019
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type {
   BuyerRequestViewDto,
   ContractViewDto,
   MarketplaceOwnedListingPublicationDto,
+  MarketplaceOwnReviewDto,
+  MarketplaceOwnReviewsDto,
   MarketplaceRoleDashboardDto,
   MarketplaceSampleDto,
   VerificationViewDto,
@@ -155,6 +157,75 @@ const sample: MarketplaceSampleDto = {
   updatedAt: '2026-08-09T10:00:00.000Z',
 };
 
+const reviewListing = (id: string, title: string, seller: string): MarketplaceOwnReviewDto['listing'] => ({
+  id,
+  kind: 'product',
+  sampleAvailable: false,
+  seller: { displayName: seller, id: `seller-${id}` },
+  title,
+});
+
+const ownReview = (
+  id: string,
+  rating: number,
+  comment: string,
+  listing: MarketplaceOwnReviewDto['listing'],
+  reply?: string,
+): MarketplaceOwnReviewDto => ({
+  listing,
+  review: {
+    assetReferences: [],
+    comment,
+    createdAt: '2026-08-14T10:00:00.000Z',
+    id,
+    listingPublicationId: listing.id,
+    rating,
+    ...(reply
+      ? {
+          reply: {
+            comment: reply,
+            createdAt: '2026-08-16T10:00:00.000Z',
+            id: `reply-${id}`,
+            revision: 0,
+            updatedAt: '2026-08-16T10:00:00.000Z',
+          },
+        }
+      : {}),
+    revision: 0,
+    updatedAt: '2026-08-14T10:00:00.000Z',
+    verifiedDeal: true,
+  },
+});
+
+const writtenReview = ownReview(
+  'review-written',
+  4,
+  'Granules were even, no caked bags.',
+  reviewListing('listing-urea', 'Urea 46% N', 'Agro Kimyo Servis'),
+);
+
+const receivedReview = ownReview(
+  'review-received',
+  3,
+  'Two sprayers out of twelve leaked.',
+  reviewListing('listing-sprayer', 'Knapsack sprayer 16 L', "Farg'ona Agrotexnika"),
+);
+
+const repliedReview = ownReview(
+  'review-replied',
+  5,
+  'Assembled carefully, bearings fine.',
+  reviewListing('listing-seeder', 'Precision seeder', "Farg'ona Agrotexnika"),
+  'Thank you, the next batch ships sealed.',
+);
+
+const reviewRecord = (overrides: Partial<MarketplaceOwnReviewsDto> = {}): MarketplaceOwnReviewsDto => ({
+  awaitingReview: [],
+  received: [],
+  written: [],
+  ...overrides,
+});
+
 const verified: VerificationViewDto = {
   createdAt: '2026-08-01T10:00:00.000Z',
   documents: [],
@@ -185,6 +256,7 @@ const cabinet = (
   onRetry: vi.fn(),
   publicRequests: emptyList<never>(),
   requestPublications: emptyList<never>(),
+  reviews: { data: reviewRecord(), status: 'ready' },
   samples: emptyList<MarketplaceSampleDto>(),
   section,
   t,
@@ -203,8 +275,11 @@ describe('DehqonHub marketplace cabinet', () => {
     expect(marketplaceCabinetSectionFromLocation('/account/finance')).toBe('finance');
     expect(marketplaceCabinetSectionFromLocation('/account/finance/')).toBe('finance');
     expect(marketplaceCabinetSectionFromLocation('/account/publications')).toBe('publications');
+    expect(marketplaceCabinetSectionFromLocation('/account/reviews')).toBe('reviews');
+    expect(marketplaceCabinetSectionFromLocation('/account/reviews/')).toBe('reviews');
     // A stale or mistyped segment must land somewhere real, not on an empty frame.
     expect(marketplaceCabinetSectionFromLocation('/account/statistics')).toBe('overview');
+    expect(marketplaceCabinetSectionFromLocation('/account/review')).toBe('overview');
     expect(marketplaceCabinetSectionFromLocation('/requests')).toBe('overview');
     expect(marketplaceCabinetPath('overview')).toBe('/account');
     for (const section of marketplaceCabinetSections.filter((candidate) => candidate !== 'overview')) {
@@ -404,6 +479,136 @@ describe('DehqonHub marketplace cabinet', () => {
     expect(screen.getAllByText('agritech.marketplace.verify.notStarted').length).toBeGreaterThan(0);
     expect(screen.queryByText('agritech.marketplace.verify.none')).toBeNull();
     expect(screen.getByText('agritech.marketplace.verify.title')).toBeTruthy();
+  });
+
+  it('keeps the reviews I wrote apart from the reviews my listings received', () => {
+    const navigate = vi.fn();
+    render(
+      <MarketplaceCabinet
+        {...cabinet('reviews', {
+          navigate,
+          reviews: {
+            data: reviewRecord({ received: [receivedReview, repliedReview], written: [writtenReview] }),
+            status: 'ready',
+          },
+        })}
+      />,
+    );
+
+    const written = screen.getByRole('heading', { name: 'agritech.marketplace.reviews.mine.written' })
+      .parentElement as HTMLElement;
+    const received = screen.getByRole('heading', { name: 'agritech.marketplace.reviews.mine.received' })
+      .parentElement as HTMLElement;
+
+    // The review I wrote names the seller it is about and appears only on that side.
+    expect(within(written).getByText('Urea 46% N')).toBeTruthy();
+    expect(within(written).getByText('Granules were even, no caked bags.')).toBeTruthy();
+    expect(within(written).getByText('agritech.marketplace.reviews.mine.aboutSeller:Agro Kimyo Servis')).toBeTruthy();
+    expect(within(written).queryByText('Knapsack sprayer 16 L')).toBeNull();
+
+    // The reviews my listings received appear only on the other side.
+    expect(within(received).getByText('Knapsack sprayer 16 L')).toBeTruthy();
+    expect(within(received).getAllByText('agritech.marketplace.reviews.mine.onMyListing')).toHaveLength(2);
+    expect(within(received).queryByText('Urea 46% N')).toBeNull();
+
+    // The rating is a value in text, not a count of glyphs, and it is also spelled
+    // out for assistive technology.
+    expect(within(written).getByText('4/5')).toBeTruthy();
+    expect(within(received).getByText('3/5')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.reviews.ratingValue:4,5')).toBeTruthy();
+
+    // A persisted seller reply is surfaced read-only, and the review that carries
+    // one offers no second entry because the schema keeps exactly one.
+    expect(within(received).getByText('Thank you, the next batch ships sealed.')).toBeTruthy();
+    expect(within(received).getAllByText('agritech.marketplace.reviews.sellerReply')).toHaveLength(1);
+    expect(within(received).getAllByRole('button', { name: 'agritech.marketplace.reviews.reply' })).toHaveLength(1);
+
+    // Neither side offers a reply on a review I wrote: the endpoint only accepts
+    // the reviewed seller organization.
+    expect(within(written).queryByRole('button', { name: 'agritech.marketplace.reviews.reply' })).toBeNull();
+
+    fireEvent.click(within(written).getByRole('button', { name: 'Urea 46% N' }));
+    expect(navigate).toHaveBeenCalledWith('/products/listing-urea');
+  });
+
+  it('says nothing written and nothing received as two different facts', () => {
+    const blank = render(<MarketplaceCabinet {...cabinet('reviews')} />);
+
+    // Both lines are present at once: an account with neither has to be told
+    // which side is which, and one merged "no reviews" would answer neither.
+    expect(screen.getByText('agritech.marketplace.reviews.mine.writtenEmpty')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.reviews.mine.receivedEmpty')).toBeTruthy();
+    // No eligibility, so no invitation to rate anything.
+    expect(screen.queryByText(/agritech.marketplace.reviews.mine.awaiting/u)).toBeNull();
+    blank.unmount();
+
+    render(
+      <MarketplaceCabinet
+        {...cabinet('reviews', {
+          reviews: { data: reviewRecord({ written: [writtenReview] }), status: 'ready' },
+        })}
+      />,
+    );
+    // A buyer who has written one review is told only that nobody has rated them.
+    expect(screen.getAllByText('agritech.marketplace.reviews.mine.receivedEmpty')).toHaveLength(1);
+    expect(screen.queryByText('agritech.marketplace.reviews.mine.writtenEmpty')).toBeNull();
+  });
+
+  it('offers a rating only for a purchase the server says is still eligible', () => {
+    const navigate = vi.fn();
+    render(
+      <MarketplaceCabinet
+        {...cabinet('reviews', {
+          navigate,
+          reviews: {
+            data: reviewRecord({
+              awaitingReview: [{ completedAt: '2026-08-10T10:00:00.000Z', listing: writtenReview.listing }],
+            }),
+            status: 'ready',
+          },
+        })}
+      />,
+    );
+
+    // One purchase reads as one purchase, from its own catalogue entry.
+    expect(screen.getByText('agritech.marketplace.reviews.mine.awaitingOne')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Urea 46% N/u }));
+    // Rating is written on the listing, where the star input and the comment
+    // limit already live; the cabinet never grows a second authoring form.
+    expect(navigate).toHaveBeenCalledWith('/products/listing-urea');
+  });
+
+  it('publishes a seller reply through the review it answers and reports it busy', () => {
+    const onReplyToReview = vi.fn().mockResolvedValue(true);
+    render(
+      <MarketplaceCabinet
+        {...cabinet('reviews', {
+          onReplyToReview,
+          reviews: { data: reviewRecord({ received: [receivedReview] }), status: 'ready' },
+          reviewsPendingAction: 'review-reply:review-received',
+        })}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.reply' }));
+    const field = screen.getByRole('textbox');
+    fireEvent.change(field, { target: { value: '  Replaced under warranty.  ' } });
+    // The busy control comes from the loading kit, so the command in flight is
+    // announced rather than only disabled, and its accessible name does not move.
+    const submit = screen.getByRole('button', { name: 'agritech.marketplace.reviews.replySubmit' });
+    expect(submit.getAttribute('aria-busy')).toBe('true');
+    expect(screen.getByRole('status').textContent).toBe('agritech.marketplace.loading');
+    fireEvent.submit(field.closest('form') as HTMLFormElement);
+    expect(onReplyToReview).toHaveBeenCalledWith(receivedReview, 'Replaced under warranty.');
+  });
+
+  it('reports an unavailable review record as a failure instead of an account with no reviews', () => {
+    render(<MarketplaceCabinet {...cabinet('reviews', { reviews: { data: null, status: 'error' } })} />);
+
+    expect(screen.getByText('agritech.marketplace.reviews.mine.unavailable')).toBeTruthy();
+    expect(screen.queryByText('agritech.marketplace.reviews.mine.writtenEmpty')).toBeNull();
+    expect(screen.queryByText('agritech.marketplace.reviews.mine.receivedEmpty')).toBeNull();
+    expect(screen.getByRole('button', { name: 'ui.runtime.retry' })).toBeTruthy();
   });
 
   it('reports the dashboard read as unavailable rather than showing a zero', () => {
