@@ -488,6 +488,28 @@
   white-space: nowrap;
 }
 
+/* An action whose name is longer than the caption budget prints the short form
+   here and the complete one from 64rem up, where the row has the width for it.
+   Exactly one of the pair is in the box at any width, so the button is never
+   named twice and the name is never cut mid-word. */
+.dh-header__nav-label--full {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .dh-header__nav > button.dh-header__nav-action--wide {
+    max-width: 8rem;
+  }
+
+  .dh-header__nav-label--full {
+    display: inline;
+  }
+
+  .dh-header__nav-label--short {
+    display: none;
+  }
+}
+
 .dh-header__nav em,
 .dh-mobile-nav em {
   align-items: center;
@@ -1915,6 +1937,7 @@
 }
 
 .dh-filter-fields select,
+.dh-listing-field select,
 .dh-sort select {
   appearance: none;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%232b2b2b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75'/%3E%3C/svg%3E");
@@ -6699,4 +6722,331 @@ label.dh-check {
 .dh-profile-boundary {
   font-size: 0.75rem;
   margin: 0.5rem 0 0;
+}
+
+/* --------------------------------------------------------------------------
+   Success as a stated outcome.
+
+   `.dh-state-inline` already carries the neutral and error tones. A created
+   listing is neither: it is a completed command whose next step is moderation,
+   so it gets the green tone the palette already owns rather than a new colour.
+   -------------------------------------------------------------------------- */
+.dh-state-inline--success {
+  background: var(--dh-green-soft);
+  color: var(--dh-green-strong);
+}
+
+/* --------------------------------------------------------------------------
+   The form itself.
+
+   `.dh-listing-form` is a `.dh-panel .dh-form`, so it already has the 32px
+   panel padding, the sand border and the 1rem stack. The extra gap here is the
+   separation *between groups*, which is one step larger than the gap between
+   two fields inside a group — that difference is what stops a long form from
+   reading as one undifferentiated column.
+   -------------------------------------------------------------------------- */
+.dh-listing-form {
+  gap: 1.75rem;
+}
+
+/* A named group of fields. The legend is the fieldset's own rendered legend
+   rather than a grid item, which is the same arrangement `.dh-choice-group`
+   already relies on: it sits above the track list as a block. */
+.dh-listing-group {
+  border: 0;
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+}
+
+.dh-listing-group > legend {
+  color: var(--dh-ink);
+  font-family: var(--dh-font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  padding: 0;
+}
+
+/* The photograph group is one full-width column: a chooser, not a field pair. */
+.dh-listing-group--photos {
+  grid-template-columns: 1fr;
+  gap: 0.625rem;
+}
+
+/* --------------------------------------------------------------------------
+   One field: label, control, hint, validation message.
+
+   The label is a sibling of the control rather than its wrapper, so the label
+   typography is set here instead of inheriting `.dh-form label > span`.
+   -------------------------------------------------------------------------- */
+.dh-listing-field {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.dh-listing-field > label {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.dh-listing-field--wide {
+  grid-column: 1 / -1;
+}
+
+.dh-listing-field__hint {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* A validation message names its own field, so it is a strong statement rather
+   than fine print, and it keeps the palette's single danger tone. */
+.dh-listing-field__error {
+  color: var(--dh-danger);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.dh-listing-field input[aria-invalid='true'],
+.dh-listing-field select[aria-invalid='true'],
+.dh-listing-field textarea[aria-invalid='true'] {
+  border-color: var(--dh-danger);
+}
+
+.dh-listing-field input[aria-invalid='true']:focus,
+.dh-listing-field select[aria-invalid='true']:focus,
+.dh-listing-field textarea[aria-invalid='true']:focus {
+  border-color: var(--dh-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dh-danger) 18%, transparent);
+}
+
+/* `.dh-form select` is not in the shared control rule, so the pill shape is
+   restated here for the create form's own selects. */
+.dh-listing-field select {
+  background-color: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 999px;
+  min-height: 2.75rem;
+  padding: 0.7rem 1rem;
+  width: 100%;
+}
+
+.dh-listing-field select:focus {
+  border-color: var(--dh-green);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dh-green) 16%, transparent);
+  outline: 0;
+}
+
+/* The one boolean on the form. It is a 44px row so the whole label is the
+   target, not just the 17px box. */
+.dh-listing-field--check {
+  align-self: end;
+}
+
+.dh-listing-field--check > label {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  gap: 0.5625rem;
+  min-height: 2.75rem;
+}
+
+.dh-listing-field--check input[type='checkbox'] {
+  appearance: none;
+  background: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 6px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  height: 1.0625rem;
+  width: 1.0625rem;
+}
+
+.dh-listing-field--check input[type='checkbox']:checked {
+  background-color: var(--dh-green);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.4 5 8.9l4.5-5' fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'/%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 0.6875rem;
+  border-color: var(--dh-green);
+}
+
+.dh-listing-field--check input[type='checkbox']:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dh-green) 16%, transparent);
+  outline: 0;
+}
+
+/* --------------------------------------------------------------------------
+   The photograph chooser.
+
+   Each tile is a 16px-radius media frame — the media radius the rest of the
+   product uses — with its own file name underneath, because the name is the
+   only thing the library actually knows about a photograph. The whole tile is
+   the target, and the checkbox stays visible so a selected tile is legible
+   without relying on colour alone.
+   -------------------------------------------------------------------------- */
+.dh-listing-photos {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(8.5rem, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-listing-photos__count {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.dh-listing-photos label {
+  align-items: center;
+  background: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 1rem;
+  cursor: pointer;
+  display: grid;
+  gap: 0.375rem;
+  justify-items: center;
+  padding: 0.5rem;
+}
+
+.dh-listing-photos label:hover {
+  border-color: var(--dh-green);
+}
+
+.dh-listing-photos label:has(input:checked) {
+  background: var(--dh-green-soft);
+  border-color: var(--dh-green);
+}
+
+.dh-listing-photos label:has(input:focus-visible) {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dh-green) 16%, transparent);
+}
+
+/* A photograph the limit has locked out states that it is unavailable rather
+   than silently ignoring the click. */
+.dh-listing-photos label:has(input:disabled) {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.dh-listing-photos input[type='checkbox'] {
+  appearance: none;
+  background: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 6px;
+  cursor: inherit;
+  height: 1.0625rem;
+  justify-self: start;
+  width: 1.0625rem;
+}
+
+.dh-listing-photos input[type='checkbox']:checked {
+  background-color: var(--dh-green);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.4 5 8.9l4.5-5' fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'/%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 0.6875rem;
+  border-color: var(--dh-green);
+}
+
+.dh-listing-photos img {
+  aspect-ratio: 3 / 2;
+  border-radius: 0.75rem;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.dh-listing-photos span {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   What will be published.
+
+   A definition list of the facts the catalogue will actually read, on the
+   cream surface so it reads as a quoted result rather than as more form.
+   -------------------------------------------------------------------------- */
+.dh-listing-summary {
+  background: var(--dh-surface-muted);
+  border: 1px solid var(--dh-border);
+  border-radius: 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.dh-listing-summary h2 {
+  font-family: var(--dh-font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.dh-listing-summary dl {
+  display: grid;
+  gap: 0.625rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  margin: 0;
+}
+
+.dh-listing-summary dl > div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.dh-listing-summary dt {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.dh-listing-summary dd {
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.dh-listing-summary p {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Narrow viewports.
+
+   The field pair collapses to one column at the same 48rem breakpoint
+   `.dh-form-grid` already collapses at, and the photograph tiles shrink rather
+   than scrolling the page sideways.
+   -------------------------------------------------------------------------- */
+@media (max-width: 48rem) {
+  .dh-listing-group {
+    grid-template-columns: 1fr;
+  }
+
+  .dh-listing-photos {
+    grid-template-columns: repeat(auto-fill, minmax(6.5rem, 1fr));
+  }
+
+  .dh-listing-form .dh-form__actions {
+    flex-wrap: wrap;
+  }
 }
