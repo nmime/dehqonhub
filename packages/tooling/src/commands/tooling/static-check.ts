@@ -225,6 +225,7 @@ export const thinLocaleCatalogFileNames = [
   "user/agritech-marketplace-management.json",
   "user/agritech-marketplace-deals.json",
   "user/agritech-marketplace-new-listing.json",
+  "user/agritech-marketplace-photos.json",
   "user/agritech-marketplace-verification.json",
   "user/agritech-marketplace-account-ai.json",
   "user/agritech-marketplace-cabinet.json",
@@ -1890,7 +1891,7 @@ function removeReviewedTechnicalLatin(value: string): string {
       .replace(/https?:\/\/[^\s]+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|`[^`]+`|\/[a-z][\w-]*/giu, '')
       .replace(/\b[A-Z][A-Z0-9_.+-]{1,}\b/gu, '')
       .replace(
-        /\b(?:AgriTech|AgroUz|DehqonHub|Discord|Fastify|GitHub|Google|MailPace|MikroORM|Nest React Boilerplate|NestJS|OneID|OpenID|Payme|PostgreSQL|Redis|Telegram|WebAuthn)\b/gu,
+        /\b(?:AgriTech|AgroUz|DehqonHub|Discord|Fastify|GitHub|Google|MailPace|MikroORM|Nest React Boilerplate|NestJS|OneID|OpenID|Payme|PostgreSQL|Redis|Telegram|WebAuthn|WebP)\b/gu,
         '',
       );
   } while (remaining !== previous);

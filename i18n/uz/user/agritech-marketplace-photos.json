@@ -1,0 +1,21 @@
+{
+  "agritech.marketplace.photos.group": "Fotosuratlar",
+  "agritech.marketplace.photos.uploadLabel": "Shu qurilmadan yuklash",
+  "agritech.marketplace.photos.uploadHint": "JPEG, PNG yoki WebP, har biri {{limit}} gacha, jami {{max}} fotosurat. Saqlashdan oldin suratga olingan joy ma'lumoti o'chiriladi.",
+  "agritech.marketplace.photos.selected": "Tanlangan: {{max}} dan {{used}}",
+  "agritech.marketplace.photos.busy": "Yuklanmoqda…",
+  "agritech.marketplace.photos.uploadingOne": "{{name}} yuklanmoqda…",
+  "agritech.marketplace.photos.remove": "{{name}} ni olib tashlash",
+  "agritech.marketplace.photos.uploadedOne": "Qurilmadan yuklandi",
+  "agritech.marketplace.photos.unavailable": "Bu o'rnatmada obyekt saqlash joyi sozlanmagan, shuning uchun fotosurat saqlanmaydi. E'lonni baribir yaratish mumkin: katalogda uning kategoriya rasmi ko'rsatiladi.",
+  "agritech.marketplace.photos.error.tooLarge": "{{name}}: {{limit}} dan katta. Hech narsa saqlanmadi.",
+  "agritech.marketplace.photos.error.type": "{{name}}: faqat JPEG, PNG va WebP qabul qilinadi. Hech narsa saqlanmadi.",
+  "agritech.marketplace.photos.error.limit": "{{name}}: qo'shilmadi, chegara — {{max}} fotosurat.",
+  "agritech.marketplace.photos.error.rejected": "{{name}}: server bu faylni o'qiladigan fotosurat emas deb rad etdi. Hech narsa saqlanmadi.",
+  "agritech.marketplace.photos.error.storage": "{{name}}: hozir fotosuratlar saqlanmaydi. Hech narsa saqlanmadi, keyinroq urinib ko'ring.",
+  "agritech.marketplace.photos.error.unauthorized": "{{name}}: fotosurat yuklash uchun qaytadan kiring.",
+  "agritech.marketplace.photos.reviewGroup": "Fotosuratlar (majburiy emas)",
+  "agritech.marketplace.photos.reviewHint": "Bahoyingiz bilan birga olgan mahsulotingizning {{max}} tagacha fotosurati chiqadi.",
+  "agritech.marketplace.photos.reviewPhotos": "Bu sharhdagi fotosuratlar",
+  "agritech.marketplace.photos.reviewAlt": "Bu sharhdagi {{total}} fotosuratdan {{position}}-si"
+}

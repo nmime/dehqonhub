@@ -19,6 +19,7 @@ const testState = vi.hoisted(() => {
   const submitVerification = vi.fn();
   const signContract = vi.fn();
   const recordSettlementEvent = vi.fn();
+  const getPhotoCapability = vi.fn();
   const transitionContractFulfillment = vi.fn();
   return {
     addToCart,
@@ -35,6 +36,7 @@ const testState = vi.hoisted(() => {
       marketplaceControllerRecordSettlementEvent: recordSettlementEvent,
       marketplaceControllerTransitionContractFulfillment: transitionContractFulfillment,
       marketplaceControllerGetReviewSelfState: getReviewSelfState,
+      marketplaceMediaControllerGetCapability: getPhotoCapability,
       marketplacePublicControllerListReviews: listReviews,
       marketplacePublicControllerListSuggestions: listSuggestions,
     },

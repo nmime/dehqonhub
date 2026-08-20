@@ -7,6 +7,7 @@ import type { Resource } from '../model/use-marketplace-data';
 import { MarketplaceRatingSummary } from './marketplace-rating';
 import { MarketplaceReviewsSection, marketplaceReviewerState } from './marketplace-reviews';
 import type { MarketplaceListing, MarketplaceTranslate } from './marketplace-ui';
+import type { MarketplacePhotoCapability, MarketplacePhotoUploadOutcome } from './marketplace-photo-upload';
 
 /**
  * Interpolating stand-in for the app's translator: the reviewer states differ by
@@ -61,10 +62,25 @@ const review = (overrides: Partial<MarketplaceReviewDto> = {}): MarketplaceRevie
 
 const emptyReviews: Resource<MarketplaceReviewDto[]> = { data: [], status: 'empty' };
 
+const photoCapability: MarketplacePhotoCapability = {
+  configured: true,
+  maximumByteSize: 5 * 1024 * 1024,
+  mediaTypes: ['image/jpeg', 'image/png', 'image/webp'],
+};
+
+const storedPhotoId = 'DDDDDDDDDDDDDDDDDDDDDD';
+
 const renderSection = (
   overrides: Partial<ComponentProps<typeof MarketplaceReviewsSection>> = {},
-): { onReview: ReturnType<typeof vi.fn> } => {
+): { onReview: ReturnType<typeof vi.fn>; onUploadPhoto: ReturnType<typeof vi.fn> } => {
   const onReview = vi.fn().mockResolvedValue(true);
+  const onUploadPhoto = vi.fn((): Promise<MarketplacePhotoUploadOutcome> =>
+    Promise.resolve({
+      path: `/marketplace/media/${storedPhotoId}`,
+      reference: `public-asset:${storedPhotoId}`,
+      status: 'stored',
+    }),
+  );
   render(
     <MarketplaceReviewsSection
       canReplyToReviews={false}
@@ -75,12 +91,14 @@ const renderSection = (
       onReplyToReview={vi.fn()}
       onReportReview={vi.fn()}
       onReview={onReview}
+      onUploadPhoto={onUploadPhoto}
+      photoCapability={photoCapability}
       reviews={emptyReviews}
       t={t}
       {...overrides}
     />,
   );
-  return { onReview };
+  return { onReview, onUploadPhoto };
 };
 
 afterEach(cleanup);
@@ -143,8 +161,60 @@ describe('marketplace review entry', () => {
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.submit' }));
 
     await waitFor(() => {
-      expect(onReview).toHaveBeenCalledWith(expect.objectContaining({ id: listingId }), 4, 'Delivered on time.');
+      expect(onReview).toHaveBeenCalledWith(expect.objectContaining({ id: listingId }), 4, 'Delivered on time.', []);
     });
+  });
+
+  it('uploads a photograph and submits it as the opaque handle the review contract accepts', async () => {
+    const { onReview, onUploadPhoto } = renderSection({ canReview: true });
+
+    const field = document.querySelector<HTMLInputElement>('.dh-review-form input[type="file"]')!;
+    expect(field.accept).toBe('image/jpeg,image/png,image/webp');
+    fireEvent.change(field, { target: { files: [new File(['x'], 'bugdoy.webp', { type: 'image/webp' })] } });
+
+    await waitFor(() => {
+      expect(document.querySelectorAll('.dh-photo-upload__list li')).toHaveLength(1);
+    });
+    // The field renders the path, because that is what an <img> can read; the
+    // review carries the `public-asset:` handle, because that is what its column
+    // accepts. Both name the same stored object.
+    expect(document.querySelector('.dh-photo-upload__list li img')?.getAttribute('src')).toBe(
+      `/marketplace/media/${storedPhotoId}`,
+    );
+    expect(onUploadPhoto).toHaveBeenCalledTimes(1);
+
+    fireEvent.click(screen.getAllByRole('radio')[4]!);
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.submit' }));
+
+    await waitFor(() => {
+      expect(onReview).toHaveBeenCalledWith(expect.objectContaining({ id: listingId }), 5, undefined, [
+        `public-asset:${storedPhotoId}`,
+      ]);
+    });
+  });
+
+  it('renders the photographs a published review carries, and nothing for a handle it cannot resolve', () => {
+    renderSection({
+      reviews: {
+        data: [
+          review({
+            assetReferences: [`public-asset:${storedPhotoId}`, 'public-asset:short', 'https://example.test/x.png'],
+          }),
+        ],
+        status: 'ready',
+      },
+    });
+
+    const photos = [...document.querySelectorAll('.dh-review-photos li img')];
+    expect(photos).toHaveLength(1);
+    expect(photos[0]?.getAttribute('src')).toBe(`/marketplace/media/${storedPhotoId}`);
+    expect(photos[0]?.getAttribute('alt')).toBe('agritech.marketplace.photos.reviewAlt(position=1,total=1)');
+  });
+
+  it('shows no photograph strip at all for a review that carries none', () => {
+    renderSection({ reviews: { data: [review()], status: 'ready' } });
+
+    expect(document.querySelector('.dh-review-photos')).toBeNull();
   });
 
   it('refuses to submit a review that carries no rating at all', () => {

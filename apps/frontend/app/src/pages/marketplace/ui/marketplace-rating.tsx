@@ -9,6 +9,15 @@ export const marketplaceRatingScale = 5;
 /** Server-side bound on review free text, mirrored here so the field can state it. */
 export const marketplaceReviewCommentLimit = 2_000;
 
+/**
+ * How many photographs one review may carry.
+ *
+ * `ck__marketplace_listing_reviews__assets` refuses a fourth entry and the
+ * write path rejects one before that, so the field states the same bound rather
+ * than letting the server be the first to say no.
+ */
+export const marketplaceReviewAssetLimit = 3;
+
 const ratingSteps = [1, 2, 3, 4, 5] as const;
 
 /**

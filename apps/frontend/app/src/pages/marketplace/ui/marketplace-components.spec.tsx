@@ -710,7 +710,9 @@ describe('DehqonHub marketplace components', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.submit' }));
 
-    expect(onReview).toHaveBeenCalledWith(seed, 4, 'Reliable quality');
+    // The fourth argument is the review's photographs: an empty list when the
+    // buyer attached none, never omitted.
+    expect(onReview).toHaveBeenCalledWith(seed, 4, 'Reliable quality', []);
     await waitFor(() => {
       expect(screen.getByText('agritech.marketplace.reviews.yourReview')).toBeTruthy();
     });

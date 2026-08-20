@@ -4,6 +4,7 @@ import type { Locale } from '@app/frontend-runtime';
 import type { MarketplaceOwnReviewDto, MarketplaceOwnReviewInvitationDto } from '@app/frontend-api-client';
 import { MarketplaceIcon } from './marketplace-icon';
 import { MarketplaceBusyButton } from './marketplace-loading';
+import { MarketplaceReviewPhotos } from './marketplace-photo-upload';
 import { marketplaceRatingScale, marketplaceReviewCommentLimit } from './marketplace-rating';
 import { formatDate, type MarketplaceNavigate, type MarketplaceTranslate } from './marketplace-ui';
 
@@ -108,6 +109,10 @@ function CabinetReviewRow({
           : t('agritech.marketplace.reviews.mine.onMyListing')}
       </p>
       {review.comment ? <p className="dh-cabinet-review__comment">{review.comment}</p> : null}
+      {/* The same photographs the public row shows. A cabinet that hid them would
+          make the buyer unable to see what they published, and the seller unable
+          to see what was published about them. */}
+      <MarketplaceReviewPhotos references={review.assetReferences} t={t} />
       {review.reply ? (
         <blockquote className="dh-review-reply">
           <strong>{t('agritech.marketplace.reviews.sellerReply')}</strong>

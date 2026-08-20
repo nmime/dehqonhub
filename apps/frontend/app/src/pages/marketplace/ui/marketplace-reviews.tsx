@@ -5,9 +5,17 @@ import type { MarketplaceReviewDto, MarketplaceReviewSelfStateDto } from '@app/f
 import type { Resource, ResourceStatus } from '../model/use-marketplace-data';
 import { MarketplaceBusyButton, MarketplaceListSkeleton } from './marketplace-loading';
 import {
+  MarketplacePhotoUpload,
+  MarketplaceReviewPhotos,
+  marketplacePhotoReferenceFor,
+  type MarketplacePhotoCapability,
+  type MarketplacePhotoUploadOutcome,
+} from './marketplace-photo-upload';
+import {
   MarketplaceRatingSummary,
   MarketplaceStarInput,
   marketplaceRatingScale,
+  marketplaceReviewAssetLimit,
   marketplaceReviewCommentLimit,
 } from './marketplace-rating';
 import { formatDate, type MarketplaceListing, type MarketplaceTranslate } from './marketplace-ui';
@@ -106,6 +114,7 @@ function ReviewRow({
           flag the browser has to trust. */}
       <p className="dh-review-verified">{t('agritech.marketplace.reviews.verifiedDeal')}</p>
       {review.comment && <p>{review.comment}</p>}
+      <MarketplaceReviewPhotos references={review.assetReferences} t={t} />
       {review.reply ? (
         <blockquote className="dh-review-reply">
           <strong>{t('agritech.marketplace.reviews.sellerReply')}</strong>
@@ -236,6 +245,7 @@ function OwnReview({
         </p>
       ) : null}
       {review?.comment ? <p>{review.comment}</p> : null}
+      {review ? <MarketplaceReviewPhotos references={review.assetReferences} t={t} /> : null}
       {review?.reply ? (
         <blockquote className="dh-review-reply">
           <strong>{t('agritech.marketplace.reviews.sellerReply')}</strong>
@@ -252,9 +262,16 @@ function OwnReview({
 
 interface ReviewFormProps {
   listing: MarketplaceListing;
-  onReview: (product: MarketplaceListing, rating: number, comment?: string) => Promise<boolean>;
+  onReview: (
+    product: MarketplaceListing,
+    rating: number,
+    comment?: string,
+    assetReferences?: readonly string[],
+  ) => Promise<boolean>;
   onSubmitted: () => void;
   pendingAction?: string;
+  photoCapability?: MarketplacePhotoCapability;
+  onUploadPhoto?: (file: File) => Promise<MarketplacePhotoUploadOutcome>;
   t: MarketplaceTranslate;
 }
 
@@ -267,9 +284,20 @@ interface ReviewFormProps {
  * pre-filled top score is a rating the buyer never gave, so the submit control
  * stays disabled until a star is actually chosen.
  */
-function ReviewForm({ listing, onReview, onSubmitted, pendingAction, t }: Readonly<ReviewFormProps>) {
+function ReviewForm({
+  listing,
+  onReview,
+  onSubmitted,
+  onUploadPhoto,
+  pendingAction,
+  photoCapability,
+  t,
+}: Readonly<ReviewFormProps>) {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
+  // Held as renderable paths so the thumbnails in the field are the same bytes
+  // the review will publish; the handles are derived on submit.
+  const [photos, setPhotos] = useState<readonly string[]>([]);
   const busy = pendingAction === `review:${listing.id}`;
   const limitId = `marketplace-review-comment-limit-${listing.id}`;
   return (
@@ -280,10 +308,16 @@ function ReviewForm({ listing, onReview, onSubmitted, pendingAction, t }: Readon
         if (rating < 1) {
           return;
         }
-        void onReview(listing, rating, comment.trim() || undefined).then((submitted) => {
+        void onReview(
+          listing,
+          rating,
+          comment.trim() || undefined,
+          photos.map((photo) => marketplacePhotoReferenceFor(photo)).filter((value): value is string => Boolean(value)),
+        ).then((submitted) => {
           if (submitted) {
             setComment('');
             setRating(0);
+            setPhotos([]);
             onSubmitted();
           }
         });
@@ -321,6 +355,24 @@ function ReviewForm({ listing, onReview, onSubmitted, pendingAction, t }: Readon
           })}
         </small>
       </div>
+      {onUploadPhoto ? (
+        <div className="dh-review-form__photos">
+          <span className="dh-review-form__photos-label">{t('agritech.marketplace.photos.reviewGroup')}</span>
+          <small className="dh-review-form__limit">
+            {t('agritech.marketplace.photos.reviewHint', { max: marketplaceReviewAssetLimit })}
+          </small>
+          <MarketplacePhotoUpload
+            capability={photoCapability}
+            disabled={busy}
+            idPrefix={`review-${listing.id}`}
+            limit={marketplaceReviewAssetLimit}
+            onChange={setPhotos}
+            onUpload={onUploadPhoto}
+            selected={photos}
+            t={t}
+          />
+        </div>
+      ) : null}
       <MarketplaceBusyButton
         busy={busy}
         busyLabel={t('agritech.marketplace.loading')}
@@ -345,8 +397,16 @@ export interface MarketplaceReviewsSectionProps {
   locale: Locale;
   onReplyToReview: (review: MarketplaceReviewDto, comment: string) => Promise<boolean>;
   onReportReview: (review: MarketplaceReviewDto, reason: ReportReason, comment?: string) => Promise<boolean>;
-  onReview: (product: MarketplaceListing, rating: number, comment?: string) => Promise<boolean>;
+  onReview: (
+    product: MarketplaceListing,
+    rating: number,
+    comment?: string,
+    assetReferences?: readonly string[],
+  ) => Promise<boolean>;
+  /** Sends one review photograph; absent when the shell offers no upload. */
+  onUploadPhoto?: (file: File) => Promise<MarketplacePhotoUploadOutcome>;
   pendingAction?: string;
+  photoCapability?: MarketplacePhotoCapability;
   reviews: Resource<MarketplaceReviewDto[]>;
   /** The server's answer to whether this caller may rate this listing, when it has been read. */
   selfState?: MarketplaceReviewSelfStateDto;
@@ -375,7 +435,9 @@ export function MarketplaceReviewsSection({
   onReplyToReview,
   onReportReview,
   onReview,
+  onUploadPhoto,
   pendingAction,
+  photoCapability,
   reviews,
   selfState,
   selfStateStatus,
@@ -439,7 +501,9 @@ export function MarketplaceReviewsSection({
           onSubmitted={() => {
             setJustSubmitted(true);
           }}
+          onUploadPhoto={onUploadPhoto}
           pendingAction={pendingAction}
+          photoCapability={photoCapability}
           t={t}
         />
       ) : null}

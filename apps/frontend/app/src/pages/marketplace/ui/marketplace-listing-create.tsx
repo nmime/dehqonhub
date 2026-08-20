@@ -5,6 +5,11 @@ import type { Resource } from '../model/use-marketplace-data';
 import { MarketplaceBusyButton } from './marketplace-loading';
 import { MarketplaceIcon } from './marketplace-icon';
 import {
+  MarketplacePhotoUpload,
+  type MarketplacePhotoCapability,
+  type MarketplacePhotoUploadOutcome,
+} from './marketplace-photo-upload';
+import {
   formatMoney,
   marketplaceListingSectionFor,
   type MarketplaceListing,
@@ -38,73 +43,17 @@ type ProduceGrade = (typeof produceGrades)[number];
  */
 export const marketplaceListingImageLimit = 5;
 
-const mediaPrefix = '/media/marketplace/';
-
 /**
- * The photographs a listing may be given — and the whole of what storage allows.
+ * The one reference a listing photograph may be: an object this account
+ * uploaded, read back through the API on the page's own origin. Anchored at both
+ * ends, so a host or a traversal segment cannot pass as one.
  *
- * There is no blob store in this product. The only other file upload it has,
- * contract dispute evidence, hashes the bytes and keeps a provider reference;
- * the file itself is never written anywhere. So a photograph taken on a phone
- * has nowhere to be stored, and this screen says that plainly rather than
- * accepting a file and dropping it.
- *
- * What does exist is this directory of checked-in, same-origin WebP photographs
- * (`apps/frontend/app/public/media/marketplace`). Every deployment sends
- * `img-src 'self' data:`, so these root-relative paths are exactly the shape a
- * published listing can render; the server validates the same shape before it
- * stores one.
+ * The server also accepts the checked-in `/media/marketplace/*.webp` library
+ * paths, because the seeded demo catalogue is built from them. This form cannot
+ * produce one, so the guard here is narrower than the API's on purpose: a draft
+ * carrying anything but an upload is a draft this screen did not compose.
  */
-const marketplaceListingPhotoNames = [
-  'alfalfa-bales',
-  'alfalfa-field',
-  'carrots',
-  'combine-harvester',
-  'cotton-bolls',
-  'cotton-field',
-  'cotton-harvester',
-  'cultivator',
-  'disc-harrow',
-  'dried-apricots',
-  'drip-irrigation',
-  'farm-trailer',
-  'fertilizer-granules',
-  'fertilizer-spreading',
-  'fresh-apricots',
-  'garlic-bulbs',
-  'greenhouse-film',
-  'hdpe-pipes',
-  'irrigation-pump',
-  'knapsack-sprayer',
-  'maize-cobs',
-  'melon',
-  'mung-beans',
-  'persimmon',
-  'pesticide-spraying',
-  'plough',
-  'pomegranate',
-  'power-tiller',
-  'raisins',
-  'rice-paddy',
-  'seed-drill',
-  'sprinkler-irrigation',
-  'table-grapes',
-  'tomato-fruit',
-  'tomato-greenhouse',
-  'tractor-field',
-  'uzbek-bazaar',
-  'ware-potatoes',
-  'watermelon-field',
-  'wheat-grain',
-  'winter-wheat-field',
-  'yellow-onions',
-] as const;
-
-export const marketplaceListingPhotoPaths: readonly string[] = marketplaceListingPhotoNames.map(
-  (name) => `${mediaPrefix}${name}.webp`,
-);
-
-const photoName = (path: string): string => path.slice(mediaPrefix.length).replace(/\.webp$/u, '');
+const uploadedPhotoPattern = /^\/marketplace\/media\/[A-Za-z0-9_-]{22}$/u;
 
 /** Server-side bounds, restated so the form refuses before the request is made. */
 const maximumTitleLength = 200;
@@ -134,6 +83,7 @@ export type MarketplaceListingSubmission =
       readonly availableUntil: string;
       readonly crop: string;
       readonly grade: ProduceGrade;
+      readonly images: readonly string[];
       readonly pricePerKgUzs: number;
       readonly quantityKg: number;
       readonly region: string;
@@ -158,6 +108,12 @@ export type MarketplaceListingOutcome =
 export interface MarketplaceListingCreateProps {
   /** Label of the one step still missing before anything can be created. */
   readonly accessActionLabel?: string;
+  /**
+   * What this deployment can store, read from the API before the control is
+   * offered. `undefined` while the answer is in flight; a deployment that
+   * answers `configured: false` gets a statement instead of a file field.
+   */
+  readonly photoCapability?: MarketplacePhotoCapability;
   readonly accessHint?: string;
   /** Current catalog, read only for the region, crop and unit suggestions. */
   readonly catalog: Resource<MarketplaceListing[]>;
@@ -170,6 +126,8 @@ export interface MarketplaceListingCreateProps {
   readonly navigate: MarketplaceNavigate;
   readonly onAccessAction?: () => void;
   readonly onSubmit: (submission: MarketplaceListingSubmission) => Promise<MarketplaceListingOutcome>;
+  /** Sends one file and reports what the server did with it. */
+  readonly onUploadPhoto?: (file: File) => Promise<MarketplacePhotoUploadOutcome>;
   readonly t: MarketplaceTranslate;
   /**
    * Why there is no form, when `kind` is absent. `role` is a settled role that
@@ -324,12 +282,12 @@ const validateAmount = (
   return parsed > maximum ? { [field]: t(aboveMaximumKey, { field: label, maximum }) } : {};
 };
 
-const validateProductPhotos = (draft: ListingDraft, t: MarketplaceTranslate): DraftErrors => {
+const validatePhotos = (draft: ListingDraft, t: MarketplaceTranslate): DraftErrors => {
   const label = t(fieldLabelKeys.images);
   if (draft.images.length > marketplaceListingImageLimit) {
     return { images: t(`${keyPrefix}error.photoLimit`, { field: label, limit: marketplaceListingImageLimit }) };
   }
-  return draft.images.some((image) => !marketplaceListingPhotoPaths.includes(image))
+  return draft.images.some((image) => !uploadedPhotoPattern.test(image))
     ? { images: t(`${keyPrefix}error.photoUnknown`, { field: label }) }
     : {};
 };
@@ -339,7 +297,7 @@ const validateProduct = (draft: ListingDraft, t: MarketplaceTranslate): DraftErr
     ...validateTitles(draft, t),
     ...validateAmount(draft.price, 'price', fieldLabelKeys.price, 1, maximumPriceUzs, t),
     ...validateAmount(draft.quantity, 'quantity', 'agritech.marketplace.product.stock', 0, maximumQuantity, t),
-    ...validateProductPhotos(draft, t),
+    ...validatePhotos(draft, t),
   };
   for (const field of ['description', 'region', 'unit'] as const) {
     if (!draft[field].trim()) {
@@ -353,6 +311,7 @@ const validateProduce = (draft: ListingDraft, t: MarketplaceTranslate): DraftErr
   const errors: DraftErrors = {
     ...validateAmount(draft.price, 'price', pricePerKgKey, 1, maximumPriceUzs, t),
     ...validateAmount(draft.quantity, 'quantity', fieldLabelKeys.quantity, 1, maximumQuantity, t),
+    ...validatePhotos(draft, t),
   };
   for (const field of ['crop', 'region', 'availableFrom', 'availableUntil'] as const) {
     if (!draft[field].trim()) {
@@ -393,6 +352,7 @@ const submissionFor = (kind: MarketplaceListingKind, draft: ListingDraft): Marke
         availableUntil: draft.availableUntil,
         crop: draft.crop.trim(),
         grade: draft.grade,
+        images: [...draft.images],
         kind: 'produce',
         pricePerKgUzs: Number(draft.price.trim()),
         quantityKg: Number(draft.quantity.trim()),
@@ -443,47 +403,6 @@ function Field({
         </strong>
       ) : null}
     </div>
-  );
-}
-
-function PhotoPicker({
-  limitReached,
-  onToggle,
-  selected,
-  t,
-}: Readonly<{
-  limitReached: boolean;
-  onToggle: (path: string) => void;
-  selected: readonly string[];
-  t: MarketplaceTranslate;
-}>) {
-  return (
-    <>
-      <p aria-live="polite" className="dh-listing-photos__count" role="status">
-        {t(`${keyPrefix}photos.selected`, { max: marketplaceListingImageLimit, used: selected.length })}
-      </p>
-      <ul className="dh-listing-photos">
-        {marketplaceListingPhotoPaths.map((path) => {
-          const checked = selected.includes(path);
-          return (
-            <li key={path}>
-              <label>
-                <input
-                  checked={checked}
-                  disabled={!checked && limitReached}
-                  onChange={() => {
-                    onToggle(path);
-                  }}
-                  type="checkbox"
-                />
-                <img alt="" height={72} loading="lazy" src={path} width={108} />
-                <span>{photoName(path)}</span>
-              </label>
-            </li>
-          );
-        })}
-      </ul>
-    </>
   );
 }
 
@@ -570,6 +489,8 @@ export function MarketplaceListingCreate({
   navigate,
   onAccessAction,
   onSubmit,
+  onUploadPhoto,
+  photoCapability,
   t,
   unavailableReason = 'role',
 }: Readonly<MarketplaceListingCreateProps>) {
@@ -921,36 +842,25 @@ export function MarketplaceListingCreate({
 
         <fieldset className="dh-listing-group dh-listing-group--photos">
           <legend>{t(`${keyPrefix}group.photos`)}</legend>
-          <p className="dh-muted" data-listing-photos="device">
-            {t(`${keyPrefix}photos.deviceUnavailable`)}
-          </p>
-          {isProduct ? (
-            <>
-              <p className="dh-muted">{t(`${keyPrefix}photos.hint`, { limit: marketplaceListingImageLimit })}</p>
-              {errors.images ? (
-                <strong className="dh-listing-field__error" role="alert">
-                  {errors.images}
-                </strong>
-              ) : null}
-              <PhotoPicker
-                limitReached={draft.images.length >= marketplaceListingImageLimit}
-                onToggle={(path) => {
-                  update(
-                    'images',
-                    draft.images.includes(path)
-                      ? draft.images.filter((image) => image !== path)
-                      : [...draft.images, path],
-                  );
-                }}
-                selected={draft.images}
-                t={t}
-              />
-            </>
-          ) : (
-            <p className="dh-muted" data-listing-photos="unsupported">
-              {t(`${keyPrefix}photos.produceUnavailable`)}
-            </p>
-          )}
+          <p className="dh-muted">{t(`${keyPrefix}photos.hint`, { limit: marketplaceListingImageLimit })}</p>
+          {errors.images ? (
+            <strong className="dh-listing-field__error" role="alert">
+              {errors.images}
+            </strong>
+          ) : null}
+          {onUploadPhoto ? (
+            <MarketplacePhotoUpload
+              capability={photoCapability}
+              idPrefix="listing"
+              limit={marketplaceListingImageLimit}
+              onChange={(next) => {
+                update('images', next);
+              }}
+              onUpload={onUploadPhoto}
+              selected={draft.images}
+              t={t}
+            />
+          ) : null}
         </fieldset>
 
         <section className="dh-listing-summary">
@@ -974,7 +884,7 @@ export function MarketplaceListingCreate({
             </div>
             <div>
               <dt>{t(fieldLabelKeys.images)}</dt>
-              <dd>{isProduct ? String(draft.images.length) : t(`${keyPrefix}photos.none`)}</dd>
+              <dd>{draft.images.length > 0 ? String(draft.images.length) : t(`${keyPrefix}photos.none`)}</dd>
             </div>
           </dl>
           <p className="dh-muted">{t(`${keyPrefix}summary.moderation`)}</p>

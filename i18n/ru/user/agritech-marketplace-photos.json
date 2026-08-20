@@ -1,0 +1,21 @@
+{
+  "agritech.marketplace.photos.group": "Фотографии",
+  "agritech.marketplace.photos.uploadLabel": "Загрузить с этого устройства",
+  "agritech.marketplace.photos.uploadHint": "JPEG, PNG или WebP, до {{limit}} каждая, всего {{max}} фотографий. Данные о месте съёмки удаляются до сохранения.",
+  "agritech.marketplace.photos.selected": "Выбрано: {{used}} из {{max}}",
+  "agritech.marketplace.photos.busy": "Загрузка…",
+  "agritech.marketplace.photos.uploadingOne": "Загружается {{name}}…",
+  "agritech.marketplace.photos.remove": "Убрать {{name}}",
+  "agritech.marketplace.photos.uploadedOne": "Загружено с устройства",
+  "agritech.marketplace.photos.unavailable": "В этом развёртывании не настроено объектное хранилище, поэтому фотографию сохранить нельзя. Объявление всё равно можно создать: в каталоге будет показана иллюстрация его категории.",
+  "agritech.marketplace.photos.error.tooLarge": "{{name}}: больше {{limit}}. Ничего не сохранено.",
+  "agritech.marketplace.photos.error.type": "{{name}}: принимаются только JPEG, PNG и WebP. Ничего не сохранено.",
+  "agritech.marketplace.photos.error.limit": "{{name}}: не добавлено, предел — {{max}} фотографий.",
+  "agritech.marketplace.photos.error.rejected": "{{name}}: сервер отклонил файл: это не читаемая фотография. Ничего не сохранено.",
+  "agritech.marketplace.photos.error.storage": "{{name}}: сейчас фотографии сохранять нельзя. Ничего не сохранено, попробуйте позже.",
+  "agritech.marketplace.photos.error.unauthorized": "{{name}}: войдите снова, чтобы загрузить фотографию.",
+  "agritech.marketplace.photos.reviewGroup": "Фотографии (необязательно)",
+  "agritech.marketplace.photos.reviewHint": "Вместе с оценкой публикуются до {{max}} фотографий полученного товара.",
+  "agritech.marketplace.photos.reviewPhotos": "Фотографии в этом отзыве",
+  "agritech.marketplace.photos.reviewAlt": "Фотография {{position}} из {{total}} в этом отзыве"
+}

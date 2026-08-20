@@ -16,6 +16,7 @@ import {
   type ContractViewDto,
   type MarketplaceAiConsultationDto,
   type MarketplaceListingPromotionDto,
+  type MarketplacePhotographCapabilityDto,
   type MarketplacePublicSuggestionDto,
   type MarketplaceReviewDto,
   type MarketplaceReviewSelfStateDto,
@@ -58,6 +59,11 @@ import {
   type MarketplaceListingOutcome,
   type MarketplaceListingSubmission,
 } from './marketplace-listing-create';
+import type {
+  MarketplacePhotoCapability,
+  MarketplacePhotoRefusal,
+  MarketplacePhotoUploadOutcome,
+} from './marketplace-photo-upload';
 import { MarketplaceBrandLockup, MarketplaceEmblem } from './marketplace-brand';
 import { MarketplaceUserManagement } from './marketplace-management';
 import {
@@ -193,6 +199,32 @@ const listingRefusal = (
   };
   const key = messageKeyByStatus[error.status];
   return { message: key ? translate(key) : error.problem.message, status: 'refused' };
+};
+
+/**
+ * Why one photograph was not stored, in the terms the upload field names.
+ *
+ * The four statuses are the upload route's whole documented vocabulary: 401 is
+ * an expired session, 413 is a file past the stated bound, 503 is storage that
+ * is unconfigured or unreachable, and 400 is a file the server could not read
+ * as a photograph. Anything else is treated as the same refusal rather than as a
+ * success, because a photograph that is not confirmed is a photograph that is
+ * not stored.
+ */
+const photographRefusal = (error: unknown): MarketplacePhotoRefusal => {
+  if (!isApiClientError(error)) {
+    return 'rejected';
+  }
+  if (error.status === 401) {
+    return 'unauthorized';
+  }
+  if (error.status === 413) {
+    return 'tooLarge';
+  }
+  if (error.status === 503) {
+    return 'storage';
+  }
+  return 'rejected';
 };
 
 const canMutateContractForRole = (contract: ContractViewDto, canBuy: boolean, canOffer: boolean): boolean =>
@@ -395,6 +427,40 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     };
   }, [api, contractId, contractLifecycleReload, data.auth, requestOptions, view]);
 
+  /**
+   * Ask once, per signed-in session, whether this deployment stores photographs.
+   *
+   * A guest never uploads, so the read is skipped and the capability stays
+   * unknown. A refusal leaves it unknown too rather than guessing `configured`
+   * either way: claiming storage exists would offer an action that fails, and
+   * claiming it does not would withdraw one that works.
+   */
+  useEffect(() => {
+    if (data.auth !== 'signed-in') {
+      setPhotoCapability(undefined);
+      return undefined;
+    }
+    let active = true;
+    void throwOnOpenApiErrorData(api.marketplaceMediaControllerGetCapability(requestOptions))
+      .then((capability: MarketplacePhotographCapabilityDto) => {
+        if (active) {
+          setPhotoCapability({
+            configured: capability.configured,
+            maximumByteSize: capability.maximumByteSize,
+            mediaTypes: capability.mediaTypes,
+          });
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setPhotoCapability(undefined);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [api, data.auth, requestOptions]);
+
   const favoriteIds = useMemo(() => {
     const serverIds = data.auth === 'signed-in' ? data.favorites.data.map((favorite) => favorite.listing.id) : [];
     const localIds = data.catalog.data
@@ -484,6 +550,13 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     },
     [translate],
   );
+
+  /**
+   * What this deployment can store, asked once. Until it answers, the upload
+   * field renders disabled rather than promising an action that may not exist;
+   * an answer of `configured: false` replaces the control with a statement.
+   */
+  const [photoCapability, setPhotoCapability] = useState<MarketplacePhotoCapability | undefined>(undefined);
 
   const runMutation = useCallback(
     async function runMarketplaceMutation<T>(
@@ -589,7 +662,12 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     );
   };
 
-  const addReview = (product: MarketplaceListing, rating: number, comment?: string) => {
+  const addReview = (
+    product: MarketplaceListing,
+    rating: number,
+    comment?: string,
+    assetReferences: readonly string[] = [],
+  ) => {
     return runMutation(
       `review:${product.id}`,
       (idempotencyKey) =>
@@ -597,7 +675,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
           api.marketplaceControllerAddReview(
             {
               ...(comment ? { comment } : {}),
-              assetReferences: [],
+              assetReferences: [...assetReferences],
               listingPublicationId: product.id,
               rating,
             },
@@ -616,7 +694,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
           status: 'ready',
         });
       },
-      `review:${product.id}:${rating}:${comment ?? ''}`,
+      `review:${product.id}:${rating}:${comment ?? ''}:${assetReferences.join(',')}`,
     );
   };
 
@@ -1176,6 +1254,23 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     );
   };
 
+  /**
+   * Send one photograph and say plainly what happened to it.
+   *
+   * Deliberately outside `runMutation`: this is not an idempotent domain command
+   * with a success toast, it is one file whose outcome the field beside it has to
+   * render per file. Every failure maps to a reason the field can name, and
+   * every one of them means the same thing — nothing was stored.
+   */
+  const uploadPhotograph = async (file: File): Promise<MarketplacePhotoUploadOutcome> => {
+    try {
+      const stored = await throwOnOpenApiErrorData(api.marketplaceMediaControllerStorePhotograph(file, requestOptions));
+      return { path: stored.path, reference: stored.reference, status: 'stored' };
+    } catch (error) {
+      return { reason: photographRefusal(error), status: 'refused' };
+    }
+  };
+
   const uploadContractDisputeEvidence = (contract: ContractViewDto, evidence: File) => {
     if (!canMutateContractForRole(contract, canBuy, canOffer)) {
       flash(translate('agritech.marketplace.cart.verifyRequired'), 'info');
@@ -1401,6 +1496,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
               pricePerKgUzs: submission.pricePerKgUzs,
               quantityKg: submission.quantityKg,
               region: submission.region,
+              images: [...submission.images],
               sampleAvailable: submission.sampleAvailable,
               supplierPartnerId: supplierPartner.id,
             },
@@ -1668,6 +1764,8 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
               canReportReviews={data.auth === 'signed-in'}
               canReview={canReviewSelectedProduct}
               onReview={addReview}
+              onUploadPhoto={uploadPhotograph}
+              photoCapability={photoCapability}
               onReplyToReview={replyToReview}
               onReportReview={reportReview}
               onRetry={data.refresh}
@@ -1888,6 +1986,8 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
                   }
                 : {})}
               onSubmit={createListing}
+              onUploadPhoto={uploadPhotograph}
+              photoCapability={photoCapability}
               t={translate}
             />
           );

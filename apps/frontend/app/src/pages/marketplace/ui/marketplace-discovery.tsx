@@ -30,6 +30,7 @@ import type { MarketplacePublicProfileDto } from '@app/frontend-api-client';
 import { MarketplacePublicProfile, marketplaceSellerProfileHref } from './marketplace-public-profile';
 import { MarketplaceRatingSummary } from './marketplace-rating';
 import { MarketplaceReviewsSection } from './marketplace-reviews';
+import type { MarketplacePhotoCapability, MarketplacePhotoUploadOutcome } from './marketplace-photo-upload';
 import {
   formatMoney,
   localizedProductName,
@@ -931,7 +932,15 @@ interface ProductDetailProps extends Omit<SharedDiscoveryProps, 'products'> {
   reviews: Resource<MarketplaceReviewDto[]>;
   sampleUsage: Resource<MarketplaceSampleUsageDto>;
   similar: MarketplaceListing[];
-  onReview: (product: MarketplaceListing, rating: number, comment?: string) => Promise<boolean>;
+  onReview: (
+    product: MarketplaceListing,
+    rating: number,
+    comment?: string,
+    assetReferences?: readonly string[],
+  ) => Promise<boolean>;
+  /** Sends one review photograph, when the shell can store one. */
+  onUploadPhoto?: (file: File) => Promise<MarketplacePhotoUploadOutcome>;
+  photoCapability?: MarketplacePhotoCapability;
   onReplyToReview: (review: MarketplaceReviewDto, comment: string) => Promise<boolean>;
   onReportReview: (
     review: MarketplaceReviewDto,
@@ -1017,6 +1026,8 @@ export function MarketplaceProductDetail({
   onFavorite,
   onOpen,
   onReview,
+  onUploadPhoto,
+  photoCapability,
   onReplyToReview,
   onReportReview,
   onRetry,
@@ -1190,7 +1201,9 @@ export function MarketplaceProductDetail({
         onReplyToReview={onReplyToReview}
         onReportReview={onReportReview}
         onReview={onReview}
+        onUploadPhoto={onUploadPhoto}
         pendingAction={pendingAction}
+        photoCapability={photoCapability}
         reviews={reviews}
         selfState={reviewSelfState}
         selfStateStatus={reviewSelfStateStatus}

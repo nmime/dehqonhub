@@ -105,6 +105,8 @@ export type SubmitMarketplaceSampleFeedbackDto = components['schemas']['SubmitMa
 export type ReplyMarketplaceReviewDto = components['schemas']['ReplyMarketplaceReviewDto'];
 export type ReportMarketplaceReviewDto = components['schemas']['ReportMarketplaceReviewDto'];
 export type MarketplaceReviewReportReceiptDto = components['schemas']['MarketplaceReviewReportReceiptDto'];
+export type MarketplacePhotographDto = components['schemas']['MarketplacePhotographDto'];
+export type MarketplacePhotographCapabilityDto = components['schemas']['MarketplacePhotographCapabilityDto'];
 export type BuyerRequestViewDto = components['schemas']['BuyerRequestViewDto'];
 export type BuyerRequestListDto = components['schemas']['BuyerRequestListDto'];
 export type CreateRequestDto = components['schemas']['CreateRequestDto'];
@@ -217,6 +219,7 @@ const notificationsPath = '/marketplace/notifications';
 const dashboardPath = '/marketplace/dashboard';
 const aiPath = '/marketplace/ai/consultations';
 const aiStarterCartPath = '/marketplace/ai/consultations/{id}/starter-cart';
+const photographsPath = '/marketplace/media';
 
 const commandHeader = (idempotencyKey: string) => ({ 'Idempotency-Key': idempotencyKey });
 
@@ -678,6 +681,31 @@ export const marketplaceControllerStoreContractDisputeEvidence = (
     params: { header: commandHeader(idempotencyKey), path: { id } },
   });
 };
+/**
+ * What this deployment can do with an uploaded photograph.
+ *
+ * Read before the control is offered, so a deployment without object storage
+ * says so instead of accepting a file it would have to drop. The limits travel
+ * with the answer, so the form refuses an oversized or unsupported file before
+ * spending a request on it.
+ */
+export const marketplaceMediaControllerGetCapability = (options?: ApiClientRequestOptions) =>
+  client.GET(photographsPath, toOpenApiFetchOptions(options));
+
+/**
+ * Upload one photograph.
+ *
+ * The body is `FormData`, so no layer sets `Content-Type` and the browser
+ * writes the multipart boundary itself; the route accepts exactly one file part
+ * named `photo` and no text fields. The response carries the opaque identifier
+ * plus the two reference shapes a listing and a review accept.
+ */
+export const marketplaceMediaControllerStorePhotograph = (photo: File, options?: ApiClientRequestOptions) => {
+  const body = new FormData();
+  body.append('photo', photo);
+  return client.POST(photographsPath, { ...toOpenApiFetchOptions(options), body: body as never });
+};
+
 export const marketplaceControllerGetContractLifecycle = (id: string, options?: ApiClientRequestOptions) =>
   client.GET(contractLifecyclePath, { ...toOpenApiFetchOptions(options), params: { path: { id } } });
 export const marketplaceControllerListNotifications = (options?: ApiClientRequestOptions) =>

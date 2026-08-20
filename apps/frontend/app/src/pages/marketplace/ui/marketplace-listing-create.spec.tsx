@@ -5,15 +5,16 @@ import type { MarketplaceData } from '../model/use-marketplace-data';
 import {
   MarketplaceListingCreate,
   marketplaceListingImageLimit,
-  marketplaceListingPhotoPaths,
   type MarketplaceListingOutcome,
   type MarketplaceListingSubmission,
 } from './marketplace-listing-create';
+import type { MarketplacePhotoCapability, MarketplacePhotoUploadOutcome } from './marketplace-photo-upload';
 import { marketplaceListingKindForRole, marketplaceListingSectionFor, type MarketplaceListing } from './marketplace-ui';
 
 const testState = vi.hoisted(() => {
   const createProduce = vi.fn();
   const createSupplierProduct = vi.fn();
+  const getPhotoCapability = vi.fn();
   const listSuggestions = vi.fn();
   const publishListing = vi.fn();
   return {
@@ -23,6 +24,7 @@ const testState = vi.hoisted(() => {
       agriTechOperationsControllerCreateProduce: createProduce,
       agriTechOperationsControllerCreateSupplierProduct: createSupplierProduct,
       marketplacePublicControllerListSuggestions: listSuggestions,
+      marketplaceMediaControllerGetCapability: getPhotoCapability,
       marketplacePublicationControllerPublishListing: publishListing,
     },
     createProduce,
@@ -91,6 +93,40 @@ const catalogListing: MarketplaceListing = {
 };
 
 const catalog = { data: [catalogListing], status: 'ready' as const };
+
+const photoCapability: MarketplacePhotoCapability = {
+  configured: true,
+  maximumByteSize: 5 * 1024 * 1024,
+  mediaTypes: ['image/jpeg', 'image/png', 'image/webp'],
+};
+
+/** Distinct 22-character identifiers, so each accepted upload has its own path. */
+const storedPhotoIds = ['AAAAAAAAAAAAAAAAAAAAAA', 'BBBBBBBBBBBBBBBBBBBBBB', 'CCCCCCCCCCCCCCCCCCCCCC'];
+
+const storingUploader = () => {
+  let index = 0;
+  return vi.fn((): Promise<MarketplacePhotoUploadOutcome> => {
+    const id = storedPhotoIds[index % storedPhotoIds.length] ?? storedPhotoIds[0]!;
+    index += 1;
+    return Promise.resolve({
+      path: `/marketplace/media/${id}`,
+      reference: `public-asset:${id}`,
+      status: 'stored',
+    });
+  });
+};
+
+const photoFile = (name: string, type = 'image/webp', size = 1024) => {
+  const file = new File(['x'], name, { type });
+  Object.defineProperty(file, 'size', { value: size });
+  return file;
+};
+
+const fileField = () => document.querySelector<HTMLInputElement>('input[type="file"]')!;
+
+const choose = (files: readonly File[]) => {
+  fireEvent.change(fileField(), { target: { files } });
+};
 
 const renderCreate = (
   overrides: Partial<Parameters<typeof MarketplaceListingCreate>[0]> = {},
@@ -172,28 +208,96 @@ describe('MarketplaceListingCreate', () => {
     expect(screen.queryByLabelText('agritech.marketplace.newListing.field.cropTitle')).toBeNull();
   });
 
-  it('offers the farmer the produce fields, no per-locale titles and no photographs', () => {
-    renderCreate({ kind: 'produce' });
+  it('offers the farmer the produce fields, no per-locale titles and its own photographs', () => {
+    renderCreate({ kind: 'produce', onUploadPhoto: storingUploader(), photoCapability });
 
     expect(screen.getByLabelText('agritech.marketplace.newListing.field.cropTitle')).toBeTruthy();
     expect(screen.getByLabelText('agritech.marketplace.filter.grade')).toBeTruthy();
     expect(screen.getByLabelText('agritech.marketplace.newListing.field.availableUntil')).toBeTruthy();
     expect(screen.queryByLabelText('agritech.marketplace.newListing.field.titleRu')).toBeNull();
     expect(screen.queryByLabelText('agritech.marketplace.filter.category')).toBeNull();
-    // Produce has no image column at all, and the screen says so instead of
-    // offering a picker whose result could not be stored.
-    expect(document.querySelector('[data-listing-photos="unsupported"]')).toBeTruthy();
-    expect(document.querySelector('.dh-listing-photos')).toBeNull();
+    // A harvest now carries its own photographs, so the field is the same one a
+    // seller gets rather than an explanation of why there is none.
+    expect(document.querySelector('input[type="file"]')).toBeTruthy();
   });
 
-  it('states that a photograph from the device cannot be stored', () => {
-    renderCreate();
+  it('offers an ordinary file field accepting exactly the photograph types the API stores', () => {
+    renderCreate({ onUploadPhoto: storingUploader(), photoCapability });
 
-    expect(document.querySelector('[data-listing-photos="device"]')?.textContent).toBe(
-      'agritech.marketplace.newListing.photos.deviceUnavailable',
+    const field = fileField();
+    expect(field.accept).toBe('image/jpeg,image/png,image/webp');
+    expect(field.multiple).toBe(true);
+    // No `capture`: a phone must be free to offer its gallery, and a desktop its
+    // file picker, from this one control.
+    expect(field.getAttribute('capture')).toBeNull();
+    expect(field.disabled).toBe(false);
+    // The library picker is gone; nothing here offers someone else's photograph.
+    expect(document.querySelector('.dh-listing-photos')).toBeNull();
+    expect(screen.queryAllByRole('checkbox', { name: /wheat-grain/u })).toHaveLength(0);
+  });
+
+  it('says a deployment without object storage cannot keep a photograph, and offers no control', () => {
+    renderCreate({
+      onUploadPhoto: storingUploader(),
+      photoCapability: { ...photoCapability, configured: false },
+    });
+
+    expect(document.querySelector('[data-photo-upload="unconfigured"]')?.textContent).toBe(
+      'agritech.marketplace.photos.unavailable',
     );
-    expect(document.querySelectorAll<HTMLInputElement>('input[type="file"]')).toHaveLength(0);
-    expect(document.querySelectorAll('.dh-listing-photos li')).toHaveLength(marketplaceListingPhotoPaths.length);
+    expect(document.querySelector('input[type="file"]')).toBeNull();
+  });
+
+  it('refuses a file whose type or size the API would reject, naming the file and storing nothing', async () => {
+    const onUploadPhoto = storingUploader();
+    renderCreate({ onUploadPhoto, photoCapability });
+
+    choose([photoFile('scan.pdf', 'application/pdf'), photoFile('huge.webp', 'image/webp', 6 * 1024 * 1024)]);
+
+    await waitFor(() => {
+      expect(document.querySelectorAll('.dh-photo-upload__errors li')).toHaveLength(2);
+    });
+    const messages = [...document.querySelectorAll('.dh-photo-upload__errors li')].map((node) => node.textContent);
+    expect(messages[0]).toContain('agritech.marketplace.photos.error.type');
+    expect(messages[0]).toContain('scan.pdf');
+    expect(messages[1]).toContain('agritech.marketplace.photos.error.tooLarge');
+    expect(messages[1]).toContain('huge.webp');
+    expect(onUploadPhoto).not.toHaveBeenCalled();
+  });
+
+  it('reports a refused upload against the file that caused it and attaches nothing', async () => {
+    const onUploadPhoto = vi.fn((): Promise<MarketplacePhotoUploadOutcome> =>
+      Promise.resolve({ reason: 'storage', status: 'refused' }),
+    );
+    renderCreate({ onUploadPhoto, photoCapability });
+
+    choose([photoFile('bugdoy.webp')]);
+
+    await waitFor(() => {
+      expect(document.querySelector('.dh-photo-upload__errors li')?.textContent).toContain(
+        'agritech.marketplace.photos.error.storage',
+      );
+    });
+    expect(document.querySelector('.dh-photo-upload__errors li')?.textContent).toContain('bugdoy.webp');
+    expect(document.querySelectorAll('.dh-photo-upload__list li')).toHaveLength(0);
+  });
+
+  it('removes one uploaded photograph before the listing is submitted', async () => {
+    renderCreate({ onUploadPhoto: storingUploader(), photoCapability });
+
+    choose([photoFile('first.webp'), photoFile('second.webp')]);
+    await waitFor(() => {
+      expect(document.querySelectorAll('.dh-photo-upload__list li')).toHaveLength(2);
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /photos\.remove.*first\.webp/u }));
+
+    await waitFor(() => {
+      expect(document.querySelectorAll('.dh-photo-upload__list li')).toHaveLength(1);
+    });
+    expect(document.querySelector('.dh-photo-upload__list li img')?.getAttribute('src')).toBe(
+      `/marketplace/media/${storedPhotoIds[1]}`,
+    );
   });
 
   it('names every required field it refuses and does not call the server', () => {
@@ -277,10 +381,13 @@ describe('MarketplaceListingCreate', () => {
       submissions.push(submission);
       return Promise.resolve<MarketplaceListingOutcome>({ status: 'published' });
     });
-    renderCreate({}, onSubmit);
+    renderCreate({ onUploadPhoto: storingUploader(), photoCapability }, onSubmit);
     fillProductForm();
     fireEvent.click(screen.getByLabelText('agritech.marketplace.filter.sampleAvailable'));
-    fireEvent.click(screen.getAllByRole('checkbox', { name: /wheat-grain/u })[0]);
+    choose([photoFile('bugdoy.webp')]);
+    await waitFor(() => {
+      expect(document.querySelectorAll('.dh-photo-upload__list li')).toHaveLength(1);
+    });
 
     submitForm();
     submitForm();
@@ -294,7 +401,7 @@ describe('MarketplaceListingCreate', () => {
     expect(submissions[0]).toEqual({
       category: 'seed',
       description: 'Certified hybrid corn seed, 2026 harvest.',
-      images: ['/media/marketplace/wheat-grain.webp'],
+      images: [`/marketplace/media/${storedPhotoIds[0]}`],
       kind: 'product',
       name: 'Corn seed',
       nameRu: 'Corn seed',
@@ -308,15 +415,30 @@ describe('MarketplaceListingCreate', () => {
     });
   });
 
-  it('stops at the photograph limit rather than accepting a sixth', () => {
-    renderCreate();
-    const boxes = screen.getAllByRole('checkbox').filter((box) => box.closest('.dh-listing-photos'));
-    for (const box of boxes.slice(0, marketplaceListingImageLimit)) {
-      fireEvent.click(box);
-    }
+  it('stops at the photograph limit rather than uploading a sixth', async () => {
+    let minted = 0;
+    const onUploadPhoto = vi.fn((): Promise<MarketplacePhotoUploadOutcome> => {
+      minted += 1;
+      const id = `${minted}`.padStart(22, 'Z');
+      return Promise.resolve({
+        path: `/marketplace/media/${id}`,
+        reference: `public-asset:${id}`,
+        status: 'stored',
+      });
+    });
+    renderCreate({ onUploadPhoto, photoCapability });
 
-    expect(boxes.filter((box) => (box as HTMLInputElement).checked)).toHaveLength(marketplaceListingImageLimit);
-    expect((boxes[marketplaceListingImageLimit] as HTMLInputElement).disabled).toBe(true);
+    choose(Array.from({ length: marketplaceListingImageLimit + 1 }, (_, index) => photoFile(`photo-${index}.webp`)));
+
+    await waitFor(() => {
+      expect(document.querySelectorAll('.dh-photo-upload__list li')).toHaveLength(marketplaceListingImageLimit);
+    });
+    // The sixth file is never sent, and the actor is told which one was refused.
+    expect(onUploadPhoto).toHaveBeenCalledTimes(marketplaceListingImageLimit);
+    const refusal = document.querySelector('.dh-photo-upload__errors li')?.textContent;
+    expect(refusal).toContain('agritech.marketplace.photos.error.limit');
+    expect(refusal).toContain(`photo-${marketplaceListingImageLimit}.webp`);
+    expect(fileField().disabled).toBe(true);
   });
 
   it('shows a typed server refusal on the field the server named', async () => {

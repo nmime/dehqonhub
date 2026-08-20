@@ -13,13 +13,23 @@ condition the licence does not: one otherwise usable carrot photograph asked to
 be contacted before commercial use, so it is not here. A permissive licence tag
 alone is not enough to make a file safe to ship.
 
+These files are the **seeded demo catalogue's** photographs. They are not
+offered to sellers or farmers: the create form has one photograph source, a real
+file upload from the actor's own device, stored in object storage and served back
+by the API under `/marketplace/media/<opaque-id>` (see
+`libs/backend/feature/agritech/main/lib/src/marketplace-media.controller.ts`).
+Server-side validation accepts both reference shapes, because every seeded
+listing here points at this directory.
+
 They are checked in and served **same-origin** from this directory on purpose.
 Every deployment sends `img-src 'self' data:` (`docker/nginx-fullstack.conf`,
 `docker/nginx-spa.conf`, `.helm/templates/configmap.yaml`,
 `scripts/single-server-deployment.mjs`), so a remote photo host would resolve in
 a dev server and then silently fail in production. Referencing them by the
 root-relative `/media/marketplace/<name>.webp` path satisfies that policy with
-no configuration change.
+no configuration change, and so does the `/marketplace/media/<opaque-id>` path an
+upload returns — every deployment's reverse proxy already routes
+`/marketplace/*` to the user API from the page's own origin.
 
 The `/media/` prefix is not cosmetic. `/marketplace/` is a **reserved API
 namespace**: `frontendDevProxyRoutes` in
@@ -102,8 +112,9 @@ hand-maintained table to stay true:
   to; each row's `images` array names its photographs.
 - `packages/tooling/src/commands/db/marketplace-seed-publications.ts` — the
   approved public snapshots (`marketplace_listing_publications.public_images`),
-  including the produce section, whose source rows have no image column of their
-  own.
+  including the produce section. `produce_listings` now has its own `images`
+  column, so a farmer's uploaded photograph publishes through the normal
+  projection; the seeder still writes its snapshots directly.
 - `libs/backend/feature/agritech/main/lib/src/marketplace-demo-catalog.ts` — the
   feature-flagged demo catalog.
 
