@@ -14,6 +14,7 @@ import {
   type ValidationArguments,
   type ValidationOptions,
 } from 'class-validator';
+import { marketplacePublicProfileId } from '@app/backend-feature-agritech-shared';
 import type {
   AgriTechOwner,
   BuyerRequest,
@@ -325,6 +326,15 @@ export class ContractViewDto {
   @ApiProperty({ enum: ['buyer', 'seller'] }) actorParty!: 'buyer' | 'seller';
   @ApiProperty({ type: MarketplacePartySnapshotDto }) buyerPartySnapshot!: MarketplacePartySnapshotDto;
   @ApiProperty({ type: MarketplacePartySnapshotDto }) sellerPartySnapshot!: MarketplacePartySnapshotDto;
+  @ApiProperty({
+    description:
+      'Opaque public profile address of the buying organization, so a deal screen can link to the counterparty. ' +
+      'It is derived, carries no partner, user or tenant identifier, and resolves only while that party keeps a ' +
+      'moderated public presence.',
+  })
+  buyerProfileId!: string;
+  @ApiProperty({ description: 'Opaque public profile address of the selling organization.' })
+  sellerProfileId!: string;
   @ApiPropertyOptional({ enum: ['cart_checkout', 'offer_selection'] }) sourceType?: ContractSourceType;
   @ApiProperty() subject!: string;
   @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) amountUzs!: number;
@@ -370,6 +380,11 @@ export function toContractSelfView(contract: Contract, owner: AgriTechOwner): Co
       legalName: contract.sellerPartySnapshot.legalName,
       region: contract.sellerPartySnapshot.region,
     },
+    // Both counterparty addresses are derived from the bound partner rows rather
+    // than copied from them, so the deal screen can offer a profile link without
+    // a private partner id ever reaching the browser or the URL.
+    buyerProfileId: marketplacePublicProfileId(contract.buyerPartnerId),
+    sellerProfileId: marketplacePublicProfileId(contract.sellerPartnerId),
     ...(contract.sourceType === undefined ? {} : { sourceType: contract.sourceType }),
     subject: contract.subject,
     amountUzs: contract.amountUzs,

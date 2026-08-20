@@ -15,6 +15,7 @@ import {
   type MarketplaceEngagementRepository,
   type MarketplaceFavoriteMutationResult,
   type MarketplaceFavoriteView,
+  type MarketplaceOwnReviews,
   type MarketplaceReviewModerationItem,
   type MarketplaceReviewModerationResult,
   type MarketplaceReviewPage,
@@ -237,6 +238,19 @@ export class MarketplaceEngagementDomainService {
       return { canReview: false, listingPublicationId };
     }
     return unwrap(result, 'marketplace-review-state');
+  }
+
+  /**
+   * The caller's own review record, in both directions.
+   *
+   * There is no demo fallback here on purpose. The demo catalog exists so an
+   * empty marketplace still has something to browse; a personal review history
+   * that borrowed fixture rows would be a claim about what this account did, and
+   * an account that has neither written nor received a review has to be able to
+   * say exactly that.
+   */
+  listOwnReviews(owner: AgriTechOwner): Promise<MarketplaceOwnReviews> {
+    return this.repository.listOwnReviews(owner).then((result) => unwrap(result, 'marketplace-own-reviews'));
   }
 
   replyToReview(

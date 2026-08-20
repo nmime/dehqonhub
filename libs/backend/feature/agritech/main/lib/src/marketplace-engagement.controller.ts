@@ -36,6 +36,7 @@ import { MarketplaceEngagementService } from './marketplace-engagement.service';
 import {
   MarketplaceFavoriteListDto,
   MarketplaceFavoriteMutationDto,
+  MarketplaceOwnReviewsDto,
   MarketplaceReviewDto,
   MarketplaceReviewPageDto,
   MarketplaceReviewReportReceiptDto,
@@ -45,6 +46,7 @@ import {
   MarketplaceSampleUsageDto,
   toMarketplaceFavoriteDto,
   toMarketplaceFavoriteMutationDto,
+  toMarketplaceOwnReviewsDto,
   toMarketplaceReviewDto,
   toMarketplaceReviewPageDto,
   toMarketplaceReviewReportReceiptDto,
@@ -278,6 +280,22 @@ export class MarketplaceEngagementController {
         await this.service.submitReview(ownerFrom(principal), input, requireIdempotencyKey(idempotencyKey)),
       ),
     );
+  }
+
+  /**
+   * The caller's own review record: what they wrote, what their listings
+   * received, and the completed purchases they may still rate.
+   *
+   * The per-listing reads cannot answer this. `GET reviews/state/:id` needs a
+   * listing to ask about, and the public projection is author-free by design, so
+   * a cabinet had no way to find the caller's own rows at all. This read is
+   * declared before the parameterized review routes so `mine` is never taken for
+   * a review identifier.
+   */
+  @Get('reviews/mine')
+  @ApiOkDataResponse(MarketplaceOwnReviewsDto)
+  async listOwnReviews(@CurrentUser() principal: AuthenticatedPrincipal) {
+    return createOkResponse(toMarketplaceOwnReviewsDto(await this.service.listOwnReviews(ownerFrom(principal))));
   }
 
   /**

@@ -28,6 +28,9 @@ function fixture() {
     listFavorites: vi.fn().mockResolvedValue([{ listingPublicationId }]),
     listPublicReviews: vi.fn().mockResolvedValue(ok({ aggregate: { reviewCount: 1 }, items: [{ id: 'review-1' }] })),
     listReviewModerationQueue: vi.fn().mockResolvedValue([{ id: 'report-1' }]),
+    listOwnReviews: vi
+      .fn()
+      .mockResolvedValue(ok({ awaitingReview: [], received: [], written: [{ review: { id: 'review-1' } }] })),
     listSamples: vi.fn().mockResolvedValue([{ id: 'sample-1' }]),
     moderateReviewReport: vi.fn().mockResolvedValue(ok({ decision: 'hidden' })),
     removeFavorite: vi.fn().mockResolvedValue(ok({ favorited: false })),
@@ -55,6 +58,33 @@ describe('MarketplaceEngagementDomainService favorites and reads', () => {
 
     expect(repository.addFavorite).toHaveBeenCalledWith(owner, listingPublicationId, key);
     expect(repository.removeFavorite).toHaveBeenCalledWith(owner, listingPublicationId, key);
+  });
+
+  /**
+   * The own-review read has no demo fallback, unlike `listPublicReviews`. A demo
+   * fixture standing in for a personal review history would be a claim about what
+   * this account did, so an account with no reviews answers with empty lists and a
+   * repository refusal stays a refusal.
+   */
+  it('reads the caller own review record without ever substituting demo rows', async () => {
+    const { repository, service } = fixture();
+
+    await expect(service.listOwnReviews(owner)).resolves.toEqual({
+      awaitingReview: [],
+      received: [],
+      written: [{ review: { id: 'review-1' } }],
+    });
+    expect(repository.listOwnReviews).toHaveBeenCalledWith(owner);
+
+    repository.listOwnReviews.mockResolvedValue(ok({ awaitingReview: [], received: [], written: [] }));
+    await expect(service.listOwnReviews(owner)).resolves.toEqual({
+      awaitingReview: [],
+      received: [],
+      written: [],
+    });
+
+    repository.listOwnReviews.mockResolvedValue({ status: 'forbidden' });
+    await expect(service.listOwnReviews(owner)).rejects.toThrow(ForbiddenException);
   });
 
   /**
