@@ -139,6 +139,7 @@ export class PostgresAgriTechOperationsRepository implements AgriTechOperationsR
       sampleAvailable: input.sampleAvailable ?? false,
       region: input.region,
       status: input.stockQuantity === 0 ? 'out_of_stock' : 'active',
+      images: input.images ?? [],
     });
     this.em.persist(entity);
     await this.em.flush();

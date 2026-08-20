@@ -28677,6 +28677,15 @@
           },
           "region": {
             "type": "string"
+          },
+          "images": {
+            "description": "Root-relative same-origin listing photographs, at most five.",
+            "example": ["/media/marketplace/wheat-grain.webp"],
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
           }
         },
         "required": ["partnerId", "name", "category", "description", "priceUzs", "unit", "stockQuantity", "region"]

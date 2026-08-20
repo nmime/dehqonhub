@@ -1397,6 +1397,13 @@ export interface components {
       /** @default false */
       sampleAvailable: boolean;
       region: string;
+      /**
+       * @description Root-relative same-origin listing photographs, at most five.
+       * @example [
+       *       "/media/marketplace/wheat-grain.webp"
+       *     ]
+       */
+      images?: string[];
     };
     SupplierProductViewDto: {
       /** Format: uuid */

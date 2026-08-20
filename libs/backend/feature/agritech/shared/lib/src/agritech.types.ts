@@ -49,6 +49,12 @@ export interface SupplierProductInput {
   stockQuantity: number;
   sampleAvailable?: boolean;
   region: string;
+  /**
+   * Root-relative same-origin listing photographs. The publication projection
+   * copies at most five of them into the public snapshot, so this is the one
+   * writable image carrier a seller-side listing has.
+   */
+  images?: string[];
 }
 
 export interface SupplierProduct {

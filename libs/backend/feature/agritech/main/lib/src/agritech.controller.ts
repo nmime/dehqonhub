@@ -3,6 +3,8 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patc
 import { ApiParam, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsDate,
   IsBoolean,
   IsIn,
@@ -43,6 +45,27 @@ const productCategories = ['fertilizer', 'seed', 'pesticide', 'equipment', 'irri
 const deliveryStatuses = ['assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'] as const;
 const maximumIntegerQuantity = 2_147_483_647;
 const maximumSupplierPriceUzs = 9_999_999_999_999;
+/**
+ * How many photographs one listing may carry.
+ *
+ * `ck__marketplace_listing_publications__content` refuses a snapshot holding
+ * more than five images, and the publication projection slices the source array
+ * to the same bound. Rejecting the sixth here tells the seller which field is
+ * wrong instead of letting the photograph disappear at publication time.
+ */
+const maximumSupplierProductImages = 5;
+/**
+ * The only shape a listing photograph may take.
+ *
+ * Listing images are root-relative paths into the checked-in, same-origin media
+ * directory. Every deployment sends `img-src 'self' data:`, so a URL to any
+ * other host resolves in a dev server and then silently fails in production,
+ * and `/marketplace/` is a reserved API namespace. Pinning the prefix, the
+ * character class and the extension rejects a remote host, a traversal segment
+ * and a non-image path in one predicate rather than storing a string the
+ * catalog cannot render.
+ */
+const supplierProductImagePattern = /^\/media\/marketplace\/[a-z0-9]+(?:-[a-z0-9]+)*\.webp$/u;
 
 class CreatePartnerDto {
   @ApiProperty({ enum: partnerKinds }) @IsIn(partnerKinds) kind!: 'supplier' | 'buyer';
@@ -88,6 +111,18 @@ class CreateSupplierProductDto {
   stockQuantity!: number;
   @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() sampleAvailable?: boolean;
   @ApiProperty() @IsString() region!: string;
+  @ApiPropertyOptional({
+    description: 'Root-relative same-origin listing photographs, at most five.',
+    example: ['/media/marketplace/wheat-grain.webp'],
+    maxItems: maximumSupplierProductImages,
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(maximumSupplierProductImages)
+  @IsString({ each: true })
+  @Matches(supplierProductImagePattern, { each: true })
+  images?: string[];
 }
 
 class UpdateSupplierProductDto {
