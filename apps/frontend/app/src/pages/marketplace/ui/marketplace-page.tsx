@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type
 import './marketplace.css';
 import { observer, useI18n } from '@app/frontend-runtime';
 import { useLogout } from '@app/frontend-feature-user-logout';
+import { usePublicProfile } from '../model/use-public-profile';
 import {
   isApiClientError,
   throwOnOpenApiError,
@@ -23,6 +24,7 @@ import {
   type VerificationViewDto,
 } from '@app/frontend-api-client';
 import { LanguageSwitcher } from '../../../shared/ui';
+import { useActiveDeals, type ActiveDeal } from '../model/use-active-deals';
 import { useGuestCart, type GuestCartLine } from '../model/use-guest-cart';
 import { useGuestFavorites } from '../model/use-guest-favorites';
 import { useMarketplaceNotices } from '../model/use-marketplace-notices';
@@ -48,6 +50,7 @@ import {
   MarketplaceSellerProfile,
   MarketplaceSkeleton,
 } from './marketplace-discovery';
+import { MarketplaceDeals } from './marketplace-deals';
 import { MarketplaceIcon } from './marketplace-icon';
 import { MarketplaceBrandLockup, MarketplaceEmblem } from './marketplace-brand';
 import { MarketplaceUserManagement } from './marketplace-management';
@@ -182,6 +185,9 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
   // sign-out control is unreachable from inside it.
   const { model: logoutModel, signOut } = useLogout({ navigate });
   const data = useMarketplaceData(productId, sellerId);
+  // Read here rather than inside the seller view: the page owns every resource this
+  // tree renders, which is what keeps the views renderable from plain props.
+  const sellerPublicProfile = usePublicProfile(data.seller.data?.id, 'seller');
   const guestCart = useGuestCart();
   const guestFavorites = useGuestFavorites();
   const { dismiss: dismissNotice, flash, notices } = useMarketplaceNotices();
@@ -376,6 +382,21 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
         contract.lines.some((line) => line.sourcePublicationId === selectedProduct.id),
     ),
   );
+  const canActOnContract = useCallback(
+    (contract: ContractViewDto) => canMutateContractForRole(contract, canBuy, canOffer),
+    [canBuy, canOffer],
+  );
+  /**
+   * Deals in flight. The per-deal lifecycle read only happens on the route that
+   * shows it; the header badge is derived from the contract list the whole page
+   * already carries, so no other route pays for this screen.
+   */
+  const deals = useActiveDeals({
+    canAct: canActOnContract,
+    contracts: data.contracts,
+    enabled: view === 'deals',
+    signedIn: data.auth === 'signed-in',
+  });
 
   const mutationError = useCallback(
     (error: unknown) => {
@@ -977,9 +998,26 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
       translate('agritech.marketplace.contract.settlement.advanced'),
       (result) => {
         setContractLifecycle({ data: result, status: 'ready' });
+        // The command answers with the fresh lifecycle, so the deals card that
+        // submitted it re-reads its own next action without a second request.
+        deals.apply(contract.id, result);
       },
       `lifecycle:${contract.id}:${JSON.stringify(action)}`,
     );
+  };
+
+  /**
+   * The one action a deals card offers. `sign` and `command` are the only kinds
+   * that reach here: an `open` action is a link the card follows itself.
+   */
+  const actOnDeal = (deal: ActiveDeal) => {
+    if (deal.action.kind === 'sign') {
+      signContract(deal.contract);
+      return;
+    }
+    if (deal.action.command) {
+      advanceContractLifecycle(deal.contract, deal.action.command);
+    }
   };
 
   const quoteContractDelivery = (contract: ContractViewDto, input: MarketplaceContractDeliveryQuoteInput) => {
@@ -1399,7 +1437,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     ...(transactionAccess?.hint ? { transactionHint: transactionAccess.hint } : {}),
   };
 
-  const privateView = view === 'account' || view === 'contract' || view === 'verification';
+  const privateView = view === 'account' || view === 'contract' || view === 'deals' || view === 'verification';
   const catalogView = view === 'catalog' || view === 'home';
   const authChecking = privateView && data.auth === 'checking';
   const authSignedOut = privateView && data.auth === 'signed-out';
@@ -1466,7 +1504,14 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
           );
           break;
         case 'seller':
-          rendered = <MarketplaceSellerProfile {...productActions} catalog={data.sellerCatalog} seller={data.seller} />;
+          rendered = (
+            <MarketplaceSellerProfile
+              {...productActions}
+              catalog={data.sellerCatalog}
+              publicProfile={sellerPublicProfile}
+              seller={data.seller}
+            />
+          );
           break;
         case 'favorites':
           rendered = (
@@ -1633,6 +1678,22 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
             />
           );
           break;
+        case 'deals':
+          rendered = (
+            <MarketplaceDeals
+              deals={deals}
+              locale={locale}
+              navigate={navigate}
+              onAct={actOnDeal}
+              onRetry={() => {
+                deals.reload();
+                data.refresh();
+              }}
+              {...(pendingAction === undefined ? {} : { pendingAction })}
+              t={translate}
+            />
+          );
+          break;
         case 'contract':
           rendered = (
             <MarketplaceContract
@@ -1671,12 +1732,14 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
       <MarketplaceHeader
         activeSection={querySection()}
         cartCount={visibleCarts.data.reduce((count, cart) => count + cart.items.length, 0)}
+        dealsBadge={deals.awaitingConsent}
         favoriteCount={favoriteIds.size}
         navigate={navigate}
         onSearch={submitSearch}
         onSelectSuggestion={selectSuggestion}
         search={search}
         setSearch={setSearch}
+        signedIn={data.auth === 'signed-in'}
         suggestions={searchSuggestions}
         t={translate}
         verificationStatus={data.verification.data?.status}
@@ -1761,12 +1824,14 @@ function MarketplaceEmbeddedPage({
       <MarketplaceHeader
         activeSection="all"
         cartCount={0}
+        dealsBadge={0}
         favoriteCount={0}
         navigate={navigate}
         onSearch={submitSearch}
         onSelectSuggestion={() => undefined}
         search={search}
         setSearch={setSearch}
+        signedIn={false}
         suggestions={{ data: [], status: 'idle' }}
         t={translate}
         view="embedded"
@@ -1810,12 +1875,16 @@ function MarketplaceNotice({
 interface HeaderProps {
   activeSection: MarketplaceSection;
   cartCount: number;
+  /** In-flight deals awaiting this actor's own consent; see `dealsAwaitingConsent`. */
+  dealsBadge: number;
   favoriteCount: number;
   navigate: MarketplaceNavigate;
   onSearch: (event: SyntheticEvent<HTMLFormElement>) => void;
   onSelectSuggestion: (suggestion: MarketplacePublicSuggestionDto) => void;
   search: string;
   setSearch: (value: string) => void;
+  /** The deals entry is private work, so it only exists for a signed-in visitor. */
+  signedIn: boolean;
   suggestions: Resource<MarketplacePublicSuggestionDto[]>;
   t: MarketplaceTranslate;
   verificationStatus?: string;
@@ -1825,12 +1894,14 @@ interface HeaderProps {
 function MarketplaceHeader({
   activeSection,
   cartCount,
+  dealsBadge,
   favoriteCount,
   navigate,
   onSearch,
   onSelectSuggestion,
   search,
   setSearch,
+  signedIn,
   suggestions,
   t,
   verificationStatus,
@@ -1915,6 +1986,18 @@ function MarketplaceHeader({
           ) : null}
         </div>
         <nav aria-label={t('agritech.marketplace.accessibility.primaryNavigation')} className="dh-header__nav">
+          {signedIn ? (
+            <HeaderAction
+              active={view === 'deals' || view === 'contract'}
+              badge={dealsBadge}
+              badgeLabel={t('agritech.marketplace.deals.badge', { count: dealsBadge })}
+              icon="contract"
+              label={t('agritech.marketplace.deals.nav')}
+              onClick={() => {
+                navigate('/deals');
+              }}
+            />
+          ) : null}
           <HeaderAction
             active={view === 'requests'}
             icon="orders"
@@ -1982,16 +2065,20 @@ function MarketplaceHeader({
 function HeaderAction({
   active,
   badge,
+  badgeLabel,
   icon,
   label,
   onClick,
 }: Readonly<{
   active: boolean;
   badge?: number;
-  icon: 'account' | 'cart' | 'heart' | 'orders' | 'shield';
+  /** What the badge counts, said in words, because the glyph and the digit cannot. */
+  badgeLabel?: string;
+  icon: 'account' | 'cart' | 'contract' | 'heart' | 'orders' | 'shield';
   label: string;
   onClick: () => void;
 }>) {
+  const badgeAttributes = badgeLabel ? { 'aria-label': badgeLabel } : {};
   return (
     <button
       aria-current={active ? 'page' : undefined}
@@ -2001,7 +2088,7 @@ function HeaderAction({
     >
       <span>
         <MarketplaceIcon name={icon} />
-        {badge ? <em>{badge}</em> : null}
+        {badge ? <em {...badgeAttributes}>{badge}</em> : null}
       </span>
       <small>{label}</small>
     </button>

@@ -6388,3 +6388,296 @@ label.dh-check {
   margin-bottom: 1rem;
   padding: 0.75rem 1rem;
 }
+
+/* Deals in flight: lanes by who is waiting, and the next action per deal. */
+/* Deals in flight.
+
+   Every rule below is scoped to the deals route and reuses the marketplace
+   tokens and shapes: cream ground, one green accent, 999px pills, 24px cards
+   inside 32px panels, and the 4/8px spacing grid. Nothing here restyles a
+   shared class. The identical block is handed to the owner of marketplace.css;
+   if it is folded in there, delete this file and its import in
+   marketplace-deals.tsx. */
+
+.dh-deals-page > .dh-page-heading {
+  align-items: baseline;
+  gap: 0.875rem;
+}
+
+/* The lane is a panel whose left edge names who it is waiting on, so the three
+   answers are separable at a glance without three different card designs. */
+.dh-deals-lane {
+  border-left: 4px solid var(--dh-border);
+}
+
+.dh-deals-lane--you {
+  border-left-color: var(--dh-green);
+}
+
+.dh-deals-lane--counterparty {
+  border-left-color: var(--dh-border);
+}
+
+.dh-deals-lane--stalled {
+  border-left-color: var(--dh-warning);
+}
+
+.dh-deal-cards {
+  display: grid;
+  gap: 1rem;
+}
+
+.dh-deal-card {
+  background: var(--dh-surface-muted);
+  border: 1px solid var(--dh-border);
+  border-radius: 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.dh-deal-card__head {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.dh-deal-card__head h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.dh-deal-card__head .dh-eyebrow {
+  margin-bottom: 0.25rem;
+}
+
+.dh-deal-card__facts {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  margin: 0;
+}
+
+.dh-deal-card__facts dt {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.dh-deal-card__facts dd {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* The stage sentence is the card's own explanation of the state the API reports,
+   so it sits between the facts and the single action it justifies. */
+.dh-deal-card__stage {
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  border-radius: 1rem;
+  color: var(--dh-ink);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+}
+
+.dh-deal-card__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.dh-deal-card__actions > .dh-button {
+  min-height: 2.75rem;
+}
+
+@media (max-width: 40rem) {
+  .dh-deal-card__head {
+    flex-direction: column;
+  }
+
+  .dh-deal-card__actions > .dh-button {
+    width: 100%;
+  }
+}
+
+/* The account's own review record: what it wrote and what it received. */
+/* One column of review cards on the same plain surface the product page uses,
+   so a review reads the same wherever it appears. */
+.dh-cabinet-review-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dh-cabinet-review {
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.dh-cabinet-review p {
+  margin: 0;
+}
+
+/* The listing and the rating share the top line and stack before they collide:
+   a long listing title must never squeeze the rating out of the card. */
+.dh-cabinet-review__head {
+  align-items: baseline;
+  column-gap: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  row-gap: 0.25rem;
+}
+
+/* The listing is a link to the listing, so it keeps the link affordance rather
+   than looking like a heading that happens to be clickable. */
+.dh-cabinet-review__listing {
+  flex: 1 1 12rem;
+  font-weight: 700;
+  min-width: 0;
+  text-align: left;
+}
+
+.dh-cabinet-review__rating {
+  align-items: baseline;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.75rem;
+}
+
+/* The rating is the value, printed as text. Tabular figures keep `4/5` and
+   `5/5` the same width down a column so the ratings line up as a column of
+   numbers rather than drifting with the glyphs. */
+.dh-cabinet-review__rating strong {
+  color: var(--dh-green-strong);
+  font-family: var(--dh-font-display);
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.dh-cabinet-review__rating span {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+}
+
+/* Which side of the deal this row records. Both lists sit on one screen, so
+   every row says whose reputation it belongs to on its own. */
+.dh-cabinet-review__party {
+  color: var(--dh-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.dh-cabinet-review__comment {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.dh-cabinet-review__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+/* Purchases still owed a rating. Green because it is the one actionable block on
+   the screen; it is rendered only when the server holds a real unused
+   completed-contract eligibility, never as a general hint. */
+.dh-cabinet-review-invitations {
+  background: var(--dh-green-soft);
+  border: 1px solid color-mix(in srgb, var(--dh-green-strong) 24%, transparent);
+  border-radius: 1.5rem;
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem 1.125rem;
+}
+
+.dh-cabinet-review-invitations > p {
+  font-weight: 700;
+  margin: 0;
+}
+
+/* The rows inherit `.dh-cabinet-rows`; only the divider needs to change, because
+   a green panel needs a divider that reads against green rather than cream. */
+.dh-cabinet-review-invitations .dh-cabinet-rows > li {
+  border-top-color: color-mix(in srgb, var(--dh-green-strong) 18%, transparent);
+}
+
+.dh-cabinet-review-invitations .dh-cabinet-rows > li > button:hover {
+  background: color-mix(in srgb, var(--dh-surface) 60%, transparent);
+}
+
+@media (max-width: 40rem) {
+  /* On a phone the rating drops under the title instead of fighting it for the
+     line; the value stays text either way. */
+  .dh-cabinet-review__head {
+    flex-direction: column;
+  }
+
+  .dh-cabinet-review__rating {
+    flex: 1 1 auto;
+  }
+}
+
+/* Public profile: role chips, fact rows, review attribution, closing note. */
+.dh-profile-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.dh-profile-facts {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.dh-profile-facts > div {
+  border-bottom: 1px solid var(--dh-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: space-between;
+  padding-block: 0.75rem;
+}
+
+.dh-profile-facts > div:last-child {
+  border-bottom: 0;
+}
+
+.dh-profile-facts dt {
+  color: var(--dh-muted);
+  font-size: 0.8125rem;
+}
+
+.dh-profile-facts dd {
+  font-weight: 600;
+  margin: 0;
+  text-align: right;
+}
+
+.dh-profile-review__meta {
+  align-items: center;
+  color: var(--dh-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+}
+
+.dh-profile-boundary {
+  font-size: 0.75rem;
+  margin: 0.5rem 0 0;
+}
