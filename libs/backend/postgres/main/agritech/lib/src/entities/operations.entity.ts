@@ -63,6 +63,7 @@ export class ProduceListingEntity {
   sampleAvailable = false;
   pricePerKgUzs!: number;
   region!: string;
+  images: string[] = [];
   availableFrom!: Date;
   availableUntil!: Date;
   status: ProduceStatus = 'active';
@@ -84,6 +85,7 @@ export const ProduceListingEntitySchema = new EntitySchema<ProduceListingEntity>
     sampleAvailable: { type: 'boolean', fieldName: 'sample_available', default: false },
     pricePerKgUzs: { type: 'decimal', precision: 15, scale: 2, fieldName: 'price_per_kg_uzs' },
     region: { type: 'varchar', length: 100 },
+    images: { type: 'jsonb', defaultRaw: "'[]'::jsonb" },
     availableFrom: { type: 'timestamptz', fieldName: 'available_from' },
     availableUntil: { type: 'timestamptz', fieldName: 'available_until' },
     status: { type: 'varchar', length: 20, default: 'active' },
@@ -101,6 +103,10 @@ export const ProduceListingEntitySchema = new EntitySchema<ProduceListingEntity>
     {
       name: 'ck__produce_listings__price_per_kg_uzs_integer',
       expression: `"price_per_kg_uzs" between 1 and 9999999999999 and "price_per_kg_uzs" = trunc("price_per_kg_uzs")`,
+    },
+    {
+      name: 'ck__produce_listings__images',
+      expression: `jsonb_typeof("images") = 'array' and jsonb_array_length("images") <= 5`,
     },
   ],
 });

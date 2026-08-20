@@ -22,6 +22,20 @@ export class PostgresSessionStore implements BackendSessionStore {
     private readonly sweepIntervalMs: number,
   ) {
     this.pool = new Pool({ connectionString: databaseUrl });
+    /*
+     * An idle client whose connection dies emits 'error' on the pool, and pg
+     * installs no listener of its own: Node then raises it as an uncaught
+     * exception and the process exits. Stopping the database took the whole auth
+     * service down with it - "terminating connection due to administrator
+     * command" from a pooled client nobody was using.
+     *
+     * The pool discards the broken client by itself and opens a fresh one on the
+     * next request, so there is nothing to repair here; this listener exists so
+     * an operational blip is not fatal. Reachability is reported by the database
+     * health check, which is the authoritative signal for it, so swallowing here
+     * hides nothing an operator needs.
+     */
+    this.pool.on('error', () => undefined);
   }
 
   async init(): Promise<void> {

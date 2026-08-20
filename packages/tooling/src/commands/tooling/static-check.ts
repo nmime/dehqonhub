@@ -213,16 +213,22 @@ export const thinLocaleCatalogFileNames = [
   "user/agritech-marketplace-discovery.json",
   "user/agritech-marketplace-catalog.json",
   "user/agritech-marketplace-product.json",
+  "user/agritech-marketplace-profile.json",
   "user/agritech-marketplace-cart-samples.json",
   "user/agritech-marketplace-requests.json",
   "user/agritech-marketplace-offers.json",
   "user/agritech-marketplace-contract-status.json",
   "user/agritech-marketplace-contracts.json",
   "user/agritech-marketplace-engagement.json",
+  "user/agritech-marketplace-reviews.json",
   "user/agritech-marketplace-lifecycle.json",
   "user/agritech-marketplace-management.json",
+  "user/agritech-marketplace-deals.json",
+  "user/agritech-marketplace-new-listing.json",
+  "user/agritech-marketplace-photos.json",
   "user/agritech-marketplace-verification.json",
   "user/agritech-marketplace-account-ai.json",
+  "user/agritech-marketplace-cabinet.json",
   "bots/shared.json",
   "bots/telegram.json",
   "bots/discord.json",
@@ -1885,7 +1891,7 @@ function removeReviewedTechnicalLatin(value: string): string {
       .replace(/https?:\/\/[^\s]+|[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}|`[^`]+`|\/[a-z][\w-]*/giu, '')
       .replace(/\b[A-Z][A-Z0-9_.+-]{1,}\b/gu, '')
       .replace(
-        /\b(?:AgriTech|AgroUz|DehqonHub|Discord|Fastify|GitHub|Google|MailPace|MikroORM|Nest React Boilerplate|NestJS|OneID|OpenID|Payme|PostgreSQL|Redis|Telegram|WebAuthn)\b/gu,
+        /\b(?:AgriTech|AgroUz|DehqonHub|Discord|Fastify|GitHub|Google|MailPace|MikroORM|Nest React Boilerplate|NestJS|OneID|OpenID|Payme|PostgreSQL|Redis|Telegram|WebAuthn|WebP)\b/gu,
         '',
       );
   } while (remaining !== previous);

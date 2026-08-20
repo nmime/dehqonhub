@@ -11,6 +11,8 @@
   "agritech.marketplace.contract.simulationDisclosure": "Simulyatsiya — tashqi provayder amali bajarilmadi",
   "agritech.marketplace.contract.simulationWatermark": "Yaratilgan hujjatda simulyatsiya suv belgisi bor.",
   "agritech.marketplace.contract.artifactUnavailable": "Yaratilgan shartnoma fayli hali mavjud emas.",
+  "agritech.marketplace.contract.settlement.notStarted": "To'lov hali boshlanmadi",
+  "agritech.marketplace.contract.settlement.notStartedDescription": "Hisob-kitob shartnomani ikki tomon imzolagach ochiladi.",
   "agritech.marketplace.contract.refreshArtifact": "Fayl ma’lumotini yangilash",
   "agritech.marketplace.contract.artifactRefreshed": "Fayl ma’lumoti yangilandi",
   "agritech.marketplace.contract.downloadArtifact": "PDF yuklab olish",

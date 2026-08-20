@@ -9,6 +9,7 @@ import {
 import type { AgriTechOperationsRepository, OperationResult } from '@app/backend-feature-agritech-shared';
 import { AgriTechNotificationPublisher } from './agritech-notification.publisher';
 import { AgriTechOperationsService } from './agritech.service';
+import type { MarketplaceMediaService } from './marketplace-media.service';
 
 const owner = { tenantId: 'tenant-1', userId: 'user-1' };
 const now = new Date('2026-08-02T00:00:00Z');
@@ -99,12 +100,17 @@ function fixture() {
     deliveryScheduled: vi.fn().mockResolvedValue(undefined),
     produceReserved: vi.fn().mockResolvedValue(undefined),
   };
+  // A listing may only carry photographs the listing owner uploaded, so the
+  // guard is a collaborator the delegation test can observe.
+  const media = { requireOwnedReferences: vi.fn().mockResolvedValue(undefined) };
   return {
     repository,
     notifications,
+    media,
     service: new AgriTechOperationsService(
       repository as unknown as AgriTechOperationsRepository,
       notifications as unknown as AgriTechNotificationPublisher,
+      media as unknown as MarketplaceMediaService,
     ),
   };
 }

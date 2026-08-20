@@ -70,6 +70,9 @@ export type MarketplacePublicCatalogPageDto = components['schemas']['Marketplace
 export type MarketplacePublicRequestDto = components['schemas']['MarketplacePublicRequestDto'];
 export type MarketplacePublicRequestPageDto = components['schemas']['MarketplacePublicRequestPageDto'];
 export type MarketplacePublicSellerDto = components['schemas']['MarketplacePublicSellerDto'];
+export type MarketplacePublicProfileDto = components['schemas']['MarketplacePublicProfileDto'];
+export type MarketplacePublicProfileReviewDto = components['schemas']['MarketplacePublicProfileReviewDto'];
+export type MarketplacePublicProfileReputationDto = components['schemas']['MarketplacePublicProfileReputationDto'];
 export type MarketplacePublicSuggestionDto = components['schemas']['MarketplacePublicSuggestionDto'];
 export type MarketplacePublicSuggestionListDto = components['schemas']['MarketplacePublicSuggestionListDto'];
 export type MarketplaceListingPublicationDto = components['schemas']['MarketplaceListingPublicationDto'];
@@ -92,12 +95,18 @@ export type MarketplaceSampleUsageDto = components['schemas']['MarketplaceSample
 export type RequestMarketplaceSampleDto = components['schemas']['RequestMarketplaceSampleDto'];
 export type MarketplaceReviewDto = components['schemas']['MarketplaceReviewDto'];
 export type MarketplaceReviewPageDto = components['schemas']['MarketplaceReviewPageDto'];
+export type MarketplaceReviewSelfStateDto = components['schemas']['MarketplaceReviewSelfStateDto'];
+export type MarketplaceOwnReviewDto = components['schemas']['MarketplaceOwnReviewDto'];
+export type MarketplaceOwnReviewInvitationDto = components['schemas']['MarketplaceOwnReviewInvitationDto'];
+export type MarketplaceOwnReviewsDto = components['schemas']['MarketplaceOwnReviewsDto'];
 export type SubmitMarketplaceReviewDto = components['schemas']['SubmitMarketplaceReviewDto'];
 export type TransitionMarketplaceSampleDto = components['schemas']['TransitionMarketplaceSampleDto'];
 export type SubmitMarketplaceSampleFeedbackDto = components['schemas']['SubmitMarketplaceSampleFeedbackDto'];
 export type ReplyMarketplaceReviewDto = components['schemas']['ReplyMarketplaceReviewDto'];
 export type ReportMarketplaceReviewDto = components['schemas']['ReportMarketplaceReviewDto'];
 export type MarketplaceReviewReportReceiptDto = components['schemas']['MarketplaceReviewReportReceiptDto'];
+export type MarketplacePhotographDto = components['schemas']['MarketplacePhotographDto'];
+export type MarketplacePhotographCapabilityDto = components['schemas']['MarketplacePhotographCapabilityDto'];
 export type BuyerRequestViewDto = components['schemas']['BuyerRequestViewDto'];
 export type BuyerRequestListDto = components['schemas']['BuyerRequestListDto'];
 export type CreateRequestDto = components['schemas']['CreateRequestDto'];
@@ -172,6 +181,8 @@ const sampleFeedbackPath = '/marketplace/samples/{sampleId}/feedback';
 const favoritesPath = '/marketplace/favorites';
 const favoritePath = '/marketplace/favorites/{listingPublicationId}';
 const reviewsPath = '/marketplace/reviews';
+const ownReviewsPath = '/marketplace/reviews/mine';
+const reviewSelfStatePath = '/marketplace/reviews/state/{listingPublicationId}';
 const reviewReplyPath = '/marketplace/reviews/{reviewId}/reply';
 const reviewReportsPath = '/marketplace/reviews/{reviewId}/reports';
 const publicCatalogPath = '/marketplace/public/catalog';
@@ -179,6 +190,8 @@ const publicCatalogSuggestionsPath = '/marketplace/public/catalog/suggestions';
 const publicCatalogListingPath = '/marketplace/public/catalog/{listingId}';
 const publicSellerPath = '/marketplace/public/sellers/{sellerId}';
 const publicSellerCatalogPath = '/marketplace/public/sellers/{sellerId}/catalog';
+const publicProfilePath = '/marketplace/public/profiles/{profileId}';
+const publicSellerProfilePath = '/marketplace/public/sellers/{sellerId}/profile';
 const publicRequestsPath = '/marketplace/public/requests';
 const publicReviewsPath = '/marketplace/public/catalog/{listingPublicationId}/reviews';
 const listingPublicationPath = '/marketplace/publications/listings';
@@ -206,6 +219,7 @@ const notificationsPath = '/marketplace/notifications';
 const dashboardPath = '/marketplace/dashboard';
 const aiPath = '/marketplace/ai/consultations';
 const aiStarterCartPath = '/marketplace/ai/consultations/{id}/starter-cart';
+const photographsPath = '/marketplace/media';
 
 const commandHeader = (idempotencyKey: string) => ({ 'Idempotency-Key': idempotencyKey });
 
@@ -311,6 +325,19 @@ export const marketplacePublicControllerGetListing = (listingId: string, options
   });
 export const marketplacePublicControllerGetSeller = (sellerId: string, options?: ApiClientRequestOptions) =>
   client.GET(publicSellerPath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { sellerId } },
+  });
+export const marketplacePublicProfileControllerGetProfile = (profileId: string, options?: ApiClientRequestOptions) =>
+  client.GET(publicProfilePath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { profileId } },
+  });
+export const marketplacePublicProfileControllerGetSellerProfile = (
+  sellerId: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.GET(publicSellerProfilePath, {
     ...toOpenApiFetchOptions(options),
     params: { path: { sellerId } },
   });
@@ -488,6 +515,16 @@ export const marketplaceControllerAddReview = (
     body,
     params: { header: commandHeader(idempotencyKey) },
   });
+export const marketplaceControllerListOwnReviews = (options?: ApiClientRequestOptions) =>
+  client.GET(ownReviewsPath, toOpenApiFetchOptions(options));
+export const marketplaceControllerGetReviewSelfState = (
+  listingPublicationId: string,
+  options?: ApiClientRequestOptions,
+) =>
+  client.GET(reviewSelfStatePath, {
+    ...toOpenApiFetchOptions(options),
+    params: { path: { listingPublicationId } },
+  });
 export const marketplaceControllerReplyToReview = (
   reviewId: string,
   body: ReplyMarketplaceReviewDto,
@@ -644,6 +681,31 @@ export const marketplaceControllerStoreContractDisputeEvidence = (
     params: { header: commandHeader(idempotencyKey), path: { id } },
   });
 };
+/**
+ * What this deployment can do with an uploaded photograph.
+ *
+ * Read before the control is offered, so a deployment without object storage
+ * says so instead of accepting a file it would have to drop. The limits travel
+ * with the answer, so the form refuses an oversized or unsupported file before
+ * spending a request on it.
+ */
+export const marketplaceMediaControllerGetCapability = (options?: ApiClientRequestOptions) =>
+  client.GET(photographsPath, toOpenApiFetchOptions(options));
+
+/**
+ * Upload one photograph.
+ *
+ * The body is `FormData`, so no layer sets `Content-Type` and the browser
+ * writes the multipart boundary itself; the route accepts exactly one file part
+ * named `photo` and no text fields. The response carries the opaque identifier
+ * plus the two reference shapes a listing and a review accept.
+ */
+export const marketplaceMediaControllerStorePhotograph = (photo: File, options?: ApiClientRequestOptions) => {
+  const body = new FormData();
+  body.append('photo', photo);
+  return client.POST(photographsPath, { ...toOpenApiFetchOptions(options), body: body as never });
+};
+
 export const marketplaceControllerGetContractLifecycle = (id: string, options?: ApiClientRequestOptions) =>
   client.GET(contractLifecyclePath, { ...toOpenApiFetchOptions(options), params: { path: { id } } });
 export const marketplaceControllerListNotifications = (options?: ApiClientRequestOptions) =>

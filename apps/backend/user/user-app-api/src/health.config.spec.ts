@@ -147,6 +147,28 @@ describe('UserAppHealthServiceProvider', () => {
     await expect(service.checkReadiness()).resolves.toMatchObject({ data: { status: 'error' } });
   });
 
+  it('never reports a required database check that skipped its round trip as healthy', async () => {
+    const runtime = fakeRuntime('postgres');
+    const service = createService(createUserAppHealthServiceProvider(), {
+      ...runtime,
+      healthIndicators: [
+        {
+          name: 'postgres',
+          check: () => ({
+            name: 'postgres',
+            status: 'ok' as const,
+            details: { skipped: true, reason: 'not_configured' },
+          }),
+        },
+        ...runtime.healthIndicators.slice(1),
+      ],
+    });
+
+    await expect(findCheck(service, 'database')).resolves.toMatchObject({ status: 'error', required: true });
+    await expect(service.checkReadiness()).resolves.toMatchObject({ data: { status: 'error' } });
+    await expect(service.checkLiveness()).resolves.toMatchObject({ data: { status: 'ok' } });
+  });
+
   it('preserves extra Postgres indicator names as optional dependencies', async () => {
     const runtime = fakeRuntime('postgres');
     const service = createService(createUserAppHealthServiceProvider(), {

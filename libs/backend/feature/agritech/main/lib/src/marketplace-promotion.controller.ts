@@ -46,7 +46,10 @@ export class MarketplaceListingPromotionDto implements MarketplaceListingPromoti
   @ApiProperty({ format: 'date-time' }) endsAt!: Date;
   @ApiProperty({ minimum: 1, type: 'integer' }) priceUzs!: number;
   @ApiProperty({ enum: ['UZS'] }) currency!: 'UZS';
-  @ApiProperty({ description: 'Internal activation audit reference; it is not a payment receipt.' })
+  @ApiProperty({
+    description:
+      'Internal activation audit reference. The charge itself lives in the promotion_billing provider operation ledger, not here.',
+  })
   activationReference!: string;
   @ApiProperty({ format: 'date-time' }) activatedAt!: Date;
   @ApiProperty({ minimum: 0, type: 'integer' }) revision!: number;
@@ -70,7 +73,7 @@ class MarketplacePromotionPlanListDto {
 }
 
 @ApiTags('marketplace-promotions')
-@ApiExceptions(400, 401, 403, 404, 409, 500)
+@ApiExceptions(400, 401, 403, 404, 409, 500, 503)
 @ApiSessionCookieAuth()
 @Controller('marketplace/promotions')
 export class MarketplacePromotionController {

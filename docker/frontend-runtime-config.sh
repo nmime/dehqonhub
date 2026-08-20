@@ -110,6 +110,9 @@ fi
   echo 'window.__APP_RUNTIME_CONFIG__ = {'
   emit_flag telegramAuthEnabled "${TELEGRAM_AUTH_ENABLED:-}"
   emit_flag discordAuthEnabled "${DISCORD_AUTH_ENABLED:-}"
+  # Reviewer credential access ships enabled; REVIEWER_ACCESS_ENABLED=false is the
+  # one switch that hides the published demo reviewer identities.
+  emit_flag reviewerAccessEnabled "${REVIEWER_ACCESS_ENABLED:-}"
   emit_url userAppUrl "${LANDING_USER_APP_URL:-}"
   emit_url adminAppUrl "${LANDING_ADMIN_APP_URL:-}"
   echo '};'

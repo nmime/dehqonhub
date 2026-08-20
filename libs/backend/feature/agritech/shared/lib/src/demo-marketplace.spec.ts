@@ -1,6 +1,12 @@
 // @requirements REQ-AGRITECH-MARKETPLACE-016
 import { describe, expect, it } from 'vitest';
-import { DemoBuyerRequests, demoProductReviews, demoReviewPage, filterDemoBuyerRequests } from './demo-marketplace';
+import {
+  DemoBuyerRequests,
+  DemoRatedListingPublicationIds,
+  demoProductReviews,
+  demoReviewPage,
+  filterDemoBuyerRequests,
+} from './demo-marketplace';
 
 describe('demo marketplace activity', () => {
   it('marks every fixture as demo content the routes can parse as an id', () => {
@@ -34,24 +40,43 @@ describe('demo marketplace activity', () => {
     expect(filterDemoBuyerRequests()).toHaveLength(3);
   });
 
-  it('reads the ratings of a demo product, and nothing for a product without any', () => {
-    const seedReviews = demoProductReviews('dec0de00-0000-4000-8000-000000000001');
+  // Demo ratings are filed under the publication ids the demo catalog publishes,
+  // because that is what the public reviews read is addressed by. Keyed by the
+  // private product id, as they once were, the fixture could never be fetched.
+  it('reads the ratings of a demo publication, newest first, and nothing for one without any', () => {
+    const cottonSeed = demoProductReviews('9d000000-0000-4000-8000-000000000101');
 
-    expect(seedReviews.map((review) => review.rating)).toEqual([5, 4]);
-    expect(demoProductReviews('dec0de00-0000-4000-8000-000000000011')).toHaveLength(1);
-    expect(demoProductReviews('dec0de00-0000-4000-8000-000000000099')).toEqual([]);
+    expect(cottonSeed.map((review) => review.rating)).toEqual([5, 4, 5]);
+    expect(cottonSeed.map((review) => review.createdAt.toISOString())).toEqual([
+      '2026-07-11T07:25:00.000Z',
+      '2026-06-02T14:40:00.000Z',
+      '2026-05-18T09:12:00.000Z',
+    ]);
+    expect(demoProductReviews('9d000000-0000-4000-8000-000000000102')).toHaveLength(2);
+    // Two of the six demo listings are deliberately unrated.
+    expect(demoProductReviews('9d000000-0000-4000-8000-000000000103')).toEqual([]);
+    expect(demoProductReviews('dec0de00-0000-4000-8000-000000000001')).toEqual([]);
+  });
+
+  it('files every demo rating under a publication the demo catalog actually publishes', () => {
+    expect(DemoRatedListingPublicationIds).toHaveLength(4);
+    for (const id of DemoRatedListingPublicationIds) {
+      expect(id).toMatch(/^9d000000-0000-4000-8000-0000000001\d{2}$/u);
+      expect(demoProductReviews(id).length).toBeGreaterThan(0);
+    }
   });
 
   // The aggregate is derived from the rows beside it, so the header of the block
   // can never disagree with the reviews underneath it.
   it('aggregates the demo ratings of a publication, and answers nothing without any', () => {
-    expect(demoReviewPage('dec0de00-0000-4000-8000-000000000001')?.aggregate).toEqual({
-      averageRating: 4.5,
-      listingPublicationId: 'dec0de00-0000-4000-8000-000000000001',
-      reviewCount: 2,
+    expect(demoReviewPage('9d000000-0000-4000-8000-000000000101')?.aggregate).toEqual({
+      // 5 + 5 + 4 over three reviews is 4.666…, published as one decimal.
+      averageRating: 4.7,
+      listingPublicationId: '9d000000-0000-4000-8000-000000000101',
+      reviewCount: 3,
       revision: 1,
     });
-    expect(demoReviewPage('dec0de00-0000-4000-8000-000000000011')?.aggregate.averageRating).toBe(5);
-    expect(demoReviewPage('dec0de00-0000-4000-8000-000000000099')).toBeUndefined();
+    expect(demoReviewPage('9d000000-0000-4000-8000-000000000102')?.aggregate.averageRating).toBe(4.5);
+    expect(demoReviewPage('9d000000-0000-4000-8000-000000000103')).toBeUndefined();
   });
 });

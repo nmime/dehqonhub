@@ -9,6 +9,7 @@ requirements:
   - id: REQ-RUNTIME-HEALTH-001
     projects:
       - '@app/backend-common-health'
+      - '@app/backend-postgres-main'
     risk: high
     profiles:
       - domain
@@ -23,6 +24,12 @@ requirements:
       - kind: vitest
         file: libs/backend/common/health/lib/src/health.service.spec.ts
         target: '@app/backend-common-health:test'
+        lanes:
+          - pr
+          - main
+      - kind: vitest
+        file: libs/backend/postgres/main/shared/lib/src/postgres.module.spec.ts
+        target: '@app/backend-postgres-main:test'
         lanes:
           - pr
           - main

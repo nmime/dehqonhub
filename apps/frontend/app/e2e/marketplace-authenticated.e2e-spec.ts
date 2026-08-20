@@ -784,19 +784,18 @@ test('account entry stays focused while progressive registration preserves its n
   await expect(page.getByLabel('Register email')).toHaveValue('dilnoza@example.com');
 
   await page.setViewportSize({ height: 812, width: 760 });
-  await page.getByRole('button', { name: 'Theme' }).last().click();
-  await page.getByRole('menuitem', { name: 'Dark' }).click();
+  // The product ships one light palette, so account entry offers no theme control.
+  await expect(page.getByRole('button', { name: 'Theme' })).toHaveCount(0);
   await expect(page).toHaveURL(accountRoute);
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   await page.setViewportSize({ height: 812, width: 375 });
-  await expectNoHorizontalOverflow(page, '375px progressive registration black theme');
+  await expectNoHorizontalOverflow(page, '375px progressive registration');
 
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.getByRole('heading', { name: 'Sign in to DehqonHub' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Email verification' })).toBeVisible();
 });
 
-test('reference-led public marketplace keeps local favorites and a polished black theme', async ({ page }) => {
+test('reference-led public marketplace keeps local favorites on one light palette', async ({ page }) => {
   await page.setViewportSize({ height: 812, width: 375 });
   await page.emulateMedia({ reducedMotion: 'reduce' });
   const consoleErrors: string[] = [];
@@ -834,13 +833,15 @@ test('reference-led public marketplace keeps local favorites and a polished blac
   await expect(
     page.getByRole('heading', { level: 1, name: "Uzbekistan's entire agro market — on one platform" }),
   ).toBeVisible();
-  await expect(page.getByRole('heading', { name: 'Explore the governed demo catalog' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Demo reviewer accounts' })).toBeVisible();
+  await expect(page.getByText('Demo accounts')).toBeVisible();
   await expect(page.getByText('dehqon@demo.dehqonhub.uz')).toBeVisible();
   await expect(page.getByText('sotuvchi@demo.dehqonhub.uz')).toBeVisible();
   await expect(page.getByText('xaridor@demo.dehqonhub.uz')).toBeVisible();
   await expect(page.locator('.dh-brand__wordmark').first()).toContainText('DehqonHub');
-  await expect(page.locator('.dh-brand__mark img')).toHaveCount(0);
-  await expect(page.locator('svg.dh-brand__mark')).toHaveCount(2);
+  await expect(page.locator('svg.dh-brand__mark')).toHaveCount(0);
+  await expect(page.locator('img.dh-brand__mark')).toHaveCount(2);
+  await expect(page.locator('img.dh-brand__mark').first()).toHaveAttribute('alt', '');
   await expect(page.getByRole('button', { name: 'Language' }).last()).toContainText('EN');
   await expectNoHorizontalOverflow(page, '375px reference home');
 
@@ -862,7 +863,9 @@ test('reference-led public marketplace keeps local favorites and a polished blac
     .toBe(true);
 
   const demoCard = page.locator('article').filter({ hasText: demoListing.title });
-  await demoCard.getByRole('button', { name: 'Add to preview cart' }).click();
+  // Both the restricted and the authenticated add action read plainly "Add to
+  // cart", so the card locator is what keeps this unambiguous.
+  await demoCard.getByRole('button', { name: 'Add to cart', exact: true }).click();
   await expect
     .poll(() =>
       page.evaluate((id) => localStorage.getItem('dehqonhub.marketplace.guest-cart.v1')?.includes(id), demoListing.id),
@@ -870,23 +873,20 @@ test('reference-led public marketplace keeps local favorites and a polished blac
     .toBe(true);
   await page.getByRole('button', { name: 'Cart' }).last().click();
   await expect(page).toHaveURL(/\/cart$/u);
-  await expect(
-    page.getByText(
-      'This preview stays on this device. Sign in and complete verification before a server cart can create a contract.',
-    ),
-  ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Continue to sign in' })).toBeVisible();
+  // The checkout control names the one step this visitor has to clear, and its own
+  // label carries that step: the generic preview sentence would also have told an
+  // already signed-in, verified actor to sign in.
+  await expect(page.getByText('Sign in to use this marketplace action.')).toBeVisible();
+  await expect(page.locator('.dh-cart-summary .dh-button--primary')).toHaveText('Sign in');
   await page.getByRole('button', { name: 'DehqonHub' }).first().click();
   await expect(
     page.getByRole('heading', { level: 1, name: "Uzbekistan's entire agro market — on one platform" }),
   ).toBeVisible();
 
-  const theme = page.getByRole('button', { name: 'Theme' }).last();
-  const publicRouteBeforeThemeChange = page.url();
-  await theme.click();
-  await page.getByRole('menuitem', { name: 'Dark' }).click();
-  await expect(page).toHaveURL(publicRouteBeforeThemeChange);
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  // The product ships one light palette and exposes no theme control anywhere in
+  // the marketplace shell.
+  await expect(page.getByRole('button', { name: 'Theme' })).toHaveCount(0);
+  const publicRouteBeforeLocaleChange = page.url();
   const visualTokens = await page.evaluate(() => {
     const root = document.querySelector<HTMLElement>('.dh-marketplace');
     const catalogButton = document.querySelector<HTMLElement>('.dh-button--catalog');
@@ -902,7 +902,7 @@ test('reference-led public marketplace keeps local favorites and a polished blac
       paddingRight: buttonStyle.paddingRight,
     };
   });
-  expect(visualTokens.background).toBe('rgb(13, 17, 14)');
+  expect(visualTokens.background).toBe('rgb(250, 240, 222)');
   expect(visualTokens.fontFamily).toContain('Poppins');
   expect(visualTokens.paddingLeft).toBe(visualTokens.paddingRight);
   expect(
@@ -917,7 +917,9 @@ test('reference-led public marketplace keeps local favorites and a polished blac
   await expect(
     page.getByRole('heading', { level: 1, name: 'Весь агрорынок Узбекистана — на одной платформе' }),
   ).toBeVisible();
-  await expectNoHorizontalOverflow(page, '375px Russian black theme');
+  // A locale change is a presentation change: it must not move the route.
+  await expect(page).toHaveURL(publicRouteBeforeLocaleChange);
+  await expectNoHorizontalOverflow(page, '375px Russian light palette');
   expect(
     consoleErrors.filter(
       (message) => message !== 'Failed to load resource: the server responded with a status of 401 (Unauthorized)',
@@ -992,17 +994,20 @@ for (const viewport of viewports) {
 
     await page.goto('/catalog');
     const liveListingCard = page.locator('article').filter({ hasText: listing.title });
-    await expect(liveListingCard.getByRole('button', { name: 'Add to preview cart' })).toBeEnabled();
-    await expect(liveListingCard.getByText('Complete marketplace verification to use this action.')).toBeVisible();
-    await expect(liveListingCard.getByRole('button', { name: 'Open verification' })).toBeVisible();
+    const liveCartAction = liveListingCard.getByRole('button', { name: 'Add to cart', exact: true });
+    await expect(liveCartAction).toBeEnabled();
+    // The eligibility reason is announced on the action and stated once above the
+    // grid; it is no longer printed under every card.
+    await expect(liveListingCard.locator('.dh-state-inline')).toHaveCount(0);
+    await expect(liveCartAction).toHaveAttribute('aria-describedby', /marketplace-product-.*-restriction/u);
+    const catalogAccessNotice = page.locator('.dh-main > .dh-access-notice');
+    await expect(catalogAccessNotice).toHaveCount(1);
+    await expect(catalogAccessNotice).toContainText('Complete marketplace verification to use this action.');
+    await expect(catalogAccessNotice.getByRole('button', { name: 'Open verification' })).toBeVisible();
     const demoListingCard = page.locator('article').filter({ hasText: demoListing.title });
     await expect(demoListingCard.getByText('Demo', { exact: true })).toBeVisible();
-    await expect(demoListingCard.getByRole('button', { name: 'Add to preview cart' })).toBeEnabled();
-    await expect(
-      demoListingCard.getByText(
-        'This is synthetic preview data. Browse it freely; transactions and engagement are disabled.',
-      ),
-    ).toBeVisible();
+    await expect(demoListingCard.getByRole('button', { name: 'Add to cart', exact: true })).toBeEnabled();
+    await expect(demoListingCard.locator('.dh-state-inline')).toHaveCount(0);
     await expectNoHorizontalOverflow(page, `${viewport.name} progressive catalog`);
 
     fixture.useVerifiedVerification();

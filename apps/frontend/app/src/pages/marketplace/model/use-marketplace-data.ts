@@ -27,6 +27,7 @@ import {
 } from '@app/frontend-api-client';
 import { createApiRuntimeFetch } from '@app/frontend-api-support';
 import {
+  marketplaceRoleCanBuy,
   toMarketplaceListing,
   toMarketplaceRequestFeedItem,
   type MarketplaceListing,
@@ -72,6 +73,15 @@ const offerResourceStatus = (hasFailure: boolean, hasOffers: boolean): ResourceS
   return hasOffers ? 'ready' : 'empty';
 };
 
+/**
+ * The offer endpoints are keyed by the request *publication* id, not by the request
+ * row id. Passing the request id made every owned-request offer read answer 404,
+ * the failure was swallowed, and a buyer read "no offers yet" on a request that had
+ * offers. An unpublished request has no publication id at all: it is skipped here
+ * and reported as awaiting moderation by the view, never as an empty offer list.
+ */
+const offerPublicationId = (request: BuyerRequestViewDto): string | undefined => request.publicationId;
+
 const initialUsage: MarketplaceSampleUsageDto = {
   limit: 5,
   period: 'current',
@@ -85,11 +95,18 @@ interface VerificationResourceAccess {
   sampleUsage: boolean;
 }
 
+/**
+ * The sample allowance is a buying figure, and `GET /marketplace/samples/usage`
+ * derives its buying party from `marketplaceBuyerRoles` — `farmer` and
+ * `buyer`. Reading it as `role === 'buyer'` withheld the quota from the one
+ * role that may buy everything, so a verified farmer saw no allowance for a
+ * request the server would have answered.
+ */
 const resourceAccessForVerification = (verification: VerificationViewDto | null): VerificationResourceAccess => {
   if (verification?.status !== 'verified') {
     return { dashboard: false, sampleUsage: false };
   }
-  return { dashboard: true, sampleUsage: verification.role === 'buyer' };
+  return { dashboard: true, sampleUsage: marketplaceRoleCanBuy(verification.role) };
 };
 
 const beginOptionalResourceLoad = <T>(resource: Resource<T>, enabled: boolean, disabled: Resource<T>): Resource<T> =>
@@ -210,7 +227,11 @@ export function useMarketplaceData(listingPublicationId?: string, sellerPublicId
     }));
 
     const [catalogResult, requestsResult, listingResult, sellerResult, sellerCatalogResult] = await Promise.allSettled([
-      throwOnOpenApiErrorData(api.marketplacePublicControllerListCatalog({}, requestOptions)),
+      // The catalog defaults to a 20-item page, which silently turned every filter
+      // and sort below into a filter over the first page. `limit` is the API's
+      // maximum; a catalog outgrowing it needs the server-side filters and the
+      // cursor this screen still does not pass.
+      throwOnOpenApiErrorData(api.marketplacePublicControllerListCatalog({ limit: 50 }, requestOptions)),
       throwOnOpenApiErrorData(api.marketplacePublicControllerListRequests({}, requestOptions)),
       listingPublicationId
         ? throwOnOpenApiErrorData(api.marketplacePublicControllerGetListing(listingPublicationId, requestOptions))
@@ -329,11 +350,17 @@ export function useMarketplaceData(listingPublicationId?: string, sellerPublicId
           setOffersByRequest({ data: {}, status: 'empty' });
           return;
         }
+        const publishedRequests = data.items.filter((request) => offerPublicationId(request) !== undefined);
+        if (publishedRequests.length === 0) {
+          setOffersByRequest({ data: {}, status: 'empty' });
+          return;
+        }
         const pairs = await Promise.all(
-          data.items.map(async (request): Promise<readonly [string, OfferViewDto[] | undefined]> => {
+          publishedRequests.map(async (request): Promise<readonly [string, OfferViewDto[] | undefined]> => {
             try {
               const offers = await throwOnOpenApiErrorData(
-                api.marketplaceControllerListOffers(request.id, requestOptions),
+                // Keyed by the publication id the offer endpoints actually accept.
+                api.marketplaceControllerListOffers(offerPublicationId(request) as string, requestOptions),
               );
               return [request.id, offers.items] as const;
             } catch {

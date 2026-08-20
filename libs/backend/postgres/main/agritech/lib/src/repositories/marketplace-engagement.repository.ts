@@ -4,6 +4,7 @@ import { EntityManager } from '@mikro-orm/postgresql';
 import { Inject, Injectable } from '@nestjs/common';
 import {
   marketplaceEngagementFingerprint,
+  marketplaceReviewAverageRating,
   marketplaceSampleDefaultMonthlyLimit,
   marketplaceSampleTransitionTarget,
   marketplaceUtcMonthKey,
@@ -15,11 +16,15 @@ import {
   type MarketplaceEngagementRepository,
   type MarketplaceFavoriteMutationResult,
   type MarketplaceFavoriteView,
+  type MarketplaceOwnReviewEntry,
+  type MarketplaceOwnReviewInvitation,
+  type MarketplaceOwnReviews,
   type MarketplaceReviewAggregateView,
   type MarketplaceReviewModerationItem,
   type MarketplaceReviewModerationResult,
   type MarketplaceReviewPage,
   type MarketplaceReviewReportReceipt,
+  type MarketplaceReviewSelfState,
   type MarketplaceReviewView,
   type MarketplaceSamplePolicyView,
   type MarketplaceSampleUsageView,
@@ -33,6 +38,7 @@ import {
   type SubmitMarketplaceSampleFeedbackInput,
   type TransitionMarketplaceSampleInput,
 } from '@app/backend-feature-agritech-shared';
+import { marketplaceCapabilityRoleFilter, marketplaceSellerRoleFilter } from './marketplace-role-predicates';
 import { FarmerEntity } from '../entities/farmer.entity';
 import { MarketplacePartnerMembershipEntity } from '../entities/marketplace-commerce.entity';
 import { MarketplaceContractReviewEligibilityEntity } from '../entities/marketplace-contract-lifecycle.entity';
@@ -255,11 +261,17 @@ const reviewView = (
   verifiedDeal: true,
 });
 
+/**
+ * The published rating block for one publication. The average comes from the
+ * shared one-decimal rule rather than the raw quotient: `rating_sum` over
+ * `review_count` is exact but publishes values like 4.666666666666667, and the
+ * count travels with it so the rounding can be checked against the rows.
+ */
 const aggregateView = (
   listingPublicationId: string,
   entity?: MarketplaceReviewAggregateEntity,
 ): MarketplaceReviewAggregateView => ({
-  averageRating: entity && entity.reviewCount > 0 ? entity.ratingSum / entity.reviewCount : null,
+  averageRating: entity ? marketplaceReviewAverageRating(entity.ratingSum, entity.reviewCount) : null,
   listingPublicationId,
   reviewCount: entity?.reviewCount ?? 0,
   revision: entity?.revision ?? 0,
@@ -405,7 +417,7 @@ async function findAuthorizedParty(
     em.findOne(
       VerificationEntity,
       {
-        role: capability === 'buyer' ? 'buyer' : { $in: ['farmer', 'seller'] },
+        role: marketplaceCapabilityRoleFilter(capability),
         status: 'verified',
         tenantId: owner.tenantId,
         userId: owner.userId,
@@ -512,7 +524,7 @@ async function resolveEligibleListing(
     em.findOne(
       VerificationEntity,
       {
-        role: { $in: ['farmer', 'seller'] },
+        role: marketplaceSellerRoleFilter(),
         status: 'verified',
         tenantId: seller.tenantId,
         userId: seller.ownerUserId,
@@ -640,6 +652,108 @@ async function resolveStoredListing(
     sellerRevision,
     source,
   };
+}
+
+const isPresent = <T>(value: T | undefined): value is T => value !== undefined;
+
+/**
+ * The seller organizations this caller may currently read reviews for.
+ *
+ * Membership alone is not the bar: the organization must still be an approved
+ * supplier and the caller must still hold a verified seller verification, which
+ * is the same triple `findAuthorizedParty` checks before it lets a seller reply.
+ * Re-deriving it per read is what makes a revoked membership or a withdrawn
+ * approval take effect immediately instead of at the next write.
+ */
+async function activeSellerPartnerIds(em: EntityManager, owner: AgriTechOwner): Promise<string[]> {
+  const memberships = await em.find(
+    MarketplacePartnerMembershipEntity,
+    { capability: 'seller', status: 'active', tenantId: owner.tenantId, userId: owner.userId },
+    { limit: maximumPrivateListSize, orderBy: { createdAt: 'ASC', id: 'ASC' } },
+  );
+  if (memberships.length === 0) {
+    return [];
+  }
+  const [partners, verification] = await Promise.all([
+    em.find(AgriTechPartnerEntity, {
+      id: { $in: memberships.map((membership) => membership.partnerId) },
+      kind: 'supplier',
+      status: 'approved',
+      tenantId: owner.tenantId,
+    }),
+    em.findOne(VerificationEntity, {
+      role: marketplaceSellerRoleFilter(),
+      status: 'verified',
+      tenantId: owner.tenantId,
+      userId: owner.userId,
+    }),
+  ]);
+  return verification ? partners.map((partner) => partner.id) : [];
+}
+
+/** One allowlisted summary per distinct publication, for a batch of reviews. */
+async function listingSummaries(
+  em: EntityManager,
+  listingPublicationIds: readonly string[],
+): Promise<Map<string, MarketplaceEngagementListingSummary>> {
+  const summaries = new Map<string, MarketplaceEngagementListingSummary>();
+  for (const listingPublicationId of new Set(listingPublicationIds)) {
+    // Sequential on purpose: one EntityManager holds one connection inside the
+    // transaction, so fanning these out would interleave queries on it.
+    // eslint-disable-next-line no-await-in-loop
+    const listing = await resolveStoredListing(em, listingPublicationId);
+    if (listing) {
+      summaries.set(listingPublicationId, listingSummary(listing));
+    }
+  }
+  return summaries;
+}
+
+/**
+ * The completed purchases this caller has not rated yet.
+ *
+ * A caller with no single active buyer organization has no eligibility to read,
+ * which is an empty invitation list rather than an error: the written and
+ * received sides still have to render for them.
+ */
+async function pendingReviewInvitations(
+  em: EntityManager,
+  owner: AgriTechOwner,
+): Promise<MarketplaceOwnReviewInvitation[]> {
+  const buyer = await deriveBuyerParty(em, owner);
+  if (buyer.status !== 'ok') {
+    return [];
+  }
+  const eligibilities = await em.find(
+    MarketplaceContractReviewEligibilityEntity,
+    {
+      buyerPartnerId: buyer.value.partner.id,
+      buyerTenantId: owner.tenantId,
+      buyerUserId: owner.userId,
+    },
+    { limit: maximumPrivateListSize, orderBy: { createdAt: 'DESC', id: 'ASC' } },
+  );
+  if (eligibilities.length === 0) {
+    return [];
+  }
+  const consumed = await em.find(MarketplaceListingReviewEntity, {
+    reviewEligibilityId: { $in: eligibilities.map((eligibility) => eligibility.id) },
+  });
+  const consumedIds = new Set(consumed.map((review) => review.reviewEligibilityId));
+  const open = eligibilities.filter((eligibility) => !consumedIds.has(eligibility.id));
+  // Only a still-eligible listing may be offered: an invitation to rate a listing
+  // the write path would refuse is worse than no invitation at all.
+  const invitations: MarketplaceOwnReviewInvitation[] = [];
+  for (const eligibility of open) {
+    // Sequential for the same reason `listFavorites` is: one connection, and the
+    // eligibility filter takes read locks it must not race itself for.
+    // eslint-disable-next-line no-await-in-loop
+    const listing = await resolveEligibleListing(em, eligibility.sourcePublicationId, false);
+    if (listing) {
+      invitations.push({ completedAt: eligibility.createdAt, listing: listingSummary(listing) });
+    }
+  }
+  return invitations;
 }
 
 async function activePolicy(
@@ -1213,6 +1327,135 @@ export class PostgresMarketplaceEngagementRepository implements MarketplaceEngag
       return ok({
         aggregate: aggregateView(listingPublicationId, aggregate ?? undefined),
         items: reviews.map((review) => reviewView(review, replyByReview.get(review.id))),
+      });
+    });
+  }
+
+  /**
+   * Whether this caller may still rate the listing, and the review they already
+   * left on it.
+   *
+   * It reads exactly the state `submitReview` writes against - one unconsumed
+   * completed-contract eligibility for this buyer and governed source - so the
+   * form the browser renders and the gate the server enforces cannot disagree.
+   * A caller with no active buyer membership is not an error here: they simply
+   * cannot review, and the ratings block still has to render for them.
+   */
+  async getReviewSelfState(
+    owner: AgriTechOwner,
+    listingPublicationId: string,
+  ): Promise<OperationResult<MarketplaceReviewSelfState>> {
+    return this.em.transactional(async (em) => {
+      const listing = await resolveEligibleListing(em, listingPublicationId, false);
+      if (!listing) {
+        return { status: 'not_found' as const };
+      }
+      const sourceId = listing.publication.productId ?? listing.publication.produceListingId;
+      const buyer = await deriveBuyerParty(em, owner);
+      if (!sourceId || buyer.status !== 'ok' || buyer.value.partner.id === listing.sellerPartner.id) {
+        return ok({ canReview: false, listingPublicationId });
+      }
+      const sourceFilter =
+        listing.publication.sourceKind === 'product'
+          ? { productId: sourceId, sourceKind: 'product' as const }
+          : { produceListingId: sourceId, sourceKind: 'produce' as const };
+      const own = await em.findOne(MarketplaceListingReviewEntity, {
+        buyerTenantId: owner.tenantId,
+        buyerUserId: owner.userId,
+        ...sourceFilter,
+      });
+      if (own) {
+        const reply = await em.findOne(MarketplaceReviewReplyEntity, { reviewId: own.id });
+        return ok({
+          canReview: false,
+          listingPublicationId,
+          review: reviewView(own, reply ?? undefined),
+        });
+      }
+      const eligibilities = await em.find(
+        MarketplaceContractReviewEligibilityEntity,
+        {
+          buyerPartnerId: buyer.value.partner.id,
+          buyerTenantId: owner.tenantId,
+          buyerUserId: owner.userId,
+          sellerPartnerId: listing.sellerPartner.id,
+          sellerTenantId: listing.seller.tenantId,
+          sourceId,
+          sourceKind: listing.publication.sourceKind,
+          sourcePublicationId: listing.publication.id,
+        },
+        { limit: 10, orderBy: { createdAt: 'ASC', id: 'ASC' } },
+      );
+      if (eligibilities.length === 0) {
+        return ok({ canReview: false, listingPublicationId });
+      }
+      const consumed = await em.find(MarketplaceListingReviewEntity, {
+        reviewEligibilityId: { $in: eligibilities.map((eligibility) => eligibility.id) },
+      });
+      const consumedIds = new Set(consumed.map((review) => review.reviewEligibilityId));
+      return ok({
+        canReview: eligibilities.some((eligibility) => !consumedIds.has(eligibility.id)),
+        listingPublicationId,
+      });
+    });
+  }
+
+  /**
+   * Every review this caller is a party to, split by direction.
+   *
+   * `written` is keyed on the author boundary the review row already stores, and
+   * `received` on the exact seller organizations this caller is still an active
+   * member of - re-derived here rather than trusted from the row, so a member who
+   * has left an organization stops reading its reviews. A seller can hold several
+   * organizations, so the received side is an `$in` over all of them rather than
+   * the single-membership rule the buying side uses.
+   *
+   * Listings are resolved with the lenient `resolveStoredListing`, not the
+   * eligibility filter: a review of a listing that has since sold out or been
+   * withdrawn is still a review this party gave or was given, and dropping it
+   * would quietly rewrite their record. Only a listing whose stored source is
+   * gone entirely is skipped, because there is then nothing truthful to name it
+   * with.
+   */
+  async listOwnReviews(owner: AgriTechOwner): Promise<OperationResult<MarketplaceOwnReviews>> {
+    return this.em.transactional(async (em) => {
+      const sellerPartnerIds = await activeSellerPartnerIds(em, owner);
+      const [written, received] = await Promise.all([
+        em.find(
+          MarketplaceListingReviewEntity,
+          { buyerTenantId: owner.tenantId, buyerUserId: owner.userId, visibility: 'visible' },
+          { limit: maximumPrivateListSize, orderBy: { createdAt: 'DESC', id: 'ASC' } },
+        ),
+        sellerPartnerIds.length === 0
+          ? Promise.resolve([])
+          : em.find(
+              MarketplaceListingReviewEntity,
+              {
+                sellerPartnerId: { $in: sellerPartnerIds },
+                sellerTenantId: owner.tenantId,
+                visibility: 'visible',
+              },
+              { limit: maximumPrivateListSize, orderBy: { createdAt: 'DESC', id: 'ASC' } },
+            ),
+      ]);
+      const reviews = [...written, ...received];
+      const replies =
+        reviews.length === 0
+          ? []
+          : await em.find(MarketplaceReviewReplyEntity, { reviewId: { $in: reviews.map((review) => review.id) } });
+      const replyByReview = new Map(replies.map((reply) => [reply.reviewId, reply]));
+      const summaries = await listingSummaries(
+        em,
+        reviews.map((review) => review.listingPublicationId),
+      );
+      const entry = (review: MarketplaceListingReviewEntity): MarketplaceOwnReviewEntry | undefined => {
+        const listing = summaries.get(review.listingPublicationId);
+        return listing ? { listing, review: reviewView(review, replyByReview.get(review.id)) } : undefined;
+      };
+      return ok({
+        awaitingReview: await pendingReviewInvitations(em, owner),
+        received: received.map(entry).filter(isPresent),
+        written: written.map(entry).filter(isPresent),
       });
     });
   }

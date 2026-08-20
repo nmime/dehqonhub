@@ -1,5 +1,5 @@
 {
-  "agritech.marketplace.orders": "Purchase requests",
+  "agritech.marketplace.orders": "Orders",
   "agritech.marketplace.orders.title": "Purchase requests",
   "agritech.marketplace.orders.create": "Create a purchase request",
   "agritech.marketplace.orders.my": "My purchase requests",
@@ -30,5 +30,18 @@
   "agritech.marketplace.orders.publish": "Publish purchase request",
   "agritech.marketplace.orders.requestTitle": "Request title",
   "agritech.marketplace.orders.reverseAuction": "Seller offers",
-  "agritech.marketplace.orders.unavailable": "Purchase requests are unavailable. Try again."
+  "agritech.marketplace.orders.unavailable": "Purchase requests are unavailable. Try again.",
+  "agritech.marketplace.orders.progress": "Request progress",
+  "agritech.marketplace.orders.stage.draft": "Draft",
+  "agritech.marketplace.orders.stage.moderation": "Moderation",
+  "agritech.marketplace.orders.stage.collecting": "Collecting offers",
+  "agritech.marketplace.orders.stage.selected": "Offer selected",
+  "agritech.marketplace.orders.stage.contract": "Contract",
+  "agritech.marketplace.orders.details": "Request details",
+  "agritech.marketplace.orders.howItWorks": "How it works",
+  "agritech.marketplace.orders.howItWorksHint": "Sellers compete for your request. Choose an offer and the terms are locked into a contract.",
+  "agritech.marketplace.orders.backToMine": "Back to my purchase requests",
+  "agritech.marketplace.orders.viewRequest": "Open request",
+  "agritech.marketplace.orders.notFound": "Purchase request not found",
+  "agritech.marketplace.orders.notFoundDescription": "This purchase request is not in your list. Open your purchase requests and pick one from there."
 }

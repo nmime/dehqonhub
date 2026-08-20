@@ -1,7 +1,9 @@
 // @requirements REQ-AGRITECH-DEMO-024
+import { demoProductReviews, marketplaceReviewAverageRating } from '@app/backend-feature-agritech-shared';
 import type {
   MarketplacePublicCatalogQuery,
   MarketplacePublicListing,
+  MarketplacePublicListingRating,
   MarketplacePublicSeller,
   MarketplacePublicSuggestion,
 } from '@app/backend-feature-agritech-shared';
@@ -17,11 +19,43 @@ const demoSeller: MarketplacePublicSeller & { description: string } = {
   verified: false,
 };
 
+/**
+ * Preview photographs, served same-origin from the user app's `public/` tree
+ * because every deployment sends `img-src 'self' data:`. They live under
+ * `/media/` rather than `/marketplace/`, which is a reserved API namespace the
+ * dev proxy and nginx both route to the user API. Provenance and licences are
+ * recorded in `apps/frontend/app/public/media/marketplace/README.md`.
+ */
+const photo = (name: string): string => `/media/marketplace/${name}.webp`;
+
+/**
+ * The rating a demo listing publishes, derived from the demo review rows filed
+ * under the same publication id rather than written twice. A demo listing nobody
+ * reviewed publishes a null average and a zero count, exactly as a live listing
+ * with no reviews does.
+ */
+const demoRating = (listingPublicationId: string): MarketplacePublicListingRating => {
+  const reviews = demoProductReviews(listingPublicationId);
+  return {
+    average: marketplaceReviewAverageRating(
+      reviews.reduce((sum, review) => sum + review.rating, 0),
+      reviews.length,
+    ),
+    count: reviews.length,
+  };
+};
+
+/** The rating block a demo listing keeps when the fixture files no reviews for it. */
+const unratedDemoListing: MarketplacePublicListingRating = { average: null, count: 0 };
+
 const base = {
   description: 'Synthetic catalog preview for evaluating the DehqonHub marketplace.',
+  /** Overridden per listing; the default keeps an assetless row possible. */
   images: [] as string[],
   promoted: false,
   provenance: 'demo' as const,
+  /** Overridden per listing from the demo review rows; an unrated listing keeps this. */
+  rating: unratedDemoListing,
   sampleAvailable: false,
   seller: demoSeller,
   transactional: false,
@@ -34,6 +68,8 @@ const demoListings: MarketplacePublicListing[] = [
     availableQuantity: 80,
     category: 'seed',
     id: '9d000000-0000-4000-8000-000000000101',
+    rating: demoRating('9d000000-0000-4000-8000-000000000101'),
+    images: [photo('cotton-bolls'), photo('cotton-field')],
     kind: 'product',
     priceUzs: 320_000,
     publishedAt: new Date('2026-08-06T09:00:00.000Z'),
@@ -53,6 +89,8 @@ const demoListings: MarketplacePublicListing[] = [
     availableQuantity: 14,
     category: 'irrigation',
     id: '9d000000-0000-4000-8000-000000000102',
+    rating: demoRating('9d000000-0000-4000-8000-000000000102'),
+    images: [photo('drip-irrigation')],
     kind: 'product',
     priceUzs: 4_850_000,
     publishedAt: new Date('2026-08-05T09:00:00.000Z'),
@@ -71,6 +109,8 @@ const demoListings: MarketplacePublicListing[] = [
     availableQuantity: 150,
     category: 'fertilizer',
     id: '9d000000-0000-4000-8000-000000000103',
+    rating: demoRating('9d000000-0000-4000-8000-000000000103'),
+    images: [photo('fertilizer-granules')],
     kind: 'product',
     priceUzs: 145_000,
     publishedAt: new Date('2026-08-04T09:00:00.000Z'),
@@ -90,6 +130,8 @@ const demoListings: MarketplacePublicListing[] = [
     crop: 'Tomato',
     grade: 'A',
     id: '9d000000-0000-4000-8000-000000000104',
+    rating: demoRating('9d000000-0000-4000-8000-000000000104'),
+    images: [photo('tomato-fruit'), photo('tomato-greenhouse')],
     kind: 'produce',
     priceUzs: 18_000,
     publishedAt: new Date('2026-08-03T09:00:00.000Z'),
@@ -109,6 +151,9 @@ const demoListings: MarketplacePublicListing[] = [
     crop: 'Apple',
     grade: 'A',
     id: '9d000000-0000-4000-8000-000000000105',
+    rating: demoRating('9d000000-0000-4000-8000-000000000105'),
+    // Deliberately assetless, so the client category illustration keeps being
+    // exercised in demo mode rather than only on an empty database.
     kind: 'produce',
     priceUzs: 16_500,
     publishedAt: new Date('2026-08-02T09:00:00.000Z'),
@@ -127,6 +172,8 @@ const demoListings: MarketplacePublicListing[] = [
     availableQuantity: 3,
     category: 'equipment',
     id: '9d000000-0000-4000-8000-000000000106',
+    rating: demoRating('9d000000-0000-4000-8000-000000000106'),
+    images: [photo('seed-drill')],
     kind: 'product',
     priceUzs: 72_000_000,
     publishedAt: new Date('2026-08-01T09:00:00.000Z'),

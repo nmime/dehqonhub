@@ -1,0 +1,21 @@
+{
+  "agritech.marketplace.photos.group": "Photographs",
+  "agritech.marketplace.photos.uploadLabel": "Upload from this device",
+  "agritech.marketplace.photos.uploadHint": "JPEG, PNG or WebP, up to {{limit}} each, {{max}} photographs in total. Camera location data is removed before a photograph is stored.",
+  "agritech.marketplace.photos.selected": "Selected: {{used}} of {{max}}",
+  "agritech.marketplace.photos.busy": "Uploading…",
+  "agritech.marketplace.photos.uploadingOne": "Uploading {{name}}…",
+  "agritech.marketplace.photos.remove": "Remove {{name}}",
+  "agritech.marketplace.photos.uploadedOne": "Uploaded from this device",
+  "agritech.marketplace.photos.unavailable": "This deployment has no object storage configured, so a photograph cannot be kept. The listing can still be created; the catalog will show the illustration for its category.",
+  "agritech.marketplace.photos.error.tooLarge": "{{name}}: larger than {{limit}}. Nothing was stored.",
+  "agritech.marketplace.photos.error.type": "{{name}}: only JPEG, PNG and WebP photographs are accepted. Nothing was stored.",
+  "agritech.marketplace.photos.error.limit": "{{name}}: not added, because {{max}} photographs is the limit.",
+  "agritech.marketplace.photos.error.rejected": "{{name}}: the server refused this file as not a readable photograph. Nothing was stored.",
+  "agritech.marketplace.photos.error.storage": "{{name}}: photographs cannot be stored right now. Nothing was stored; try again later.",
+  "agritech.marketplace.photos.error.unauthorized": "{{name}}: sign in again before uploading a photograph.",
+  "agritech.marketplace.photos.reviewGroup": "Photographs (optional)",
+  "agritech.marketplace.photos.reviewHint": "Up to {{max}} photographs of what you received are published with your rating.",
+  "agritech.marketplace.photos.reviewPhotos": "Photographs in this review",
+  "agritech.marketplace.photos.reviewAlt": "Photograph {{position}} of {{total}} in this review"
+}

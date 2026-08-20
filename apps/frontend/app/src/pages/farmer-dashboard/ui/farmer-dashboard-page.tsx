@@ -1,6 +1,6 @@
 // REQ-AGRITECH-WEB-006: dashboard statistics and orders are source-backed or explicitly empty.
 import { useCallback, useEffect, useState } from 'react';
-import { observer, useI18n } from '@app/frontend-runtime';
+import { observer, useI18n, type Locale } from '@app/frontend-runtime';
 import {
   isApiClientError,
   throwOnOpenApiErrorData,
@@ -10,8 +10,18 @@ import {
 } from '@app/frontend-api-client';
 import { UiButton, UiCard, UiSection, UiStatCard } from '../../../shared/ui';
 
+/* Amounts and dates followed the operating system, so the same order read
+   1,250,000 UZS on one machine and 1 250 000 on another. They follow the
+   locale the reader actually chose instead. */
+const intlLocaleByLocale: Record<Locale, string> = {
+  en: 'en-US',
+  ru: 'ru-RU',
+  uz: 'uz-UZ',
+  'uz-cyrl': 'uz-Cyrl-UZ',
+};
+
 export const FarmerDashboardPage = observer(function FarmerDashboardPage() {
-  const { t } = useI18n();
+  const { locale, t } = useI18n();
   const { api, requestOptions } = useUserApiClient();
   const [profile, setProfile] = useState<FarmerProfileDto>();
   const [orders, setOrders] = useState<OrderViewDto[]>([]);
@@ -91,8 +101,8 @@ export const FarmerDashboardPage = observer(function FarmerDashboardPage() {
                   {orders.map((order) => (
                     <tr key={order.id}>
                       <td>{order.id}</td>
-                      <td>{new Date(order.createdAt).toLocaleDateString()}</td>
-                      <td>{order.totalAmountUzs.toLocaleString()} UZS</td>
+                      <td>{new Date(order.createdAt).toLocaleDateString(intlLocaleByLocale[locale])}</td>
+                      <td>{order.totalAmountUzs.toLocaleString(intlLocaleByLocale[locale])} UZS</td>
                       <td>{order.status}</td>
                     </tr>
                   ))}

@@ -2,6 +2,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode, type SyntheticEvent } from 'react';
 import './marketplace.css';
 import { observer, useI18n } from '@app/frontend-runtime';
+import { useLogout } from '@app/frontend-feature-user-logout';
+import { usePublicProfile } from '../model/use-public-profile';
+import { MarketplacePublicProfile } from './marketplace-public-profile';
 import {
   isApiClientError,
   throwOnOpenApiError,
@@ -13,16 +16,20 @@ import {
   type ContractViewDto,
   type MarketplaceAiConsultationDto,
   type MarketplaceListingPromotionDto,
+  type MarketplacePhotographCapabilityDto,
   type MarketplacePublicSuggestionDto,
   type MarketplaceReviewDto,
+  type MarketplaceReviewSelfStateDto,
   type MarketplaceSampleDto,
   type OfferViewDto,
   type VerificationDocumentInputDto,
   type VerificationViewDto,
 } from '@app/frontend-api-client';
-import { LanguageSwitcher, ThemeSwitcher } from '../../../shared/ui';
-import { useGuestCart } from '../model/use-guest-cart';
+import { LanguageSwitcher } from '../../../shared/ui';
+import { useActiveDeals, type ActiveDeal } from '../model/use-active-deals';
+import { useGuestCart, type GuestCartLine } from '../model/use-guest-cart';
 import { useGuestFavorites } from '../model/use-guest-favorites';
+import { useMarketplaceNotices } from '../model/use-marketplace-notices';
 import { useMarketplaceData, type Resource } from '../model/use-marketplace-data';
 import { MarketplaceAi } from './marketplace-ai';
 import {
@@ -45,14 +52,32 @@ import {
   MarketplaceSellerProfile,
   MarketplaceSkeleton,
 } from './marketplace-discovery';
+import { MarketplaceDeals } from './marketplace-deals';
 import { MarketplaceIcon } from './marketplace-icon';
-import { MarketplaceBrandLockup } from './marketplace-brand';
+import {
+  MarketplaceListingCreate,
+  type MarketplaceListingOutcome,
+  type MarketplaceListingSubmission,
+} from './marketplace-listing-create';
+import type {
+  MarketplacePhotoCapability,
+  MarketplacePhotoRefusal,
+  MarketplacePhotoUploadOutcome,
+} from './marketplace-photo-upload';
+import { MarketplaceBrandLockup, MarketplaceEmblem } from './marketplace-brand';
 import { MarketplaceUserManagement } from './marketplace-management';
 import {
+  marketplaceListingKindForRole,
+  marketplaceListingSectionFor,
+  marketplaceRoleCanBuy,
+  marketplaceRoleCanCreateListing,
+  marketplaceRoleCanSell,
+  querySection,
   type MarketplaceNavigate,
   type MarketplaceListing,
   type MarketplaceNotice,
   type MarketplaceRequestFeedItem,
+  type MarketplaceSection,
   type MarketplaceTranslate,
   type MarketplaceView,
 } from './marketplace-ui';
@@ -60,8 +85,12 @@ import {
 export interface MarketplacePageProps {
   children?: ReactNode;
   contractId?: string;
+  /** Router-subscribed path, which the cabinet's deep-linked sections are read from. */
+  locationPathname?: string;
   locationSearch?: string;
   navigate?: MarketplaceNavigate;
+  /** Opaque public profile address of a counterparty, from a deal. */
+  partyId?: string;
   productId?: string;
   sellerId?: string;
   view?: MarketplaceView;
@@ -116,6 +145,88 @@ const defaultNavigate: MarketplaceNavigate = (to) => {
   globalThis.location.assign(to);
 };
 
+/**
+ * Sign-in reached from the cart has to come back to the cart. Without the return
+ * address a buyer who followed the checkout boundary notice landed on the home
+ * page and had to find the assembled cart again. Verification and organization
+ * entries own their own continuation, so only the account route is rewritten.
+ */
+const withCartReturn = (path: string): string => (path === '/auth' ? '/auth?returnUrl=%2Fcart' : path);
+
+/**
+ * The replay identity of one preview line's promotion. It is derived, never
+ * generated: the same line at the same quantity must reuse the same key so the
+ * server answers a reload with the original cart instead of adding twice.
+ */
+const adoptionKey = (buyerPartnerId: string, line: GuestCartLine): string =>
+  `guest-cart:${buyerPartnerId}:${line.listingPublicationId}:${line.quantity}`;
+
+/**
+ * A refused listing command, said in the actor's own terms.
+ *
+ * A validation problem carries the DTO member it rejected, so that member and
+ * its reason are handed back to the form and shown on the control rather than in
+ * a toast. The remaining statuses are the create endpoints' documented
+ * refusals: 403 is an unapproved organization, 404 is a missing farmer or
+ * organization record, and 409 is a source that is already published.
+ */
+const listingRefusal = (
+  error: unknown,
+  translate: MarketplaceTranslate,
+): { field?: string; message: string; status: 'refused' } => {
+  if (!isApiClientError(error)) {
+    return { message: translate('agritech.marketplace.error'), status: 'refused' };
+  }
+  const issue = error.problem.validation.at(0);
+  if (issue?.field) {
+    return {
+      field: issue.field,
+      message: translate('agritech.marketplace.newListing.refusal.validation', {
+        field: issue.field,
+        reason: issue.message,
+      }),
+      status: 'refused',
+    };
+  }
+  if (issue) {
+    return { message: issue.message, status: 'refused' };
+  }
+  const messageKeyByStatus: Record<number, string> = {
+    401: 'agritech.marketplace.auth.required',
+    403: 'agritech.marketplace.newListing.refusal.forbidden',
+    404: 'agritech.marketplace.newListing.refusal.notFound',
+    409: 'agritech.marketplace.action.conflict',
+  };
+  const key = messageKeyByStatus[error.status];
+  return { message: key ? translate(key) : error.problem.message, status: 'refused' };
+};
+
+/**
+ * Why one photograph was not stored, in the terms the upload field names.
+ *
+ * The four statuses are the upload route's whole documented vocabulary: 401 is
+ * an expired session, 413 is a file past the stated bound, 503 is storage that
+ * is unconfigured or unreachable, and 400 is a file the server could not read
+ * as a photograph. Anything else is treated as the same refusal rather than as a
+ * success, because a photograph that is not confirmed is a photograph that is
+ * not stored.
+ */
+const photographRefusal = (error: unknown): MarketplacePhotoRefusal => {
+  if (!isApiClientError(error)) {
+    return 'rejected';
+  }
+  if (error.status === 401) {
+    return 'unauthorized';
+  }
+  if (error.status === 413) {
+    return 'tooLarge';
+  }
+  if (error.status === 503) {
+    return 'storage';
+  }
+  return 'rejected';
+};
+
 const canMutateContractForRole = (contract: ContractViewDto, canBuy: boolean, canOffer: boolean): boolean =>
   contract.actorParty === 'buyer' ? canBuy : canOffer;
 
@@ -137,12 +248,13 @@ export const MarketplacePage = observer(function MarketplacePage(props: Readonly
   return <MarketplaceDataPage {...props} />;
 });
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- this owner coordinates fail-closed command handlers across the complete marketplace route surface
 const MarketplaceDataPage = observer(function MarketplaceDataPage({
   children,
   contractId,
+  locationPathname,
   locationSearch = '',
   navigate = defaultNavigate,
+  partyId,
   productId,
   sellerId,
   view = 'home',
@@ -153,10 +265,17 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     [t],
   );
   const { api, requestOptions } = useUserApiClient();
+  // The marketplace owns the whole chrome, so the settings page that held the only
+  // sign-out control is unreachable from inside it.
+  const { model: logoutModel, signOut } = useLogout({ navigate });
   const data = useMarketplaceData(productId, sellerId);
+  // Read here rather than inside the seller view: the page owns every resource this
+  // tree renders, which is what keeps the views renderable from plain props.
+  const sellerPublicProfile = usePublicProfile(data.seller.data?.id, 'seller');
+  const partyPublicProfile = usePublicProfile(partyId, 'profile');
   const guestCart = useGuestCart();
   const guestFavorites = useGuestFavorites();
-  const [notice, setNotice] = useState<MarketplaceNotice>();
+  const { dismiss: dismissNotice, flash, notices } = useMarketplaceNotices();
   const [pendingAction, setPendingAction] = useState<string>();
   const [search, setSearch] = useState('');
   const [searchSuggestions, setSearchSuggestions] = useState<Resource<MarketplacePublicSuggestionDto[]>>({
@@ -165,6 +284,10 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
   });
   const [confirmation, setConfirmation] = useState<Confirmation>();
   const [reviews, setReviews] = useState<Resource<MarketplaceReviewDto[]>>({ data: [], status: 'idle' });
+  const [reviewSelfState, setReviewSelfState] = useState<Resource<MarketplaceReviewSelfStateDto | null>>({
+    data: null,
+    status: 'idle',
+  });
   const [contractLifecycle, setContractLifecycle] = useState<Resource<ContractLifecycleDto | null>>({
     data: null,
     status: 'idle',
@@ -175,10 +298,10 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
   });
   const [contractLifecycleReload, setContractLifecycleReload] = useState(0);
   const commandKeysRef = useRef(new Map<string, { actionKey: string; idempotencyKey: string }>());
+  const adoptionRef = useRef({ attemptedKeys: new Set<string>(), rejectedKeys: new Set<string>(), running: false });
   const reloadContractLifecycle = useCallback(() => {
     setContractLifecycleReload((revision) => revision + 1);
   }, []);
-  const noticeTimer = useRef<ReturnType<typeof globalThis.setTimeout> | undefined>(undefined);
   const closeConfirmation = useCallback(() => {
     setConfirmation(undefined);
   }, []);
@@ -190,25 +313,6 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
       document.title = previousTitle;
     };
   }, []);
-
-  const flash = useCallback((message: string, kind: MarketplaceNotice['kind'] = 'success') => {
-    if (noticeTimer.current) {
-      globalThis.clearTimeout(noticeTimer.current);
-    }
-    setNotice({ kind, message });
-    noticeTimer.current = globalThis.setTimeout(() => {
-      setNotice(undefined);
-    }, 5000);
-  }, []);
-
-  useEffect(
-    () => () => {
-      if (noticeTimer.current) {
-        globalThis.clearTimeout(noticeTimer.current);
-      }
-    },
-    [],
-  );
 
   useEffect(() => {
     const query = search.trim();
@@ -265,6 +369,40 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     };
   }, [api, productId, requestOptions, view]);
 
+  /**
+   * What this caller may still do with the listing's ratings.
+   *
+   * The public review projection is author-free, so the browser cannot work out
+   * from it whether one of the visible reviews is its own — it cannot tell "you
+   * already rated this" apart from "you were never able to". This read answers
+   * both from the same persisted eligibility the write path consumes. A signed-out
+   * visitor is not asked at all, and a refusal is recorded as an error rather than
+   * promoted to eligibility: the ratings block then shows the aggregate and no
+   * entry, which is what an ineligible caller should see anyway.
+   */
+  useEffect(() => {
+    if (view !== 'product' || !productId || data.auth !== 'signed-in') {
+      setReviewSelfState({ data: null, status: 'idle' });
+      return undefined;
+    }
+    let active = true;
+    setReviewSelfState((resource) => ({ ...resource, status: 'loading' }));
+    void throwOnOpenApiErrorData(api.marketplaceControllerGetReviewSelfState(productId, requestOptions))
+      .then((response) => {
+        if (active) {
+          setReviewSelfState({ data: response, status: 'ready' });
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setReviewSelfState({ data: null, status: 'error' });
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [api, data.auth, productId, requestOptions, view]);
+
   useEffect(() => {
     if (view !== 'contract' || !contractId || data.auth !== 'signed-in') {
       setContractLifecycle({ data: null, status: 'idle' });
@@ -289,6 +427,40 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     };
   }, [api, contractId, contractLifecycleReload, data.auth, requestOptions, view]);
 
+  /**
+   * Ask once, per signed-in session, whether this deployment stores photographs.
+   *
+   * A guest never uploads, so the read is skipped and the capability stays
+   * unknown. A refusal leaves it unknown too rather than guessing `configured`
+   * either way: claiming storage exists would offer an action that fails, and
+   * claiming it does not would withdraw one that works.
+   */
+  useEffect(() => {
+    if (data.auth !== 'signed-in') {
+      setPhotoCapability(undefined);
+      return undefined;
+    }
+    let active = true;
+    void throwOnOpenApiErrorData(api.marketplaceMediaControllerGetCapability(requestOptions))
+      .then((capability: MarketplacePhotographCapabilityDto) => {
+        if (active) {
+          setPhotoCapability({
+            configured: capability.configured,
+            maximumByteSize: capability.maximumByteSize,
+            mediaTypes: capability.mediaTypes,
+          });
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setPhotoCapability(undefined);
+        }
+      });
+    return () => {
+      active = false;
+    };
+  }, [api, data.auth, requestOptions]);
+
   const favoriteIds = useMemo(() => {
     const serverIds = data.auth === 'signed-in' ? data.favorites.data.map((favorite) => favorite.listing.id) : [];
     const localIds = data.catalog.data
@@ -305,6 +477,8 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     [data.auth, data.carts, guestCart.carts],
   );
   const previewCartIds = useMemo(() => new Set(guestCart.carts.map((cart) => cart.id)), [guestCart.carts]);
+  const previewCartLines = guestCart.lines;
+  const releasePreviewCartLine = guestCart.release;
   const selectedProduct = data.selectedListing.data ?? data.catalog.data.find((product) => product.id === productId);
   const selectedContract = data.contracts.data.find((contract) => contract.id === contractId);
   const buyerPartner = data.partners.data.find((partner) => partner.kind === 'buyer' && partner.status === 'approved');
@@ -313,8 +487,21 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
   );
   const isVerified = data.verification.data?.status === 'verified';
   const verificationRole = data.verification.data?.role;
-  const canBuy = isVerified && (verificationRole === 'buyer' || verificationRole === 'farmer');
-  const canOffer = isVerified && (verificationRole === 'seller' || verificationRole === 'farmer');
+  const canBuy = isVerified && marketplaceRoleCanBuy(verificationRole);
+  const canOffer = isVerified && marketplaceRoleCanSell(verificationRole);
+  /**
+   * Which listing this actor creates. The kind follows the role alone, so an
+   * actor whose verification is still open already knows what they will be able
+   * to list; verification and an approved organization are separate steps the
+   * create screen names rather than reasons to hide the kind.
+   */
+  const listingKind = marketplaceListingKindForRole(verificationRole);
+  /**
+   * Whether the header offers the create entry at all. It is the same predicate
+   * the route uses, so the entry can never appear for an actor the screen would
+   * then refuse — and a buyer never sees it.
+   */
+  const canCreateListing = marketplaceRoleCanCreateListing(verificationRole);
   const selectedContractCanMutate = selectedContract
     ? canMutateContractForRole(selectedContract, canBuy, canOffer)
     : false;
@@ -327,6 +514,21 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
         contract.lines.some((line) => line.sourcePublicationId === selectedProduct.id),
     ),
   );
+  const canActOnContract = useCallback(
+    (contract: ContractViewDto) => canMutateContractForRole(contract, canBuy, canOffer),
+    [canBuy, canOffer],
+  );
+  /**
+   * Deals in flight. The per-deal lifecycle read only happens on the route that
+   * shows it; the header badge is derived from the contract list the whole page
+   * already carries, so no other route pays for this screen.
+   */
+  const deals = useActiveDeals({
+    canAct: canActOnContract,
+    contracts: data.contracts,
+    enabled: view === 'deals',
+    signedIn: data.auth === 'signed-in',
+  });
 
   const mutationError = useCallback(
     (error: unknown) => {
@@ -348,6 +550,13 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     },
     [translate],
   );
+
+  /**
+   * What this deployment can store, asked once. Until it answers, the upload
+   * field renders disabled rather than promising an action that may not exist;
+   * an answer of `configured: false` replaces the control with a statement.
+   */
+  const [photoCapability, setPhotoCapability] = useState<MarketplacePhotoCapability | undefined>(undefined);
 
   const runMutation = useCallback(
     async function runMarketplaceMutation<T>(
@@ -453,7 +662,12 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     );
   };
 
-  const addReview = (product: MarketplaceListing, rating: number, comment?: string) => {
+  const addReview = (
+    product: MarketplaceListing,
+    rating: number,
+    comment?: string,
+    assetReferences: readonly string[] = [],
+  ) => {
     return runMutation(
       `review:${product.id}`,
       (idempotencyKey) =>
@@ -461,7 +675,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
           api.marketplaceControllerAddReview(
             {
               ...(comment ? { comment } : {}),
-              assetReferences: [],
+              assetReferences: [...assetReferences],
               listingPublicationId: product.id,
               rating,
             },
@@ -472,8 +686,15 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
       translate('agritech.marketplace.reviews.submitted'),
       (result) => {
         setReviews((resource) => ({ data: [result, ...resource.data], status: 'ready' }));
+        // The eligibility this review consumed is gone, and the row the server
+        // returned is the caller's own — which is the one fact the public list
+        // can never tell them again.
+        setReviewSelfState({
+          data: { canReview: false, listingPublicationId: product.id, review: result },
+          status: 'ready',
+        });
       },
-      `review:${product.id}:${rating}:${comment ?? ''}`,
+      `review:${product.id}:${rating}:${comment ?? ''}:${assetReferences.join(',')}`,
     );
   };
 
@@ -574,11 +795,180 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     });
   };
 
+  const sharedTransactionAccess = (() => {
+    // A session that is still being read is not a signed-out session. Every data
+    // refresh re-checks it, so answering `signIn` here told an already signed-in
+    // actor to sign in for as long as the refresh lasted.
+    if (data.auth === 'checking') {
+      return { hint: translate('agritech.marketplace.access.checking') };
+    }
+    if (data.auth !== 'signed-in') {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.signIn'),
+        hint: translate('agritech.marketplace.access.signIn'),
+        path: '/auth',
+      };
+    }
+    if (data.verification.status === 'loading' || data.verification.status === 'idle') {
+      return { hint: translate('agritech.marketplace.access.checking') };
+    }
+    if (!isVerified) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.verify'),
+        hint: translate('agritech.marketplace.access.verify'),
+        path: '/verification',
+      };
+    }
+    return undefined;
+  })();
+
+  /**
+   * The single buying barrier, in the order the actor has to clear it: sign in,
+   * then a settled verification, then a verification role that may buy, then an
+   * approved buyer organization. Exactly one step is named at a time, and every
+   * surface that blocks buying — the catalog card, the product detail action and
+   * the cart's checkout control — reads its wording, its entry point and its
+   * enabled state from this one value, so a control can never name a step the
+   * actor has already cleared. `undefined` means nothing is missing.
+   *
+   * An organization list that still shows no approved buyer while it is being read
+   * is reported as a check in progress rather than as a missing organization:
+   * claiming an approval is absent before it has been read is the same class of
+   * falsehood as telling a signed-in actor to sign in. A refresh that already
+   * carries an approved organization keeps transacting open.
+   */
+  const transactionAccess = (() => {
+    if (sharedTransactionAccess) {
+      return sharedTransactionAccess;
+    }
+    if (!canBuy) {
+      return { hint: translate('agritech.marketplace.access.buyerRole') };
+    }
+    if (!buyerPartner) {
+      if (data.partners.status === 'loading' || data.partners.status === 'idle') {
+        return { hint: translate('agritech.marketplace.access.checking') };
+      }
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.organization'),
+        hint: translate('agritech.marketplace.access.organization'),
+        path: '/account',
+      };
+    }
+    return undefined;
+  })();
+
+  /**
+   * A preview cart assembled before sign-in is not an order, and `checkout` can
+   * never make it one: a `guest-cart:` id addresses no server cart. Because the
+   * versioned local store outlives authentication, the preview used to reappear
+   * beside the buyer's real carts with a checkout control that could only ever
+   * answer with a notice — the dead end the owner reported.
+   *
+   * Once the actor is an authorized buyer the preview is promoted through the same
+   * `POST /marketplace/cart/items` the catalog uses, so the server derives the
+   * seller from the listing publication, keeps one open cart per buyer and seller,
+   * and revalidates price and stock. Nothing runs while signed out or unverified:
+   * REQ-AGRITECH-EXPERIENCE-026 keeps that preview explicitly local, and the
+   * boundary is the guarantee rather than an oversight.
+   *
+   * The idempotency key is derived from the acting partner, the listing and the
+   * quantity instead of generated, so a reload between an accepted request and the
+   * local release replays the same command and returns the original cart rather
+   * than adding the quantity a second time. An accepted line is released
+   * immediately, which is what makes the pass a no-op on every later render, and a
+   * rejected line is remembered so a revalidation failure is reported once instead
+   * of retried on every refresh.
+   */
+  const adoptPreviewCart = useCallback(
+    async (retryRejected = false): Promise<void> => {
+      if (data.auth !== 'signed-in' || !canBuy || !buyerPartner || adoptionRef.current.running) {
+        return;
+      }
+      if (retryRejected) {
+        for (const key of adoptionRef.current.rejectedKeys) {
+          adoptionRef.current.attemptedKeys.delete(key);
+        }
+        adoptionRef.current.rejectedKeys.clear();
+      }
+      const pending = previewCartLines.filter(
+        (line) => !adoptionRef.current.attemptedKeys.has(adoptionKey(buyerPartner.id, line)),
+      );
+      if (pending.length === 0) {
+        return;
+      }
+      adoptionRef.current.running = true;
+      const sellers: string[] = [];
+      let rejection: unknown;
+      try {
+        for (const line of pending) {
+          const key = adoptionKey(buyerPartner.id, line);
+          adoptionRef.current.attemptedKeys.add(key);
+          try {
+            // Sequential on purpose: two lines from the same seller resolve to one
+            // open cart, and issuing them together would contend for that cart's
+            // advisory lock instead of merging into it.
+            // eslint-disable-next-line no-await-in-loop
+            const cart = await throwOnOpenApiErrorData(
+              api.marketplaceControllerAddToCart(
+                {
+                  actingPartnerId: buyerPartner.id,
+                  listingPublicationId: line.listingPublicationId,
+                  quantity: line.quantity,
+                },
+                key,
+                requestOptions,
+              ),
+            );
+            releasePreviewCartLine(line.listingPublicationId);
+            if (!sellers.includes(cart.seller.displayName)) {
+              sellers.push(cart.seller.displayName);
+            }
+          } catch (error) {
+            adoptionRef.current.rejectedKeys.add(key);
+            rejection = error;
+          }
+        }
+      } finally {
+        adoptionRef.current.running = false;
+      }
+      for (const seller of sellers) {
+        flash(translate('agritech.marketplace.cart.addedToSellerCart', { seller }));
+      }
+      if (sellers.length > 0) {
+        data.refresh();
+      }
+      if (rejection !== undefined) {
+        flash(mutationError(rejection), 'error');
+      }
+    },
+    [
+      api,
+      buyerPartner,
+      canBuy,
+      data,
+      flash,
+      mutationError,
+      previewCartLines,
+      releasePreviewCartLine,
+      requestOptions,
+      translate,
+    ],
+  );
+
+  useEffect(() => {
+    void adoptPreviewCart();
+  }, [adoptPreviewCart]);
+
   const checkout = (cart: CartViewDto, deliveryTerms: DeliveryTerms) => {
     if (guestCart.owns(cart.id)) {
-      flash(translate('agritech.marketplace.demo.checkoutDone'), 'info');
-      if (data.auth !== 'signed-in') {
-        navigate('/auth?returnUrl=%2Fcart');
+      if (canBuy && buyerPartner) {
+        void adoptPreviewCart(true);
+        return;
+      }
+      // Nothing was ordered. Name the one thing still missing and go there.
+      flash(transactionAccess?.hint ?? translate('agritech.marketplace.cart.previewHint'), 'info');
+      if (transactionAccess?.path) {
+        navigate(withCartReturn(transactionAccess.path));
       }
       return;
     }
@@ -660,6 +1050,13 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
       navigate('/verification');
       return;
     }
+    // The offer endpoints are keyed by the request publication. A request still
+    // awaiting moderation has none, so say so instead of firing a 404 nobody sees.
+    const publicationId = request.publicationId;
+    if (!publicationId) {
+      flash(translate('agritech.marketplace.orders.awaitingModerationHint'), 'info');
+      return;
+    }
     setConfirmation({
       confirmLabel: translate('agritech.marketplace.orders.confirmOffer'),
       description: translate('agritech.marketplace.orders.confirmOfferDescription'),
@@ -668,7 +1065,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
           `choose:${offer.id}`,
           (idempotencyKey) =>
             throwOnOpenApiErrorData(
-              api.marketplaceControllerChooseOffer(request.id, offer.id, idempotencyKey, requestOptions),
+              api.marketplaceControllerChooseOffer(publicationId, offer.id, idempotencyKey, requestOptions),
             ),
           translate('agritech.marketplace.contract.draftCreated'),
           (result) => {
@@ -745,9 +1142,26 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
       translate('agritech.marketplace.contract.settlement.advanced'),
       (result) => {
         setContractLifecycle({ data: result, status: 'ready' });
+        // The command answers with the fresh lifecycle, so the deals card that
+        // submitted it re-reads its own next action without a second request.
+        deals.apply(contract.id, result);
       },
       `lifecycle:${contract.id}:${JSON.stringify(action)}`,
     );
+  };
+
+  /**
+   * The one action a deals card offers. `sign` and `command` are the only kinds
+   * that reach here: an `open` action is a link the card follows itself.
+   */
+  const actOnDeal = (deal: ActiveDeal) => {
+    if (deal.action.kind === 'sign') {
+      signContract(deal.contract);
+      return;
+    }
+    if (deal.action.command) {
+      advanceContractLifecycle(deal.contract, deal.action.command);
+    }
   };
 
   const quoteContractDelivery = (contract: ContractViewDto, input: MarketplaceContractDeliveryQuoteInput) => {
@@ -838,6 +1252,23 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
       },
       `dispute:${contract.id}:${reason}`,
     );
+  };
+
+  /**
+   * Send one photograph and say plainly what happened to it.
+   *
+   * Deliberately outside `runMutation`: this is not an idempotent domain command
+   * with a success toast, it is one file whose outcome the field beside it has to
+   * render per file. Every failure maps to a reason the field can name, and
+   * every one of them means the same thing — nothing was stored.
+   */
+  const uploadPhotograph = async (file: File): Promise<MarketplacePhotoUploadOutcome> => {
+    try {
+      const stored = await throwOnOpenApiErrorData(api.marketplaceMediaControllerStorePhotograph(file, requestOptions));
+      return { path: stored.path, reference: stored.reference, status: 'stored' };
+    } catch (error) {
+      return { reason: photographRefusal(error), status: 'refused' };
+    }
   };
 
   const uploadContractDisputeEvidence = (contract: ContractViewDto, evidence: File) => {
@@ -1010,6 +1441,97 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     );
   };
 
+  /**
+   * Create a listing and submit it for publication, in that order.
+   *
+   * These are two separate commands with two separate outcomes, and the screen
+   * reports whichever one it actually reached: a refusal on the create leaves
+   * nothing behind, while a refusal on the publish leaves a private row the
+   * cabinet can still submit. Refusals are returned rather than flashed, so the
+   * form can put a field-level problem on the control that caused it instead of
+   * showing a toast that names nothing.
+   */
+  const createListing = async (submission: MarketplaceListingSubmission): Promise<MarketplaceListingOutcome> => {
+    if (data.auth !== 'signed-in') {
+      return { message: translate('agritech.marketplace.auth.required'), status: 'refused' };
+    }
+    if (!supplierPartner) {
+      return { message: translate('agritech.marketplace.access.sellerOrganization'), status: 'refused' };
+    }
+    let sourceId: string;
+    try {
+      if (submission.kind === 'product') {
+        const created = await throwOnOpenApiErrorData(
+          api.agriTechOperationsControllerCreateSupplierProduct(
+            {
+              category: submission.category,
+              description: submission.description,
+              images: [...submission.images],
+              name: submission.name,
+              nameRu: submission.nameRu,
+              nameUz: submission.nameUz,
+              nameUzCyrl: submission.nameUzCyrl,
+              partnerId: supplierPartner.id,
+              priceUzs: submission.priceUzs,
+              region: submission.region,
+              sampleAvailable: submission.sampleAvailable,
+              stockQuantity: submission.stockQuantity,
+              unit: submission.unit,
+            },
+            requestOptions,
+          ),
+        );
+        sourceId = created.id;
+      } else {
+        const created = await throwOnOpenApiErrorData(
+          api.agriTechOperationsControllerCreateProduce(
+            {
+              // The API takes an instant; the form collects a calendar day, so
+              // each bound is anchored to UTC midnight rather than to whatever
+              // zone the browser happens to sit in.
+              availableFrom: `${submission.availableFrom}T00:00:00.000Z`,
+              availableUntil: `${submission.availableUntil}T00:00:00.000Z`,
+              crop: submission.crop,
+              grade: submission.grade,
+              pricePerKgUzs: submission.pricePerKgUzs,
+              quantityKg: submission.quantityKg,
+              region: submission.region,
+              images: [...submission.images],
+              sampleAvailable: submission.sampleAvailable,
+              supplierPartnerId: supplierPartner.id,
+            },
+            requestOptions,
+          ),
+        );
+        sourceId = created.id;
+      }
+    } catch (error) {
+      return listingRefusal(error, translate);
+    }
+    try {
+      await throwOnOpenApiErrorData(
+        api.marketplacePublicationControllerPublishListing(
+          {
+            section: marketplaceListingSectionFor(
+              submission.kind,
+              submission.kind === 'product' ? submission.category : undefined,
+            ),
+            sellerPartnerId: supplierPartner.id,
+            sourceId,
+            sourceKind: submission.kind,
+          },
+          globalThis.crypto.randomUUID(),
+          requestOptions,
+        ),
+      );
+    } catch (error) {
+      data.refresh();
+      return { reason: listingRefusal(error, translate).message, status: 'unpublished' };
+    }
+    data.refresh();
+    return { status: 'published' };
+  };
+
   const publishRequest = (requestId: string) => {
     if (!canBuy || !buyerPartner) {
       flash(translate('agritech.marketplace.management.verificationRequired'), 'info');
@@ -1128,56 +1650,34 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     navigate(`/requests?q=${encodeURIComponent(suggestion.label)}`);
   };
 
-  const sharedTransactionAccess = (() => {
-    if (data.auth !== 'signed-in') {
-      return {
-        actionLabel: translate('agritech.marketplace.access.action.signIn'),
-        hint: translate('agritech.marketplace.access.signIn'),
-        path: '/auth',
-      };
-    }
-    if (data.verification.status === 'loading' || data.verification.status === 'idle') {
-      return { hint: translate('agritech.marketplace.access.checking') };
-    }
-    if (!isVerified) {
-      return {
-        actionLabel: translate('agritech.marketplace.access.action.verify'),
-        hint: translate('agritech.marketplace.access.verify'),
-        path: '/verification',
-      };
-    }
-    return undefined;
-  })();
-
-  const transactionAccess = (() => {
+  const sellerTransactionAccess = (() => {
     if (sharedTransactionAccess) {
       return sharedTransactionAccess;
     }
-    if (!canBuy) {
-      return {
-        actionLabel: translate('agritech.marketplace.access.action.verify'),
-        hint: translate('agritech.marketplace.access.buyerRole'),
-        path: '/verification',
-      };
+    if (!canOffer) {
+      return { hint: translate('agritech.marketplace.access.sellerRole') };
     }
-    if (!buyerPartner) {
+    if (!supplierPartner) {
       return {
         actionLabel: translate('agritech.marketplace.access.action.organization'),
-        hint: translate('agritech.marketplace.access.organization'),
+        hint: translate('agritech.marketplace.access.sellerOrganization'),
         path: '/account',
       };
     }
     return undefined;
   })();
 
-  const sellerTransactionAccess = (() => {
-    if (sharedTransactionAccess) {
-      return sharedTransactionAccess;
-    }
-    if (!canOffer) {
+  /**
+   * The one step still missing before this actor can create a listing, or
+   * `undefined` when nothing is. Verification settles the role, and an approved
+   * seller organization owns the row, so those are the only two steps — and each
+   * is named with the surface that clears it rather than as a generic denial.
+   */
+  const listingCreateAccess = (() => {
+    if (!isVerified) {
       return {
         actionLabel: translate('agritech.marketplace.access.action.verify'),
-        hint: translate('agritech.marketplace.access.sellerRole'),
+        hint: translate('agritech.marketplace.access.verify'),
         path: '/verification',
       };
     }
@@ -1213,7 +1713,8 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     ...(transactionAccess?.hint ? { transactionHint: transactionAccess.hint } : {}),
   };
 
-  const privateView = view === 'account' || view === 'contract' || view === 'verification';
+  const privateView =
+    view === 'account' || view === 'contract' || view === 'deals' || view === 'newListing' || view === 'verification';
   const catalogView = view === 'catalog' || view === 'home';
   const authChecking = privateView && data.auth === 'checking';
   const authSignedOut = privateView && data.auth === 'signed-out';
@@ -1263,12 +1764,16 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
               canReportReviews={data.auth === 'signed-in'}
               canReview={canReviewSelectedProduct}
               onReview={addReview}
+              onUploadPhoto={uploadPhotograph}
+              photoCapability={photoCapability}
               onReplyToReview={replyToReview}
               onReportReview={reportReview}
               onRetry={data.refresh}
               onSample={requestSample}
               product={selectedProduct}
               reviews={reviews}
+              reviewSelfState={reviewSelfState.data ?? undefined}
+              reviewSelfStateStatus={reviewSelfState.status}
               sampleUsage={data.sampleUsage}
               similar={data.catalog.data.filter(
                 (product) =>
@@ -1277,8 +1782,26 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
             />
           );
           break;
+        case 'party':
+          rendered = (
+            <MarketplacePublicProfile
+              identity
+              locale={locale}
+              navigate={navigate}
+              profile={partyPublicProfile}
+              t={translate}
+            />
+          );
+          break;
         case 'seller':
-          rendered = <MarketplaceSellerProfile {...productActions} catalog={data.sellerCatalog} seller={data.seller} />;
+          rendered = (
+            <MarketplaceSellerProfile
+              {...productActions}
+              catalog={data.sellerCatalog}
+              publicProfile={sellerPublicProfile}
+              seller={data.seller}
+            />
+          );
           break;
         case 'favorites':
           rendered = (
@@ -1292,7 +1815,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
         case 'cart':
           rendered = (
             <MarketplaceCart
-              canCheckout={canBuy}
+              canCheckout={transactionAccess === undefined}
               {...(transactionAccess?.actionLabel ? { checkoutActionLabel: transactionAccess.actionLabel } : {})}
               {...(transactionAccess?.hint ? { checkoutHint: transactionAccess.hint } : {})}
               carts={visibleCarts}
@@ -1302,7 +1825,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
               {...(transactionAccess?.path
                 ? {
                     onCheckoutAction: () => {
-                      navigate(transactionAccess.path);
+                      navigate(withCartReturn(transactionAccess.path));
                     },
                   }
                 : {})}
@@ -1379,13 +1902,16 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
             <MarketplaceAccount
               contracts={data.contracts}
               dashboard={data.dashboard}
+              listingPublications={data.ownedListingPublications}
               locale={locale}
+              {...(locationPathname === undefined ? {} : { locationPathname })}
               management={
                 <MarketplaceUserManagement
                   {...(transactionAccess?.actionLabel ? { buyerAccessActionLabel: transactionAccess.actionLabel } : {})}
                   {...(transactionAccess?.hint ? { buyerAccessHint: transactionAccess.hint } : {})}
                   aiConsultations={data.aiConsultations}
                   canActivatePromotions={canOffer && Boolean(supplierPartner)}
+                  canCreateListing={canCreateListing}
                   canPublishListings={canOffer && Boolean(supplierPartner)}
                   canPublishRequests={canBuy && Boolean(buyerPartner)}
                   listingPublications={data.ownedListingPublications}
@@ -1429,11 +1955,56 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
                   t={translate}
                 />
               }
+              myRequests={data.myRequests}
               navigate={navigate}
+              offersByRequest={data.offersByRequest}
               onRetry={data.refresh}
+              onSignOut={signOut}
+              publicRequests={data.requests}
+              requestPublications={data.ownedRequestPublications}
               samples={data.samples}
+              signOutPending={logoutModel.isPending}
               t={translate}
               verification={data.verification}
+            />
+          );
+          break;
+        case 'newListing':
+          rendered = (
+            <MarketplaceListingCreate
+              {...(listingCreateAccess?.actionLabel ? { accessActionLabel: listingCreateAccess.actionLabel } : {})}
+              {...(listingCreateAccess?.hint ? { accessHint: listingCreateAccess.hint } : {})}
+              catalog={data.catalog}
+              kind={listingKind}
+              locale={locale}
+              navigate={navigate}
+              {...(listingCreateAccess?.path
+                ? {
+                    onAccessAction: () => {
+                      navigate(listingCreateAccess.path);
+                    },
+                  }
+                : {})}
+              onSubmit={createListing}
+              onUploadPhoto={uploadPhotograph}
+              photoCapability={photoCapability}
+              t={translate}
+            />
+          );
+          break;
+        case 'deals':
+          rendered = (
+            <MarketplaceDeals
+              deals={deals}
+              locale={locale}
+              navigate={navigate}
+              onAct={actOnDeal}
+              onRetry={() => {
+                deals.reload();
+                data.refresh();
+              }}
+              {...(pendingAction === undefined ? {} : { pendingAction })}
+              t={translate}
             />
           );
           break;
@@ -1473,38 +2044,49 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
   return (
     <div className="dh-marketplace">
       <MarketplaceHeader
+        activeSection={querySection()}
+        canCreateListing={canCreateListing}
         cartCount={visibleCarts.data.reduce((count, cart) => count + cart.items.length, 0)}
+        dealsBadge={deals.awaitingConsent}
         favoriteCount={favoriteIds.size}
         navigate={navigate}
         onSearch={submitSearch}
         onSelectSuggestion={selectSuggestion}
         search={search}
         setSearch={setSearch}
+        signedIn={data.auth === 'signed-in'}
         suggestions={searchSuggestions}
         t={translate}
         verificationStatus={data.verification.data?.status}
         view={view}
       />
-      {notice && (
-        <div
-          aria-live="polite"
-          className={`dh-notice dh-notice--${notice.kind}`}
-          role={notice.kind === 'error' ? 'alert' : 'status'}
-        >
-          <MarketplaceIcon name={notice.kind === 'error' ? 'shield' : 'check'} />
-          <span>{notice.message}</span>
-          <button
-            aria-label={translate('agritech.marketplace.close')}
-            onClick={() => {
-              setNotice(undefined);
-            }}
-            type="button"
-          >
-            <MarketplaceIcon name="close" />
-          </button>
+      {notices.length > 0 && (
+        <div className="dh-notices">
+          <div aria-live="polite" className="dh-notices__region" role="status">
+            {notices
+              .filter((notice) => notice.kind !== 'error')
+              .map((notice) => (
+                <MarketplaceNotice key={notice.id} notice={notice} onDismiss={dismissNotice} t={translate} />
+              ))}
+          </div>
+          <div aria-live="assertive" className="dh-notices__region" role="alert">
+            {notices
+              .filter((notice) => notice.kind === 'error')
+              .map((notice) => (
+                <MarketplaceNotice key={notice.id} notice={notice} onDismiss={dismissNotice} t={translate} />
+              ))}
+          </div>
         </div>
       )}
       <main className="dh-main" id="dh-main">
+        <MarketplaceCatalogAccessNotice
+          access={transactionAccess}
+          catalogView={catalogView}
+          loading={catalogLoading}
+          navigate={navigate}
+          signedIn={data.auth === 'signed-in'}
+          unavailable={contentUnavailable}
+        />
         {content}
       </main>
       <MarketplaceFooter navigate={navigate} t={translate} />
@@ -1555,13 +2137,17 @@ function MarketplaceEmbeddedPage({
   return (
     <div className="dh-marketplace">
       <MarketplaceHeader
+        activeSection="all"
+        canCreateListing={false}
         cartCount={0}
+        dealsBadge={0}
         favoriteCount={0}
         navigate={navigate}
         onSearch={submitSearch}
         onSelectSuggestion={() => undefined}
         search={search}
         setSearch={setSearch}
+        signedIn={false}
         suggestions={{ data: [], status: 'idle' }}
         t={translate}
         view="embedded"
@@ -1575,14 +2161,51 @@ function MarketplaceEmbeddedPage({
   );
 }
 
+function MarketplaceNotice({
+  notice,
+  onDismiss,
+  t,
+}: Readonly<{
+  notice: MarketplaceNotice;
+  onDismiss: (id: string) => void;
+  t: MarketplaceTranslate;
+}>) {
+  return (
+    <div className={`dh-notice dh-notice--${notice.kind}${notice.leaving ? ' is-leaving' : ''}`}>
+      <span aria-hidden="true" className="dh-notice__dot" />
+      <span className="dh-notice__message">{notice.message}</span>
+      <button
+        aria-label={t('agritech.marketplace.close')}
+        className="dh-notice__close"
+        onClick={() => {
+          onDismiss(notice.id);
+        }}
+        type="button"
+      >
+        <MarketplaceIcon name="close" />
+      </button>
+    </div>
+  );
+}
+
 interface HeaderProps {
+  activeSection: MarketplaceSection;
+  /**
+   * Whether this actor may create a listing at all. A buyer creates none, so the
+   * entry is absent rather than present-and-refusing.
+   */
+  canCreateListing: boolean;
   cartCount: number;
+  /** In-flight deals awaiting this actor's own consent; see `dealsAwaitingConsent`. */
+  dealsBadge: number;
   favoriteCount: number;
   navigate: MarketplaceNavigate;
   onSearch: (event: SyntheticEvent<HTMLFormElement>) => void;
   onSelectSuggestion: (suggestion: MarketplacePublicSuggestionDto) => void;
   search: string;
   setSearch: (value: string) => void;
+  /** The deals entry is private work, so it only exists for a signed-in visitor. */
+  signedIn: boolean;
   suggestions: Resource<MarketplacePublicSuggestionDto[]>;
   t: MarketplaceTranslate;
   verificationStatus?: string;
@@ -1590,13 +2213,17 @@ interface HeaderProps {
 }
 
 function MarketplaceHeader({
+  activeSection,
+  canCreateListing,
   cartCount,
+  dealsBadge,
   favoriteCount,
   navigate,
   onSearch,
   onSelectSuggestion,
   search,
   setSearch,
+  signedIn,
   suggestions,
   t,
   verificationStatus,
@@ -1681,6 +2308,29 @@ function MarketplaceHeader({
           ) : null}
         </div>
         <nav aria-label={t('agritech.marketplace.accessibility.primaryNavigation')} className="dh-header__nav">
+          {canCreateListing ? (
+            <HeaderAction
+              active={view === 'newListing'}
+              fullLabel={t('agritech.marketplace.newListing.title')}
+              icon="plus"
+              label={t('agritech.marketplace.newListing.nav')}
+              onClick={() => {
+                navigate('/listings/new');
+              }}
+            />
+          ) : null}
+          {signedIn ? (
+            <HeaderAction
+              active={view === 'deals' || view === 'contract'}
+              badge={dealsBadge}
+              badgeLabel={t('agritech.marketplace.deals.badge', { count: dealsBadge })}
+              icon="contract"
+              label={t('agritech.marketplace.deals.nav')}
+              onClick={() => {
+                navigate('/deals');
+              }}
+            />
+          ) : null}
           <HeaderAction
             active={view === 'requests'}
             icon="orders"
@@ -1722,12 +2372,12 @@ function MarketplaceHeader({
         </nav>
         <div className="dh-header__preferences">
           <LanguageSwitcher compact variant="menu" />
-          <ThemeSwitcher variant="menu" />
         </div>
       </div>
       <nav aria-label={t('agritech.marketplace.catalog.categories')} className="dh-header__categories">
         {(['all', 'equipment', 'seeds', 'produce'] as const).map((section) => (
           <button
+            aria-current={view === 'catalog' && activeSection === section}
             key={section}
             onClick={() => {
               navigate(section === 'all' ? '/catalog' : `/catalog?section=${section}`);
@@ -1740,7 +2390,6 @@ function MarketplaceHeader({
       </nav>
       <div className="dh-header__mobile-preferences">
         <LanguageSwitcher compact variant="menu" />
-        <ThemeSwitcher variant="menu" />
       </div>
     </header>
   );
@@ -1749,28 +2398,42 @@ function MarketplaceHeader({
 function HeaderAction({
   active,
   badge,
+  badgeLabel,
+  fullLabel,
   icon,
   label,
   onClick,
 }: Readonly<{
   active: boolean;
   badge?: number;
-  icon: 'account' | 'cart' | 'heart' | 'orders' | 'shield';
+  /** What the badge counts, said in words, because the glyph and the digit cannot. */
+  badgeLabel?: string;
+  /**
+   * The complete wording, for an action whose name does not fit the caption
+   * budget every other entry lives inside. Wide layouts print this and narrow
+   * ones print {@link label}; exactly one of the two is ever rendered, so the
+   * button's accessible name is whichever the reader can see rather than both
+   * concatenated. Without it a long name is silently cut mid-word.
+   */
+  fullLabel?: string;
+  icon: 'account' | 'cart' | 'contract' | 'heart' | 'orders' | 'plus' | 'shield';
   label: string;
   onClick: () => void;
 }>) {
+  const badgeAttributes = badgeLabel ? { 'aria-label': badgeLabel } : {};
+  const classNames = [active ? 'is-active' : '', fullLabel ? 'dh-header__nav-action--wide' : '']
+    .filter(Boolean)
+    .join(' ');
   return (
-    <button
-      aria-current={active ? 'page' : undefined}
-      className={active ? 'is-active' : ''}
-      onClick={onClick}
-      type="button"
-    >
+    <button aria-current={active ? 'page' : undefined} className={classNames} onClick={onClick} type="button">
       <span>
         <MarketplaceIcon name={icon} />
-        {badge ? <em>{badge}</em> : null}
+        {badge ? <em {...badgeAttributes}>{badge}</em> : null}
       </span>
-      <small>{label}</small>
+      <small>
+        {fullLabel ? <span className="dh-header__nav-label--full">{fullLabel}</span> : null}
+        <span className={fullLabel ? 'dh-header__nav-label--short' : undefined}>{label}</span>
+      </small>
     </button>
   );
 }
@@ -1784,14 +2447,62 @@ function MarketplaceLoading({ t }: Readonly<{ t: MarketplaceTranslate }>) {
   );
 }
 
+interface MarketplaceCatalogAccessNoticeProps {
+  access: { actionLabel?: string; hint?: string; path?: string } | undefined;
+  catalogView: boolean;
+  loading: boolean;
+  navigate: MarketplaceNavigate;
+  signedIn: boolean;
+  unavailable: boolean;
+}
+
+/**
+ * One notice above the catalog carries the reason a signed-in actor cannot
+ * transact yet, plus its recovery route. It replaced the identical hint that
+ * used to repeat under every product card; a signed-out visitor is not shown a
+ * reason here because the header sign-in entry, the local preview confirmation,
+ * and the cart route already state that boundary.
+ */
+function MarketplaceCatalogAccessNotice({
+  access,
+  catalogView,
+  loading,
+  navigate,
+  signedIn,
+  unavailable,
+}: Readonly<MarketplaceCatalogAccessNoticeProps>) {
+  const hint = access?.hint;
+  if (!catalogView || !signedIn || loading || unavailable || !hint) {
+    return null;
+  }
+  const actionLabel = access.actionLabel;
+  const path = access.path;
+
+  return (
+    <div className="dh-state-inline dh-access-notice" role="status">
+      <MarketplaceIcon name="shield" />
+      <span>{hint}</span>
+      {actionLabel && path ? (
+        <button
+          className="dh-text-button"
+          onClick={() => {
+            navigate(path);
+          }}
+          type="button"
+        >
+          {actionLabel}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 function MarketplaceSignedOut({ navigate, t }: Readonly<{ navigate: MarketplaceNavigate; t: MarketplaceTranslate }>) {
   const returnUrl =
     typeof globalThis.location === 'undefined' ? '/' : `${globalThis.location.pathname}${globalThis.location.search}`;
   return (
     <section className="dh-signed-out">
-      <span className="dh-seal">
-        <MarketplaceIcon name="account" />
-      </span>
+      <MarketplaceEmblem className="dh-emblem" />
       <p className="dh-eyebrow">{t('agritech.marketplace.title')}</p>
       <h1>{t('agritech.marketplace.auth.title')}</h1>
       <p>{t('agritech.marketplace.auth.description')}</p>

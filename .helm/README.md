@@ -28,6 +28,10 @@ routes.
   renders it into `/runtime-config.js` at start, so the same immutable image
   serves Telegram-enabled and disabled environments with no rebuild. (The
   `VITE_TELEGRAM_AUTH_ENABLED` build arg remains only as the local-dev default.)
+- Reviewer credential access is also a **runtime** flag and ships enabled: the
+  user-app home publishes the three demo reviewer identities for the MVP review.
+  Set `frontendRuntimeConfig.REVIEWER_ACCESS_ENABLED='false'` to withdraw that
+  list from a deployment without a rebuild.
 - Select externally managed PostgreSQL or a transaction-capable MongoDB replica
   set with `database.engine`; MongoDB also requires matching non-empty
   `database.mongodb.replicaSet` and `replicaSet` URI options.

@@ -21,6 +21,7 @@ import type {
   MarketplacePublicProduceListing,
   MarketplacePublicProductListing,
   MarketplacePublicRequest,
+  MarketplacePublicListingRating,
   MarketplacePublicSeller,
   MarketplacePublicSuggestion,
 } from '@app/backend-feature-agritech-shared';
@@ -203,6 +204,11 @@ class MarketplacePublicSellerDto implements MarketplacePublicSeller {
   @ApiPropertyOptional() description?: string;
 }
 
+class MarketplacePublicListingRatingDto implements MarketplacePublicListingRating {
+  @ApiProperty({ maximum: 5, minimum: 1, nullable: true, type: 'number' }) average!: number | null;
+  @ApiProperty({ minimum: 0, type: 'integer' }) count!: number;
+}
+
 abstract class MarketplacePublicListingBaseDto {
   @ApiProperty({ format: 'uuid' }) id!: string;
   @ApiProperty() title!: string;
@@ -219,6 +225,7 @@ abstract class MarketplacePublicListingBaseDto {
   @ApiProperty({ enum: ['live', 'demo'] }) provenance!: MarketplacePublicListing['provenance'];
   @ApiProperty() transactional!: boolean;
   @ApiProperty() sampleAvailable!: boolean;
+  @ApiProperty({ type: MarketplacePublicListingRatingDto }) rating!: MarketplacePublicListingRating;
   @ApiProperty({ type: MarketplacePublicSellerDto }) seller!: MarketplacePublicSeller;
   @ApiProperty({ format: 'date-time' }) publishedAt!: Date;
   @ApiProperty({ format: 'date-time' }) updatedAt!: Date;

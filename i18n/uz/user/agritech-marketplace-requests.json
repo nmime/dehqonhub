@@ -1,5 +1,5 @@
 {
-  "agritech.marketplace.orders": "Xarid so'rovlari",
+  "agritech.marketplace.orders": "So'rovlar",
   "agritech.marketplace.orders.title": "Xarid so'rovlari",
   "agritech.marketplace.orders.create": "Xarid so'rovi yaratish",
   "agritech.marketplace.orders.my": "Mening xarid so'rovlarim",
@@ -30,5 +30,18 @@
   "agritech.marketplace.orders.publish": "Xarid so'rovini e'lon qilish",
   "agritech.marketplace.orders.requestTitle": "So'rov nomi",
   "agritech.marketplace.orders.reverseAuction": "Sotuvchi takliflari",
-  "agritech.marketplace.orders.unavailable": "Xarid so'rovlari mavjud emas. Qayta urinib ko'ring."
+  "agritech.marketplace.orders.unavailable": "Xarid so'rovlari mavjud emas. Qayta urinib ko'ring.",
+  "agritech.marketplace.orders.progress": "So'rov bosqichi",
+  "agritech.marketplace.orders.stage.draft": "Qoralama",
+  "agritech.marketplace.orders.stage.moderation": "Moderatsiya",
+  "agritech.marketplace.orders.stage.collecting": "Takliflar yig'ilmoqda",
+  "agritech.marketplace.orders.stage.selected": "Taklif tanlandi",
+  "agritech.marketplace.orders.stage.contract": "Shartnoma",
+  "agritech.marketplace.orders.details": "So'rov tafsilotlari",
+  "agritech.marketplace.orders.howItWorks": "Bu qanday ishlaydi",
+  "agritech.marketplace.orders.howItWorksHint": "Sotuvchilar sizning so'rovingiz uchun raqobatlashadi. Taklifni tanlasangiz, shartlar shartnomada qayd etiladi.",
+  "agritech.marketplace.orders.backToMine": "Mening xarid so'rovlarimga qaytish",
+  "agritech.marketplace.orders.viewRequest": "So'rovni ochish",
+  "agritech.marketplace.orders.notFound": "Xarid so'rovi topilmadi",
+  "agritech.marketplace.orders.notFoundDescription": "Bu xarid so'rovi ro'yxatingizda yo'q. Xarid so'rovlaringizni ochib, keragini tanlang."
 }

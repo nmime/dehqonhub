@@ -1,17 +1,37 @@
 // @requirements REQ-AGRITECH-EXPERIENCE-026 REQ-AGRITECH-WEB-006 REQ-AGRITECH-DEMO-024
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import type { Locale } from '@app/frontend-runtime';
 import type {
   MarketplacePublicSellerDto,
   MarketplaceReviewDto,
+  MarketplaceReviewSelfStateDto,
   MarketplaceSampleUsageDto,
 } from '@app/frontend-api-client';
+import { isReviewerAccessEnabled } from '../../../shared/config';
 import type { Resource, ResourceStatus } from '../model/use-marketplace-data';
 import { MarketplaceIcon, type MarketplaceIconName } from './marketplace-icon';
+import { MarketplaceTractorSilhouette } from './marketplace-brand';
 import { MarketplaceDemoBanner } from './marketplace-demo-banner';
-import { MarketplaceProductCard, ProductMedia } from './marketplace-product-card';
+import { MarketplaceGallery, MarketplaceGallerySkeleton } from './marketplace-gallery';
 import {
-  formatDate,
+  MarketplaceBusyButton,
+  MarketplaceFactsSkeleton,
+  MarketplaceListSkeleton,
+  MarketplaceLoadingRegion,
+  MarketplaceProductGridSkeleton,
+  MarketplaceStatsSkeleton,
+  SkeletonGrid,
+  SkeletonLine,
+  SkeletonPill,
+} from './marketplace-loading';
+import { MarketplaceProductCard } from './marketplace-product-card';
+import { MarketplaceProductSpecs, MarketplaceProductSpecsSkeleton } from './marketplace-product-specs';
+import type { MarketplacePublicProfileDto } from '@app/frontend-api-client';
+import { MarketplacePublicProfile, marketplaceSellerProfileHref } from './marketplace-public-profile';
+import { MarketplaceRatingSummary } from './marketplace-rating';
+import { MarketplaceReviewsSection } from './marketplace-reviews';
+import type { MarketplacePhotoCapability, MarketplacePhotoUploadOutcome } from './marketplace-photo-upload';
+import {
   formatMoney,
   localizedProductName,
   querySearch,
@@ -75,11 +95,6 @@ const sectionIcons: Record<Exclude<MarketplaceSection, 'all'>, MarketplaceIconNa
   seeds: 'seeds',
 };
 
-const formText = (form: FormData, field: string): string => {
-  const value = form.get(field);
-  return typeof value === 'string' ? value.trim() : '';
-};
-
 function Shelf({
   actions,
   locale,
@@ -95,7 +110,7 @@ function Shelf({
   section: Exclude<MarketplaceSection, 'all'>;
   t: MarketplaceTranslate;
 }>) {
-  const sectionProducts = products.filter((product) => sectionForProduct(product) === section).slice(0, 4);
+  const sectionProducts = products.filter((product) => sectionForProduct(product) === section).slice(0, 5);
   return (
     <section aria-labelledby={`dh-shelf-${section}`} className="dh-section">
       <div className="dh-section__head">
@@ -125,11 +140,12 @@ function Shelf({
               onAdd={actions.onAdd}
               onFavorite={actions.onFavorite}
               onOpen={actions.onOpen}
-              onTransactionAction={actions.onTransactionAction}
+              onOpenSeller={(item) => {
+                navigate(marketplaceSellerProfileHref(item.supplierId));
+              }}
               pendingAction={actions.pendingAction}
               product={product}
               t={t}
-              transactionActionLabel={actions.transactionActionLabel}
               transactionHint={actions.transactionHint}
             />
           ))}
@@ -158,7 +174,9 @@ function Shelf({
 
 export function MarketplaceHome(props: Readonly<SharedDiscoveryProps>) {
   const { locale, navigate, products, t, ...actions } = props;
-  const hasDemoProducts = products.some((product) => product.provenance === 'demo');
+  // Reviewer entry is a deployment decision, not a property of the catalog: the
+  // live catalog carries real transactional listings and no demo provenance.
+  const showsReviewerAccess = isReviewerAccessEnabled();
   return (
     <div className="dh-home">
       <section className="dh-hero">
@@ -189,11 +207,12 @@ export function MarketplaceHome(props: Readonly<SharedDiscoveryProps>) {
           </div>
         </div>
         <div aria-hidden="true" className="dh-hero__illustration">
-          <div className="dh-hero__sun" />
-          <MarketplaceIcon name="equipment" />
-          <span className="dh-hero__furrow dh-hero__furrow--one" />
-          <span className="dh-hero__furrow dh-hero__furrow--two" />
-          <span className="dh-hero__furrow dh-hero__furrow--three" />
+          <span className="dh-hero__raster">
+            {Array.from({ length: 12 }, (_, index) => (
+              <i key={index} />
+            ))}
+          </span>
+          <MarketplaceTractorSilhouette className="dh-hero__silhouette" />
         </div>
       </section>
 
@@ -223,7 +242,7 @@ export function MarketplaceHome(props: Readonly<SharedDiscoveryProps>) {
         ))}
       </section>
 
-      {hasDemoProducts ? <MarketplaceDemoBanner navigate={navigate} t={t} /> : null}
+      {showsReviewerAccess ? <MarketplaceDemoBanner navigate={navigate} t={t} /> : null}
 
       <Shelf actions={actions} locale={locale} navigate={navigate} products={products} section="seeds" t={t} />
       <Shelf actions={actions} locale={locale} navigate={navigate} products={products} section="equipment" t={t} />
@@ -250,9 +269,13 @@ export function MarketplaceHome(props: Readonly<SharedDiscoveryProps>) {
   );
 }
 
-type SortMode = 'name' | 'priceAsc' | 'priceDesc';
+type SortMode = 'name' | 'newest' | 'priceAsc' | 'priceDesc';
 
 interface CatalogFilters {
+  /** Input categories, multi-select: a shopper looks for seed *and* fertiliser. */
+  categories: readonly string[];
+  crops: readonly string[];
+  grades: readonly string[];
   inStock: boolean;
   maxPrice: string;
   minPrice: string;
@@ -261,9 +284,13 @@ interface CatalogFilters {
   sampleAvailable: boolean;
   section: MarketplaceSection;
   sort: SortMode;
+  verifiedOnly: boolean;
 }
 
 const initialFilters = (locationSearch?: string): CatalogFilters => ({
+  categories: [],
+  crops: [],
+  grades: [],
   inStock: false,
   maxPrice: '',
   minPrice: '',
@@ -272,10 +299,322 @@ const initialFilters = (locationSearch?: string): CatalogFilters => ({
   sampleAvailable: false,
   section: querySection(locationSearch),
   sort: 'name',
+  verifiedOnly: false,
 });
 
+/**
+ * Which input categories a section offers, mirroring the server's own taxonomy.
+ * Produce has none: a harvest is chosen by crop and grade, not by category.
+ */
+const categoriesBySection: Record<MarketplaceSection, readonly string[]> = {
+  all: ['equipment', 'irrigation', 'seed', 'fertilizer', 'pesticide'],
+  equipment: ['equipment', 'irrigation'],
+  produce: [],
+  seeds: ['seed', 'fertilizer', 'pesticide'],
+};
+
+/** Toggles one value of a multi-select facet. */
+const toggleFacet = (values: readonly string[], value: string): readonly string[] =>
+  values.includes(value) ? values.filter((entry) => entry !== value) : [...values, value];
+
+const matchesText = (product: MarketplaceListing, query: string, locale: Locale): boolean =>
+  !query ||
+  `${localizedProductName(product, locale)} ${product.supplierName} ${product.region}`
+    .toLocaleLowerCase(locale)
+    .includes(query);
+
+const matchesFacets = (product: MarketplaceListing, filters: CatalogFilters): boolean => {
+  if (filters.region && product.region !== filters.region) {
+    return false;
+  }
+  if (filters.categories.length > 0 && !filters.categories.includes(product.category)) {
+    return false;
+  }
+  if (filters.crops.length > 0 && !(product.crop && filters.crops.includes(product.crop))) {
+    return false;
+  }
+  return filters.grades.length === 0 || Boolean(product.grade && filters.grades.includes(product.grade));
+};
+
+const matchesAvailability = (product: MarketplaceListing, filters: CatalogFilters): boolean => {
+  if (filters.verifiedOnly && !product.supplierVerified) {
+    return false;
+  }
+  if (filters.inStock && (product.status !== 'active' || product.stockQuantity <= 0)) {
+    return false;
+  }
+  return !filters.sampleAvailable || product.sampleAvailable;
+};
+
+const matchesPrice = (product: MarketplaceListing, filters: CatalogFilters): boolean => {
+  const minimum = filters.minPrice ? Number(filters.minPrice) : undefined;
+  const maximum = filters.maxPrice ? Number(filters.maxPrice) : undefined;
+  if (minimum !== undefined && product.priceUzs < minimum) {
+    return false;
+  }
+  return maximum === undefined || product.priceUzs <= maximum;
+};
+
+/**
+ * Sorting order. Promoted listings lead every ordering except an explicit price
+ * sort, which is what a seller's promotion plan actually pays for — before this
+ * the screen sorted by name and a paid placement changed nothing.
+ */
+const compareListings = (
+  left: MarketplaceListing,
+  right: MarketplaceListing,
+  sort: SortMode,
+  locale: Locale,
+): number => {
+  if (sort !== 'priceAsc' && sort !== 'priceDesc' && left.promoted !== right.promoted) {
+    return left.promoted ? -1 : 1;
+  }
+  if (sort === 'priceAsc') {
+    return left.priceUzs - right.priceUzs;
+  }
+  if (sort === 'priceDesc') {
+    return right.priceUzs - left.priceUzs;
+  }
+  if (sort === 'newest') {
+    return right.publishedAt.localeCompare(left.publishedAt);
+  }
+  return localizedProductName(left, locale).localeCompare(localizedProductName(right, locale), locale);
+};
+
+function CatalogCrumbs({
+  navigate,
+  section,
+  t,
+}: Readonly<{ navigate: MarketplaceNavigate; section: MarketplaceSection; t: MarketplaceTranslate }>) {
+  return (
+    <nav aria-label={t('agritech.marketplace.accessibility.breadcrumbs')} className="dh-crumbs">
+      <button
+        onClick={() => {
+          navigate('/');
+        }}
+        type="button"
+      >
+        {t('agritech.marketplace.home')}
+      </button>
+      <span aria-hidden="true">·</span>
+      {section === 'all' ? (
+        <span>{t('agritech.marketplace.catalog')}</span>
+      ) : (
+        <>
+          <button
+            onClick={() => {
+              navigate('/catalog');
+            }}
+            type="button"
+          >
+            {t('agritech.marketplace.catalog')}
+          </button>
+          <span aria-hidden="true">·</span>
+          <span>{t(`agritech.marketplace.section.${section}`)}</span>
+        </>
+      )}
+    </nav>
+  );
+}
+
+interface CatalogFilterPanelProps {
+  crops: readonly string[];
+  filters: CatalogFilters;
+  grades: readonly string[];
+  matchCount: number;
+  onClose: () => void;
+  onReset: () => void;
+  regions: readonly string[];
+  sectionCategories: readonly string[];
+  setFilters: Dispatch<SetStateAction<CatalogFilters>>;
+  t: MarketplaceTranslate;
+}
+
+/** Every question the catalog can ask about a listing, grouped as the reference does. */
+function CatalogFilterPanel({
+  crops,
+  filters,
+  grades,
+  matchCount,
+  onClose,
+  onReset,
+  regions,
+  sectionCategories,
+  setFilters,
+  t,
+}: Readonly<CatalogFilterPanelProps>) {
+  return (
+    <div className="dh-filter-fields">
+      <div className="dh-filter-group">
+        <h4>{t('agritech.marketplace.filter.query')}</h4>
+        <label>
+          <span className="dh-sr-only">{t('agritech.marketplace.filter.query')}</span>
+          <input
+            onChange={(event) => {
+              setFilters((value) => ({ ...value, query: event.target.value }));
+            }}
+            placeholder={t('agritech.marketplace.filter.queryPlaceholder')}
+            type="search"
+            value={filters.query}
+          />
+        </label>
+      </div>
+      <div className="dh-filter-group">
+        <h4>{t('agritech.marketplace.filter.price')}</h4>
+        <div className="dh-field-row">
+          <label>
+            <span className="dh-sr-only">{t('agritech.marketplace.filter.from')}</span>
+            <input
+              inputMode="numeric"
+              min="0"
+              onChange={(event) => {
+                setFilters((value) => ({ ...value, minPrice: event.target.value }));
+              }}
+              placeholder={t('agritech.marketplace.filter.fromPlaceholder')}
+              type="number"
+              value={filters.minPrice}
+            />
+          </label>
+          <label>
+            <span className="dh-sr-only">{t('agritech.marketplace.filter.to')}</span>
+            <input
+              inputMode="numeric"
+              min="0"
+              onChange={(event) => {
+                setFilters((value) => ({ ...value, maxPrice: event.target.value }));
+              }}
+              placeholder={t('agritech.marketplace.filter.toPlaceholder')}
+              type="number"
+              value={filters.maxPrice}
+            />
+          </label>
+        </div>
+      </div>
+      <div className="dh-filter-group">
+        <h4>{t('agritech.marketplace.filter.trust')}</h4>
+        <label className="dh-check dh-check--toggle">
+          <input
+            checked={filters.verifiedOnly}
+            onChange={(event) => {
+              setFilters((value) => ({ ...value, verifiedOnly: event.target.checked }));
+            }}
+            type="checkbox"
+          />
+          <span>{t('agritech.marketplace.filter.verifiedOnly')}</span>
+        </label>
+        <label className="dh-check dh-check--toggle">
+          <input
+            checked={filters.sampleAvailable}
+            onChange={(event) => {
+              setFilters((value) => ({ ...value, sampleAvailable: event.target.checked }));
+            }}
+            type="checkbox"
+          />
+          <span>{t('agritech.marketplace.filter.sampleAvailable')}</span>
+        </label>
+        <label className="dh-check dh-check--toggle">
+          <input
+            checked={filters.inStock}
+            onChange={(event) => {
+              setFilters((value) => ({ ...value, inStock: event.target.checked }));
+            }}
+            type="checkbox"
+          />
+          <span>{t('agritech.marketplace.filter.inStock')}</span>
+        </label>
+      </div>
+      {/* Each section asks its own questions: inputs are chosen by category, a
+            harvest by crop and grade. Facets are built from the results in hand, so
+            a box is only offered when something behind it exists. */}
+      {sectionCategories.length > 0 ? (
+        <div className="dh-filter-group">
+          <h4>{t('agritech.marketplace.filter.category')}</h4>
+          {sectionCategories.map((category) => (
+            <label className="dh-check" key={category}>
+              <input
+                checked={filters.categories.includes(category)}
+                onChange={() => {
+                  setFilters((value) => ({ ...value, categories: toggleFacet(value.categories, category) }));
+                }}
+                type="checkbox"
+              />
+              <span>{t(`agritech.marketplace.category.${category}`)}</span>
+            </label>
+          ))}
+        </div>
+      ) : null}
+      {crops.length > 0 ? (
+        <div className="dh-filter-group">
+          <h4>{t('agritech.marketplace.filter.crop')}</h4>
+          {crops.map((crop) => (
+            <label className="dh-check" key={crop}>
+              <input
+                checked={filters.crops.includes(crop)}
+                onChange={() => {
+                  setFilters((value) => ({ ...value, crops: toggleFacet(value.crops, crop) }));
+                }}
+                type="checkbox"
+              />
+              <span>{crop}</span>
+            </label>
+          ))}
+        </div>
+      ) : null}
+      {grades.length > 0 ? (
+        <div className="dh-filter-group">
+          <h4>{t('agritech.marketplace.filter.grade')}</h4>
+          {grades.map((grade) => (
+            <label className="dh-check" key={grade}>
+              <input
+                checked={filters.grades.includes(grade)}
+                onChange={() => {
+                  setFilters((value) => ({ ...value, grades: toggleFacet(value.grades, grade) }));
+                }}
+                type="checkbox"
+              />
+              <span>{t('agritech.marketplace.filter.gradeValue', { grade })}</span>
+            </label>
+          ))}
+        </div>
+      ) : null}
+      <div className="dh-filter-group">
+        <h4>{t('agritech.marketplace.filter.region')}</h4>
+        <label>
+          <span className="dh-sr-only">{t('agritech.marketplace.filter.region')}</span>
+          <select
+            onChange={(event) => {
+              setFilters((value) => ({ ...value, region: event.target.value }));
+            }}
+            value={filters.region}
+          >
+            <option value="">{t('agritech.marketplace.section.all')}</option>
+            {regions.map((region) => (
+              <option key={region}>{region}</option>
+            ))}
+          </select>
+        </label>
+      </div>
+      <button
+        className="dh-button dh-button--primary dh-button--block"
+        onClick={() => {
+          onClose();
+          document.getElementById('dh-results-title')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }}
+        type="button"
+      >
+        {matchCount === 1
+          ? t('agritech.marketplace.filter.showOne')
+          : t('agritech.marketplace.filter.show', { count: matchCount })}
+      </button>
+      <button className="dh-filter-reset" onClick={onReset} type="button">
+        {t('agritech.marketplace.filter.reset')}
+      </button>
+    </div>
+  );
+}
+
 export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { locationSearch: string }>) {
-  const { locale, locationSearch, products, t, ...actions } = props;
+  const { locale, locationSearch, navigate, products, t, ...actions } = props;
   const [filters, setFilters] = useState<CatalogFilters>(() => initialFilters(locationSearch));
   const mobileFiltersDialog = useRef<HTMLDialogElement>(null);
 
@@ -314,48 +653,44 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
       [...new Set(products.map((product) => product.region))].sort((left, right) => left.localeCompare(right, locale)),
     [locale, products],
   );
+  /** Listings of the open section, which is what the section facets are drawn from. */
+  const sectionProducts = useMemo(
+    () =>
+      filters.section === 'all'
+        ? products
+        : products.filter((product) => sectionForProduct(product) === filters.section),
+    [filters.section, products],
+  );
+  const sectionCategories = useMemo(() => {
+    const offered = new Set<string>(sectionProducts.map((product) => product.category));
+    return categoriesBySection[filters.section].filter((category) => offered.has(category));
+  }, [filters.section, sectionProducts]);
+  const crops = useMemo(
+    () =>
+      [...new Set(sectionProducts.flatMap((product) => (product.crop ? [product.crop] : [])))].sort((left, right) =>
+        left.localeCompare(right, locale),
+      ),
+    [locale, sectionProducts],
+  );
+  const grades = useMemo(
+    () =>
+      [...new Set(sectionProducts.flatMap((product) => (product.grade ? [product.grade] : [])))].sort((left, right) =>
+        left.localeCompare(right),
+      ),
+    [sectionProducts],
+  );
   const filtered = useMemo(() => {
     const query = filters.query.trim().toLocaleLowerCase(locale);
-    const minimum = filters.minPrice ? Number(filters.minPrice) : undefined;
-    const maximum = filters.maxPrice ? Number(filters.maxPrice) : undefined;
-    const result = products.filter((product) => {
-      if (filters.section !== 'all' && sectionForProduct(product) !== filters.section) {
-        return false;
-      }
-      if (
-        query &&
-        !`${localizedProductName(product, locale)} ${product.supplierName} ${product.region}`
-          .toLocaleLowerCase(locale)
-          .includes(query)
-      ) {
-        return false;
-      }
-      if (filters.region && product.region !== filters.region) {
-        return false;
-      }
-      if (filters.inStock && (product.status !== 'active' || product.stockQuantity <= 0)) {
-        return false;
-      }
-      if (filters.sampleAvailable && !product.sampleAvailable) {
-        return false;
-      }
-      if (minimum !== undefined && product.priceUzs < minimum) {
-        return false;
-      }
-      if (maximum !== undefined && product.priceUzs > maximum) {
-        return false;
-      }
-      return true;
-    });
-    return result.sort((left, right) => {
-      if (filters.sort === 'priceAsc') {
-        return left.priceUzs - right.priceUzs;
-      }
-      if (filters.sort === 'priceDesc') {
-        return right.priceUzs - left.priceUzs;
-      }
-      return localizedProductName(left, locale).localeCompare(localizedProductName(right, locale), locale);
-    });
+    return products
+      .filter(
+        (product) =>
+          (filters.section === 'all' || sectionForProduct(product) === filters.section) &&
+          matchesText(product, query, locale) &&
+          matchesFacets(product, filters) &&
+          matchesAvailability(product, filters) &&
+          matchesPrice(product, filters),
+      )
+      .sort((left, right) => compareListings(left, right, filters.sort, locale));
   }, [filters, locale, products]);
 
   const reset = () => {
@@ -383,89 +718,6 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
     }
     dialog.setAttribute('open', '');
   };
-  const filterControls = (
-    <div className="dh-filter-fields">
-      <label>
-        <span>{t('agritech.marketplace.filter.query')}</span>
-        <input
-          onChange={(event) => {
-            setFilters((value) => ({ ...value, query: event.target.value }));
-          }}
-          placeholder={t('agritech.marketplace.filter.queryPlaceholder')}
-          type="search"
-          value={filters.query}
-        />
-      </label>
-      <fieldset>
-        <legend>{t('agritech.marketplace.filter.price')}</legend>
-        <div className="dh-field-row">
-          <label>
-            <span>{t('agritech.marketplace.filter.from')}</span>
-            <input
-              inputMode="numeric"
-              min="0"
-              onChange={(event) => {
-                setFilters((value) => ({ ...value, minPrice: event.target.value }));
-              }}
-              placeholder={t('agritech.marketplace.filter.fromPlaceholder')}
-              type="number"
-              value={filters.minPrice}
-            />
-          </label>
-          <label>
-            <span>{t('agritech.marketplace.filter.to')}</span>
-            <input
-              inputMode="numeric"
-              min="0"
-              onChange={(event) => {
-                setFilters((value) => ({ ...value, maxPrice: event.target.value }));
-              }}
-              placeholder={t('agritech.marketplace.filter.toPlaceholder')}
-              type="number"
-              value={filters.maxPrice}
-            />
-          </label>
-        </div>
-      </fieldset>
-      <label>
-        <span>{t('agritech.marketplace.filter.region')}</span>
-        <select
-          onChange={(event) => {
-            setFilters((value) => ({ ...value, region: event.target.value }));
-          }}
-          value={filters.region}
-        >
-          <option value="">{t('agritech.marketplace.section.all')}</option>
-          {regions.map((region) => (
-            <option key={region}>{region}</option>
-          ))}
-        </select>
-      </label>
-      <label className="dh-check">
-        <input
-          checked={filters.inStock}
-          onChange={(event) => {
-            setFilters((value) => ({ ...value, inStock: event.target.checked }));
-          }}
-          type="checkbox"
-        />
-        <span>{t('agritech.marketplace.filter.inStock')}</span>
-      </label>
-      <label className="dh-check">
-        <input
-          checked={filters.sampleAvailable}
-          onChange={(event) => {
-            setFilters((value) => ({ ...value, sampleAvailable: event.target.checked }));
-          }}
-          type="checkbox"
-        />
-        <span>{t('agritech.marketplace.filter.sampleAvailable')}</span>
-      </label>
-      <button className="dh-button dh-button--secondary dh-button--block" onClick={reset} type="button">
-        {t('agritech.marketplace.filter.reset')}
-      </button>
-    </div>
-  );
   const hasActiveFilters = Boolean(
     filters.query ||
     filters.region ||
@@ -477,15 +729,19 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
 
   return (
     <div className="dh-catalog-page">
+      <CatalogCrumbs navigate={navigate} section={filters.section} t={t} />
       <div className="dh-page-heading">
         <div>
-          <p className="dh-eyebrow">{t('agritech.marketplace.catalog')}</p>
           <h1>
             {filters.section === 'all'
               ? t('agritech.marketplace.catalog')
               : t(`agritech.marketplace.section.${filters.section}`)}
           </h1>
-          <p>{t('agritech.marketplace.catalog.description')}</p>
+          <p className="dh-page-heading__count">
+            {filtered.length === 1
+              ? t('agritech.marketplace.catalog.resultCountOne')
+              : t('agritech.marketplace.catalog.resultCount', { count: filtered.length })}
+          </p>
         </div>
         <label className="dh-sort">
           <span>{t('agritech.marketplace.sort')}</span>
@@ -498,6 +754,7 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
             <option value="name">{t('agritech.marketplace.sort.name')}</option>
             <option value="priceAsc">{t('agritech.marketplace.sort.priceAsc')}</option>
             <option value="priceDesc">{t('agritech.marketplace.sort.priceDesc')}</option>
+            <option value="newest">{t('agritech.marketplace.sort.newest')}</option>
           </select>
         </label>
       </div>
@@ -598,22 +855,39 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
               <MarketplaceIcon name="close" />
             </button>
           </header>
-          {filterControls}
+          <CatalogFilterPanel
+            crops={crops}
+            filters={filters}
+            grades={grades}
+            matchCount={filtered.length}
+            onClose={closeMobileFilters}
+            onReset={reset}
+            regions={regions}
+            sectionCategories={sectionCategories}
+            setFilters={setFilters}
+            t={t}
+          />
         </section>
       </dialog>
       <div className="dh-catalog-layout">
         <aside aria-label={t('agritech.marketplace.filter.title')} className="dh-filter-panel">
-          {filterControls}
+          <CatalogFilterPanel
+            crops={crops}
+            filters={filters}
+            grades={grades}
+            matchCount={filtered.length}
+            onClose={closeMobileFilters}
+            onReset={reset}
+            regions={regions}
+            sectionCategories={sectionCategories}
+            setFilters={setFilters}
+            t={t}
+          />
         </aside>
         <section aria-labelledby="dh-results-title">
-          <div className="dh-results-head">
-            <h2 id="dh-results-title">{t('agritech.marketplace.catalog.results')}</h2>
-            <span>
-              {filtered.length === 1
-                ? t('agritech.marketplace.catalog.resultCountOne')
-                : t('agritech.marketplace.catalog.resultCount', { count: filtered.length })}
-            </span>
-          </div>
+          <h2 className="dh-sr-only" id="dh-results-title">
+            {t('agritech.marketplace.catalog.results')}
+          </h2>
           {filtered.length > 0 ? (
             <div className="dh-product-grid">
               {filtered.map((product) => (
@@ -625,11 +899,12 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
                   onAdd={actions.onAdd}
                   onFavorite={actions.onFavorite}
                   onOpen={actions.onOpen}
-                  onTransactionAction={actions.onTransactionAction}
+                  onOpenSeller={(item) => {
+                    navigate(marketplaceSellerProfileHref(item.supplierId));
+                  }}
                   pendingAction={actions.pendingAction}
                   product={product}
                   t={t}
-                  transactionActionLabel={actions.transactionActionLabel}
                   transactionHint={actions.transactionHint}
                 />
               ))}
@@ -657,7 +932,15 @@ interface ProductDetailProps extends Omit<SharedDiscoveryProps, 'products'> {
   reviews: Resource<MarketplaceReviewDto[]>;
   sampleUsage: Resource<MarketplaceSampleUsageDto>;
   similar: MarketplaceListing[];
-  onReview: (product: MarketplaceListing, rating: number, comment?: string) => Promise<boolean>;
+  onReview: (
+    product: MarketplaceListing,
+    rating: number,
+    comment?: string,
+    assetReferences?: readonly string[],
+  ) => Promise<boolean>;
+  /** Sends one review photograph, when the shell can store one. */
+  onUploadPhoto?: (file: File) => Promise<MarketplacePhotoUploadOutcome>;
+  photoCapability?: MarketplacePhotoCapability;
   onReplyToReview: (review: MarketplaceReviewDto, comment: string) => Promise<boolean>;
   onReportReview: (
     review: MarketplaceReviewDto,
@@ -666,6 +949,15 @@ interface ProductDetailProps extends Omit<SharedDiscoveryProps, 'products'> {
   ) => Promise<boolean>;
   onRetry: () => void;
   onSample: (product: MarketplaceListing) => void;
+  /**
+   * The server's answer to whether this caller may still rate this listing, and
+   * the review they already left. The public review projection carries no author,
+   * so nothing else on this page can tell "you already rated this" apart from
+   * "you never could"; until the shell has read it, the ratings block falls back
+   * to `canReview`.
+   */
+  reviewSelfState?: MarketplaceReviewSelfStateDto;
+  reviewSelfStateStatus?: ResourceStatus;
 }
 
 function ProductSampleAction({
@@ -707,20 +999,21 @@ function ProductSampleAction({
     );
   }
   return (
-    <button
+    <MarketplaceBusyButton
+      busy={pendingAction === `sample:${product.id}`}
+      busyLabel={t('agritech.marketplace.loading')}
       className="dh-button dh-button--secondary"
-      disabled={!sampleAvailable || pendingAction === `sample:${product.id}`}
+      disabled={!sampleAvailable}
       onClick={() => {
         onSample(product);
       }}
       type="button"
     >
       {sampleAvailable ? t('agritech.marketplace.product.sample') : t('agritech.marketplace.samples.unavailable')}
-    </button>
+    </MarketplaceBusyButton>
   );
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity -- the product view intentionally renders the complete demo, stock, sample, review, and transaction state matrix
 export function MarketplaceProductDetail({
   canTransact = true,
   canReview,
@@ -733,6 +1026,8 @@ export function MarketplaceProductDetail({
   onFavorite,
   onOpen,
   onReview,
+  onUploadPhoto,
+  photoCapability,
   onReplyToReview,
   onReportReview,
   onRetry,
@@ -741,6 +1036,8 @@ export function MarketplaceProductDetail({
   pendingAction,
   product,
   reviews,
+  reviewSelfState,
+  reviewSelfStateStatus,
   sampleUsage,
   similar,
   t,
@@ -748,10 +1045,6 @@ export function MarketplaceProductDetail({
   transactionHint,
 }: Readonly<ProductDetailProps>) {
   const [quantity, setQuantity] = useState(1);
-  const [reviewComment, setReviewComment] = useState('');
-  const [reviewRating, setReviewRating] = useState(5);
-  const [replyingReviewId, setReplyingReviewId] = useState<string>();
-  const [reportingReviewId, setReportingReviewId] = useState<string>();
   if (!product) {
     return (
       <MarketplaceEmpty
@@ -773,127 +1066,6 @@ export function MarketplaceProductDetail({
   const transactionRestricted = !canTransact || product.transactional === false;
   const restrictionHint = isDemo ? t('agritech.marketplace.access.demo') : transactionHint;
   const restrictionId = `marketplace-product-${product.id}-detail-restriction`;
-  let reviewsContent: ReactNode;
-  if (reviews.status === 'loading') {
-    reviewsContent = <MarketplaceSkeleton count={2} />;
-  } else if (reviews.data.length > 0) {
-    reviewsContent = (
-      <div className="dh-review-list">
-        {reviews.data.map((review) => (
-          <article key={review.id}>
-            <div>
-              <strong>{review.rating}/5</strong>
-              <span>{formatDate(review.createdAt, locale)}</span>
-            </div>
-            {review.comment && <p>{review.comment}</p>}
-            {review.reply ? (
-              <blockquote className="dh-review-reply">
-                <strong>{t('agritech.marketplace.reviews.sellerReply')}</strong>
-                <p>{review.reply.comment}</p>
-              </blockquote>
-            ) : null}
-            <div className="dh-review-actions">
-              {canReplyToReviews && !review.reply ? (
-                <button
-                  className="dh-text-button"
-                  onClick={() => {
-                    setReplyingReviewId((value) => (value === review.id ? undefined : review.id));
-                    setReportingReviewId(undefined);
-                  }}
-                  type="button"
-                >
-                  {t('agritech.marketplace.reviews.reply')}
-                </button>
-              ) : null}
-              {canReportReviews ? (
-                <button
-                  className="dh-text-button"
-                  onClick={() => {
-                    setReportingReviewId((value) => (value === review.id ? undefined : review.id));
-                    setReplyingReviewId(undefined);
-                  }}
-                  type="button"
-                >
-                  {t('agritech.marketplace.reviews.report')}
-                </button>
-              ) : null}
-            </div>
-            {replyingReviewId === review.id ? (
-              <form
-                className="dh-inline-form"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const form = new FormData(event.currentTarget);
-                  const comment = formText(form, 'comment');
-                  if (comment) {
-                    void onReplyToReview(review, comment).then((submitted) => {
-                      if (submitted) {
-                        setReplyingReviewId(undefined);
-                      }
-                    });
-                  }
-                }}
-              >
-                <label>
-                  <span>{t('agritech.marketplace.reviews.reply')}</span>
-                  <textarea maxLength={2000} name="comment" required rows={3} />
-                </label>
-                <button
-                  className="dh-button dh-button--secondary"
-                  disabled={pendingAction === `review-reply:${review.id}`}
-                  type="submit"
-                >
-                  {t('agritech.marketplace.reviews.replySubmit')}
-                </button>
-              </form>
-            ) : null}
-            {reportingReviewId === review.id ? (
-              <form
-                className="dh-inline-form"
-                onSubmit={(event) => {
-                  event.preventDefault();
-                  const form = new FormData(event.currentTarget);
-                  const reason = formText(form, 'reason') as 'abuse' | 'off_topic' | 'privacy' | 'spam';
-                  const comment = formText(form, 'comment');
-                  void onReportReview(review, reason, comment || undefined).then((submitted) => {
-                    if (submitted) {
-                      setReportingReviewId(undefined);
-                    }
-                  });
-                }}
-              >
-                <label>
-                  <span>{t('agritech.marketplace.reviews.reportReason')}</span>
-                  <select name="reason">
-                    {(['abuse', 'off_topic', 'privacy', 'spam'] as const).map((reason) => (
-                      <option key={reason} value={reason}>
-                        {t(`agritech.marketplace.reviews.reportReason.${reason}`)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span>{t('agritech.marketplace.reviews.reportComment')}</span>
-                  <textarea maxLength={1000} name="comment" rows={2} />
-                </label>
-                <button
-                  className="dh-button dh-button--secondary"
-                  disabled={pendingAction === `review-report:${review.id}`}
-                  type="submit"
-                >
-                  {t('agritech.marketplace.reviews.reportSubmit')}
-                </button>
-              </form>
-            ) : null}
-          </article>
-        ))}
-      </div>
-    );
-  } else {
-    const emptyReviewKey =
-      reviews.status === 'error' ? 'agritech.marketplace.reviews.unavailable' : 'agritech.marketplace.reviews.empty';
-    reviewsContent = <p className="dh-muted">{t(emptyReviewKey)}</p>;
-  }
 
   return (
     <div className="dh-product-page">
@@ -909,7 +1081,7 @@ export function MarketplaceProductDetail({
       </button>
       <div className="dh-product-detail">
         <div className="dh-product-detail__visual">
-          <ProductMedia locale={locale} product={product} t={t} />
+          <MarketplaceGallery locale={locale} product={product} t={t} />
         </div>
         <section className="dh-product-detail__content">
           <div className="dh-product-detail__heading">
@@ -926,6 +1098,9 @@ export function MarketplaceProductDetail({
               <p>
                 {product.region} · {product.supplierName}
               </p>
+              {/* The same aggregate the catalog card carries, so opening a listing
+                  never changes the score it was chosen on. */}
+              <MarketplaceRatingSummary layout="detail" locale={locale} rating={product.rating} t={t} />
             </div>
             <button
               aria-label={
@@ -948,36 +1123,14 @@ export function MarketplaceProductDetail({
             <span>/ {product.unit}</span>
           </div>
           <p className="dh-product-detail__description">{product.description}</p>
-          <dl className="dh-facts">
-            <div>
-              <dt>{t('agritech.marketplace.product.seller')}</dt>
-              <dd>
-                <button
-                  className="dh-text-button"
-                  onClick={() => {
-                    navigate(`/sellers/${encodeURIComponent(product.supplierId)}`);
-                  }}
-                  type="button"
-                >
-                  {product.supplierName}
-                </button>
-              </dd>
-            </div>
-            <div>
-              <dt>{t('agritech.marketplace.filter.region')}</dt>
-              <dd>{product.region}</dd>
-            </div>
-            <div>
-              <dt>{t('agritech.marketplace.product.stock')}</dt>
-              <dd>
-                {product.stockQuantity} {product.unit}
-              </dd>
-            </div>
-            <div>
-              <dt>{t('agritech.marketplace.product.sku')}</dt>
-              <dd>{product.id}</dd>
-            </div>
-          </dl>
+          <MarketplaceProductSpecs
+            locale={locale}
+            onOpenSeller={() => {
+              navigate(marketplaceSellerProfileHref(product.supplierId));
+            }}
+            product={product}
+            t={t}
+          />
           <div className="dh-buy-row">
             <label className="dh-quantity">
               <span>{t('agritech.marketplace.product.quantity')}</span>
@@ -990,22 +1143,24 @@ export function MarketplaceProductDetail({
                 value={quantity}
               />
             </label>
-            <button
+            <MarketplaceBusyButton
               aria-describedby={transactionRestricted ? restrictionId : undefined}
+              busy={pendingAction === `cart:${product.id}`}
+              busyLabel={t('agritech.marketplace.loading')}
               className="dh-button dh-button--primary"
-              disabled={outOfStock || pendingAction === `cart:${product.id}`}
+              disabled={outOfStock}
+              icon="cart"
               onClick={() => {
                 onAdd(product, quantity);
               }}
               type="button"
             >
-              <MarketplaceIcon name="cart" />
               {t(
                 transactionRestricted
                   ? 'agritech.marketplace.product.addToPreviewCart'
                   : 'agritech.marketplace.product.addToCart',
               )}
-            </button>
+            </MarketplaceBusyButton>
           </div>
           {transactionRestricted && restrictionHint ? (
             <div className="dh-state-inline" id={restrictionId}>
@@ -1037,68 +1192,30 @@ export function MarketplaceProductDetail({
           </div>
         </section>
       </div>
-      <section aria-labelledby="dh-reviews-title" className="dh-detail-section">
-        <div className="dh-section__head">
-          <h2 id="dh-reviews-title">{t('agritech.marketplace.product.reviewsTab')}</h2>
-        </div>
-        {canReview && (
-          <form
-            className="dh-review-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              void onReview(product, reviewRating, reviewComment.trim() || undefined).then((submitted) => {
-                if (submitted) {
-                  setReviewComment('');
-                }
-              });
-            }}
-          >
-            <h3>{t('agritech.marketplace.reviews.write')}</h3>
-            <label>
-              <span>{t('agritech.marketplace.reviews.rating')}</span>
-              <select
-                onChange={(event) => {
-                  setReviewRating(Number(event.target.value));
-                }}
-                value={reviewRating}
-              >
-                {[5, 4, 3, 2, 1].map((rating) => (
-                  <option key={rating} value={rating}>
-                    {rating}/5
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>{t('agritech.marketplace.reviews.comment')}</span>
-              <textarea
-                maxLength={2000}
-                onChange={(event) => {
-                  setReviewComment(event.target.value);
-                }}
-                placeholder={t('agritech.marketplace.reviews.commentPlaceholder')}
-                rows={3}
-                value={reviewComment}
-              />
-            </label>
-            <button
-              className="dh-button dh-button--primary"
-              disabled={pendingAction === `review:${product.id}`}
-              type="submit"
-            >
-              {t('agritech.marketplace.reviews.submit')}
-            </button>
-          </form>
-        )}
-        {reviewsContent}
-      </section>
+      <MarketplaceReviewsSection
+        canReplyToReviews={canReplyToReviews}
+        canReportReviews={canReportReviews}
+        canReview={canReview}
+        listing={product}
+        locale={locale}
+        onReplyToReview={onReplyToReview}
+        onReportReview={onReportReview}
+        onReview={onReview}
+        onUploadPhoto={onUploadPhoto}
+        pendingAction={pendingAction}
+        photoCapability={photoCapability}
+        reviews={reviews}
+        selfState={reviewSelfState}
+        selfStateStatus={reviewSelfStateStatus}
+        t={t}
+      />
       {similar.length > 0 && (
         <section aria-labelledby="dh-similar-title" className="dh-section">
           <div className="dh-section__head">
             <h2 id="dh-similar-title">{t('agritech.marketplace.product.similar')}</h2>
           </div>
           <div className="dh-product-grid">
-            {similar.slice(0, 4).map((item) => (
+            {similar.slice(0, 5).map((item) => (
               <MarketplaceProductCard
                 canTransact={canTransact}
                 favorite={favoriteIds.has(item.id)}
@@ -1107,11 +1224,12 @@ export function MarketplaceProductDetail({
                 onAdd={onAdd}
                 onFavorite={onFavorite}
                 onOpen={onOpen}
-                onTransactionAction={onTransactionAction}
+                onOpenSeller={(entry) => {
+                  navigate(marketplaceSellerProfileHref(entry.supplierId));
+                }}
                 pendingAction={pendingAction}
                 product={item}
                 t={t}
-                transactionActionLabel={transactionActionLabel}
                 transactionHint={transactionHint}
               />
             ))}
@@ -1126,11 +1244,35 @@ interface SellerProfileProps extends ProductActions {
   catalog: Resource<MarketplaceListing[]>;
   locale: Locale;
   navigate: MarketplaceNavigate;
+  /** Supplied by the page; absent in a bare render, where the block is skipped. */
+  publicProfile?: Resource<MarketplacePublicProfileDto | null>;
   seller: Resource<MarketplacePublicSellerDto | null>;
   t: MarketplaceTranslate;
 }
 
-export function MarketplaceSellerProfile({
+/**
+ * The seller route. The loading region persists across the transition, so the
+ * same status that announced the route as loading announces it as ready instead
+ * of unmounting silently.
+ */
+export function MarketplaceSellerProfile(props: Readonly<SellerProfileProps>) {
+  return (
+    <MarketplaceLoadingRegion
+      busy={props.seller.status === 'loading' || props.seller.status === 'idle'}
+      label={props.t('agritech.marketplace.seller.title')}
+      skeleton={
+        <div className="dh-page-stack">
+          <MarketplaceSellerProfileSkeleton />
+        </div>
+      }
+      t={props.t}
+    >
+      <SellerProfileContent {...props} />
+    </MarketplaceLoadingRegion>
+  );
+}
+
+function SellerProfileContent({
   canTransact = true,
   catalog,
   favoriteIds,
@@ -1139,16 +1281,12 @@ export function MarketplaceSellerProfile({
   onAdd,
   onFavorite,
   onOpen,
-  onTransactionAction,
   pendingAction,
+  publicProfile,
   seller,
   t,
-  transactionActionLabel,
   transactionHint,
 }: Readonly<SellerProfileProps>) {
-  if (seller.status === 'loading' || seller.status === 'idle') {
-    return <MarketplaceSkeleton count={5} />;
-  }
   if (seller.status === 'error' || !seller.data) {
     return (
       <MarketplaceEmpty
@@ -1192,44 +1330,55 @@ export function MarketplaceSellerProfile({
           </span>
         </div>
       </div>
+      {/* The public reputation record of the same organization: completed-deal
+          counts, the reviews it received, and the reviews it wrote. The page reads
+          it by the public seller address the catalog already links to, so no second
+          identifier reaches the browser. */}
+      {publicProfile ? (
+        <MarketplacePublicProfile identity={false} locale={locale} navigate={navigate} profile={publicProfile} t={t} />
+      ) : null}
       <section aria-labelledby="dh-seller-catalog" className="dh-detail-section">
         <div className="dh-section__head">
           <h2 id="dh-seller-catalog">{t('agritech.marketplace.seller.catalog')}</h2>
         </div>
-        {catalog.status === 'loading' || catalog.status === 'idle' ? <MarketplaceSkeleton count={4} /> : null}
-        {catalog.status === 'error' ? (
-          <p className="dh-state-inline dh-state-inline--error">
-            {t('agritech.marketplace.catalog.unavailableDescription')}
-          </p>
-        ) : null}
-        {catalog.status === 'empty' ? (
-          <MarketplaceEmpty
-            icon="produce"
-            message={t('agritech.marketplace.seller.emptyDescription')}
-            title={t('agritech.marketplace.seller.empty')}
-          />
-        ) : null}
-        {catalog.data.length > 0 ? (
-          <div className="dh-product-grid">
-            {catalog.data.map((product) => (
-              <MarketplaceProductCard
-                canTransact={canTransact}
-                favorite={favoriteIds.has(product.id)}
-                key={product.id}
-                locale={locale}
-                onAdd={onAdd}
-                onFavorite={onFavorite}
-                onOpen={onOpen}
-                onTransactionAction={onTransactionAction}
-                pendingAction={pendingAction}
-                product={product}
-                t={t}
-                transactionActionLabel={transactionActionLabel}
-                transactionHint={transactionHint}
-              />
-            ))}
-          </div>
-        ) : null}
+        <MarketplaceLoadingRegion
+          busy={catalog.status === 'loading' || catalog.status === 'idle'}
+          label={t('agritech.marketplace.seller.catalog')}
+          skeleton={<MarketplaceProductGridSkeleton count={4} />}
+          t={t}
+        >
+          {catalog.status === 'error' ? (
+            <p className="dh-state-inline dh-state-inline--error">
+              {t('agritech.marketplace.catalog.unavailableDescription')}
+            </p>
+          ) : null}
+          {catalog.status === 'empty' ? (
+            <MarketplaceEmpty
+              icon="produce"
+              message={t('agritech.marketplace.seller.emptyDescription')}
+              title={t('agritech.marketplace.seller.empty')}
+            />
+          ) : null}
+          {catalog.data.length > 0 ? (
+            <div className="dh-product-grid">
+              {catalog.data.map((product) => (
+                <MarketplaceProductCard
+                  canTransact={canTransact}
+                  favorite={favoriteIds.has(product.id)}
+                  key={product.id}
+                  locale={locale}
+                  onAdd={onAdd}
+                  onFavorite={onFavorite}
+                  onOpen={onOpen}
+                  pendingAction={pendingAction}
+                  product={product}
+                  t={t}
+                  transactionHint={transactionHint}
+                />
+              ))}
+            </div>
+          ) : null}
+        </MarketplaceLoadingRegion>
       </section>
     </div>
   );
@@ -1242,11 +1391,9 @@ interface FavoritesProps extends SharedDiscoveryProps {
 
 export function MarketplaceFavorites({ localOnly, status, ...props }: Readonly<FavoritesProps>) {
   const favorites = props.products.filter((product) => props.favoriteIds.has(product.id));
-  let content: ReactNode;
-  if (status === 'loading') {
-    content = <MarketplaceSkeleton count={4} />;
-  } else if (status === 'error') {
-    content = (
+  let settled: ReactNode;
+  if (status === 'error') {
+    settled = (
       <MarketplaceEmpty
         actionLabel={props.t('ui.runtime.retry')}
         icon="heart"
@@ -1258,7 +1405,7 @@ export function MarketplaceFavorites({ localOnly, status, ...props }: Readonly<F
       />
     );
   } else if (favorites.length > 0) {
-    content = (
+    settled = (
       <div className="dh-product-grid">
         {favorites.map((product) => (
           <MarketplaceProductCard
@@ -1269,18 +1416,19 @@ export function MarketplaceFavorites({ localOnly, status, ...props }: Readonly<F
             onAdd={props.onAdd}
             onFavorite={props.onFavorite}
             onOpen={props.onOpen}
-            onTransactionAction={props.onTransactionAction}
+            onOpenSeller={(item) => {
+              props.navigate(marketplaceSellerProfileHref(item.supplierId));
+            }}
             pendingAction={props.pendingAction}
             product={product}
             t={props.t}
-            transactionActionLabel={props.transactionActionLabel}
             transactionHint={props.transactionHint}
           />
         ))}
       </div>
     );
   } else {
-    content = (
+    settled = (
       <MarketplaceEmpty
         actionLabel={props.t('agritech.marketplace.hero.cta')}
         icon="heart"
@@ -1292,6 +1440,16 @@ export function MarketplaceFavorites({ localOnly, status, ...props }: Readonly<F
       />
     );
   }
+  const content = (
+    <MarketplaceLoadingRegion
+      busy={status === 'loading'}
+      label={props.t('agritech.marketplace.favorites')}
+      skeleton={<MarketplaceProductGridSkeleton count={4} />}
+      t={props.t}
+    >
+      {settled}
+    </MarketplaceLoadingRegion>
+  );
   return (
     <div className="dh-page-stack">
       <div className="dh-page-heading">
@@ -1312,13 +1470,71 @@ export function MarketplaceFavorites({ localOnly, status, ...props }: Readonly<F
   );
 }
 
-export function MarketplaceSkeleton({ count = 4 }: Readonly<{ count?: number }>) {
+/**
+ * The marketplace's shared skeleton. Every renderer in this page imports it by
+ * this name, so `count` keeps its meaning and its default; `shape` is an added
+ * optional prop that lets a caller ask for the shape of the content it stands in
+ * for instead of always getting a grid of catalog cards. A cart line, an offer
+ * or a publication row is a row, not a 3:4 tile.
+ */
+export function MarketplaceSkeleton({
+  count = 4,
+  shape = 'cards',
+}: Readonly<{ count?: number; shape?: 'cards' | 'facts' | 'rows' | 'stats' }>) {
+  if (shape === 'rows') {
+    return <MarketplaceListSkeleton count={count} />;
+  }
+  if (shape === 'facts') {
+    return <MarketplaceFactsSkeleton rows={count} />;
+  }
+  if (shape === 'stats') {
+    return <MarketplaceStatsSkeleton count={count} />;
+  }
+  return <MarketplaceProductGridSkeleton count={count} />;
+}
+
+/**
+ * The product route's own loading shape: the gallery frame and its thumbnail
+ * strip in the visual column, and the eyebrow, title, price, description,
+ * grouped specs and buy action in the content column, laid out on
+ * `.dh-product-detail`'s own two-track grid.
+ */
+export function MarketplaceProductDetailSkeleton() {
   return (
-    <div aria-busy="true" className="dh-skeleton-grid">
-      {Array.from({ length: count }, (_, index) => (
-        <div className="dh-skeleton" key={index} />
-      ))}
-    </div>
+    <SkeletonGrid shape="detail">
+      <MarketplaceGallerySkeleton />
+      <span aria-hidden="true" className="dh-sk-detail">
+        <SkeletonLine width="quarter" />
+        <SkeletonLine size="title" width="wide" />
+        <SkeletonLine size="title" width="third" />
+        <SkeletonLine />
+        <SkeletonLine width="wide" />
+        <MarketplaceProductSpecsSkeleton />
+        <SkeletonPill />
+      </span>
+    </SkeletonGrid>
+  );
+}
+
+/**
+ * The seller route's own loading shape: the account hero the seller's name and
+ * description fill, then the catalog grid under its section heading.
+ */
+export function MarketplaceSellerProfileSkeleton() {
+  return (
+    <SkeletonGrid shape="plain">
+      <span aria-hidden="true" className="dh-sk-hero">
+        <span className="dh-sk-hero__copy">
+          <SkeletonLine width="quarter" />
+          <SkeletonLine size="title" width="half" />
+          <SkeletonLine width="wide" />
+          <SkeletonLine width="third" />
+        </span>
+        <SkeletonPill />
+      </span>
+      <SkeletonLine size="lead" width="third" />
+      <MarketplaceProductGridSkeleton count={4} />
+    </SkeletonGrid>
   );
 }
 

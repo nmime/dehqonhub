@@ -56,8 +56,8 @@ describe("MongoDB bootstrap seed", () => {
       permissions: permissions.length,
       roles: 2,
       rolePermissions: Object.values(rolePermissions).flat().length,
-      users: 6,
-      userRoles: 6,
+      users: users.length,
+      userRoles: users.length,
     });
     assert.deepEqual(second, {
       permissions: 0,
@@ -66,7 +66,7 @@ describe("MongoDB bootstrap seed", () => {
       users: 0,
       userRoles: 0,
     });
-    assert.equal(database.collection("auth_users").documents.length, 6);
+    assert.equal(database.collection("auth_users").documents.length, users.length);
     assert.equal(database.collection("auth_roles").documents.length, 2);
     assert.equal(database.collection("auth_permissions").documents.length, permissions.length);
     for (const collection of database.collections.values()) {

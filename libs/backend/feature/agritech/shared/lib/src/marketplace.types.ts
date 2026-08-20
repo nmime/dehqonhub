@@ -1,3 +1,5 @@
+import type { MarketplaceModerationStatus, MarketplacePublicationStatus } from './marketplace-public';
+
 export type VerificationRole = 'farmer' | 'seller' | 'buyer';
 export type VerificationLevel = 'basic' | 'verified' | 'trusted';
 export type VerificationStatus = 'none' | 'pending' | 'verified' | 'rejected';
@@ -88,13 +90,31 @@ export interface BuyerRequest {
   budgetUzs?: number;
   requirements?: string;
   status: RequestStatus;
+  /**
+   * The public request publication this request is exposed through. It is the only
+   * id the offer endpoints accept, and it stays absent until the request is
+   * published — an unpublished request has no offer surface at all, which callers
+   * must surface instead of reading an empty offer list as "no offers yet".
+   */
+  publicationId?: string;
+  publicationStatus?: MarketplacePublicationStatus;
+  moderationStatus?: MarketplaceModerationStatus;
   createdAt: Date;
   updatedAt: Date;
 }
 
 export interface CreateBuyerRequestInput extends Omit<
   BuyerRequest,
-  'id' | 'tenantId' | 'buyerUserId' | 'buyerPartnerId' | 'status' | 'createdAt' | 'updatedAt'
+  | 'id'
+  | 'tenantId'
+  | 'buyerUserId'
+  | 'buyerPartnerId'
+  | 'status'
+  | 'publicationId'
+  | 'publicationStatus'
+  | 'moderationStatus'
+  | 'createdAt'
+  | 'updatedAt'
 > {
   actingPartnerId: string;
 }

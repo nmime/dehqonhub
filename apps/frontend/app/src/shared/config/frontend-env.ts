@@ -19,3 +19,19 @@ export const getUserApiBaseUrl = (): string => getRequiredApiBaseUrl(getFrontend
  */
 export const isTelegramAuthEnabled = (): boolean =>
   resolveFeatureFlag(getFrontendRuntimeConfig()['telegramAuthEnabled'], getFrontendEnv()['VITE_TELEGRAM_AUTH_ENABLED']);
+
+/**
+ * Reviewer credential access is deployment-configurable at runtime and ships
+ * ENABLED for the MVP review build, because a state commission has to sign in as
+ * each demo reviewer role. The container writes `runtime-config.js` from
+ * `REVIEWER_ACCESS_ENABLED` at start, so a deployment turns the published
+ * reviewer identities off with `REVIEWER_ACCESS_ENABLED=false` (Helm:
+ * `frontendRuntimeConfig.REVIEWER_ACCESS_ENABLED`) without a code change.
+ * `VITE_REVIEWER_ACCESS_ENABLED` remains the build-time default for local dev.
+ */
+export const isReviewerAccessEnabled = (): boolean =>
+  resolveFeatureFlag(
+    getFrontendRuntimeConfig()['reviewerAccessEnabled'],
+    getFrontendEnv()['VITE_REVIEWER_ACCESS_ENABLED'],
+    true,
+  );

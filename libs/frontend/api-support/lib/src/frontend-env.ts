@@ -37,10 +37,11 @@ const parseBooleanFlag = (value: unknown): boolean | undefined => {
 /**
  * Resolve a boolean feature flag, preferring the runtime value over the value
  * baked in at build time. Unset/unparsable runtime values fall through, so a
- * deployment can only ever override a flag deliberately.
+ * deployment can only ever override a flag deliberately. `defaultValue` covers
+ * the flags that ship enabled: it applies only when neither side states a value.
  */
-export const resolveFeatureFlag = (runtimeValue: unknown, buildValue: unknown): boolean =>
-  parseBooleanFlag(runtimeValue) ?? parseBooleanFlag(buildValue) ?? false;
+export const resolveFeatureFlag = (runtimeValue: unknown, buildValue: unknown, defaultValue = false): boolean =>
+  parseBooleanFlag(runtimeValue) ?? parseBooleanFlag(buildValue) ?? defaultValue;
 
 export const frontendApiBaseUrlKeys = [
   'VITE_AUTH_API_BASE_URL',

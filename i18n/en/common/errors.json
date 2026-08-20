@@ -45,5 +45,7 @@
   "validation.constraints.max": "{{property}} must not be greater than the maximum allowed value",
   "validation.constraints.isIn": "{{property}} must be one of the allowed values",
   "validation.constraints.isUuid": "{{property}} must be a UUID",
-  "validation.constraints.isArray": "{{property}} must be an array"
+  "validation.constraints.isArray": "{{property}} must be an array",
+  "errors.marketplace-media-storage-unavailable.title": "Marketplace Photograph Storage Unavailable",
+  "errors.marketplace-media-storage-unavailable.detail": "This deployment cannot store photographs because its object storage is not configured or not reachable. Nothing was stored."
 }

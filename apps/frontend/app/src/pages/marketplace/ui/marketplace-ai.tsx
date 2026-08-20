@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type SyntheticEvent } from 'r
 import type { Locale } from '@app/frontend-runtime';
 import type { MarketplaceAiConsultationDto } from '@app/frontend-api-client';
 import { MarketplaceIcon } from './marketplace-icon';
+import { MarketplaceBusyButton, SkeletonLine, useDeferredBusy } from './marketplace-loading';
 import { ProductMedia } from './marketplace-product-card';
 import { localizedProductName, type MarketplaceListing, type MarketplaceTranslate } from './marketplace-ui';
 
@@ -50,6 +51,14 @@ export function MarketplaceAi({
   const [question, setQuestion] = useState('');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [confirmedConsultations, setConfirmedConsultations] = useState<ReadonlySet<string>>(new Set());
+  const [confirmingConsultationId, setConfirmingConsultationId] = useState<string>();
+  /*
+   * The panel's own anti-flicker gate. A grounded answer that returns from cache
+   * inside a frame or two used to paint the typing row and remove it again, which
+   * reads as a rendering fault rather than as work; the default policy holds the
+   * row back for 120 ms and then keeps it for at least 320 ms.
+   */
+  const working = useDeferredBusy(pending);
   const [mobileModal, setMobileModal] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -148,10 +157,12 @@ export function MarketplaceAi({
   const confirmStarterCart = useCallback(
     async (answer: MarketplaceAiConsultationDto) => {
       setPending(true);
+      setConfirmingConsultationId(answer.id);
       const confirmed = await onConfirmStarterCart(answer);
       if (confirmed) {
         setConfirmedConsultations((value) => new Set([...value, answer.id]));
       }
+      setConfirmingConsultationId(undefined);
       setPending(false);
     },
     [onConfirmStarterCart],
@@ -214,7 +225,10 @@ export function MarketplaceAi({
                   <span>
                     <MarketplaceIcon name="seeds" />
                   </span>
-                  <h2>{t('agritech.marketplace.ai.welcome')}</h2>
+                  {/* Prose, not a heading: the panel is already titled in its header,
+                      and an <h2> here inherited the page heading scale, so the opening
+                      sentence rendered at 30px inside a 13px bubble. */}
+                  <p className="dh-ai-welcome__lead">{t('agritech.marketplace.ai.welcome')}</p>
                   <p>{t('agritech.marketplace.ai.disclosure')}</p>
                 </div>
               )}
@@ -260,29 +274,39 @@ export function MarketplaceAi({
                       </div>
                     )}
                     {showStarterCartConfirmation && (
-                      <button
+                      <MarketplaceBusyButton
+                        busy={confirmingConsultationId === answer.id}
                         className="dh-button dh-button--secondary dh-button--block"
                         disabled={pending || starterCartConfirmed}
+                        icon="cart"
                         onClick={() => {
                           void confirmStarterCart(answer);
                         }}
                         type="button"
                       >
-                        <MarketplaceIcon name="cart" />
                         {starterCartConfirmed
                           ? t('agritech.marketplace.ai.starterCart.confirmed')
                           : t('agritech.marketplace.ai.starterCart.confirm')}
-                      </button>
+                      </MarketplaceBusyButton>
                     )}
                   </div>
                 );
               })}
-              {pending && (
-                <div className="dh-ai-typing">
-                  <span />
-                  <span />
-                  <span />
-                  <em>{t('agritech.marketplace.ai.loading')}</em>
+              {working && (
+                <div aria-busy="true" className="dh-ai-pending">
+                  <div className="dh-ai-typing">
+                    <span />
+                    <span />
+                    <span />
+                    <em>{t('agritech.marketplace.ai.loading')}</em>
+                  </div>
+                  {/* The reply that is coming is a paragraph in an assistant bubble,
+                      so the placeholder is that bubble at that height. */}
+                  <div aria-hidden="true" className="dh-ai-message dh-ai-message--assistant dh-sk-reply">
+                    <SkeletonLine />
+                    <SkeletonLine width="wide" />
+                    <SkeletonLine width="half" />
+                  </div>
                 </div>
               )}
             </div>
@@ -299,14 +323,16 @@ export function MarketplaceAi({
                 ref={inputRef}
                 value={question}
               />
-              <button
+              {/* The panel body is already a polite live region that narrates the
+                  request, so this control carries no second announcement. */}
+              <MarketplaceBusyButton
                 aria-label={t('agritech.marketplace.ai.send')}
+                busy={pending}
                 className="dh-icon-button dh-icon-button--primary"
-                disabled={!question.trim() || pending}
+                disabled={!question.trim()}
+                icon="send"
                 type="submit"
-              >
-                <MarketplaceIcon name="send" />
-              </button>
+              />
             </form>
             <p className="dh-ai-panel__fine-print">{t('agritech.marketplace.ai.noAutonomousActions')}</p>
           </aside>

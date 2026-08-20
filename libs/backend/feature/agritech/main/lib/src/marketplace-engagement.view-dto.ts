@@ -4,10 +4,13 @@ import type {
   MarketplaceEngagementListingSummary,
   MarketplaceFavoriteMutationResult,
   MarketplaceFavoriteView,
+  MarketplaceOwnReviewEntry,
+  MarketplaceOwnReviews,
   MarketplaceReviewModerationItem,
   MarketplaceReviewModerationResult,
   MarketplaceReviewPage,
   MarketplaceReviewReportReceipt,
+  MarketplaceReviewSelfState,
   MarketplaceReviewView,
   MarketplaceSamplePolicyView,
   MarketplaceSampleUsageView,
@@ -121,6 +124,50 @@ export class MarketplaceReviewAggregateDto {
 export class MarketplaceReviewPageDto {
   @ApiProperty({ type: MarketplaceReviewAggregateDto }) aggregate!: MarketplaceReviewAggregateDto;
   @ApiProperty({ isArray: true, type: MarketplaceReviewDto }) items!: MarketplaceReviewDto[];
+}
+
+/**
+ * The signed-in visitor's own standing with one listing's ratings. It carries no
+ * eligibility, contract or count internals: `canReview` answers whether an unused
+ * completed-contract eligibility exists, and `review` is the caller's own row,
+ * which the author-free public projection cannot identify for them.
+ */
+export class MarketplaceReviewSelfStateDto {
+  @ApiProperty({ format: 'uuid' }) listingPublicationId!: string;
+  @ApiProperty() canReview!: boolean;
+  @ApiPropertyOptional({ type: MarketplaceReviewDto }) review?: MarketplaceReviewDto;
+}
+
+/**
+ * One review beside the listing it belongs to. The listing is the same
+ * allowlisted summary favorites and samples return, so naming the listing costs
+ * no private source, partner or contract identifier.
+ */
+export class MarketplaceOwnReviewDto {
+  @ApiProperty({ type: MarketplaceEngagementListingDto }) listing!: MarketplaceEngagementListingDto;
+  @ApiProperty({ type: MarketplaceReviewDto }) review!: MarketplaceReviewDto;
+}
+
+/** A completed purchase with an unused eligibility, named by its listing. */
+export class MarketplaceOwnReviewInvitationDto {
+  @ApiProperty({ type: MarketplaceEngagementListingDto }) listing!: MarketplaceEngagementListingDto;
+  @ApiProperty({ format: 'date-time' }) completedAt!: Date;
+}
+
+/**
+ * The caller's own review standing.
+ *
+ * `written` and `received` stay two lists rather than one tagged list because
+ * they are opposite reputational facts: what this party said about others, and
+ * what others said about them. `awaitingReview` is the read side of the same
+ * completed-contract gate the write path enforces, so it can never invite a
+ * rating the server would refuse.
+ */
+export class MarketplaceOwnReviewsDto {
+  @ApiProperty({ isArray: true, type: MarketplaceOwnReviewDto }) written!: MarketplaceOwnReviewDto[];
+  @ApiProperty({ isArray: true, type: MarketplaceOwnReviewDto }) received!: MarketplaceOwnReviewDto[];
+  @ApiProperty({ isArray: true, type: MarketplaceOwnReviewInvitationDto })
+  awaitingReview!: MarketplaceOwnReviewInvitationDto[];
 }
 
 export class MarketplaceReviewReportReceiptDto {
@@ -237,6 +284,26 @@ export const toMarketplaceReviewPageDto = (value: MarketplaceReviewPage): Market
     revision: value.aggregate.revision,
   },
   items: value.items.map(toMarketplaceReviewDto),
+});
+
+export const toMarketplaceReviewSelfStateDto = (value: MarketplaceReviewSelfState): MarketplaceReviewSelfStateDto => ({
+  canReview: value.canReview,
+  listingPublicationId: value.listingPublicationId,
+  ...(value.review ? { review: toMarketplaceReviewDto(value.review) } : {}),
+});
+
+export const toMarketplaceOwnReviewsDto = (value: MarketplaceOwnReviews): MarketplaceOwnReviewsDto => ({
+  awaitingReview: value.awaitingReview.map((invitation) => ({
+    completedAt: invitation.completedAt,
+    listing: toMarketplaceListingDto(invitation.listing),
+  })),
+  received: value.received.map(toMarketplaceOwnReviewDto),
+  written: value.written.map(toMarketplaceOwnReviewDto),
+});
+
+const toMarketplaceOwnReviewDto = (value: MarketplaceOwnReviewEntry): MarketplaceOwnReviewDto => ({
+  listing: toMarketplaceListingDto(value.listing),
+  review: toMarketplaceReviewDto(value.review),
 });
 
 export const toMarketplaceReviewReportReceiptDto = (

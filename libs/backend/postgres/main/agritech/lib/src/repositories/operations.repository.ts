@@ -139,6 +139,7 @@ export class PostgresAgriTechOperationsRepository implements AgriTechOperationsR
       sampleAvailable: input.sampleAvailable ?? false,
       region: input.region,
       status: input.stockQuantity === 0 ? 'out_of_stock' : 'active',
+      images: input.images ?? [],
     });
     this.em.persist(entity);
     await this.em.flush();
@@ -264,6 +265,7 @@ export class PostgresAgriTechOperationsRepository implements AgriTechOperationsR
         crop: input.crop,
         farmerId: farmer.id,
         grade: input.grade,
+        images: input.images ? [...input.images] : [],
         pricePerKgUzs: input.pricePerKgUzs,
         sampleAvailable: input.sampleAvailable ?? false,
         quantityKg: input.quantityKg,
@@ -799,6 +801,7 @@ const toProduce = (entity: ProduceListingEntity): ProduceListing => ({
   sampleAvailable: entity.sampleAvailable,
   pricePerKgUzs: Number(entity.pricePerKgUzs),
   region: entity.region,
+  images: [...entity.images],
   availableFrom: entity.availableFrom,
   availableUntil: entity.availableUntil,
   status: entity.status,

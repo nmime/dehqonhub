@@ -35,7 +35,11 @@ function unwrap<T>(result: OperationResult<T>, label: string): T {
     throw new ResourceNotFoundException(label);
   }
   if (result.status === 'conflict') {
-    throw new ConflictException(label);
+    // `ConflictException` publishes `field` as an RFC 9457 extension. Dropping
+    // it turned every refusal into an unexplained 409: a buyer whose second
+    // award was refused because the request is already decided read the same
+    // body as one who replayed an idempotency key with a changed body.
+    throw new ConflictException(label, result.field);
   }
   if (result.status === 'invalid_state') {
     throw new BadRequestException({ meta: { resourceType: label, field: result.field } });

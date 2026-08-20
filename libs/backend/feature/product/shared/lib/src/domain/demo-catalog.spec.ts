@@ -34,8 +34,10 @@ describe('demo catalog', () => {
     expect(new Set(DemoProducts.map((product) => product.category)).size).toBeGreaterThan(1);
   });
 
-  it('names each listing in all three catalog languages', () => {
-    expect(DemoProducts.every((product) => product.name && product.nameRu && product.nameUz)).toBe(true);
+  it('names each listing in all four catalog languages', () => {
+    expect(
+      DemoProducts.every((product) => product.name && product.nameRu && product.nameUz && product.nameUzCyrl),
+    ).toBe(true);
   });
 
   it('narrows by category and region the way the repository filter does', () => {

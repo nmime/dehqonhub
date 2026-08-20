@@ -136,6 +136,86 @@ export interface MarketplaceReviewPage {
   items: MarketplaceReviewView[];
 }
 
+/**
+ * What the authenticated visitor may do with one listing's ratings, plus the one
+ * review they have already left on it.
+ *
+ * The public review projection is deliberately author-free, so a browser cannot
+ * work out which visible row is its own and therefore cannot tell "you already
+ * rated this" apart from "you were never able to". This read answers both
+ * questions from persisted eligibility instead of from a client guess, and stays
+ * one boolean plus the caller's own review: eligibility rows, contract ids and
+ * remaining counts stay private.
+ */
+export interface MarketplaceReviewSelfState {
+  listingPublicationId: string;
+  /** An unconsumed completed-contract eligibility exists for this caller. */
+  canReview: boolean;
+  /** The caller's own review of this governed source, when they left one. */
+  review?: MarketplaceReviewView;
+}
+
+/**
+ * One review as the party it belongs to sees it, with the listing it was left
+ * against.
+ *
+ * The public projection carries only `listingPublicationId`, which is enough for
+ * a product page that already knows its own listing and useless in a cabinet
+ * listing reviews across many listings. The summary here is the same allowlisted
+ * `MarketplaceEngagementListingSummary` favorites and samples already return, so
+ * no private source, partner or contract identifier is added to reach it.
+ */
+export interface MarketplaceOwnReviewEntry {
+  listing: MarketplaceEngagementListingSummary;
+  review: MarketplaceReviewView;
+}
+
+/**
+ * A completed purchase this caller may still rate: one unconsumed
+ * completed-contract eligibility, named by the listing it was earned on.
+ *
+ * It is the read side of exactly the gate `submitReview` enforces, so an
+ * invitation shown here cannot be an invitation the write path would refuse. The
+ * eligibility and contract identifiers behind it stay private.
+ */
+export interface MarketplaceOwnReviewInvitation {
+  listing: MarketplaceEngagementListingSummary;
+  completedAt: Date;
+}
+
+/**
+ * The caller's whole review standing, split by which direction it points.
+ *
+ * `written` and `received` are opposite facts about reputation - what this party
+ * said about others, and what others said about them - so they are two lists
+ * rather than one list with a role flag: nothing may merge them by accident. Both
+ * are bounded and newest first, and `received` covers every seller organization
+ * this caller is an active member of, because a seller can hold several.
+ */
+export interface MarketplaceOwnReviews {
+  written: MarketplaceOwnReviewEntry[];
+  received: MarketplaceOwnReviewEntry[];
+  /** Purchases with an unused eligibility. Empty for a caller who owes no rating. */
+  awaitingReview: MarketplaceOwnReviewInvitation[];
+}
+
+/**
+ * The published average of a rating aggregate: one decimal place, or nothing at
+ * all while no visible deal-verified review exists.
+ *
+ * `rating_sum / review_count` is exact but unreadable - 5 + 4 + 5 over three
+ * reviews is 4.666666666666667. Rounding here rather than in each renderer keeps
+ * the demo block, the catalog card, the product page and the seller profile
+ * quoting one number, and the review count always travels beside it so the
+ * rounding stays checkable rather than a claim.
+ */
+export const marketplaceReviewAverageRating = (ratingSum: number, reviewCount: number): number | null => {
+  if (!Number.isFinite(ratingSum) || !Number.isInteger(reviewCount) || reviewCount <= 0) {
+    return null;
+  }
+  return Math.round((ratingSum / reviewCount) * 10) / 10;
+};
+
 export interface SubmitMarketplaceReviewInput {
   listingPublicationId: string;
   rating: number;
@@ -233,6 +313,11 @@ export interface MarketplaceEngagementRepository {
     idempotencyKey: string,
   ): Promise<OperationResult<MarketplaceReviewView>>;
   listPublicReviews(listingPublicationId: string): Promise<OperationResult<MarketplaceReviewPage>>;
+  getReviewSelfState(
+    owner: AgriTechOwner,
+    listingPublicationId: string,
+  ): Promise<OperationResult<MarketplaceReviewSelfState>>;
+  listOwnReviews(owner: AgriTechOwner): Promise<OperationResult<MarketplaceOwnReviews>>;
   replyToReview(
     owner: AgriTechOwner,
     reviewId: string,

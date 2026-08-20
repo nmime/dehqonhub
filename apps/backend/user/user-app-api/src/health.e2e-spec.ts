@@ -113,7 +113,8 @@ describe.runIf(runDatabaseE2e)('user-app-api health e2e', () => {
             name: 'database',
             status: 'ok',
             required: true,
-            details: expect.objectContaining({ skipped: expect.any(Boolean) }),
+            // A required database check may only be ok when it actually ran.
+            details: expect.objectContaining({ skipped: false }),
           }),
           expect.objectContaining({
             name: 'database-migrations',

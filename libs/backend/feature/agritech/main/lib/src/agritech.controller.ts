@@ -3,6 +3,8 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Param, ParseUUIDPipe, Patc
 import { ApiParam, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
+  ArrayMaxSize,
+  IsArray,
   IsDate,
   IsBoolean,
   IsIn,
@@ -19,7 +21,13 @@ import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/bac
 import { createOkResponse } from '@app/backend-common-response';
 import { CurrentUser, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import { AgriTechOperationsService } from './agritech.service';
-import type { AgriTechOwner, DeliveryStatus, ProduceGrade } from '@app/backend-feature-agritech-shared';
+import {
+  marketplaceListingImagePattern,
+  maximumMarketplaceListingImages,
+  type AgriTechOwner,
+  type DeliveryStatus,
+  type ProduceGrade,
+} from '@app/backend-feature-agritech-shared';
 import {
   AdvisoryListDto,
   AssignedFarmerListDto,
@@ -43,6 +51,21 @@ const productCategories = ['fertilizer', 'seed', 'pesticide', 'equipment', 'irri
 const deliveryStatuses = ['assigned', 'picked_up', 'in_transit', 'delivered', 'cancelled'] as const;
 const maximumIntegerQuantity = 2_147_483_647;
 const maximumSupplierPriceUzs = 9_999_999_999_999;
+/**
+ * The two shapes a listing photograph may take.
+ *
+ * Either a root-relative path into the checked-in same-origin media directory,
+ * or `/marketplace/media/{id}` — one photograph this account uploaded, served
+ * back by this API from the page's own origin. Both are same-origin by
+ * construction, which is what `img-src 'self'` requires; a URL to any other
+ * host, a traversal segment and a non-image path all fail the anchored
+ * alternation rather than being stored as a string the catalog cannot render.
+ *
+ * The pattern proves the shape only. Whether an uploaded identifier belongs to
+ * this account is a separate check in `AgriTechOperationsService`, because no
+ * pattern can answer that.
+ */
+const supplierProductImagePattern = marketplaceListingImagePattern;
 
 class CreatePartnerDto {
   @ApiProperty({ enum: partnerKinds }) @IsIn(partnerKinds) kind!: 'supplier' | 'buyer';
@@ -88,6 +111,18 @@ class CreateSupplierProductDto {
   stockQuantity!: number;
   @ApiPropertyOptional({ default: false }) @IsOptional() @IsBoolean() sampleAvailable?: boolean;
   @ApiProperty() @IsString() region!: string;
+  @ApiPropertyOptional({
+    description: 'Root-relative same-origin listing photographs, at most five.',
+    example: ['/media/marketplace/wheat-grain.webp', '/marketplace/media/AAAAAAAAAAAAAAAAAAAAAA'],
+    maxItems: maximumMarketplaceListingImages,
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(maximumMarketplaceListingImages)
+  @IsString({ each: true })
+  @Matches(supplierProductImagePattern, { each: true })
+  images?: string[];
 }
 
 class UpdateSupplierProductDto {
@@ -143,6 +178,18 @@ class CreateProduceDto {
   @Max(maximumSupplierPriceUzs)
   pricePerKgUzs!: number;
   @ApiProperty() @IsString() region!: string;
+  @ApiPropertyOptional({
+    description: 'Root-relative same-origin harvest photographs, at most five.',
+    example: ['/marketplace/media/AAAAAAAAAAAAAAAAAAAAAA'],
+    maxItems: maximumMarketplaceListingImages,
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(maximumMarketplaceListingImages)
+  @IsString({ each: true })
+  @Matches(supplierProductImagePattern, { each: true })
+  images?: string[];
   @ApiProperty({ format: 'date-time' }) @Type(() => Date) @IsDate() availableFrom!: Date;
   @ApiProperty({ format: 'date-time' }) @Type(() => Date) @IsDate() availableUntil!: Date;
 }

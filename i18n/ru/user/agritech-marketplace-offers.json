@@ -10,5 +10,22 @@
   "agritech.marketplace.orders.offerStatus.accepted": "Принято",
   "agritech.marketplace.orders.offerStatus.declined": "Отклонено",
   "agritech.marketplace.orders.offerStatus.pending": "Ожидает",
-  "agritech.marketplace.orders.submitOffer": "Отправить предложение продавца"
+  "agritech.marketplace.orders.submitOffer": "Отправить предложение продавца",
+  "agritech.marketplace.orders.incoming": "Входящие запросы",
+  "agritech.marketplace.orders.step": "Шаг {{current}} из {{total}}",
+  "agritech.marketplace.orders.stepBasics": "Что нужно",
+  "agritech.marketplace.orders.stepLogistics": "Где и когда",
+  "agritech.marketplace.orders.stepTerms": "Бюджет и требования",
+  "agritech.marketplace.orders.next": "Следующий шаг",
+  "agritech.marketplace.orders.previous": "Предыдущий шаг",
+  "agritech.marketplace.orders.awaitingModeration": "Ожидает модерации",
+  "agritech.marketplace.orders.awaitingModerationHint": "Запрос ещё не опубликован, поэтому продавцы не могут делать предложения. Предложения появятся здесь после одобрения публикации модерацией.",
+  "agritech.marketplace.orders.publicationPaused": "Публикация приостановлена",
+  "agritech.marketplace.orders.publicationRejected": "Публикация отклонена",
+  "agritech.marketplace.orders.publicationRejectedHint": "Модерация отклонила эту публикацию, поэтому запрос не собирает предложения. Исправьте данные и опубликуйте его снова.",
+  "agritech.marketplace.orders.openContract": "Открыть договор",
+  "agritech.marketplace.orders.offerVerified": "Проверенный продавец",
+  "agritech.marketplace.orders.offerTotal": "Итого",
+  "agritech.marketplace.orders.offersSort": "Сначала дешёвые",
+  "agritech.marketplace.orders.offerReceived": "Получено {{date}}"
 }

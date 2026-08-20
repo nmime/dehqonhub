@@ -44,5 +44,11 @@
   "agritech.marketplace.samples.status.requested": "So'raldi",
   "agritech.marketplace.samples.status.approved": "Tasdiqlangan",
   "agritech.marketplace.samples.status.declined": "Rad etilgan",
-  "agritech.marketplace.samples.status.received": "Qabul qilingan"
+  "agritech.marketplace.samples.status.received": "Qabul qilingan",
+  "agritech.marketplace.cart.activeCart": "Faol savat",
+  "agritech.marketplace.cart.activeCartAnnouncement": "Faol savat: {{seller}}",
+  "agritech.marketplace.cart.cartTotal": "Savat summasi",
+  "agritech.marketplace.cart.lineUnavailable": "Mahsulot endi mavjud emas — savat summasiga kirmaydi",
+  "agritech.marketplace.cart.switchTo": "{{seller}} savatiga o'tish",
+  "agritech.marketplace.cart.switcherHint": "Har bir sotuvchiga bitta buyurtma. Faol savatni tanlang."
 }

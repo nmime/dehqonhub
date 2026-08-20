@@ -32,6 +32,7 @@ import {
   type PreparedMarketplaceContractSignature,
   type PreparedMarketplaceSettlementProviderCommand,
 } from '@app/backend-feature-agritech-shared';
+import { marketplaceCapabilityRoleFilter } from './marketplace-role-predicates';
 import { ContractEntity, MarketplaceProviderOperationEntity, VerificationEntity } from '../entities/marketplace.entity';
 import { MarketplacePartnerMembershipEntity } from '../entities/marketplace-commerce.entity';
 import {
@@ -301,7 +302,7 @@ async function authorizeParty(
     em.findOne(
       VerificationEntity,
       {
-        role: party === 'buyer' ? 'buyer' : { $in: ['farmer', 'seller'] },
+        role: marketplaceCapabilityRoleFilter(party),
         status: 'verified',
         tenantId: owner.tenantId,
         userId: owner.userId,
@@ -1652,11 +1653,33 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
     });
   }
 
+  /**
+   * Reading a lifecycle that does not exist yet.
+   *
+   * Settlement and fulfillment rows are created when a contract is signed, so
+   * every draft contract answers {@link lifecycleIn} with `invalid_state`. On a
+   * command path that is the right answer - the command cannot run - but on a
+   * plain read it made the API answer 400 for the ordinary case of a deal nobody
+   * has signed yet, and a client cannot tell that apart from a malformed request:
+   * the contract screen painted a generic failure with a retry button that could
+   * never succeed. A read reports `not_found` instead, which is what a GET on an
+   * absent sub-resource means and what the clients already render as "nothing
+   * prepared yet".
+   */
+  private async readLifecycle(
+    em: EntityManager,
+    contract: ContractEntity,
+    party: MarketplaceContractTimelineActor,
+  ): Promise<OperationResult<MarketplaceContractLifecycle>> {
+    const lifecycle = await this.lifecycleIn(em, contract, party);
+    return lifecycle.status === 'invalid_state' ? { status: 'not_found' } : lifecycle;
+  }
+
   getLifecycle(owner: AgriTechOwner, contractId: string): Promise<OperationResult<MarketplaceContractLifecycle>> {
     return this.em.transactional(async (em) => {
       const authorization = await lockAuthorizedContract(em, owner, contractId);
       return authorization.status === 'ok'
-        ? this.lifecycleIn(em, authorization.value.contract, authorization.value.party)
+        ? this.readLifecycle(em, authorization.value.contract, authorization.value.party)
         : authorization;
     });
   }
@@ -1668,7 +1691,7 @@ export class PostgresMarketplaceContractLifecycleRepository implements Marketpla
         id: contractId,
         $or: [{ tenantId }, { sellerTenantId: tenantId }],
       });
-      return contract ? this.lifecycleIn(em, contract, 'admin') : { status: 'not_found' };
+      return contract ? this.readLifecycle(em, contract, 'admin') : { status: 'not_found' };
     });
   }
 

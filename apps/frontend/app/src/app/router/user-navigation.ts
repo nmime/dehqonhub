@@ -15,7 +15,19 @@ export const normalizePath = (path: string): string => {
   return normalized.endsWith('/') && normalized !== '/' ? normalized.slice(0, -1) : normalized;
 };
 
-const marketplaceRoutes = new Set(['/', '/account', '/cart', '/catalog', '/favorites', '/requests', '/verification']);
+const marketplaceRoutes = new Set([
+  '/',
+  '/account',
+  '/cart',
+  '/catalog',
+  '/deals',
+  '/favorites',
+  // The seller's and farmer's own listing-creation screen. It must be listed
+  // here or the shell wraps it in a second page and renders two headers.
+  '/listings/new',
+  '/requests',
+  '/verification',
+]);
 const bareRoutes = new Set(['/link/telegram', '/telegram-mini-app', '/tma', '/tma/auth']);
 
 /** Telegram owns the outer host chrome for these launch and linking routes. */
@@ -32,8 +44,18 @@ export const isMarketplaceRoute = (path: string): boolean => {
   return (
     marketplaceRoutes.has(normalized) ||
     /^\/contracts\/[^/]+$/u.test(normalized) ||
+    // `/requests/incoming`, `/requests/new` and a single `/requests/<id>` are all
+    // marketplace-owned purchase-request surfaces.
+    /^\/requests\/[^/]+$/u.test(normalized) ||
+    // A cabinet section is the account route plus one segment, so it owns the same
+    // chrome. Without this the shell wrapped it in a second page and rendered a
+    // second header below the first.
+    /^\/account\/[^/]+$/u.test(normalized) ||
     /^\/products\/[^/]+$/u.test(normalized) ||
-    /^\/sellers\/[^/]+$/u.test(normalized)
+    /^\/sellers\/[^/]+$/u.test(normalized) ||
+    // A counterparty's public profile, addressed by the opaque profile id a deal
+    // carries rather than by a seller id — a buying organization has no catalog.
+    /^\/parties\/[^/]+$/u.test(normalized)
   );
 };
 

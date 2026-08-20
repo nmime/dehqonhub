@@ -13,6 +13,9 @@
   "agritech.marketplace.filter.regionChip": "Region: {{value}}",
   "agritech.marketplace.filter.priceChip": "Price range",
   "agritech.marketplace.filter.reset": "Reset",
+  "agritech.marketplace.filter.trust": "Trust",
+  "agritech.marketplace.filter.show": "Show {{count}} products",
+  "agritech.marketplace.filter.showOne": "Show 1 product",
   "agritech.marketplace.sort": "Sort",
   "agritech.marketplace.sort.priceAsc": "Price: low to high",
   "agritech.marketplace.sort.priceDesc": "Price: high to low",
@@ -31,5 +34,16 @@
   "agritech.marketplace.filter.title": "Catalog filters",
   "agritech.marketplace.filter.to": "To",
   "agritech.marketplace.filter.toPlaceholder": "No limit",
-  "agritech.marketplace.sort.name": "Name"
+  "agritech.marketplace.sort.name": "Name",
+  "agritech.marketplace.filter.verifiedOnly": "Verified sellers only",
+  "agritech.marketplace.filter.category": "Category",
+  "agritech.marketplace.filter.crop": "Crop",
+  "agritech.marketplace.filter.grade": "Grade",
+  "agritech.marketplace.filter.gradeValue": "Grade {{grade}}",
+  "agritech.marketplace.category.seed": "Seeds",
+  "agritech.marketplace.category.fertilizer": "Fertilisers",
+  "agritech.marketplace.category.pesticide": "Crop protection",
+  "agritech.marketplace.category.equipment": "Machinery",
+  "agritech.marketplace.category.irrigation": "Irrigation",
+  "agritech.marketplace.sort.newest": "Newest first"
 }

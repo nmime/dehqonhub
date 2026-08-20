@@ -45,5 +45,7 @@
   "validation.constraints.isUuid": "{{property}} UUID bo'lishi kerak",
   "validation.constraints.isArray": "{{property}} massiv bo'lishi kerak",
   "errors.marketplace-provider-unavailable.title": "Marketpleys provayderi mavjud emas",
-  "errors.marketplace-provider-unavailable.detail": "So'ralgan marketpleys provayderi imkoniyati vaqtincha ishlamayapti yoki o'chirib qo'yilgan."
+  "errors.marketplace-provider-unavailable.detail": "So'ralgan marketpleys provayderi imkoniyati vaqtincha ishlamayapti yoki o'chirib qo'yilgan.",
+  "errors.marketplace-media-storage-unavailable.title": "Fotosurat saqlash joyi mavjud emas",
+  "errors.marketplace-media-storage-unavailable.detail": "Bu o'rnatma fotosuratlarni saqlay olmaydi: obyekt saqlash joyi sozlanmagan yoki unga ulanib bo'lmadi. Hech narsa saqlanmadi."
 }

@@ -13,13 +13,19 @@
   --dh-border: #e9dfc9;
   --dh-danger: #e5484d;
   --dh-warning: #e8a33d;
-  --dh-footer-bg: #17924b;
-  --dh-footer-ink: #fff;
-  --dh-footer-muted: #e5f5e7;
-  --dh-shadow: 0 1rem 3rem rgb(43 43 43 / 14%);
+  --dh-container: 96rem;
+  --dh-star: #ffb800;
+  /* Sticky panels and offsets measure from the real header, not a guess. */
+  --dh-header-h: 8.75rem;
+  --dh-footer-bg: #1ca24c;
+  --dh-footer-ink: #faf0de;
+  --dh-footer-muted: #e2d9bf;
+  --dh-shadow: 0 1rem 3rem rgb(43 43 43 / 16%);
   --dh-shadow-soft: 0 1px 0 rgb(43 43 43 / 4%);
-  --dh-font-body: 'Poppins', 'Manrope Variable', sans-serif;
-  --dh-font-display: 'Poppins', 'Montserrat Variable', sans-serif;
+  /* Cards lift into the accent, not into a neutral smudge. */
+  --dh-shadow-hover: 0 0.5rem 1.5rem rgb(28 162 76 / 14%);
+  --dh-font-body: 'Manrope Variable', 'Manrope', sans-serif;
+  --dh-font-display: 'Montserrat Variable', 'Montserrat', sans-serif;
   --xr-color-background: var(--dh-cream);
   --xr-color-background-accent: var(--dh-green-soft);
   --xr-color-surface: var(--dh-surface);
@@ -66,37 +72,16 @@
   overflow-x: clip;
   padding-bottom: var(--xr-mini-app-safe-bottom, 0px);
 }
-
-:root[data-theme='dark'] .dh-marketplace,
-.xr-shell[data-theme='dark'] .dh-marketplace {
-  --dh-ink: #f5f7f2;
-  --dh-muted: #a8b0a9;
-  --dh-green: #42c96f;
-  --dh-green-hover: #54d67d;
-  --dh-green-strong: #7ed957;
-  --dh-green-soft: #173822;
-  --dh-lime: #9ae66d;
-  --dh-cream: #0d110e;
-  --dh-cream-deep: #182019;
-  --dh-surface: #151a16;
-  --dh-surface-muted: #1b211c;
-  --dh-border: #303a32;
-  --dh-danger: #ff8f92;
-  --dh-warning: #ffc46b;
-  --dh-footer-bg: #0b2b17;
-  --dh-footer-ink: #f6fbf5;
-  --dh-footer-muted: #b9cabb;
-  --dh-shadow: 0 1rem 3rem rgb(0 0 0 / 34%);
-  --dh-shadow-soft: 0 1px 0 rgb(255 255 255 / 5%);
-  --xr-color-primary-contrast: #07170d;
-  background: var(--dh-cream);
-}
-
 .dh-marketplace,
 .dh-marketplace *,
 .dh-marketplace *::before,
 .dh-marketplace *::after {
   box-sizing: border-box;
+}
+
+.dh-marketplace {
+  font-size: 1rem;
+  line-height: 1.55;
 }
 
 .dh-marketplace :where(button, input, select, textarea) {
@@ -117,7 +102,7 @@
 .dh-marketplace textarea:focus-visible,
 .dh-marketplace summary:focus-visible,
 .dh-marketplace a:focus-visible {
-  outline: 0.2rem solid color-mix(in srgb, var(--dh-lime) 80%, white);
+  outline: 0.2rem solid var(--dh-green-strong);
   outline-offset: 0.16rem;
 }
 
@@ -133,22 +118,38 @@
 .dh-marketplace h3,
 .dh-brand {
   font-family: var(--dh-font-display);
-  letter-spacing: -0.025em;
+  letter-spacing: -0.01em;
+}
+
+/* Product, supplier and region names come from the API. A single token wider
+   than the line box would be cut without a scrollbar, because the root is
+   `overflow-x: clip`. Scoped off `.dh-brand`, which is deliberately nowrap. */
+.dh-marketplace h1,
+.dh-marketplace h2,
+.dh-marketplace h3 {
+  overflow-wrap: anywhere;
+}
+
+.dh-marketplace h1 {
+  letter-spacing: -0.02em;
 }
 
 .dh-marketplace h1 {
   font-size: clamp(1.875rem, 4vw, 3.5rem);
-  line-height: 1.06;
+  font-weight: 800;
+  line-height: 1.05;
 }
 
 .dh-marketplace h2 {
-  font-size: clamp(1.45rem, 2.6vw, 2.25rem);
-  line-height: 1.12;
+  font-size: clamp(1.375rem, 2.2vw, 2rem);
+  font-weight: 700;
+  line-height: 1.14;
 }
 
 .dh-marketplace h3 {
-  font-size: 1.08rem;
-  line-height: 1.25;
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
 .dh-sr-only {
@@ -163,7 +164,7 @@
 
 .dh-skip-link {
   background: var(--dh-green-strong);
-  border-radius: 0 0 0.7rem 0.7rem;
+  border-radius: 0 0 1rem 1rem;
   color: white;
   font-weight: 800;
   left: 1rem;
@@ -179,12 +180,15 @@
 }
 
 .dh-header {
-  backdrop-filter: blur(0.8rem);
-  background: color-mix(in srgb, var(--dh-cream) 96%, transparent);
-  border-bottom: 1px solid var(--dh-border);
+  background: var(--dh-cream);
+  border-bottom: 1.5px solid var(--dh-border);
   position: sticky;
   top: 0;
-  z-index: 30;
+  z-index: 60;
+}
+
+.dh-header.is-scrolled {
+  box-shadow: var(--dh-shadow-soft);
 }
 
 .dh-header__main,
@@ -192,16 +196,16 @@
 .dh-main,
 .dh-footer {
   margin-inline: auto;
-  max-width: 82.5rem;
+  max-width: var(--dh-container);
   width: calc(100% - clamp(2rem, 4vw, 3rem));
 }
 
 .dh-header__main {
   align-items: center;
   display: grid;
-  gap: 0.75rem;
-  grid-template-columns: auto auto minmax(13rem, 1fr) auto auto;
-  min-height: 4.75rem;
+  gap: 1rem;
+  grid-template-columns: auto auto minmax(14rem, 1fr) auto auto;
+  padding-block: 0.875rem;
 }
 
 .dh-brand {
@@ -210,18 +214,29 @@
   border: 0;
   cursor: pointer;
   display: inline-flex;
-  font-size: 1.45rem;
+  font-size: 1.5rem;
   font-weight: 800;
   gap: 0.5rem;
+  letter-spacing: -0.02em;
   min-height: 2.75rem;
-  padding: 0.5rem 0;
+  min-width: 2.75rem;
+  padding: 0;
 }
 
+/* The mark is the transparent emblem raster, so a text colour no longer applies
+   to it, and object-fit protects the artwork if the box is ever non-square. */
 .dh-brand__mark {
-  color: var(--brand-gold);
   flex: 0 0 auto;
-  height: 2rem;
-  width: 2rem;
+  height: 2.75rem;
+  object-fit: contain;
+  width: 2.75rem;
+}
+
+/* Brand artwork gets room only where a screen has it to spare. */
+.dh-emblem {
+  height: 7rem;
+  object-fit: contain;
+  width: 7rem;
 }
 
 .dh-brand__wordmark {
@@ -272,8 +287,8 @@
 .dh-button svg,
 .dh-icon-button svg,
 .dh-text-button svg {
-  height: 1.15rem;
-  width: 1.15rem;
+  height: 1.125rem;
+  width: 1.125rem;
 }
 
 .dh-button--primary,
@@ -282,13 +297,11 @@
   color: white;
 }
 
-:root[data-theme='dark'] .dh-button--primary,
-:root[data-theme='dark'] .dh-button--catalog,
-.xr-shell[data-theme='dark'] .dh-button--primary,
-.xr-shell[data-theme='dark'] .dh-button--catalog {
-  color: #07170d;
+.dh-button--catalog {
+  font-size: 0.9375rem;
+  min-height: 3rem;
+  padding: 0.75rem 1.375rem;
 }
-
 .dh-button--primary:hover:not(:disabled),
 .dh-button--catalog:hover:not(:disabled),
 .dh-button--catalog.is-active {
@@ -302,8 +315,11 @@
 }
 
 .dh-button--surface {
-  background: white;
-  color: #2b2b2b;
+  background: var(--dh-surface-muted);
+  color: var(--dh-ink);
+  font-size: 0.9375rem;
+  min-height: 3rem;
+  padding: 0.8125rem 1.75rem;
 }
 
 .dh-button--glass {
@@ -329,7 +345,7 @@
   display: grid;
   grid-template-columns: 1fr auto;
   min-width: 0;
-  overflow: hidden;
+  padding: 0.25rem;
 }
 
 .dh-search-state,
@@ -363,8 +379,8 @@
   align-items: center;
   background: transparent;
   border: 0;
-  border-radius: 0.7rem;
-  color: var(--dh-text);
+  border-radius: 999px;
+  color: var(--dh-ink);
   cursor: pointer;
   display: flex;
   justify-content: space-between;
@@ -391,10 +407,10 @@
 .dh-search input {
   background: transparent;
   border: 0;
-  min-height: 2.7rem;
+  min-height: 2.375rem;
   min-width: 0;
   outline: 0;
-  padding: 0.65rem 1rem;
+  padding: 0.4rem 0.5rem 0.4rem 1rem;
   width: 100%;
 }
 
@@ -406,31 +422,37 @@
   color: white;
   cursor: pointer;
   display: inline-flex;
-  height: 2.75rem;
+  flex: 0 0 auto;
+  height: 2.375rem;
   justify-content: center;
-  margin-right: 0.24rem;
-  width: 2.75rem;
+  width: 2.375rem;
 }
 
-.dh-header__nav,
+.dh-header__nav {
+  align-items: center;
+  display: flex;
+  gap: 0.875rem;
+}
+
 .dh-header__preferences {
   align-items: center;
   display: flex;
-  gap: 0.2rem;
+  gap: 0.5rem;
 }
 
 .dh-header__nav > button {
   background: transparent;
   border: 0;
-  border-radius: 0.7rem;
+  border-radius: 999px;
   color: var(--dh-muted);
   cursor: pointer;
   display: grid;
-  gap: 0.12rem;
+  gap: 0.2rem;
   justify-items: center;
-  min-height: 3.4rem;
-  min-width: 3.35rem;
-  padding: 0.35rem;
+  max-width: 5.25rem;
+  min-height: 3rem;
+  min-width: 3.25rem;
+  padding: 0.25rem 0.4rem;
 }
 
 .dh-header__nav > button:hover,
@@ -446,34 +468,66 @@
 }
 
 .dh-header__nav svg {
-  height: 1.2rem;
-  width: 1.2rem;
+  color: var(--dh-ink);
+  height: 1.375rem;
+  width: 1.375rem;
+}
+
+.dh-header__nav > button.is-active svg,
+.dh-header__nav > button:hover svg {
+  color: var(--dh-green-strong);
 }
 
 .dh-header__nav small,
 .dh-mobile-nav small {
-  font-size: 0.65rem;
-  font-weight: 700;
+  font-size: 0.75rem;
+  font-weight: 500;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* An action whose name is longer than the caption budget prints the short form
+   here and the complete one from 64rem up, where the row has the width for it.
+   Exactly one of the pair is in the box at any width, so the button is never
+   named twice and the name is never cut mid-word. */
+.dh-header__nav-label--full {
+  display: none;
+}
+
+@media (min-width: 64rem) {
+  .dh-header__nav > button.dh-header__nav-action--wide {
+    max-width: 8rem;
+  }
+
+  .dh-header__nav-label--full {
+    display: inline;
+  }
+
+  .dh-header__nav-label--short {
+    display: none;
+  }
 }
 
 .dh-header__nav em,
 .dh-mobile-nav em {
   align-items: center;
-  background: var(--dh-green-strong);
-  border: 2px solid var(--dh-cream);
+  background: var(--dh-green);
   border-radius: 50%;
   color: white;
   display: flex;
-  font-size: 0.58rem;
+  font-size: 0.75rem;
   font-style: normal;
-  font-weight: 800;
-  height: 1.12rem;
+  font-weight: 700;
+  height: 1.125rem;
+  line-height: 1;
   justify-content: center;
-  min-width: 1.12rem;
-  padding-inline: 0.14rem;
+  min-width: 1.125rem;
+  padding-inline: 0.15rem;
   position: absolute;
-  right: -0.7rem;
-  top: -0.45rem;
+  right: -0.5rem;
+  top: -0.3rem;
 }
 
 .dh-header__preferences > * {
@@ -482,10 +536,10 @@
 
 .dh-header__preferences .xr-button,
 .dh-header__mobile-preferences .xr-button {
-  border: 1px solid var(--dh-border);
+  border: 1.5px solid var(--dh-border);
   border-radius: 999px;
   color: var(--dh-ink);
-  min-height: 2.75rem;
+  min-height: 3rem;
 }
 
 .dh-header__preferences .xr-language-menu-trigger {
@@ -498,9 +552,9 @@
 
 .dh-header__categories {
   display: flex;
-  gap: 0.45rem;
+  gap: 0.625rem;
   overflow-x: auto;
-  padding-block: 0 0.7rem;
+  padding-block: 0 0.875rem;
   scrollbar-width: none;
 }
 
@@ -511,18 +565,23 @@
 .dh-header__categories button,
 .dh-tabs button {
   background: var(--dh-surface);
-  border: 1px solid var(--dh-border);
+  border: 1.5px solid var(--dh-border);
   border-radius: 999px;
   cursor: pointer;
   flex: none;
-  font-size: 0.8rem;
+  font-size: 0.8125rem;
   font-weight: 600;
   min-height: 2.75rem;
-  padding: 0.45rem 0.9rem;
+  padding: 0.5rem 1.125rem;
 }
 
 .dh-header__categories button:hover,
-.dh-tabs button:hover,
+.dh-tabs button:hover {
+  background: var(--dh-green-soft);
+  border-color: color-mix(in srgb, var(--dh-green) 40%, var(--dh-border));
+}
+
+.dh-header__categories button[aria-current='true'],
 .dh-tabs button.is-active {
   background: var(--dh-green);
   border-color: var(--dh-green);
@@ -530,6 +589,9 @@
 }
 
 .dh-main {
+  display: grid;
+  gap: 2rem;
+  align-content: start;
   min-height: 34rem;
   padding-block: clamp(1.25rem, 3vw, 2rem) clamp(4rem, 7vw, 6rem);
 }
@@ -542,16 +604,38 @@
 .dh-verification-page,
 .dh-loading {
   display: grid;
-  gap: clamp(1.5rem, 4vw, 3.5rem);
+  gap: clamp(1.25rem, 2.5vw, 2rem);
+}
+
+.dh-page-stack > section,
+.dh-catalog-page > section {
+  display: grid;
+  gap: 1rem;
+}
+
+/* The class was in the markup with no rule behind it, so the eyebrow and the
+   heading sat on top of each other. */
+.dh-section__head {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.dh-section__head > div,
+.dh-results-head > div {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dh-section__head .dh-eyebrow {
+  margin-bottom: 0;
 }
 
 .dh-eyebrow {
   color: var(--dh-green-strong);
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  margin-bottom: 0.45rem;
-  text-transform: uppercase;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  margin-bottom: 0.35rem;
 }
 
 .dh-muted,
@@ -567,45 +651,48 @@
 }
 
 .dh-hero {
-  background:
-    radial-gradient(circle at 80% 10%, rgb(255 255 255 / 18%), transparent 15rem),
-    linear-gradient(118deg, #17924b, #35c264 58%, #7ed957);
+  background: linear-gradient(120deg, #17924b 0%, #35c264 55%, #7ed957 100%);
   border-radius: 2rem;
   color: white;
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(15rem, 0.75fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(12rem, 0.75fr);
   isolation: isolate;
-  min-height: clamp(17rem, 28vw, 21rem);
+  min-height: clamp(13rem, 22vw, 16rem);
   overflow: hidden;
-  padding: clamp(2rem, 4vw, 3rem);
+  padding: 1.875rem clamp(1.5rem, 3.5vw, 3rem) 2.5rem;
   position: relative;
 }
 
-.dh-hero::before {
-  background-image:
-    linear-gradient(
-      30deg,
-      rgb(255 255 255 / 12%) 12%,
-      transparent 12.5%,
-      transparent 87%,
-      rgb(255 255 255 / 12%) 87.5%
-    ),
-    linear-gradient(
-      150deg,
-      rgb(255 255 255 / 12%) 12%,
-      transparent 12.5%,
-      transparent 87%,
-      rgb(255 255 255 / 12%) 87.5%
-    );
-  background-size: 2rem 3.5rem;
-  content: '';
-  height: 9rem;
-  opacity: 0.75;
+.dh-hero__raster {
+  display: grid;
+  gap: 0.25rem;
+  grid-template-columns: repeat(4, 1.375rem);
+  opacity: 0.9;
   position: absolute;
-  right: 2.5rem;
-  top: 2rem;
-  width: 9rem;
-  z-index: -1;
+  right: 2.75rem;
+  top: 0.5rem;
+}
+
+.dh-hero__raster i {
+  border-bottom: 1.1875rem solid rgb(255 255 255 / 85%);
+  border-left: 0.6875rem solid transparent;
+  border-right: 0.6875rem solid transparent;
+  height: 0;
+  width: 0;
+}
+
+.dh-hero__raster i:nth-child(2n) {
+  opacity: 0.55;
+  transform: rotate(180deg);
+}
+
+.dh-hero__silhouette {
+  bottom: -0.375rem;
+  height: 6.875rem;
+  opacity: 0.35;
+  position: absolute;
+  right: 1rem;
+  width: 10.625rem;
 }
 
 .dh-hero__content {
@@ -621,96 +708,49 @@
 
 .dh-hero h1 {
   color: white;
-  margin-bottom: 1rem;
-  font-size: clamp(2rem, 4vw, 3rem);
-  max-width: 19ch;
+  font-size: clamp(1.75rem, 3vw, 2.25rem);
+  line-height: 1.08;
+  margin-bottom: 0.75rem;
+  max-width: 35rem;
 }
 
 .dh-hero__content > p:not(.dh-eyebrow) {
-  color: rgb(255 255 255 / 86%);
-  font-size: clamp(0.95rem, 1.6vw, 1.08rem);
+  color: rgb(255 255 255 / 92%);
+  font-size: 0.9375rem;
   line-height: 1.6;
-  max-width: 38rem;
+  max-width: 30rem;
 }
 
 .dh-hero__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin-top: 1.75rem;
+  margin-top: 1.125rem;
 }
 
 .dh-hero__illustration {
-  align-self: end;
-  color: rgb(2 59 28 / 42%);
-  height: 100%;
-  min-height: 14rem;
+  align-self: stretch;
   position: relative;
 }
 
-.dh-hero__illustration > svg {
-  bottom: 1.6rem;
-  height: clamp(6rem, 14vw, 10rem);
-  position: absolute;
-  right: 8%;
-  width: clamp(6rem, 14vw, 10rem);
-  z-index: 2;
-}
-
-.dh-hero__sun {
-  background: rgb(255 235 147 / 55%);
-  border-radius: 50%;
-  height: 6rem;
-  position: absolute;
-  right: 15%;
-  top: 18%;
-  width: 6rem;
-}
-
-.dh-hero__furrow {
-  border: 0.18rem solid rgb(5 88 39 / 32%);
-  border-radius: 50%;
-  bottom: -5rem;
-  height: 9rem;
-  position: absolute;
-  right: -12%;
-  transform: rotate(-8deg);
-  width: 130%;
-}
-
-.dh-hero__furrow--two {
-  bottom: -3rem;
-  right: -20%;
-}
-
-.dh-hero__furrow--three {
-  bottom: -1rem;
-  right: -30%;
-}
-
-.dh-category-grid,
 .dh-scenario-grid,
 .dh-product-grid,
 .dh-stat-grid {
   display: grid;
-  gap: clamp(0.75rem, 2vw, 1.2rem);
+  gap: clamp(1rem, 1.5vw, 1.25rem);
 }
 
-.dh-category-grid,
 .dh-scenario-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
-.dh-category-card,
 .dh-scenario-card {
   background: var(--dh-surface);
   border: 1px solid transparent;
-  border-radius: 1.25rem;
+  border-radius: 1.5rem;
   box-shadow: var(--dh-shadow-soft);
   color: var(--dh-ink);
   cursor: pointer;
-  min-height: 7.5rem;
-  padding: 1.1rem;
   text-align: left;
   transition:
     border-color 160ms ease,
@@ -718,56 +758,124 @@
     transform 160ms ease;
 }
 
-.dh-category-card {
-  align-items: center;
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: auto 1fr auto;
-}
-
-.dh-category-card:hover,
 .dh-scenario-card:hover {
   border-color: color-mix(in srgb, var(--dh-green) 45%, var(--dh-border));
-  box-shadow: var(--dh-shadow);
+  box-shadow: var(--dh-shadow-hover);
   transform: translateY(-0.18rem);
 }
 
-.dh-category-card__icon,
 .dh-scenario-card__icon,
+.dh-contract-sidebar .dh-provider-state,
+.dh-verification-layout .dh-provider-state {
+  background: linear-gradient(120deg, #17924b 0%, #35c264 55%, #7ed957 100%);
+  border-color: transparent;
+  border-radius: 2rem;
+  box-shadow: none;
+  color: #fff;
+  overflow: hidden;
+  padding: 1.5rem 1.625rem;
+  position: relative;
+}
+
+.dh-contract-sidebar .dh-provider-state h2,
+.dh-verification-layout .dh-provider-state h2 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.dh-contract-sidebar .dh-provider-state p,
+.dh-contract-sidebar .dh-provider-state .dh-fine-print,
+.dh-verification-layout .dh-provider-state p,
+.dh-verification-layout .dh-provider-state .dh-fine-print {
+  color: rgb(255 255 255 / 94%);
+  font-size: 0.78125rem;
+  line-height: 1.55;
+}
+
+.dh-contract-sidebar .dh-provider-state .dh-eyebrow,
+.dh-verification-layout .dh-provider-state .dh-eyebrow {
+  color: rgb(255 255 255 / 78%);
+}
+
+.dh-contract-sidebar .dh-provider-state .dh-badge--neutral,
+.dh-verification-layout .dh-provider-state .dh-badge--neutral {
+  background: rgb(255 255 255 / 16%);
+  border-color: rgb(255 255 255 / 30%);
+  color: #fff;
+}
+
+.dh-contract-sidebar .dh-provider-state .dh-button--secondary,
+.dh-verification-layout .dh-provider-state .dh-button--secondary {
+  background: var(--dh-surface-muted);
+  border-color: transparent;
+  color: var(--dh-ink);
+}
+
+.dh-contract-sidebar .dh-provider-state .dh-provider-state__icon,
+.dh-verification-layout .dh-provider-state .dh-provider-state__icon {
+  background: rgb(255 255 255 / 16%);
+  color: #fff;
+}
+
 .dh-provider-state__icon {
   align-items: center;
   background: var(--dh-green-soft);
-  border-radius: 1rem;
   color: var(--dh-green-strong);
   display: inline-flex;
+  flex: 0 0 auto;
   height: 3rem;
   justify-content: center;
   width: 3rem;
 }
 
-.dh-category-card__icon svg,
+/* Same seal edge as the verified mark, at plate size: 36 points. */
+.dh-scenario-card__icon,
+.dh-provider-state__icon {
+  clip-path: polygon(
+    50% 0%,
+    57.8% 5.9%,
+    67.1% 2.9%,
+    72.5% 11%,
+    82.2% 10.9%,
+    84.9% 20.2%,
+    94.1% 22.5%,
+    93.7% 32.2%,
+    100% 39.6%,
+    96.4% 48.6%,
+    100% 57.8%,
+    94.1% 65.5%,
+    95.4% 75.1%,
+    86.6% 79.4%,
+    84.9% 89%,
+    75.3% 89.6%,
+    70.7% 98.1%,
+    61.2% 96.2%,
+    53.5% 102%,
+    46.5% 102%,
+    38.8% 96.2%,
+    29.3% 98.1%,
+    24.7% 89.6%,
+    15.1% 89%,
+    13.4% 79.4%,
+    4.6% 75.1%,
+    5.9% 65.5%,
+    0% 57.8%,
+    3.6% 48.6%,
+    0% 39.6%,
+    6.3% 32.2%,
+    5.9% 22.5%,
+    15.1% 20.2%,
+    17.8% 10.9%,
+    27.5% 11%,
+    32.9% 2.9%,
+    42.2% 5.9%
+  );
+}
+
 .dh-scenario-card__icon svg,
 .dh-provider-state__icon svg {
-  height: 1.4rem;
-  width: 1.4rem;
-}
-
-.dh-category-card strong,
-.dh-category-card small {
-  display: block;
-}
-
-.dh-category-card small {
-  color: var(--dh-muted);
-  font-size: 0.78rem;
-  line-height: 1.45;
-  margin-top: 0.2rem;
-}
-
-.dh-category-card__arrow {
-  color: var(--dh-green);
-  height: 1rem;
-  width: 1rem;
+  height: 1.375rem;
+  width: 1.375rem;
 }
 
 .dh-scenario-card__arrow {
@@ -779,10 +887,10 @@
 .dh-scenario-card {
   align-items: center;
   display: grid;
-  gap: 0.75rem;
+  gap: 0.875rem;
   grid-template-columns: auto minmax(0, 1fr) auto;
   min-height: 4.75rem;
-  padding: 0.85rem 1rem;
+  padding: 0.875rem 1.125rem;
 }
 
 .dh-scenario-card__copy {
@@ -790,15 +898,20 @@
   gap: 0.18rem;
 }
 
-.dh-scenario-card__copy strong,
+.dh-scenario-card__copy strong {
+  display: block;
+  font-size: 0.90625rem;
+  font-weight: 600;
+}
+
 .dh-scenario-card__copy small {
   display: block;
 }
 
 .dh-scenario-card__copy small {
   color: var(--dh-muted);
-  font-size: 0.72rem;
-  line-height: 1.4;
+  font-size: 0.75rem;
+  line-height: 1.45;
 }
 
 .dh-local-favorites-note {
@@ -812,7 +925,7 @@
 }
 
 .dh-demo-banner {
-  background: var(--dh-surface-muted);
+  background: var(--dh-surface);
   border: 1px solid var(--dh-border);
   border-radius: 1.5rem;
   display: grid;
@@ -884,13 +997,48 @@
 
 .dh-demo-banner__accounts small {
   color: var(--dh-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   line-height: 1.4;
 }
 
 .dh-demo-banner__accounts .dh-button {
-  min-height: 2.5rem;
-  padding: 0.55rem 0.8rem;
+  min-height: 2.75rem;
+  padding: 0.6rem 0.8rem;
+}
+
+.dh-demo-banner__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0.25rem;
+}
+
+.dh-demo-banner__accounts li > div > small:first-of-type {
+  color: var(--dh-ink);
+  font-weight: 600;
+}
+
+.dh-demo-banner__purpose {
+  margin-top: 0.25rem;
+}
+
+/* Tells a reviewer where the seeded request, offers and contract already are. */
+.dh-demo-banner__prepared {
+  align-items: flex-start;
+  background: var(--dh-green-soft);
+  border-radius: 1rem;
+  color: var(--dh-green-strong);
+  display: flex;
+  font-size: 0.8125rem;
+  gap: 0.5rem;
+  line-height: 1.5;
+  padding: 0.75rem 1rem;
+}
+
+.dh-demo-banner__prepared svg {
+  flex: 0 0 1.25rem;
+  height: 1.25rem;
+  width: 1.25rem;
 }
 
 .dh-local-favorites-note {
@@ -899,9 +1047,9 @@
 }
 
 .dh-local-favorites-note svg {
-  flex: 0 0 1.2rem;
-  height: 1.2rem;
-  width: 1.2rem;
+  flex: 0 0 1.25rem;
+  height: 1.25rem;
+  width: 1.25rem;
 }
 
 .dh-section {
@@ -927,11 +1075,63 @@
   margin-bottom: 0;
 }
 
+.dh-page-heading h1 {
+  font-size: clamp(1.875rem, 3.5vw, 2.75rem);
+  font-weight: 800;
+}
+
+.dh-panel__head h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.dh-request-card__head h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.dh-section__head h2 {
+  font-size: 1.625rem;
+  letter-spacing: -0.01em;
+}
+
+.dh-catalog-page > .dh-page-heading {
+  align-items: baseline;
+  gap: 0.875rem;
+}
+
+.dh-catalog-page > .dh-page-heading h1 {
+  font-size: clamp(1.75rem, 3vw, 2rem);
+}
+
+.dh-page-heading > div,
+.dh-panel__head > div,
+.dh-request-card__head > div {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dh-page-heading .dh-eyebrow,
+.dh-panel__head .dh-eyebrow,
+.dh-request-card__head .dh-eyebrow {
+  margin-bottom: 0;
+}
+
+.dh-page-heading__count {
+  color: var(--dh-muted);
+  font-size: 0.8125rem;
+}
+
 .dh-page-heading > div > p:last-child {
   color: var(--dh-muted);
   line-height: 1.6;
   margin: 0;
   max-width: 48rem;
+}
+
+/* The icon set carries a single arrow glyph; the back control mirrors it. */
+.dh-back svg {
+  transform: scaleX(-1);
 }
 
 .dh-text-button {
@@ -941,14 +1141,68 @@
   color: var(--dh-green-strong);
   cursor: pointer;
   display: inline-flex;
-  font-weight: 800;
+  font-size: 0.875rem;
+  font-weight: 600;
   gap: 0.35rem;
   min-height: 2.75rem;
   padding: 0.4rem;
 }
 
 .dh-product-grid {
+  align-items: stretch;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 14.8rem), 1fr));
+}
+
+.dh-section > .dh-product-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+/* The scalloped seal is the brand's signature shape: a seal-edged disc used for
+   the verified mark and for feature-tile icon plates. Polygons come from the
+   design reference verbatim — 26 points at mark size, 36 at plate size. */
+.dh-vseal {
+  align-items: center;
+  background: var(--dh-green);
+  clip-path: polygon(
+    50% 0%,
+    61% 8%,
+    74% 5%,
+    80% 17%,
+    93% 20%,
+    92% 33%,
+    100% 42%,
+    94% 54%,
+    98% 67%,
+    86% 73%,
+    84% 86%,
+    71% 86%,
+    63% 97%,
+    50% 92%,
+    37% 97%,
+    29% 86%,
+    16% 86%,
+    14% 73%,
+    2% 67%,
+    6% 54%,
+    0% 42%,
+    8% 33%,
+    7% 20%,
+    20% 17%,
+    26% 5%,
+    39% 8%
+  );
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 0.9375rem;
+  justify-content: center;
+  width: 0.9375rem;
+}
+
+.dh-vseal svg {
+  color: #fff;
+  height: 0.5625rem;
+  stroke-width: 3;
+  width: 0.5625rem;
 }
 
 .dh-product-card {
@@ -958,8 +1212,9 @@
   box-shadow: var(--dh-shadow-soft);
   display: flex;
   flex-direction: column;
+  gap: 0.5rem;
   min-width: 0;
-  overflow: hidden;
+  padding: 0.75rem;
   position: relative;
   transition:
     border-color 160ms ease,
@@ -969,19 +1224,40 @@
 
 .dh-product-card:hover {
   border-color: color-mix(in srgb, var(--dh-green) 36%, var(--dh-border));
-  box-shadow: var(--dh-shadow);
+  box-shadow: var(--dh-shadow-hover);
   transform: translateY(-0.15rem);
 }
 
 .dh-product-media {
   aspect-ratio: 1.72 / 1;
-  background:
-    radial-gradient(circle at 70% 22%, rgb(255 255 255 / 72%), transparent 5rem),
-    linear-gradient(145deg, var(--dh-cream-deep), var(--dh-green-soft));
+  background: var(--dh-cream-deep);
   border-radius: 1rem;
-  margin: 0.75rem 0.75rem 0;
+  margin: 0;
   overflow: hidden;
   position: relative;
+}
+
+/* Listings ship without photography, so the plate carries a deterministic tint
+   drawn from the reference's own placeholder set. Same product, same colour —
+   a shelf stops reading as one repeated grey block. */
+.dh-product-media--tint-0 {
+  background: #f2e8cf;
+}
+
+.dh-product-media--tint-1 {
+  background: #e8efd8;
+}
+
+.dh-product-media--tint-2 {
+  background: #f4ede0;
+}
+
+.dh-product-media--tint-3 {
+  background: #eaf0dc;
+}
+
+.dh-product-media--tint-4 {
+  background: #efe6d2;
 }
 
 .dh-product-media img {
@@ -999,13 +1275,14 @@
 }
 
 .dh-product-media__fallback svg {
-  height: 34%;
-  width: 34%;
+  height: 42%;
+  opacity: 0.55;
+  width: 42%;
 }
 
 .dh-product-media--compact {
   aspect-ratio: 1;
-  border-radius: 0.8rem;
+  border-radius: 1rem;
   flex: 0 0 4.5rem;
 }
 
@@ -1024,10 +1301,36 @@
 }
 
 .dh-product-card__favorite {
+  background: rgb(255 255 255 / 92%);
+  border: 0;
+  height: 1.75rem;
   position: absolute;
-  right: 0.7rem;
-  top: 0.7rem;
+  right: 1.25rem;
+  top: 1.25rem;
+  width: 1.75rem;
   z-index: 2;
+}
+
+.dh-product-card__favorite::after {
+  content: '';
+  inset: -0.5rem;
+  position: absolute;
+}
+
+.dh-product-card__favorite.dh-busy-button > .dh-busy-button__slot {
+  height: 0.9375rem;
+  width: 0.9375rem;
+}
+
+.dh-product-card__favorite.dh-busy-button .dh-spinner {
+  border-width: 1.5px;
+  height: 0.9375rem;
+  width: 0.9375rem;
+}
+
+.dh-product-card__favorite svg {
+  height: 0.9375rem;
+  width: 0.9375rem;
 }
 
 .dh-product-card__favorite.is-active,
@@ -1037,12 +1340,23 @@
   color: var(--dh-green-strong);
 }
 
+/* Send action in the AI composer: the one icon button that carries the accent. */
+.dh-icon-button--primary {
+  background: var(--dh-green);
+  border-color: transparent;
+  color: #fff;
+}
+
+.dh-icon-button--primary:hover:not(:disabled) {
+  background: var(--dh-green-hover);
+}
+
 .dh-product-card__body {
   display: flex;
   flex: 1;
   flex-direction: column;
-  gap: 0.55rem;
-  padding: 0.7rem 0.75rem 0.8rem;
+  gap: 0.5rem;
+  padding: 0;
 }
 
 .dh-product-card__open {
@@ -1057,8 +1371,18 @@
 .dh-product-card__title,
 .dh-product-card__seller,
 .dh-product-card__facts,
-.dh-product-card__demo,
 .dh-product-card__price,
+.dh-product-card .dh-button {
+  position: relative;
+  z-index: 2;
+}
+
+.dh-product-card .dh-button--primary {
+  font-size: 0.875rem;
+  min-height: 2.5rem;
+  padding: 0.5rem 1rem;
+}
+
 .dh-product-card .dh-button {
   position: relative;
   z-index: 2;
@@ -1069,55 +1393,174 @@
 }
 
 .dh-product-card__title {
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   background: transparent;
   border: 0;
   color: inherit;
   cursor: pointer;
-  font-size: 0.95rem;
-  line-height: 1.42;
-  margin: 0;
+  display: -webkit-box;
+  font-size: 0.8125rem;
   font-weight: 500;
+  line-height: 1.35;
+  margin: 0;
   min-height: 2.7em;
+  overflow: hidden;
   padding: 0;
   text-align: left;
+}
+
+.dh-product-card__seller {
+  align-items: center;
+  display: flex;
+  gap: 0.375rem;
+  min-height: 1.25rem;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.dh-product-card__seller-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dh-product-card__seller-region {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dh-product-card__seller-region::before {
+  color: var(--dh-border);
+  content: '•';
+  padding-inline-end: 0.375rem;
+}
+
+/* Provenance and paid placement belong on the plate: the fact row below is a
+   single line, and a fourth chip there pushed the region out of view. */
+.dh-product-media__flags {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  inset-inline-start: 0.5rem;
+  position: absolute;
+  top: 0.5rem;
+  z-index: 2;
+}
+
+.dh-product-media__flags .dh-badge {
+  background: var(--dh-surface);
+  box-shadow: var(--dh-shadow-soft);
+}
+
+.dh-product-card__seller > :first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dh-product-card .dh-button--primary {
+  margin-top: auto;
+}
+
+.dh-product-card__rating {
+  align-items: center;
+  color: var(--dh-muted);
+  display: flex;
+  font-size: 0.75rem;
+  gap: 0.25rem;
+}
+
+.dh-product-card__rating b {
+  color: var(--dh-ink);
+  font-weight: 600;
+}
+
+.dh-product-card__rating svg {
+  color: var(--dh-star);
+  fill: var(--dh-star);
+  height: 0.8125rem;
+  width: 0.8125rem;
 }
 
 .dh-product-card__price {
   align-items: baseline;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.28rem;
+}
+
+.dh-product-card__price {
+  flex-wrap: nowrap;
+  gap: 0.375rem;
+  min-height: 1.75rem;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
 .dh-product-card__price strong {
-  font-size: 1.16rem;
-  font-weight: 800;
+  font-size: 1.125rem;
+  font-weight: 700;
 }
 
 .dh-product-card__price span,
+.dh-product-card__price > strong {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dh-product-card__price > span {
+  flex: 0 5 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 .dh-product-card__facts,
 .dh-product-card__seller {
   color: var(--dh-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .dh-product-card__facts {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
+  min-height: 1.75rem;
+  overflow: hidden;
+}
+
+.dh-product-card__facts > * {
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.dh-product-card__facts > .dh-badge {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dh-product-card__facts .dh-caption {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .dh-badge {
   align-items: center;
   border-radius: 999px;
   display: inline-flex;
-  font-size: 0.68rem;
+  font-size: 0.8125rem;
   font-style: normal;
-  font-weight: 800;
+  font-weight: 600;
   line-height: 1;
-  min-height: 1.6rem;
-  padding: 0.35rem 0.6rem;
+  min-height: 1.75rem;
+  padding: 0.4rem 0.7rem;
 }
 
 .dh-badge--soft {
@@ -1131,10 +1574,48 @@
   color: var(--dh-muted);
 }
 
+/* Pending work waiting on someone else. */
+/* The paired pills from the reference: type in brand green, state in accent. */
+.dh-badge--strong {
+  background: var(--dh-green);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.5rem 1.25rem;
+}
+
+.dh-badge--accent {
+  background: var(--dh-lime);
+  color: var(--dh-ink);
+  font-size: 0.875rem;
+  font-weight: 700;
+  padding: 0.5rem 1.25rem;
+}
+
+.dh-badge--warning {
+  background: color-mix(in srgb, var(--dh-warning) 18%, var(--dh-surface));
+  color: #7d5410;
+}
+
+/* Finished states stay quiet: outline only. */
+.dh-badge--outline {
+  background: transparent;
+  border: 1px solid var(--dh-border);
+  color: var(--dh-ink);
+}
+
+/* Rejection is text, never a red fill. */
+.dh-badge--danger {
+  background: transparent;
+  border: 1px solid color-mix(in srgb, var(--dh-danger) 45%, transparent);
+  color: var(--dh-danger);
+}
+
 .dh-inline-empty,
 .dh-empty,
 .dh-signed-out,
 .dh-status-page {
+  gap: 1rem;
   align-items: center;
   background: var(--dh-surface);
   border: 1px solid var(--dh-border);
@@ -1161,22 +1642,22 @@
 }
 
 .dh-empty > span svg {
-  height: 2.4rem;
-  width: 2.4rem;
+  height: 2.5rem;
+  width: 2.5rem;
 }
 
 .dh-inline-empty > svg {
   color: var(--dh-green);
   flex: 0 0 auto;
-  height: 2.4rem;
+  height: 2.5rem;
   margin-bottom: 1rem;
-  width: 2.4rem;
+  width: 2.5rem;
 }
 
 .dh-empty h2,
 .dh-signed-out h1,
 .dh-status-page h1 {
-  margin-bottom: 0.7rem;
+  margin-bottom: 0;
 }
 
 .dh-empty p,
@@ -1189,8 +1670,8 @@
 
 .dh-how {
   align-items: start;
-  background: var(--dh-footer-bg);
-  border-radius: 1.75rem;
+  background: var(--dh-green-strong);
+  border-radius: 2rem;
   color: var(--dh-footer-ink);
   display: grid;
   gap: 2rem;
@@ -1210,23 +1691,22 @@
 .dh-how__steps {
   counter-reset: dh-step;
   display: grid;
-  gap: 0;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   list-style: none;
   margin: 0;
   padding: 0;
 }
 
 .dh-how__steps li {
-  border-bottom: 1px solid color-mix(in srgb, var(--dh-footer-ink) 18%, transparent);
+  align-content: start;
+  background: var(--dh-cream);
+  border-radius: 1.5rem;
+  color: var(--dh-ink);
   counter-increment: dh-step;
   display: grid;
-  gap: 1rem;
-  grid-template-columns: auto 1fr;
-  padding: 1rem 0;
-}
-
-.dh-how__steps li:last-child {
-  border-bottom: 0;
+  gap: 0.75rem;
+  padding: 1.25rem;
 }
 
 .dh-how__steps li::before {
@@ -1236,7 +1716,7 @@
   color: #102218;
   content: counter(dh-step);
   display: flex;
-  font-weight: 900;
+  font-weight: 800;
   height: 2rem;
   justify-content: center;
   width: 2rem;
@@ -1259,6 +1739,36 @@
   scrollbar-width: none;
 }
 
+.dh-crumbs {
+  align-items: center;
+  color: var(--dh-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.75rem;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+/* 18.6px tall and 6.4px apart before this: under the 44px target and under the
+   8px adjacency minimum. */
+.dh-crumbs button {
+  background: transparent;
+  border: 0;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  min-height: 2.75rem;
+  padding: 0;
+}
+
+.dh-crumbs button:hover {
+  color: var(--dh-green-strong);
+}
+
+.dh-crumbs span[aria-hidden='true'] {
+  opacity: 0.6;
+}
+
 .dh-active-filters {
   align-items: center;
   display: flex;
@@ -1274,11 +1784,11 @@
   color: var(--dh-green-strong);
   cursor: pointer;
   display: inline-flex;
-  font-size: 0.75rem;
+  font-size: 0.78125rem;
   font-weight: 600;
-  gap: 0.35rem;
-  min-height: 2.25rem;
-  padding: 0.45rem 0.75rem;
+  gap: 0.4rem;
+  min-height: 2.75rem;
+  padding: 0.4375rem 0.875rem;
 }
 
 .dh-active-filters button:hover,
@@ -1287,8 +1797,8 @@
 }
 
 .dh-active-filters button svg {
-  height: 0.9rem;
-  width: 0.9rem;
+  height: 0.875rem;
+  width: 0.875rem;
 }
 
 .dh-active-filters .dh-active-filters__reset {
@@ -1305,7 +1815,13 @@
   align-items: start;
   display: grid;
   gap: 1.25rem;
-  grid-template-columns: 16rem minmax(0, 1fr);
+  grid-template-columns: 16.5rem minmax(0, 1fr);
+}
+
+.dh-panel h2,
+.dh-panel h3,
+.dh-panel p {
+  margin-block-end: 0;
 }
 
 .dh-filter-panel,
@@ -1314,12 +1830,63 @@
   border: 1px solid var(--dh-border);
   border-radius: 1.5rem;
   box-shadow: var(--dh-shadow-soft);
-  padding: 1.2rem;
+  padding: 1.375rem;
 }
 
 .dh-filter-panel {
+  border-radius: 2rem;
+}
+
+.dh-panel {
+  border-radius: 2rem;
+  display: grid;
+  gap: 1.25rem;
+  padding: 1.625rem 1.75rem;
+}
+
+/* Filter sections carry a heading and a rule, the way the reference groups them. */
+.dh-filter-group {
+  border-bottom: 1px solid var(--dh-border);
+  display: grid;
+  gap: 0.625rem;
+  padding-bottom: 1rem;
+}
+
+.dh-filter-group:last-of-type {
+  border-bottom: 0;
+  padding-bottom: 0;
+}
+
+.dh-filter-group > h4 {
+  font-family: var(--dh-font-display);
+  font-size: 0.84375rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.dh-filter-panel .dh-button--primary {
+  font-size: 0.84375rem;
+  margin-top: 0.875rem;
+}
+
+/* Renders inside the mobile filter sheet, where 35.4px is a mobile control. */
+.dh-filter-reset {
+  background: transparent;
+  border: 0;
+  color: var(--dh-muted);
+  cursor: pointer;
+  font-size: 0.78125rem;
+  min-height: 2.75rem;
+  padding: 0.5rem;
+  text-align: center;
+  width: 100%;
+}
+
+.dh-filter-panel {
+  display: grid;
+  gap: 1rem;
   position: sticky;
-  top: 8.8rem;
+  top: calc(var(--dh-header-h) + 1rem);
 }
 
 .dh-filter-fields,
@@ -1352,7 +1919,7 @@
   font-weight: 800;
 }
 
-.dh-filter-fields input,
+.dh-filter-fields input:not([type='checkbox']),
 .dh-filter-fields select,
 .dh-form input,
 .dh-form textarea,
@@ -1367,6 +1934,17 @@
   min-height: 2.75rem;
   padding: 0.7rem 1rem;
   width: 100%;
+}
+
+.dh-filter-fields select,
+.dh-listing-field select,
+.dh-sort select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5 6 6.5 11 1.5' fill='none' stroke='%232b2b2b' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.75'/%3E%3C/svg%3E");
+  background-position: right 1.0625rem center;
+  background-repeat: no-repeat;
+  background-size: 0.75rem 0.5rem;
+  padding-right: 2.625rem;
 }
 
 .dh-filter-fields input::placeholder,
@@ -1413,21 +1991,82 @@
   min-width: 0;
 }
 
-.dh-check {
+label.dh-check {
   align-items: center;
-  display: flex !important;
-  grid-template-columns: auto 1fr;
+  cursor: pointer;
+  display: flex;
+  font-size: 0.8125rem;
+  gap: 0.5625rem;
   min-height: 2.75rem;
 }
 
-.dh-check input {
-  accent-color: var(--dh-green-strong);
-  height: 1.2rem;
-  width: 1.2rem;
+/* Checkbox and switch are drawn rather than native: the reference gives the box a
+   6px corner and the switch a 34x20 track, neither of which a platform control
+   provides. */
+.dh-check input[type='checkbox'] {
+  appearance: none;
+  background: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 6px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  height: 1.0625rem;
+  margin: 0;
+  position: relative;
+  width: 1.0625rem;
+}
+
+.dh-check input[type='checkbox']:checked {
+  background: var(--dh-green);
+  border-color: var(--dh-green);
+}
+
+.dh-check input[type='checkbox']:checked::after {
+  border-bottom: 2px solid #fff;
+  border-left: 2px solid #fff;
+  content: '';
+  height: 0.3rem;
+  left: 0.22rem;
+  position: absolute;
+  top: 0.2rem;
+  transform: rotate(-45deg);
+  width: 0.55rem;
+}
+
+.dh-check--toggle input[type='checkbox'] {
+  border-radius: 999px;
+  height: 1.25rem;
+  transition:
+    background-color 160ms ease,
+    border-color 160ms ease;
+  width: 2.125rem;
+}
+
+.dh-check--toggle input[type='checkbox']::after {
+  background: #fff;
+  border-radius: 50%;
+  content: '';
+  height: 1rem;
+  left: 0.0625rem;
+  position: absolute;
+  top: 0.0625rem;
+  transition: left 160ms ease;
+  width: 1rem;
+}
+
+.dh-check--toggle input[type='checkbox']:checked::after {
+  background: #fff;
+  border: 0;
+  border-radius: 50%;
+  height: 1rem;
+  left: 0.9375rem;
+  top: 0.0625rem;
+  transform: none;
+  width: 1rem;
 }
 
 .dh-check span {
-  font-size: 0.85rem;
+  font-size: 0.875rem;
   font-weight: 500;
 }
 
@@ -1442,7 +2081,7 @@
 
 .dh-results-head span {
   color: var(--dh-muted);
-  font-size: 0.82rem;
+  font-size: 0.8125rem;
 }
 
 .dh-mobile-filter-trigger,
@@ -1462,7 +2101,7 @@
   border-radius: 1.5rem;
   box-shadow: var(--dh-shadow-soft);
   position: sticky;
-  top: 8.8rem;
+  top: calc(var(--dh-header-h) + 1rem);
 }
 
 .dh-product-detail__content {
@@ -1475,6 +2114,12 @@
   display: flex;
   gap: 1rem;
   justify-content: space-between;
+}
+
+/* Without this the title block's min-content pushes the 44px favourite button
+   out of the row before the title wraps. */
+.dh-product-detail__heading > div {
+  min-width: 0;
 }
 
 .dh-product-detail__heading h1 {
@@ -1498,8 +2143,11 @@
   color: var(--dh-muted);
 }
 
+/* 42rem is the cap the hero already uses. Without it the description runs ~99
+   characters per line at a 1536px viewport. */
 .dh-product-detail__description {
   line-height: 1.7;
+  max-width: 42rem;
 }
 
 .dh-facts,
@@ -1531,7 +2179,7 @@
 
 .dh-facts dd,
 .dh-contract-terms dd {
-  font-weight: 750;
+  font-weight: 700;
   margin: 0;
   max-width: 70%;
   overflow-wrap: anywhere;
@@ -1556,7 +2204,7 @@
   align-items: center;
   background: var(--dh-surface-muted);
   border: 1px solid var(--dh-border);
-  border-radius: 0.75rem;
+  border-radius: 999px;
   cursor: pointer;
   display: flex;
   gap: 0.6rem;
@@ -1588,7 +2236,7 @@
 .dh-callout p {
   color: var(--dh-muted);
   font-size: 0.8rem;
-  margin: 0.2rem 0 0;
+  margin: 0.25rem 0 0;
 }
 
 .dh-detail-section {
@@ -1599,6 +2247,13 @@
 .dh-review-list {
   display: grid;
   gap: 0.75rem;
+  grid-auto-columns: min(22rem, 100%);
+  grid-auto-flow: column;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 0.5rem;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
 }
 
 .dh-review-list article {
@@ -1606,6 +2261,18 @@
   border: 1px solid var(--dh-border);
   border-radius: 1rem;
   padding: 1rem;
+  scroll-snap-align: start;
+}
+
+/* The quote is the variable part, so it takes the slack and every card in the row
+   keeps the same height. */
+.dh-review-list article > p {
+  overflow-wrap: anywhere;
+}
+
+.dh-review-list:focus-visible {
+  outline: 0.2rem solid var(--dh-green-strong);
+  outline-offset: 0.16rem;
 }
 
 .dh-review-reply {
@@ -1650,7 +2317,7 @@
   align-items: center;
   background: color-mix(in srgb, var(--dh-green-soft) 38%, var(--dh-surface));
   border: 1px solid var(--dh-border);
-  border-radius: 0.9rem;
+  border-radius: 1.5rem;
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
@@ -1675,7 +2342,7 @@
   margin: 1rem 0;
 }
 
-.dh-review-list article > div {
+.dh-review-list article > div:not(.dh-review-actions) {
   display: flex;
   gap: 1rem;
   justify-content: space-between;
@@ -1693,7 +2360,8 @@
   border-radius: 1rem;
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: minmax(7rem, 0.35fr) minmax(14rem, 1fr) auto;
+  /* Five 2.75rem star targets plus their value label do not fit in 7rem. */
+  grid-template-columns: minmax(15rem, 0.4fr) minmax(14rem, 1fr) auto;
   margin-bottom: 1rem;
   padding: 1rem;
 }
@@ -1708,6 +2376,10 @@
   gap: 0.35rem;
 }
 
+.dh-review-form .dh-star-input__star {
+  display: inline-flex;
+}
+
 .dh-review-form label > span {
   color: var(--dh-muted);
   font-size: 0.75rem;
@@ -1718,37 +2390,72 @@
 .dh-review-form textarea {
   background: var(--dh-surface);
   border: 1px solid var(--dh-border);
-  border-radius: 0.75rem;
-  color: var(--dh-text);
+  border-radius: 1rem;
+  color: var(--dh-ink);
   font: inherit;
   padding: 0.7rem;
+}
+
+.dh-cart-switcher {
+  display: grid;
+  gap: 0.5rem;
 }
 
 .dh-cart-tabs {
   display: flex;
   gap: 0.5rem;
   overflow-x: auto;
+  padding-block: 0.25rem;
 }
 
 .dh-cart-tabs button {
   background: var(--dh-surface);
   border: 1px solid var(--dh-border);
-  border-radius: 0.9rem;
+  border-radius: 999px;
   cursor: pointer;
   display: grid;
   flex: none;
-  min-width: 10rem;
-  padding: 0.75rem;
+  gap: 0.125rem;
+  min-height: 2.75rem;
+  min-width: 11rem;
+  padding: 0.75rem 1.25rem;
   text-align: left;
 }
 
+.dh-cart-tabs button.is-active,
 .dh-cart-tabs button[aria-selected='true'] {
   background: var(--dh-green-soft);
   border-color: var(--dh-green);
 }
 
+.dh-cart-tabs button:hover:not([aria-selected='true']) {
+  border-color: var(--dh-green);
+}
+
 .dh-cart-tabs small {
   color: var(--dh-muted);
+}
+
+.dh-cart-tabs__seller {
+  align-items: center;
+  display: flex;
+  font-weight: 700;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.dh-cart-tabs__name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dh-cart-tabs__total {
+  font-size: 0.9375rem;
+}
+
+.dh-cart-switcher__hint {
+  font-size: 0.8125rem;
 }
 
 .dh-cart-layout,
@@ -1791,13 +2498,13 @@
 
 .dh-cart-line__content span {
   color: var(--dh-muted);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
 }
 
 .dh-cart-line__missing {
   align-items: center;
   background: var(--dh-green-soft);
-  border-radius: 0.8rem;
+  border-radius: 1rem;
   color: var(--dh-green);
   display: flex;
   flex: 0 0 4.5rem;
@@ -1834,7 +2541,7 @@
 
 .dh-cart-summary {
   position: sticky;
-  top: 8.8rem;
+  top: calc(var(--dh-header-h) + 1rem);
 }
 
 .dh-cart-summary__total {
@@ -1873,7 +2580,7 @@
 .dh-request-card {
   background: var(--dh-surface);
   border: 1px solid var(--dh-border);
-  border-radius: 1.2rem;
+  border-radius: 1.5rem;
   display: grid;
   gap: 1rem;
   padding: 1.1rem;
@@ -1889,40 +2596,14 @@
   margin: 0;
 }
 
-.dh-offer-list > div {
-  align-items: center;
-  background: var(--dh-surface-muted);
-  border: 1px solid var(--dh-border);
-  border-radius: 0.9rem;
-  display: flex;
-  gap: 0.8rem;
-  justify-content: space-between;
-  padding: 0.8rem;
-}
-
-.dh-offer-list > div.is-best {
-  border-color: var(--dh-green);
-  box-shadow: inset 0.24rem 0 var(--dh-green);
-}
-
-.dh-offer-list > div > div {
-  display: grid;
-}
-
-.dh-offer-list span,
-.dh-offer-list small {
-  color: var(--dh-muted);
-  font-size: 0.72rem;
-}
-
 .dh-state-inline {
   align-items: center;
   background: var(--dh-green-soft);
-  border-radius: 0.7rem;
+  border-radius: 1rem;
   color: var(--dh-green-strong);
   display: inline-flex;
   font-size: 0.8rem;
-  font-weight: 750;
+  font-weight: 700;
   gap: 0.45rem;
   padding: 0.65rem 0.75rem;
 }
@@ -1935,6 +2616,12 @@
 .dh-state-inline svg {
   height: 1rem;
   width: 1rem;
+}
+
+.dh-access-notice {
+  display: flex;
+  flex-wrap: wrap;
+  width: 100%;
 }
 
 .dh-verification-layout {
@@ -1964,6 +2651,7 @@
 .dh-role-grid button.is-active {
   background: var(--dh-green-soft);
   border-color: var(--dh-green);
+  border-width: 2px;
 }
 
 .dh-role-grid svg {
@@ -1986,6 +2674,55 @@
   padding: 0;
 }
 
+/* Document rows become the reference's dashed drop zones: two per row, each with
+   its own icon plate. A stored file switches the glyph to a check, which is what
+   turns the zone solid green — no extra class needed. */
+.dh-verification-layout .dh-document-list {
+  gap: 0.875rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dh-verification-layout .dh-document-list li {
+  align-items: center;
+  background: var(--dh-surface-muted);
+  border: 2px dashed var(--dh-border);
+  border-radius: 1.5rem;
+  gap: 0.875rem;
+  min-height: auto;
+  padding: 1.125rem;
+}
+
+.dh-verification-layout .dh-document-list li:has(> svg[data-marketplace-icon='check']) {
+  background: var(--dh-surface);
+  border-color: var(--dh-green);
+  border-style: solid;
+}
+
+.dh-verification-layout .dh-document-list li > svg:first-child {
+  background: var(--dh-green-soft);
+  border-radius: 0.875rem;
+  color: var(--dh-green-strong);
+  flex: none;
+  height: 2.75rem;
+  padding: 0.71875rem;
+  width: 2.75rem;
+}
+
+.dh-verification-layout .dh-document-list li > span {
+  flex: 1;
+  font-size: 0.84375rem;
+  min-width: 0;
+}
+
+.dh-verification-layout .dh-document-upload {
+  border: 0;
+  font-size: 0.75rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 0;
+  text-decoration: underline;
+  white-space: normal;
+}
+
 .dh-document-list li {
   align-items: center;
   border-top: 1px solid var(--dh-border);
@@ -1994,10 +2731,46 @@
   min-height: 3rem;
 }
 
+/* Upload control on a document row. The native file input stays reachable for
+   assistive tech and tests, but the visible affordance is a brand pill. */
+.dh-document-upload {
+  align-items: center;
+  border: 1.5px solid var(--dh-green);
+  border-radius: 999px;
+  color: var(--dh-green-strong);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  gap: 0.4rem;
+  margin-left: auto;
+  min-height: 2.75rem;
+  padding: 0.35rem 1rem;
+  position: relative;
+  white-space: nowrap;
+}
+
+.dh-document-upload:hover {
+  background: var(--dh-green-soft);
+}
+
+.dh-document-upload:has(input:disabled) {
+  border-color: var(--dh-border);
+  color: var(--dh-muted);
+  cursor: not-allowed;
+}
+
+.dh-document-upload input[type='file'] {
+  inset: 0;
+  opacity: 0;
+  position: absolute;
+  width: 100%;
+}
+
 .dh-document-list svg {
   color: var(--dh-green);
-  height: 1.1rem;
-  width: 1.1rem;
+  height: 1.125rem;
+  width: 1.125rem;
 }
 
 .dh-provider-state {
@@ -2010,23 +2783,64 @@
 
 .dh-seal {
   align-items: center;
-  background: var(--dh-green-strong);
-  border: 0.45rem double color-mix(in srgb, var(--dh-lime) 70%, white);
-  border-radius: 50%;
-  color: white;
-  display: inline-flex;
+  background: var(--dh-green);
+  clip-path: polygon(
+    50% 0%,
+    57.8% 5.9%,
+    67.1% 2.9%,
+    72.5% 11%,
+    82.2% 10.9%,
+    84.9% 20.2%,
+    94.1% 22.5%,
+    93.7% 32.2%,
+    100% 39.6%,
+    96.4% 48.6%,
+    100% 57.8%,
+    94.1% 65.5%,
+    95.4% 75.1%,
+    86.6% 79.4%,
+    84.9% 89%,
+    75.3% 89.6%,
+    70.7% 98.1%,
+    61.2% 96.2%,
+    53.5% 102%,
+    46.5% 102%,
+    38.8% 96.2%,
+    29.3% 98.1%,
+    24.7% 89.6%,
+    15.1% 89%,
+    13.4% 79.4%,
+    4.6% 75.1%,
+    5.9% 65.5%,
+    0% 57.8%,
+    3.6% 48.6%,
+    0% 39.6%,
+    6.3% 32.2%,
+    5.9% 22.5%,
+    15.1% 20.2%,
+    17.8% 10.9%,
+    27.5% 11%,
+    32.9% 2.9%,
+    42.2% 5.9%
+  );
+  color: #fff;
+  display: flex;
   flex: none;
-  height: 5rem;
+  flex-direction: column;
+  font-size: 0.75rem;
+  font-weight: 700;
+  height: 6.5rem;
   justify-content: center;
-  margin-bottom: 1rem;
-  outline: 0.35rem dotted var(--dh-green-strong);
-  outline-offset: -0.05rem;
-  width: 5rem;
+  line-height: 1.25;
+  text-align: center;
+  width: 6.5rem;
 }
 
 .dh-seal svg {
-  height: 2rem;
-  width: 2rem;
+  height: 1.375rem;
+  margin-bottom: 0.1875rem;
+  stroke-width: 2;
+  width: 1.375rem;
 }
 
 .dh-seal--small {
@@ -2050,13 +2864,33 @@
   padding: clamp(1.3rem, 4vw, 2.5rem);
 }
 
+.dh-account-hero > div:first-child {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dh-account-hero .dh-eyebrow {
+  margin-bottom: 0;
+}
+
+.dh-account-hero h1 {
+  margin-bottom: 0;
+}
+
+.dh-account-hero > div:first-child > p:last-child {
+  color: var(--dh-muted);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 48rem;
+}
+
 .dh-verification-chip {
   align-items: center;
   background: var(--dh-surface);
   border: 1px solid var(--dh-border);
   border-radius: 999px;
   display: flex;
-  font-weight: 750;
+  font-weight: 700;
   gap: 0.5rem;
   padding: 0.7rem 0.9rem;
 }
@@ -2077,7 +2911,7 @@
 .dh-stat-grid > div {
   background: var(--dh-surface);
   border: 1px solid var(--dh-border);
-  border-radius: 1.1rem;
+  border-radius: 1.5rem;
   display: grid;
   gap: 0.2rem;
   padding: 1.2rem;
@@ -2089,7 +2923,7 @@
 
 .dh-stat-grid span {
   color: var(--dh-muted);
-  font-size: 0.78rem;
+  font-size: 0.8125rem;
 }
 
 .dh-account-grid {
@@ -2135,7 +2969,7 @@
 .dh-compact-list em,
 .dh-sample-list em {
   color: var(--dh-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-style: normal;
 }
 
@@ -2145,10 +2979,20 @@
 
 .dh-contract-sidebar {
   position: sticky;
-  top: 8.8rem;
+  top: calc(var(--dh-header-h) + 1rem);
+}
+
+.dh-contract-document {
+  border-color: transparent;
+  border-radius: 2rem;
+  box-shadow: none;
+  padding: 2.125rem 2.5rem;
+  position: relative;
 }
 
 .dh-contract-parties {
+  max-width: 40rem;
+
   display: grid;
   gap: 0.75rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -2156,16 +3000,16 @@
 
 .dh-contract-parties > div {
   background: var(--dh-surface-muted);
-  border-radius: 1rem;
+  border-radius: 1.5rem;
   display: grid;
   gap: 0.3rem;
-  padding: 1rem;
+  padding: 0.875rem 1.125rem;
 }
 
 .dh-contract-parties span,
 .dh-contract-parties small {
   color: var(--dh-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
 }
 
 .dh-contract-parties small {
@@ -2176,8 +3020,8 @@
 }
 
 .dh-contract-parties svg {
-  height: 0.9rem;
-  width: 0.9rem;
+  height: 0.875rem;
+  width: 0.875rem;
 }
 
 .dh-contract-lines {
@@ -2199,16 +3043,17 @@
 
 .dh-contract-consent {
   align-items: center;
-  background: var(--dh-green-soft);
-  border-radius: 1rem;
+  background: transparent;
+  border-radius: 0;
   display: flex;
   gap: 1rem;
   justify-content: space-between;
-  padding: 1rem;
+  margin-top: 1.375rem;
+  padding: 0;
 }
 
 .dh-contract-consent p {
-  font-size: 0.82rem;
+  font-size: 0.8125rem;
   line-height: 1.5;
   margin: 0;
 }
@@ -2242,7 +3087,7 @@
 }
 
 .dh-timeline li:not(:last-child)::before {
-  background: var(--dh-border);
+  background: var(--dh-green-soft);
   content: '';
   height: 100%;
   left: 0.72rem;
@@ -2251,15 +3096,20 @@
   width: 2px;
 }
 
+.dh-timeline li.is-now > span {
+  background: var(--dh-surface);
+  border: 0.15625rem solid var(--dh-green);
+}
+
 .dh-timeline li.is-done > span {
-  background: var(--dh-green-strong);
-  border-color: var(--dh-green-strong);
+  background: var(--dh-green);
+  border-color: var(--dh-green);
   color: white;
 }
 
 .dh-timeline svg {
-  height: 0.8rem;
-  width: 0.8rem;
+  height: 0.75rem;
+  width: 0.75rem;
 }
 
 .dh-timeline div {
@@ -2268,46 +3118,115 @@
 
 .dh-timeline small {
   color: var(--dh-muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
+}
+
+/* Toasts live in the bottom corner, clear of the sticky header, and stack
+   upward so the newest is closest to the thumb. */
+.dh-notices {
+  bottom: max(1.5rem, var(--xr-mini-app-safe-bottom, 0px));
+  display: grid;
+  gap: 0.5rem;
+  justify-items: end;
+  pointer-events: none;
+  position: fixed;
+  right: max(1.5rem, var(--xr-mini-app-safe-right, 0px));
+  width: min(24rem, calc(100% - 3rem));
+  z-index: 70;
+}
+
+.dh-notices__region {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: end;
+  width: 100%;
 }
 
 .dh-notice {
   align-items: center;
+  animation: dh-notice-enter 200ms ease-out both;
   background: var(--dh-surface);
   border: 1px solid var(--dh-border);
-  border-left: 0.3rem solid var(--dh-green);
-  border-radius: 0.9rem;
+  border-radius: 1.5rem;
   box-shadow: var(--dh-shadow);
-  display: flex;
-  gap: 0.65rem;
-  left: 50%;
-  max-width: min(32rem, calc(100% - 2rem));
-  padding: 0.8rem;
-  position: fixed;
-  top: 6.2rem;
-  transform: translateX(-50%);
-  width: max-content;
-  z-index: 60;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 0.875rem 1rem;
+  pointer-events: auto;
+  width: 100%;
 }
 
-.dh-notice--error {
-  border-left-color: var(--dh-danger);
-  color: var(--dh-danger);
+.dh-notice.is-leaving {
+  animation: dh-notice-leave 220ms ease-in both;
 }
 
-.dh-notice > svg {
-  flex: none;
-  height: 1.2rem;
-  width: 1.2rem;
+.dh-notice__dot {
+  background: var(--dh-green);
+  border-radius: 50%;
+  height: 0.5rem;
+  width: 0.5rem;
 }
 
-.dh-notice button {
+.dh-notice__message {
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.dh-notice__close {
   align-items: center;
   background: transparent;
   border: 0;
+  color: var(--dh-muted);
   cursor: pointer;
   display: flex;
-  margin-left: auto;
+  padding: 0;
+  position: relative;
+}
+
+/* The glyph is 16px; the target is 44px. Same transparent-inset pattern the
+   favourite button uses, and -0.875rem stays inside the notice's own padding. */
+.dh-notice__close::after {
+  content: '';
+  inset: -0.875rem;
+  position: absolute;
+}
+
+.dh-notice__close svg {
+  height: 1rem;
+  width: 1rem;
+}
+
+@keyframes dh-notice-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes dh-notice-leave {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateY(0.375rem);
+  }
+}
+
+.dh-notice--error .dh-notice__dot {
+  background: var(--dh-danger);
+}
+
+.dh-notice--info .dh-notice__dot {
+  background: var(--dh-warning);
 }
 
 .dh-dialog-backdrop {
@@ -2353,26 +3272,31 @@
 
 .dh-ai-fab {
   align-items: center;
-  background: var(--dh-green-strong);
+  background: var(--dh-green);
   border: 0;
-  border-radius: 999px;
-  bottom: max(1.4rem, var(--xr-mini-app-safe-bottom, 0px));
-  box-shadow: var(--dh-shadow);
+  border-radius: 50%;
+  bottom: max(2.25rem, var(--xr-mini-app-safe-bottom, 0px));
+  box-shadow: 0 0.625rem 1.625rem rgb(28 162 76 / 40%);
   color: white;
   cursor: pointer;
   display: flex;
-  font-weight: 800;
-  gap: 0.55rem;
-  min-height: 3.4rem;
-  padding: 0.75rem 1.1rem;
+  height: 3.625rem;
+  justify-content: center;
+  padding: 0;
   position: fixed;
-  right: max(1.4rem, var(--xr-mini-app-safe-right, 0px));
+  right: max(3.5rem, var(--xr-mini-app-safe-right, 0px));
+  width: 3.625rem;
   z-index: 45;
 }
 
+/* The reference's floating action is a bare disc; the label lives in aria only. */
+.dh-ai-fab > span {
+  display: none;
+}
+
 .dh-ai-fab svg {
-  height: 1.3rem;
-  width: 1.3rem;
+  height: 1.25rem;
+  width: 1.25rem;
 }
 
 .dh-ai-panel {
@@ -2406,8 +3330,8 @@
 
 .dh-ai-panel__mark {
   align-items: center;
-  background: rgb(255 255 255 / 15%);
-  border-radius: 0.8rem;
+  background: rgb(255 255 255 / 20%);
+  border-radius: 50%;
   display: flex;
   flex: none;
   height: 2.5rem;
@@ -2440,10 +3364,17 @@
 
 .dh-ai-welcome,
 .dh-ai-message {
-  border-radius: 1rem;
+  border-bottom-left-radius: 0.375rem;
+  border-radius: 1.25rem;
+  font-size: 0.8125rem;
   line-height: 1.5;
-  max-width: 88%;
-  padding: 0.8rem;
+  max-width: 86%;
+  padding: 0.75rem 1rem;
+}
+
+.dh-ai-welcome__lead {
+  font-weight: 600;
+  margin: 0 0 0.5rem;
 }
 
 .dh-ai-welcome,
@@ -2454,6 +3385,9 @@
 
 .dh-ai-message--user,
 .dh-ai-question {
+  border-bottom-left-radius: 1.25rem;
+  border-bottom-right-radius: 0.375rem;
+
   background: var(--dh-green);
   color: white;
   justify-self: end;
@@ -2464,21 +3398,68 @@
   margin: 0;
 }
 
-.dh-ai-prompts,
-.dh-ai-products {
-  display: grid;
+.dh-ai-prompts {
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   margin-top: 0.7rem;
 }
 
-.dh-ai-prompts button,
+.dh-ai-products {
+  display: flex;
+  gap: 0.625rem;
+  margin-top: 0.7rem;
+}
+
+/* The AI panel is full-screen at <=48rem, so these are primary mobile controls
+   and 35.6px is not enough. */
+.dh-ai-prompts button {
+  background: var(--dh-surface);
+  border: 1.5px solid var(--dh-green);
+  border-radius: 999px;
+  color: var(--dh-green-strong);
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  min-height: 2.75rem;
+  padding: 0.5rem 0.8125rem;
+  text-align: center;
+}
+
+/* Mini product cards sit side by side, the way the reference lays them out. */
 .dh-ai-products button {
   background: var(--dh-surface);
-  border: 1px solid var(--dh-border);
-  border-radius: 0.75rem;
+  border: 1.5px solid var(--dh-green-soft);
+  border-radius: 1.125rem;
   cursor: pointer;
-  padding: 0.65rem;
+  flex: 1;
+  flex-direction: column;
+  min-width: 0;
+  padding: 0.625rem;
   text-align: left;
+}
+
+.dh-ai-products .dh-product-media--compact {
+  aspect-ratio: auto;
+  border-radius: 0.75rem;
+  flex: none;
+  height: 3.5rem;
+  margin: 0;
+  width: 100%;
+}
+
+.dh-ai-products button > span {
+  display: grid;
+  gap: 0.125rem;
+}
+
+.dh-ai-products strong {
+  font-size: 0.78125rem;
+  font-weight: 700;
+}
+
+.dh-ai-products button > svg {
+  align-self: flex-end;
 }
 
 .dh-ai-products button {
@@ -2493,8 +3474,46 @@
 }
 
 .dh-ai-typing {
+  align-items: center;
   color: var(--dh-muted);
+  display: flex;
   font-size: 0.8rem;
+  gap: 0.3rem;
+}
+
+.dh-ai-typing span {
+  animation: dh-ai-dot 1.1s ease-in-out infinite;
+  background: var(--dh-green);
+  border-radius: 50%;
+  height: 0.375rem;
+  width: 0.375rem;
+}
+
+.dh-ai-typing span:nth-child(2) {
+  animation-delay: 0.18s;
+}
+
+.dh-ai-typing span:nth-child(3) {
+  animation-delay: 0.36s;
+}
+
+.dh-ai-typing em {
+  font-style: normal;
+  margin-left: 0.2rem;
+}
+
+@keyframes dh-ai-dot {
+  0%,
+  80%,
+  100% {
+    opacity: 0.32;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-0.18rem);
+  }
 }
 
 .dh-ai-panel__composer {
@@ -2515,7 +3534,7 @@
 
 .dh-ai-panel__fine-print {
   color: var(--dh-muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   line-height: 1.45;
   margin: 0;
   padding: 0 0.8rem 0.8rem;
@@ -2538,8 +3557,10 @@
     linear-gradient(30deg, transparent 72%, rgb(255 255 255 / 16%) 73% 82%, transparent 83%) 0 0 / 2rem 2rem,
     linear-gradient(150deg, transparent 72%, rgb(139 212 86 / 20%) 73% 82%, transparent 83%) 1rem 1rem / 2rem 2rem;
   content: '';
-  inset: 0 0 0 62%;
-  opacity: 0.8;
+  inset: auto 0 0 auto;
+  height: 14rem;
+  opacity: 0.7;
+  width: 18rem;
   pointer-events: none;
   position: absolute;
 }
@@ -2553,6 +3574,14 @@
   align-content: start;
   display: grid;
   gap: 0.55rem;
+}
+
+.dh-footer > div > strong {
+  color: var(--dh-footer-ink);
+  font-family: var(--dh-font-display);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  margin-bottom: 0.3rem;
 }
 
 .dh-footer button,
@@ -2574,25 +3603,10 @@
 }
 
 .dh-brand--footer .dh-brand__mark {
-  border-color: rgb(255 255 255 / 28%);
   flex-basis: 3rem;
   height: 3rem;
   width: 3rem;
 }
-
-:root[data-theme='dark'] .dh-button--surface,
-.xr-shell[data-theme='dark'] .dh-button--surface {
-  background: #f5f7f2;
-  color: #151a16;
-}
-
-:root[data-theme='dark'] .dh-product-media,
-.xr-shell[data-theme='dark'] .dh-product-media {
-  background:
-    radial-gradient(circle at 70% 22%, rgb(126 217 87 / 9%), transparent 5rem),
-    linear-gradient(145deg, #242b25, #173822);
-}
-
 .dh-brand--footer .dh-brand__wordmark > span {
   color: var(--dh-footer-ink);
 }
@@ -2626,13 +3640,17 @@
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 14.8rem), 1fr));
 }
 
+.dh-sk,
 .dh-skeleton {
   animation: dh-shimmer 1.4s ease-in-out infinite;
-  aspect-ratio: 3 / 4;
-  background: linear-gradient(100deg, var(--dh-surface-muted) 35%, var(--dh-surface) 50%, var(--dh-surface-muted) 65%);
+  background: linear-gradient(100deg, var(--dh-cream-deep) 35%, var(--dh-surface-muted) 50%, var(--dh-cream-deep) 65%);
   background-size: 250% 100%;
+}
+
+.dh-skeleton {
+  aspect-ratio: 3 / 4;
   border: 1px solid var(--dh-border);
-  border-radius: 1.2rem;
+  border-radius: 1.5rem;
 }
 
 .dh-skeleton--hero {
@@ -2650,6 +3668,12 @@
 }
 
 @media (max-width: 70rem) {
+  /* The mobile preferences row joins the sticky header at this width, so the
+     offset the sticky panels measure from has to include it. */
+  .dh-marketplace {
+    --dh-header-h: 12.5rem;
+  }
+
   .dh-header__main {
     grid-template-columns: auto auto minmax(11rem, 1fr) auto;
   }
@@ -2664,12 +3688,11 @@
     gap: 0.5rem;
     justify-content: flex-end;
     margin: 0 auto;
-    max-width: 82.5rem;
+    max-width: var(--dh-container);
     padding: 0 0 0.65rem;
-    width: calc(100% - clamp(2rem, 5vw, 5rem));
+    width: calc(100% - clamp(2rem, 4vw, 3rem));
   }
 
-  .dh-category-grid,
   .dh-scenario-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -2679,15 +3702,86 @@
   .dh-management-grid {
     grid-template-columns: 1fr;
   }
+
+  /* Five fixed columns put the shelf card at 159px here, below its own content
+     floor, while the 56rem step below gives it 276px. Four columns keep it
+     above 200px across the whole band. */
+  .dh-section > .dh-product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 56rem) {
+  .dh-section > .dh-product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
   .dh-header__main {
     grid-template-columns: auto auto minmax(9rem, 1fr);
   }
 
   .dh-header__nav {
     display: none;
+  }
+
+  /* The header hands navigation to the bottom bar at the same width it drops it. */
+  .dh-marketplace {
+    padding-bottom: calc(4.7rem + var(--xr-mini-app-safe-bottom, 0px));
+  }
+
+  .dh-mobile-nav {
+    align-items: center;
+    background: color-mix(in srgb, var(--dh-cream) 94%, transparent);
+    border-top: 1px solid var(--dh-border);
+    bottom: 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    left: 0;
+    padding: 0.35rem max(0.35rem, var(--xr-mini-app-safe-right, 0px)) max(0.35rem, var(--xr-mini-app-safe-bottom, 0px))
+      max(0.35rem, var(--xr-mini-app-safe-left, 0px));
+    position: fixed;
+    right: 0;
+    z-index: 50;
+  }
+
+  /* The bar appears at this width, so the rules that make it a bar have to
+     appear at this width too, not one breakpoint later. Without them the five
+     buttons render as native UA controls about 30px tall. */
+  .dh-mobile-nav button {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 999px;
+    color: var(--dh-muted);
+    display: grid;
+    gap: 0.25rem;
+    justify-items: center;
+    min-height: 3.75rem;
+    min-width: 0;
+    padding: 0.375rem 0.125rem;
+  }
+
+  .dh-mobile-nav button[aria-current='page'] {
+    background: var(--dh-green-soft);
+    color: var(--dh-green-strong);
+  }
+
+  .dh-mobile-nav svg {
+    height: 1.25rem;
+    width: 1.25rem;
+  }
+
+  /* Lifted clear of the bar at the width the bar appears, not one breakpoint
+     later; the 48rem block restates the same offset. */
+  .dh-ai-fab {
+    bottom: calc(5.4rem + var(--xr-mini-app-safe-bottom, 0px));
+  }
+
+  /* The bottom corner belongs to the navigation bar and the AI action at this
+     width. Toasts are interactive and dwell for seconds, so they stack above
+     both instead of on top of them. */
+  .dh-notices {
+    bottom: calc(9.25rem + var(--xr-mini-app-safe-bottom, 0px));
   }
 
   .dh-review-form {
@@ -2791,7 +3885,6 @@
     width: 2.75rem;
   }
 
-  .dh-product-detail__visual .dh-product-media,
   .dh-cart-summary,
   .dh-contract-sidebar {
     position: static;
@@ -2812,11 +3905,23 @@
   .dh-footer__brand p {
     max-width: none;
   }
+
+  /* Footer links reach the 44px target. The row gap folds into the target so
+     the column grows 10.4px per link instead of 19.2px, and a native button
+     centres its own label, so the optical spacing survives. The brand block
+     keeps its gap: its lockup and paragraph are not link rows. */
+  .dh-footer > div:not(.dh-footer__brand) {
+    gap: 0;
+  }
+
+  .dh-footer button {
+    min-height: 2.75rem;
+  }
 }
 
 @media (max-width: 48rem) {
-  .dh-marketplace {
-    padding-bottom: calc(4.7rem + var(--xr-mini-app-safe-bottom, 0px));
+  .dh-catalog-page > .dh-page-heading {
+    align-items: flex-start;
   }
 
   .dh-header__main,
@@ -2841,7 +3946,7 @@
   }
 
   .dh-search input {
-    font-size: 0.82rem;
+    font-size: 0.8125rem;
   }
 
   .dh-header__categories {
@@ -2881,9 +3986,9 @@
     width: 100%;
   }
 
-  .dh-category-grid,
   .dh-scenario-grid,
   .dh-stat-grid,
+  .dh-skeleton-grid.dh-skeleton-grid--stats,
   .dh-role-grid,
   .dh-contract-parties,
   .dh-form-grid {
@@ -2904,7 +4009,6 @@
     width: 100%;
   }
 
-  .dh-category-card,
   .dh-scenario-card {
     min-height: 6rem;
   }
@@ -2921,16 +4025,26 @@
   }
 
   .dh-product-grid,
+  .dh-section > .dh-product-grid,
   .dh-skeleton-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .dh-product-card__body {
-    padding: 0.8rem;
+  /* The card owns the inset; the body must not charge for it a second time.
+     0.75rem + 0.8rem left the mobile card 25.6px narrower inside than the same
+     card above 768px. */
+  .dh-product-card {
+    padding: 0.5rem;
+  }
+
+  /* Recovers label room inside the recovered content width: the CTA label is a
+     bare text node in a centred flex box, so it cannot ellipsis. */
+  .dh-product-card .dh-button--primary {
+    padding: 0.5rem 0.75rem;
   }
 
   .dh-product-card__title {
-    font-size: 0.85rem;
+    font-size: 0.875rem;
   }
 
   .dh-product-card__price strong {
@@ -2963,6 +4077,24 @@
     text-align: left;
   }
 
+  /* Three fixed tracks leave 33px of text width at 320px, and the root clips
+     instead of scrolling, so the copy disappears without a scrollbar. */
+  .dh-how__steps {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Two tracks leave 75px for a non-wrapping row whose icon alone is 44px, so
+     the upload control of the right-hand cell lands outside the viewport. */
+  .dh-verification-layout .dh-document-list {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* One track fits the row, but the upload label carries a document name, so
+     let the row wrap rather than clip when that name is long. */
+  .dh-verification-layout .dh-document-list li {
+    flex-wrap: wrap;
+  }
+
   .dh-footer {
     grid-template-columns: 1fr;
     padding-bottom: 2rem;
@@ -2973,48 +4105,7 @@
     grid-column: auto;
   }
 
-  .dh-mobile-nav {
-    align-items: center;
-    backdrop-filter: blur(1rem);
-    background: color-mix(in srgb, var(--dh-surface) 94%, transparent);
-    border-top: 1px solid var(--dh-border);
-    bottom: 0;
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    left: 0;
-    padding: 0.35rem max(0.35rem, var(--xr-mini-app-safe-right, 0px)) max(0.35rem, var(--xr-mini-app-safe-bottom, 0px))
-      max(0.35rem, var(--xr-mini-app-safe-left, 0px));
-    position: fixed;
-    right: 0;
-    z-index: 50;
-  }
-
-  .dh-mobile-nav button {
-    align-items: center;
-    background: transparent;
-    border: 0;
-    border-radius: 0.65rem;
-    color: var(--dh-muted);
-    display: grid;
-    gap: 0.18rem;
-    justify-items: center;
-    min-height: 3.7rem;
-    min-width: 0;
-    padding: 0.35rem 0.1rem;
-  }
-
-  .dh-mobile-nav button[aria-current='page'] {
-    background: var(--dh-green-soft);
-    color: var(--dh-green-strong);
-  }
-
-  .dh-mobile-nav svg {
-    height: 1.25rem;
-    width: 1.25rem;
-  }
-
   .dh-ai-fab {
-    bottom: calc(5.4rem + var(--xr-mini-app-safe-bottom, 0px));
     height: 3.25rem;
     justify-content: center;
     min-height: 3.25rem;
@@ -3063,10 +4154,6 @@
     padding: 0 max(0.8rem, var(--xr-mini-app-safe-right, 0px)) max(0.8rem, var(--xr-mini-app-safe-bottom, 0px))
       max(0.8rem, var(--xr-mini-app-safe-left, 0px));
   }
-
-  .dh-notice {
-    top: 4.8rem;
-  }
 }
 
 @media (max-width: 22rem) {
@@ -3074,6 +4161,12 @@
   .dh-header__categories,
   .dh-main,
   .dh-footer {
+    width: calc(100% - 1.25rem);
+  }
+
+  /* The preferences row carries its own width and is in neither shell list, so
+     it has to follow the shell down to the narrowest gutter. */
+  .dh-header__mobile-preferences {
     width: calc(100% - 1.25rem);
   }
 
@@ -3086,15 +4179,9 @@
   }
 
   .dh-product-grid,
+  .dh-section > .dh-product-grid,
   .dh-skeleton-grid {
     grid-template-columns: 1fr;
-  }
-
-  .dh-mobile-nav small {
-    font-size: 0.58rem;
-    max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 }
 
@@ -3106,8 +4193,23 @@
     transition-duration: 0.01ms !important;
   }
 
+  /* A flat plate, not a gradient stopped halfway through its sweep. */
+  .dh-sk,
   .dh-skeleton {
     animation: none;
+    background: var(--dh-cream-deep);
+  }
+
+  /* Activity without rotation: the ring holds still and breathes. */
+  .dh-spinner {
+    animation: dh-spinner-pulse 1.6s ease-in-out infinite;
+    border-color: color-mix(in srgb, var(--dh-green) 28%, transparent);
+    border-top-color: var(--dh-green);
+  }
+
+  /* The dots keep their phase and lose their 0.18rem travel. */
+  .dh-ai-typing span {
+    animation-name: dh-ai-dot-reduced;
   }
 }
 
@@ -3119,5 +4221,2914 @@
   .dh-dialog,
   .dh-ai-panel {
     border: 1px solid CanvasText;
+  }
+}
+
+/* ==========================================================================
+   Product detail: attribute block and image gallery
+   Merge target: apps/frontend/app/src/pages/marketplace/ui/marketplace.css
+   Append this block after the existing `.dh-facts` / `.dh-product-detail`
+   rules and before the responsive `@media` blocks at the end of the file.
+   The two `@media` blocks at the bottom of this file must land inside (or
+   after) the matching existing media queries — they are written as standalone
+   queries so they can simply be appended.
+   ========================================================================== */
+
+/* --- Listing attributes ------------------------------------------------- */
+
+.dh-product-specs {
+  display: grid;
+  gap: 1.25rem;
+}
+
+/* The same tag row the catalog card carries, so a filtered result reads the
+   same on its own page. */
+.dh-product-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dh-badge--seal {
+  gap: 0.3rem;
+}
+
+.dh-badge--seal svg {
+  height: 1rem;
+  width: 1rem;
+}
+
+.dh-spec-group {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dh-marketplace .dh-spec-group h2 {
+  font-size: 1.05rem;
+  letter-spacing: 0;
+  margin: 0;
+}
+
+/* --- Gallery ------------------------------------------------------------ */
+
+.dh-gallery {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* The detail column pins the media while the copy scrolls; the pin now belongs
+   to the whole gallery instead of the single plate it replaced. */
+.dh-product-detail__visual .dh-gallery {
+  position: sticky;
+  top: calc(var(--dh-header-h) + 1rem);
+}
+
+/* Every frame of the gallery is the card's own plate, so the detail column's
+   plate treatment has to be handed back to the frame that now owns it. */
+.dh-gallery .dh-product-media,
+.dh-product-detail__visual .dh-gallery .dh-product-media {
+  border: 0;
+  box-shadow: none;
+  position: relative;
+  top: auto;
+}
+
+.dh-gallery__frame {
+  background: none;
+  border: 1px solid var(--dh-border);
+  border-radius: 1.5rem;
+  box-shadow: var(--dh-shadow-soft);
+  cursor: zoom-in;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  width: 100%;
+}
+
+.dh-gallery__frame .dh-product-media {
+  border-radius: calc(1.5rem - 1px);
+}
+
+.dh-gallery__strip {
+  display: flex;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  overflow-x: auto;
+  padding: 0.25rem 0;
+  scrollbar-width: thin;
+}
+
+.dh-gallery__strip > li {
+  flex: 0 0 auto;
+}
+
+.dh-gallery__thumb {
+  background: none;
+  border: 1px solid var(--dh-border);
+  border-radius: 1rem;
+  cursor: pointer;
+  display: block;
+  overflow: hidden;
+  padding: 0;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease;
+  width: 4.5rem;
+}
+
+.dh-gallery__thumb .dh-product-media--compact {
+  border-radius: calc(1rem - 1px);
+  flex: none;
+  width: 100%;
+}
+
+.dh-gallery__thumb:hover {
+  border-color: color-mix(in srgb, var(--dh-green) 55%, var(--dh-border));
+}
+
+.dh-gallery__thumb.is-active {
+  border-color: var(--dh-green);
+  box-shadow: 0 0 0 1px var(--dh-green);
+}
+
+/* --- Fullscreen viewer -------------------------------------------------- */
+
+/* The viewer is portalled to `document.body`, outside `.dh-marketplace`, so it
+   restates the box model, the type family and every token it borrows with the
+   token's own light value as the fallback. */
+.dh-gallery-lightbox {
+  align-items: center;
+  animation: dh-gallery-lightbox-in 160ms ease-out;
+  background: rgb(20 32 24 / 82%);
+  color: var(--dh-ink, #2b2b2b);
+  display: flex;
+  font-family: var(--dh-font-body, 'Manrope Variable', 'Manrope', sans-serif);
+  inset: 0;
+  justify-content: center;
+  padding: clamp(0.75rem, 3vw, 2rem);
+  position: fixed;
+  z-index: 120;
+}
+
+.dh-gallery-lightbox,
+.dh-gallery-lightbox *,
+.dh-gallery-lightbox *::before,
+.dh-gallery-lightbox *::after {
+  box-sizing: border-box;
+}
+
+@keyframes dh-gallery-lightbox-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.dh-gallery-lightbox__panel {
+  background: var(--dh-surface, #fff);
+  border-radius: 2rem;
+  box-shadow: var(--dh-shadow, 0 1rem 3rem rgb(43 43 43 / 16%));
+  display: grid;
+  gap: 0.75rem;
+  grid-template-rows: auto minmax(0, 1fr);
+  max-height: 100%;
+  max-width: min(64rem, 100%);
+  padding: 1rem;
+  width: 100%;
+}
+
+.dh-gallery-lightbox__bar {
+  align-items: center;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.dh-gallery-lightbox__position {
+  color: var(--dh-muted, #6b6b63);
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.dh-gallery-lightbox__control {
+  align-items: center;
+  background: var(--dh-surface-muted, #fdf6e9);
+  border: 1px solid var(--dh-border, #e9dfc9);
+  border-radius: 999px;
+  color: var(--dh-ink, #2b2b2b);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 2.75rem;
+  font: inherit;
+  height: 2.75rem;
+  justify-content: center;
+  transition: background-color 160ms ease;
+  width: 2.75rem;
+}
+
+.dh-gallery-lightbox__control svg {
+  height: 1.125rem;
+  width: 1.125rem;
+}
+
+.dh-gallery-lightbox__control:hover {
+  background: var(--dh-green-soft, #e4f6e3);
+}
+
+.dh-gallery-lightbox button:focus-visible {
+  outline: 0.2rem solid var(--dh-green-strong, #0e7a3c);
+  outline-offset: 0.16rem;
+}
+
+.dh-gallery-lightbox__stage {
+  align-items: center;
+  background: var(--dh-cream-deep, #f2e5ce);
+  border-radius: 1rem;
+  display: flex;
+  justify-content: center;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+/* Fullscreen shows the whole photograph; the shelf plates crop, this does not. */
+.dh-gallery-lightbox__image {
+  display: block;
+  max-height: 100%;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.dh-gallery-lightbox__fallback {
+  width: min(26rem, 100%);
+}
+
+.dh-gallery-lightbox__control--prev,
+.dh-gallery-lightbox__control--next {
+  background: color-mix(in srgb, var(--dh-surface, #fff) 92%, transparent);
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.dh-gallery-lightbox__control--prev {
+  left: 0.75rem;
+}
+
+.dh-gallery-lightbox__control--prev svg {
+  transform: rotate(180deg);
+}
+
+.dh-gallery-lightbox__control--next {
+  right: 0.75rem;
+}
+
+/* --- Responsive --------------------------------------------------------- */
+
+@media (max-width: 56rem) {
+  /* The pin is a desktop affordance; the existing rule already unpins the
+     plate at this width, and the gallery follows it. */
+  .dh-product-detail__visual .dh-gallery {
+    position: static;
+  }
+}
+
+@media (max-width: 48rem) {
+  .dh-gallery-lightbox__panel {
+    border-radius: 1.5rem;
+    padding: 0.75rem;
+  }
+
+  .dh-gallery-lightbox__control--prev {
+    left: 0.5rem;
+  }
+
+  .dh-gallery-lightbox__control--next {
+    right: 0.5rem;
+  }
+}
+
+@media (max-width: 22rem) {
+  .dh-gallery__thumb {
+    width: 3.75rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dh-gallery-lightbox {
+    animation: none;
+  }
+
+  .dh-gallery__thumb,
+  .dh-gallery-lightbox__control {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .dh-gallery__frame,
+  .dh-gallery__thumb,
+  .dh-gallery-lightbox__panel,
+  .dh-gallery-lightbox__control {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* Per-seller sub-carts: one order is one cart and one cart is one seller. */
+/* --- GROUPS: append after .dh-cart-summary__total ------------------------- */
+
+.dh-cart-groups {
+  display: grid;
+  gap: 1rem;
+}
+
+.dh-cart-group--active:focus-visible {
+  border-radius: 2rem;
+  outline: 2px solid var(--dh-green);
+  outline-offset: 0.25rem;
+}
+
+.dh-cart-lines__seller {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+}
+
+.dh-cart-line__flag {
+  color: var(--dh-warning);
+  font-size: 0.8125rem;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.dh-cart-summary__scope {
+  align-items: center;
+  color: var(--dh-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+  gap: 0.5rem;
+}
+
+/* --- RESPONSIVE: add inside the existing @media (max-width: 56rem) -------- */
+
+/* --- RESPONSIVE: add inside the existing @media (max-width: 48rem) -------- */
+
+@media (max-width: 48rem) {
+  .dh-cart-tabs button {
+    min-width: 9.5rem;
+    padding: 0.625rem 1rem;
+  }
+}
+
+/* Purchase requests: buyer-owned requests, seller feed, offers and contracts. */
+/* Route switch between the buyer's own requests and the seller feed. */
+.dh-request-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.dh-request-tabs__tab {
+  align-items: center;
+  background: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 999px;
+  color: var(--dh-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 700;
+  gap: 0.5rem;
+  min-height: 2.75rem;
+  padding: 0.5rem 1.25rem;
+}
+
+.dh-request-tabs__tab svg {
+  height: 1.125rem;
+  width: 1.125rem;
+}
+
+.dh-request-tabs__tab:hover {
+  border-color: var(--dh-green);
+  color: var(--dh-ink);
+}
+
+.dh-request-tabs__tab.is-active {
+  background: var(--dh-green);
+  border-color: var(--dh-green);
+  color: #fff;
+}
+
+/* Five-stage progress scale: draft, moderation, offers, selection, contract. */
+.dh-request-stages {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-request-stages__step {
+  align-items: center;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-rows: auto auto;
+  justify-items: center;
+  position: relative;
+  text-align: center;
+}
+
+/* The connector runs between dots, so the last step never trails a line. */
+.dh-request-stages__step:not(:last-child)::after {
+  background: var(--dh-green-soft);
+  content: '';
+  height: 2px;
+  left: 50%;
+  position: absolute;
+  right: -50%;
+  top: 0.6875rem;
+}
+
+.dh-request-stages__step.is-done:not(:last-child)::after {
+  background: var(--dh-green);
+}
+
+.dh-request-stages__dot {
+  align-items: center;
+  background: var(--dh-surface);
+  border: 2px solid var(--dh-border);
+  border-radius: 999px;
+  color: #fff;
+  display: flex;
+  height: 1.5rem;
+  justify-content: center;
+  position: relative;
+  width: 1.5rem;
+  z-index: 1;
+}
+
+.dh-request-stages__dot svg {
+  height: 0.875rem;
+  width: 0.875rem;
+}
+
+.dh-request-stages__step.is-done .dh-request-stages__dot {
+  background: var(--dh-green);
+  border-color: var(--dh-green);
+}
+
+.dh-request-stages__step.is-current .dh-request-stages__dot {
+  background: var(--dh-surface);
+  border-color: var(--dh-green);
+  box-shadow: 0 0 0 0.25rem var(--dh-green-soft);
+}
+
+.dh-request-stages__label {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.dh-request-stages__step.is-current .dh-request-stages__label,
+.dh-request-stages__step.is-done .dh-request-stages__label {
+  color: var(--dh-ink);
+}
+
+/* Why a request cannot collect offers right now — never a blank list. */
+.dh-request-notice {
+  background: var(--dh-green-soft);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+}
+
+.dh-request-notice strong {
+  align-items: center;
+  color: var(--dh-green-strong);
+  display: flex;
+  font-size: 0.875rem;
+  gap: 0.5rem;
+}
+
+.dh-request-notice strong svg {
+  height: 1rem;
+  width: 1rem;
+}
+
+.dh-request-notice span {
+  color: var(--dh-muted);
+  font-size: 0.8125rem;
+  line-height: 1.45;
+}
+
+.dh-request-notice--rejected {
+  background: color-mix(in srgb, var(--dh-danger) 10%, var(--dh-surface));
+}
+
+.dh-request-notice--rejected strong {
+  color: var(--dh-danger);
+}
+
+.dh-request-notice--paused {
+  background: color-mix(in srgb, var(--dh-warning) 14%, var(--dh-surface));
+}
+
+.dh-request-notice--paused strong {
+  color: var(--dh-warning);
+}
+
+/* Request facts, as the reference order panel lays them out. */
+.dh-request-facts {
+  display: grid;
+  margin: 0;
+}
+
+.dh-request-facts > div {
+  border-bottom: 1px solid var(--dh-border);
+  display: flex;
+  font-size: 0.84375rem;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: 0.6875rem 0;
+}
+
+.dh-request-facts > div:last-child {
+  border-bottom: 0;
+}
+
+.dh-request-facts dt {
+  color: var(--dh-muted);
+}
+
+.dh-request-facts dd {
+  font-weight: 600;
+  margin: 0;
+  max-width: 70%;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.dh-request-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
+
+/* Single-request view: facts rail beside the offer column. */
+.dh-request-detail {
+  gap: 1rem;
+}
+
+.dh-request-detail__columns {
+  align-items: start;
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.2fr);
+}
+
+.dh-request-detail__columns > section {
+  display: grid;
+  gap: 1rem;
+}
+
+.dh-request-note {
+  background: var(--dh-green-soft);
+  border-radius: 1.5rem;
+  display: grid;
+  gap: 0.25rem;
+  padding: 0.875rem 1rem;
+}
+
+.dh-request-note strong {
+  color: var(--dh-green-strong);
+  font-size: 0.875rem;
+}
+
+.dh-request-note span {
+  color: var(--dh-green-strong);
+  font-size: 0.78125rem;
+  line-height: 1.5;
+}
+
+/* Step-by-step request creation. Every fieldset stays in the DOM; only the
+   inactive ones are hidden, so nothing typed earlier is lost. */
+.dh-request-wizard__steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-request-wizard__step {
+  align-items: center;
+  background: var(--dh-surface-muted);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 999px;
+  color: var(--dh-muted);
+  cursor: pointer;
+  display: inline-flex;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.375rem 1rem 0.375rem 0.375rem;
+}
+
+.dh-request-wizard__step > span {
+  align-items: center;
+  background: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 999px;
+  display: flex;
+  height: 1.75rem;
+  justify-content: center;
+  width: 1.75rem;
+}
+
+.dh-request-wizard__step.is-active {
+  background: var(--dh-green-soft);
+  border-color: var(--dh-green);
+  color: var(--dh-green-strong);
+}
+
+.dh-request-wizard__step.is-active > span {
+  background: var(--dh-green);
+  border-color: var(--dh-green);
+  color: #fff;
+}
+
+.dh-request-wizard fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-request-wizard fieldset[hidden] {
+  display: none;
+}
+
+/* Offer cards: seller and terms on the left, price and the one action on the right. */
+.dh-offer-cards {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dh-offer-card {
+  align-items: center;
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  border-radius: 1.5rem;
+  column-gap: 1.125rem;
+  display: grid;
+  grid-template-areas:
+    'seller price'
+    'meta action';
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 1.125rem 1.375rem;
+  position: relative;
+  row-gap: 0.375rem;
+}
+
+.dh-offer-card--best {
+  border: 2px solid var(--dh-green);
+  padding: calc(1.125rem - 1px) calc(1.375rem - 1px);
+}
+
+.dh-offer-card__flag {
+  background: var(--dh-green);
+  border-radius: 999px;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  left: 1.375rem;
+  line-height: 1;
+  padding: 0.25rem 0.875rem;
+  position: absolute;
+  top: -0.6875rem;
+}
+
+.dh-offer-card__seller {
+  align-items: center;
+  display: flex;
+  gap: 0.625rem;
+  grid-area: seller;
+  min-width: 0;
+}
+
+.dh-offer-card__seal {
+  align-items: center;
+  background: var(--dh-green);
+  clip-path: polygon(
+    50% 0%,
+    61% 8%,
+    74% 5%,
+    80% 17%,
+    93% 20%,
+    92% 33%,
+    100% 42%,
+    94% 54%,
+    98% 67%,
+    86% 73%,
+    84% 86%,
+    71% 86%,
+    63% 97%,
+    50% 92%,
+    37% 97%,
+    29% 86%,
+    16% 86%,
+    14% 73%,
+    2% 67%,
+    6% 54%,
+    0% 42%,
+    8% 33%,
+    7% 20%,
+    20% 17%,
+    26% 5%,
+    39% 8%
+  );
+  color: #fff;
+  display: flex;
+  flex: none;
+  height: 1.25rem;
+  justify-content: center;
+  width: 1.25rem;
+}
+
+.dh-offer-card__seal svg {
+  height: 0.75rem;
+  width: 0.75rem;
+}
+
+.dh-offer-card__name {
+  color: var(--dh-ink);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dh-offer-card__meta {
+  color: var(--dh-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.78125rem;
+  gap: 0.25rem 1rem;
+  grid-area: meta;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-offer-card__price {
+  display: grid;
+  gap: 0.125rem;
+  grid-area: price;
+  justify-items: end;
+  text-align: right;
+}
+
+.dh-offer-card__price strong {
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.dh-offer-card__price small {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+}
+
+.dh-offer-card__action {
+  grid-area: action;
+  justify-self: end;
+}
+
+.dh-offer-card__action .dh-button {
+  font-size: 0.84375rem;
+  min-height: 2.5rem;
+  padding: 0.625rem 1.625rem;
+}
+
+@media (max-width: 60rem) {
+  .dh-request-detail__columns {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 40rem) {
+  .dh-request-stages {
+    gap: 0.75rem;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dh-request-stages__step {
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-rows: auto;
+    justify-items: start;
+    text-align: left;
+  }
+
+  .dh-request-stages__step:not(:last-child)::after {
+    bottom: -0.75rem;
+    height: auto;
+    left: 0.6875rem;
+    right: auto;
+    top: 1.5rem;
+    width: 2px;
+  }
+
+  .dh-offer-card {
+    grid-template-areas:
+      'seller'
+      'meta'
+      'price'
+      'action';
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dh-offer-card__price {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .dh-offer-card__action {
+    justify-self: stretch;
+  }
+
+  .dh-offer-card__action .dh-button {
+    width: 100%;
+  }
+}
+
+/* Loading affordances: content-shaped placeholders, spinner and busy controls. */
+/* ==========================================================================
+   PART 1 — REPLACEMENTS
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   REPLACEMENT 1 of 2 — share one shimmer between the legacy plate and the kit.
+
+   CURRENT TEXT IN marketplace.css (lines 3524-3531), REMOVE EXACTLY THIS:
+
+   .dh-skeleton {
+     animation: dh-shimmer 1.4s ease-in-out infinite;
+     aspect-ratio: 3 / 4;
+     background: linear-gradient(100deg, var(--dh-surface-muted) 35%, var(--dh-surface) 50%, var(--dh-surface-muted) 65%);
+     background-size: 250% 100%;
+     border: 1px solid var(--dh-border);
+     border-radius: 1.5rem;
+   }
+
+   REPLACE WITH THE TWO RULES BELOW.
+
+   Why: the shimmer moves from the plate rule onto a shared `.dh-sk` base so the
+   kit's lines, plates, pills and rows are visibly the same material as the
+   legacy plate. The gradient stops move from surface-muted/surface (#fdf6e9 on
+   #ffffff — invisible inside a white card) to cream-deep/surface-muted, which
+   reads on the cream page and inside a white card alike. `.dh-skeleton` keeps
+   its own 3:4 plate geometry and its border so the one place that still uses it
+   (`.dh-skeleton--hero` in marketplace-page.tsx) is unchanged in shape.
+   -------------------------------------------------------------------------- */
+
+.dh-sk,
+.dh-skeleton {
+  animation: dh-shimmer 1.4s ease-in-out infinite;
+  background: linear-gradient(100deg, var(--dh-cream-deep) 35%, var(--dh-surface-muted) 50%, var(--dh-cream-deep) 65%);
+  background-size: 250% 100%;
+}
+
+.dh-skeleton {
+  aspect-ratio: 3 / 4;
+  border: 1px solid var(--dh-border);
+  border-radius: 1.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   REPLACEMENT 2 of 2 — a deliberate reduced-motion treatment, not a freeze.
+
+   CURRENT TEXT IN marketplace.css (lines 4003-4014), REMOVE EXACTLY THIS:
+
+   @media (prefers-reduced-motion: reduce) {
+     .dh-marketplace *,
+     .dh-marketplace *::before,
+     .dh-marketplace *::after {
+       scroll-behavior: auto !important;
+       transition-duration: 0.01ms !important;
+     }
+
+     .dh-skeleton {
+       animation: none;
+     }
+   }
+
+   REPLACE WITH THE BLOCK BELOW.
+
+   Why: today only `.dh-skeleton` stops. Its `animation: none` leaves the
+   travelling gradient frozen mid-sweep, which reads as a rendering artefact, and
+   the AI panel's three typing dots (`@keyframes dh-ai-dot`, which translates
+   them by 0.18rem) keep animating because the block only overrides
+   `transition-duration`. Every loading affordance now has an explicit reduced
+   treatment: the shimmer becomes one flat fill, the spinner stops rotating and
+   conveys activity by opacity alone, and the typing dots keep their opacity
+   phase but lose their travel.
+   -------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .dh-marketplace *,
+  .dh-marketplace *::before,
+  .dh-marketplace *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  /* A flat plate, not a gradient stopped halfway through its sweep. */
+  .dh-sk,
+  .dh-skeleton {
+    animation: none;
+    background: var(--dh-cream-deep);
+  }
+
+  /* Activity without rotation: the ring holds still and breathes. */
+  .dh-spinner {
+    animation: dh-spinner-pulse 1.6s ease-in-out infinite;
+    border-color: color-mix(in srgb, var(--dh-green) 28%, transparent);
+    border-top-color: var(--dh-green);
+  }
+
+  /* The dots keep their phase and lose their 0.18rem travel. */
+  .dh-ai-typing span {
+    animation-name: dh-ai-dot-reduced;
+  }
+}
+
+/* ==========================================================================
+   PART 2 — ADDITION INSIDE AN EXISTING MEDIA QUERY
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   In the `@media (max-width: 48rem)` block, the rule that reads
+
+   .dh-scenario-grid,
+   .dh-stat-grid,
+   .dh-role-grid,
+   .dh-contract-parties,
+   .dh-form-grid {
+     grid-template-columns: 1fr;
+   }
+
+   must gain the skeleton's stat shape, so a stat-tile skeleton collapses on the
+   same breakpoint as the tiles it replaces:
+
+   .dh-scenario-grid,
+   .dh-stat-grid,
+   .dh-skeleton-grid.dh-skeleton-grid--stats,
+   .dh-role-grid,
+   .dh-contract-parties,
+   .dh-form-grid {
+     grid-template-columns: 1fr;
+   }
+
+   Nothing else in the responsive cascade needs touching. The card shape
+   deliberately sets no `grid-template-columns` of its own, so it inherits
+   `.dh-skeleton-grid`'s track list and both existing overrides (2 columns at
+   70rem, 1 column at 48rem) exactly as the product grid does today.
+   -------------------------------------------------------------------------- */
+
+/* ==========================================================================
+   PART 3 — NEW RULES (append verbatim)
+   ========================================================================== */
+
+/* Note: MarketplaceLoadingRegion renders no element of its own. The stylesheet
+   addresses several of these grids through direct-child selectors
+   (`.dh-section > .dh-product-grid`, `.dh-page-stack > section`), so a wrapper
+   div would break them. `aria-busy` lives on `.dh-skeleton-grid` instead and the
+   screen-reader status reuses the existing absolutely positioned `.dh-sr-only`.
+   No new rule is required for the region itself. */
+
+/* --------------------------------------------------------------------------
+   Skeleton container shapes.
+
+   `.dh-skeleton-grid` stays exactly as it is (`display: grid; gap: 1rem;
+   grid-template-columns: repeat(auto-fill, minmax(min(100%, 14.8rem), 1fr))`),
+   which already mirrors `.dh-product-grid`. Each shape below is written as a
+   two-class selector so it also wins over the two `.dh-skeleton-grid` overrides
+   in the responsive blocks, which a single-class selector appended here would
+   not do reliably.
+   -------------------------------------------------------------------------- */
+
+/* Rows: mirrors `.dh-management-list` / `.dh-review-list` (gap 0.65rem/0.75rem). */
+.dh-skeleton-grid.dh-skeleton-grid--rows {
+  gap: 0.65rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Facts: mirrors `.dh-facts` — one column, no gap, rules top and bottom. */
+.dh-skeleton-grid.dh-skeleton-grid--facts {
+  border-block: 1px solid var(--dh-border);
+  gap: 0;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Stats: mirrors `.dh-stat-grid` (3 tracks, gap clamp(1rem, 1.5vw, 1.25rem)). */
+.dh-skeleton-grid.dh-skeleton-grid--stats {
+  gap: clamp(1rem, 1.5vw, 1.25rem);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Detail: mirrors `.dh-product-detail`. */
+.dh-skeleton-grid.dh-skeleton-grid--detail {
+  align-items: start;
+  gap: clamp(1.5rem, 4vw, 3rem);
+  grid-template-columns: minmax(17rem, 0.9fr) minmax(0, 1.1fr);
+}
+
+/* Gallery: mirrors `.dh-gallery` — the frame above, the thumbnail strip below. */
+.dh-skeleton-grid.dh-skeleton-grid--gallery {
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Plain: a single stacked column for one-off compositions. */
+.dh-skeleton-grid.dh-skeleton-grid--plain {
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 60rem) {
+  .dh-skeleton-grid.dh-skeleton-grid--detail {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Primitives. Every skeleton element is a block-level span so it can be
+   dropped inside a paragraph, a list item or a definition list without
+   producing invalid markup.
+   -------------------------------------------------------------------------- */
+
+.dh-sk {
+  border-radius: 999px;
+  display: block;
+  flex: 0 0 auto;
+}
+
+/* Text lines. 0.75rem is the product's 12px minimum type size, so a body line
+   is exactly as tall as the smallest real line it can stand in for.
+   `--lead` matches `.dh-product-card__price strong` (font-size 1.125rem) and
+   `--title` matches `.dh-stat-grid strong` (font-size 1.8rem), each rounded up
+   by the 1.2 line box those rules inherit. */
+.dh-sk--line {
+  height: 0.75rem;
+  max-width: 100%;
+}
+
+.dh-sk--body {
+  height: 0.75rem;
+}
+
+.dh-sk--lead {
+  height: 1.35rem;
+}
+
+.dh-sk--title {
+  height: 2.16rem;
+}
+
+.dh-sk--line-full {
+  width: 100%;
+}
+
+.dh-sk--line-wide {
+  width: 78%;
+}
+
+.dh-sk--line-half {
+  width: 54%;
+}
+
+.dh-sk--line-third {
+  width: 36%;
+}
+
+.dh-sk--line-quarter {
+  width: 24%;
+}
+
+/* Media plates. `--card` and `--hero` copy `.dh-product-media`
+   (aspect-ratio 1.72 / 1; border-radius 1rem); `--hero` takes the detail
+   column's frame radius from `.dh-gallery__frame` (1.5rem). `--thumb` copies
+   `.dh-product-media--compact` and `.dh-gallery__thumb` (aspect-ratio 1;
+   border-radius 1rem; width 4.5rem). */
+.dh-sk--media {
+  aspect-ratio: 1.72 / 1;
+  border-radius: 1rem;
+  width: 100%;
+}
+
+.dh-sk--media-hero {
+  border-radius: 1.5rem;
+}
+
+.dh-sk--media-thumb {
+  aspect-ratio: 1;
+  border-radius: 1rem;
+  width: 4.5rem;
+}
+
+/* Pill controls. `--action` copies `.dh-button` (min-height 2.75rem);
+   `--card-action` copies `.dh-product-card .dh-button--primary`
+   (min-height 2.5rem); `--badge` copies `.dh-badge` (min-height 1.75rem). */
+.dh-sk--pill {
+  border-radius: 999px;
+}
+
+.dh-sk--pill-action {
+  height: 2.75rem;
+  width: 7.5rem;
+}
+
+.dh-sk--pill-card-action {
+  height: 2.5rem;
+  width: 100%;
+}
+
+.dh-sk--pill-badge {
+  height: 1.75rem;
+  width: 5.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Card: mirrors `.dh-product-card` and `.dh-product-card__body` exactly, so a
+   catalog grid does not resize when the listings arrive.
+
+   `.dh-product-card`      background var(--dh-surface); border 1px transparent;
+                           border-radius 1.5rem; box-shadow var(--dh-shadow-soft);
+                           flex column; gap 0.5rem; padding 0.75rem.
+   `.dh-product-card__body` flex column; gap 0.5rem.
+   Body children reserve the real min-heights: facts 1.75rem, price 1.75rem,
+   title 2.7em at font-size 0.8125rem (= 2.194rem), seller 1.25rem,
+   action 2.5rem.
+   -------------------------------------------------------------------------- */
+
+.dh-sk-card {
+  background: var(--dh-surface);
+  border: 1px solid transparent;
+  border-radius: 1.5rem;
+  box-shadow: var(--dh-shadow-soft);
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 0;
+  padding: 0.75rem;
+}
+
+.dh-sk-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dh-sk-card__title {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  justify-content: center;
+  min-height: 2.194rem;
+}
+
+.dh-sk-card .dh-sk--pill-badge {
+  min-height: 1.75rem;
+}
+
+.dh-sk-card .dh-sk--lead {
+  min-height: 1.75rem;
+}
+
+.dh-sk-card > .dh-sk-card__body > .dh-sk--line-half:last-of-type {
+  min-height: 1.25rem;
+}
+
+.dh-sk-card .dh-sk--pill-card-action {
+  margin-top: auto;
+}
+
+/* --------------------------------------------------------------------------
+   List row.
+
+   `--soft` mirrors `.dh-management-list article`: the same tinted surface,
+   1px sand border, 1.5rem radius, 0.8rem padding, 0.75rem gap, centre
+   alignment and space-between distribution, with the copy block taking the
+   article's own `flex: 1 1 12rem; gap: 0.2rem`.
+   `--plain` mirrors `.dh-review-list article`: plain white surface, 1rem
+   radius, 1rem padding. It also stands in for `.dh-offer-card`, whose own
+   1.125rem/1.375rem padding and 1.5rem radius are within a rounding of it.
+   `--flush` mirrors `.dh-cart-line`.
+   Both therefore stand 0.8rem + 2.75rem + 0.8rem = 4.35rem tall, which is the
+   height of the row they replace.
+   -------------------------------------------------------------------------- */
+
+.dh-sk-row {
+  align-items: center;
+  border: 1px solid var(--dh-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.dh-sk-row--soft {
+  background: color-mix(in srgb, var(--dh-green-soft) 38%, var(--dh-surface));
+  border-radius: 1.5rem;
+  padding: 0.8rem;
+}
+
+.dh-sk-row--plain {
+  background: var(--dh-surface);
+  border-radius: 1rem;
+  padding: 1rem;
+}
+
+/* Mirrors `.dh-cart-line`: a flush row separated by a single top rule, with
+   1rem block padding and no surface or radius of its own. */
+.dh-sk-row--flush {
+  border: 0;
+  border-top: 1px solid var(--dh-border);
+  border-radius: 0;
+  gap: 1rem;
+  padding-block: 1rem;
+}
+
+.dh-sk-row__copy {
+  display: grid;
+  flex: 1 1 12rem;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.dh-sk-row__trail {
+  align-items: center;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.65rem;
+}
+
+/* --------------------------------------------------------------------------
+   Stat tile: mirrors `.dh-stat-grid > div` (surface, 1px sand border,
+   1.5rem radius, grid, gap 0.2rem, padding 1.2rem).
+   -------------------------------------------------------------------------- */
+
+.dh-sk-stat {
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  border-radius: 1.5rem;
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+  padding: 1.2rem;
+}
+
+/* --------------------------------------------------------------------------
+   Definition-list row: mirrors `.dh-facts div` (flex, space-between, gap 1rem,
+   padding-block 0.75rem) and `.dh-facts div + div` (1px sand top rule).
+   -------------------------------------------------------------------------- */
+
+.dh-sk-fact {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-block: 0.75rem;
+}
+
+.dh-sk-fact + .dh-sk-fact {
+  border-top: 1px solid var(--dh-border);
+}
+
+/* --------------------------------------------------------------------------
+   Gallery thumbnail strip: mirrors `.dh-gallery__strip` (flex, gap 0.5rem,
+   padding 0.25rem 0).
+   -------------------------------------------------------------------------- */
+
+.dh-sk-strip {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.25rem 0;
+}
+
+/* --------------------------------------------------------------------------
+   Route-level compositions.
+   -------------------------------------------------------------------------- */
+
+/* The product route's visual and content columns.
+   `.dh-product-detail__content` is `display: grid; gap: 1.2rem`. */
+.dh-sk-detail {
+  display: grid;
+  gap: 1.2rem;
+  min-width: 0;
+}
+
+/* The seller route's hero: mirrors `.dh-account-hero` (1px sand border,
+   1.5rem radius, flex, space-between, gap 1rem, padding clamp(1.3rem, 4vw,
+   2.5rem)) including its soft green-to-white wash. */
+.dh-sk-hero {
+  align-items: center;
+  background: linear-gradient(115deg, var(--dh-green-soft), var(--dh-surface));
+  border: 1px solid var(--dh-border);
+  border-radius: 1.5rem;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding: clamp(1.3rem, 4vw, 2.5rem);
+}
+
+.dh-sk-hero__copy {
+  display: grid;
+  flex: 1 1 auto;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+/* The product-spec tag chips: mirrors `.dh-product-tags`. */
+.dh-sk-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+/* The AI panel's in-flight block: the typing row above the reply placeholder.
+   `.dh-ai-panel__body` stacks its children, so the block only needs its own
+   internal rhythm. */
+.dh-ai-pending {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+/* The assistant reply placeholder keeps `.dh-ai-message`'s bubble and adds the
+   line rhythm of the paragraph it stands in for (font-size 0.8125rem,
+   line-height 1.5 = 1.22rem per line). */
+.dh-sk-reply {
+  display: grid;
+  gap: 0.47rem;
+  min-width: 14rem;
+  width: 86%;
+}
+
+/* --------------------------------------------------------------------------
+   Spinner. 1.125rem is `.dh-button svg`, so swapping a glyph for the spinner
+   inside a control changes nothing about the control's box. The ring is drawn
+   with borders, so it needs no asset and inherits the accent token.
+   -------------------------------------------------------------------------- */
+
+.dh-spinner {
+  animation: dh-spin 0.7s linear infinite;
+  border: 2px solid color-mix(in srgb, var(--dh-green) 24%, transparent);
+  border-radius: 50%;
+  border-top-color: var(--dh-green);
+  display: inline-block;
+  flex: 0 0 auto;
+}
+
+.dh-spinner--sm {
+  height: 1.125rem;
+  width: 1.125rem;
+}
+
+.dh-spinner--md {
+  height: 1.5rem;
+  width: 1.5rem;
+}
+
+@keyframes dh-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Reduced motion substitution: activity without rotation. */
+@keyframes dh-spinner-pulse {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Reduced motion substitution for the AI typing dots: phase, no travel. */
+@keyframes dh-ai-dot-reduced {
+  0%,
+  80%,
+  100% {
+    opacity: 0.32;
+  }
+
+  40% {
+    opacity: 1;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Busy control.
+
+   The affordance slot is 1.125rem wide in both states — the size of
+   `.dh-button svg` — so a control that enters the busy state swaps a glyph for
+   the spinner and never changes width. A control that carries no idle glyph
+   still reserves the slot, which is a static design decision rather than a
+   shift: the box is the same before, during and after the action.
+
+   Selector specificity: `.dh-button.dh-busy-button` and
+   `.dh-icon-button.dh-busy-button` are two-class selectors, so the layout below
+   wins over the single-class `.dh-button` / `.dh-icon-button` rules earlier in
+   the stylesheet regardless of the merge position.
+   -------------------------------------------------------------------------- */
+
+.dh-busy-button__slot {
+  align-items: center;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 1.125rem;
+  justify-content: center;
+  width: 1.125rem;
+}
+
+/* An icon-only control has no label to sit beside, so the slot is the control:
+   it must not add a second 1.125rem box next to the glyph. */
+.dh-icon-button.dh-busy-button {
+  gap: 0;
+}
+
+.dh-icon-button.dh-busy-button > .dh-busy-button__slot:empty {
+  display: none;
+}
+
+.dh-busy-button[aria-busy='true'] {
+  /* The disabled dimming already reads as "not now"; the spinner reads as
+     "working". Keeping the cursor as progress rather than not-allowed states
+     which of the two this is. */
+  cursor: progress;
+}
+
+/* Personal cabinet: navigation rail, section panels, month chart. */
+/* --- APPEND: cabinet shell ---------------------------------------------- */
+
+/* Two columns at the widened container: a fixed rail that stays put, and the
+   content panel taking every remaining pixel. */
+.dh-cabinet-layout {
+  align-items: start;
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: 17.5rem minmax(0, 1fr);
+}
+
+.dh-cabinet-rail {
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  border-radius: 2rem;
+  box-shadow: var(--dh-shadow-soft);
+  padding: 0.75rem;
+  position: sticky;
+  top: calc(var(--dh-header-h) + 1rem);
+}
+
+.dh-cabinet-rail ul {
+  display: grid;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+/* A real button, so Tab and Enter reach every section without a key handler,
+   and a 2.75rem box so the target clears the 44px floor. */
+.dh-cabinet-rail__link {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: var(--dh-ink);
+  cursor: pointer;
+  display: grid;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  gap: 0.625rem;
+  grid-template-columns: 1.25rem minmax(0, 1fr);
+  min-height: 2.75rem;
+  padding: 0.5rem 0.875rem;
+  text-align: left;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
+  width: 100%;
+}
+
+.dh-cabinet-rail__link svg {
+  height: 1.25rem;
+  width: 1.25rem;
+}
+
+.dh-cabinet-rail__link:hover {
+  background: var(--dh-surface-muted);
+  color: var(--dh-green-strong);
+}
+
+.dh-cabinet-rail__link.is-active {
+  background: var(--dh-green-soft);
+  color: var(--dh-green-strong);
+}
+
+.dh-cabinet-content {
+  display: grid;
+  gap: 1.5rem;
+  min-width: 0;
+}
+
+/* The content panel is the page's primary surface, so it keeps the 2rem panel
+   radius and padding `.dh-panel` already gives it and only widens the gap. */
+.dh-cabinet-panel {
+  gap: 1.5rem;
+}
+
+/* The same head rhythm the page and request heads use: a 0.5rem grid gap, the
+   eyebrow's own margin zeroed, and the description muted underneath. */
+.dh-cabinet-panel__head {
+  display: grid;
+  gap: 1rem;
+}
+
+.dh-cabinet-panel__head > div {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dh-cabinet-panel__head .dh-eyebrow {
+  margin-bottom: 0;
+}
+
+.dh-cabinet-panel__head h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 0;
+}
+
+.dh-cabinet-panel__head > div > p:last-child {
+  color: var(--dh-muted);
+  line-height: 1.6;
+  margin: 0;
+  max-width: 52rem;
+}
+
+.dh-cabinet-group {
+  border-top: 1px solid var(--dh-border);
+  display: grid;
+  gap: 0.75rem;
+  padding-top: 1.25rem;
+}
+
+.dh-cabinet-group > h3 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.dh-cabinet-state {
+  display: grid;
+  gap: 0.5rem;
+  justify-items: start;
+}
+
+/* --- APPEND: headline figures ------------------------------------------- */
+
+.dh-cabinet-stats {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.dh-cabinet-stats > div {
+  background: var(--dh-surface-muted);
+  border: 1px solid var(--dh-border);
+  border-radius: 1.5rem;
+  display: grid;
+  gap: 0.25rem;
+  padding: 1rem 1.125rem;
+}
+
+.dh-cabinet-stats strong {
+  font-family: var(--dh-font-display);
+  font-size: 1.5rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.dh-cabinet-stats span {
+  color: var(--dh-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+/* --- APPEND: record rows ------------------------------------------------- */
+
+.dh-cabinet-rows {
+  display: grid;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-cabinet-rows > li {
+  border-top: 1px solid var(--dh-border);
+}
+
+.dh-cabinet-rows > li:first-child {
+  border-top: 0;
+}
+
+.dh-cabinet-rows > li > button,
+.dh-cabinet-rows--static > li {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  color: inherit;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  min-height: 2.75rem;
+  padding: 0.75rem 0.25rem;
+  text-align: left;
+  width: 100%;
+}
+
+/* A static row has no control, so it carries no arrow column. */
+.dh-cabinet-rows--static > li {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.dh-cabinet-rows > li > button {
+  border-radius: 1rem;
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+.dh-cabinet-rows > li > button:hover {
+  background: var(--dh-surface-muted);
+  color: var(--dh-green-strong);
+}
+
+.dh-cabinet-rows > li > button > svg {
+  height: 1.125rem;
+  width: 1.125rem;
+}
+
+.dh-cabinet-rows__main {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.dh-cabinet-rows__main strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.dh-cabinet-rows__main small {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.dh-cabinet-rows__side {
+  align-items: flex-end;
+  display: grid;
+  gap: 0.3rem;
+  justify-items: end;
+}
+
+.dh-cabinet-rows__side b {
+  font-size: 0.9375rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* --- APPEND: month chart ------------------------------------------------ */
+
+.dh-cabinet-chart {
+  display: grid;
+  gap: 1rem;
+  margin: 0;
+}
+
+.dh-cabinet-chart__caption {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dh-cabinet-chart__caption strong {
+  font-family: var(--dh-font-display);
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.dh-cabinet-chart__empty {
+  background: var(--dh-surface-muted);
+  border: 1px dashed var(--dh-border);
+  border-radius: 1rem;
+  color: var(--dh-muted);
+  font-size: 0.875rem;
+  margin: 0;
+  padding: 0.75rem 1rem;
+}
+
+.dh-cabinet-chart__plot {
+  display: grid;
+  gap: 0.75rem;
+}
+
+/* The scale label sits above the plot it describes while staying after it in
+   the DOM, where it reads as part of the figure rather than as a heading. */
+.dh-cabinet-chart__peak {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  margin: 0;
+  order: -1;
+}
+
+.dh-cabinet-chart__peak b {
+  color: var(--dh-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* One column per month the API returned, whatever that count is. */
+.dh-cabinet-chart__months {
+  display: grid;
+  gap: 0.375rem;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-cabinet-chart__month {
+  display: grid;
+  gap: 0.375rem;
+  justify-items: center;
+  min-width: 0;
+}
+
+/* Quartile gridlines, so a bar can be read against the scale rather than only
+   against its neighbours. */
+.dh-cabinet-chart__bars {
+  align-items: flex-end;
+  background: repeating-linear-gradient(
+    to top,
+    transparent 0,
+    transparent calc(25% - 1px),
+    var(--dh-border) calc(25% - 1px),
+    var(--dh-border) 25%
+  );
+  display: flex;
+  gap: 0.1875rem;
+  height: 9rem;
+  justify-content: center;
+  width: 100%;
+}
+
+.dh-cabinet-chart__bar {
+  border-radius: 0.375rem 0.375rem 0 0;
+  flex: 1 1 0;
+  height: var(--dh-bar-share, 0%);
+  max-width: 2.25rem;
+  min-width: 0;
+  transition: height 240ms ease;
+}
+
+.dh-cabinet-chart__bar--spend {
+  background: var(--dh-green-strong);
+}
+
+.dh-cabinet-chart__bar--revenue {
+  background: var(--dh-lime);
+}
+
+.dh-cabinet-chart__month-label {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+.dh-cabinet-chart__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-cabinet-chart__key {
+  align-items: center;
+  color: var(--dh-muted);
+  display: flex;
+  font-size: 0.8125rem;
+  gap: 0.4rem;
+}
+
+.dh-cabinet-chart__key::before {
+  border-radius: 999px;
+  content: '';
+  height: 0.625rem;
+  width: 0.625rem;
+}
+
+.dh-cabinet-chart__key--spend::before {
+  background: var(--dh-green-strong);
+}
+
+.dh-cabinet-chart__key--revenue::before {
+  background: var(--dh-lime);
+}
+
+/* --- APPEND: the chart's value table ------------------------------------ */
+
+/* The accessible equivalent of the plot. `:not(.dh-sr-only)` keeps the scroll
+   container off the screen-reader-only copy the overview renders, whose
+   `.dh-sr-only` clip must win. */
+.dh-cabinet-table:not(.dh-sr-only) {
+  border-collapse: collapse;
+  display: block;
+  font-size: 0.8125rem;
+  font-variant-numeric: tabular-nums;
+  overflow-x: auto;
+  width: 100%;
+}
+
+.dh-cabinet-table caption {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  padding-bottom: 0.5rem;
+  text-align: left;
+}
+
+.dh-cabinet-table th,
+.dh-cabinet-table td {
+  border-bottom: 1px solid var(--dh-border);
+  padding: 0.5rem 0.75rem;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.dh-cabinet-table thead th:first-child,
+.dh-cabinet-table tbody th,
+.dh-cabinet-table tfoot th {
+  text-align: left;
+}
+
+.dh-cabinet-table thead th {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dh-cabinet-table tfoot th,
+.dh-cabinet-table tfoot td {
+  border-bottom: 0;
+  font-weight: 700;
+}
+
+/* The global reduced-motion block already neutralises transitions across
+   `.dh-marketplace *`; this states it for the bars explicitly, because a bar
+   whose height animates is the one element here a reader could be sensitive to. */
+@media (prefers-reduced-motion: reduce) {
+  .dh-cabinet-chart__bar,
+  .dh-cabinet-rail__link,
+  .dh-cabinet-rows > li > button {
+    transition: none;
+  }
+}
+
+/* --- RESPONSIVE: add inside the existing @media (max-width: 70rem) ------- */
+
+@media (max-width: 70rem) {
+  /* One column below the two-column threshold, with the rail becoming a
+     horizontal scroller above the content instead of a squeezed sidebar. */
+  .dh-cabinet-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dh-cabinet-rail {
+    border-radius: 1.5rem;
+    position: static;
+    top: auto;
+  }
+
+  .dh-cabinet-rail ul {
+    grid-auto-columns: max-content;
+    grid-auto-flow: column;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .dh-cabinet-rail__link {
+    grid-template-columns: 1.25rem max-content;
+  }
+}
+
+/* --- RESPONSIVE: add inside the existing @media (max-width: 48rem) ------- */
+
+@media (max-width: 48rem) {
+  .dh-cabinet-rows > li > button,
+  .dh-cabinet-rows--static > li {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: 0.5rem;
+  }
+
+  .dh-cabinet-rows > li > button > svg {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .dh-cabinet-chart__bars {
+    height: 7.5rem;
+  }
+}
+
+/* --- RESPONSIVE: add inside the existing @media (max-width: 22rem) ------- */
+
+@media (max-width: 22rem) {
+  /* At the 320px floor the six month labels still have to read, so the bar
+     boxes shrink and the label drops to the 0.75rem type minimum rather than
+     below it. */
+  .dh-cabinet-chart__months {
+    gap: 0.25rem;
+  }
+
+  .dh-cabinet-chart__bars {
+    gap: 0.125rem;
+    height: 6.5rem;
+  }
+
+  .dh-cabinet-stats {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dh-cabinet-rail__link {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
+  }
+}
+
+/* ==========================================================================
+   OPTIONAL DELETIONS — rules whose only markup consumer is gone
+   ==========================================================================
+
+   `grep -rn 'dh-stat-grid\|dh-compact-list\|dh-sample-list' apps/frontend/app/src
+   --include=*.tsx` now returns nothing outside tests: the cabinet replaced the
+   account view's stat grid with `.dh-cabinet-stats` and both lists with
+   `.dh-cabinet-rows`. `.dh-account-grid` is still used by
+   `marketplace-management.tsx:727` and must stay.
+
+   Safe to delete if you want the file smaller (verify the grep first):
+
+     - the `.dh-stat-grid` selector inside the
+       `.dh-scenario-grid, .dh-product-grid, .dh-stat-grid` display/gap group —
+       remove the selector only, the other two still need the rule
+     - `.dh-stat-grid`, `.dh-stat-grid > div`, `.dh-stat-grid strong` and
+       `.dh-stat-grid span` in the account cluster
+     - the whole `.dh-compact-list` / `.dh-sample-list` cluster that follows it
+     - the `.dh-stat-grid` selector inside the 48rem single-column group —
+       selector only
+   ========================================================================== */
+
+/* Five-star ratings, review authoring and replies. */
+/* The glyph row behind an aggregate. It is `aria-hidden` in the markup, so it
+   carries no state that is not also printed as text beside it. */
+.dh-stars {
+  display: inline-flex;
+  gap: 0.0625rem;
+  line-height: 0;
+}
+
+.dh-stars__star svg {
+  color: var(--dh-border);
+  fill: none;
+  height: 0.875rem;
+  width: 0.875rem;
+}
+
+.dh-stars__star.is-on svg {
+  color: var(--dh-star);
+  fill: var(--dh-star);
+}
+
+/* The aggregate line itself. On a catalog card it also carries
+   `.dh-product-card__rating`, which already sets the muted 0.75rem row; this
+   base only adds what both placements need. */
+.dh-rating {
+  align-items: center;
+  color: var(--dh-muted);
+  display: flex;
+  font-size: 0.75rem;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.dh-rating b {
+  color: var(--dh-ink);
+  font-weight: 600;
+}
+
+/* A listing nobody has rated. The star stays outlined: there is no score to
+   colour in, and a filled star with no number beside it would read as one. */
+.dh-rating--empty svg {
+  color: var(--dh-border);
+  fill: none;
+  height: 0.875rem;
+  width: 0.875rem;
+}
+
+/* On the product page the same aggregate is read at heading distance. */
+.dh-rating--detail {
+  font-size: 0.8125rem;
+  gap: 0.375rem;
+  margin-top: 0.35rem;
+}
+
+.dh-rating--detail .dh-stars__star svg,
+.dh-rating--detail.dh-rating--empty svg {
+  height: 1.0625rem;
+  width: 1.0625rem;
+}
+
+/* The rating input: five native radios wearing stars. The 44px target is the
+   label, not the glyph, so the whole square is clickable and the focus ring
+   traces the same square the pointer hits. */
+.dh-star-input {
+  border: 0;
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+  min-width: 0;
+  padding: 0;
+}
+
+.dh-star-input legend {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0;
+}
+
+.dh-star-input__row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.125rem;
+}
+
+.dh-star-input__star {
+  align-items: center;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  justify-content: center;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+}
+
+.dh-star-input__star svg {
+  color: var(--dh-border);
+  fill: none;
+  height: 1.75rem;
+  transition:
+    color 120ms ease,
+    fill 120ms ease;
+  width: 1.75rem;
+}
+
+.dh-star-input__star.is-on svg {
+  color: var(--dh-star);
+  fill: var(--dh-star);
+}
+
+/* Hover previews the rating the pointer is about to choose, from the hovered
+   star leftwards — the same run the selection paints. */
+.dh-star-input__row:hover .dh-star-input__star svg {
+  color: var(--dh-star);
+  fill: var(--dh-star);
+}
+
+.dh-star-input__row .dh-star-input__star:hover ~ .dh-star-input__star svg {
+  color: var(--dh-border);
+  fill: none;
+}
+
+/* The keyboard must see what the pointer sees: `:focus-visible` on the visually
+   hidden radio draws the ring on its label. */
+.dh-star-input__star:has(input:focus-visible) {
+  outline: 2px solid var(--dh-green);
+  outline-offset: 2px;
+}
+
+.dh-star-input:disabled .dh-star-input__star {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* The chosen value in words, next to the stars, so the selection is legible
+   without counting glyphs. */
+.dh-star-input__value {
+  color: var(--dh-ink);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding-inline-start: 0.35rem;
+}
+
+/* The comment field and its character counter. The counter is a sibling of the
+   label rather than a child, so the field's accessible name does not change on
+   every keystroke; it stays one grid cell. */
+.dh-review-form__field {
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+}
+
+.dh-review-form__limit {
+  color: var(--dh-muted);
+  font-size: 0.6875rem;
+  justify-self: end;
+}
+
+/* The deal-verified label a published review carries. */
+.dh-review-verified {
+  align-items: center;
+  color: var(--dh-green-strong, var(--dh-green));
+  display: flex;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  gap: 0.25rem;
+  letter-spacing: 0.02em;
+  margin: 0.25rem 0 0;
+  text-transform: uppercase;
+}
+
+/* The buyer's own review, shown in place of an entry they have already used. */
+.dh-review-own {
+  background: var(--dh-green-soft);
+  border: 1px solid color-mix(in srgb, var(--dh-green-strong) 24%, transparent);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+}
+
+.dh-review-own h3 {
+  margin: 0;
+}
+
+.dh-review-own p {
+  margin: 0;
+}
+
+.dh-review-own__rating {
+  align-items: baseline;
+  display: flex;
+  gap: 0.75rem;
+}
+
+.dh-review-own__rating span {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+}
+
+/* Why no entry is offered. It states the rule; it never hints at a control. */
+.dh-review-gate {
+  background: color-mix(in srgb, var(--dh-green-soft) 45%, var(--dh-surface));
+  border: 1px solid var(--dh-border);
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+}
+
+/* Deals in flight: lanes by who is waiting, and the next action per deal. */
+/* Deals in flight.
+
+   Every rule below is scoped to the deals route and reuses the marketplace
+   tokens and shapes: cream ground, one green accent, 999px pills, 24px cards
+   inside 32px panels, and the 4/8px spacing grid. Nothing here restyles a
+   shared class. The identical block is handed to the owner of marketplace.css;
+   if it is folded in there, delete this file and its import in
+   marketplace-deals.tsx. */
+
+.dh-deals-page > .dh-page-heading {
+  align-items: baseline;
+  gap: 0.875rem;
+}
+
+/* The lane is a panel whose left edge names who it is waiting on, so the three
+   answers are separable at a glance without three different card designs. */
+.dh-deals-lane {
+  border-left: 4px solid var(--dh-border);
+}
+
+.dh-deals-lane--you {
+  border-left-color: var(--dh-green);
+}
+
+.dh-deals-lane--counterparty {
+  border-left-color: var(--dh-border);
+}
+
+.dh-deals-lane--stalled {
+  border-left-color: var(--dh-warning);
+}
+
+.dh-deal-cards {
+  display: grid;
+  gap: 1rem;
+}
+
+.dh-deal-card {
+  background: var(--dh-surface-muted);
+  border: 1px solid var(--dh-border);
+  border-radius: 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.dh-deal-card__head {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+}
+
+.dh-deal-card__head h3 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.dh-deal-card__head .dh-eyebrow {
+  margin-bottom: 0.25rem;
+}
+
+.dh-deal-card__facts {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  margin: 0;
+}
+
+.dh-deal-card__facts dt {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  margin-bottom: 0.25rem;
+}
+
+.dh-deal-card__facts dd {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+/* The stage sentence is the card's own explanation of the state the API reports,
+   so it sits between the facts and the single action it justifies. */
+.dh-deal-card__stage {
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  border-radius: 1rem;
+  color: var(--dh-ink);
+  font-size: 0.875rem;
+  line-height: 1.5;
+  margin: 0;
+  padding: 0.625rem 0.75rem;
+}
+
+.dh-deal-card__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+}
+
+.dh-deal-card__actions > .dh-button {
+  min-height: 2.75rem;
+}
+
+@media (max-width: 40rem) {
+  .dh-deal-card__head {
+    flex-direction: column;
+  }
+
+  .dh-deal-card__actions > .dh-button {
+    width: 100%;
+  }
+}
+
+/* The account's own review record: what it wrote and what it received. */
+/* One column of review cards on the same plain surface the product page uses,
+   so a review reads the same wherever it appears. */
+.dh-cabinet-review-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.dh-cabinet-review {
+  background: var(--dh-surface);
+  border: 1px solid var(--dh-border);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem;
+}
+
+.dh-cabinet-review p {
+  margin: 0;
+}
+
+/* The listing and the rating share the top line and stack before they collide:
+   a long listing title must never squeeze the rating out of the card. */
+.dh-cabinet-review__head {
+  align-items: baseline;
+  column-gap: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  row-gap: 0.25rem;
+}
+
+/* The listing is a link to the listing, so it keeps the link affordance rather
+   than looking like a heading that happens to be clickable. */
+.dh-cabinet-review__listing {
+  flex: 1 1 12rem;
+  font-weight: 700;
+  min-width: 0;
+  text-align: left;
+}
+
+.dh-cabinet-review__rating {
+  align-items: baseline;
+  display: flex;
+  flex: 0 0 auto;
+  gap: 0.75rem;
+}
+
+/* The rating is the value, printed as text. Tabular figures keep `4/5` and
+   `5/5` the same width down a column so the ratings line up as a column of
+   numbers rather than drifting with the glyphs. */
+.dh-cabinet-review__rating strong {
+  color: var(--dh-green-strong);
+  font-family: var(--dh-font-display);
+  font-size: 1.125rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.dh-cabinet-review__rating span {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+}
+
+/* Which side of the deal this row records. Both lists sit on one screen, so
+   every row says whose reputation it belongs to on its own. */
+.dh-cabinet-review__party {
+  color: var(--dh-muted);
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.dh-cabinet-review__comment {
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.dh-cabinet-review__actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+/* Purchases still owed a rating. Green because it is the one actionable block on
+   the screen; it is rendered only when the server holds a real unused
+   completed-contract eligibility, never as a general hint. */
+.dh-cabinet-review-invitations {
+  background: var(--dh-green-soft);
+  border: 1px solid color-mix(in srgb, var(--dh-green-strong) 24%, transparent);
+  border-radius: 1.5rem;
+  display: grid;
+  gap: 0.5rem;
+  padding: 1rem 1.125rem;
+}
+
+.dh-cabinet-review-invitations > p {
+  font-weight: 700;
+  margin: 0;
+}
+
+/* The rows inherit `.dh-cabinet-rows`; only the divider needs to change, because
+   a green panel needs a divider that reads against green rather than cream. */
+.dh-cabinet-review-invitations .dh-cabinet-rows > li {
+  border-top-color: color-mix(in srgb, var(--dh-green-strong) 18%, transparent);
+}
+
+.dh-cabinet-review-invitations .dh-cabinet-rows > li > button:hover {
+  background: color-mix(in srgb, var(--dh-surface) 60%, transparent);
+}
+
+@media (max-width: 40rem) {
+  /* On a phone the rating drops under the title instead of fighting it for the
+     line; the value stays text either way. */
+  .dh-cabinet-review__head {
+    flex-direction: column;
+  }
+
+  .dh-cabinet-review__rating {
+    flex: 1 1 auto;
+  }
+}
+
+/* Public profile: role chips, fact rows, review attribution, closing note. */
+.dh-profile-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0;
+}
+
+.dh-profile-facts {
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+}
+
+.dh-profile-facts > div {
+  border-bottom: 1px solid var(--dh-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  justify-content: space-between;
+  padding-block: 0.75rem;
+}
+
+.dh-profile-facts > div:last-child {
+  border-bottom: 0;
+}
+
+.dh-profile-facts dt {
+  color: var(--dh-muted);
+  font-size: 0.8125rem;
+}
+
+.dh-profile-facts dd {
+  font-weight: 600;
+  margin: 0;
+  text-align: right;
+}
+
+.dh-profile-review__meta {
+  align-items: center;
+  color: var(--dh-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.8125rem;
+  gap: 0.5rem;
+  margin: 0.25rem 0 0;
+}
+
+.dh-profile-boundary {
+  font-size: 0.75rem;
+  margin: 0.5rem 0 0;
+}
+
+/* --------------------------------------------------------------------------
+   Success as a stated outcome.
+
+   `.dh-state-inline` already carries the neutral and error tones. A created
+   listing is neither: it is a completed command whose next step is moderation,
+   so it gets the green tone the palette already owns rather than a new colour.
+   -------------------------------------------------------------------------- */
+.dh-state-inline--success {
+  background: var(--dh-green-soft);
+  color: var(--dh-green-strong);
+}
+
+/* --------------------------------------------------------------------------
+   The form itself.
+
+   `.dh-listing-form` is a `.dh-panel .dh-form`, so it already has the 32px
+   panel padding, the sand border and the 1rem stack. The extra gap here is the
+   separation *between groups*, which is one step larger than the gap between
+   two fields inside a group — that difference is what stops a long form from
+   reading as one undifferentiated column.
+   -------------------------------------------------------------------------- */
+.dh-listing-form {
+  gap: 1.75rem;
+}
+
+/* A named group of fields. The legend is the fieldset's own rendered legend
+   rather than a grid item, which is the same arrangement `.dh-choice-group`
+   already relies on: it sits above the track list as a block. */
+.dh-listing-group {
+  border: 0;
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin: 0;
+  padding: 0;
+}
+
+.dh-listing-group > legend {
+  color: var(--dh-ink);
+  font-family: var(--dh-font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  margin-bottom: 0.75rem;
+  padding: 0;
+}
+
+/* The photograph group is one full-width column: a chooser, not a field pair. */
+.dh-listing-group--photos {
+  grid-template-columns: 1fr;
+  gap: 0.625rem;
+}
+
+/* --------------------------------------------------------------------------
+   One field: label, control, hint, validation message.
+
+   The label is a sibling of the control rather than its wrapper, so the label
+   typography is set here instead of inheriting `.dh-form label > span`.
+   -------------------------------------------------------------------------- */
+.dh-listing-field {
+  display: grid;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.dh-listing-field > label {
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.dh-listing-field--wide {
+  grid-column: 1 / -1;
+}
+
+.dh-listing-field__hint {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+/* A validation message names its own field, so it is a strong statement rather
+   than fine print, and it keeps the palette's single danger tone. */
+.dh-listing-field__error {
+  color: var(--dh-danger);
+  font-size: 0.75rem;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.dh-listing-field input[aria-invalid='true'],
+.dh-listing-field select[aria-invalid='true'],
+.dh-listing-field textarea[aria-invalid='true'] {
+  border-color: var(--dh-danger);
+}
+
+.dh-listing-field input[aria-invalid='true']:focus,
+.dh-listing-field select[aria-invalid='true']:focus,
+.dh-listing-field textarea[aria-invalid='true']:focus {
+  border-color: var(--dh-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dh-danger) 18%, transparent);
+}
+
+/* `.dh-form select` is not in the shared control rule, so the pill shape is
+   restated here for the create form's own selects. */
+.dh-listing-field select {
+  background-color: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 999px;
+  min-height: 2.75rem;
+  padding: 0.7rem 1rem;
+  width: 100%;
+}
+
+.dh-listing-field select:focus {
+  border-color: var(--dh-green);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dh-green) 16%, transparent);
+  outline: 0;
+}
+
+/* The one boolean on the form. It is a 44px row so the whole label is the
+   target, not just the 17px box. */
+.dh-listing-field--check {
+  align-self: end;
+}
+
+.dh-listing-field--check > label {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  gap: 0.5625rem;
+  min-height: 2.75rem;
+}
+
+.dh-listing-field--check input[type='checkbox'] {
+  appearance: none;
+  background: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 6px;
+  cursor: pointer;
+  flex: 0 0 auto;
+  height: 1.0625rem;
+  width: 1.0625rem;
+}
+
+.dh-listing-field--check input[type='checkbox']:checked {
+  background-color: var(--dh-green);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M2.5 6.4 5 8.9l4.5-5' fill='none' stroke='%23fff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2'/%3E%3C/svg%3E");
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 0.6875rem;
+  border-color: var(--dh-green);
+}
+
+.dh-listing-field--check input[type='checkbox']:focus-visible {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--dh-green) 16%, transparent);
+  outline: 0;
+}
+
+/* --------------------------------------------------------------------------
+   What will be published.
+
+   A definition list of the facts the catalogue will actually read, on the
+   cream surface so it reads as a quoted result rather than as more form.
+   -------------------------------------------------------------------------- */
+.dh-listing-summary {
+  background: var(--dh-surface-muted);
+  border: 1px solid var(--dh-border);
+  border-radius: 1.5rem;
+  display: grid;
+  gap: 0.75rem;
+  padding: 1.25rem;
+}
+
+.dh-listing-summary h2 {
+  font-family: var(--dh-font-display);
+  font-size: 1rem;
+  font-weight: 800;
+  margin: 0;
+}
+
+.dh-listing-summary dl {
+  display: grid;
+  gap: 0.625rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  margin: 0;
+}
+
+.dh-listing-summary dl > div {
+  display: grid;
+  gap: 0.2rem;
+  min-width: 0;
+}
+
+.dh-listing-summary dt {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.dh-listing-summary dd {
+  font-size: 0.875rem;
+  font-weight: 700;
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.dh-listing-summary p {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Narrow viewports.
+
+   The field pair collapses to one column at the same 48rem breakpoint
+   `.dh-form-grid` already collapses at, and the photograph tiles shrink rather
+   than scrolling the page sideways.
+   -------------------------------------------------------------------------- */
+@media (max-width: 48rem) {
+  .dh-listing-group {
+    grid-template-columns: 1fr;
+  }
+
+  .dh-listing-form .dh-form__actions {
+    flex-wrap: wrap;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Photograph upload.
+
+   An ordinary file field, dressed as one of the product's own controls. The
+   native button is left in place rather than hidden behind a styled label: it
+   is the control every phone and desktop already knows how to open, and a
+   replacement would have to reimplement its keyboard and assistive behaviour
+   to be no better than it.
+
+   The field, its limits, its busy line, its per-file refusals and its
+   thumbnails are one stack, because they are one answer to "what will be
+   published" and they must not be read in separate places.
+   -------------------------------------------------------------------------- */
+.dh-photo-upload {
+  display: grid;
+  gap: 0.5rem;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.dh-photo-upload__control {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.dh-photo-upload__control > span {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.dh-photo-upload__control input[type='file'] {
+  background: var(--dh-surface);
+  border: 1.5px dashed var(--dh-border);
+  border-radius: 1rem;
+  color: var(--dh-ink);
+  cursor: pointer;
+  font: inherit;
+  max-width: 100%;
+  padding: 0.7rem;
+}
+
+.dh-photo-upload__control input[type='file']:hover:enabled {
+  border-color: var(--dh-green);
+}
+
+.dh-photo-upload__control input[type='file']:focus-visible {
+  border-color: var(--dh-green);
+  outline: 0.2rem solid var(--dh-green-strong);
+  outline-offset: 0.16rem;
+}
+
+/* A field the limit has closed looks closed rather than ignoring a click. */
+.dh-photo-upload__control input[type='file']:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.dh-photo-upload__hint,
+.dh-photo-upload__status {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  margin: 0;
+}
+
+/* The busy line and the selected count share one live region, so the row
+   reserves its height in both states and the stack never jumps. */
+.dh-photo-upload__status {
+  font-weight: 700;
+  min-height: 1.15rem;
+}
+
+/* One refusal per file, each naming its own file: a list rather than a single
+   line, because a batch can fail in more than one way at once. */
+.dh-photo-upload__errors {
+  display: grid;
+  gap: 0.25rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-photo-upload__errors .dh-listing-field__error {
+  overflow-wrap: anywhere;
+}
+
+/* What is attached: the photograph, its file name, and the control that
+   removes it, so nothing is removed without seeing which. */
+.dh-photo-upload__list {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(9.5rem, 1fr));
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dh-photo-upload__list li {
+  background: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 1rem;
+  display: grid;
+  gap: 0.375rem;
+  justify-items: center;
+  min-width: 0;
+  padding: 0.5rem;
+}
+
+.dh-photo-upload__list img {
+  aspect-ratio: 3 / 2;
+  border-radius: 0.75rem;
+  height: auto;
+  object-fit: cover;
+  width: 100%;
+}
+
+.dh-photo-upload__list span {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  overflow-wrap: anywhere;
+  text-align: center;
+}
+
+/* --------------------------------------------------------------------------
+   Review photographs.
+
+   The entry field spans the whole review form rather than sharing a column
+   with the stars: that form is a three-column grid, and a fourth cell would
+   have wrapped into a strip too narrow to see a thumbnail in.
+   -------------------------------------------------------------------------- */
+.dh-review-form__photos {
+  display: grid;
+  gap: 0.35rem;
+  grid-column: 1 / -1;
+  min-width: 0;
+}
+
+.dh-review-form__photos-label {
+  color: var(--dh-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+/* The photographs a published review carries, on the product page and in the
+   cabinet. A `ul` rather than a `div` on purpose: `.dh-review-list article >
+   div:not(.dh-review-actions)` turns any bare div in a review card into a
+   space-between flex row, which would have spread three thumbnails across the
+   card. */
+.dh-review-photos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  list-style: none;
+  margin: 0.5rem 0 0;
+  padding: 0;
+}
+
+.dh-review-photos li {
+  margin: 0;
+}
+
+.dh-review-photos img {
+  aspect-ratio: 1 / 1;
+  border: 1px solid var(--dh-border);
+  border-radius: 0.75rem;
+  height: 4.5rem;
+  object-fit: cover;
+  width: 4.5rem;
+}
+
+/* Same 48rem breakpoint the listing form already collapses at: the thumbnails
+   shrink rather than scrolling the page sideways. */
+@media (max-width: 48rem) {
+  .dh-photo-upload__list {
+    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
   }
 }

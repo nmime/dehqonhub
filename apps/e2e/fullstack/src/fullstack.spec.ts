@@ -1,5 +1,5 @@
 // @requirements REQ-FRONTEND-JOURNEY-001
-// Evidence for: REQ-AUTH-FRONTEND-009 REQ-AUTH-IDENTITY-005 REQ-AUTH-SESSION-002 REQ-FRONTEND-ERROR-005 REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-SHELL-004
+// Evidence for: REQ-AGRITECH-EXPERIENCE-026 REQ-AUTH-FRONTEND-009 REQ-AUTH-IDENTITY-005 REQ-AUTH-SESSION-002 REQ-FRONTEND-ERROR-005 REQ-FRONTEND-JOURNEY-001 REQ-FRONTEND-SHELL-004
 import { randomUUID } from 'node:crypto';
 import { expect, test, type Locator, type Page } from '@playwright/test';
 // Runtime journey evidence for REQ-AUTH-SESSION-002 and
@@ -266,15 +266,26 @@ test('@critical user login honors safe return navigation, survives reload, and l
   await gotoWithRetry(page, urls.userApp);
   await expect(page.getByRole('heading', { level: 1, name: 'Everything for your farm in one place' })).toBeVisible();
   await expect(page).toHaveTitle('DehqonHub');
-  const brandMarks = page.locator('.dh-brand__mark img');
+  const brandMarks = page.locator('img.dh-brand__mark');
   await expect(brandMarks).toHaveCount(2);
+  // The header and footer marks are the transparent emblem, and the responsive
+  // source set serves the 96 px asset for these small boxes rather than the
+  // 512 px master.
   expect(
     await brandMarks.evaluateAll((marks) =>
-      marks.every((mark) => mark instanceof HTMLImageElement && mark.complete && mark.naturalWidth === 512),
+      marks.every(
+        (mark) =>
+          mark instanceof HTMLImageElement &&
+          mark.complete &&
+          mark.naturalWidth === 96 &&
+          mark.currentSrc.endsWith('/dehqonhub-emblem-96.png') &&
+          mark.alt === '',
+      ),
     ),
   ).toBe(true);
   await expect(page.getByRole('button', { name: 'Language' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Theme' })).toBeVisible();
+  // The product ships one light palette and exposes no theme control.
+  await expect(page.getByRole('button', { name: 'Theme' })).toHaveCount(0);
   await page.getByRole('button', { name: 'Language' }).click();
   await page.getByRole('menuitem', { name: 'Russian' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Всё для вашего хозяйства в одном месте' })).toBeVisible();
@@ -299,7 +310,11 @@ test('@critical user login honors safe return navigation, survives reload, and l
   const compactBrandBox = await compactBrand.boundingBox();
   expect(compactBrandBox?.width).toBeGreaterThanOrEqual(44);
   expect(compactBrandBox?.height).toBeGreaterThanOrEqual(44);
-  await expect(page.locator('.dh-header .dh-brand__wordmark')).toBeHidden();
+  // The lockup is the tap target, so it has to clear the 44 px minimum itself.
+  const compactBrandTarget = await page.locator('.dh-header .dh-brand').boundingBox();
+  expect(compactBrandTarget?.width).toBeGreaterThanOrEqual(44);
+  expect(compactBrandTarget?.height).toBeGreaterThanOrEqual(44);
+  await expect(page.locator('.dh-header .dh-brand__wordmark')).toBeVisible();
   const mobileNavigationInsets = await readPaddingInsets(page.locator('.dh-mobile-nav'));
   expect(mobileNavigationInsets.bottom).toBeGreaterThanOrEqual(safeArea.bottom);
   expect(mobileNavigationInsets.left).toBeGreaterThanOrEqual(safeArea.left);
@@ -388,25 +403,16 @@ test('@critical user login honors safe return navigation, survives reload, and l
     })
     .toEqual({ locale: 'ru', status: 200 });
 
-  const themeSwitcher = page.getByRole('combobox', { name: 'Тема' });
-  await themeSwitcher.click();
-  await page.getByRole('option', { name: 'Тёмная' }).click();
-  await expect(page.locator('html')).toHaveAttribute('data-theme-preference', 'dark');
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-  await expect
-    .poll(async () => {
-      const response = await page.context().request.get(`${urls.authApi}/auth/me`);
-      const body = (await response.json()) as { data?: { user?: { locale?: string; theme?: string } } };
-      return { locale: body.data?.user?.locale, status: response.status(), theme: body.data?.user?.theme };
-    })
-    .toEqual({ locale: 'ru', status: 200, theme: 'dark' });
+  // The product deliberately ships a single light palette, so settings exposes a
+  // language control and no theme control in any locale.
+  await expect(page.getByRole('combobox', { name: 'Тема' })).toHaveCount(0);
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'dark');
 
   await page.reload();
   await expect(page.locator('html')).toHaveAttribute('lang', 'ru');
-  await expect(page.locator('html')).toHaveAttribute('data-theme-preference', 'dark');
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
+  await expect(page.locator('html')).not.toHaveAttribute('data-theme', 'dark');
   await expect(page.getByRole('combobox', { name: 'Язык' })).toContainText('Русский');
-  await expect(page.getByRole('combobox', { name: 'Тема' })).toContainText('Тёмная');
+  await expect(page.getByRole('combobox', { name: 'Тема' })).toHaveCount(0);
 
   await page.getByRole('button', { name: 'Выйти' }).click();
   await expect(page).toHaveURL(`${urls.userApp}/auth`);

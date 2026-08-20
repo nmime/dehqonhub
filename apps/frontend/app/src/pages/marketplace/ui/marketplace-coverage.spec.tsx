@@ -40,6 +40,7 @@ const listing = (overrides: Partial<MarketplaceListing> = {}): MarketplaceListin
   priceUzs: 1_250_000,
   promoted: false,
   provenance: 'live',
+  rating: { average: 4.6, count: 12 },
   region: 'Samarqand',
   sampleAvailable: true,
   section: 'seeds',
@@ -80,6 +81,7 @@ describe('marketplace projections and discovery interactions', () => {
       priceUzs: 750_000,
       promoted: true,
       provenance: 'live',
+      rating: { average: 4.6, count: 12 },
       region: 'Buxoro',
       sampleAvailable: false,
       section: 'seeds',
@@ -262,22 +264,29 @@ describe('marketplace projections and discovery interactions', () => {
     expect(screen.queryByText(inactiveStock.name)).toBeNull();
   });
 
-  it('promotes the demo shelf and clears every active catalog filter from its own chip', () => {
+  it('publishes reviewer entry by deployment flag and clears every active catalog filter from its own chip', () => {
     const home = baseActions();
 
+    // Reviewer entry is gated by the deployment flag, not by demo provenance:
+    // a live-only catalog still carries the identities the commission needs.
     render(<MarketplaceHome {...home} products={[listing({ id: 'live-seed', provenance: 'live' })]} />);
-    expect(screen.queryByRole('heading', { level: 2, name: 'agritech.marketplace.demo.title' })).toBeNull();
-    expect(screen.queryByText('dehqon@demo.dehqonhub.uz')).toBeNull();
-
-    cleanup();
-    render(<MarketplaceHome {...home} products={[listing({ id: 'demo-seed', provenance: 'demo' })]} />);
-
     expect(screen.getByRole('heading', { level: 2, name: 'agritech.marketplace.demo.title' })).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.demo.reviewerLabel')).toBeTruthy();
     expect(screen.getByText('dehqon@demo.dehqonhub.uz')).toBeTruthy();
     expect(screen.getByText('sotuvchi@demo.dehqonhub.uz')).toBeTruthy();
     expect(screen.getByText('xaridor@demo.dehqonhub.uz')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.demo.signIn' }));
     expect(home.navigate).toHaveBeenCalledWith('/auth');
+
+    cleanup();
+    vi.stubGlobal('__APP_RUNTIME_CONFIG__', { reviewerAccessEnabled: false });
+    try {
+      render(<MarketplaceHome {...home} products={[listing({ id: 'demo-seed', provenance: 'demo' })]} />);
+      expect(screen.queryByRole('heading', { level: 2, name: 'agritech.marketplace.demo.title' })).toBeNull();
+      expect(screen.queryByText('dehqon@demo.dehqonhub.uz')).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
 
     cleanup();
     const sampled = listing({ id: 'sampled', name: 'Sampled seed', region: 'Buxoro' });
@@ -433,7 +442,11 @@ describe('marketplace projections and discovery interactions', () => {
     fireEvent.submit(
       screen.getByRole('button', { name: 'agritech.marketplace.reviews.reportSubmit' }).closest('form')!,
     );
+    // Submitting without a star is refused by the form itself, so the rating is
+    // chosen first and the comment travels with it.
     fireEvent.submit(screen.getByRole('button', { name: 'agritech.marketplace.reviews.submit' }).closest('form')!);
+    expect(successfulReview).not.toHaveBeenCalled();
+    fireEvent.click(screen.getAllByRole('radio')[4]!);
     fireEvent.change(screen.getByLabelText('agritech.marketplace.reviews.comment'), {
       target: { value: 'Updated review' },
     });

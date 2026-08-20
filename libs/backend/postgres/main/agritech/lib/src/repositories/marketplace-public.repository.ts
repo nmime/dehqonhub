@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { EntityManager, LockMode } from '@mikro-orm/core';
 import { Inject, Injectable } from '@nestjs/common';
 import { DefaultFeatureFlagTenantId } from '@app/common-feature-flags';
+import { marketplaceReviewAverageRating } from '@app/backend-feature-agritech-shared';
 import type {
   AgriTechOwner,
   MarketplaceCatalogSort,
@@ -30,6 +31,7 @@ import type {
   ReviewMarketplaceRequestPublicationInput,
   ReviewMarketplaceSellerProfileInput,
 } from '@app/backend-feature-agritech-shared';
+import { marketplaceBuyerRolesSql, marketplaceSellerRolesSql } from './marketplace-role-predicates';
 import { FarmerEntity } from '../entities/farmer.entity';
 import { BuyerRequestEntity, VerificationEntity } from '../entities/marketplace.entity';
 import {
@@ -65,8 +67,10 @@ interface PublishedListingRow {
   product_category: ProductCategory | null;
   produce_crop: string | null;
   produce_grade: 'A' | 'B' | 'C' | null;
-  published_at: Date;
-  updated_at: Date;
+  review_count: number;
+  rating_sum: number;
+  published_at: RawTimestamp;
+  updated_at: RawTimestamp;
   seller_public_id: string;
   seller_display_name: string;
   seller_region: string;
@@ -89,13 +93,38 @@ interface PublishedRequestRow {
   budget_uzs: string | number | null;
   requirements: string | null;
   buyer_display_name: string;
-  published_at: Date;
-  created_at: Date;
-  updated_at: Date;
+  published_at: RawTimestamp;
+  created_at: RawTimestamp;
+  updated_at: RawTimestamp;
 }
 
 const imagesFrom = (value: unknown): string[] =>
   Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
+
+/** Mirrors `ck__marketplace_listing_publications__content`, which caps public assets at five. */
+const maxPublicImages = 5;
+
+/**
+ * What a timestamp column actually is on the raw-SQL path. MikroORM's PostgreSQL
+ * dialect installs `pg` type parsers that hand `timestamptz` back as the wire
+ * string so the ORM owns the conversion, and `getConnection().execute()` skips
+ * that conversion — only entity hydration performs it. So every timestamp read
+ * through `executeRows` arrives as a string here, and typing these fields as
+ * `Date` silently promised a method the value does not have.
+ */
+type RawTimestamp = Date | string | number;
+
+/** A real `Date` from a raw row, failing loudly instead of producing `Invalid Date`. */
+const timestampFromRow = (value: RawTimestamp): Date => {
+  const parsed = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(parsed.valueOf())) {
+    throw new Error(`Marketplace public read received an unparseable timestamp: ${String(value)}`);
+  }
+  return parsed;
+};
+
+/** ISO 8601 form of a raw-row timestamp, which is what a keyset cursor carries. */
+const isoTimestamp = (value: RawTimestamp): string => timestampFromRow(value).toISOString();
 
 const listingFromRow = (row: PublishedListingRow): MarketplacePublishedListingRecord => ({
   availableQuantity: row.available_quantity,
@@ -108,7 +137,11 @@ const listingFromRow = (row: PublishedListingRow): MarketplacePublishedListingRe
   ...(row.produce_crop ? { produceCrop: row.produce_crop } : {}),
   ...(row.produce_grade ? { produceGrade: row.produce_grade } : {}),
   publicId: row.public_id,
-  publishedAt: row.published_at,
+  rating: {
+    average: marketplaceReviewAverageRating(Number(row.rating_sum), Number(row.review_count)),
+    count: Number(row.review_count),
+  },
+  publishedAt: timestampFromRow(row.published_at),
   region: row.region,
   section: row.section,
   sellerDisplayName: row.seller_display_name,
@@ -120,7 +153,7 @@ const listingFromRow = (row: PublishedListingRow): MarketplacePublishedListingRe
   ...(row.title_uz ? { titleUz: row.title_uz } : {}),
   ...(row.title_uz_cyrl ? { titleUzCyrl: row.title_uz_cyrl } : {}),
   unit: row.unit,
-  updatedAt: row.updated_at,
+  updatedAt: timestampFromRow(row.updated_at),
 });
 
 const sellerFromRow = (row: PublishedSellerRow): MarketplacePublishedSellerRecord => ({
@@ -134,14 +167,14 @@ const sellerFromRow = (row: PublishedSellerRow): MarketplacePublishedSellerRecor
 const requestFromRow = (row: PublishedRequestRow): MarketplacePublishedRequestRecord => ({
   ...(row.budget_uzs === null ? {} : { budgetUzs: Number(row.budget_uzs) }),
   buyerDisplayName: row.buyer_display_name,
-  createdAt: row.created_at,
+  createdAt: timestampFromRow(row.created_at),
   ...(row.deadline ? { deadline: row.deadline } : {}),
   ...(row.product ? { product: row.product } : {}),
   publicId: row.public_id,
   region: row.region,
   ...(row.requirements ? { requirements: row.requirements } : {}),
   title: row.title,
-  updatedAt: row.updated_at,
+  updatedAt: timestampFromRow(row.updated_at),
   ...(row.volume ? { volume: row.volume } : {}),
 });
 
@@ -335,7 +368,7 @@ const listingCursorFromRow = (
       id: row.public_id,
       kind: 'catalog',
       promoted: row.promoted,
-      publishedAt: row.published_at.toISOString(),
+      publishedAt: isoTimestamp(row.published_at),
       sort,
     };
   }
@@ -386,7 +419,7 @@ export class PostgresMarketplacePublicRepository implements MarketplacePublicRep
             on verification.tenant_id = seller.tenant_id
            and verification.user_id = seller.owner_user_id
            and verification.status = 'verified'
-           and verification.role in ('farmer', 'seller')
+           and verification.role in (${marketplaceSellerRolesSql})
          where seller.id = ? and seller.status = 'published'
            and partner.status = 'approved' and partner.kind = 'supplier'
          limit 1
@@ -465,7 +498,7 @@ export class PostgresMarketplacePublicRepository implements MarketplacePublicRep
             on verification.tenant_id = request.tenant_id
            and verification.user_id = request.buyer_user_id
            and verification.status = 'verified'
-           and verification.role in ('buyer', 'farmer')
+           and verification.role in (${marketplaceBuyerRolesSql})
          where ${where.join(' and ')}
          order by publication.published_at desc, publication.id asc
          limit ?
@@ -482,7 +515,7 @@ export class PostgresMarketplacePublicRepository implements MarketplacePublicRep
             nextCursor: {
               id: last.public_id,
               kind: 'request',
-              publishedAt: last.published_at.toISOString(),
+              publishedAt: isoTimestamp(last.published_at),
             },
           }
         : {}),
@@ -513,7 +546,7 @@ export class PostgresMarketplacePublicRepository implements MarketplacePublicRep
               on verification.tenant_id = seller.tenant_id
              and verification.user_id = seller.owner_user_id
              and verification.status = 'verified'
-             and verification.role in ('farmer', 'seller')
+             and verification.role in (${marketplaceSellerRolesSql})
            where seller.status = 'published' and partner.status = 'approved' and partner.kind = 'supplier'
              and revision.display_name ilike ? escape '\\'
            order by revision.display_name asc, seller.id asc
@@ -887,7 +920,10 @@ export class PostgresMarketplacePublicRepository implements MarketplacePublicRep
         crop: produce?.crop ?? undefined,
         description: product?.description ?? undefined,
         grade: produce?.grade ?? undefined,
-        images: [] as string[],
+        // The snapshot inherits the locked source's own photographs, whichever
+        // kind of source it is. A listing that carries none publishes assetless
+        // and the client renders its category illustration instead.
+        images: imagesFrom(product?.images ?? produce?.images).slice(0, maxPublicImages),
         region: product?.region ?? produce?.region ?? '',
         section: input.section,
         sourceKind: input.sourceKind,
@@ -1149,6 +1185,8 @@ export class PostgresMarketplacePublicRepository implements MarketplacePublicRep
                ${listingPromotionExpression} as promoted,
                publication.public_category as product_category,
                publication.public_crop as produce_crop, publication.public_grade as produce_grade,
+               coalesce(rating.review_count, 0) as review_count,
+               coalesce(rating.rating_sum, 0) as rating_sum,
                publication.published_at, publication.updated_at,
                seller.id as seller_public_id, seller_revision.display_name as seller_display_name,
                seller_revision.region as seller_region
@@ -1170,7 +1208,7 @@ export class PostgresMarketplacePublicRepository implements MarketplacePublicRep
             on verification.tenant_id = seller.tenant_id
            and verification.user_id = seller.owner_user_id
            and verification.status = 'verified'
-           and verification.role in ('farmer', 'seller')
+           and verification.role in (${marketplaceSellerRolesSql})
           left join products product
             on product.id = publication.product_id
            and product.tenant_id = publication.tenant_id
@@ -1187,6 +1225,8 @@ export class PostgresMarketplacePublicRepository implements MarketplacePublicRep
             on farmer.id = produce.farmer_id
            and farmer.tenant_id = publication.tenant_id
            and farmer.user_id = seller.owner_user_id
+          left join marketplace_review_aggregates rating
+            on rating.listing_publication_id = publication.id
          where ${where.join(' and ')}
          order by ${listingOrder(input.sort)}
          limit ?

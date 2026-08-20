@@ -8,6 +8,7 @@ import type {
   ContractViewDto,
   MarketplaceAiConsultationDto,
   MarketplaceProviderReadinessDto,
+  MarketplaceRoleDashboardDto,
   OfferViewDto,
 } from '@app/frontend-api-client';
 import { MarketplaceAi } from './marketplace-ai';
@@ -18,7 +19,12 @@ import {
   MarketplaceRequests,
   MarketplaceVerification,
 } from './marketplace-commerce';
-import { MarketplaceCatalog, MarketplaceProductDetail, MarketplaceSellerProfile } from './marketplace-discovery';
+import {
+  MarketplaceCatalog,
+  MarketplaceHome,
+  MarketplaceProductDetail,
+  MarketplaceSellerProfile,
+} from './marketplace-discovery';
 import { MarketplaceDemoBanner } from './marketplace-demo-banner';
 import { MarketplaceIcon } from './marketplace-icon';
 import { MarketplaceProductCard, ProductMedia } from './marketplace-product-card';
@@ -41,6 +47,7 @@ const product = (
   priceUzs: 1_250_000,
   promoted: false,
   provenance: 'live',
+  rating: { average: 4.6, count: 12 },
   region: 'Samarqand',
   sampleAvailable: true,
   section: category === 'equipment' || category === 'irrigation' ? 'equipment' : 'seeds',
@@ -256,6 +263,16 @@ function installMatchMedia(initialMatches: boolean) {
   };
 }
 
+const homeProps = () => ({
+  favoriteIds: new Set<string>(),
+  locale: 'en' as const,
+  navigate: vi.fn(),
+  onAdd: vi.fn(),
+  onFavorite: vi.fn(),
+  onOpen: vi.fn(),
+  t,
+});
+
 afterEach(() => {
   cleanup();
   window.history.replaceState({}, '', '/');
@@ -274,7 +291,7 @@ describe('DehqonHub marketplace components', () => {
   it('keeps governed demo content browseable with a local preview cart boundary', () => {
     const onAdd = vi.fn();
     const onFavorite = vi.fn();
-    render(
+    const { container } = render(
       <MarketplaceProductCard
         favorite={false}
         locale="en"
@@ -287,24 +304,105 @@ describe('DehqonHub marketplace components', () => {
     );
 
     expect(screen.getByText('agritech.marketplace.access.demoBadge')).toBeTruthy();
-    expect(screen.getByText('agritech.marketplace.access.demo')).toBeTruthy();
     const favorite = screen.getByRole('button', { name: 'agritech.marketplace.product.addFavorite' });
     expect(favorite.hasAttribute('disabled')).toBe(false);
     const previewCart = screen.getByRole('button', { name: 'agritech.marketplace.product.addToPreviewCart' });
     expect(previewCart.hasAttribute('disabled')).toBe(false);
+    const provenance = screen.getByText('agritech.marketplace.access.demo');
+    expect(provenance.className).toBe('dh-sr-only');
+    expect(previewCart.getAttribute('aria-describedby')).toBe(provenance.id);
+    expect(container.querySelector('.dh-product-card .dh-state-inline')).toBeNull();
     fireEvent.click(previewCart);
     expect(onAdd).toHaveBeenCalledWith(demoSeed);
     fireEvent.click(favorite);
     expect(onFavorite).toHaveBeenCalledWith(demoSeed);
   });
 
-  it('publishes all three guarded reviewer identities in the governed demo banner', () => {
-    render(<MarketplaceDemoBanner navigate={vi.fn()} t={t} />);
+  it('announces a restricted catalog action without repeating the reason under every card', () => {
+    const { container } = render(
+      <MarketplaceProductCard
+        canTransact={false}
+        favorite={false}
+        locale="en"
+        onAdd={vi.fn()}
+        onFavorite={vi.fn()}
+        onOpen={vi.fn()}
+        product={seed}
+        t={t}
+        transactionHint="verification-needed"
+      />,
+    );
 
-    expect(screen.getByText('dehqon@demo.dehqonhub.uz')).toBeTruthy();
-    expect(screen.getByText('sotuvchi@demo.dehqonhub.uz')).toBeTruthy();
+    const cartAction = screen.getByRole('button', { name: 'agritech.marketplace.product.addToPreviewCart' });
+    const reason = screen.getByText('verification-needed');
+    expect(reason.className).toBe('dh-sr-only');
+    expect(cartAction.getAttribute('aria-describedby')).toBe(reason.id);
+    // No visible reason block and no per-card recovery control: the owning page
+    // renders one notice with that action above the grid.
+    expect(container.querySelector('.dh-product-card .dh-state-inline')).toBeNull();
+    expect(container.querySelector('.dh-product-card .dh-text-button')).toBeNull();
+  });
+
+  it('publishes the three guarded reviewer identities as labelled demo accounts with copy controls', async () => {
+    const clipboard = { writeText: vi.fn<(value: string) => Promise<void>>().mockResolvedValue(undefined) };
+    Object.defineProperty(navigator, 'clipboard', { configurable: true, value: clipboard });
+    const navigate = vi.fn();
+
+    try {
+      render(<MarketplaceDemoBanner navigate={navigate} t={t} />);
+
+      // The demo nature is visible copy on the banner itself, not a footnote.
+      expect(screen.getByText('agritech.marketplace.demo.reviewerLabel')).toBeTruthy();
+      expect(screen.getByText('agritech.marketplace.demo.reviewerNotice')).toBeTruthy();
+      // A reviewer is told that a request, competing offers, and a signed
+      // contract already exist between the buyer and seller identities.
+      expect(screen.getByText('agritech.marketplace.demo.prepared')).toBeTruthy();
+      expect(screen.getByText('dehqon@demo.dehqonhub.uz')).toBeTruthy();
+      expect(screen.getByText('sotuvchi@demo.dehqonhub.uz')).toBeTruthy();
+      expect(screen.getByText('xaridor@demo.dehqonhub.uz')).toBeTruthy();
+      // Each role states what it is for, and the farmer identity is stated as a
+      // dashboard role rather than a trading party.
+      expect(screen.getByText('agritech.marketplace.demo.purpose.farmer')).toBeTruthy();
+      expect(screen.getByText('agritech.marketplace.demo.purpose.seller')).toBeTruthy();
+      expect(screen.getByText('agritech.marketplace.demo.purpose.buyer')).toBeTruthy();
+
+      const copyControls = screen.getAllByRole('button', { name: /^agritech\.marketplace\.demo\.copy:/u });
+      expect(copyControls).toHaveLength(3);
+      fireEvent.click(copyControls[0]!);
+      await waitFor(() => {
+        expect(screen.getByText('agritech.marketplace.demo.copied')).toBeTruthy();
+      });
+      expect(clipboard.writeText).toHaveBeenCalledWith('dehqon@demo.dehqonhub.uz / DemoDehqon2026');
+
+      fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.demo.signIn' }));
+      expect(navigate).toHaveBeenCalledWith('/auth');
+    } finally {
+      delete (navigator as { clipboard?: unknown }).clipboard;
+    }
+  });
+
+  it('keeps reviewer entry on a live-only home while the deployment flag stays enabled', () => {
+    // The catalog now serves real transactional listings, so provenance can no
+    // longer decide whether the commission finds its accounts.
+    render(<MarketplaceHome {...homeProps()} products={[seed, tractor]} />);
+
+    expect(screen.getByRole('heading', { level: 2, name: 'agritech.marketplace.demo.title' })).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.demo.reviewerLabel')).toBeTruthy();
     expect(screen.getByText('xaridor@demo.dehqonhub.uz')).toBeTruthy();
-    expect(screen.getAllByRole('button', { name: /^agritech\.marketplace\.demo\.copy:/u })).toHaveLength(3);
+  });
+
+  it('removes reviewer entry when a deployment turns the reviewer-access flag off', () => {
+    vi.stubGlobal('__APP_RUNTIME_CONFIG__', { reviewerAccessEnabled: false });
+
+    try {
+      render(<MarketplaceHome {...homeProps()} products={[seed, demoSeed]} />);
+
+      expect(screen.queryByRole('heading', { level: 2, name: 'agritech.marketplace.demo.title' })).toBeNull();
+      expect(screen.queryByText('xaridor@demo.dehqonhub.uz')).toBeNull();
+      expect(screen.queryByText('agritech.marketplace.demo.reviewerLabel')).toBeNull();
+    } finally {
+      vi.unstubAllGlobals();
+    }
   });
   it('keeps catalog branches distinct and applies real record filters', () => {
     window.history.replaceState({}, '', '/catalog?section=seeds');
@@ -605,16 +703,22 @@ describe('DehqonHub marketplace components', () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText('agritech.marketplace.reviews.rating'), { target: { value: '4' } });
+    // Four stars, chosen through the radio the star glyph decorates.
+    fireEvent.click(screen.getAllByRole('radio')[3]!);
     fireEvent.change(screen.getByLabelText('agritech.marketplace.reviews.comment'), {
       target: { value: 'Reliable quality' },
     });
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.submit' }));
 
-    expect(onReview).toHaveBeenCalledWith(seed, 4, 'Reliable quality');
+    // The fourth argument is the review's photographs: an empty list when the
+    // buyer attached none, never omitted.
+    expect(onReview).toHaveBeenCalledWith(seed, 4, 'Reliable quality', []);
     await waitFor(() => {
-      expect((screen.getByLabelText('agritech.marketplace.reviews.comment') as HTMLTextAreaElement).value).toBe('');
+      expect(screen.getByText('agritech.marketplace.reviews.yourReview')).toBeTruthy();
     });
+    // One review per purchase: the entry is gone rather than offering a second
+    // submission the server would answer with a conflict.
+    expect(screen.queryByLabelText('agritech.marketplace.reviews.comment')).toBeNull();
   });
 
   it('preserves review input when the server rejects submission', async () => {
@@ -646,6 +750,7 @@ describe('DehqonHub marketplace components', () => {
       />,
     );
 
+    fireEvent.click(screen.getAllByRole('radio')[4]!);
     const comment = screen.getByLabelText('agritech.marketplace.reviews.comment');
     fireEvent.change(comment, { target: { value: 'Keep this on failure' } });
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.reviews.submit' }));
@@ -749,6 +854,7 @@ describe('DehqonHub marketplace components', () => {
     };
     render(
       <MarketplaceRequests
+        feed="incoming"
         isVerified
         locale="en"
         myRequests={{ data: [], status: 'empty' }}
@@ -773,6 +879,9 @@ describe('DehqonHub marketplace components', () => {
     const request: BuyerRequestViewDto = {
       createdAt: '2026-08-09T10:00:00.000Z',
       id: 'request-unverified',
+      moderationStatus: 'approved',
+      publicationId: 'request-unverified-publication',
+      publicationStatus: 'published',
       region: 'Samarqand',
       status: 'offering',
       title: 'Corn seed',
@@ -787,10 +896,11 @@ describe('DehqonHub marketplace components', () => {
       seller: { displayName: 'Seed cooperative', region: 'Tashkent' },
       status: 'pending',
     };
-    render(
+    const restricted = (feed: 'incoming' | 'mine') => (
       <MarketplaceRequests
         buyerAccessActionLabel="buyer-next"
         buyerAccessHint="buyer-prerequisite"
+        feed={feed}
         isVerified={false}
         locale="en"
         myRequests={{ data: [request], status: 'ready' }}
@@ -807,15 +917,13 @@ describe('DehqonHub marketplace components', () => {
         sellerAccessActionLabel="seller-next"
         sellerAccessHint="seller-prerequisite"
         t={t}
-      />,
+      />
     );
+    const restrictedView = render(restricted('incoming'));
 
     expect(screen.getByText('buyer-prerequisite')).toBeTruthy();
     expect(screen.getByText('seller-prerequisite')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }).hasAttribute('disabled')).toBe(
-      true,
-    );
-    expect(screen.getByRole('button', { name: 'agritech.marketplace.orders.choose' }).hasAttribute('disabled')).toBe(
       true,
     );
     expect(
@@ -826,6 +934,11 @@ describe('DehqonHub marketplace components', () => {
     expect(onBuyerAccessAction).toHaveBeenCalledOnce();
     expect(onSellerAccessAction).toHaveBeenCalledOnce();
     expect(screen.queryByLabelText('agritech.marketplace.orders.requestTitle')).toBeNull();
+
+    restrictedView.rerender(restricted('mine'));
+    expect(screen.getByRole('button', { name: 'agritech.marketplace.orders.choose' }).hasAttribute('disabled')).toBe(
+      true,
+    );
   });
 
   it('submits the visible request deadline even before controlled state catches up', () => {
@@ -880,6 +993,7 @@ describe('DehqonHub marketplace components', () => {
     const onOffer = vi.fn();
     render(
       <MarketplaceRequests
+        feed="incoming"
         isVerified
         locale="en"
         myRequests={{ data: [], status: 'empty' }}
@@ -916,6 +1030,9 @@ describe('DehqonHub marketplace components', () => {
     const request: BuyerRequestViewDto = {
       createdAt: '2026-08-09T10:00:00.000Z',
       id: 'request-owned',
+      moderationStatus: 'approved',
+      publicationId: 'request-owned-publication',
+      publicationStatus: 'published',
       region: 'Samarqand',
       status: 'open',
       title: 'Corn seed',
@@ -949,6 +1066,9 @@ describe('DehqonHub marketplace components', () => {
     const request: BuyerRequestViewDto = {
       createdAt: '2026-08-09T10:00:00.000Z',
       id: 'request-with-offer',
+      moderationStatus: 'approved',
+      publicationId: 'request-with-offer-publication',
+      publicationStatus: 'published',
       region: 'Samarqand',
       status: 'offering',
       title: 'Corn seed',
@@ -1456,14 +1576,48 @@ describe('DehqonHub marketplace components', () => {
       />,
     );
 
+    // Each cabinet section owns its own failure. The overview reports the dashboard
+    // read; the buying and account sections report the contract and sample reads
+    // where those panels actually live, and each offers its own retry in place.
     expect(screen.getByText('agritech.marketplace.account.dashboardUnavailable')).toBeTruthy();
-    expect(screen.getByText('agritech.marketplace.account.contractsUnavailable')).toBeTruthy();
-    expect(screen.getByText('agritech.marketplace.samples.unavailable')).toBeTruthy();
     expect(screen.queryByLabelText('agritech.marketplace.account.dashboard')).toBeNull();
+    fireEvent.click(screen.getByRole('button', { name: 'ui.runtime.retry' }));
+
+    account.rerender(
+      <MarketplaceAccount
+        cabinetSection="buying"
+        contracts={{ data: [], status: 'error' }}
+        dashboard={{ data: null, status: 'error' }}
+        locale="en"
+        myRequests={{ data: [], status: 'error' }}
+        navigate={vi.fn()}
+        onRetry={onRetry}
+        samples={{ data: [], status: 'error' }}
+        t={t}
+        verification={{ data: null, status: 'empty' }}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.account.contractsUnavailable')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.orders.unavailable')).toBeTruthy();
+
+    account.rerender(
+      <MarketplaceAccount
+        cabinetSection="account"
+        contracts={{ data: [], status: 'error' }}
+        dashboard={{ data: null, status: 'error' }}
+        locale="en"
+        navigate={vi.fn()}
+        onRetry={onRetry}
+        samples={{ data: [], status: 'error' }}
+        t={t}
+        verification={{ data: null, status: 'empty' }}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.samples.unavailable')).toBeTruthy();
     for (const retry of screen.getAllByRole('button', { name: 'ui.runtime.retry' })) {
       fireEvent.click(retry);
     }
-    expect(onRetry).toHaveBeenCalledTimes(3);
+    expect(onRetry).toHaveBeenCalledTimes(2);
 
     account.unmount();
     const contract: ContractViewDto = {
@@ -1504,7 +1658,8 @@ describe('DehqonHub marketplace components', () => {
     );
     expect(screen.getByText('agritech.marketplace.error')).toBeTruthy();
     fireEvent.click(screen.getByRole('button', { name: 'ui.runtime.retry' }));
-    expect(onRetry).toHaveBeenCalledTimes(4);
+    // One retry from the cabinet overview, one from its account section, one here.
+    expect(onRetry).toHaveBeenCalledTimes(3);
   });
 
   it('blocks consent and lets the listed seller quote pending delivery', () => {
@@ -1788,11 +1943,19 @@ describe('DehqonHub marketplace components', () => {
     const ownedRequest: BuyerRequestViewDto = {
       ...publicRequest,
       id: 'owned-coverage',
+      moderationStatus: 'approved',
+      publicationId: 'owned-coverage-publication',
+      publicationStatus: 'published',
       status: 'offering',
+    };
+    const unpublishedOwnedRequest: BuyerRequestViewDto = {
+      ...publicRequest,
+      id: 'owned-coverage-unpublished',
+      status: 'open',
     };
     const onCreate = vi.fn();
     const onOffer = vi.fn();
-    const requestView = render(
+    const requestPanel = (overrides: Partial<Parameters<typeof MarketplaceRequests>[0]>) => (
       <MarketplaceRequests
         isVerified
         locale="en"
@@ -1806,25 +1969,27 @@ describe('DehqonHub marketplace components', () => {
         requests={{ data: [], status: 'loading' }}
         role="farmer"
         t={t}
-      />,
+        {...overrides}
+      />
     );
+    const requestView = render(requestPanel({ feed: 'mine' }));
     requestView.rerender(
-      <MarketplaceRequests
-        isVerified
-        locale="en"
-        myRequests={{ data: [ownedRequest], status: 'ready' }}
-        navigate={navigate}
-        offersByRequest={{ data: { [ownedRequest.id]: [] }, status: 'empty' }}
-        onChoose={vi.fn()}
-        onCreate={onCreate}
-        onOffer={onOffer}
-        onRetry={vi.fn()}
-        requests={{ data: [publicRequest], status: 'ready' }}
-        role="farmer"
-        t={t}
-      />,
+      requestPanel({
+        feed: 'mine',
+        myRequests: { data: [ownedRequest], status: 'ready' },
+        offersByRequest: { data: { [ownedRequest.id]: [] }, status: 'empty' },
+        requests: { data: [publicRequest], status: 'ready' },
+      }),
     );
     expect(screen.getByText('agritech.marketplace.orders.noOffers')).toBeTruthy();
+    requestView.rerender(
+      requestPanel({
+        feed: 'incoming',
+        myRequests: { data: [ownedRequest], status: 'ready' },
+        offersByRequest: { data: { [ownedRequest.id]: [] }, status: 'empty' },
+        requests: { data: [publicRequest], status: 'ready' },
+      }),
+    );
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.makeOffer' }));
     fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.price'), { target: { value: '3000000' } });
     fireEvent.change(screen.getByLabelText('agritech.marketplace.product.delivery'), {
@@ -1853,20 +2018,25 @@ describe('DehqonHub marketplace components', () => {
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.submitOffer' }));
     expect(onOffer).toHaveBeenCalledWith(publicRequest, expect.objectContaining({ priceUzs: 1 }));
 
+    // The wizard keeps every fieldset mounted, so each field is reachable whichever
+    // step is on screen, and nothing typed earlier is dropped on the way to publish.
     fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' })[0]!);
     fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.requestTitle'), {
       target: { value: 'Complete request' },
     });
     fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.product'), { target: { value: 'Seed' } });
     fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.volume'), { target: { value: '10 t' } });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.next' }));
     fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.region'), { target: { value: 'Buxoro' } });
     fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.deadline'), {
       target: { value: '2026-10-01' },
     });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.next' }));
     fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.budget'), { target: { value: '7000000' } });
     fireEvent.change(screen.getByLabelText('agritech.marketplace.orders.requirements'), {
       target: { value: 'Certified' },
     });
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.previous' }));
     fireEvent.click(
       within(screen.getByLabelText('agritech.marketplace.orders.requestTitle').closest('form')!).getByRole('button', {
         name: 'agritech.marketplace.cancel',
@@ -1887,113 +2057,128 @@ describe('DehqonHub marketplace components', () => {
       deliveryTerms: 'pickup',
       id,
       priceUzs,
-      requestPublicId: ownedRequest.id,
+      requestPublicId: 'owned-coverage-publication',
       seller: { displayName: `Seller ${id}`, region: 'Tashkent' },
       status: 'pending',
     });
-    requestView.rerender(
-      <MarketplaceRequests
-        isVerified
-        locale="en"
-        myRequests={{ data: [ownedRequest], status: 'ready' }}
-        navigate={navigate}
-        offersByRequest={{
-          data: {
-            [ownedRequest.id]: [
-              {
-                ...requestOffer('expensive', 3_000_000),
-                deliveryDays: 4,
-                deliveryPriceUzs: 250_000,
-                status: 'accepted',
-              },
-              requestOffer('cheap', 1_000_000),
-            ],
+    const walkedOffers = {
+      data: {
+        [ownedRequest.id]: [
+          {
+            ...requestOffer('expensive', 3_000_000),
+            deliveryDays: 4,
+            deliveryPriceUzs: 250_000,
+            status: 'accepted' as const,
           },
-          status: 'ready',
-        }}
-        onChoose={vi.fn()}
-        onCreate={onCreate}
-        onOffer={onOffer}
-        onRetry={vi.fn()}
-        requests={{ data: [], status: 'error' }}
-        role="farmer"
-        t={t}
-      />,
+          requestOffer('cheap', 1_000_000),
+        ],
+      },
+      status: 'ready' as const,
+    };
+    requestView.rerender(
+      requestPanel({
+        feed: 'incoming',
+        myRequests: { data: [ownedRequest], status: 'ready' },
+        offersByRequest: walkedOffers,
+        requests: { data: [], status: 'error' },
+      }),
     );
     expect(screen.getByText('agritech.marketplace.orders.unavailable')).toBeTruthy();
+    requestView.rerender(
+      requestPanel({
+        feed: 'mine',
+        myRequests: { data: [ownedRequest], status: 'ready' },
+        offersByRequest: walkedOffers,
+        requests: { data: [], status: 'error' },
+      }),
+    );
     expect(screen.getByText(/Seller cheap/u)).toBeTruthy();
     requestView.rerender(
-      <MarketplaceRequests
-        isVerified
-        locale="en"
-        myRequests={{ data: [], status: 'error' }}
-        navigate={navigate}
-        offersByRequest={{ data: {}, status: 'empty' }}
-        onChoose={vi.fn()}
-        onCreate={onCreate}
-        onOffer={onOffer}
-        onRetry={vi.fn()}
-        requests={{ data: [], status: 'empty' }}
-        role="buyer"
-        t={t}
-      />,
+      requestPanel({
+        feed: 'mine',
+        myRequests: { data: [], status: 'error' },
+        offersByRequest: { data: {}, status: 'empty' },
+        requests: { data: [], status: 'empty' },
+        role: 'buyer',
+      }),
     );
     expect(screen.getByText('agritech.marketplace.orders.unavailable')).toBeTruthy();
     requestView.rerender(
-      <MarketplaceRequests
-        isVerified
-        locale="en"
-        myRequests={{ data: [], status: 'empty' }}
-        navigate={navigate}
-        offersByRequest={{ data: {}, status: 'empty' }}
-        onChoose={vi.fn()}
-        onCreate={onCreate}
-        onOffer={onOffer}
-        onRetry={vi.fn()}
-        requests={{ data: [], status: 'empty' }}
-        role="buyer"
-        t={t}
-      />,
+      requestPanel({
+        feed: 'mine',
+        myRequests: { data: [], status: 'empty' },
+        offersByRequest: { data: {}, status: 'empty' },
+        requests: { data: [], status: 'empty' },
+        role: 'buyer',
+      }),
     );
     fireEvent.click(screen.getAllByRole('button', { name: 'agritech.marketplace.orders.create' }).at(-1)!);
     requestView.rerender(
-      <MarketplaceRequests
-        isVerified={false}
-        locale="en"
-        myRequests={{ data: [], status: 'empty' }}
-        navigate={navigate}
-        offersByRequest={{ data: {}, status: 'empty' }}
-        onChoose={vi.fn()}
-        onCreate={onCreate}
-        onOffer={onOffer}
-        onRetry={vi.fn()}
-        requests={{ data: [], status: 'empty' }}
-        role="buyer"
-        t={t}
-      />,
+      requestPanel({
+        feed: 'mine',
+        isVerified: false,
+        myRequests: { data: [], status: 'empty' },
+        offersByRequest: { data: {}, status: 'empty' },
+        requests: { data: [], status: 'empty' },
+        role: 'buyer',
+      }),
     );
     requestView.rerender(
-      <MarketplaceRequests
-        buyerAccessHint="buyer-prerequisite"
-        isVerified={false}
-        locale="en"
-        myRequests={{ data: [], status: 'empty' }}
-        navigate={navigate}
-        offersByRequest={{ data: {}, status: 'empty' }}
-        onChoose={vi.fn()}
-        onCreate={onCreate}
-        onOffer={onOffer}
-        onRetry={vi.fn()}
-        requests={{ data: [publicRequest], status: 'ready' }}
-        role="seller"
-        sellerAccessHint="seller-prerequisite"
-        t={t}
-      />,
+      requestPanel({
+        buyerAccessHint: 'buyer-prerequisite',
+        feed: 'incoming',
+        isVerified: false,
+        myRequests: { data: [], status: 'empty' },
+        offersByRequest: { data: {}, status: 'empty' },
+        requests: { data: [publicRequest], status: 'ready' },
+        role: 'seller',
+        sellerAccessHint: 'seller-prerequisite',
+      }),
     );
     expect(screen.getByText('buyer-prerequisite')).toBeTruthy();
     expect(screen.getByText('seller-prerequisite')).toBeTruthy();
     fireEvent.submit(screen.getByLabelText('agritech.marketplace.orders.requestTitle').closest('form')!);
     expect(navigate).toHaveBeenCalledWith('/verification');
+
+    // A single request is its own view: facts, the five-stage scale, and the offers.
+    requestView.rerender(
+      requestPanel({
+        myRequests: { data: [ownedRequest], status: 'ready' },
+        offersByRequest: walkedOffers,
+        requestId: ownedRequest.id,
+        requests: { data: [], status: 'empty' },
+        role: 'buyer',
+      }),
+    );
+    expect(screen.getByRole('heading', { level: 1, name: ownedRequest.title })).toBeTruthy();
+    expect(screen.getByRole('list', { name: 'agritech.marketplace.orders.progress' })).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.orders.howItWorksHint')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.orders.backToMine' }));
+    expect(navigate).toHaveBeenCalledWith('/requests');
+    requestView.rerender(
+      requestPanel({
+        myRequests: { data: [ownedRequest], status: 'ready' },
+        offersByRequest: { data: {}, status: 'empty' },
+        requestId: 'missing-request',
+        requests: { data: [], status: 'empty' },
+        role: 'buyer',
+      }),
+    );
+    expect(screen.getByText('agritech.marketplace.orders.notFound')).toBeTruthy();
+
+    // An unpublished request says it is awaiting moderation instead of reading as a
+    // published request with no offers.
+    requestView.rerender(
+      requestPanel({
+        myRequests: { data: [unpublishedOwnedRequest], status: 'ready' },
+        offersByRequest: { data: {}, status: 'empty' },
+        requestId: unpublishedOwnedRequest.id,
+        requests: { data: [], status: 'empty' },
+        role: 'buyer',
+      }),
+    );
+    expect(screen.getByText('agritech.marketplace.orders.awaitingModeration')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.orders.awaitingModerationHint')).toBeTruthy();
     requestView.unmount();
 
     const verified = {
@@ -2195,16 +2380,59 @@ describe('DehqonHub marketplace components', () => {
       subject: seed.name,
       updatedAt: '2026-08-09T10:03:00.000Z',
     };
+    // The cabinet aggregates only what the dashboard actually returns, so the
+    // fixture carries the real activity window and recent-deal members rather than
+    // a partial object the panels would have to guess around.
+    const buyerDashboard: MarketplaceRoleDashboardDto = {
+      buyer: {
+        activeDeals: 2,
+        completedDeals: 3,
+        completedSpendUzs: 5_000_000,
+        openCarts: 1,
+        openPurchaseRequests: 4,
+      },
+      generatedAt: '2026-08-19T10:00:00.000Z',
+      monthlyActivity: [
+        { completedPurchases: 1, completedSales: 0, month: '2026-07', purchaseSpendUzs: 2_000_000, salesRevenueUzs: 0 },
+        { completedPurchases: 2, completedSales: 0, month: '2026-08', purchaseSpendUzs: 3_000_000, salesRevenueUzs: 0 },
+      ],
+      recentDeals: [
+        {
+          amountUzs: 2_500_000,
+          contractId: contract.id,
+          counterpartyName: 'Seed cooperative',
+          side: 'buyer',
+          status: 'active',
+          updatedAt: '2026-08-09T10:03:00.000Z',
+        },
+      ],
+      role: 'buyer',
+    };
+    const sellerDashboard: MarketplaceRoleDashboardDto = {
+      generatedAt: '2026-08-19T10:00:00.000Z',
+      monthlyActivity: buyerDashboard.monthlyActivity.map((month) => ({
+        ...month,
+        completedPurchases: 0,
+        completedSales: month.completedPurchases,
+        purchaseSpendUzs: 0,
+        salesRevenueUzs: month.purchaseSpendUzs,
+      })),
+      recentDeals: [],
+      role: 'seller',
+      seller: {
+        activeDeals: 1,
+        activeListings: 4,
+        completedDeals: 2,
+        completedRevenueUzs: 5_000_000,
+        offerConversionBps: 3333,
+        pendingOffers: 3,
+        topListings: [],
+      },
+    };
     const account = render(
       <MarketplaceAccount
         contracts={{ data: [contract], status: 'ready' }}
-        dashboard={{
-          data: {
-            buyer: { activeDeals: 2, completedDeals: 3, openPurchaseRequests: 4 },
-            role: 'buyer',
-          } as never,
-          status: 'ready',
-        }}
+        dashboard={{ data: buyerDashboard, status: 'ready' }}
         locale="en"
         navigate={navigate}
         onRetry={vi.fn()}
@@ -2214,28 +2442,17 @@ describe('DehqonHub marketplace components', () => {
       />,
     );
     fireEvent.click(screen.getByRole('button', { name: 'agritech.marketplace.verification' }));
-    fireEvent.click(screen.getAllByRole('button', { name: new RegExp(seed.name, 'u') })[0]!);
-    account.rerender(
-      <MarketplaceAccount
-        contracts={{ data: [], status: 'loading' }}
-        dashboard={{
-          data: { role: 'seller', seller: { activeDeals: 1, completedDeals: 2, pendingOffers: 3 } } as never,
-          status: 'ready',
-        }}
-        locale="en"
-        navigate={navigate}
-        onRetry={vi.fn()}
-        samples={{ data: [], status: 'empty' }}
-        t={t}
-        verification={{ data: verified, status: 'ready' }}
-      />,
-    );
     expect(screen.getByLabelText('agritech.marketplace.account.dashboard')).toBeTruthy();
+    fireEvent.click(screen.getByRole('button', { name: /Seed cooperative/u }));
+    expect(navigate).toHaveBeenCalledWith(`/contracts/${contract.id}`);
+
     account.rerender(
       <MarketplaceAccount
-        contracts={{ data: [], status: 'empty' }}
-        dashboard={{ data: { role: 'farmer' } as never, status: 'ready' }}
+        cabinetSection="buying"
+        contracts={{ data: [contract], status: 'ready' }}
+        dashboard={{ data: buyerDashboard, status: 'ready' }}
         locale="en"
+        myRequests={{ data: [], status: 'empty' }}
         navigate={navigate}
         onRetry={vi.fn()}
         samples={{ data: [], status: 'empty' }}
@@ -2243,9 +2460,31 @@ describe('DehqonHub marketplace components', () => {
         verification={{ data: verified, status: 'ready' }}
       />,
     );
-    expect(screen.getByText('agritech.marketplace.empty')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.orders.empty')).toBeTruthy();
+    fireEvent.click(screen.getAllByRole('button', { name: new RegExp(seed.name, 'u') })[0]!);
+    expect(navigate).toHaveBeenCalledWith(`/contracts/${contract.id}`);
+
+    // The same contract is the buyer's; a seller-scoped panel must not claim it.
     account.rerender(
       <MarketplaceAccount
+        cabinetSection="selling"
+        contracts={{ data: [contract], status: 'ready' }}
+        dashboard={{ data: sellerDashboard, status: 'ready' }}
+        locale="en"
+        navigate={navigate}
+        onRetry={vi.fn()}
+        publicRequests={{ data: [], status: 'empty' }}
+        samples={{ data: [], status: 'empty' }}
+        t={t}
+        verification={{ data: verified, status: 'ready' }}
+      />,
+    );
+    expect(screen.getByText('agritech.marketplace.cabinet.selling.noContracts')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.cabinet.stat.pendingOffers')).toBeTruthy();
+
+    account.rerender(
+      <MarketplaceAccount
+        cabinetSection="account"
         contracts={{ data: [], status: 'empty' }}
         dashboard={{ data: null, status: 'loading' }}
         locale="en"
@@ -2261,6 +2500,7 @@ describe('DehqonHub marketplace components', () => {
               listing: {
                 id: seed.id,
                 kind: 'product',
+                rating: { average: 4.6, count: 12 },
                 sampleAvailable: true,
                 seller: { displayName: 'Seed cooperative', id: seed.supplierId },
                 title: seed.name,
@@ -2527,7 +2767,9 @@ describe('DehqonHub marketplace components', () => {
         t={t}
       />,
     );
-    expect(screen.getByText('agritech.marketplace.contract.artifactUnavailable')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.contract.settlement.notStarted')).toBeTruthy();
+    expect(screen.getByText('agritech.marketplace.contract.settlement.notStartedDescription')).toBeTruthy();
+    expect(screen.queryByText('agritech.marketplace.error')).toBeNull();
     contractStates.unmount();
   });
 

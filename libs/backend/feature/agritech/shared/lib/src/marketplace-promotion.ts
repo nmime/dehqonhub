@@ -1,8 +1,11 @@
-// @requirements REQ-AGRITECH-STAGE2-017
+// @requirements REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-STAGE2-017
 import { createHash } from 'node:crypto';
 import type { AgriTechOwner, OperationResult } from './agritech.types';
+import type { MarketplaceProviderIdentity } from './marketplace-contract-lifecycle';
+import type { MarketplaceProviderSafeReceipt } from './marketplace-provider-operation';
 
 export const MarketplacePromotionRepositoryInjectToken = Symbol('MarketplacePromotionRepositoryInjectToken');
+export const MarketplacePromotionBillingProviderInjectToken = Symbol('MarketplacePromotionBillingProviderInjectToken');
 
 export const marketplacePromotionPlans = {
   catalog_7d: { durationDays: 7, priceUzs: 150_000 },
@@ -14,6 +17,13 @@ export const marketplacePromotionPlanCodes = Object.keys(marketplacePromotionPla
 
 export type MarketplacePromotionPlanCode = keyof typeof marketplacePromotionPlans;
 export type MarketplacePromotionStatus = 'scheduled' | 'active' | 'expired';
+
+/**
+ * A promotion slot is reserved before it is charged and only leaves
+ * `pending_billing` once a succeeded `promotion_billing` provider operation
+ * backs it, so a reserved row never reaches catalog placement for free.
+ */
+export type MarketplacePromotionLifecycleStatus = MarketplacePromotionStatus | 'pending_billing';
 
 export interface MarketplacePromotionPlan {
   code: MarketplacePromotionPlanCode;
@@ -60,13 +70,58 @@ export interface ActivateMarketplacePromotionCommand extends ActivateMarketplace
   requestFingerprint: string;
 }
 
+/**
+ * The persisted reservation a billing attempt is anchored to. `settledPromotion`
+ * is present only when this exact command already paid, which makes an exact
+ * replay return the original record without charging a second time.
+ */
+export interface MarketplacePromotionReservation {
+  id: string;
+  listingPublicId: string;
+  planCode: MarketplacePromotionPlanCode;
+  priceUzs: number;
+  revision: number;
+  sellerPartnerId: string;
+  settledPromotion?: MarketplaceListingPromotion;
+}
+
 export interface MarketplacePromotionRepository {
-  activatePromotion(
+  reservePromotion(
     owner: AgriTechOwner,
     input: ActivateMarketplacePromotionCommand,
+  ): Promise<OperationResult<MarketplacePromotionReservation>>;
+  settlePromotion(
+    owner: AgriTechOwner,
+    promotionId: string,
+    billingOperationId: string,
   ): Promise<OperationResult<MarketplaceListingPromotion>>;
   findPromotion(owner: AgriTechOwner, promotionId: string): Promise<MarketplaceListingPromotion | undefined>;
   listPromotions(owner: AgriTechOwner): Promise<MarketplaceListingPromotion[]>;
+}
+
+export interface MarketplacePromotionBillingProviderResult {
+  chargedAmountUzs: number;
+  completedAt: Date;
+  currency: 'UZS';
+  providerEventId?: string;
+  providerMode: 'mock' | 'live';
+  providerName: string;
+  providerReference: string;
+  safeReceipt: MarketplaceProviderSafeReceipt;
+}
+
+export interface MarketplacePromotionBillingProvider extends MarketplaceProviderIdentity {
+  billListingPromotion(input: {
+    amountUzs: number;
+    currency: 'UZS';
+    listingPublicId: string;
+    operationAttempt: number;
+    operationId: string;
+    planCode: MarketplacePromotionPlanCode;
+    promotionId: string;
+    sellerPartnerId: string;
+    signal?: AbortSignal;
+  }): Promise<MarketplacePromotionBillingProviderResult>;
 }
 
 export function marketplacePromotionActivationFingerprint(input: ActivateMarketplacePromotionInput): string {

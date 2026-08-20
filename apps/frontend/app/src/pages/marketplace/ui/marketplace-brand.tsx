@@ -1,18 +1,36 @@
 import type { MarketplaceTranslate } from './marketplace-ui';
 
-/** Transparent vector emblem; it has no raster plate on cream or dark surfaces. */
+/**
+ * The DehqonHub emblem at header and footer scale: a transparent raster with no
+ * plate, so it sits directly on the cream shell beside the text wordmark. The
+ * 96 px asset covers the 2.75rem header box through 2x density; the 512 px
+ * master is offered for denser screens instead of being downloaded for every
+ * 44 px mark.
+ */
 export function MarketplaceBrandMark({ className }: Readonly<{ className?: string }>) {
   return (
-    <svg aria-hidden="true" className={className} focusable="false" viewBox="0 0 48 48">
-      <path d="M23.4 21.2C15.6 22 9.7 17.3 8.6 9.6c7.5-1.1 13.7 3.9 14.8 11.6Z" fill="var(--dh-green-strong)" />
-      <path d="M24.6 21.2C32.4 22 38.3 17.3 39.4 9.6c-7.5-1.1-13.7 3.9-14.8 11.6Z" fill="var(--dh-lime)" />
-      <path d="M24 3.6c6 5.1 6 13.6 0 19.4-6-5.8-6-14.3 0-19.4Z" fill="var(--dh-green)" />
-      <g fill="none" stroke="currentColor" strokeLinecap="round" strokeWidth="3">
-        <path d="M24 41.4V22.6" />
-        <path d="M13.8 39.6c4 3.4 16.4 3.4 20.4 0" />
-      </g>
-    </svg>
+    <img
+      alt=""
+      aria-hidden="true"
+      className={className}
+      decoding="async"
+      height={96}
+      sizes="3rem"
+      src="/dehqonhub-emblem-96.png"
+      srcSet="/dehqonhub-emblem-96.png 96w, /dehqonhub-emblem.png 512w"
+      width={96}
+    />
   );
+}
+
+/**
+ * The same emblem where the brand gets room — the account entry and the empty
+ * states. It renders the 512 px master because the artwork is displayed large
+ * enough to resolve the ornamented leaves and the harvest motif along the top
+ * edge.
+ */
+export function MarketplaceEmblem({ className }: Readonly<{ className?: string }>) {
+  return <img alt="" aria-hidden="true" className={className} src="/dehqonhub-emblem.png" />;
 }
 
 export function MarketplaceBrandLockup({ t }: Readonly<{ t: MarketplaceTranslate }>) {
@@ -27,5 +45,23 @@ export function MarketplaceBrandLockup({ t }: Readonly<{ t: MarketplaceTranslate
         <strong>{brand.slice(accentStart)}</strong>
       </span>
     </>
+  );
+}
+
+/** Flat silhouette from the design reference: decorative, never load-bearing. */
+export function MarketplaceTractorSilhouette({ className }: Readonly<{ className?: string }>) {
+  return (
+    <svg aria-hidden="true" className={className} focusable="false" viewBox="0 0 200 130">
+      <g fill="var(--dh-green-strong)">
+        <circle cx="52" cy="102" r="26" />
+        <circle cx="150" cy="108" r="17" />
+        <path d="M30 76h60V38h28l22 38h20v26h-14a17 17 0 0 0-34 0H78a26 26 0 0 0-48-12z" />
+      </g>
+      <g fill="var(--dh-lime)">
+        <circle cx="52" cy="102" r="11" />
+        <circle cx="150" cy="108" r="7" />
+        <rect height="24" width="18" x="96" y="44" />
+      </g>
+    </svg>
   );
 }

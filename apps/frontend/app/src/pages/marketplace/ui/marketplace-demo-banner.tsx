@@ -3,6 +3,14 @@ import { demoAccounts } from '../model/demo-accounts';
 import { MarketplaceIcon } from './marketplace-icon';
 import type { MarketplaceNavigate, MarketplaceTranslate } from './marketplace-ui';
 
+/**
+ * Reviewer entry for the MVP review build. The identities are public demo-seed
+ * accounts, so the banner has to say that in visible copy, not only in a
+ * tooltip: the badge, the notice and the per-account role lines carry it.
+ *
+ * Gated by the `reviewerAccessEnabled` deployment flag, never by catalog
+ * provenance — the catalog now serves real transactional listings.
+ */
 export function MarketplaceDemoBanner({
   navigate,
   t,
@@ -33,7 +41,10 @@ export function MarketplaceDemoBanner({
         <div>
           <p className="dh-eyebrow">{t('agritech.marketplace.demo.eyebrow')}</p>
           <h2 id="dh-demo-title">{t('agritech.marketplace.demo.title')}</h2>
-          <p>{t('agritech.marketplace.demo.guest')}</p>
+          <p className="dh-demo-banner__tags">
+            <span className="dh-badge dh-badge--warning">{t('agritech.marketplace.demo.reviewerLabel')}</span>
+          </p>
+          <p>{t('agritech.marketplace.demo.reviewerNotice')}</p>
         </div>
         <button
           className="dh-button dh-button--primary"
@@ -53,6 +64,7 @@ export function MarketplaceDemoBanner({
               <strong>{account.email}</strong>
               <code>{account.password}</code>
               <small>{t(account.roleKey)}</small>
+              <small className="dh-demo-banner__purpose">{t(account.purposeKey)}</small>
             </div>
             <button
               aria-label={`${t('agritech.marketplace.demo.copy')}: ${account.email}`}
@@ -68,6 +80,10 @@ export function MarketplaceDemoBanner({
           </li>
         ))}
       </ul>
+      <p className="dh-demo-banner__prepared">
+        <MarketplaceIcon name="contract" />
+        <span>{t('agritech.marketplace.demo.prepared')}</span>
+      </p>
     </section>
   );
 }

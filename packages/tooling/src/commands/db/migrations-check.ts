@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 
 import {
   expectedMigrationIndexName,
@@ -114,9 +114,18 @@ function validate(file: string, sql: string) {
   }
 }
 
+// The walk yields platform-native paths, so the separator is a backslash on
+// Windows and the pattern below matched nothing there: the check reported
+// "checked: 0" and passed every migration unexamined. Comparing a normalized
+// path makes the gate mean the same thing on every platform, and finding no
+// migrations at all is now a failure rather than a silent pass.
 const migrationFiles = listFiles(join(repoRoot, "libs")).filter((file) =>
-  /\/migrations\/Migration\d+.*\.ts$/.test(file),
+  /\/migrations\/Migration\d+.*\.ts$/.test(file.split(sep).join("/")),
 );
+if (migrationFiles.length === 0) {
+  console.error("Database migration standards check found no migrations to examine.");
+  process.exit(1);
+}
 for (const file of migrationFiles) validate(file, readFileSync(file, "utf8"));
 if (errors.length) {
   console.error("Database migration standards check failed:");

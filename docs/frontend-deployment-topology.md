@@ -239,6 +239,7 @@ runs `docker/frontend-runtime-config.sh` from the nginx
 ```js
 window.__APP_RUNTIME_CONFIG__ = {
   telegramAuthEnabled: true,
+  reviewerAccessEnabled: false,
   userAppUrl: 'https://user-app.product.example',
   adminAppUrl: 'https://admin-app.product.example/admin',
 };
@@ -246,15 +247,30 @@ window.__APP_RUNTIME_CONFIG__ = {
 
 `index.html` loads that file before the app bundle, so
 `resolveFeatureFlag(runtimeValue, buildValue)` (from `@app/frontend-api-support`)
-reads it synchronously. Precedence is runtime → Vite build value → `false`, and an
-unset or unparsable runtime value falls through, so a deployment can only override
-a flag deliberately.
+reads it synchronously. Precedence is runtime → Vite build value → the flag's own
+default (`false` unless the reader passes one), and an unset or unparsable runtime
+value falls through, so a deployment can only override a flag deliberately.
 
 | Surface        | How to set it                                                         |
 | -------------- | --------------------------------------------------------------------- |
 | Compose (prod) | `AUTH_TELEGRAM_ENABLED` / `DISCORD_AUTH_ENABLED` in `.env.production` |
 | Kubernetes     | `frontendRuntimeConfig.TELEGRAM_AUTH_ENABLED: 'true'` in Helm values  |
 | Local dev      | `VITE_TELEGRAM_AUTH_ENABLED` (build-time default)                     |
+
+`reviewerAccessEnabled` is the one flag that ships **enabled**: the user app
+publishes the three demo reviewer identities on the marketplace home so a
+commission can sign in as each role for the MVP review. Turning it off needs no
+code change:
+
+| Surface        | How to set it                                             |
+| -------------- | --------------------------------------------------------- |
+| Compose (prod) | `REVIEWER_ACCESS_ENABLED=false` in `.env.production`      |
+| Kubernetes     | `frontendRuntimeConfig.REVIEWER_ACCESS_ENABLED: 'false'`  |
+| Local dev      | `VITE_REVIEWER_ACCESS_ENABLED=false` (build-time default) |
+
+The published identities are deliberately public demo-seed accounts, never real
+or production credentials. Leave the flag off for any deployment that must not
+carry them.
 
 Compose derives landing destinations from `PUBLIC_DOMAIN` and the declared
 public mode: `per-app-domains` uses the user-app HTTPS origin at `/` and the

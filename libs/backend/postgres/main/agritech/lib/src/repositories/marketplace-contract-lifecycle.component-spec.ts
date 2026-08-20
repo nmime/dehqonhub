@@ -508,6 +508,26 @@ describe('marketplace contract lifecycle PostgreSQL authority', { sequential: tr
       ),
     ).toEqual([{ commissionCount: 1, eligibilityCount: 1, eventCount: 6, intentCount: 12, stock: 10 }]);
   }, 120_000);
+
+  it('reports a lifecycle read on an unsigned deal as an absent sub-resource, not a bad request', async () => {
+    const database = requireOrm(orm);
+    const fixture = await seedSigningContract(database.em);
+
+    // Settlement and fulfillment rows come into existence when a deal is signed,
+    // so this read has nothing to answer with. Reporting that as invalid state
+    // reached the client as HTTP 400, which it cannot tell apart from a malformed
+    // call: the contract screen painted a generic failure with a retry button that
+    // could never succeed for the ordinary case of a deal awaiting signature.
+    await expect(lifecycleRepository(database).getLifecycle(fixture.buyer, fixture.contractId)).resolves.toEqual({
+      status: 'not_found',
+    });
+    await expect(lifecycleRepository(database).getLifecycle(fixture.seller, fixture.contractId)).resolves.toEqual({
+      status: 'not_found',
+    });
+    await expect(
+      lifecycleRepository(database).getLifecycleForAdmin(fixture.buyer.tenantId, fixture.contractId),
+    ).resolves.toEqual({ status: 'not_found' });
+  }, 120_000);
 });
 
 const lifecycleEntities = [

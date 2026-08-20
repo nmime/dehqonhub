@@ -44,5 +44,11 @@
   "agritech.marketplace.samples.status.requested": "Запрошен",
   "agritech.marketplace.samples.status.approved": "Одобрен",
   "agritech.marketplace.samples.status.declined": "Отклонён",
-  "agritech.marketplace.samples.status.received": "Получен"
+  "agritech.marketplace.samples.status.received": "Получен",
+  "agritech.marketplace.cart.activeCart": "Активная корзина",
+  "agritech.marketplace.cart.activeCartAnnouncement": "Активная корзина: {{seller}}",
+  "agritech.marketplace.cart.cartTotal": "Сумма корзины",
+  "agritech.marketplace.cart.lineUnavailable": "Позиция больше недоступна — не входит в сумму корзины",
+  "agritech.marketplace.cart.switchTo": "Перейти в корзину продавца {{seller}}",
+  "agritech.marketplace.cart.switcherHint": "Один заказ на одного продавца. Выберите активную корзину."
 }

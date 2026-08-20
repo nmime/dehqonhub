@@ -64,6 +64,8 @@ export class ProduceListingViewDto {
   @ApiProperty() sampleAvailable!: boolean;
   @ApiProperty() pricePerKgUzs!: number;
   @ApiProperty() region!: string;
+  @ApiProperty({ description: 'Root-relative same-origin harvest photographs.', type: [String] })
+  images!: string[];
   @ApiProperty({ format: 'date-time' }) availableFrom!: Date;
   @ApiProperty({ format: 'date-time' }) availableUntil!: Date;
   @ApiProperty({ enum: produceStatuses }) status!: string;

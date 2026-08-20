@@ -394,25 +394,129 @@ describe("unified auth migration integration", { skip: SKIP }, () => {
       }
     }, { timeout: 60_000 });
 
+    /**
+     * Every counter, not a listed subset. The assertion used to name the eight
+     * counters that existed when it was written, so each new fixture table -
+     * sellers, publications, contracts, eligibilities, ratings - broke it on the
+     * key set while every value was still zero, and the failure said nothing
+     * about idempotence. Asserting the property directly keeps it true as the
+     * fixture grows and still fails loudly if any row is written twice.
+     */
     it("is idempotent on second run", async () => {
       const { seedPostgresDatabase } = await import("./postgres-seed.ts");
       const { buildSeedUsers } = await import("./seed-data.ts");
 
       const inserted = await seedPostgresDatabase(dbUrl, buildSeedUsers("Seed@Integration1!", "en"));
-      assert.deepStrictEqual(
-        inserted,
-        {
-          permissions: 0,
-          roles: 0,
-          rolePermissions: 0,
-          users: 0,
-          userRoles: 0,
-          demoPartners: 0,
-          demoVerifications: 0,
-          demoProducts: 0,
-        },
-        "a second seed should insert nothing",
-      );
+      const rewritten = Object.entries(inserted).filter(([, count]) => count !== 0);
+      assert.deepStrictEqual(rewritten, [], "a second seed should insert nothing");
+      for (const counter of ["demoContracts", "demoReviewEligibilities", "demoReviews", "demoReviewReplies"]) {
+        assert.ok(counter in inserted, `${counter} should be reported so its idempotence is actually checked`);
+      }
+    }, { timeout: 60_000 });
+
+    /**
+     * A seeded rating must never displace or duplicate one a real buyer left.
+     *
+     * Three uniqueness rules can already be satisfied by a review this fixture
+     * did not write - `uq__marketplace_listing_reviews__eligibility` and the two
+     * partial indexes on buyer plus source - and a reviewer signed in as a demo
+     * login and rating a purchase through the API satisfies exactly those. Before
+     * the seed guarded against it, that one row aborted the entire seed
+     * transaction on a bare constraint name, so the demo could not be re-seeded
+     * after anybody had used it.
+     *
+     * Staging the state needs the review guard switched off for two statements:
+     * `guard_marketplace_listing_review` refuses every delete, which is correct
+     * in production and is the only thing stopping a test from standing a real
+     * reviewer's rating where the fixture's was. The container is disposable, and
+     * the aggregate is corrected by hand exactly as the trigger would have.
+     */
+    it("keeps a rating a real buyer filed and re-seeds around it", async () => {
+      const { seedPostgresDatabase } = await import("./postgres-seed.ts");
+      const { buildSeedUsers } = await import("./seed-data.ts");
+      const pool = new Pool({ connectionString: dbUrl });
+      try {
+        const target = await pool.query(
+          `SELECT r."id", r."review_eligibility_id" AS eligibility, r."listing_publication_id" AS listing,
+                  r."rating", p."id" AS reply
+             FROM "marketplace_listing_reviews" r
+             JOIN "marketplace_review_replies" p ON p."review_id" = r."id"
+            ORDER BY r."id" LIMIT 1`,
+        );
+        assert.strictEqual(target.rowCount, 1, "the fixture should seed at least one answered review");
+        const { id, eligibility, listing, rating, reply } = target.rows[0];
+
+        await pool.query(`ALTER TABLE "marketplace_review_replies" DISABLE TRIGGER USER`);
+        await pool.query(`ALTER TABLE "marketplace_listing_reviews" DISABLE TRIGGER USER`);
+        await pool.query(`DELETE FROM "marketplace_review_replies" WHERE "id" = $1`, [reply]);
+        await pool.query(`DELETE FROM "marketplace_listing_reviews" WHERE "id" = $1`, [id]);
+        await pool.query(
+          `UPDATE "marketplace_review_aggregates"
+              SET "review_count" = "review_count" - 1, "rating_sum" = "rating_sum" - $2,
+                  "revision" = "revision" + 1, "updated_at" = now()
+            WHERE "listing_publication_id" = $1`,
+          [listing, rating],
+        );
+        await pool.query(`ALTER TABLE "marketplace_listing_reviews" ENABLE TRIGGER USER`);
+        await pool.query(`ALTER TABLE "marketplace_review_replies" ENABLE TRIGGER USER`);
+
+        const filedByBuyer = randomUUID();
+        await pool.query(
+          `INSERT INTO "marketplace_listing_reviews" (
+             "id", "listing_publication_id", "source_kind", "product_id", "produce_listing_id",
+             "review_eligibility_id", "buyer_tenant_id", "buyer_user_id", "buyer_partner_id",
+             "seller_tenant_id", "seller_partner_id", "rating", "comment", "asset_references",
+             "verified_deal", "visibility", "revision", "created_at", "updated_at"
+           )
+           SELECT $1, e."source_publication_id", e."source_kind",
+                  CASE WHEN e."source_kind" = 'product' THEN e."source_id" END,
+                  CASE WHEN e."source_kind" = 'produce' THEN e."source_id" END,
+                  e."id", e."buyer_tenant_id", e."buyer_user_id", e."buyer_partner_id",
+                  e."seller_tenant_id", e."seller_partner_id", 2, 'Filed by the buyer, not by the fixture.',
+                  '[]'::jsonb, true, 'visible', 1, now(), now()
+             FROM "marketplace_contract_review_eligibilities" e
+            WHERE e."id" = $2`,
+          [filedByBuyer, eligibility],
+        );
+
+        const inserted = await seedPostgresDatabase(dbUrl, buildSeedUsers("Seed@Integration1!", "en"));
+        assert.strictEqual(inserted.demoReviews, 0, "the fixture must yield the consumed eligibility");
+        assert.strictEqual(inserted.demoReviewReplies, 0, "a reply without its review must not be attempted");
+
+        const survived = await pool.query(
+          `SELECT "rating", "comment" FROM "marketplace_listing_reviews" WHERE "id" = $1`,
+          [filedByBuyer],
+        );
+        assert.strictEqual(survived.rowCount, 1, "the buyer's own rating must survive a re-seed");
+        assert.strictEqual(survived.rows[0].rating, 2);
+        const resurrected = await pool.query(`SELECT 1 FROM "marketplace_listing_reviews" WHERE "id" = $1`, [id]);
+        assert.strictEqual(resurrected.rowCount, 0, "the fixture must not write a second rating for one purchase");
+
+        const incoherent = await pool.query(
+          `SELECT count(*)::int AS total FROM (
+             SELECT a."listing_publication_id"
+               FROM "marketplace_review_aggregates" a
+               LEFT JOIN (SELECT "listing_publication_id", count(*) AS "n", sum("rating") AS "s"
+                            FROM "marketplace_listing_reviews" WHERE "visibility" = 'visible'
+                           GROUP BY 1) v ON v."listing_publication_id" = a."listing_publication_id"
+              WHERE coalesce(v."n", 0) <> a."review_count" OR coalesce(v."s", 0) <> a."rating_sum"
+             UNION ALL
+             SELECT v."listing_publication_id"
+               FROM (SELECT "listing_publication_id" FROM "marketplace_listing_reviews"
+                      WHERE "visibility" = 'visible' GROUP BY 1) v
+               LEFT JOIN "marketplace_review_aggregates" a
+                 ON a."listing_publication_id" = v."listing_publication_id"
+              WHERE a."listing_publication_id" IS NULL
+           ) x`,
+        );
+        assert.strictEqual(
+          incoherent.rows[0].total,
+          0,
+          "every published average must still equal the rows behind it",
+        );
+      } finally {
+        await pool.end();
+      }
     }, { timeout: 60_000 });
   });
 }, { timeout: 180_000 });

@@ -100,6 +100,87 @@ describe('HealthService', () => {
     });
   });
 
+  it('refuses to report a required indicator that never executed as healthy', async () => {
+    const service = new HealthService({
+      appName: 'user-app-api',
+      indicators: [
+        {
+          name: 'runtime',
+          livenessSafe: true,
+          check: () => ({ name: 'runtime', status: 'ok' }),
+        },
+        {
+          // Exactly the shape a dependency indicator produces when its client
+          // was never wired: success without a round trip.
+          name: 'database',
+          required: true,
+          check: () =>
+            Promise.resolve({
+              name: 'database',
+              status: 'ok' as const,
+              details: { skipped: true, reason: 'not_configured' },
+            }),
+        },
+      ],
+    });
+
+    const readiness = await service.check('ready');
+
+    expect(readiness.checks[1]).toMatchObject({
+      name: 'database',
+      status: 'error',
+      required: true,
+      details: { skipped: true, reason: 'not_configured' },
+    });
+    expect(readiness.status).toBe('error');
+    expect(hasRequiredReadinessFailure(readiness)).toBe(true);
+    await expect(service.checkLiveness()).resolves.toMatchObject({ data: { status: 'ok' } });
+  });
+
+  it('fails a required indicator that declares itself skipped and keeps optional ones passing', async () => {
+    const service = new HealthService({
+      appName: 'api',
+      indicators: [
+        { name: 'database', required: true, check: () => ({ name: 'database', status: 'skipped' }) },
+        { name: 'nats', required: false, check: () => ({ name: 'nats', status: 'skipped' }) },
+        { name: 'redis', required: false, check: () => ({ name: 'redis', status: 'ok', details: { skipped: true } }) },
+      ],
+    });
+
+    const readiness = await service.check('ready');
+
+    expect(readiness.checks.map((check) => [check.name, check.status])).toEqual([
+      ['database', 'error'],
+      ['nats', 'skipped'],
+      ['redis', 'ok'],
+    ]);
+    expect(readiness.status).toBe('error');
+  });
+
+  it('bounds every indicator so a hung dependency fails readiness instead of hanging the probe', async () => {
+    const service = new HealthService({
+      appName: 'api',
+      indicatorTimeoutMs: 5,
+      indicators: [
+        {
+          name: 'database',
+          required: true,
+          check: () => new Promise<never>(() => undefined),
+        },
+      ],
+    });
+
+    const readiness = await service.check('ready');
+
+    expect(readiness.checks[0]).toMatchObject({
+      name: 'database',
+      status: 'error',
+      required: true,
+      details: { message: 'Health indicator timed out.' },
+    });
+    expect(readiness.status).toBe('error');
+  });
+
   it('aggregates required errors as error and optional errors as degraded', () => {
     expect(
       resolveHealthStatus([

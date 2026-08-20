@@ -10,7 +10,11 @@ import { MarketplaceEngagementDomainService } from './marketplace-engagement.dom
 
 const owner = { tenantId: 'tenant-buyer', userId: 'buyer-user' };
 const listingPublicationId = 'public-listing-1';
-const demoListingPublicationId = 'dec0de00-0000-4000-8000-000000000001';
+// Demo ratings are addressed by the publication ids the demo catalog publishes,
+// which is what the public reviews route is keyed by.
+const demoListingPublicationId = '9d000000-0000-4000-8000-000000000101';
+// A demo listing the fixture deliberately leaves unrated.
+const unratedDemoListingPublicationId = '9d000000-0000-4000-8000-000000000103';
 const key = 'engagement-0001';
 const ok = <T>(value: T) => ({ status: 'ok' as const, value });
 
@@ -18,11 +22,15 @@ function fixture() {
   const repository = {
     activateSamplePolicy: vi.fn().mockResolvedValue(ok({ monthlyLimit: 3, version: 2 })),
     addFavorite: vi.fn().mockResolvedValue(ok({ favorited: true })),
+    getReviewSelfState: vi.fn().mockResolvedValue(ok({ canReview: true, listingPublicationId })),
     getSamplePolicy: vi.fn().mockResolvedValue({ monthlyLimit: 2, version: 1 }),
     getSampleUsage: vi.fn().mockResolvedValue(ok({ remaining: 1, used: 1 })),
     listFavorites: vi.fn().mockResolvedValue([{ listingPublicationId }]),
     listPublicReviews: vi.fn().mockResolvedValue(ok({ aggregate: { reviewCount: 1 }, items: [{ id: 'review-1' }] })),
     listReviewModerationQueue: vi.fn().mockResolvedValue([{ id: 'report-1' }]),
+    listOwnReviews: vi
+      .fn()
+      .mockResolvedValue(ok({ awaitingReview: [], received: [], written: [{ review: { id: 'review-1' } }] })),
     listSamples: vi.fn().mockResolvedValue([{ id: 'sample-1' }]),
     moderateReviewReport: vi.fn().mockResolvedValue(ok({ decision: 'hidden' })),
     removeFavorite: vi.fn().mockResolvedValue(ok({ favorited: false })),
@@ -33,7 +41,11 @@ function fixture() {
     submitSampleFeedback: vi.fn().mockResolvedValue(ok({ id: 'sample-1' })),
     transitionSample: vi.fn().mockResolvedValue(ok({ id: 'sample-1' })),
   };
-  return { repository, service: new MarketplaceEngagementDomainService(repository as never) };
+  // A review may only carry photographs the reviewing account uploaded. The
+  // guard is a collaborator so this suite can assert it is consulted, and so a
+  // future asset store cannot be swapped in without the check going with it.
+  const assets = { requireOwnedReferences: vi.fn().mockResolvedValue(undefined) };
+  return { assets, repository, service: new MarketplaceEngagementDomainService(repository as never, assets) };
 }
 
 describe('MarketplaceEngagementDomainService favorites and reads', () => {
@@ -50,6 +62,33 @@ describe('MarketplaceEngagementDomainService favorites and reads', () => {
 
     expect(repository.addFavorite).toHaveBeenCalledWith(owner, listingPublicationId, key);
     expect(repository.removeFavorite).toHaveBeenCalledWith(owner, listingPublicationId, key);
+  });
+
+  /**
+   * The own-review read has no demo fallback, unlike `listPublicReviews`. A demo
+   * fixture standing in for a personal review history would be a claim about what
+   * this account did, so an account with no reviews answers with empty lists and a
+   * repository refusal stays a refusal.
+   */
+  it('reads the caller own review record without ever substituting demo rows', async () => {
+    const { repository, service } = fixture();
+
+    await expect(service.listOwnReviews(owner)).resolves.toEqual({
+      awaitingReview: [],
+      received: [],
+      written: [{ review: { id: 'review-1' } }],
+    });
+    expect(repository.listOwnReviews).toHaveBeenCalledWith(owner);
+
+    repository.listOwnReviews.mockResolvedValue(ok({ awaitingReview: [], received: [], written: [] }));
+    await expect(service.listOwnReviews(owner)).resolves.toEqual({
+      awaitingReview: [],
+      received: [],
+      written: [],
+    });
+
+    repository.listOwnReviews.mockResolvedValue({ status: 'forbidden' });
+    await expect(service.listOwnReviews(owner)).rejects.toThrow(ForbiddenException);
   });
 
   /**
@@ -182,6 +221,23 @@ describe('MarketplaceEngagementDomainService samples', () => {
 describe('MarketplaceEngagementDomainService reviews', () => {
   const reviewId = 'review-1';
 
+  it('refuses a photograph the reviewing party did not upload, and never reaches the repository', async () => {
+    const { assets, repository, service } = fixture();
+    const input = { assetReferences: ['public-asset:abcdefgh'], listingPublicationId, rating: 4 };
+
+    await service.submitReview(owner, input as never, key);
+    // The guard sees exactly the handles the review will carry, so a reference
+    // cannot be checked and then replaced on the way to persistence.
+    expect(assets.requireOwnedReferences).toHaveBeenCalledWith(owner, ['public-asset:abcdefgh'], 'assetReferences');
+
+    assets.requireOwnedReferences.mockRejectedValueOnce(
+      new BadRequestException({ meta: { field: 'assetReferences' } }),
+    );
+    repository.submitReview.mockClear();
+    await expect(service.submitReview(owner, input as never, key)).rejects.toThrow(BadRequestException);
+    expect(repository.submitReview).not.toHaveBeenCalled();
+  });
+
   it('accepts up to three distinct public asset references and normalizes the comment', async () => {
     const { repository, service } = fixture();
     const submit = (input: unknown) => service.submitReview(owner, input as never, key);
@@ -192,6 +248,7 @@ describe('MarketplaceEngagementDomainService reviews', () => {
       listingPublicationId,
       rating: 5,
     });
+
     expect(repository.submitReview).toHaveBeenCalledWith(
       owner,
       {
@@ -244,20 +301,54 @@ describe('MarketplaceEngagementDomainService reviews', () => {
 
     repository.listPublicReviews.mockResolvedValue(ok({ aggregate: { reviewCount: 0 }, items: [] }));
     await expect(service.listPublicReviews(demoListingPublicationId)).resolves.toMatchObject({
-      aggregate: { listingPublicationId: demoListingPublicationId, reviewCount: 2 },
+      aggregate: { listingPublicationId: demoListingPublicationId, reviewCount: 3 },
     });
-    // A publication the repository has never heard of still gets the demo block.
+    // A demo publication the repository has never heard of still gets its block:
+    // it exists only as a fixture, so the repository cannot find it at all.
     repository.listPublicReviews.mockResolvedValue({ status: 'not_found' });
     await expect(service.listPublicReviews(demoListingPublicationId)).resolves.toMatchObject({
-      aggregate: { reviewCount: 2 },
+      aggregate: { reviewCount: 3 },
     });
 
-    // Without demo ratings to fall back on, an empty page stays empty and a
-    // missing publication stays missing.
+    // A governed listing nobody has reviewed is a listing with no reviews, and it
+    // says so rather than borrowing a fixture's stars. A missing one stays missing.
     repository.listPublicReviews.mockResolvedValue(ok({ aggregate: { reviewCount: 0 }, items: [] }));
     await expect(service.listPublicReviews(listingPublicationId)).resolves.toMatchObject({ items: [] });
     repository.listPublicReviews.mockResolvedValue({ status: 'not_found' });
     await expect(service.listPublicReviews(listingPublicationId)).rejects.toThrow(ResourceNotFoundException);
+
+    // An unrated demo listing answers with its own empty block, not a 404.
+    await expect(service.listPublicReviews(unratedDemoListingPublicationId)).resolves.toEqual({
+      aggregate: {
+        averageRating: null,
+        listingPublicationId: unratedDemoListingPublicationId,
+        reviewCount: 0,
+        revision: 0,
+      },
+      items: [],
+    });
+  });
+
+  /**
+   * The caller's own standing is read from persisted eligibility, never guessed
+   * from the author-free public projection. A demo listing is not transactional,
+   * so it can never produce the completed contract this read looks for.
+   */
+  it('reports the own review standing of a caller, and refuses no one a demo listing', async () => {
+    const { repository, service } = fixture();
+
+    await expect(service.getReviewSelfState(owner, listingPublicationId)).resolves.toEqual({
+      canReview: true,
+      listingPublicationId,
+    });
+    expect(repository.getReviewSelfState).toHaveBeenCalledWith(owner, listingPublicationId);
+
+    repository.getReviewSelfState.mockResolvedValue({ status: 'not_found' });
+    await expect(service.getReviewSelfState(owner, demoListingPublicationId)).resolves.toEqual({
+      canReview: false,
+      listingPublicationId: demoListingPublicationId,
+    });
+    await expect(service.getReviewSelfState(owner, listingPublicationId)).rejects.toThrow(ResourceNotFoundException);
   });
 
   it('requires a seller reply to actually say something', async () => {

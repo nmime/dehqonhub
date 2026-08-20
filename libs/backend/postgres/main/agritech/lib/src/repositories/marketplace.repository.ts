@@ -35,12 +35,14 @@ import type {
   VerificationRejectionReason,
 } from '@app/backend-feature-agritech-shared';
 import {
+  canChooseRequestOffer,
   hasRequiredVerificationDocuments,
   isVerificationReviewReasonValid,
   marketplaceProviderFingerprint,
   marketplaceProviderOperationScopes,
   type AgriTechOwner,
 } from '@app/backend-feature-agritech-shared';
+import { marketplaceCapabilityRoleFilter } from './marketplace-role-predicates';
 import { createHash, randomUUID } from 'node:crypto';
 import {
   BuyerRequestEntity,
@@ -96,6 +98,31 @@ const forbiddenProviderReceiptKeyFragments = [
   'tin',
 ] as const;
 
+const promotionBillingLockKey = (resourceId: string): string =>
+  `marketplace-provider-operation:promotion_billing:${resourceId}`;
+
+/**
+ * Reads the operation's capability and resource without taking a row lock, then
+ * takes the promotion charge's resource-scoped advisory lock so preparation and
+ * completion of one promotion never interleave their row locks.
+ */
+const claimPromotionBillingLock = async (
+  em: EntityManager,
+  owner: AgriTechOwner,
+  operationId: string,
+): Promise<void> => {
+  const scopes = await em.execute<Array<{ capability: string; resourceId: string }>>(
+    `select capability, resource_id as "resourceId"
+       from marketplace_provider_operations
+      where id = ? and tenant_id = ? and user_id = ?`,
+    [operationId, owner.tenantId, owner.userId],
+  );
+  const scope = scopes[0];
+  if (scope?.capability === 'promotion_billing') {
+    await em.execute('select pg_advisory_xact_lock(hashtext(?))', [promotionBillingLockKey(scope.resourceId)]);
+  }
+};
+
 function providerOperationLockKey(owner: AgriTechOwner, input: MarketplaceProviderOperationPreparation): string {
   const resourceScope = `${input.capability}:${input.resourceType}:${input.resourceId}:${input.resourceRevision}`;
   if (['contract_artifact_storage', 'direct_payment', 'factoring'].includes(input.capability)) {
@@ -104,6 +131,11 @@ function providerOperationLockKey(owner: AgriTechOwner, input: MarketplaceProvid
   const actorScope = `${owner.tenantId}:${owner.userId}:${input.actorType}:${resourceScope}`;
   if (input.capability === 'qualified_signature') {
     return `marketplace-provider-operation:${actorScope}`;
+  }
+  // A promotion charge serializes on the promotion itself, never on the command
+  // key, so two concurrent activation commands cannot both bill one slot.
+  if (input.capability === 'promotion_billing') {
+    return promotionBillingLockKey(input.resourceId);
   }
   if (['verification_documents', 'dispute_evidence_storage'].includes(input.capability)) {
     return `marketplace-provider-operation:${actorScope}:${input.requestFingerprint}`;
@@ -331,6 +363,7 @@ const isProviderCompletionValid = (
 };
 
 interface ProviderResourceAnchor {
+  promotionStatus?: string;
   verification?: VerificationEntity;
 }
 
@@ -382,14 +415,15 @@ const lockPromotionProviderResource = async (
   if (actorType !== 'promotion_owner') {
     return undefined;
   }
-  const rows = await em.execute<Array<{ id: string }>>(
-    `select id
+  const rows = await em.execute<Array<{ id: string; status: string }>>(
+    `select id, status
        from marketplace_listing_promotions
       where id = ? and tenant_id = ? and actor_user_id = ?
       for update`,
     [resourceId, owner.tenantId, owner.userId],
   );
-  return rows.length === 1 ? {} : undefined;
+  const promotion = rows[0];
+  return rows.length === 1 && promotion ? { promotionStatus: promotion.status } : undefined;
 };
 
 const lockProviderResource = (
@@ -439,7 +473,7 @@ const toCart = (e: CartEntity, seller: Pick<AgriTechPartnerEntity, 'legalName' |
   updatedAt: e.updatedAt,
 });
 
-const toRequest = (e: BuyerRequestEntity): BuyerRequest => ({
+const toRequest = (e: BuyerRequestEntity, publication?: MarketplaceRequestPublicationEntity): BuyerRequest => ({
   id: e.id,
   tenantId: e.tenantId,
   buyerUserId: e.buyerUserId,
@@ -452,9 +486,34 @@ const toRequest = (e: BuyerRequestEntity): BuyerRequest => ({
   budgetUzs: e.budgetUzs === null ? undefined : Number(e.budgetUzs),
   requirements: e.requirements ?? undefined,
   status: e.status,
+  // The offer endpoints are keyed by the publication, never by the request row, so
+  // a reader that never sees this id cannot reach its own offers. It stays absent
+  // while the request is unpublished rather than falling back to the request id.
+  publicationId: publication?.id,
+  publicationStatus: publication?.status,
+  moderationStatus: publication?.moderationStatus,
   createdAt: e.createdAt,
   updatedAt: e.updatedAt,
 });
+
+/**
+ * The left side of the request-to-publication join. A request without a publication
+ * keeps its entry absent, which is what marks it as still awaiting moderation.
+ */
+const findRequestPublications = async (
+  em: EntityManager,
+  tenantId: string,
+  requests: readonly BuyerRequestEntity[],
+): Promise<Map<string, MarketplaceRequestPublicationEntity>> => {
+  if (requests.length === 0) {
+    return new Map();
+  }
+  const rows = await em.find(MarketplaceRequestPublicationEntity, {
+    requestId: { $in: requests.map((request) => request.id) },
+    tenantId,
+  });
+  return new Map(rows.map((row) => [row.requestId, row]));
+};
 
 const toOffer = (e: RequestOfferEntity, seller: Pick<AgriTechPartnerEntity, 'legalName' | 'region'>): RequestOffer => ({
   buyerPartnerId: e.buyerPartnerId as string,
@@ -664,6 +723,34 @@ const executeCommerceOperation = async <T>(
   return result;
 };
 
+/**
+ * The persisted single-award rules, by the exact names
+ * `Migration20260812120000GuardMarketplaceOfferSelection` gives them. A
+ * database that refuses a second award is telling the caller the request is
+ * already decided, which is a conflict on the request stage — never a server
+ * fault.
+ */
+const marketplaceSingleAwardConstraints = [
+  'uq__marketplace_request_offers__request_id',
+  'ck__marketplace_contracts__offer_selection',
+  'ck__marketplace_requests__stage_authority',
+];
+
+const violatedConstraintName = (error: Error): string => {
+  const named = (error as { constraint?: unknown }).constraint;
+  return typeof named === 'string' ? named : '';
+};
+
+const isMarketplaceSingleAwardViolation = (error: unknown): boolean => {
+  for (let cause: unknown = error; cause instanceof Error; cause = cause.cause) {
+    const text = `${cause.message} ${violatedConstraintName(cause)}`;
+    if (marketplaceSingleAwardConstraints.some((constraint) => text.includes(constraint))) {
+      return true;
+    }
+  }
+  return false;
+};
+
 const lockAuthorizedMarketplaceParty = async (
   em: EntityManager,
   owner: AgriTechOwner,
@@ -700,7 +787,7 @@ const lockAuthorizedMarketplaceParty = async (
   const verification = await em.findOne(
     VerificationEntity,
     {
-      role: capability === 'buyer' ? 'buyer' : { $in: ['farmer', 'seller'] },
+      role: marketplaceCapabilityRoleFilter(capability),
       status: 'verified',
       tenantId: owner.tenantId,
       userId: owner.userId,
@@ -973,11 +1060,17 @@ export class PostgresMarketplaceRepository
       );
       const contractPartyClaim = input.capability === 'qualified_signature';
       const fingerprintClaim = ['verification_documents', 'dispute_evidence_storage'].includes(input.capability);
-      const semanticClaim = contractGlobalClaim || contractPartyClaim || fingerprintClaim;
+      const promotionChargeClaim = input.capability === 'promotion_billing';
+      const semanticClaim = contractGlobalClaim || contractPartyClaim || fingerprintClaim || promotionChargeClaim;
       await em.execute('select pg_advisory_xact_lock(hashtext(?))', [providerOperationLockKey(owner, input)]);
       const anchor = await lockProviderResource(em, owner, input.actorType, input.resourceType, input.resourceId);
       if (!anchor) {
         return { status: 'not_found', field: 'resource' };
+      }
+      // A promotion is billable only while its slot is still reserved. Once it
+      // serves — or once the reservation lapsed — no further charge is prepared.
+      if (promotionChargeClaim && anchor.promotionStatus !== 'pending_billing') {
+        return { status: 'conflict', field: 'status' };
       }
       if (input.capability === 'dispute_evidence_storage') {
         const disputes = await em.execute<Array<{ revision: number; status: string }>>(
@@ -1060,7 +1153,8 @@ export class PostgresMarketplaceRepository
               capability: input.capability,
               ...(fingerprintClaim ? { requestFingerprint: input.requestFingerprint } : {}),
               resourceId: input.resourceId,
-              resourceRevision: input.resourceRevision,
+              // One charge per promotion, whatever revision asks for it.
+              ...(promotionChargeClaim ? {} : { resourceRevision: input.resourceRevision }),
               resourceType: input.resourceType,
               ...(existing ? { id: { $ne: existing.id } } : {}),
               $or: [{ status: { $in: ['started', 'succeeded'] } }, { reconciliationRequired: true, status: 'failed' }],
@@ -1401,6 +1495,12 @@ export class PostgresMarketplaceRepository
   ): Promise<OperationResult<MarketplaceProviderOperationReplay>> {
     return this.em.transactional(async (em) => {
       const now = new Date();
+      // A promotion charge takes the same resource-scoped advisory lock that
+      // preparation takes, before any row lock. Preparation locks the promotion
+      // and then the operation; completion locks them in the opposite order, so
+      // a retry of the same command key racing an in-flight charge would
+      // otherwise deadlock instead of conflicting cleanly.
+      await claimPromotionBillingLock(em, owner, operationId);
       const operation = await em.findOne(
         MarketplaceProviderOperationEntity,
         { id: operationId, tenantId: owner.tenantId, userId: owner.userId },
@@ -1966,24 +2066,24 @@ export class PostgresMarketplaceRepository
     );
   }
 
-  listRequests(tenantId: string, status?: string): Promise<BuyerRequest[]> {
+  async listRequests(tenantId: string, status?: string): Promise<BuyerRequest[]> {
     const where: Record<string, unknown> = { bindingStatus: 'resolved', tenantId };
     if (status && status !== 'all') {
       where.status = status;
     }
-    return this.em
-      .find(BuyerRequestEntity, where, { orderBy: { createdAt: 'DESC' } })
-      .then((rows) => rows.map(toRequest));
+    const rows = await this.em.find(BuyerRequestEntity, where, { orderBy: { createdAt: 'DESC' } });
+    const publications = await findRequestPublications(this.em, tenantId, rows);
+    return rows.map((row) => toRequest(row, publications.get(row.id)));
   }
 
-  listMyRequests(owner: AgriTechOwner): Promise<BuyerRequest[]> {
-    return this.em
-      .find(
-        BuyerRequestEntity,
-        { bindingStatus: 'resolved', tenantId: owner.tenantId, buyerUserId: owner.userId },
-        { orderBy: { createdAt: 'DESC' } },
-      )
-      .then((rows) => rows.map(toRequest));
+  async listMyRequests(owner: AgriTechOwner): Promise<BuyerRequest[]> {
+    const rows = await this.em.find(
+      BuyerRequestEntity,
+      { bindingStatus: 'resolved', tenantId: owner.tenantId, buyerUserId: owner.userId },
+      { orderBy: { createdAt: 'DESC' } },
+    );
+    const publications = await findRequestPublications(this.em, owner.tenantId, rows);
+    return rows.map((row) => toRequest(row, publications.get(row.id)));
   }
 
   async makeOffer(
@@ -2146,6 +2246,28 @@ export class PostgresMarketplaceRepository
     offerId: string,
     idempotencyKey: string,
   ): Promise<OperationResult<OfferSelectionResult>> {
+    try {
+      return await this.chooseOfferTransaction(owner, requestPublicId, offerId, idempotencyKey);
+    } catch (error) {
+      // The pessimistic write lock on the request row already serializes two
+      // concurrent buyers, so the loser normally reads `selected` and is
+      // refused above. This arm exists so that a second award which reaches
+      // the database anyway — another API instance, a lock path lost to a
+      // future refactor — still leaves with the same typed conflict naming the
+      // request stage instead of an unexpected server error.
+      if (isMarketplaceSingleAwardViolation(error)) {
+        return { status: 'conflict', field: 'status' };
+      }
+      throw error;
+    }
+  }
+
+  private chooseOfferTransaction(
+    owner: AgriTechOwner,
+    requestPublicId: string,
+    offerId: string,
+    idempotencyKey: string,
+  ): Promise<OperationResult<OfferSelectionResult>> {
     return this.em.transactional((em) =>
       executeCommerceOperation(em, owner, 'offer_choose', requestPublicId, idempotencyKey, { offerId }, async () => {
         const publication = await em.findOne(
@@ -2180,7 +2302,7 @@ export class PostgresMarketplaceRepository
         if (!request) {
           return { status: 'not_found' };
         }
-        if (request.status !== 'offering' && request.status !== 'open') {
+        if (!canChooseRequestOffer(request.status)) {
           return { status: 'conflict', field: 'status' };
         }
         const offer = await em.findOne(

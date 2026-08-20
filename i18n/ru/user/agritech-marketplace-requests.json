@@ -1,5 +1,5 @@
 {
-  "agritech.marketplace.orders": "Запросы на закупку",
+  "agritech.marketplace.orders": "Запросы",
   "agritech.marketplace.orders.title": "Запросы на закупку",
   "agritech.marketplace.orders.create": "Создать запрос на закупку",
   "agritech.marketplace.orders.my": "Мои запросы на закупку",
@@ -30,5 +30,18 @@
   "agritech.marketplace.orders.publish": "Опубликовать запрос на закупку",
   "agritech.marketplace.orders.requestTitle": "Название запроса",
   "agritech.marketplace.orders.reverseAuction": "Предложения продавцов",
-  "agritech.marketplace.orders.unavailable": "Запросы на закупку недоступны. Попробуйте ещё раз."
+  "agritech.marketplace.orders.unavailable": "Запросы на закупку недоступны. Попробуйте ещё раз.",
+  "agritech.marketplace.orders.progress": "Ход запроса",
+  "agritech.marketplace.orders.stage.draft": "Черновик",
+  "agritech.marketplace.orders.stage.moderation": "Модерация",
+  "agritech.marketplace.orders.stage.collecting": "Сбор предложений",
+  "agritech.marketplace.orders.stage.selected": "Предложение выбрано",
+  "agritech.marketplace.orders.stage.contract": "Договор",
+  "agritech.marketplace.orders.details": "Детали запроса",
+  "agritech.marketplace.orders.howItWorks": "Как это работает",
+  "agritech.marketplace.orders.howItWorksHint": "Продавцы конкурируют за ваш запрос. Выберите предложение — условия фиксируются в договоре.",
+  "agritech.marketplace.orders.backToMine": "К моим запросам на закупку",
+  "agritech.marketplace.orders.viewRequest": "Открыть запрос",
+  "agritech.marketplace.orders.notFound": "Запрос на закупку не найден",
+  "agritech.marketplace.orders.notFoundDescription": "Этого запроса нет в вашем списке. Откройте свои запросы на закупку и выберите нужный."
 }

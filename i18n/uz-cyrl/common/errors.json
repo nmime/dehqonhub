@@ -45,5 +45,7 @@
   "validation.constraints.max": "{{property}} рухсат этилган максимал қийматдан ошмаслиги керак",
   "validation.constraints.isIn": "{{property}} рухсат этилган қийматлардан бири бўлиши керак",
   "validation.constraints.isUuid": "{{property}} UUID бўлиши керак",
-  "validation.constraints.isArray": "{{property}} массив бўлиши керак"
+  "validation.constraints.isArray": "{{property}} массив бўлиши керак",
+  "errors.marketplace-media-storage-unavailable.title": "Фотосурат сақлаш жойи мавжуд эмас",
+  "errors.marketplace-media-storage-unavailable.detail": "Бу ўрнатма фотосуратларни сақлай олмайди: объект сақлаш жойи созланмаган ёки унга уланиб бўлмади. Ҳеч нарса сақланмади."
 }

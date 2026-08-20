@@ -55,6 +55,10 @@ vi.mock('@app/frontend-runtime', () => ({
   useI18n: () => ({ locale: 'en', t: (key: string) => key }),
 }));
 
+vi.mock('@app/frontend-feature-user-logout', () => ({
+  useLogout: () => ({ model: { isPending: false }, signOut: () => undefined }),
+}));
+
 vi.mock('@app/frontend-api-client', async (importOriginal) => {
   const actual = await importOriginal<typeof import('@app/frontend-api-client')>();
   return {
@@ -149,6 +153,7 @@ const product: MarketplaceListing = {
   priceUzs: 1_250_000,
   promoted: false,
   provenance: 'live',
+  rating: { average: 4.6, count: 12 },
   region: 'Samarqand',
   sampleAvailable: true,
   section: 'seeds',
@@ -160,12 +165,29 @@ const product: MarketplaceListing = {
   unit: 't',
 };
 
+// The request row id and the request publication id are different values on purpose:
+// the offer endpoints only accept the publication id, and passing the request id is
+// the defect these fixtures guard against.
+const requestPublicationId = 'request-publication-1';
+
 const request: BuyerRequestViewDto = {
   createdAt: now,
-  id: 'request-public-1',
+  id: 'request-1',
+  moderationStatus: 'approved',
+  publicationId: requestPublicationId,
+  publicationStatus: 'published',
   region: 'Samarqand',
   status: 'offering',
   title: 'Need certified corn seed',
+  updatedAt: now,
+};
+
+const unpublishedRequest: BuyerRequestViewDto = {
+  createdAt: now,
+  id: 'request-unpublished',
+  region: 'Samarqand',
+  status: 'open',
+  title: 'Awaiting moderation',
   updatedAt: now,
 };
 
@@ -175,7 +197,7 @@ const offer: OfferViewDto = {
   deliveryTerms: 'seller_delivery',
   id: 'offer-1',
   priceUzs: 4_500_000,
-  requestPublicId: request.id,
+  requestPublicId: requestPublicationId,
   seller: { displayName: 'Seed cooperative', region: 'Tashkent' },
   status: 'pending',
 };
@@ -262,6 +284,7 @@ const sample: MarketplaceSampleDto = {
   listing: {
     id: product.id,
     kind: 'product',
+    rating: { average: 4.6, count: 12 },
     sampleAvailable: true,
     seller: { displayName: product.supplierName, id: product.supplierId },
     title: product.name,
@@ -338,6 +361,7 @@ const buildMarketplaceData = (refresh: ReturnType<typeof vi.fn>): MarketplaceDat
       listing: {
         id: product.id,
         kind: 'product',
+        rating: { average: 4.6, count: 12 },
         sampleAvailable: true,
         seller: { displayName: product.supplierName, id: product.supplierId },
         title: product.name,
@@ -364,7 +388,7 @@ const buildMarketplaceData = (refresh: ReturnType<typeof vi.fn>): MarketplaceDat
   ownedRequestPublications: ready([
     {
       buyerDisplayName: 'Buyer cooperative',
-      id: request.id,
+      id: requestPublicationId,
       kind: 'request',
       moderationStatus: 'approved',
       revision: 1,
@@ -413,6 +437,7 @@ const buildMarketplaceData = (refresh: ReturnType<typeof vi.fn>): MarketplaceDat
       id: 'produce-1',
       pricePerKgUzs: 5_000,
       quantityKg: 500,
+      rating: { average: 4.6, count: 12 },
       region: 'Samarqand',
       sampleAvailable: true,
       status: 'active',
@@ -478,6 +503,7 @@ const buildMarketplaceData = (refresh: ReturnType<typeof vi.fn>): MarketplaceDat
       name: product.name,
       partnerId: 'supplier-partner',
       priceUzs: product.priceUzs,
+      rating: { average: 4.6, count: 12 },
       region: product.region,
       sampleAvailable: true,
       status: 'active',
@@ -847,6 +873,18 @@ describe('MarketplacePage route action orchestration', () => {
       expect(apiMock('marketplaceControllerMakeOffer')).toHaveBeenCalledWith(
         request.id,
         expect.objectContaining({ actingPartnerId: 'supplier-partner', priceUzs: 4_500_000 }),
+        expect.any(String),
+        testState.requestOptions,
+      );
+      expect(apiMock('marketplaceControllerChooseOffer')).toHaveBeenCalledWith(
+        requestPublicationId,
+        offer.id,
+        expect.any(String),
+        testState.requestOptions,
+      );
+      expect(apiMock('marketplaceControllerChooseOffer')).not.toHaveBeenCalledWith(
+        request.id,
+        offer.id,
         expect.any(String),
         testState.requestOptions,
       );
@@ -1519,23 +1557,25 @@ describe('MarketplacePage route action orchestration', () => {
       ...buildMarketplaceData(refresh),
       verification: ready({ ...verification, role: 'seller' }),
     };
+    // A seller cannot buy and a buyer cannot sell: that is the shape of the role,
+    // not a prerequisite either of them can clear, so no surface offers an action.
     mount(sellerData);
-    viewProps<ProductActions>('home').onTransactionAction?.();
+    expect(viewProps<ProductActions>('home').onTransactionAction).toBeUndefined();
     mount(sellerData, { view: 'cart' });
-    viewProps<CartActions>('cart').onCheckoutAction?.();
+    expect(viewProps<CartActions>('cart').onCheckoutAction).toBeUndefined();
     mount(sellerData, { view: 'requests' });
-    viewProps<RequestActions>('requests').onBuyerAccessAction?.();
+    expect(viewProps<RequestActions>('requests').onBuyerAccessAction).toBeUndefined();
     mount(sellerData, { view: 'account' });
-    viewProps<ManagementActions>('management').onBuyerAccessAction?.();
+    expect(viewProps<ManagementActions>('management').onBuyerAccessAction).toBeUndefined();
 
     const buyerData: MarketplaceData = {
       ...buildMarketplaceData(refresh),
       verification: ready({ ...verification, role: 'buyer' }),
     };
     mount(buyerData, { view: 'requests' });
-    viewProps<RequestActions>('requests').onSellerAccessAction?.();
+    expect(viewProps<RequestActions>('requests').onSellerAccessAction).toBeUndefined();
     mount(buyerData, { view: 'account' });
-    viewProps<ManagementActions>('management').onSellerAccessAction?.();
+    expect(viewProps<ManagementActions>('management').onSellerAccessAction).toBeUndefined();
 
     const organizationData: MarketplaceData = {
       ...buildMarketplaceData(refresh),
@@ -1551,7 +1591,38 @@ describe('MarketplacePage route action orchestration', () => {
     viewProps<ManagementActions>('management').onBuyerAccessAction?.();
     viewProps<ManagementActions>('management').onSellerAccessAction?.();
 
-    expect(navigate.mock.calls.filter(([path]) => path === '/verification')).toHaveLength(6);
+    // A missing organization IS clearable, so it keeps its destination; a role that
+    // does not buy or sell never sends the actor to verification it cannot change.
+    expect(navigate.mock.calls.filter(([path]) => path === '/verification')).toHaveLength(0);
     expect(navigate.mock.calls.filter(([path]) => path === '/account')).toHaveLength(5);
+  });
+
+  it('refuses to choose an offer on a request that has no publication yet', async () => {
+    const refresh = vi.fn();
+    const navigate = vi.fn();
+    testState.views = {};
+    for (const mock of testState.apiMocks.values()) {
+      mock.mockReset();
+    }
+    apiMock('marketplaceControllerChooseOffer').mockResolvedValue(apiSuccess({ contractId: 'contract-unreachable' }));
+    testState.marketplaceData = {
+      ...buildMarketplaceData(refresh),
+      myRequests: ready([unpublishedRequest]),
+      offersByRequest: empty({}),
+    };
+    render(<MarketplacePage navigate={navigate} view="requests" />);
+
+    act(() => {
+      viewProps<RequestActions>('requests').onChoose(unpublishedRequest, {
+        ...offer,
+        requestPublicId: 'never-addressable',
+      });
+    });
+
+    expect(screen.queryByRole('dialog')).toBeNull();
+    await waitFor(() => {
+      expect(screen.getByText('agritech.marketplace.orders.awaitingModerationHint')).toBeTruthy();
+    });
+    expect(apiMock('marketplaceControllerChooseOffer')).not.toHaveBeenCalled();
   });
 });

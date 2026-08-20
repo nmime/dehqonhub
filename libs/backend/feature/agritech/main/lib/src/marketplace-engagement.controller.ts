@@ -36,17 +36,21 @@ import { MarketplaceEngagementService } from './marketplace-engagement.service';
 import {
   MarketplaceFavoriteListDto,
   MarketplaceFavoriteMutationDto,
+  MarketplaceOwnReviewsDto,
   MarketplaceReviewDto,
   MarketplaceReviewPageDto,
   MarketplaceReviewReportReceiptDto,
+  MarketplaceReviewSelfStateDto,
   MarketplaceSampleDto,
   MarketplaceSampleListDto,
   MarketplaceSampleUsageDto,
   toMarketplaceFavoriteDto,
   toMarketplaceFavoriteMutationDto,
+  toMarketplaceOwnReviewsDto,
   toMarketplaceReviewDto,
   toMarketplaceReviewPageDto,
   toMarketplaceReviewReportReceiptDto,
+  toMarketplaceReviewSelfStateDto,
   toMarketplaceSampleDto,
   toMarketplaceSampleUsageDto,
 } from './marketplace-engagement.view-dto';
@@ -274,6 +278,42 @@ export class MarketplaceEngagementController {
     return createOkResponse(
       toMarketplaceReviewDto(
         await this.service.submitReview(ownerFrom(principal), input, requireIdempotencyKey(idempotencyKey)),
+      ),
+    );
+  }
+
+  /**
+   * The caller's own review record: what they wrote, what their listings
+   * received, and the completed purchases they may still rate.
+   *
+   * The per-listing reads cannot answer this. `GET reviews/state/:id` needs a
+   * listing to ask about, and the public projection is author-free by design, so
+   * a cabinet had no way to find the caller's own rows at all. This read is
+   * declared before the parameterized review routes so `mine` is never taken for
+   * a review identifier.
+   */
+  @Get('reviews/mine')
+  @ApiOkDataResponse(MarketplaceOwnReviewsDto)
+  async listOwnReviews(@CurrentUser() principal: AuthenticatedPrincipal) {
+    return createOkResponse(toMarketplaceOwnReviewsDto(await this.service.listOwnReviews(ownerFrom(principal))));
+  }
+
+  /**
+   * The caller's own standing with one listing's ratings. The public review read
+   * is author-free by design, so a browser cannot infer from it whether the review
+   * it is looking at is its own; this read says so from persisted eligibility
+   * instead, which is also what the write path enforces.
+   */
+  @Get('reviews/state/:listingPublicationId')
+  @ApiParam({ format: 'uuid', name: 'listingPublicationId' })
+  @ApiOkDataResponse(MarketplaceReviewSelfStateDto)
+  async getReviewSelfState(
+    @CurrentUser() principal: AuthenticatedPrincipal,
+    @Param('listingPublicationId', ParseUUIDPipe) listingPublicationId: string,
+  ) {
+    return createOkResponse(
+      toMarketplaceReviewSelfStateDto(
+        await this.service.getReviewSelfState(ownerFrom(principal), listingPublicationId),
       ),
     );
   }

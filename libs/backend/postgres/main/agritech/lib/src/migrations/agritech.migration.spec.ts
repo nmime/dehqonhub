@@ -1,11 +1,13 @@
 // @requirements REQ-AGRITECH-PROFILE-001 REQ-AGRITECH-CATALOG-002 REQ-AGRITECH-ORDER-003 REQ-AGRITECH-PAYMENT-004 REQ-AGRITECH-PARTNER-007 REQ-AGRITECH-OUTPUT-008 REQ-AGRITECH-ADVISORY-009 REQ-AGRITECH-FULFILLMENT-010 REQ-AGRITECH-ANALYTICS-011 REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-MARKETPLACE-016 REQ-AGRITECH-I18N-012
 import { describe, expect, it } from 'vitest';
+import { requestTransitions } from '@app/backend-feature-agritech-shared';
 import { Migration20260802120000CreateAgriTechMarketplace } from './Migration20260802120000CreateAgriTechMarketplace';
 import { Migration20260802160000CompleteAgriTechPlatform } from './Migration20260802160000CompleteAgriTechPlatform';
 import { Migration20260809000000CreateMarketplace } from './Migration20260809000000CreateMarketplace';
 import { Migration20260809120000SecureMarketplaceContracts } from './Migration20260809120000SecureMarketplaceContracts';
 import { Migration20260810123000AddUzbekCyrillicProductNames } from './Migration20260810123000AddUzbekCyrillicProductNames';
 import { Migration20260810124500AddMarketplaceVerificationProviders } from './Migration20260810124500AddMarketplaceVerificationProviders';
+import { Migration20260812120000GuardMarketplaceOfferSelection } from './Migration20260812120000GuardMarketplaceOfferSelection';
 import { agritechMigrations } from './index';
 
 function collect(run: (migration: Migration20260802120000CreateAgriTechMarketplace) => void): string {
@@ -274,5 +276,88 @@ describe('marketplace verification-provider migration', () => {
       sql.indexOf('drop column if exists "provider_mode"'),
     );
     expect(sql).toContain('drop function if exists "prevent_marketplace_verification_evidence_mutation"');
+  });
+});
+
+describe('marketplace single-award offer selection migration', () => {
+  const collectOfferSelection = (
+    run: (migration: Migration20260812120000GuardMarketplaceOfferSelection) => void,
+  ): string => {
+    const migration = new Migration20260812120000GuardMarketplaceOfferSelection(undefined as never, undefined as never);
+    const statements: string[] = [];
+    migration.addSql = (sql: string) => statements.push(sql);
+    run(migration);
+    return statements.join('\n');
+  };
+
+  it('runs after the party-role alignment and repairs the rows the new rules forbid before installing them', () => {
+    const sql = collectOfferSelection((migration) => {
+      migration.up();
+    });
+    const migrationNames = agritechMigrations.map((migration) => migration.name);
+
+    expect(migrationNames.indexOf('Migration20260811110000AlignMarketplaceBuyerPartyRole')).toBeLessThan(
+      migrationNames.indexOf(Migration20260812120000GuardMarketplaceOfferSelection.name),
+    );
+    // Demotion and cancellation, never deletion: the surplus awards stay
+    // readable, and no audit row is removed to satisfy a new constraint.
+    expect(sql).not.toMatch(/\bdelete\b/iu);
+    expect(sql.indexOf(`set "status" = 'declined'`)).toBeLessThan(sql.indexOf(`set "status" = 'cancelled'`));
+    expect(sql.indexOf(`set "status" = 'cancelled'`)).toBeLessThan(sql.indexOf(`set "status" = 'selected'`));
+    expect(sql.indexOf(`set "status" = 'selected'`)).toBeLessThan(
+      sql.indexOf('create unique index "uq__marketplace_request_offers__request_id"'),
+    );
+  });
+
+  it('makes a second award impossible in the schema rather than in the read path alone', () => {
+    const sql = collectOfferSelection((migration) => {
+      migration.up();
+    });
+
+    expect(sql).toContain(`create unique index "uq__marketplace_request_offers__request_id"
+        on "marketplace_request_offers" ("request_id")
+        where "status" = 'accepted';`);
+    expect(sql).toContain('create constraint trigger "ct__marketplace_contracts__offer_selection"');
+    expect(sql).toContain('deferrable initially deferred');
+    expect(sql).toContain('marketplace purchase request already has a contract');
+    expect(sql).toContain(`constraint = 'ck__marketplace_contracts__offer_selection'`);
+    expect(sql).toContain('create trigger "tr__marketplace_requests__stage_authority"');
+    expect(sql).toContain('marketplace request stage transition is not allowed');
+    expect(sql).toContain(`constraint = 'ck__marketplace_requests__stage_authority'`);
+  });
+
+  /**
+   * The persisted stage machine is a frozen copy of the domain policy, because a
+   * migration must not follow a constant that moves under it. This assertion is
+   * what keeps the copy honest: change `requestTransitions` and this fails until
+   * a new migration carries the change into the database.
+   */
+  it('persists exactly the transitions the request stage policy allows', () => {
+    const sql = collectOfferSelection((migration) => {
+      migration.up();
+    });
+
+    for (const [current, allowed] of Object.entries(requestTransitions)) {
+      if (allowed.length === 0) {
+        expect(sql).not.toContain(`old."status" = '${current}' and`);
+        continue;
+      }
+      const quoted = allowed.map((status) => `'${status}'`).join(', ');
+      const next = allowed.length === 1 ? `new."status" = ${quoted}` : `new."status" in (${quoted})`;
+      expect(sql).toContain(`(old."status" = '${current}' and ${next})`);
+    }
+  });
+
+  it('rolls every guard back and leaves the repaired rows in place', () => {
+    const sql = collectOfferSelection((migration) => {
+      migration.down();
+    });
+
+    expect(sql).toContain('drop trigger "tr__marketplace_requests__stage_authority" on "marketplace_requests"');
+    expect(sql).toContain('drop function "enforce_marketplace_request_stage_authority"()');
+    expect(sql).toContain('drop trigger "ct__marketplace_contracts__offer_selection" on "marketplace_contracts"');
+    expect(sql).toContain('drop function "assert_marketplace_single_offer_selection_contract"()');
+    expect(sql).toContain('drop index "uq__marketplace_request_offers__request_id"');
+    expect(sql).not.toMatch(/\b(update|insert|delete)\b/iu);
   });
 });

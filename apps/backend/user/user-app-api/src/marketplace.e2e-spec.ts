@@ -78,6 +78,7 @@ const publishedProductRecord = (
   productCategory: 'seed' as const,
   promoted: true,
   publicId: publicListingId,
+  rating: { average: 4.7, count: 3 },
   publishedAt: now,
   region: 'Samarkand',
   section: 'seeds' as const,
@@ -105,6 +106,7 @@ const publishedProduceRecord = (
   produceGrade: 'A' as const,
   promoted: false,
   publicId: publicProduceId,
+  rating: { average: null, count: 0 },
   publishedAt: now,
   region: 'Tashkent',
   section: 'produce' as const,
@@ -1664,6 +1666,11 @@ describe('marketplace HTTP contract', () => {
     });
 
     expectProblem(response, 409);
+    // The refused field is public on purpose. A buyer whose award lost to an
+    // earlier one has to be able to tell "this request already has a winner"
+    // from "your idempotency key was reused with a different body", and both
+    // arrive here as 409 on the same route.
+    expect(response.json()).toMatchObject({ field: 'status', resourceType: 'offer' });
     expect(repository.chooseOffer).toHaveBeenCalledWith(
       { tenantId: tenantOne, userId: buyerUserId },
       requestPublicId,

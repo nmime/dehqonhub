@@ -11,6 +11,8 @@
   "agritech.marketplace.contract.simulationDisclosure": "Симуляция — ташқи провайдер амали бажарилмади",
   "agritech.marketplace.contract.simulationWatermark": "Яратилган ҳужжатда симуляция сув белгиси бор.",
   "agritech.marketplace.contract.artifactUnavailable": "Яратилган шартнома файли ҳали мавжуд эмас.",
+  "agritech.marketplace.contract.settlement.notStarted": "Тўлов ҳали бошланмади",
+  "agritech.marketplace.contract.settlement.notStartedDescription": "Ҳисоб-китоб шартномани икки томон имзолагач очилади.",
   "agritech.marketplace.contract.refreshArtifact": "Файл маълумотини янгилаш",
   "agritech.marketplace.contract.artifactRefreshed": "Файл маълумоти янгиланди",
   "agritech.marketplace.contract.downloadArtifact": "PDF юклаб олиш",

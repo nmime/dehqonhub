@@ -10,3 +10,4 @@ export * from './marketplace-commerce.entity';
 export * from './marketplace-contract-lifecycle.entity';
 export * from './marketplace-dashboard-ai.entity';
 export * from './marketplace-engagement.entity';
+export * from './marketplace-media.entity';

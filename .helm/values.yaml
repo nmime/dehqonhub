@@ -592,6 +592,7 @@ frontendRuntimeConfig: {}
 # frontendRuntimeConfig:
 #   TELEGRAM_AUTH_ENABLED: 'true'
 #   DISCORD_AUTH_ENABLED: 'false'
+#   REVIEWER_ACCESS_ENABLED: 'false'
 
 networkPolicy:
   enabled: false

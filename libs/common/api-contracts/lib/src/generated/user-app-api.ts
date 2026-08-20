@@ -644,6 +644,38 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/marketplace/public/profiles/{profileId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MarketplacePublicProfileController_getProfile'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/marketplace/public/sellers/{sellerId}/profile': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MarketplacePublicProfileController_getSellerProfile'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/marketplace/publications/mine': {
     parameters: {
       query?: never;
@@ -1060,6 +1092,38 @@ export interface paths {
     patch?: never;
     trace?: never;
   };
+  '/marketplace/reviews/mine': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MarketplaceEngagementController_listOwnReviews'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/marketplace/reviews/state/{listingPublicationId}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MarketplaceEngagementController_getReviewSelfState'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
   '/marketplace/reviews/{reviewId}/reply': {
     parameters: {
       query?: never;
@@ -1100,6 +1164,38 @@ export interface paths {
       cookie?: never;
     };
     get: operations['MarketplacePublicEngagementController_listReviews'];
+    put?: never;
+    post?: never;
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/marketplace/media': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MarketplaceMediaController_getCapability'];
+    put?: never;
+    post: operations['MarketplaceMediaController_storePhotograph'];
+    delete?: never;
+    options?: never;
+    head?: never;
+    patch?: never;
+    trace?: never;
+  };
+  '/marketplace/media/{id}': {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    get: operations['MarketplacePublicMediaController_readPhotograph'];
     put?: never;
     post?: never;
     delete?: never;
@@ -1333,6 +1429,14 @@ export interface components {
       /** @default false */
       sampleAvailable: boolean;
       region: string;
+      /**
+       * @description Root-relative same-origin listing photographs, at most five.
+       * @example [
+       *       "/media/marketplace/wheat-grain.webp",
+       *       "/marketplace/media/AAAAAAAAAAAAAAAAAAAAAA"
+       *     ]
+       */
+      images?: string[];
     };
     SupplierProductViewDto: {
       /** Format: uuid */
@@ -1382,6 +1486,8 @@ export interface components {
       sampleAvailable: boolean;
       pricePerKgUzs: number;
       region: string;
+      /** @description Root-relative same-origin harvest photographs. */
+      images: string[];
       /** Format: date-time */
       availableFrom: string;
       /** Format: date-time */
@@ -1404,6 +1510,13 @@ export interface components {
       sampleAvailable: boolean;
       pricePerKgUzs: number;
       region: string;
+      /**
+       * @description Root-relative same-origin harvest photographs, at most five.
+       * @example [
+       *       "/marketplace/media/AAAAAAAAAAAAAAAAAAAAAA"
+       *     ]
+       */
+      images?: string[];
       /** Format: date-time */
       availableFrom: string;
       /** Format: date-time */
@@ -1677,6 +1790,21 @@ export interface components {
       requirements?: string;
       /** @enum {string} */
       status: 'open' | 'offering' | 'selected' | 'closed' | 'expired';
+      /**
+       * Format: uuid
+       * @description Public request publication id. The offer endpoints are keyed by it, never by the request id. Absent until the request is published, which means it is still awaiting moderation and cannot receive offers yet.
+       */
+      publicationId?: string;
+      /**
+       * @description Publication lifecycle state. Present only together with publicationId.
+       * @enum {string}
+       */
+      publicationStatus?: 'published' | 'paused' | 'rejected';
+      /**
+       * @description Moderation decision on the publication. Present only together with publicationId.
+       * @enum {string}
+       */
+      moderationStatus?: 'pending' | 'approved' | 'rejected';
       /** Format: date-time */
       createdAt: string;
       /** Format: date-time */
@@ -1761,6 +1889,10 @@ export interface components {
       actorParty: 'buyer' | 'seller';
       buyerPartySnapshot: components['schemas']['MarketplacePartySnapshotDto'];
       sellerPartySnapshot: components['schemas']['MarketplacePartySnapshotDto'];
+      /** @description Opaque public profile address of the buying organization, so a deal screen can link to the counterparty. It is derived, carries no partner, user or tenant identifier, and resolves only while that party keeps a moderated public presence. */
+      buyerProfileId: string;
+      /** @description Opaque public profile address of the selling organization. */
+      sellerProfileId: string;
       /** @enum {string} */
       sourceType?: 'cart_checkout' | 'offer_selection';
       subject: string;
@@ -1794,6 +1926,10 @@ export interface components {
     ContractListDto: {
       items: components['schemas']['ContractViewDto'][];
     };
+    MarketplacePublicListingRatingDto: {
+      average: number | null;
+      count: number;
+    };
     MarketplacePublicSellerDto: {
       /** Format: uuid */
       id: string;
@@ -1822,6 +1958,7 @@ export interface components {
       provenance: 'live' | 'demo';
       transactional: boolean;
       sampleAvailable: boolean;
+      rating: components['schemas']['MarketplacePublicListingRatingDto'];
       seller: components['schemas']['MarketplacePublicSellerDto'];
       /** Format: date-time */
       publishedAt: string;
@@ -1855,6 +1992,7 @@ export interface components {
       provenance: 'live' | 'demo';
       transactional: boolean;
       sampleAvailable: boolean;
+      rating: components['schemas']['MarketplacePublicListingRatingDto'];
       seller: components['schemas']['MarketplacePublicSellerDto'];
       /** Format: date-time */
       publishedAt: string;
@@ -1910,6 +2048,71 @@ export interface components {
     MarketplacePublicRequestPageDto: {
       items: components['schemas']['MarketplacePublicRequestDto'][];
       nextCursor?: string;
+    };
+    MarketplacePublicProfileReviewCountsDto: {
+      count: number;
+      averageRating: number | null;
+    };
+    MarketplacePublicProfileWrittenCountsDto: {
+      count: number;
+    };
+    MarketplacePublicProfileReputationDto: {
+      completedDeals: number;
+      completedDealsAsSeller: number;
+      completedDealsAsBuyer: number;
+      /** Format: date-time */
+      firstDealAt: string | null;
+      /** Format: date-time */
+      lastDealAt: string | null;
+      sections: ('equipment' | 'seeds' | 'produce')[];
+      reviewsReceived: components['schemas']['MarketplacePublicProfileReviewCountsDto'];
+      reviewsWritten: components['schemas']['MarketplacePublicProfileWrittenCountsDto'];
+    };
+    MarketplacePublicProfileReviewReplyDto: {
+      comment: string;
+      /** Format: date-time */
+      createdAt: string;
+    };
+    MarketplacePublicProfilePartyDto: {
+      profileId: string;
+      displayName: string;
+    };
+    MarketplacePublicProfileReviewDto: {
+      /** Format: uuid */
+      id: string;
+      rating: number;
+      comment?: string;
+      /** @enum {boolean} */
+      verifiedDeal: true;
+      /** Format: uuid */
+      listingId: string;
+      listingTitle: string;
+      /** @enum {string} */
+      section: 'equipment' | 'seeds' | 'produce';
+      reply?: components['schemas']['MarketplacePublicProfileReviewReplyDto'];
+      /** @description The reviewed seller. Present only on reviews this profile wrote, never on reviews it received. */
+      subject?: components['schemas']['MarketplacePublicProfilePartyDto'];
+      /** Format: date-time */
+      createdAt: string;
+    };
+    MarketplacePublicProfileDto: {
+      /** @description Opaque public profile address. Never a user, tenant or partner identifier. */
+      id: string;
+      displayName: string;
+      region: string;
+      description?: string;
+      roles: ('seller' | 'buyer')[];
+      verified: boolean;
+      /** Format: date-time */
+      publicSince: string;
+      /**
+       * Format: uuid
+       * @description Public seller address, when this party publishes a catalog.
+       */
+      sellerId?: string;
+      reputation: components['schemas']['MarketplacePublicProfileReputationDto'];
+      reviewsReceived: components['schemas']['MarketplacePublicProfileReviewDto'][];
+      reviewsWritten: components['schemas']['MarketplacePublicProfileReviewDto'][];
     };
     MarketplaceOwnedListingPublicationDto: {
       /** @enum {string} */
@@ -2027,7 +2230,7 @@ export interface components {
       priceUzs: number;
       /** @enum {string} */
       currency: 'UZS';
-      /** @description Internal activation audit reference; it is not a payment receipt. */
+      /** @description Internal activation audit reference. The charge itself lives in the promotion_billing provider operation ledger, not here. */
       activationReference: string;
       /** Format: date-time */
       activatedAt: string;
@@ -2611,6 +2814,26 @@ export interface components {
       comment?: string;
       assetReferences: string[];
     };
+    MarketplaceOwnReviewDto: {
+      listing: components['schemas']['MarketplaceEngagementListingDto'];
+      review: components['schemas']['MarketplaceReviewDto'];
+    };
+    MarketplaceOwnReviewInvitationDto: {
+      listing: components['schemas']['MarketplaceEngagementListingDto'];
+      /** Format: date-time */
+      completedAt: string;
+    };
+    MarketplaceOwnReviewsDto: {
+      written: components['schemas']['MarketplaceOwnReviewDto'][];
+      received: components['schemas']['MarketplaceOwnReviewDto'][];
+      awaitingReview: components['schemas']['MarketplaceOwnReviewInvitationDto'][];
+    };
+    MarketplaceReviewSelfStateDto: {
+      /** Format: uuid */
+      listingPublicationId: string;
+      canReview: boolean;
+      review?: components['schemas']['MarketplaceReviewDto'];
+    };
     ReplyMarketplaceReviewDto: {
       comment: string;
       expectedRevision: number;
@@ -2639,6 +2862,33 @@ export interface components {
     MarketplaceReviewPageDto: {
       aggregate: components['schemas']['MarketplaceReviewAggregateDto'];
       items: components['schemas']['MarketplaceReviewDto'][];
+    };
+    MarketplacePhotographCapabilityDto: {
+      /** @description Whether this deployment can store an uploaded photograph at all. */
+      configured: boolean;
+      mediaTypes: ('image/jpeg' | 'image/png' | 'image/webp')[];
+      maximumByteSize: number;
+      maximumListingImages: number;
+      maximumReviewAssets: number;
+    };
+    MarketplacePhotographDto: {
+      /** @description Opaque public identifier of the stored photograph. */
+      id: string;
+      /**
+       * @description Root-relative same-origin path a listing image column accepts.
+       * @example /marketplace/media/AAAAAAAAAAAAAAAAAAAAAA
+       */
+      path: string;
+      /**
+       * @description Opaque handle a review's assetReferences accepts.
+       * @example public-asset:AAAAAAAAAAAAAAAAAAAAAA
+       */
+      reference: string;
+      /** @enum {string} */
+      mediaType: 'image/jpeg' | 'image/png' | 'image/webp';
+      byteSize: number;
+      /** Format: date-time */
+      createdAt: string;
     };
     FarmerProfileDto: {
       /** @example +998901234567 */
@@ -2841,6 +3091,171 @@ export interface components {
   headers: never;
   pathItems: never;
 }
+export type AuthenticatedPrincipalDto = components['schemas']['AuthenticatedPrincipalDto'];
+export type UserProfileViewDto = components['schemas']['UserProfileViewDto'];
+export type ProfilePayloadDto = components['schemas']['ProfilePayloadDto'];
+export type PartnerViewDto = components['schemas']['PartnerViewDto'];
+export type CreatePartnerDto = components['schemas']['CreatePartnerDto'];
+export type PartnerListDto = components['schemas']['PartnerListDto'];
+export type CreatedResourceDto = components['schemas']['CreatedResourceDto'];
+export type CreateSupplierProductDto = components['schemas']['CreateSupplierProductDto'];
+export type SupplierProductViewDto = components['schemas']['SupplierProductViewDto'];
+export type SupplierProductListDto = components['schemas']['SupplierProductListDto'];
+export type UpdateSupplierProductDto = components['schemas']['UpdateSupplierProductDto'];
+export type ProduceListingViewDto = components['schemas']['ProduceListingViewDto'];
+export type CreateProduceDto = components['schemas']['CreateProduceDto'];
+export type ProduceListingListDto = components['schemas']['ProduceListingListDto'];
+export type UpdateSampleAvailabilityDto = components['schemas']['UpdateSampleAvailabilityDto'];
+export type PriceDiscoveryViewDto = components['schemas']['PriceDiscoveryViewDto'];
+export type ProduceReservationViewDto = components['schemas']['ProduceReservationViewDto'];
+export type ReserveProduceDto = components['schemas']['ReserveProduceDto'];
+export type AssignedFarmerViewDto = components['schemas']['AssignedFarmerViewDto'];
+export type AssignedFarmerListDto = components['schemas']['AssignedFarmerListDto'];
+export type DeliveryHistoryViewDto = components['schemas']['DeliveryHistoryViewDto'];
+export type DeliveryViewDto = components['schemas']['DeliveryViewDto'];
+export type DeliveryListDto = components['schemas']['DeliveryListDto'];
+export type TransitionDeliveryDto = components['schemas']['TransitionDeliveryDto'];
+export type FieldVisitViewDto = components['schemas']['FieldVisitViewDto'];
+export type CreateFieldVisitDto = components['schemas']['CreateFieldVisitDto'];
+export type AdvisoryViewDto = components['schemas']['AdvisoryViewDto'];
+export type AdvisoryListDto = components['schemas']['AdvisoryListDto'];
+export type VerificationDocumentDto = components['schemas']['VerificationDocumentDto'];
+export type VerificationViewDto = components['schemas']['VerificationViewDto'];
+export type NullableVerificationResponseDto = components['schemas']['NullableVerificationResponseDto'];
+export type StartVerificationDto = components['schemas']['StartVerificationDto'];
+export type MarketplaceProviderCapabilityReadinessDto =
+  components['schemas']['MarketplaceProviderCapabilityReadinessDto'];
+export type MarketplaceProviderReadinessDto = components['schemas']['MarketplaceProviderReadinessDto'];
+export type VerificationDocumentInputDto = components['schemas']['VerificationDocumentInputDto'];
+export type SubmitVerificationDto = components['schemas']['SubmitVerificationDto'];
+export type MarketplaceSafePartyDto = components['schemas']['MarketplaceSafePartyDto'];
+export type CartItemDto = components['schemas']['CartItemDto'];
+export type CartViewDto = components['schemas']['CartViewDto'];
+export type CartListDto = components['schemas']['CartListDto'];
+export type AddToCartDto = components['schemas']['AddToCartDto'];
+export type UpdateCartItemDto = components['schemas']['UpdateCartItemDto'];
+export type CheckoutCartResultDto = components['schemas']['CheckoutCartResultDto'];
+export type CheckoutCartDto = components['schemas']['CheckoutCartDto'];
+export type BuyerRequestViewDto = components['schemas']['BuyerRequestViewDto'];
+export type CreateRequestDto = components['schemas']['CreateRequestDto'];
+export type BuyerRequestListDto = components['schemas']['BuyerRequestListDto'];
+export type OfferViewDto = components['schemas']['OfferViewDto'];
+export type RequestOfferDto = components['schemas']['RequestOfferDto'];
+export type OfferListDto = components['schemas']['OfferListDto'];
+export type OfferSelectionResultDto = components['schemas']['OfferSelectionResultDto'];
+export type MarketplacePartySnapshotDto = components['schemas']['MarketplacePartySnapshotDto'];
+export type ContractLineDto = components['schemas']['ContractLineDto'];
+export type ContractViewDto = components['schemas']['ContractViewDto'];
+export type ContractDeliveryQuoteDto = components['schemas']['ContractDeliveryQuoteDto'];
+export type ContractListDto = components['schemas']['ContractListDto'];
+export type MarketplacePublicListingRatingDto = components['schemas']['MarketplacePublicListingRatingDto'];
+export type MarketplacePublicSellerDto = components['schemas']['MarketplacePublicSellerDto'];
+export type MarketplacePublicProductListingDto = components['schemas']['MarketplacePublicProductListingDto'];
+export type MarketplacePublicProduceListingDto = components['schemas']['MarketplacePublicProduceListingDto'];
+export type MarketplacePublicCatalogPageDto = components['schemas']['MarketplacePublicCatalogPageDto'];
+export type MarketplacePublicSuggestionDto = components['schemas']['MarketplacePublicSuggestionDto'];
+export type MarketplacePublicSuggestionListDto = components['schemas']['MarketplacePublicSuggestionListDto'];
+export type MarketplacePublicRequestDto = components['schemas']['MarketplacePublicRequestDto'];
+export type MarketplacePublicRequestPageDto = components['schemas']['MarketplacePublicRequestPageDto'];
+export type MarketplacePublicProfileReviewCountsDto = components['schemas']['MarketplacePublicProfileReviewCountsDto'];
+export type MarketplacePublicProfileWrittenCountsDto =
+  components['schemas']['MarketplacePublicProfileWrittenCountsDto'];
+export type MarketplacePublicProfileReputationDto = components['schemas']['MarketplacePublicProfileReputationDto'];
+export type MarketplacePublicProfileReviewReplyDto = components['schemas']['MarketplacePublicProfileReviewReplyDto'];
+export type MarketplacePublicProfilePartyDto = components['schemas']['MarketplacePublicProfilePartyDto'];
+export type MarketplacePublicProfileReviewDto = components['schemas']['MarketplacePublicProfileReviewDto'];
+export type MarketplacePublicProfileDto = components['schemas']['MarketplacePublicProfileDto'];
+export type MarketplaceOwnedListingPublicationDto = components['schemas']['MarketplaceOwnedListingPublicationDto'];
+export type MarketplaceOwnedRequestPublicationDto = components['schemas']['MarketplaceOwnedRequestPublicationDto'];
+export type MarketplaceOwnedPublicationsDto = components['schemas']['MarketplaceOwnedPublicationsDto'];
+export type MarketplaceListingPublicationDto = components['schemas']['MarketplaceListingPublicationDto'];
+export type PublishMarketplaceListingDto = components['schemas']['PublishMarketplaceListingDto'];
+export type MarketplaceRequestPublicationDto = components['schemas']['MarketplaceRequestPublicationDto'];
+export type PublishMarketplaceRequestDto = components['schemas']['PublishMarketplaceRequestDto'];
+export type MarketplaceListingPromotionDto = components['schemas']['MarketplaceListingPromotionDto'];
+export type ActivateMarketplacePromotionDto = components['schemas']['ActivateMarketplacePromotionDto'];
+export type MarketplaceListingPromotionListDto = components['schemas']['MarketplaceListingPromotionListDto'];
+export type MarketplacePromotionPlanDto = components['schemas']['MarketplacePromotionPlanDto'];
+export type MarketplacePromotionPlanListDto = components['schemas']['MarketplacePromotionPlanListDto'];
+export type ContractArtifactDto = components['schemas']['ContractArtifactDto'];
+export type CreateContractArtifactDto = components['schemas']['CreateContractArtifactDto'];
+export type DirectPaymentSettlementDto = components['schemas']['DirectPaymentSettlementDto'];
+export type FactoringSettlementDto = components['schemas']['FactoringSettlementDto'];
+export type CommissionRateSnapshotDto = components['schemas']['CommissionRateSnapshotDto'];
+export type ContractCommissionDto = components['schemas']['ContractCommissionDto'];
+export type ContractDisputeDto = components['schemas']['ContractDisputeDto'];
+export type ContractDisputeEvidenceDto = components['schemas']['ContractDisputeEvidenceDto'];
+export type ContractFulfillmentDto = components['schemas']['ContractFulfillmentDto'];
+export type ContractNotificationIntentDto = components['schemas']['ContractNotificationIntentDto'];
+export type ContractReviewEligibilityDto = components['schemas']['ContractReviewEligibilityDto'];
+export type ContractReputationSignalDto = components['schemas']['ContractReputationSignalDto'];
+export type ContractSettlementEventDto = components['schemas']['ContractSettlementEventDto'];
+export type ContractSignatureDto = components['schemas']['ContractSignatureDto'];
+export type ContractTimelineEventDto = components['schemas']['ContractTimelineEventDto'];
+export type ContractLifecycleDto = components['schemas']['ContractLifecycleDto'];
+export type SettlementCommandDto = components['schemas']['SettlementCommandDto'];
+export type FulfillmentCommandDto = components['schemas']['FulfillmentCommandDto'];
+export type OpenDisputeDto = components['schemas']['OpenDisputeDto'];
+export type MarketplaceContractNotificationRecipientDto =
+  components['schemas']['MarketplaceContractNotificationRecipientDto'];
+export type MarketplaceContractNotificationListDto = components['schemas']['MarketplaceContractNotificationListDto'];
+export type MarketplaceBuyerDashboardMetricsDto = components['schemas']['MarketplaceBuyerDashboardMetricsDto'];
+export type MarketplaceDashboardTopListingDto = components['schemas']['MarketplaceDashboardTopListingDto'];
+export type MarketplaceSellerDashboardMetricsDto = components['schemas']['MarketplaceSellerDashboardMetricsDto'];
+export type MarketplaceDashboardMonthlyActivityDto = components['schemas']['MarketplaceDashboardMonthlyActivityDto'];
+export type MarketplaceDashboardRecentDealDto = components['schemas']['MarketplaceDashboardRecentDealDto'];
+export type MarketplaceRoleDashboardDto = components['schemas']['MarketplaceRoleDashboardDto'];
+export type MarketplaceAiLocalizedTitlesDto = components['schemas']['MarketplaceAiLocalizedTitlesDto'];
+export type MarketplaceAiAvailabilityDto = components['schemas']['MarketplaceAiAvailabilityDto'];
+export type MarketplaceAiRecommendationDto = components['schemas']['MarketplaceAiRecommendationDto'];
+export type MarketplaceAiPreviewPartitionDto = components['schemas']['MarketplaceAiPreviewPartitionDto'];
+export type MarketplaceAiStarterCartPreviewDto = components['schemas']['MarketplaceAiStarterCartPreviewDto'];
+export type MarketplaceAiGroundedResponseDto = components['schemas']['MarketplaceAiGroundedResponseDto'];
+export type MarketplaceAiConsultationDto = components['schemas']['MarketplaceAiConsultationDto'];
+export type CreateAiConsultationDto = components['schemas']['CreateAiConsultationDto'];
+export type MarketplaceAiConsultationListDto = components['schemas']['MarketplaceAiConsultationListDto'];
+export type MarketplaceAiStarterCartPartitionDto = components['schemas']['MarketplaceAiStarterCartPartitionDto'];
+export type MarketplaceAiStarterCartResultDto = components['schemas']['MarketplaceAiStarterCartResultDto'];
+export type ConfirmAiStarterCartDto = components['schemas']['ConfirmAiStarterCartDto'];
+export type MarketplaceFavoriteMutationDto = components['schemas']['MarketplaceFavoriteMutationDto'];
+export type MarketplaceEngagementSellerDto = components['schemas']['MarketplaceEngagementSellerDto'];
+export type MarketplaceEngagementListingDto = components['schemas']['MarketplaceEngagementListingDto'];
+export type MarketplaceFavoriteDto = components['schemas']['MarketplaceFavoriteDto'];
+export type MarketplaceFavoriteListDto = components['schemas']['MarketplaceFavoriteListDto'];
+export type MarketplaceSampleDeliveryDto = components['schemas']['MarketplaceSampleDeliveryDto'];
+export type MarketplaceSampleFeedbackDto = components['schemas']['MarketplaceSampleFeedbackDto'];
+export type MarketplaceSampleDto = components['schemas']['MarketplaceSampleDto'];
+export type RequestMarketplaceSampleDto = components['schemas']['RequestMarketplaceSampleDto'];
+export type MarketplaceSampleListDto = components['schemas']['MarketplaceSampleListDto'];
+export type MarketplaceSampleUsageDto = components['schemas']['MarketplaceSampleUsageDto'];
+export type TransitionMarketplaceSampleDto = components['schemas']['TransitionMarketplaceSampleDto'];
+export type SubmitMarketplaceSampleFeedbackDto = components['schemas']['SubmitMarketplaceSampleFeedbackDto'];
+export type MarketplaceReviewReplyDto = components['schemas']['MarketplaceReviewReplyDto'];
+export type MarketplaceReviewDto = components['schemas']['MarketplaceReviewDto'];
+export type SubmitMarketplaceReviewDto = components['schemas']['SubmitMarketplaceReviewDto'];
+export type MarketplaceOwnReviewDto = components['schemas']['MarketplaceOwnReviewDto'];
+export type MarketplaceOwnReviewInvitationDto = components['schemas']['MarketplaceOwnReviewInvitationDto'];
+export type MarketplaceOwnReviewsDto = components['schemas']['MarketplaceOwnReviewsDto'];
+export type MarketplaceReviewSelfStateDto = components['schemas']['MarketplaceReviewSelfStateDto'];
+export type ReplyMarketplaceReviewDto = components['schemas']['ReplyMarketplaceReviewDto'];
+export type MarketplaceReviewReportReceiptDto = components['schemas']['MarketplaceReviewReportReceiptDto'];
+export type ReportMarketplaceReviewDto = components['schemas']['ReportMarketplaceReviewDto'];
+export type MarketplaceReviewAggregateDto = components['schemas']['MarketplaceReviewAggregateDto'];
+export type MarketplaceReviewPageDto = components['schemas']['MarketplaceReviewPageDto'];
+export type MarketplacePhotographCapabilityDto = components['schemas']['MarketplacePhotographCapabilityDto'];
+export type MarketplacePhotographDto = components['schemas']['MarketplacePhotographDto'];
+export type FarmerProfileDto = components['schemas']['FarmerProfileDto'];
+export type CreateFarmerDto = components['schemas']['CreateFarmerDto'];
+export type UpdateFarmerDto = components['schemas']['UpdateFarmerDto'];
+export type OrderItemViewDto = components['schemas']['OrderItemViewDto'];
+export type OrderViewDto = components['schemas']['OrderViewDto'];
+export type OrderItemDto = components['schemas']['OrderItemDto'];
+export type CreateOrderDto = components['schemas']['CreateOrderDto'];
+export type OrderListDto = components['schemas']['OrderListDto'];
+export type PaymentHandoffViewDto = components['schemas']['PaymentHandoffViewDto'];
+export type CreatePaymentDto = components['schemas']['CreatePaymentDto'];
+export type ProductViewDto = components['schemas']['ProductViewDto'];
+export type ProductListDto = components['schemas']['ProductListDto'];
 export type $defs = Record<string, never>;
 export interface operations {
   BaseHealthController_getHealth: {
@@ -14354,6 +14769,276 @@ export interface operations {
       };
     };
   };
+  MarketplacePublicProfileController_getProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        profileId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['MarketplacePublicProfileDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplacePublicProfileController_getSellerProfile: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        sellerId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['MarketplacePublicProfileDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
   MarketplacePublicationController_listMine: {
     parameters: {
       query?: {
@@ -15344,6 +16029,43 @@ export interface operations {
           };
         };
       };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Service Unavailable
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 503
+             * @enum {integer}
+             */
+            status: 503;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
     };
   };
   MarketplacePromotionController_activate: {
@@ -15583,6 +16305,43 @@ export interface operations {
              * @enum {integer}
              */
             status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Service Unavailable
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 503
+             * @enum {integer}
+             */
+            status: 503;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
             /**
@@ -15839,6 +16598,43 @@ export interface operations {
           };
         };
       };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Service Unavailable
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 503
+             * @enum {integer}
+             */
+            status: 503;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
     };
   };
   MarketplacePromotionController_get: {
@@ -16073,6 +16869,43 @@ export interface operations {
              * @enum {integer}
              */
             status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Service Unavailable
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 503
+             * @enum {integer}
+             */
+            status: 503;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
             /**
@@ -22690,6 +23523,496 @@ export interface operations {
       };
     };
   };
+  MarketplaceEngagementController_listOwnReviews: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['MarketplaceOwnReviewsDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplaceEngagementController_getReviewSelfState: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        listingPublicationId: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['MarketplaceReviewSelfStateDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Forbidden */
+      403: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Forbidden
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 403
+             * @enum {integer}
+             */
+            status: 403;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Conflict */
+      409: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Conflict
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 409
+             * @enum {integer}
+             */
+            status: 409;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
   MarketplaceEngagementController_replyToReview: {
     parameters: {
       query?: never;
@@ -23317,6 +24640,562 @@ export interface operations {
              * @enum {integer}
              */
             status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplaceMediaController_getCapability: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['MarketplacePhotographCapabilityDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Payload Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Payload Too Large
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 413
+             * @enum {integer}
+             */
+            status: 413;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Service Unavailable
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 503
+             * @enum {integer}
+             */
+            status: 503;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplaceMediaController_storePhotograph: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path?: never;
+      cookie?: never;
+    };
+    requestBody: {
+      content: {
+        'multipart/form-data': {
+          /** Format: binary */
+          photo: string;
+        };
+      };
+    };
+    responses: {
+      /** @description OK */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/json': {
+            data: components['schemas']['MarketplacePhotographDto'];
+          };
+        };
+      };
+      /** @description Bad Request */
+      400: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Bad Request
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 400
+             * @enum {integer}
+             */
+            status: 400;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Unauthorized */
+      401: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Unauthorized
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 401
+             * @enum {integer}
+             */
+            status: 401;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Payload Too Large */
+      413: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Payload Too Large
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 413
+             * @enum {integer}
+             */
+            status: 413;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Service Unavailable
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 503
+             * @enum {integer}
+             */
+            status: 503;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+    };
+  };
+  MarketplacePublicMediaController_readPhotograph: {
+    parameters: {
+      query?: never;
+      header?: never;
+      path: {
+        id: string;
+      };
+      cookie?: never;
+    };
+    requestBody?: never;
+    responses: {
+      /** @description The stored photograph, served from this API origin. */
+      200: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'image/jpeg': string;
+          'image/png': string;
+          'image/webp': string;
+        };
+      };
+      /** @description Not Found */
+      404: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Not Found
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 404
+             * @enum {integer}
+             */
+            status: 404;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Internal Server Error */
+      500: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Internal Server Error
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 500
+             * @enum {integer}
+             */
+            status: 500;
+            /** @description A human-readable explanation specific to this occurrence. */
+            detail?: string;
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying this specific occurrence.
+             */
+            instance?: string;
+          } & {
+            [key: string]: unknown;
+          };
+        };
+      };
+      /** @description Service Unavailable */
+      503: {
+        headers: {
+          [name: string]: unknown;
+        };
+        content: {
+          'application/problem+json': {
+            /**
+             * Format: uri-reference
+             * @description A URI reference identifying the problem type; defaults to about:blank when omitted.
+             * @example about:blank
+             * @enum {string}
+             */
+            type: 'about:blank';
+            /**
+             * @description A short human-readable summary of the problem type.
+             * @example Service Unavailable
+             */
+            title: string;
+            /**
+             * @description The HTTP status code generated by the origin server for this occurrence.
+             * @example 503
+             * @enum {integer}
+             */
+            status: 503;
             /** @description A human-readable explanation specific to this occurrence. */
             detail?: string;
             /**

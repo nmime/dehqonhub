@@ -22,6 +22,11 @@ import type {
   VerificationRole,
 } from '@app/backend-feature-agritech-shared';
 import {
+  marketplaceBuyerRoleFilter,
+  marketplaceSellerRoleFilter,
+  marketplaceSellerRolesSql,
+} from './marketplace-role-predicates';
+import {
   MarketplaceAiConsultationEntity,
   MarketplaceAiConsultationOperationEntity,
   MarketplaceAiStarterCartOperationEntity,
@@ -962,7 +967,7 @@ export class PostgresMarketplaceDashboardAiRepository implements MarketplaceDash
             on seller_verification."tenant_id" = partner."tenant_id"
            and seller_verification."user_id" = seller."owner_user_id"
            and seller_verification."status" = 'verified'
-           and seller_verification."role" in ('farmer', 'seller')
+           and seller_verification."role" in (${marketplaceSellerRolesSql})
           left join "products" product
             on product."id" = publication."product_id"
            and product."tenant_id" = publication."tenant_id"
@@ -1000,7 +1005,7 @@ export class PostgresMarketplaceDashboardAiRepository implements MarketplaceDash
     const verification = await em.findOne(
       VerificationEntity,
       {
-        role: { $in: ['buyer', 'farmer'] },
+        role: marketplaceBuyerRoleFilter(),
         status: 'verified',
         tenantId: owner.tenantId,
         userId: owner.userId,
@@ -1092,7 +1097,7 @@ export class PostgresMarketplaceDashboardAiRepository implements MarketplaceDash
       em.findOne(
         VerificationEntity,
         {
-          role: { $in: ['farmer', 'seller'] },
+          role: marketplaceSellerRoleFilter(),
           status: 'verified',
           tenantId: publication.tenantId,
           userId: sellerPublic.ownerUserId,

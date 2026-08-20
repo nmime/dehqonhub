@@ -10,5 +10,22 @@
   "agritech.marketplace.orders.offerStatus.accepted": "Accepted",
   "agritech.marketplace.orders.offerStatus.declined": "Declined",
   "agritech.marketplace.orders.offerStatus.pending": "Pending",
-  "agritech.marketplace.orders.submitOffer": "Submit seller offer"
+  "agritech.marketplace.orders.submitOffer": "Submit seller offer",
+  "agritech.marketplace.orders.incoming": "Incoming requests",
+  "agritech.marketplace.orders.step": "Step {{current}} of {{total}}",
+  "agritech.marketplace.orders.stepBasics": "What you need",
+  "agritech.marketplace.orders.stepLogistics": "Where and when",
+  "agritech.marketplace.orders.stepTerms": "Budget and requirements",
+  "agritech.marketplace.orders.next": "Next step",
+  "agritech.marketplace.orders.previous": "Previous step",
+  "agritech.marketplace.orders.awaitingModeration": "Awaiting moderation",
+  "agritech.marketplace.orders.awaitingModerationHint": "This request is not published yet, so sellers cannot offer on it. Offers appear here once moderation approves the publication.",
+  "agritech.marketplace.orders.publicationPaused": "Publication paused",
+  "agritech.marketplace.orders.publicationRejected": "Publication rejected",
+  "agritech.marketplace.orders.publicationRejectedHint": "Moderation rejected this publication, so the request collects no offers. Correct the details and publish it again.",
+  "agritech.marketplace.orders.openContract": "Open the contract",
+  "agritech.marketplace.orders.offerVerified": "Verified seller",
+  "agritech.marketplace.orders.offerTotal": "Total",
+  "agritech.marketplace.orders.offersSort": "Cheapest first",
+  "agritech.marketplace.orders.offerReceived": "Received {{date}}"
 }

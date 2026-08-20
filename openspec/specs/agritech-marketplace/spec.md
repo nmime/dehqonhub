@@ -29,7 +29,11 @@ administrator.
 The platform SHALL expose active tenant catalog items, SHALL distinguish
 supplier-owned inputs from farmer-owned produce, SHALL validate category,
 region, availability, unit, grade, and inventory, and SHALL limit mutation to
-the owning approved actor or an authorized administrator.
+the owning approved actor or an authorized administrator. A supplier input and a
+farmer produce listing SHALL each carry at most five owner-supplied photograph
+references, validated against the allowlisted reference shapes governed by
+REQ-AGRITECH-PUBLIC-018 and accepted only when every uploaded reference resolves
+to an object the same tenant and account stored.
 
 #### Scenario: Supplier input publication
 
@@ -142,15 +146,14 @@ evidence.
 ### Requirement: [REQ-AGRITECH-EXPERIENCE-026] DehqonHub user experience is coherent, responsive, and honestly previewable
 
 The selected user web application SHALL present every DehqonHub marketplace
-route through one mini-app product system whose authored default is a dark
-presentation: a deep near-black canvas, gradient elevated panels, large corner
-radii, a blue primary action colour, a gold accent reserved for settled
-commercial value, filled navigation glyphs, a distinct display typeface for
-headings and numeric values, and glow-based rather than drop-shadow elevation.
-A derived light theme SHALL remain available as a user preference. Both themes
-SHALL preserve the same content hierarchy, spacing, interaction states,
-localized semantics, and generated-API authority across desktop, 375 px
-Russian, and the 320 px supported floor.
+route through one reference-led product system with Poppins-compatible
+typography, warm cream and green light surfaces, pill-shaped controls, rounded
+cards and panels, a transparent brand mark beside a transparent text wordmark,
+clear line icons, consistent field and button padding, and restrained
+print-like elevation. The product SHALL ship that single light palette and SHALL
+expose no theme control on any route. The palette SHALL preserve the same
+content hierarchy, localized semantics, interaction states, and generated-API
+authority across desktop, 375 px Russian, and the 320 px supported floor.
 
 The home experience SHALL expose the compact marketplace header, search,
 category chips, hero, quick scenarios, real or governed-demo product shelves,
@@ -159,23 +162,174 @@ category blocks or a separate marketing renderer. Catalog filters SHALL be
 labelled, populated from current authoritative results, visibly active,
 keyboard operable, resettable, and available in a mobile bottom sheet. Empty
 text and price filter controls SHALL render localized example placeholders
-without substituting those examples as submitted values. Order, contract,
-verification, account, cart, favorites, and AI surfaces SHALL retain their
-owning real state machines while following the same spacing, typography, icon,
-card, and responsive rules.
+without substituting those examples as submitted values. Order,
+contract, verification, account, cart, favorites, and AI surfaces SHALL retain
+their owning real state machines while following the same spacing, typography,
+icon, card, and responsive rules; the account surface additionally follows the
+cabinet clause below.
 
-The mini-app bottom navigation SHALL render each destination with a visible
-text label beside or beneath its glyph and SHALL mark the current destination
-with `aria-current="page"` in addition to any visual fill. Controls that report
-a transient outcome SHALL keep a stable accessible name and announce the
-outcome through a polite live region instead of renaming the control.
+The product detail route SHALL state the listing's own attributes, grouped as
+category-specific facts before commercial terms, using the same vocabulary the
+catalog facets filter on, and SHALL repeat the availability, sample, promotion,
+region, and verified-seller tags the catalog card carries. It SHALL render only
+members the generated listing projection actually returns and SHALL omit an
+absent member instead of printing a placeholder value. The route SHALL present
+every image the listing carries: one main frame, a thumbnail strip once more
+than one image exists, and a modal fullscreen viewer with previous/next
+controls, Left/Right arrow keys, Escape dismissal, and touch swipe. The viewer
+SHALL be a labelled modal dialog that traps focus, returns focus to the frame
+that opened it, locks page scrolling while open, and restores scrolling when it
+closes or unmounts.
+
+Every route SHALL report work in progress in the shape of the content that is
+coming. A region whose data has not arrived SHALL render placeholders that
+occupy approximately the box the content will occupy — a catalog grid as cards,
+a management or offer list as rows, a definition list as label and value rows, a
+dashboard as stat tiles, and the product route as its image frame, thumbnail
+strip and grouped specifications — rather than one generic tile shape reused for
+every region. A control whose action is in flight SHALL show that it is working
+through a spinner in an affordance slot the control reserves in both states,
+SHALL carry `aria-busy`, SHALL keep its accessible name and its box unchanged,
+and SHALL stay disabled so the action cannot be submitted twice.
+
+The cart route SHALL present the seller-separated carts owned by
+REQ-AGRITECH-MARKETPLACE-016 through exactly one switching control: a single
+compact strip in which every sub-cart appears once, naming its seller with the
+verified seal the listing projection reports, its region, its own item count, and
+its own total. Exactly one sub-cart SHALL be active, and only the active sub-cart
+SHALL render line items, the delivery choice, and the checkout action. An
+inactive sub-cart SHALL NOT be repeated outside that strip as a second summary
+row carrying the same facts and its own swap control. The active selection SHALL
+persist in versioned browser storage on the same fail-closed discipline as the
+local preview cart, and SHALL resolve deterministically to the first remaining
+cart when the stored one is gone.
+
+The purchase-request experience SHALL separate the buyer's own purchase requests
+from the seller's incoming request feed as distinct addressable deep links, and
+SHALL give a single request its own view. That view SHALL state the request facts,
+a five-stage progress scale of draft, moderation, collecting offers, offer
+selected, and contract, the received offers as cards carrying price, delivery
+terms, and the seller display with its verified seal, and exactly one
+unmistakable primary action for the stage the request is in. Creating a request
+SHALL be a step-by-step flow whose fieldsets all remain mounted so moving between
+steps loses no entered value. Every purchase-request view SHALL carry explicit
+loading, empty, error, and awaiting-moderation states rather than a blank region.
+
+A verified producer SHALL reach one addressable screen that creates a listing,
+offered in the primary navigation immediately before the deals entry and absent
+for a role that creates none. Which listing that screen creates SHALL follow the
+actor's verified role rather than a control the actor operates: a seller creates
+the supplier-side product listing the seeds and machinery sections read, a farmer
+creates a produce listing, and a buyer creates none. A buyer reaching the address
+directly SHALL be told that creating a listing is outside a buying role rather
+than shown a blank region or a not-found page, and an account whose role is not
+settled yet SHALL be offered verification instead of being told its role forbids
+listing. The screen SHALL collect every member the catalog projection and its
+facets read for that kind — four localized names, description, category, unit,
+integer UZS price, stock and sample availability for a product; crop, grade,
+integer UZS price per kilogram, volume, sample availability and the availability
+window for produce; region for both — grouped as named field sets rather than one
+undifferentiated column, and SHALL refuse each invalid field with a message that
+names that field beside the control it belongs to. Submitting SHALL create the
+row and submit it for publication as one action, SHALL report which of the two
+commands succeeded, and SHALL state that a submitted listing stays invisible to
+shoppers until moderation approves it. A refusal the server types SHALL be shown
+with its own reason rather than a generic notice, and a refusal naming an API
+member SHALL be shown on the control that member belongs to. The submit control
+SHALL stay disabled while its commands are in flight so nothing is created twice.
+
+Listing photographs SHALL be limited to what storage actually holds. A product
+listing MAY carry at most five root-relative same-origin photographs drawn from
+the checked-in marketplace media directory, validated against that library in the
+browser and against the same path shape on the server, so no listing depends on a
+host the deployed content-security policy would refuse. A produce listing carries
+none, because produce has no image column, and the catalog draws its crop
+illustration instead. The screen SHALL state that a photograph from the actor's
+own device cannot be stored — this product has no blob storage — rather than
+accepting a file it would then discard.
 
 Guests and unverified visitors MAY assemble a versioned browser-local preview
 cart grouped by seller. That preview SHALL be explicitly local, SHALL use only
 safe public listing projections, and SHALL NOT invoke add-to-cart, update-cart,
-checkout, contract, or verification mutations. The governed demo home MAY show
-the three fixed reviewer identities created by the guarded demo seed, but only
-while API-governed demo listings are present and only with explicit demo copy.
+checkout, contract, or verification mutations.
+
+A preview cart SHALL NOT outlive the actor's authority to transact. Once the
+signed-in actor is a verified buyer with an approved buyer organization, every
+stored preview line SHALL be promoted through the same authenticated add-to-cart
+command any other client uses, so the server derives the seller, keeps one open
+cart per buyer and seller, and revalidates price and availability. That promotion
+SHALL be idempotent: each line's replay identity SHALL be derived from the acting
+organization, the listing publication, and the quantity rather than generated, an
+accepted line SHALL be removed from browser storage, and a reload SHALL NOT
+increase any quantity. A line the server rejects SHALL remain local, SHALL be
+reported once rather than retried on every refresh, and SHALL stay retryable from
+the cart. Promotion SHALL NOT run for a signed-out or unverified actor.
+
+While a preview cart cannot be checked out, the cart route SHALL state the
+boundary at the checkout control before it is used, naming the single step the
+actor has to clear — sign in, a settled verification, or an approved buyer
+organization — and offering that step as a direct action. The control's own label
+SHALL carry that step and its action SHALL open the surface that step names, so a
+control never names a step the actor has already cleared: a signed-in actor SHALL
+NOT be told to sign in. A verified role that does not buy is not a missing step
+at all: buying is outside that role. The route SHALL then state which roles may
+buy and what the actor's own role does, and SHALL offer no entry point, because
+verification cannot change a settled role and offering it would be a dead end. While the
+session or the buyer organization is still being read, the route SHALL report
+that check instead of naming a step it cannot yet know, and SHALL offer no entry
+point. Sign-in reached from the cart SHALL return the actor to the cart. Any
+confirmation the route emits after the control is used SHALL repeat that same
+step and SHALL NOT describe the preview as an assembled, placed, or submitted
+order.
+
+The home experience MAY publish the three fixed reviewer identities created by
+the guarded demo seed while the deployment's reviewer-access runtime flag is
+enabled, on a live, demo, or mixed catalog alike, because reviewer entry is a
+deployment decision rather than a property of the catalog. That reviewer entry
+SHALL name the identities as demo accounts in visible copy, SHALL state what
+each role is for and, where a role cannot do something, that the capability is
+absent rather than pending — the farmer identity buys everything and sells
+everything, the buyer identity only buys, and the seller identity only sells —
+and SHALL state qualitatively that a
+purchase request, competing offers, and a signed contract are already prepared
+between the buyer and seller identities without asserting counts or identifiers
+the page cannot read. It SHALL NOT present the seeded activity as production
+activity. A deployment SHALL be able to withdraw the identity list through that
+runtime flag alone, with no code change, and an unset or unparsable flag value
+SHALL fall through to the build-time default instead of an undefined state.
+
+The account route SHALL present a personal cabinet: a left rail listing its
+sections beside one large content panel showing the selected section. Those
+sections SHALL cover an overview of headline figures with the month chart, the
+account's own purchase requests and buyer-side contracts, the seller-side offers
+work and contracts it is fulfilling, sales and spending with the totals behind
+the chart, the publication and moderation queue, and the verification and account
+state. Each section SHALL have its own address, so a reviewer can be sent
+directly to one; an unrecognized section SHALL resolve to the overview rather
+than to an empty frame. The rail SHALL be operable by keyboard alone and SHALL
+announce which section is current. The cabinet SHALL collapse to a single column
+on narrow viewports. Moving between sections SHALL NOT re-read the account's
+resources.
+
+Every cabinet figure SHALL come from a member the generated client actually
+returned for that account, and SHALL NOT be derived from another figure,
+defaulted, or padded. Buyer-side and seller-side work SHALL be separated on the
+party the contract projection stamps for the reading account, never on a
+client-side comparison of identities. The month chart SHALL plot a spending
+series only while the dashboard reports a buyer scope and a sales series only
+while it reports a seller scope, SHALL draw no bar for a month that completed
+nothing, SHALL NOT interpolate, repeat, or extend a month, and SHALL state in
+words when the whole window completed nothing instead of plotting a flat line. It
+SHALL carry a scale, a legend, and a captioned value table with column headers as
+its accessible equivalent rather than presenting the figures only as a picture,
+SHALL render every amount through the shared money formatter with tabular
+figures, and SHALL respect reduced-motion preferences. Every cabinet panel SHALL
+carry explicit loading, empty, error, and ready states, and an error SHALL name
+the read that failed and offer a retry in place instead of showing a zero. Every
+capability the account surface offered before the cabinet SHALL remain reachable
+inside it. Each cabinet head SHALL separate its eyebrow, heading, and description
+on the same rhythm the page and panel heads use, so a description never collapses
+onto the eyebrow's own margin.
 
 The account entry route SHALL present one focused task at a time. Returning
 visitors SHALL receive a compact sign-in form and connected-provider choices;
@@ -193,33 +347,78 @@ return-route behavior.
 
 **Invariants:**
 
-- The dark reference palette uses a near-black canvas, indigo-violet gradient
-  panels, a blue primary, a gold value accent, and readable muted text; the
-  light theme is an explicitly authored counterpart with equivalent hierarchy
-  and states rather than an automatic colour inversion. Pure black is not used
-  as a surface.
-- Accent and success hues that pass contrast on the dark canvas MUST NOT be
-  reused as text colours on light surfaces; each palette resolves its own
-  readable text token.
-- The gold accent marks settled commercial value only. The product MUST NOT
-  present chance outcomes, streaks, reward loops, or winnings language.
-- Status, category, and empty-state artwork is source-owned, themes from design
-  tokens, and encodes meaning by distinct glyph shape so state survives
-  greyscale or colour-vision differences.
-- The header/footer render a transparent text wordmark and MUST NOT display the
-  white-backed legacy raster mark.
+- The reference palette uses warm cream, white, DehqonHub green, soft green,
+  charcoal ink, and sand borders. It is the only palette the product ships: no
+  route, control, or stored preference offers a second theme, and no automatic
+  color inversion stands in for one.
+- The header and footer render the DehqonHub emblem beside a transparent text
+  wordmark. The emblem MAY be raster or vector but MUST be transparent: no
+  opaque or white plate, and never the white-backed legacy raster mark. Where
+  the mark renders small it MUST be served from an asset sized for that box
+  rather than a full-resolution master, and it MUST stay presentational so the
+  clickable lockup keeps its own localized accessible name. That lockup is
+  itself an interactive target and MUST meet the 44 px minimum.
 - Controls expose visible hover, focus, selected, disabled, loading, empty,
   validation, denied, error, and success states with a consistent 44 px minimum
-  target where space permits. A control MAY be drawn smaller than its target so
-  long as its hit area meets that floor.
-- Decorative motion collapses under `prefers-reduced-motion: reduce` without
-  changing layout, hierarchy, or available actions.
+  target where space permits.
+- The product ships exactly one shimmer treatment and exactly one spinner, both
+  built from the existing palette tokens. A placeholder is never a control, a
+  heading, or a landmark: it is hidden from assistive technology while its
+  container carries `aria-busy` and a screen-reader-only status announces the
+  region as loading and then, by name, as ready. A busy control never changes
+  its accessible name to report its state.
+- A placeholder that would appear and disappear within a few frames is not
+  shown. A placeholder appears only once the work has outlasted the
+  instantaneous-response window, and once it has appeared it stays for a minimum
+  duration. Under `prefers-reduced-motion` the shimmer and the spinner take a
+  deliberate reduced treatment rather than a frozen animation, and because the
+  reduced placeholder does not move, its minimum visible duration is longer.
+- The cabinet never shows a figure it cannot source. A count, an amount, or a
+  chart point exists on screen only because an endpoint returned it for this
+  account; a failed read is reported as a failed read. A series is chosen from
+  the role scope the dashboard reports, not from whether its values happen to be
+  zero, so an absent capability never reads as a run of empty months.
+- Every cabinet section is separately addressable, resolves an unknown address to
+  the overview, and is reachable with Tab and Enter alone.
+- The buyer's own purchase requests and the seller's incoming request feed are
+  never rendered as one mixed list; each is its own addressable view, a single
+  request is addressable on its own, and the request creation flow hides the
+  inactive steps rather than unmounting their fields.
 - Guest favorites store only opaque public listing IDs in a versioned
   browser-local set, are described as device-local, and grant no authenticated
   authority. Signed-in live-listing favorites remain server-authoritative.
 - Guest preview carts are bounded and versioned, remain device-local, group
   public listing projections by seller, and cannot create a server cart,
-  checkout, contract, or authorization outcome.
+  checkout, contract, or authorization outcome. The add action reads as the same
+  plain add-to-cart call in every eligibility state. The device-local boundary
+  SHALL be stated where the buyer will see it — the add confirmation, the cart
+  route, and the catalog eligibility notice — and never as extra wording on the
+  button.
+- The cart route never merges two sellers into one prospective order. Switching
+  sub-carts is offered exactly once, as a tablist with roving tab focus and
+  Arrow/Home/End keys; no second control repeats an inactive sub-cart's seller,
+  count and total beside its own swap button. The active sub-cart is announced in
+  a polite live region, and every count and total is rendered with the sub-cart it
+  belongs to, whether in that cart's tab or in the active panel. A count or total
+  never appears as a bare label paired with a value that already spells the same
+  term out. A single seller drops the switcher yet still names that seller and
+  leaves no dangling tab reference behind. A line whose listing left the
+  authoritative projection or sold out is labelled and excluded from its cart
+  total instead of being silently priced. Quantity and checkout actions address
+  the active sub-cart's cart id only.
+- A restricted catalog card carries the demo or eligibility reason on its own
+  action as an accessible description and MUST NOT print that reason as visible
+  copy under every card. Governed demo provenance stays visible on the card, and
+  a signed-in actor who cannot yet transact receives exactly one catalog-level
+  notice holding the reason and its recovery route.
+- Product detail attributes and tags are projections of the generated public
+  listing response. Produce states crop and grade, inputs state the category the
+  catalog offers as a facet, and no attribute is inferred, defaulted, or
+  reworded into a claim the API did not make.
+- The fullscreen image viewer is a single modal dialog with `aria-modal`, a
+  labelled close control, labelled previous/next controls, a trapped tab ring,
+  and an announced position; page scrolling is locked for exactly as long as it
+  is open.
 - Production catalog, seller, offer, order, contract, verification, account,
   payment, provider, and AI facts come only from generated API responses.
   Storybook/browser fixtures are test-only, and API-empty/error states never
@@ -228,26 +427,32 @@ return-route behavior.
   and may be bookmarked only through the local guest/demo favorite boundary.
 - Public marketplace routes remain public when an optional authentication
   presentation or session bootstrap returns an anonymous response.
-- Language and theme changes update presentation preferences without changing
-  the current route or manufacturing an authentication redirect.
+- Language changes update presentation preferences without changing the current
+  route or manufacturing an authentication redirect.
 - Account-entry mode or registration-step changes remain on `/auth`, preserve
   drafted non-secret identity values, and never bypass authentication or expose
   secret or production credentials in URLs, browser storage, fixtures, or page
-  copy. The fixed reviewer identities are explicitly public demo data and appear
-  only with API-governed demo provenance.
+  copy. The fixed reviewer identities are explicitly public demo data, stay
+  labelled as demo accounts wherever they are published, and appear only while
+  the deployment's reviewer-access flag is enabled.
 
 **Failure behavior:**
 
 - Missing product media renders an intentional category illustration rather
-  than a broken image, white box, or unlabeled placeholder.
+  than a broken image, white box, or unlabeled placeholder. A listing without
+  images offers no thumbnail strip and no fullscreen viewer, a single image
+  offers no strip and no previous/next controls, and an image URL that fails to
+  load degrades to that same labelled category illustration in the frame, the
+  strip, and the viewer.
 - Empty filters or result sets render labelled recovery/reset guidance; they do
   not show blank panels, empty-looking controls, or fabricate listings.
-- Unsupported width, locale expansion, or either theme MUST NOT create
-  horizontal page overflow, clipped primary actions, clipped navigation labels,
-  invisible focus, or unreadable text.
-- A navigation destination MUST NOT be presented as an unlabeled glyph, and a
-  transient outcome MUST NOT be announced by replacing a control's accessible
-  name.
+- A region that is still loading never renders a blank area, and never renders a
+  placeholder whose shape or height is not the shape or height of the content it
+  stands in for. An action that is in flight never reads as a dead control that
+  merely greyed out, and a placeholder is never left on screen as a substitute
+  for an error or empty state once the response has arrived.
+- Unsupported width or locale expansion MUST NOT create horizontal page
+  overflow, clipped primary actions, invisible focus, or unreadable text.
 - Local-storage denial or malformed stored data fails safely to empty local
   favorite and preview-cart state and never redirects, crashes, or changes
   server state.
@@ -258,27 +463,22 @@ return-route behavior.
 
 #### Scenario: Reference-led home and catalog
 
-- **WHEN** a visitor opens the home or catalog in the default dark theme or the
-  light theme on a desktop, 375 px Russian, or 320 px viewport
+- **WHEN** a visitor opens the home or catalog on a desktop, 375 px Russian, or
+  320 px viewport
 - **THEN** the compact DehqonHub shell, hero, product content, labelled filters,
   localized placeholder examples, active controls, equal-padding actions, and
   responsive navigation remain readable and operable without duplicate
   marketing content or horizontal overflow
 
-#### Scenario: Labelled mini-app navigation identifies the current route
+#### Scenario: One brand lockup and one restriction notice
 
-- **WHEN** the mini-app shell renders its bottom navigation on any route
-- **THEN** every destination shows a visible text label with its glyph, the
-  destination matching the active path carries `aria-current="page"`, and the
-  navigation island stays clear of the reported safe-area insets
-
-#### Scenario: Sharing announces once without renaming the control
-
-- **WHEN** a visitor activates either share control and the link is copied
-  rather than handed to a host share sheet
-- **THEN** the polite live region announces the copy result once, both share
-  controls keep their original accessible name, and the visual affordance
-  alone reflects the confirmed state
+- **WHEN** a signed-in actor who is not yet eligible to transact opens the home
+  or catalog in any supported locale
+- **THEN** the header and footer each render the transparent DehqonHub emblem
+  from its small-asset source beside the text wordmark on a lockup that meets the
+  44 px target, the route shows exactly one notice naming the eligibility reason
+  and its recovery route, and no product card prints that reason while governed
+  demo cards keep their visible demo label
 
 #### Scenario: Guest bookmark remains local
 
@@ -297,12 +497,62 @@ return-route behavior.
   the header and cart update without a marketplace mutation, and contract review
   requires focused sign-in or verification instead of a browser-authored order
 
-#### Scenario: Governed demo exposes reviewer entry honestly
+#### Scenario: Preview cart is promoted once its owner may transact
 
-- **WHEN** the API supplies governed demo listings on the home route
-- **THEN** the farmer, seller, and buyer reviewer identities are visibly labelled
-  as demo accounts with copy controls, while a live-only, empty, or failed
-  catalog does not publish the identity list
+- **WHEN** a visitor who assembled a browser-local preview cart becomes a
+  signed-in verified buyer holding an approved buyer organization, and then
+  reloads the route
+- **THEN** every stored line is submitted once through the authenticated
+  add-to-cart command with a replay identity derived from the acting
+  organization, listing publication, and quantity, each accepted line leaves
+  browser storage, no quantity is increased by the reload, and a line the server
+  rejects stays local, is reported once, and remains retryable from the cart
+
+#### Scenario: Blocked preview checkout names its one missing step
+
+- **WHEN** an actor who may not yet transact reaches the checkout control of a
+  preview cart, before and after using it
+- **THEN** the route names the single step still required — sign in, a settled
+  verification, or an approved buyer organization — the checkout control's own
+  label carries that step, the offered action opens the surface that step names, a
+  sign-in returns to the cart, no cart, checkout, or contract mutation is invoked,
+  and the preview is never presented as an assembled, placed, or submitted order
+
+#### Scenario: The checkout control never names a cleared step
+
+- **WHEN** a signed-in actor whose verification is confirmed for a role that
+  cannot buy reaches the cart's checkout control, and when another actor reaches
+  it while the session or the buyer organization is still being read
+- **THEN** the first control states that buying belongs to farmers and buyers and
+  what the actor's own role does, offers no verification or sign-in entry point
+  because neither would change the outcome, the second reports the access check
+  in progress and offers no entry point, and neither control claims a step the
+  actor has already cleared or a remedy that does not exist
+
+#### Scenario: Active seller sub-cart is switched and checked out alone
+
+- **WHEN** a buyer holding carts from several sellers switches the active
+  sub-cart with the pointer or the keyboard, changes a quantity, reloads, and
+  requests contract review
+- **THEN** the one switching strip lists every sub-cart with its seller, region,
+  count and total, only the chosen sub-cart renders lines, delivery and checkout,
+  no inactive sub-cart is repeated below the strip as a second switch row, the
+  selection survives the reload from versioned browser storage, and checkout
+  submits that one seller's cart id without ever mixing sellers into a single
+  order
+
+#### Scenario: Reviewer entry follows its deployment flag and stays honest
+
+- **WHEN** the home route renders a live-only catalog while the deployment's
+  reviewer-access flag is enabled, and renders again after a deployment turns
+  that flag off
+- **THEN** the enabled case publishes the farmer, seller, and buyer identities
+  with visible demo labelling, copy controls, each role's purpose including the
+  farmer's two-sided reach and the single-sided limit of the buyer and seller
+  identities, and a qualitative note that a purchase request,
+  competing offers, and a signed contract are already prepared between the buyer
+  and seller identities, while the disabled case publishes no identity list at
+  all
 
 #### Scenario: Authoritative empty and demo states stay honest
 
@@ -316,20 +566,63 @@ return-route behavior.
 
 - **WHEN** a visitor opens `/auth`, chooses account creation, selects email,
   enters identity details, moves to credentials, and then steps backward and
-  forward in either supported theme or a narrow viewport
+  forward on a narrow viewport
 - **THEN** the route first shows a focused sign-in task, registration exposes a
   localized method-identity-credentials trail, drafted name and email survive
   step changes, Telegram remains an optional configured method, the final form
   uses the existing auth submission, and sign-in and recovery remain available
   without an unexpected redirect or horizontal overflow
 
+#### Scenario: Purchase requests separate ownership and show real progress
+
+- **WHEN** a buyer opens their own purchase requests, the seller feed, and one
+  single request
+- **THEN** the two lists are separate addressable views rather than one mixed
+  list, the single request shows its facts, the five-stage progress scale, the
+  offers as cards, and one primary action for its stage, the creation flow keeps
+  every step's fields mounted, and a request still awaiting moderation says so
+  instead of rendering an empty offer list
+
+#### Scenario: Product detail states the attributes the catalog filtered on
+
+- **WHEN** a visitor opens a produce or input listing after filtering the catalog
+  by crop, grade, category, availability, or seller trust
+- **THEN** the detail route shows those same values in a grouped attribute block
+  with the catalog's own labels, repeats the availability, sample, promotion,
+  region, and verified-seller tags, and omits every member the generated listing
+  projection did not return
+
+#### Scenario: Fullscreen image viewer is keyboard and touch operable
+
+- **WHEN** a visitor opens the main image of a listing that carries several
+  images and then uses thumbnails, arrow keys, swipes, and Escape
+- **THEN** a labelled modal dialog opens on the selected image with focus on its
+  close control, previous/next controls and Left/Right keys move through the
+  images, a horizontal swipe moves the same way, page scrolling stays locked
+  while it is open, and Escape closes it and returns focus to the frame that
+  opened it
+
 #### Scenario: Complete workflow visual parity
 
 - **WHEN** an authorized actor opens an order, contract, verification, account,
   cart, favorites, or AI workflow
 - **THEN** its authoritative state and actions remain unchanged while typography,
-  spacing, icons, cards, status treatments, responsive behavior, and both themes
-  follow the same DehqonHub product system
+  spacing, icons, cards, status treatments, and responsive behavior follow the
+  same single-palette DehqonHub product system
+
+#### Scenario: Loading carries the shape of the content and the state of the action
+
+- **WHEN** a visitor opens a catalog grid, a management list, a seller profile,
+  and a product route while the responses are slow, submits an action from one of
+  them, and repeats the same journey with reduced motion requested
+- **THEN** each region renders placeholders in its own content shape inside a
+  container marked `aria-busy` with every placeholder hidden from assistive
+  technology and one status announcing the region as loading and then as ready,
+  the submitted control shows a spinner in a slot it already reserved while
+  staying disabled and keeping its accessible name, no placeholder is painted for
+  work that resolves inside the instantaneous-response window, and the
+  reduced-motion journey shows the deliberate static treatment held for longer
+  instead of a frozen animation
 
 ### Requirement: [REQ-AGRITECH-PARTNER-007] Suppliers and buyers are approved organizations
 
@@ -412,13 +705,19 @@ Latin and `uz-cyrl` SHALL be the canonical Uzbek Cyrillic locale.
 ### Requirement: [REQ-AGRITECH-INTEGRATION-013] External connectors fail closed and explicit mock providers remain isolated
 
 Weather, agronomy, export, government, identity, document, signing, payment,
-factoring, notification, and commercial provider adapters SHALL have explicit
+promotion billing, factoring, notification, listing and review photograph object
+storage, and commercial provider adapters
+SHALL have explicit
 configuration, bounded timeouts, source identity, idempotent cursor, command, or
 callback semantics, reconciliation status, readiness, and redacted telemetry.
 An absent live contract or credential SHALL disable the connector. Development,
 test, and staging runtimes MAY explicitly select a deterministic mock adapter to
 supply external-provider facts while all domain authorization and persistence
-remain real; production SHALL reject mock mode during startup.
+remain real; production SHALL reject mock mode during startup. Photograph object
+storage has no mock adapter: it is either configured, in which case an accepted
+upload is durably written before its reference exists, or unconfigured, in which
+case the upload command SHALL refuse with a localized typed problem, store
+nothing, mint no reference, and the client SHALL NOT offer the action.
 
 #### Scenario: Disabled government connector
 
@@ -427,7 +726,7 @@ remain real; production SHALL reject mock mode during startup.
 
 #### Scenario: Mock provider does not grant authority
 
-- **WHEN** a non-production user completes a mock identity, storage, signing, payment, or factoring provider operation
+- **WHEN** a non-production user completes a mock identity, storage, signing, payment, promotion-billing, or factoring provider operation
 - **THEN** the idempotent result persists `mock` provenance and remains subject to the same administrator, party, tenant, and state-machine authorization as a live result
 
 ### Requirement: [REQ-AGRITECH-DEPLOYMENT-014] Selected deployment is operationally prepared
@@ -599,7 +898,14 @@ organization-authorized, tenant-safe, transactional, and fail closed when
 verification or an external provider is unavailable. Commands whose HTTP
 contract declares an `Idempotency-Key` SHALL return the original result for an
 exact replay, reject changed-input key reuse, and avoid duplicate outcomes under
-concurrency. This contract applies explicitly to
+concurrency. An owned purchase-request read SHALL carry that request's public
+request-publication correlation — the opaque publication identifier plus the
+current publication and moderation status whenever a publication exists — because
+the request publication, and never the private request row, is what
+`GET /marketplace/requests/{id}/offers`,
+`POST /marketplace/requests/{id}/offers`, and
+`POST /marketplace/requests/{id}/offers/{offerId}/choose` address. This contract
+applies explicitly to
 `POST /marketplace/verification`,
 `POST /marketplace/verification/submit`,
 `PATCH /marketplace/contracts/{id}/delivery-quote`, and
@@ -628,17 +934,50 @@ evidence.
   counterparty identity is needed, they use the caller's actor relationship and
   allowlisted party display snapshots. Internal tenant, user, partner, source-row,
   and provider-operation identifiers remain absent from user responses.
+  `BuyerRequestViewDto` additionally carries the request's own opaque publication
+  identifier and that publication's status and moderation status, which describe a
+  public row the same actor owns and are not internal identity.
+- Offer reads and offer selection for a purchase request are addressed by the
+  request publication identifier only. A request with no publication is not
+  addressable by those endpoints at all, and the client MUST report that the
+  request is awaiting moderation instead of presenting an empty or silently failed
+  offer list.
 - Product seller identity, request ownership, offer authorship, verification,
   approved buyer/supplier organization membership, contract parties, and
   signing actor MUST be derived from authenticated and persisted state, never a
   display label or caller-selected authority field.
 - An open cart MUST contain products from exactly one server-derived seller;
   adding a different seller's product creates or updates another cart.
+- Every persisted party-coherence invariant — behind a cart, an offer, a
+  contract, a purchase request, a sample request, and a listing review — MUST
+  accept exactly the verification roles the marketplace role policy authorizes
+  for that side: `buyer` or `farmer` on the buying side, and `seller` or
+  `farmer` on the selling side, each still requiring an active membership of the
+  matching capability on an approved organization of the matching kind. A
+  stricter persisted rule than the authorization layer enforces is a defect,
+  because the command then passes every check and fails as an unexpected server
+  error instead of a typed problem response.
+- The marketplace role policy is one authority. Repository predicates and
+  persisted trigger predicates MUST derive the accepted roles from it rather
+  than restate them as literals, so a persisted rule cannot drift away from the
+  authorization layer again.
 - Catalog checkout and selected offers MUST resolve to persisted, reviewable
   commercial terms; the platform MUST NOT return a fabricated order or contract
   identifier.
 - A purchase-request creator MUST NOT bid on their own request, and only the
   request owner can select a pending offer.
+- One purchase request MUST award at most one offer and MUST therefore produce at
+  most one live contract. The persisted schema, and not only the command path,
+  MUST make a second award impossible: at most one `accepted` offer per request,
+  at most one live `offer_selection` contract per request, and a request stage
+  that never returns to a choosable stage once it has been decided. A guarantee
+  that lives only in a mutable status column is not one, because any writer that
+  restores an earlier stage — a re-run demo fixture, a repair script, a second
+  API instance — re-arms the request and a second seller is told they won.
+- The request stage machine is one authority. The PostgreSQL repository, the
+  in-memory adapter, and the persisted stage guard MUST derive the permitted
+  transitions from it rather than restate them, so `offering -> selected` is the
+  only path to an award and no implementation disagrees about who may still win.
 - Contract creation freezes the reviewable commercial terms owned here. Artifact
   generation, qualified party signing, signature-triggered activation and
   inventory commit, settlement, fulfillment, dispute, commission, and review
@@ -675,6 +1014,12 @@ evidence.
 - Concurrent cart or offer conflicts reload authoritative state and do not
   duplicate or partially create the transaction. Post-freeze concurrency and
   inventory effects are governed by REQ-AGRITECH-LIFECYCLE-020.
+- Awarding an offer on a request that is already decided returns RFC 9457 409
+  naming the refused field, so the caller learns the request has a winner rather
+  than reading an unexplained conflict. Two concurrent awards resolve with
+  exactly one winner and one such conflict; a persisted single-award rule that
+  refuses the loser is reported as that same conflict and never as an
+  unexpected server error.
 
 #### Scenario: Canonical deep links and public discovery
 
@@ -735,6 +1080,15 @@ evidence.
 - **THEN** the API and UI expose two independently reviewable carts, preserve
   each seller boundary, show authoritative totals, and mutate only the selected
   cart line
+
+#### Scenario: Every authorized selling role is a valid persisted party
+
+- **WHEN** a verified buyer adds a published listing sold through an approved
+  supplier organization whose owner holds an active seller membership and a
+  verified verification in any role the marketplace seller policy authorizes
+- **THEN** the cart and its frozen contract persist with that organization as the
+  selling party, and no command that the authorization layer accepted fails as an
+  unexpected server error from a stricter persisted rule
 
 #### Scenario: Verified catalog checkout reaches contract review
 
@@ -806,6 +1160,23 @@ evidence.
   selects the request, creates one persisted draft contract from the accepted
   product price and delivery terms, and returns that contract reference for
   explicit review without adding the offer to a cart
+
+#### Scenario: Owned request reads correlate their own publication
+
+- **WHEN** the request owner reads `GET /marketplace/requests/mine`
+- **THEN** each published request carries its opaque request-publication
+  identifier together with the current publication and moderation status, a
+  request without a publication omits all three, and the client addresses offer
+  reads and offer selection with that publication identifier rather than the
+  private request identifier
+
+#### Scenario: A request awaiting moderation has no offer surface
+
+- **WHEN** the owner of a request that is not published yet opens it or attempts
+  to select an offer on it
+- **THEN** no offer endpoint is called with the private request identifier, the
+  surface states that the request is awaiting moderation, and no offer, request,
+  or contract state changes
 
 #### Scenario: Stale or foreign offer selection is rejected
 
@@ -887,6 +1258,15 @@ and `@app/backend-postgres-main-agritech`.
   and fallback are governed exclusively by REQ-AGRITECH-NOTIFICATION-022.
 - Promotions have bounded plans/periods and visible `Ad` disclosure and affect
   catalog/shelf ordering only.
+- A promotion is a paid placement, so it is reserved before it is granted. The
+  activation command requires an enabled `promotion_billing` capability, records
+  exactly one charge per promotion in the provider-operation ledger with its own
+  idempotency key, fingerprint, mode, and safe receipt, and only then lets the
+  reserved slot serve. A reservation is invisible to the catalog and to the
+  seller's promotion reads until that charge succeeds, and the database refuses
+  the transition without it. Mock mode records a simulated charge that discloses
+  `simulated` and `moneyMoved: false`; no receipt of any mode is presented as a
+  payment confirmation, and production rejects mock during startup.
 - Supplier, farmer, and buyer dashboards derive authorized metrics from real
   current records; fixtures and source presence are not activity.
 - Notification intents are persisted transactionally with their triggering
@@ -907,6 +1287,14 @@ and `@app/backend-postgres-main-agritech`.
   moderation, promotion ownership/period conflicts, fabricated dashboard scope,
   or stale/changed AI-cart input returns a localized typed error and leaves the
   previous authoritative state intact.
+- A disabled promotion billing capability refuses the activation with the
+  localized RFC 9457 `marketplace-provider-unavailable` 503 and reserves
+  nothing. A failed or timed-out charge records the failed operation, leaves the
+  reservation unserved, and refuses the command; the same command key retries the
+  charge and an exact replay of a settled command returns the original promotion.
+  A second command key cannot buy a second charge for one promotion, and a
+  concurrent double activation of one listing resolves as exactly one charge. The
+  client never offers a paid promotion action while the capability is unavailable.
 - Provider-mode failures and all delegated public, engagement, lifecycle,
   notification, client, locale, and assurance failures retain the fail-closed
   behavior of their owning requirements; this umbrella requirement adds no
@@ -920,7 +1308,12 @@ and `@app/backend-postgres-main-agritech`.
 #### Scenario: Promotion is catalog-only
 
 - **WHEN** an approved seller activates a promoted listing
-- **THEN** the product receives a localized `Ad` label and catalog placement while matching, offers, and AI ignore promotion weight
+- **THEN** exactly one `promotion_billing` charge is recorded for the plan price, the product receives a localized `Ad` label and catalog placement, and matching, offers, and AI ignore promotion weight
+
+#### Scenario: Unbillable promotion refuses itself
+
+- **WHEN** the promotion billing capability is disabled or its charge fails
+- **THEN** the activation returns a localized 503 explaining the unavailable capability, no slot is promoted, and no receipt claims that money moved
 
 #### Scenario: Confirmed AI starter cart is exactly once
 
@@ -970,6 +1363,30 @@ evidence.
   source or display edit either leaves the approved revision unchanged or
   creates a new pending moderation revision; unreviewed descriptive or
   organization content never becomes guest-visible in place.
+- A listing publication's safe assets are the locked authoritative source's own
+  assets at snapshot time, bounded to at most five entries and carried in the
+  snapshot's content fingerprint. A source that holds no asset publishes none,
+  and the client renders its intentional category illustration under
+  REQ-AGRITECH-EXPERIENCE-026 rather than a broken or fabricated image. Public
+  assets are served same-origin, so no public listing depends on a remote image
+  host the deployed content-security policy would refuse.
+- A source asset reference is one of exactly two allowlisted root-relative
+  shapes: a checked-in same-origin media path, or an object this platform stored
+  from an authenticated upload and serves back under its own `/marketplace/*`
+  namespace. Both are anchored so no absolute URL, host, traversal segment, or
+  query string can satisfy either.
+- An upload command requires an authenticated account, bounds the request to one
+  file part and a stated byte ceiling, and decides the media type from the
+  container's own bytes rather than from the file name or the declared type. A
+  file whose structure cannot be parsed to its end is refused rather than stored.
+  Camera and comment metadata — including any recorded position — is removed
+  before the object is written, and only the written bytes are digested.
+- A stored object is addressed publicly by an opaque high-entropy identifier and
+  nothing else. No public response exposes its tenant, uploading account, bucket,
+  or storage key, and a missing object and an unknown identifier are
+  indistinguishable. Attaching an uploaded reference to any record requires that
+  the attaching party stored it; a foreign or unknown reference is refused
+  identically.
 - Seller-profile content revisions are immutable. A listing submission whose
   seller display or description differs from the last approved profile creates
   or reuses a pending seller revision and pins that revision/fingerprint; it
@@ -1003,6 +1420,12 @@ evidence.
   malformed, noncanonical, sort-mismatched, or oversized cursors fail before
   querying. No input can select a tenant, organization, user, source row,
   provider record, or moderation state.
+- A truncated page MUST return a usable next cursor rather than fail. The cursor
+  carries the last returned row's sort key as a normalized absolute value — an
+  ISO 8601 instant for a time-ordered sort — so continuing from it returns the
+  following rows without repeating or skipping one, and every timestamp a public
+  read exposes is that same normalized `date-time` form regardless of how the
+  persistence driver returned it.
 - Publication commands require an authenticated verified owner who currently
   belongs to the matching approved organization. The server locks and derives
   the source and snapshot. Same-key/same-input retries return the original
@@ -1015,7 +1438,11 @@ evidence.
   but neither collection exposes the private listing source ID or purchase-request
   ID. It also omits internal tenant, user, partner, moderator, idempotency, and
   provider-operation identifiers, never returns another actor's unpublished
-  state, and does not claim exhaustive history.
+  state, and does not claim exhaustive history. Correlating a request publication
+  back to its private request is allowed only on the owner's own authenticated
+  request read under REQ-AGRITECH-MARKETPLACE-016, where the same actor already
+  owns both rows; no anonymous read correlates a public publication to a private
+  request.
 - Moderation queues and decisions require the tenant-scoped administrator
   permission. The queue exposes the exact allowlisted snapshot plus listing or
   request revision and seller-profile revision/fingerprint reviewed by the
@@ -1147,6 +1574,13 @@ browser evidence.
   and optional allowlisted public asset references. Review text, assets, seller
   reply, and report reason reject control/bidirectional characters, contact
   leakage, private URLs, oversized content, and caller identity fields.
+- A review asset reference is accepted only when it resolves to an object the
+  reviewing party itself stored under REQ-AGRITECH-PUBLIC-018; a foreign or
+  unknown handle is refused with the field named and nothing disclosed about
+  whether it exists. Every accepted reference is rendered wherever that review is
+  shown, publicly and in the author's and the reviewed organization's own views,
+  and a reference that no longer resolves renders nothing rather than a broken
+  frame.
 - A deal-verified review is visible through the public listing/seller
   projection with an explicit verified-deal label. Rating count and average are
   derived only from visible deal-verified reviews and update transactionally
@@ -1155,6 +1589,15 @@ browser evidence.
   bounded public reply under idempotency and revision controls. Any
   authenticated user may report a visible review once per reason class without
   changing its visibility directly.
+- An authenticated party MAY read its own review record: the reviews it authored,
+  the reviews left on listings owned by the exact seller organizations it is
+  currently an active member of, and the completed purchases whose eligibility it
+  has not consumed. The two directions stay separate collections, each entry
+  carries only the allowlisted public listing summary beside the review, and the
+  received side is derived from currently active membership in an approved
+  organization with a verified seller role rather than from the stored review row.
+  The read substitutes no demo, fixture or aggregated rating, and an absent record
+  is empty collections rather than a not-found.
 - Review reports enter a tenant-scoped administrator queue containing the exact
   allowlisted review/reply snapshot and revision. A permission-checked,
   expected-revision, idempotent decision either dismisses the report or hides
@@ -1210,6 +1653,11 @@ browser evidence.
 
 - **WHEN** public listing, seller, rating, and review data plus authenticated favorite/sample states are read in English, Russian, Uzbek Latin, and Uzbek Cyrillic
 - **THEN** semantic state and localized authored titles remain equivalent while tenant, user, partner, source, contract, eligibility, provider, idempotency, and moderation internals are absent
+
+#### Scenario: Own review record separates both directions
+
+- **WHEN** an authenticated buyer and an authenticated seller each read their own review record
+- **THEN** the buyer receives the reviews it authored plus its unconsumed completed-purchase eligibilities with no received reviews, the seller receives only the reviews left on its active organizations' listings with any persisted reply, and neither answer borrows a demo rating or exposes an eligibility, contract or partner identifier
 
 ### Requirement: [REQ-AGRITECH-LIFECYCLE-020] Contract lifecycle effects are durable, party-bound, and reconcilable
 
@@ -1288,6 +1736,10 @@ operations evidence.
   dispute evidence returns a safe localized 400, 403, 404, or 409 and commits no
   partial lifecycle, inventory, commission, eligibility, reputation, event, or
   notification state.
+- Reading a lifecycle a contract has not created yet reports an absent
+  sub-resource rather than a rejected request, so a client distinguishes a deal
+  still awaiting signature from a malformed or unauthorized call and renders the
+  explanatory waiting state instead of a failure with an impossible retry.
 - Provider disabled/live-unwired configuration fails before invocation. Mock
   configuration in production fails startup and deployment validation.
 - Timeout or unknown provider outcome is durably reconciliation-required;
@@ -1413,8 +1865,13 @@ verification while every commercial mutation remains server-authoritative.
 Public discovery SHALL remain anonymous. Signed-in users SHALL retain profile,
 favorites, organization application, and verification readiness/history.
 Controls for unavailable commercial actions SHALL remain visible when they aid
-task understanding, SHALL be disabled, and SHALL state the exact missing
-identity or approved-organization prerequisite with a next action.
+task understanding, SHALL be disabled, and SHALL distinguish a prerequisite the
+actor can still clear from a capability that lies outside their role. A missing
+identity or approved-organization prerequisite SHALL be named exactly and offered
+as a next action. A capability outside the verified role SHALL instead state
+which roles hold it and what the actor's own role does, and SHALL offer no next
+action, because a settled verification role cannot be changed from these
+surfaces and presenting verification as the remedy would be false.
 
 **Evidence profile:** API, domain, security, journey, accessibility
 

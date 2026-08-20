@@ -769,6 +769,21 @@ Then(
   },
 );
 
+Then(
+  'exactly one simulated charge is recorded, no slot serves unpaid, and an unavailable billing capability refuses the paid action',
+  function (this: AcceptanceWorld) {
+    const result = this.agriTechPromotionResult;
+    assert.ok(result, 'promotion activation was not exercised');
+    assert.equal(result.chargeCount, 1);
+    assert.equal(result.servedWithoutCharge, 0);
+    assert.equal(result.chargeReceipt.simulated, true);
+    assert.equal(result.chargeReceipt.moneyMoved, false);
+    assert.equal(result.chargeReceipt.amountUzs, 150_000);
+    assert.equal(result.refusedStatus, 503);
+    assert.equal(result.refusedCapability, 'promotion_billing');
+  },
+);
+
 Given('a verified buyer receives a grounded AI preview across two approved sellers', function (this: AcceptanceWorld) {
   this.agriTechDashboardAiAdapter = new MarketplaceDashboardAiAcceptanceAdapter();
 });

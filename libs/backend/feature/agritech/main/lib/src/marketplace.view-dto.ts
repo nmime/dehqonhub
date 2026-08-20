@@ -14,6 +14,7 @@ import {
   type ValidationArguments,
   type ValidationOptions,
 } from 'class-validator';
+import { marketplacePublicProfileId } from '@app/backend-feature-agritech-shared';
 import type {
   AgriTechOwner,
   BuyerRequest,
@@ -32,6 +33,8 @@ const verificationStatuses = ['none', 'pending', 'verified', 'rejected'] as cons
 const cartStatuses = ['open', 'ordered', 'abandoned'] as const;
 const requestStatuses = ['open', 'offering', 'selected', 'closed', 'expired'] as const;
 const offerStatuses = ['pending', 'accepted', 'declined'] as const;
+const publicationStatuses = ['published', 'paused', 'rejected'] as const;
+const publicationModerationStatuses = ['pending', 'approved', 'rejected'] as const;
 const contractStatuses = ['draft', 'signed', 'active', 'completed', 'cancelled', 'legacy_review_required'] as const;
 const deliveryTerms = ['pickup', 'seller_delivery', 'by_agreement'] as const;
 const maximumDeliveryDays = 365;
@@ -194,6 +197,22 @@ export class BuyerRequestViewDto {
   @ApiPropertyOptional({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) budgetUzs?: number;
   @ApiPropertyOptional() requirements?: string;
   @ApiProperty({ enum: requestStatuses }) status!: string;
+  @ApiPropertyOptional({
+    description:
+      'Public request publication id. The offer endpoints are keyed by it, never by the request id. Absent until the request is published, which means it is still awaiting moderation and cannot receive offers yet.',
+    format: 'uuid',
+  })
+  publicationId?: string;
+  @ApiPropertyOptional({
+    description: 'Publication lifecycle state. Present only together with publicationId.',
+    enum: publicationStatuses,
+  })
+  publicationStatus?: string;
+  @ApiPropertyOptional({
+    description: 'Moderation decision on the publication. Present only together with publicationId.',
+    enum: publicationModerationStatuses,
+  })
+  moderationStatus?: string;
   @ApiProperty({ format: 'date-time' }) createdAt!: Date;
   @ApiProperty({ format: 'date-time' }) updatedAt!: Date;
 }
@@ -307,6 +326,15 @@ export class ContractViewDto {
   @ApiProperty({ enum: ['buyer', 'seller'] }) actorParty!: 'buyer' | 'seller';
   @ApiProperty({ type: MarketplacePartySnapshotDto }) buyerPartySnapshot!: MarketplacePartySnapshotDto;
   @ApiProperty({ type: MarketplacePartySnapshotDto }) sellerPartySnapshot!: MarketplacePartySnapshotDto;
+  @ApiProperty({
+    description:
+      'Opaque public profile address of the buying organization, so a deal screen can link to the counterparty. ' +
+      'It is derived, carries no partner, user or tenant identifier, and resolves only while that party keeps a ' +
+      'moderated public presence.',
+  })
+  buyerProfileId!: string;
+  @ApiProperty({ description: 'Opaque public profile address of the selling organization.' })
+  sellerProfileId!: string;
   @ApiPropertyOptional({ enum: ['cart_checkout', 'offer_selection'] }) sourceType?: ContractSourceType;
   @ApiProperty() subject!: string;
   @ApiProperty({ maximum: maximumUzsAmount, minimum: 1, type: 'integer' }) amountUzs!: number;
@@ -352,6 +380,11 @@ export function toContractSelfView(contract: Contract, owner: AgriTechOwner): Co
       legalName: contract.sellerPartySnapshot.legalName,
       region: contract.sellerPartySnapshot.region,
     },
+    // Both counterparty addresses are derived from the bound partner rows rather
+    // than copied from them, so the deal screen can offer a profile link without
+    // a private partner id ever reaching the browser or the URL.
+    buyerProfileId: marketplacePublicProfileId(contract.buyerPartnerId),
+    sellerProfileId: marketplacePublicProfileId(contract.sellerPartnerId),
     ...(contract.sourceType === undefined ? {} : { sourceType: contract.sourceType }),
     subject: contract.subject,
     amountUzs: contract.amountUzs,
@@ -397,7 +430,10 @@ export const toBuyerRequestView = (request: BuyerRequest): BuyerRequestViewDto =
   createdAt: request.createdAt,
   ...(request.deadline === undefined ? {} : { deadline: request.deadline }),
   id: request.id,
+  ...(request.moderationStatus === undefined ? {} : { moderationStatus: request.moderationStatus }),
   ...(request.product === undefined ? {} : { product: request.product }),
+  ...(request.publicationId === undefined ? {} : { publicationId: request.publicationId }),
+  ...(request.publicationStatus === undefined ? {} : { publicationStatus: request.publicationStatus }),
   region: request.region,
   ...(request.requirements === undefined ? {} : { requirements: request.requirements }),
   status: request.status,

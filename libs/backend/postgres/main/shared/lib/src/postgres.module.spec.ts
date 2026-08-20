@@ -1,6 +1,10 @@
-// @requirements REQ-RUNTIME-DATABASE-008
-import { afterEach, describe, expect, it } from 'vitest';
+// @requirements REQ-RUNTIME-DATABASE-008 REQ-RUNTIME-HEALTH-001
+import { MikroORM } from '@mikro-orm/core';
+import { Test } from '@nestjs/testing';
+import type { Provider } from '@nestjs/common';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { PostgresMainModule } from './postgres.module';
+import { PostgresReadinessHealthIndicator } from './postgres.health';
 import { PostgresSessionStore } from './postgres-session.store';
 
 interface DurableRuntimeForTest {
@@ -28,6 +32,58 @@ function durableRuntimeFactory(): (readiness: unknown, migrations: unknown) => D
   }
   return provider.useFactory as (readiness: unknown, migrations: unknown) => DurableRuntimeForTest;
 }
+
+/**
+ * Compiles the module's own providers through the Nest container, which is the
+ * only place the reflected injection metadata of the health adapter is
+ * exercised: constructing the adapter by hand cannot prove that a wired app
+ * really receives an ORM to query.
+ */
+async function resolveReadinessIndicator(orm?: unknown): Promise<PostgresReadinessHealthIndicator> {
+  const providers = (PostgresMainModule.forRoot().providers ?? []) as Provider[];
+  const moduleRef = await Test.createTestingModule({
+    providers: [...(orm === undefined ? [] : [{ provide: MikroORM, useValue: orm }]), ...providers],
+  }).compile();
+  const indicator = moduleRef.get(PostgresReadinessHealthIndicator);
+  await moduleRef.close();
+  return indicator;
+}
+
+describe('PostgresMainModule dependency health wiring', () => {
+  it('resolves a readiness indicator that queries the container-provided ORM', async () => {
+    const execute = vi.fn(() => Promise.resolve([{ '?column?': 1 }]));
+    const indicator = await resolveReadinessIndicator({ em: { getConnection: () => ({ execute }) } });
+
+    await expect(indicator.check()).resolves.toEqual({
+      name: 'postgres',
+      status: 'ok',
+      details: { skipped: false },
+    });
+    expect(execute).toHaveBeenCalledWith('select 1');
+  });
+
+  it('reports an unreachable database as an error instead of throwing', async () => {
+    const execute = vi.fn(() => Promise.reject(new Error('connect ECONNREFUSED 127.0.0.1:5432')));
+    const indicator = await resolveReadinessIndicator({ em: { getConnection: () => ({ execute }) } });
+
+    await expect(indicator.check()).resolves.toEqual({
+      name: 'postgres',
+      status: 'error',
+      details: { message: 'connect ECONNREFUSED 127.0.0.1:5432', type: 'Error' },
+    });
+    expect(execute).toHaveBeenCalledWith('select 1');
+  });
+
+  it('fails readiness when the selected provider exposes no ORM to query', async () => {
+    const indicator = await resolveReadinessIndicator();
+
+    await expect(indicator.check()).resolves.toMatchObject({
+      name: 'postgres',
+      status: 'error',
+      details: { skipped: false, reason: 'not_configured' },
+    });
+  });
+});
 
 describe('PostgresMainModule', () => {
   const originalEnvironment = process.env;

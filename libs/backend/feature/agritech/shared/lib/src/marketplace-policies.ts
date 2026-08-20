@@ -66,3 +66,20 @@ export const requestTransitions: Readonly<Record<RequestStatus, readonly Request
 
 export const isRequestTransitionAllowed = (current: RequestStatus, next: RequestStatus): boolean =>
   current === next || requestTransitions[current].includes(next);
+
+/**
+ * Whether a purchase request may still award an offer.
+ *
+ * `isRequestTransitionAllowed` treats `current === next` as allowed, because a
+ * command that re-asserts the stage it already has is idempotent — that is what
+ * a repeat offer on an `offering` request needs. Awarding is not idempotent: it
+ * freezes a contract. A request that already reached `selected` must therefore
+ * be refused here even though `selected -> selected` is a legal no-op, and
+ * `open` must be refused because the stage machine has no `open -> selected`
+ * edge. Both the PostgreSQL repository and the in-memory adapter read this one
+ * predicate, and `tr__marketplace_requests__stage_authority` mirrors the same
+ * table in the database, so no implementation can disagree about who may still
+ * win a request.
+ */
+export const canChooseRequestOffer = (status: RequestStatus): boolean =>
+  status !== 'selected' && isRequestTransitionAllowed(status, 'selected');

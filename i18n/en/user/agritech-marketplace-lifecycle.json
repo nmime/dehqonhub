@@ -11,6 +11,8 @@
   "agritech.marketplace.contract.simulationDisclosure": "Simulation — no external provider action occurred",
   "agritech.marketplace.contract.simulationWatermark": "The generated artifact carries a simulation watermark.",
   "agritech.marketplace.contract.artifactUnavailable": "No generated contract artifact is available yet.",
+  "agritech.marketplace.contract.settlement.notStarted": "Payment has not started",
+  "agritech.marketplace.contract.settlement.notStartedDescription": "Settlement opens once both parties have signed the contract.",
   "agritech.marketplace.contract.refreshArtifact": "Refresh artifact metadata",
   "agritech.marketplace.contract.artifactRefreshed": "Artifact metadata refreshed",
   "agritech.marketplace.contract.downloadArtifact": "Download PDF",

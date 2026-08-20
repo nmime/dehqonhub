@@ -1,0 +1,21 @@
+{
+  "agritech.marketplace.photos.group": "Фотосуратлар",
+  "agritech.marketplace.photos.uploadLabel": "Шу қурилмадан юклаш",
+  "agritech.marketplace.photos.uploadHint": "JPEG, PNG ёки WebP, ҳар бири {{limit}} гача, жами {{max}} фотосурат. Сақлашдан олдин суратга олинган жой маълумоти ўчирилади.",
+  "agritech.marketplace.photos.selected": "Танланган: {{max}} дан {{used}}",
+  "agritech.marketplace.photos.busy": "Юкланмоқда…",
+  "agritech.marketplace.photos.uploadingOne": "{{name}} юкланмоқда…",
+  "agritech.marketplace.photos.remove": "{{name}} ни олиб ташлаш",
+  "agritech.marketplace.photos.uploadedOne": "Қурилмадан юкланди",
+  "agritech.marketplace.photos.unavailable": "Бу ўрнатмада объект сақлаш жойи созланмаган, шунинг учун фотосурат сақланмайди. Эълонни барибир яратиш мумкин: каталогда унинг категория расми кўрсатилади.",
+  "agritech.marketplace.photos.error.tooLarge": "{{name}}: {{limit}} дан катта. Ҳеч нарса сақланмади.",
+  "agritech.marketplace.photos.error.type": "{{name}}: фақат JPEG, PNG ва WebP қабул қилинади. Ҳеч нарса сақланмади.",
+  "agritech.marketplace.photos.error.limit": "{{name}}: қўшилмади, чегара — {{max}} фотосурат.",
+  "agritech.marketplace.photos.error.rejected": "{{name}}: сервер бу файлни ўқиладиган фотосурат эмас деб рад этди. Ҳеч нарса сақланмади.",
+  "agritech.marketplace.photos.error.storage": "{{name}}: ҳозир фотосуратлар сақланмайди. Ҳеч нарса сақланмади, кейинроқ уриниб кўринг.",
+  "agritech.marketplace.photos.error.unauthorized": "{{name}}: фотосурат юклаш учун қайтадан киринг.",
+  "agritech.marketplace.photos.reviewGroup": "Фотосуратлар (мажбурий эмас)",
+  "agritech.marketplace.photos.reviewHint": "Баҳоингиз билан бирга олган маҳсулотингизнинг {{max}} тагача фотосурати чиқади.",
+  "agritech.marketplace.photos.reviewPhotos": "Бу шарҳдаги фотосуратлар",
+  "agritech.marketplace.photos.reviewAlt": "Бу шарҳдаги {{total}} фотосуратдан {{position}}-си"
+}

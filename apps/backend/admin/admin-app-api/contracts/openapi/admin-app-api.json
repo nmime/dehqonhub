@@ -27549,6 +27549,14 @@
           "sellerPartySnapshot": {
             "$ref": "#/components/schemas/MarketplacePartySnapshotDto"
           },
+          "buyerProfileId": {
+            "type": "string",
+            "description": "Opaque public profile address of the buying organization, so a deal screen can link to the counterparty. It is derived, carries no partner, user or tenant identifier, and resolves only while that party keeps a moderated public presence."
+          },
+          "sellerProfileId": {
+            "type": "string",
+            "description": "Opaque public profile address of the selling organization."
+          },
           "sourceType": {
             "type": "string",
             "enum": ["cart_checkout", "offer_selection"]
@@ -27620,6 +27628,8 @@
           "actorParty",
           "buyerPartySnapshot",
           "sellerPartySnapshot",
+          "buyerProfileId",
+          "sellerProfileId",
           "subject",
           "amountUzs",
           "lines",

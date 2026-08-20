@@ -12,8 +12,14 @@ const sqlFrom = (direction: 'down' | 'up'): string => {
 };
 
 describe('marketplace command hardening migration', () => {
-  it('is the latest migration and adds a contract revision plus the four persisted command kinds', () => {
-    expect(agritechMigrations.at(-1)).toBe(Migration20260810139000HardenMarketplaceCommands);
+  it('runs after every schema it hardens and adds a contract revision plus the four persisted command kinds', () => {
+    const migrationNames = agritechMigrations.map((migration) => migration.name);
+    expect(migrationNames.indexOf('Migration20260810138000AddMarketplaceEngagement')).toBeLessThan(
+      migrationNames.indexOf(Migration20260810139000HardenMarketplaceCommands.name),
+    );
+    expect(migrationNames.indexOf(Migration20260810139000HardenMarketplaceCommands.name)).toBeLessThan(
+      migrationNames.indexOf('Migration20260810140000AlignMarketplaceSellerPartyRole'),
+    );
     const sql = sqlFrom('up');
     expect(sql).toContain('add column "version" int not null default 0');
     expect(sql).toContain("'verification_create'");

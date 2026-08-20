@@ -11,7 +11,9 @@ degraded behavior explicit and continuously provable.
 
 Health endpoints and dependency indicators SHALL identify the running app,
 redact internals, distinguish degraded from failed state, and never report a
-required failed dependency as healthy.
+required failed dependency as healthy. A required dependency check SHALL execute
+a bounded round trip against the dependency it names, and readiness SHALL follow
+that result.
 
 **Evidence profile:** domain, operations
 
@@ -19,15 +21,29 @@ required failed dependency as healthy.
 
 - Health output contains no secret configuration.
 - Shutdown and readiness reflect dependency lifecycle.
+- A required dependency check that did not execute is reported as failed, never
+  as healthy, and never as an optional skip.
+- Every indicator is bounded by a timeout, so a hung dependency fails the probe
+  instead of hanging it.
+- Liveness runs only liveness-safe indicators; dependency truth belongs to
+  readiness so a dependency outage never restarts a healthy process.
 
 **Failure behavior:**
 
 - Dependency failure produces a bounded unhealthy or degraded result.
+- An unreachable, unconfigured, or hung required dependency fails readiness
+  while liveness stays healthy.
 
 #### Scenario: Failed required dependency
 
 - **WHEN** a required runtime dependency cannot respond
 - **THEN** health does not report an unconditional healthy state
+
+#### Scenario: Required dependency check that never executed
+
+- **WHEN** a required dependency check reports success without performing its
+  round trip
+- **THEN** readiness reports that required dependency as failed
 
 ### Requirement: [REQ-RUNTIME-RECOVERY-002] Failure and recovery procedures are executable
 
