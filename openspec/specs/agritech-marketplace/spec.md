@@ -1482,6 +1482,15 @@ browser evidence.
   bounded public reply under idempotency and revision controls. Any
   authenticated user may report a visible review once per reason class without
   changing its visibility directly.
+- An authenticated party MAY read its own review record: the reviews it authored,
+  the reviews left on listings owned by the exact seller organizations it is
+  currently an active member of, and the completed purchases whose eligibility it
+  has not consumed. The two directions stay separate collections, each entry
+  carries only the allowlisted public listing summary beside the review, and the
+  received side is derived from currently active membership in an approved
+  organization with a verified seller role rather than from the stored review row.
+  The read substitutes no demo, fixture or aggregated rating, and an absent record
+  is empty collections rather than a not-found.
 - Review reports enter a tenant-scoped administrator queue containing the exact
   allowlisted review/reply snapshot and revision. A permission-checked,
   expected-revision, idempotent decision either dismisses the report or hides
@@ -1537,6 +1546,11 @@ browser evidence.
 
 - **WHEN** public listing, seller, rating, and review data plus authenticated favorite/sample states are read in English, Russian, Uzbek Latin, and Uzbek Cyrillic
 - **THEN** semantic state and localized authored titles remain equivalent while tenant, user, partner, source, contract, eligibility, provider, idempotency, and moderation internals are absent
+
+#### Scenario: Own review record separates both directions
+
+- **WHEN** an authenticated buyer and an authenticated seller each read their own review record
+- **THEN** the buyer receives the reviews it authored plus its unconsumed completed-purchase eligibilities with no received reviews, the seller receives only the reviews left on its active organizations' listings with any persisted reply, and neither answer borrows a demo rating or exposes an eligibility, contract or partner identifier
 
 ### Requirement: [REQ-AGRITECH-LIFECYCLE-020] Contract lifecycle effects are durable, party-bound, and reconcilable
 
