@@ -166,6 +166,27 @@ describe('AdminAppHealthServiceProvider', () => {
     await expect(service.checkReadiness()).resolves.toMatchObject({ data: { status: 'error' } });
   });
 
+  it('never reports a required database check that skipped its round trip as healthy', async () => {
+    const service = createService(
+      createAdminAppHealthServiceProvider(),
+      fakeRuntime('postgres', [
+        {
+          name: 'postgres',
+          check: () => ({
+            name: 'postgres',
+            status: 'ok' as const,
+            details: { skipped: true, reason: 'not_configured' },
+          }),
+        },
+        fakeIndicator('postgres-migrations'),
+      ]),
+    );
+
+    await expect(findCheck(service, 'database')).resolves.toMatchObject({ status: 'error', required: true });
+    await expect(service.checkReadiness()).resolves.toMatchObject({ data: { status: 'error' } });
+    await expect(service.checkLiveness()).resolves.toMatchObject({ data: { status: 'ok' } });
+  });
+
   it('preserves extra Postgres indicator names as optional dependencies', async () => {
     const service = createService(
       createAdminAppHealthServiceProvider(),
