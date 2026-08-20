@@ -213,6 +213,7 @@ export const thinLocaleCatalogFileNames = [
   "user/agritech-marketplace-discovery.json",
   "user/agritech-marketplace-catalog.json",
   "user/agritech-marketplace-product.json",
+  "user/agritech-marketplace-profile.json",
   "user/agritech-marketplace-cart-samples.json",
   "user/agritech-marketplace-requests.json",
   "user/agritech-marketplace-offers.json",

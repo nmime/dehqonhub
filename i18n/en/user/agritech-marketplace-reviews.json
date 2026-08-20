@@ -29,5 +29,14 @@
   "agritech.marketplace.reviews.verifiedDeal": "Verified purchase",
   "agritech.marketplace.reviews.yourReview": "Your review",
   "agritech.marketplace.reviews.alreadyReviewed": "One review is kept per completed purchase, so this rating can no longer be changed.",
-  "agritech.marketplace.reviews.gated": "Only a buyer whose contract for this listing was completed can rate it."
+  "agritech.marketplace.reviews.gated": "Only a buyer whose contract for this listing was completed can rate it.",
+  "agritech.marketplace.reviews.mine.written": "Reviews I wrote",
+  "agritech.marketplace.reviews.mine.received": "Reviews my listings received",
+  "agritech.marketplace.reviews.mine.writtenEmpty": "You have not reviewed anything yet.",
+  "agritech.marketplace.reviews.mine.receivedEmpty": "Nobody has reviewed your listings yet.",
+  "agritech.marketplace.reviews.mine.unavailable": "Your reviews are unavailable.",
+  "agritech.marketplace.reviews.mine.aboutSeller": "About {{seller}}",
+  "agritech.marketplace.reviews.mine.onMyListing": "Left on your listing",
+  "agritech.marketplace.reviews.mine.awaiting": "{{count}} completed purchases are still waiting for your rating.",
+  "agritech.marketplace.reviews.mine.awaitingOne": "1 completed purchase is still waiting for your rating."
 }

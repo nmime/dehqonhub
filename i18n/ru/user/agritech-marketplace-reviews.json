@@ -29,5 +29,14 @@
   "agritech.marketplace.reviews.verifiedDeal": "Покупка подтверждена",
   "agritech.marketplace.reviews.yourReview": "Ваш отзыв",
   "agritech.marketplace.reviews.alreadyReviewed": "На одну завершённую покупку остаётся один отзыв, поэтому изменить эту оценку уже нельзя.",
-  "agritech.marketplace.reviews.gated": "Оценить это предложение может только покупатель с завершённым контрактом по нему."
+  "agritech.marketplace.reviews.gated": "Оценить это предложение может только покупатель с завершённым контрактом по нему.",
+  "agritech.marketplace.reviews.mine.written": "Отзывы, которые я написал",
+  "agritech.marketplace.reviews.mine.received": "Отзывы о моих объявлениях",
+  "agritech.marketplace.reviews.mine.writtenEmpty": "Вы ещё никого не оценили.",
+  "agritech.marketplace.reviews.mine.receivedEmpty": "Ваши объявления пока никто не оценил.",
+  "agritech.marketplace.reviews.mine.unavailable": "Ваши отзывы недоступны.",
+  "agritech.marketplace.reviews.mine.aboutSeller": "О продавце {{seller}}",
+  "agritech.marketplace.reviews.mine.onMyListing": "Оставлен о вашем объявлении",
+  "agritech.marketplace.reviews.mine.awaiting": "{{count}} завершённых покупок ждут вашей оценки.",
+  "agritech.marketplace.reviews.mine.awaitingOne": "Одна завершённая покупка ждёт вашей оценки."
 }

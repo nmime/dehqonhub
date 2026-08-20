@@ -29,5 +29,14 @@
   "agritech.marketplace.reviews.verifiedDeal": "Xarid tasdiqlangan",
   "agritech.marketplace.reviews.yourReview": "Sizning sharhingiz",
   "agritech.marketplace.reviews.alreadyReviewed": "Har bir yakunlangan xarid uchun bitta sharh saqlanadi, shu sababli bu bahoni o‘zgartirib bo‘lmaydi.",
-  "agritech.marketplace.reviews.gated": "Bu e‘lonni faqat shu e‘lon bo‘yicha shartnomasi yakunlangan xaridor baholay oladi."
+  "agritech.marketplace.reviews.gated": "Bu e‘lonni faqat shu e‘lon bo‘yicha shartnomasi yakunlangan xaridor baholay oladi.",
+  "agritech.marketplace.reviews.mine.written": "Men yozgan sharhlar",
+  "agritech.marketplace.reviews.mine.received": "E'lonlarim olgan sharhlar",
+  "agritech.marketplace.reviews.mine.writtenEmpty": "Siz hali hech narsani baholamadingiz.",
+  "agritech.marketplace.reviews.mine.receivedEmpty": "E'lonlaringizni hali hech kim baholamagan.",
+  "agritech.marketplace.reviews.mine.unavailable": "Sharhlaringiz mavjud emas.",
+  "agritech.marketplace.reviews.mine.aboutSeller": "{{seller}} haqida",
+  "agritech.marketplace.reviews.mine.onMyListing": "Sizning e'loningizga qoldirilgan",
+  "agritech.marketplace.reviews.mine.awaiting": "{{count}} yakunlangan xarid hali bahoyingizni kutmoqda.",
+  "agritech.marketplace.reviews.mine.awaitingOne": "Bitta yakunlangan xarid hali bahoyingizni kutmoqda."
 }

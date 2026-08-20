@@ -11,6 +11,7 @@ import enAgriTechCatalog from '@app/i18n-en-user/agritech.json';
 import enAgriTechOperationsCatalog from '@app/i18n-en-user/agritech-operations.json';
 import enAgriTechMarketplaceAccountAiCatalog from '@app/i18n-en-user/agritech-marketplace-account-ai.json';
 import enAgriTechMarketplaceCabinetCatalog from '@app/i18n-en-user/agritech-marketplace-cabinet.json';
+import enAgriTechMarketplaceDealsCatalog from '@app/i18n-en-user/agritech-marketplace-deals.json';
 import enAgriTechMarketplaceCartSamplesCatalog from '@app/i18n-en-user/agritech-marketplace-cart-samples.json';
 import enAgriTechMarketplaceCatalogCatalog from '@app/i18n-en-user/agritech-marketplace-catalog.json';
 import enAgriTechMarketplaceContractStatusCatalog from '@app/i18n-en-user/agritech-marketplace-contract-status.json';
@@ -20,6 +21,7 @@ import enAgriTechMarketplaceReviewsCatalog from '@app/i18n-en-user/agritech-mark
 import enAgriTechMarketplaceDiscoveryCatalog from '@app/i18n-en-user/agritech-marketplace-discovery.json';
 import enAgriTechMarketplaceOffersCatalog from '@app/i18n-en-user/agritech-marketplace-offers.json';
 import enAgriTechMarketplaceProductCatalog from '@app/i18n-en-user/agritech-marketplace-product.json';
+import enAgriTechMarketplaceProfileCatalog from '@app/i18n-en-user/agritech-marketplace-profile.json';
 import enAgriTechMarketplaceRequestsCatalog from '@app/i18n-en-user/agritech-marketplace-requests.json';
 import enAgriTechMarketplaceShellCatalog from '@app/i18n-en-user/agritech-marketplace-shell.json';
 import enAgriTechMarketplaceLifecycleCatalog from '@app/i18n-en-user/agritech-marketplace-lifecycle.json';
@@ -37,6 +39,7 @@ import ruAgriTechCatalog from '@app/i18n-ru-user/agritech.json';
 import ruAgriTechOperationsCatalog from '@app/i18n-ru-user/agritech-operations.json';
 import ruAgriTechMarketplaceAccountAiCatalog from '@app/i18n-ru-user/agritech-marketplace-account-ai.json';
 import ruAgriTechMarketplaceCabinetCatalog from '@app/i18n-ru-user/agritech-marketplace-cabinet.json';
+import ruAgriTechMarketplaceDealsCatalog from '@app/i18n-ru-user/agritech-marketplace-deals.json';
 import ruAgriTechMarketplaceCartSamplesCatalog from '@app/i18n-ru-user/agritech-marketplace-cart-samples.json';
 import ruAgriTechMarketplaceCatalogCatalog from '@app/i18n-ru-user/agritech-marketplace-catalog.json';
 import ruAgriTechMarketplaceContractStatusCatalog from '@app/i18n-ru-user/agritech-marketplace-contract-status.json';
@@ -46,6 +49,7 @@ import ruAgriTechMarketplaceReviewsCatalog from '@app/i18n-ru-user/agritech-mark
 import ruAgriTechMarketplaceDiscoveryCatalog from '@app/i18n-ru-user/agritech-marketplace-discovery.json';
 import ruAgriTechMarketplaceOffersCatalog from '@app/i18n-ru-user/agritech-marketplace-offers.json';
 import ruAgriTechMarketplaceProductCatalog from '@app/i18n-ru-user/agritech-marketplace-product.json';
+import ruAgriTechMarketplaceProfileCatalog from '@app/i18n-ru-user/agritech-marketplace-profile.json';
 import ruAgriTechMarketplaceRequestsCatalog from '@app/i18n-ru-user/agritech-marketplace-requests.json';
 import ruAgriTechMarketplaceShellCatalog from '@app/i18n-ru-user/agritech-marketplace-shell.json';
 import ruAgriTechMarketplaceLifecycleCatalog from '@app/i18n-ru-user/agritech-marketplace-lifecycle.json';
@@ -63,6 +67,7 @@ import uzAgriTechCatalog from '@app/i18n-uz-user/agritech.json';
 import uzAgriTechOperationsCatalog from '@app/i18n-uz-user/agritech-operations.json';
 import uzAgriTechMarketplaceAccountAiCatalog from '@app/i18n-uz-user/agritech-marketplace-account-ai.json';
 import uzAgriTechMarketplaceCabinetCatalog from '@app/i18n-uz-user/agritech-marketplace-cabinet.json';
+import uzAgriTechMarketplaceDealsCatalog from '@app/i18n-uz-user/agritech-marketplace-deals.json';
 import uzAgriTechMarketplaceCartSamplesCatalog from '@app/i18n-uz-user/agritech-marketplace-cart-samples.json';
 import uzAgriTechMarketplaceCatalogCatalog from '@app/i18n-uz-user/agritech-marketplace-catalog.json';
 import uzAgriTechMarketplaceContractStatusCatalog from '@app/i18n-uz-user/agritech-marketplace-contract-status.json';
@@ -72,6 +77,7 @@ import uzAgriTechMarketplaceReviewsCatalog from '@app/i18n-uz-user/agritech-mark
 import uzAgriTechMarketplaceDiscoveryCatalog from '@app/i18n-uz-user/agritech-marketplace-discovery.json';
 import uzAgriTechMarketplaceOffersCatalog from '@app/i18n-uz-user/agritech-marketplace-offers.json';
 import uzAgriTechMarketplaceProductCatalog from '@app/i18n-uz-user/agritech-marketplace-product.json';
+import uzAgriTechMarketplaceProfileCatalog from '@app/i18n-uz-user/agritech-marketplace-profile.json';
 import uzAgriTechMarketplaceRequestsCatalog from '@app/i18n-uz-user/agritech-marketplace-requests.json';
 import uzAgriTechMarketplaceShellCatalog from '@app/i18n-uz-user/agritech-marketplace-shell.json';
 import uzAgriTechMarketplaceLifecycleCatalog from '@app/i18n-uz-user/agritech-marketplace-lifecycle.json';
@@ -89,6 +95,7 @@ import uzCyrlAgriTechCatalog from '@app/i18n-uz-cyrl-user/agritech.json';
 import uzCyrlAgriTechOperationsCatalog from '@app/i18n-uz-cyrl-user/agritech-operations.json';
 import uzCyrlAgriTechMarketplaceAccountAiCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-account-ai.json';
 import uzCyrlAgriTechMarketplaceCabinetCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-cabinet.json';
+import uzCyrlAgriTechMarketplaceDealsCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-deals.json';
 import uzCyrlAgriTechMarketplaceCartSamplesCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-cart-samples.json';
 import uzCyrlAgriTechMarketplaceCatalogCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-catalog.json';
 import uzCyrlAgriTechMarketplaceContractStatusCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-contract-status.json';
@@ -98,6 +105,7 @@ import uzCyrlAgriTechMarketplaceReviewsCatalog from '@app/i18n-uz-cyrl-user/agri
 import uzCyrlAgriTechMarketplaceDiscoveryCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-discovery.json';
 import uzCyrlAgriTechMarketplaceOffersCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-offers.json';
 import uzCyrlAgriTechMarketplaceProductCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-product.json';
+import uzCyrlAgriTechMarketplaceProfileCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-profile.json';
 import uzCyrlAgriTechMarketplaceRequestsCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-requests.json';
 import uzCyrlAgriTechMarketplaceShellCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-shell.json';
 import uzCyrlAgriTechMarketplaceLifecycleCatalog from '@app/i18n-uz-cyrl-user/agritech-marketplace-lifecycle.json';
@@ -162,6 +170,8 @@ const enFiles = [
   ['user/agritech-marketplace-verification.json', enAgriTechMarketplaceVerificationCatalog],
   ['user/agritech-marketplace-account-ai.json', enAgriTechMarketplaceAccountAiCatalog],
   ['user/agritech-marketplace-cabinet.json', enAgriTechMarketplaceCabinetCatalog],
+  ['user/agritech-marketplace-deals.json', enAgriTechMarketplaceDealsCatalog],
+  ['user/agritech-marketplace-profile.json', enAgriTechMarketplaceProfileCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const ruFiles = [
@@ -191,6 +201,8 @@ const ruFiles = [
   ['user/agritech-marketplace-verification.json', ruAgriTechMarketplaceVerificationCatalog],
   ['user/agritech-marketplace-account-ai.json', ruAgriTechMarketplaceAccountAiCatalog],
   ['user/agritech-marketplace-cabinet.json', ruAgriTechMarketplaceCabinetCatalog],
+  ['user/agritech-marketplace-deals.json', ruAgriTechMarketplaceDealsCatalog],
+  ['user/agritech-marketplace-profile.json', ruAgriTechMarketplaceProfileCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const uzFiles = [
@@ -220,6 +232,8 @@ const uzFiles = [
   ['user/agritech-marketplace-verification.json', uzAgriTechMarketplaceVerificationCatalog],
   ['user/agritech-marketplace-account-ai.json', uzAgriTechMarketplaceAccountAiCatalog],
   ['user/agritech-marketplace-cabinet.json', uzAgriTechMarketplaceCabinetCatalog],
+  ['user/agritech-marketplace-deals.json', uzAgriTechMarketplaceDealsCatalog],
+  ['user/agritech-marketplace-profile.json', uzAgriTechMarketplaceProfileCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 const uzCyrlFiles = [
@@ -249,6 +263,8 @@ const uzCyrlFiles = [
   ['user/agritech-marketplace-verification.json', uzCyrlAgriTechMarketplaceVerificationCatalog],
   ['user/agritech-marketplace-account-ai.json', uzCyrlAgriTechMarketplaceAccountAiCatalog],
   ['user/agritech-marketplace-cabinet.json', uzCyrlAgriTechMarketplaceCabinetCatalog],
+  ['user/agritech-marketplace-deals.json', uzCyrlAgriTechMarketplaceDealsCatalog],
+  ['user/agritech-marketplace-profile.json', uzCyrlAgriTechMarketplaceProfileCatalog],
 ] as const satisfies readonly FrontendLocaleCatalogFileEntry[];
 
 export const userFrontendTranslations = {

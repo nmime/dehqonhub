@@ -53,5 +53,7 @@
   "agritech.marketplace.cabinet.account.level.basic": "Basic",
   "agritech.marketplace.cabinet.account.level.verified": "Verified",
   "agritech.marketplace.cabinet.account.level.trusted": "Trusted",
-  "agritech.marketplace.cabinet.session": "Session"
+  "agritech.marketplace.cabinet.session": "Session",
+  "agritech.marketplace.cabinet.section.reviews": "Reviews",
+  "agritech.marketplace.cabinet.reviews.description": "Reviews you wrote about sellers, and reviews buyers left on your listings."
 }

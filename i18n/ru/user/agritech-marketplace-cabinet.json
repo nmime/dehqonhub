@@ -53,5 +53,7 @@
   "agritech.marketplace.cabinet.account.level.basic": "Базовый",
   "agritech.marketplace.cabinet.account.level.verified": "Подтверждён",
   "agritech.marketplace.cabinet.account.level.trusted": "Доверенный",
-  "agritech.marketplace.cabinet.session": "Сессия"
+  "agritech.marketplace.cabinet.session": "Сессия",
+  "agritech.marketplace.cabinet.section.reviews": "Отзывы",
+  "agritech.marketplace.cabinet.reviews.description": "Отзывы, которые вы написали продавцам, и отзывы покупателей о ваших объявлениях."
 }

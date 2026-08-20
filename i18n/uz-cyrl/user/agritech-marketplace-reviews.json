@@ -29,5 +29,14 @@
   "agritech.marketplace.reviews.verifiedDeal": "Харид тасдиқланган",
   "agritech.marketplace.reviews.yourReview": "Сизнинг шарҳингиз",
   "agritech.marketplace.reviews.alreadyReviewed": "Ҳар бир якунланган харид учун битта шарҳ сақланади, шу сабабли бу баҳони ўзгартириб бўлмайди.",
-  "agritech.marketplace.reviews.gated": "Бу эълонни фақат шу эълон бўйича шартномаси якунланган харидор баҳолай олади."
+  "agritech.marketplace.reviews.gated": "Бу эълонни фақат шу эълон бўйича шартномаси якунланган харидор баҳолай олади.",
+  "agritech.marketplace.reviews.mine.written": "Мен ёзган шарҳлар",
+  "agritech.marketplace.reviews.mine.received": "Эълонларим олган шарҳлар",
+  "agritech.marketplace.reviews.mine.writtenEmpty": "Сиз ҳали ҳеч нарсани баҳоламадингиз.",
+  "agritech.marketplace.reviews.mine.receivedEmpty": "Эълонларингизни ҳали ҳеч ким баҳоламаган.",
+  "agritech.marketplace.reviews.mine.unavailable": "Шарҳларингиз мавжуд эмас.",
+  "agritech.marketplace.reviews.mine.aboutSeller": "{{seller}} ҳақида",
+  "agritech.marketplace.reviews.mine.onMyListing": "Сизнинг эълонингизга қолдирилган",
+  "agritech.marketplace.reviews.mine.awaiting": "{{count}} якунланган харид ҳали баҳоингизни кутмоқда.",
+  "agritech.marketplace.reviews.mine.awaitingOne": "Битта якунланган харид ҳали баҳоингизни кутмоқда."
 }

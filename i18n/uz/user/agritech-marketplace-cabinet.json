@@ -53,5 +53,7 @@
   "agritech.marketplace.cabinet.account.level.basic": "Boshlang'ich",
   "agritech.marketplace.cabinet.account.level.verified": "Tasdiqlangan",
   "agritech.marketplace.cabinet.account.level.trusted": "Ishonchli",
-  "agritech.marketplace.cabinet.session": "Sessiya"
+  "agritech.marketplace.cabinet.session": "Sessiya",
+  "agritech.marketplace.cabinet.section.reviews": "Sharhlar",
+  "agritech.marketplace.cabinet.reviews.description": "Siz sotuvchilar haqida yozgan sharhlar va xaridorlar e'lonlaringizga qoldirgan sharhlar."
 }
