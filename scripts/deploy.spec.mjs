@@ -33,6 +33,19 @@ const titles = (plan) => plan.steps.map((step) => step.title);
 const commandLine = (step) => [step.command, ...step.args].join(' ');
 const stepFor = (plan, fragment) => plan.steps.find((step) => step.title.toLowerCase().includes(fragment));
 
+test('migrator pins Nest core and common to the source runtime releases', () => {
+  const sourceManifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+  const migratorManifest = JSON.parse(readFileSync(new URL('../docker/migrator-package.json', import.meta.url), 'utf8'));
+
+  for (const dependency of ['@nestjs/common', '@nestjs/core']) {
+    assert.equal(
+      migratorManifest.dependencies[dependency],
+      sourceManifest.dependencies[dependency],
+      `migrator must pin ${dependency} to the source runtime release rather than let pnpm auto-resolve a peer`,
+    );
+  }
+});
+
 test('migrator runtime sources remain readable by the non-root image user', () => {
   const dockerfile = readFileSync(new URL('../Dockerfile', import.meta.url), 'utf8');
   const migrator = dockerfile.slice(
