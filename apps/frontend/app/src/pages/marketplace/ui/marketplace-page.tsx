@@ -53,10 +53,18 @@ import {
 } from './marketplace-discovery';
 import { MarketplaceDeals } from './marketplace-deals';
 import { MarketplaceIcon } from './marketplace-icon';
+import {
+  MarketplaceListingCreate,
+  type MarketplaceListingOutcome,
+  type MarketplaceListingSubmission,
+} from './marketplace-listing-create';
 import { MarketplaceBrandLockup, MarketplaceEmblem } from './marketplace-brand';
 import { MarketplaceUserManagement } from './marketplace-management';
 import {
+  marketplaceListingKindForRole,
+  marketplaceListingSectionFor,
   marketplaceRoleCanBuy,
+  marketplaceRoleCanCreateListing,
   marketplaceRoleCanSell,
   querySection,
   type MarketplaceNavigate,
@@ -146,6 +154,46 @@ const withCartReturn = (path: string): string => (path === '/auth' ? '/auth?retu
  */
 const adoptionKey = (buyerPartnerId: string, line: GuestCartLine): string =>
   `guest-cart:${buyerPartnerId}:${line.listingPublicationId}:${line.quantity}`;
+
+/**
+ * A refused listing command, said in the actor's own terms.
+ *
+ * A validation problem carries the DTO member it rejected, so that member and
+ * its reason are handed back to the form and shown on the control rather than in
+ * a toast. The remaining statuses are the create endpoints' documented
+ * refusals: 403 is an unapproved organization, 404 is a missing farmer or
+ * organization record, and 409 is a source that is already published.
+ */
+const listingRefusal = (
+  error: unknown,
+  translate: MarketplaceTranslate,
+): { field?: string; message: string; status: 'refused' } => {
+  if (!isApiClientError(error)) {
+    return { message: translate('agritech.marketplace.error'), status: 'refused' };
+  }
+  const issue = error.problem.validation.at(0);
+  if (issue?.field) {
+    return {
+      field: issue.field,
+      message: translate('agritech.marketplace.newListing.refusal.validation', {
+        field: issue.field,
+        reason: issue.message,
+      }),
+      status: 'refused',
+    };
+  }
+  if (issue) {
+    return { message: issue.message, status: 'refused' };
+  }
+  const messageKeyByStatus: Record<number, string> = {
+    401: 'agritech.marketplace.auth.required',
+    403: 'agritech.marketplace.newListing.refusal.forbidden',
+    404: 'agritech.marketplace.newListing.refusal.notFound',
+    409: 'agritech.marketplace.action.conflict',
+  };
+  const key = messageKeyByStatus[error.status];
+  return { message: key ? translate(key) : error.problem.message, status: 'refused' };
+};
 
 const canMutateContractForRole = (contract: ContractViewDto, canBuy: boolean, canOffer: boolean): boolean =>
   contract.actorParty === 'buyer' ? canBuy : canOffer;
@@ -375,6 +423,19 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
   const verificationRole = data.verification.data?.role;
   const canBuy = isVerified && marketplaceRoleCanBuy(verificationRole);
   const canOffer = isVerified && marketplaceRoleCanSell(verificationRole);
+  /**
+   * Which listing this actor creates. The kind follows the role alone, so an
+   * actor whose verification is still open already knows what they will be able
+   * to list; verification and an approved organization are separate steps the
+   * create screen names rather than reasons to hide the kind.
+   */
+  const listingKind = marketplaceListingKindForRole(verificationRole);
+  /**
+   * Whether the header offers the create entry at all. It is the same predicate
+   * the route uses, so the entry can never appear for an actor the screen would
+   * then refuse — and a buyer never sees it.
+   */
+  const canCreateListing = marketplaceRoleCanCreateListing(verificationRole);
   const selectedContractCanMutate = selectedContract
     ? canMutateContractForRole(selectedContract, canBuy, canOffer)
     : false;
@@ -1285,6 +1346,96 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     );
   };
 
+  /**
+   * Create a listing and submit it for publication, in that order.
+   *
+   * These are two separate commands with two separate outcomes, and the screen
+   * reports whichever one it actually reached: a refusal on the create leaves
+   * nothing behind, while a refusal on the publish leaves a private row the
+   * cabinet can still submit. Refusals are returned rather than flashed, so the
+   * form can put a field-level problem on the control that caused it instead of
+   * showing a toast that names nothing.
+   */
+  const createListing = async (submission: MarketplaceListingSubmission): Promise<MarketplaceListingOutcome> => {
+    if (data.auth !== 'signed-in') {
+      return { message: translate('agritech.marketplace.auth.required'), status: 'refused' };
+    }
+    if (!supplierPartner) {
+      return { message: translate('agritech.marketplace.access.sellerOrganization'), status: 'refused' };
+    }
+    let sourceId: string;
+    try {
+      if (submission.kind === 'product') {
+        const created = await throwOnOpenApiErrorData(
+          api.agriTechOperationsControllerCreateSupplierProduct(
+            {
+              category: submission.category,
+              description: submission.description,
+              images: [...submission.images],
+              name: submission.name,
+              nameRu: submission.nameRu,
+              nameUz: submission.nameUz,
+              nameUzCyrl: submission.nameUzCyrl,
+              partnerId: supplierPartner.id,
+              priceUzs: submission.priceUzs,
+              region: submission.region,
+              sampleAvailable: submission.sampleAvailable,
+              stockQuantity: submission.stockQuantity,
+              unit: submission.unit,
+            },
+            requestOptions,
+          ),
+        );
+        sourceId = created.id;
+      } else {
+        const created = await throwOnOpenApiErrorData(
+          api.agriTechOperationsControllerCreateProduce(
+            {
+              // The API takes an instant; the form collects a calendar day, so
+              // each bound is anchored to UTC midnight rather than to whatever
+              // zone the browser happens to sit in.
+              availableFrom: `${submission.availableFrom}T00:00:00.000Z`,
+              availableUntil: `${submission.availableUntil}T00:00:00.000Z`,
+              crop: submission.crop,
+              grade: submission.grade,
+              pricePerKgUzs: submission.pricePerKgUzs,
+              quantityKg: submission.quantityKg,
+              region: submission.region,
+              sampleAvailable: submission.sampleAvailable,
+              supplierPartnerId: supplierPartner.id,
+            },
+            requestOptions,
+          ),
+        );
+        sourceId = created.id;
+      }
+    } catch (error) {
+      return listingRefusal(error, translate);
+    }
+    try {
+      await throwOnOpenApiErrorData(
+        api.marketplacePublicationControllerPublishListing(
+          {
+            section: marketplaceListingSectionFor(
+              submission.kind,
+              submission.kind === 'product' ? submission.category : undefined,
+            ),
+            sellerPartnerId: supplierPartner.id,
+            sourceId,
+            sourceKind: submission.kind,
+          },
+          globalThis.crypto.randomUUID(),
+          requestOptions,
+        ),
+      );
+    } catch (error) {
+      data.refresh();
+      return { reason: listingRefusal(error, translate).message, status: 'unpublished' };
+    }
+    data.refresh();
+    return { status: 'published' };
+  };
+
   const publishRequest = (requestId: string) => {
     if (!canBuy || !buyerPartner) {
       flash(translate('agritech.marketplace.management.verificationRequired'), 'info');
@@ -1420,6 +1571,30 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     return undefined;
   })();
 
+  /**
+   * The one step still missing before this actor can create a listing, or
+   * `undefined` when nothing is. Verification settles the role, and an approved
+   * seller organization owns the row, so those are the only two steps — and each
+   * is named with the surface that clears it rather than as a generic denial.
+   */
+  const listingCreateAccess = (() => {
+    if (!isVerified) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.verify'),
+        hint: translate('agritech.marketplace.access.verify'),
+        path: '/verification',
+      };
+    }
+    if (!supplierPartner) {
+      return {
+        actionLabel: translate('agritech.marketplace.access.action.organization'),
+        hint: translate('agritech.marketplace.access.sellerOrganization'),
+        path: '/account',
+      };
+    }
+    return undefined;
+  })();
+
   const productActions = {
     canTransact: canBuy && Boolean(buyerPartner),
     favoriteIds,
@@ -1442,7 +1617,8 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     ...(transactionAccess?.hint ? { transactionHint: transactionAccess.hint } : {}),
   };
 
-  const privateView = view === 'account' || view === 'contract' || view === 'deals' || view === 'verification';
+  const privateView =
+    view === 'account' || view === 'contract' || view === 'deals' || view === 'newListing' || view === 'verification';
   const catalogView = view === 'catalog' || view === 'home';
   const authChecking = privateView && data.auth === 'checking';
   const authSignedOut = privateView && data.auth === 'signed-out';
@@ -1637,6 +1813,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
                   {...(transactionAccess?.hint ? { buyerAccessHint: transactionAccess.hint } : {})}
                   aiConsultations={data.aiConsultations}
                   canActivatePromotions={canOffer && Boolean(supplierPartner)}
+                  canCreateListing={canCreateListing}
                   canPublishListings={canOffer && Boolean(supplierPartner)}
                   canPublishRequests={canBuy && Boolean(buyerPartner)}
                   listingPublications={data.ownedListingPublications}
@@ -1694,6 +1871,27 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
             />
           );
           break;
+        case 'newListing':
+          rendered = (
+            <MarketplaceListingCreate
+              {...(listingCreateAccess?.actionLabel ? { accessActionLabel: listingCreateAccess.actionLabel } : {})}
+              {...(listingCreateAccess?.hint ? { accessHint: listingCreateAccess.hint } : {})}
+              catalog={data.catalog}
+              kind={listingKind}
+              locale={locale}
+              navigate={navigate}
+              {...(listingCreateAccess?.path
+                ? {
+                    onAccessAction: () => {
+                      navigate(listingCreateAccess.path);
+                    },
+                  }
+                : {})}
+              onSubmit={createListing}
+              t={translate}
+            />
+          );
+          break;
         case 'deals':
           rendered = (
             <MarketplaceDeals
@@ -1747,6 +1945,7 @@ const MarketplaceDataPage = observer(function MarketplaceDataPage({
     <div className="dh-marketplace">
       <MarketplaceHeader
         activeSection={querySection()}
+        canCreateListing={canCreateListing}
         cartCount={visibleCarts.data.reduce((count, cart) => count + cart.items.length, 0)}
         dealsBadge={deals.awaitingConsent}
         favoriteCount={favoriteIds.size}
@@ -1839,6 +2038,7 @@ function MarketplaceEmbeddedPage({
     <div className="dh-marketplace">
       <MarketplaceHeader
         activeSection="all"
+        canCreateListing={false}
         cartCount={0}
         dealsBadge={0}
         favoriteCount={0}
@@ -1890,6 +2090,11 @@ function MarketplaceNotice({
 
 interface HeaderProps {
   activeSection: MarketplaceSection;
+  /**
+   * Whether this actor may create a listing at all. A buyer creates none, so the
+   * entry is absent rather than present-and-refusing.
+   */
+  canCreateListing: boolean;
   cartCount: number;
   /** In-flight deals awaiting this actor's own consent; see `dealsAwaitingConsent`. */
   dealsBadge: number;
@@ -1909,6 +2114,7 @@ interface HeaderProps {
 
 function MarketplaceHeader({
   activeSection,
+  canCreateListing,
   cartCount,
   dealsBadge,
   favoriteCount,
@@ -2002,6 +2208,17 @@ function MarketplaceHeader({
           ) : null}
         </div>
         <nav aria-label={t('agritech.marketplace.accessibility.primaryNavigation')} className="dh-header__nav">
+          {canCreateListing ? (
+            <HeaderAction
+              active={view === 'newListing'}
+              fullLabel={t('agritech.marketplace.newListing.title')}
+              icon="plus"
+              label={t('agritech.marketplace.newListing.nav')}
+              onClick={() => {
+                navigate('/listings/new');
+              }}
+            />
+          ) : null}
           {signedIn ? (
             <HeaderAction
               active={view === 'deals' || view === 'contract'}
@@ -2082,6 +2299,7 @@ function HeaderAction({
   active,
   badge,
   badgeLabel,
+  fullLabel,
   icon,
   label,
   onClick,
@@ -2090,23 +2308,32 @@ function HeaderAction({
   badge?: number;
   /** What the badge counts, said in words, because the glyph and the digit cannot. */
   badgeLabel?: string;
-  icon: 'account' | 'cart' | 'contract' | 'heart' | 'orders' | 'shield';
+  /**
+   * The complete wording, for an action whose name does not fit the caption
+   * budget every other entry lives inside. Wide layouts print this and narrow
+   * ones print {@link label}; exactly one of the two is ever rendered, so the
+   * button's accessible name is whichever the reader can see rather than both
+   * concatenated. Without it a long name is silently cut mid-word.
+   */
+  fullLabel?: string;
+  icon: 'account' | 'cart' | 'contract' | 'heart' | 'orders' | 'plus' | 'shield';
   label: string;
   onClick: () => void;
 }>) {
   const badgeAttributes = badgeLabel ? { 'aria-label': badgeLabel } : {};
+  const classNames = [active ? 'is-active' : '', fullLabel ? 'dh-header__nav-action--wide' : '']
+    .filter(Boolean)
+    .join(' ');
   return (
-    <button
-      aria-current={active ? 'page' : undefined}
-      className={active ? 'is-active' : ''}
-      onClick={onClick}
-      type="button"
-    >
+    <button aria-current={active ? 'page' : undefined} className={classNames} onClick={onClick} type="button">
       <span>
         <MarketplaceIcon name={icon} />
         {badge ? <em {...badgeAttributes}>{badge}</em> : null}
       </span>
-      <small>{label}</small>
+      <small>
+        {fullLabel ? <span className="dh-header__nav-label--full">{fullLabel}</span> : null}
+        <span className={fullLabel ? 'dh-header__nav-label--short' : undefined}>{label}</span>
+      </small>
     </button>
   );
 }

@@ -14,6 +14,7 @@ import type {
   SupplierProductViewDto,
 } from '@app/frontend-api-client';
 import type { Resource } from '../model/use-marketplace-data';
+import { MarketplaceIcon } from './marketplace-icon';
 import {
   MarketplaceBusyButton,
   MarketplaceFactsSkeleton,
@@ -36,6 +37,13 @@ interface MarketplaceManagementProps {
   readonly buyerAccessHint?: string;
   readonly aiConsultations: Resource<MarketplaceAiConsultationDto[]>;
   readonly canActivatePromotions: boolean;
+  /**
+   * Whether this role may create a listing at all, which is narrower than being
+   * allowed to publish one: a buyer can do neither, and a farmer creates only
+   * produce. The cabinet needs it because the header entry disappears below
+   * 56rem, and this panel is where a phone manages publications.
+   */
+  readonly canCreateListing: boolean;
   readonly canPublishListings: boolean;
   readonly canPublishRequests: boolean;
   readonly listingPublications: Resource<MarketplaceOwnedListingPublicationDto[]>;
@@ -161,11 +169,13 @@ function SourceResourceMessage({
 }
 
 function PublicationWorkspace({
+  canCreateListing,
   canPublishListings,
   canPublishRequests,
   listingPublications,
   locale,
   myRequests,
+  navigate,
   onRetry,
   onPublishListing,
   onPublishRequest,
@@ -182,11 +192,13 @@ function PublicationWorkspace({
   onSellerAccessAction,
 }: Pick<
   MarketplaceManagementProps,
+  | 'canCreateListing'
   | 'canPublishListings'
   | 'canPublishRequests'
   | 'listingPublications'
   | 'locale'
   | 'myRequests'
+  | 'navigate'
   | 'onRetry'
   | 'onPublishListing'
   | 'onPublishRequest'
@@ -211,6 +223,18 @@ function PublicationWorkspace({
           <p className="dh-eyebrow">{t('agritech.marketplace.management.seller')}</p>
           <h2 id="dh-publication-title">{t('agritech.marketplace.publication.title')}</h2>
         </div>
+        {canCreateListing ? (
+          <button
+            className="dh-button dh-button--secondary"
+            onClick={() => {
+              navigate('/listings/new');
+            }}
+            type="button"
+          >
+            <MarketplaceIcon name="plus" />
+            {t('agritech.marketplace.newListing.title')}
+          </button>
+        ) : null}
       </div>
       <div className="dh-management-grid">
         <div>

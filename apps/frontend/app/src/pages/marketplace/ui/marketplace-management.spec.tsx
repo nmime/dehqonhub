@@ -171,6 +171,7 @@ describe('Marketplace user management', () => {
       <MarketplaceUserManagement
         aiConsultations={{ data: [consultation], status: 'ready' }}
         canActivatePromotions
+        canCreateListing
         canPublishListings
         canPublishRequests
         listingPublications={{
@@ -273,6 +274,7 @@ describe('Marketplace user management', () => {
         buyerAccessHint="agritech.marketplace.access.organization"
         aiConsultations={empty}
         canActivatePromotions={false}
+        canCreateListing={false}
         canPublishListings={false}
         canPublishRequests={false}
         listingPublications={empty}
@@ -321,6 +323,7 @@ describe('Marketplace user management', () => {
       <MarketplaceUserManagement
         aiConsultations={empty}
         canActivatePromotions={false}
+        canCreateListing={false}
         canPublishListings={false}
         canPublishRequests={false}
         listingPublications={empty}
@@ -373,6 +376,7 @@ describe('Marketplace user management', () => {
       <MarketplaceUserManagement
         aiConsultations={failed}
         canActivatePromotions
+        canCreateListing
         canPublishListings
         canPublishRequests
         listingPublications={failed}
@@ -444,6 +448,7 @@ describe('Marketplace user management', () => {
     const baseProps = {
       aiConsultations: loading,
       canActivatePromotions: true,
+      canCreateListing: true,
       canPublishListings: true,
       canPublishRequests: true,
       listingPublications: loading,
@@ -592,5 +597,47 @@ describe('Marketplace user management', () => {
     );
     vi.unstubAllGlobals();
     expect(onSampleFeedback).toHaveBeenLastCalledWith(actionSamples[3], 4, undefined);
+  });
+
+  it('offers the way to create a listing only to a role that may create one', () => {
+    const navigate = vi.fn();
+    const props = {
+      aiConsultations: empty,
+      canActivatePromotions: false,
+      canCreateListing: true,
+      canPublishListings: true,
+      canPublishRequests: false,
+      listingPublications: empty,
+      locale: 'en' as const,
+      myRequests: empty,
+      navigate,
+      notifications: empty,
+      onActivatePromotion: vi.fn(),
+      onLoadPromotion: vi.fn(),
+      onPublishListing: vi.fn(),
+      onPublishRequest: vi.fn(),
+      onRetry: vi.fn(),
+      onSampleFeedback: vi.fn(),
+      onSampleTransition: vi.fn(),
+      produceListings: empty,
+      promotionDetail: { data: null, status: 'empty' as const },
+      promotionPlans: empty,
+      promotions: empty,
+      requestPublications: empty,
+      samples: empty,
+      supplierProducts: empty,
+      t,
+    };
+
+    // The cabinet has to carry this entry, not only the header: the header
+    // navigation is hidden below 56rem, so on a phone this panel is the only
+    // place a producer can reach the form from.
+    const view = render(<MarketplaceUserManagement {...props} />);
+    fireEvent.click(screen.getByRole('button', { name: /agritech.marketplace.newListing.title/u }));
+    expect(navigate).toHaveBeenCalledWith('/listings/new');
+
+    view.rerender(<MarketplaceUserManagement {...props} canCreateListing={false} />);
+    expect(screen.queryByRole('button', { name: /agritech.marketplace.newListing.title/u })).toBeNull();
+    view.unmount();
   });
 });
