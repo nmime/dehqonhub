@@ -124,42 +124,51 @@ build with absolute origins, you must rebuild to move the instance.
 ```bash
 export DATABASE_URL='postgres://USER:PASSWORD@HOST:5432/DBNAME'
 pnpm db:migrate
-pnpm db:seed --email 'you@example.org' --password-env DEMO_ADMIN_PASSWORD
+
+# Seeding a deployment is an explicit act - see the two notes below.
+export DB_ALLOW_DESTRUCTIVE=true DB_SEED_ALLOW_NON_LOCAL=true
+pnpm db:seed --force --email 'you@example.org' --password-env DEMO_ADMIN_PASSWORD
 ```
 
 `db:migrate` applies the Better-Auth core schema and the 56 MikroORM
 migrations. `db:seed` writes the RBAC catalogue, the 22 accounts and the whole
 marketplace fixture inside one transaction.
 
-Two things about `db:seed` will bite you:
+Two things about `db:seed` on a deployment:
 
-- **`--email` and `--password-env` are not optional here.** Run it bare and it
-  creates `admin@example.com` with the password `Admin@Secure1!`, which is in
-  this public repository (`packages/tooling/src/commands/db/seed-data.ts`). The
-  guard that is supposed to stop that (`seed-safety.ts:86-91`) only fires for a
-  database it considers non-local, and it decides that from `NODE_ENV` plus a
-  host/name heuristic — host `postgres` and a database name containing `dev`,
-  `test` or `boilerplate` read as local. So with `NODE_ENV=staging` and the
-  default database name `nest_react_boilerplate`, a bare `db:seed` is accepted
-  and publishes an admin login. Verified:
+- **A bare `db:seed` is refused, and that is deliberate.** The guard reads
+  `NODE_ENV` as an allowlist - `development`, `test` and unset are a local
+  checkout, everything else is a deployment - because the host-and-name heuristic
+  beside it cannot tell the two apart: a deployed stack reaches Postgres at host
+  `postgres` under the default database name, exactly as a laptop does. Verified:
 
   ```
-  $ NODE_ENV=staging DATABASE_URL=postgres://appuser:pw@postgres:5432/nest_react_boilerplate \
-      pnpm db:seed --dry-run
-  { "status": "dry-run", "plan": { ... } }        # accepted, default admin credentials
+  $ NODE_ENV=staging DATABASE_URL=postgres://appuser:pw@postgres:5432/nest_react_boilerplate       pnpm db:seed --dry-run
+  Refusing destructive database operation while NODE_ENV=staging
+  (postgres/nest_react_boilerplate). ... Set DB_ALLOW_DESTRUCTIVE=true only for
+  an intentional, controlled operation.
   ```
 
-- **Name the database so the heuristic does not fight you.** The same heuristic
-  refuses a database whose name has no `dev`/`test`/`boilerplate` token:
+  Until this was closed, that same command was **accepted** and created
+  `admin@example.com` with a password published in this repository
+  (`packages/tooling/src/commands/db/seed-data.ts`), because the guard excluded
+  only the single name `production`.
 
-  ```
-  $ NODE_ENV=staging DATABASE_URL=postgres://appuser:pw@postgres:5432/dehqonhub \
-      pnpm db:seed --dry-run
-  Refusing destructive reset for non-local/dev database postgres/dehqonhub.
+- **Seeding a deployment is therefore an explicit act.** Ask for it and supply
+  your own administrator credentials:
+
+  ```bash
+  export DB_ALLOW_DESTRUCTIVE=true
+  export DB_SEED_ALLOW_NON_LOCAL=true
+  pnpm db:seed --force --email 'you@example.org' --password-env DEMO_ADMIN_PASSWORD
   ```
 
-  Either keep `nest_react_boilerplate`, or pass `--force` together with
-  `DB_SEED_ALLOW_NON_LOCAL=true`, `--email` and `--password-env`.
+  `--email` and `--password-env` are not decoration: without them the run is
+  refused rather than falling back to the published defaults. `--force` and
+  `DB_SEED_ALLOW_NON_LOCAL` are what acknowledge that the target is not a
+  disposable local database, and `DB_ALLOW_DESTRUCTIVE` is what permits the
+  reset the seed performs. A database named without a `dev`, `test` or
+  `boilerplate` token needs the same flags for the same reason.
 
 Re-running `db:seed` is safe and is the supported way to restore demo state a
 reviewer consumed — stock a checkout drew down, an organization an admin
