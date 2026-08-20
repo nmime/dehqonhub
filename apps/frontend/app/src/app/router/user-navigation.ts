@@ -15,7 +15,16 @@ export const normalizePath = (path: string): string => {
   return normalized.endsWith('/') && normalized !== '/' ? normalized.slice(0, -1) : normalized;
 };
 
-const marketplaceRoutes = new Set(['/', '/account', '/cart', '/catalog', '/favorites', '/requests', '/verification']);
+const marketplaceRoutes = new Set([
+  '/',
+  '/account',
+  '/cart',
+  '/catalog',
+  '/deals',
+  '/favorites',
+  '/requests',
+  '/verification',
+]);
 const bareRoutes = new Set(['/link/telegram', '/telegram-mini-app', '/tma', '/tma/auth']);
 
 /** Telegram owns the outer host chrome for these launch and linking routes. */

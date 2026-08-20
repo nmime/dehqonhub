@@ -283,6 +283,15 @@ const singleRequestRoute = createRoute({
   component: MarketplaceRequestRouteComponent,
 });
 
+// Deals in flight get their own address, so a party can be sent straight to the
+// work waiting on them instead of through the cabinet. A single deal keeps its
+// own `/contracts/$contractId` route.
+const dealsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/deals',
+  component: createMarketplaceRouteComponent('deals'),
+});
+
 const verificationRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/verification',
@@ -337,6 +346,7 @@ const routeTree = rootRoute.addChildren([
   requestsIncomingRoute,
   requestsNewRoute,
   singleRequestRoute,
+  dealsRoute,
   verificationRoute,
   accountRoute,
   accountSectionRoute,

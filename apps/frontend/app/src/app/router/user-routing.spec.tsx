@@ -100,6 +100,7 @@ describe('DehqonHub marketplace routes', () => {
     ['/favorites', 'favorites'],
     ['/cart', 'cart'],
     ['/requests', 'requests'],
+    ['/deals', 'deals'],
     ['/verification', 'verification'],
     ['/account', 'account'],
   ])('maps %s to the %s marketplace state without the generic shell', async (path, view) => {
