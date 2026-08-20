@@ -26,6 +26,8 @@ import {
 } from './marketplace-loading';
 import { MarketplaceProductCard } from './marketplace-product-card';
 import { MarketplaceProductSpecs, MarketplaceProductSpecsSkeleton } from './marketplace-product-specs';
+import type { MarketplacePublicProfileDto } from '@app/frontend-api-client';
+import { MarketplacePublicProfile, marketplaceSellerProfileHref } from './marketplace-public-profile';
 import { MarketplaceRatingSummary } from './marketplace-rating';
 import { MarketplaceReviewsSection } from './marketplace-reviews';
 import {
@@ -137,6 +139,9 @@ function Shelf({
               onAdd={actions.onAdd}
               onFavorite={actions.onFavorite}
               onOpen={actions.onOpen}
+              onOpenSeller={(item) => {
+                navigate(marketplaceSellerProfileHref(item.supplierId));
+              }}
               pendingAction={actions.pendingAction}
               product={product}
               t={t}
@@ -893,6 +898,9 @@ export function MarketplaceCatalog(props: Readonly<SharedDiscoveryProps & { loca
                   onAdd={actions.onAdd}
                   onFavorite={actions.onFavorite}
                   onOpen={actions.onOpen}
+                  onOpenSeller={(item) => {
+                    navigate(marketplaceSellerProfileHref(item.supplierId));
+                  }}
                   pendingAction={actions.pendingAction}
                   product={product}
                   t={t}
@@ -1107,7 +1115,7 @@ export function MarketplaceProductDetail({
           <MarketplaceProductSpecs
             locale={locale}
             onOpenSeller={() => {
-              navigate(`/sellers/${encodeURIComponent(product.supplierId)}`);
+              navigate(marketplaceSellerProfileHref(product.supplierId));
             }}
             product={product}
             t={t}
@@ -1203,6 +1211,9 @@ export function MarketplaceProductDetail({
                 onAdd={onAdd}
                 onFavorite={onFavorite}
                 onOpen={onOpen}
+                onOpenSeller={(entry) => {
+                  navigate(marketplaceSellerProfileHref(entry.supplierId));
+                }}
                 pendingAction={pendingAction}
                 product={item}
                 t={t}
@@ -1220,6 +1231,8 @@ interface SellerProfileProps extends ProductActions {
   catalog: Resource<MarketplaceListing[]>;
   locale: Locale;
   navigate: MarketplaceNavigate;
+  /** Supplied by the page; absent in a bare render, where the block is skipped. */
+  publicProfile?: Resource<MarketplacePublicProfileDto | null>;
   seller: Resource<MarketplacePublicSellerDto | null>;
   t: MarketplaceTranslate;
 }
@@ -1256,6 +1269,7 @@ function SellerProfileContent({
   onFavorite,
   onOpen,
   pendingAction,
+  publicProfile,
   seller,
   t,
   transactionHint,
@@ -1303,6 +1317,13 @@ function SellerProfileContent({
           </span>
         </div>
       </div>
+      {/* The public reputation record of the same organization: completed-deal
+          counts, the reviews it received, and the reviews it wrote. The page reads
+          it by the public seller address the catalog already links to, so no second
+          identifier reaches the browser. */}
+      {publicProfile ? (
+        <MarketplacePublicProfile identity={false} locale={locale} navigate={navigate} profile={publicProfile} t={t} />
+      ) : null}
       <section aria-labelledby="dh-seller-catalog" className="dh-detail-section">
         <div className="dh-section__head">
           <h2 id="dh-seller-catalog">{t('agritech.marketplace.seller.catalog')}</h2>
@@ -1382,6 +1403,9 @@ export function MarketplaceFavorites({ localOnly, status, ...props }: Readonly<F
             onAdd={props.onAdd}
             onFavorite={props.onFavorite}
             onOpen={props.onOpen}
+            onOpenSeller={(item) => {
+              props.navigate(marketplaceSellerProfileHref(item.supplierId));
+            }}
             pendingAction={props.pendingAction}
             product={product}
             t={props.t}

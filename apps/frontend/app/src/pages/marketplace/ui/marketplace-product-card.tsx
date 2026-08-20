@@ -104,10 +104,42 @@ function ProductTags({ product, t }: Readonly<{ product: MarketplaceListing; t: 
   );
 }
 
-function ProductSeller({ product, t }: Readonly<{ product: MarketplaceListing; t: MarketplaceTranslate }>) {
+/**
+ * The seller line on a card.
+ *
+ * The name is a control when the card is given `onOpenSeller`, because "who am I
+ * buying from" is a question a buyer answers before price: one press opens that
+ * organization's public profile - its completed-deal record and the reviews it
+ * received - from the same place the offer is being weighed. The link carries the
+ * public seller address the catalog already returned, never an internal user id.
+ * Without the callback the name stays plain text, so no card can render a control
+ * that leads nowhere.
+ */
+function ProductSeller({
+  onOpenSeller,
+  product,
+  t,
+}: Readonly<{
+  onOpenSeller?: (product: MarketplaceListing) => void;
+  product: MarketplaceListing;
+  t: MarketplaceTranslate;
+}>) {
   return (
     <p className="dh-product-card__seller">
-      <span className="dh-product-card__seller-name">{product.supplierName}</span>
+      {onOpenSeller ? (
+        <button
+          aria-label={t('agritech.marketplace.profile.open', { name: product.supplierName })}
+          className="dh-product-card__seller-name dh-profile-link"
+          onClick={() => {
+            onOpenSeller(product);
+          }}
+          type="button"
+        >
+          {product.supplierName}
+        </button>
+      ) : (
+        <span className="dh-product-card__seller-name">{product.supplierName}</span>
+      )}
       {product.supplierVerified ? (
         <span aria-label={t('agritech.marketplace.product.sellerVerified')} className="dh-vseal" role="img">
           <MarketplaceIcon name="check" />
@@ -125,6 +157,8 @@ interface ProductCardProps {
   onAdd: (product: MarketplaceListing) => void;
   onFavorite: (product: MarketplaceListing) => void;
   onOpen: (product: MarketplaceListing) => void;
+  /** Opens the seller's public profile. Omitted where no profile route exists. */
+  onOpenSeller?: (product: MarketplaceListing) => void;
   pendingAction?: string;
   product: MarketplaceListing;
   t: MarketplaceTranslate;
@@ -145,6 +179,7 @@ export function MarketplaceProductCard({
   onAdd,
   onFavorite,
   onOpen,
+  onOpenSeller,
   pendingAction,
   product,
   t,
@@ -202,7 +237,7 @@ export function MarketplaceProductCard({
         >
           {name}
         </button>
-        <ProductSeller product={product} t={t} />
+        <ProductSeller onOpenSeller={onOpenSeller} product={product} t={t} />
         {/* The aggregate travels with the listing everywhere it is shown, and an
             unrated listing says so rather than borrowing a score. */}
         <MarketplaceRatingSummary locale={locale} rating={product.rating} t={t} />
