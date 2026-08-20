@@ -152,10 +152,10 @@ content hierarchy, localized semantics, interaction states, and generated-API
 authority across desktop, 375 px Russian, and the 320 px supported floor.
 
 The home experience SHALL expose the compact marketplace header, search,
-category chips, gradient hero, quick scenarios, real or governed-demo product
-shelves, purchase-request explanation, verification entry, and footer without
-duplicated category blocks or a separate marketing renderer. Catalog filters
-SHALL be labelled, populated from current authoritative results, visibly active,
+category chips, hero, quick scenarios, real or governed-demo product shelves,
+purchase-request explanation, verification entry, and footer without duplicated
+category blocks or a separate marketing renderer. Catalog filters SHALL be
+labelled, populated from current authoritative results, visibly active,
 keyboard operable, resettable, and available in a mobile bottom sheet. Empty
 text and price filter controls SHALL render localized example placeholders
 without substituting those examples as submitted values. Order,

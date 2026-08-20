@@ -38,12 +38,20 @@
   --radius-xl: var(--xr-radius-xl);
 }
 
+/* DehqonHub mini-app skin.
+   Dark is the designed, default theme: the product's primary surface is a
+   Telegram Mini App on a phone, where a near-black canvas with one elevated
+   panel family reads fastest and costs the least battery on OLED. The light
+   theme below is a derived counterpart that keeps theme parity intact; it is
+   not a second design. Panels carry no drop shadow — depth comes from a 1px
+   lighter border plus an internal top-lit gradient. */
 :root {
-  color-scheme: light;
-  --xr-font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  --xr-radius-sm: 0.5rem;
-  --xr-radius-md: 0.75rem;
-  --xr-radius-lg: 1rem;
+  color-scheme: dark;
+  --xr-font-family: var(--font-body);
+  --xr-font-display: var(--font-display);
+  --xr-radius-sm: 0.75rem;
+  --xr-radius-md: 1rem;
+  --xr-radius-lg: 1.25rem;
   --xr-radius-xl: 1.5rem;
   --xr-space-1: 0.25rem;
   --xr-space-2: 0.5rem;
@@ -51,36 +59,55 @@
   --xr-space-4: 1rem;
   --xr-space-5: 1.25rem;
   --xr-space-6: 1.5rem;
-  --xr-border: hsl(214 32% 91%);
-  --xr-muted: hsl(215 16% 47%);
-  --xr-text: hsl(222 47% 11%);
-  --xr-surface: hsl(0 0% 100%);
-  --xr-color-background: hsl(210 40% 98%);
-  --xr-color-background-accent: hsl(210 100% 96%);
-  --xr-color-surface: hsl(0 0% 100% / 0.92);
-  --xr-color-surface-strong: hsl(0 0% 100%);
-  --xr-color-border: hsl(214 32% 91%);
-  --xr-color-text: hsl(222 47% 11%);
-  --xr-color-muted: hsl(215 16% 47%);
-  --xr-color-primary: hsl(221 83% 53%);
-  --xr-color-primary-strong: hsl(224 76% 48%);
-  --xr-color-primary-contrast: hsl(0 0% 100%);
-  --xr-color-info: hsl(217 91% 60%);
-  --xr-color-success: hsl(142 72% 29%);
-  --xr-color-warning: hsl(24 95% 45%);
-  --xr-color-destructive: hsl(0 84% 60%);
-  --xr-color-destructive-contrast: hsl(0 0% 100%);
-  --xr-control-background: hsl(210 40% 96%);
-  --xr-input-background: hsl(0 0% 100%);
-  --xr-card-background: hsl(0 0% 100% / 0.96);
-  --xr-feedback-background: hsl(0 0% 100% / 0.94);
-  --xr-focus-ring: 0 0 0 3px hsl(221 83% 53% / 0.28);
-  --xr-focus-ring-strong: 0 0 0 4px hsl(221 83% 53% / 0.34);
-  --xr-shadow-sm: 0 1px 2px hsl(222 47% 11% / 0.06);
-  --xr-shadow-md: 0 1px 2px hsl(222 47% 11% / 0.06), 0 12px 36px hsl(222 47% 11% / 0.08);
-  --xr-shadow-lg: 0 2px 4px hsl(222 47% 11% / 0.05), 0 24px 72px hsl(222 47% 11% / 0.16);
-  --xr-mini-app-header-color: #2563eb;
-  --xr-mini-app-bottom-color: #0f172a;
+  --xr-border: #3a3270;
+  --xr-muted: #8e8cb0;
+  --xr-text: #ffffff;
+  --xr-surface: #1e1c3e;
+  --xr-color-background: #0b0b12;
+  --xr-color-background-deep: #08080e;
+  --xr-color-background-accent: rgb(43 110 245 / 0.16);
+  --xr-color-surface: #1e1c3e;
+  --xr-color-surface-strong: #241d48;
+  /* The panel gradient is the signature: lighter at the top edge, as if lit
+     from above. Applied as a background-image so the flat --xr-color-surface
+     stays available as a fallback and for color-mix(). */
+  --xr-color-surface-gradient: linear-gradient(160deg, #1d1b3c 0%, #241d48 100%);
+  --xr-color-well: #141328;
+  --xr-color-border: #3a3270;
+  --xr-color-border-soft: #2a2550;
+  --xr-color-text: #ffffff;
+  --xr-color-muted: #8e8cb0;
+  /* 4.64:1 on the canvas — the dimmest step still cleared for body copy. */
+  --xr-color-dim: #7a77a0;
+  --xr-color-primary: #2b6ef5;
+  --xr-color-primary-strong: #1e5bd8;
+  --xr-color-primary-contrast: #ffffff;
+  --xr-color-accent: #f5b43c;
+  --xr-color-accent-strong: #e08a15;
+  --xr-color-accent-contrast: #0b0b12;
+  /* Gold and green as *text*. On near-black the fill colors are already legible
+     (10.6:1 and 8.5:1); the light theme overrides these with darker steps. */
+  --xr-color-accent-text: #f5b43c;
+  --xr-color-info: #2b6ef5;
+  --xr-color-success: #22c55e;
+  --xr-color-success-text: #22c55e;
+  --xr-color-warning: #f59e0b;
+  --xr-color-destructive: #ef4444;
+  --xr-color-destructive-contrast: #ffffff;
+  --xr-control-background: #141328;
+  --xr-input-background: #141328;
+  --xr-card-background: #1e1c3e;
+  --xr-feedback-background: #1e1c3e;
+  --xr-focus-ring: 0 0 0 3px rgb(43 110 245 / 0.45);
+  --xr-focus-ring-strong: 0 0 0 4px rgb(43 110 245 / 0.55);
+  --xr-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --xr-shadow-md: 0 2px 8px rgb(0 0 0 / 0.45);
+  --xr-shadow-lg: 0 8px 32px rgb(0 0 0 / 0.55);
+  --xr-shadow-nav: 0 -8px 32px rgb(0 0 0 / 0.55);
+  --xr-glow-primary: 0 8px 24px rgb(43 110 245 / 0.35);
+  --xr-glow-accent: 0 8px 24px rgb(245 180 60 / 0.3);
+  --xr-mini-app-header-color: #0b0b12;
+  --xr-mini-app-bottom-color: #0b0b12;
   --xr-mini-app-safe-top: max(
     env(safe-area-inset-top, 0px),
     var(--tg-safe-area-inset-top, 0px),
@@ -110,8 +137,8 @@
     var(--tg-viewport-content-safe-area-inset-left, 0px)
   );
   --xr-body-gradient:
-    radial-gradient(circle at top left, hsl(217 91% 60% / 0.16), transparent 34rem),
-    linear-gradient(180deg, hsl(210 40% 98%), hsl(214 32% 95%));
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgb(43 110 245 / 0.14), transparent 70%),
+    linear-gradient(180deg, #0b0b12 0%, #08080e 100%);
   --background: var(--xr-color-background);
   --foreground: var(--xr-color-text);
   --card: var(--xr-card-background);
@@ -124,15 +151,15 @@
   --secondary-foreground: var(--xr-color-text);
   --muted: var(--xr-control-background);
   --muted-foreground: var(--xr-color-muted);
-  --accent: hsl(217 91% 60% / 0.12);
+  --accent: rgb(43 110 245 / 0.16);
   --accent-foreground: var(--xr-color-primary);
   --destructive: var(--xr-color-destructive);
   --destructive-foreground: var(--xr-color-destructive-contrast);
   --border: var(--xr-color-border);
   --input: var(--xr-color-border);
-  --ring: hsl(221 83% 53%);
+  --ring: #2b6ef5;
   --radius: var(--xr-radius-md);
-  --sidebar: hsl(0 0% 100%);
+  --sidebar: #141328;
   --sidebar-foreground: var(--xr-color-text);
   --sidebar-primary: var(--xr-color-primary);
   --sidebar-primary-foreground: var(--xr-color-primary-contrast);
@@ -142,40 +169,57 @@
   --sidebar-ring: var(--xr-color-primary);
 }
 
+/* Dark is already the :root default. This selector exists so an explicit
+   `data-theme="dark"` on a nested shell reverses a light ancestor. */
 :root[data-theme='dark'],
 .xr-shell[data-theme='dark'] {
   color-scheme: dark;
-  --xr-border: hsl(217 33% 18%);
-  --xr-muted: hsl(215 20% 65%);
-  --xr-text: hsl(210 40% 98%);
-  --xr-surface: hsl(222 47% 11%);
-  --xr-color-background: hsl(222 47% 8%);
-  --xr-color-background-accent: hsl(217 91% 60% / 0.18);
-  --xr-color-surface: hsl(222 47% 11% / 0.78);
-  --xr-color-surface-strong: hsl(222 47% 13%);
-  --xr-color-border: hsl(217 33% 22%);
-  --xr-color-text: hsl(210 40% 98%);
-  --xr-color-muted: hsl(215 20% 65%);
-  --xr-color-primary: hsl(199 89% 48%);
-  --xr-color-primary-strong: hsl(201 96% 40%);
-  --xr-color-primary-contrast: hsl(222 47% 8%);
-  --xr-color-info: hsl(199 89% 48%);
-  --xr-color-success: hsl(142 70% 45%);
-  --xr-color-warning: hsl(38 92% 50%);
-  --xr-color-destructive: hsl(0 72% 51%);
-  --xr-color-destructive-contrast: hsl(0 0% 100%);
-  --xr-control-background: hsl(217 33% 17% / 0.92);
-  --xr-input-background: hsl(222 47% 11% / 0.86);
-  --xr-card-background: hsl(222 47% 11% / 0.78);
-  --xr-feedback-background: hsl(222 47% 13% / 0.84);
-  --xr-focus-ring: 0 0 0 3px hsl(199 89% 48% / 0.34);
-  --xr-focus-ring-strong: 0 0 0 4px hsl(199 89% 48% / 0.42);
-  --xr-shadow-sm: 0 1px 2px hsl(0 0% 0% / 0.24);
-  --xr-shadow-md: 0 1px 2px hsl(0 0% 0% / 0.24), 0 18px 48px hsl(0 0% 0% / 0.28);
-  --xr-shadow-lg: 0 2px 6px hsl(0 0% 0% / 0.3), 0 28px 88px hsl(0 0% 0% / 0.44);
+  --xr-border: #3a3270;
+  --xr-muted: #8e8cb0;
+  --xr-text: #ffffff;
+  --xr-surface: #1e1c3e;
+  --xr-color-background: #0b0b12;
+  --xr-color-background-deep: #08080e;
+  --xr-color-background-accent: rgb(43 110 245 / 0.16);
+  --xr-color-surface: #1e1c3e;
+  --xr-color-surface-strong: #241d48;
+  --xr-color-surface-gradient: linear-gradient(160deg, #1d1b3c 0%, #241d48 100%);
+  --xr-color-well: #141328;
+  --xr-color-border: #3a3270;
+  --xr-color-border-soft: #2a2550;
+  --xr-color-text: #ffffff;
+  --xr-color-muted: #8e8cb0;
+  --xr-color-dim: #7a77a0;
+  --xr-color-primary: #2b6ef5;
+  --xr-color-primary-strong: #1e5bd8;
+  --xr-color-primary-contrast: #ffffff;
+  --xr-color-accent: #f5b43c;
+  --xr-color-accent-strong: #e08a15;
+  --xr-color-accent-contrast: #0b0b12;
+  --xr-color-accent-text: #f5b43c;
+  --xr-color-info: #2b6ef5;
+  --xr-color-success: #22c55e;
+  --xr-color-success-text: #22c55e;
+  --xr-color-warning: #f59e0b;
+  --xr-color-destructive: #ef4444;
+  --xr-color-destructive-contrast: #ffffff;
+  --xr-control-background: #141328;
+  --xr-input-background: #141328;
+  --xr-card-background: #1e1c3e;
+  --xr-feedback-background: #1e1c3e;
+  --xr-focus-ring: 0 0 0 3px rgb(43 110 245 / 0.45);
+  --xr-focus-ring-strong: 0 0 0 4px rgb(43 110 245 / 0.55);
+  --xr-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --xr-shadow-md: 0 2px 8px rgb(0 0 0 / 0.45);
+  --xr-shadow-lg: 0 8px 32px rgb(0 0 0 / 0.55);
+  --xr-shadow-nav: 0 -8px 32px rgb(0 0 0 / 0.55);
+  --xr-glow-primary: 0 8px 24px rgb(43 110 245 / 0.35);
+  --xr-glow-accent: 0 8px 24px rgb(245 180 60 / 0.3);
+  --xr-mini-app-header-color: #0b0b12;
+  --xr-mini-app-bottom-color: #0b0b12;
   --xr-body-gradient:
-    radial-gradient(circle at top left, hsl(199 89% 48% / 0.2), transparent 36rem),
-    linear-gradient(180deg, hsl(222 47% 8%), hsl(224 71% 5%));
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgb(43 110 245 / 0.14), transparent 70%),
+    linear-gradient(180deg, #0b0b12 0%, #08080e 100%);
   --background: var(--xr-color-background);
   --foreground: var(--xr-color-text);
   --card: var(--xr-card-background);
@@ -188,14 +232,14 @@
   --secondary-foreground: var(--xr-color-text);
   --muted: var(--xr-control-background);
   --muted-foreground: var(--xr-color-muted);
-  --accent: hsl(199 89% 48% / 0.16);
+  --accent: rgb(43 110 245 / 0.16);
   --accent-foreground: var(--xr-color-primary);
   --destructive: var(--xr-color-destructive);
   --destructive-foreground: var(--xr-color-destructive-contrast);
   --border: var(--xr-color-border);
   --input: var(--xr-color-border);
-  --ring: hsl(199 89% 48%);
-  --sidebar: hsl(222 47% 10%);
+  --ring: #2b6ef5;
+  --sidebar: #141328;
   --sidebar-foreground: var(--xr-color-text);
   --sidebar-primary: var(--xr-color-primary);
   --sidebar-primary-foreground: var(--xr-color-primary-contrast);
@@ -205,9 +249,85 @@
   --sidebar-ring: var(--xr-color-primary);
 }
 
+/* Derived light counterpart. Same hues and geometry, inverted lightness, with
+   the two "value" colors (gold, green) darkened for AA on a light canvas —
+   #f5b43c and #22c55e are legible on near-black but not on near-white. */
 :root[data-theme='light'],
 .xr-shell[data-theme='light'] {
   color-scheme: light;
+  --xr-border: #dcdcea;
+  --xr-muted: #55537a;
+  --xr-text: #14132a;
+  --xr-surface: #ffffff;
+  --xr-color-background: #f4f4fa;
+  --xr-color-background-deep: #eaeaf4;
+  --xr-color-background-accent: rgb(30 91 216 / 0.1);
+  --xr-color-surface: #ffffff;
+  --xr-color-surface-strong: #ffffff;
+  --xr-color-surface-gradient: linear-gradient(160deg, #ffffff 0%, #f7f7fc 100%);
+  --xr-color-well: #eeeef6;
+  --xr-color-border: #dcdcea;
+  --xr-color-border-soft: #e8e8f2;
+  --xr-color-text: #14132a;
+  --xr-color-muted: #55537a;
+  --xr-color-dim: #6c6a92;
+  --xr-color-primary: #1e5bd8;
+  --xr-color-primary-strong: #1747ad;
+  --xr-color-primary-contrast: #ffffff;
+  --xr-color-accent: #f5b43c;
+  --xr-color-accent-strong: #e08a15;
+  --xr-color-accent-contrast: #14132a;
+  --xr-color-accent-text: #8a5600;
+  --xr-color-info: #1e5bd8;
+  --xr-color-success: #22c55e;
+  --xr-color-success-text: #15803d;
+  --xr-color-warning: #b45309;
+  --xr-color-destructive: #dc2626;
+  --xr-color-destructive-contrast: #ffffff;
+  --xr-control-background: #eeeef6;
+  --xr-input-background: #ffffff;
+  --xr-card-background: #ffffff;
+  --xr-feedback-background: #ffffff;
+  --xr-focus-ring: 0 0 0 3px rgb(30 91 216 / 0.3);
+  --xr-focus-ring-strong: 0 0 0 4px rgb(30 91 216 / 0.4);
+  --xr-shadow-sm: 0 1px 2px rgb(20 19 42 / 0.06);
+  --xr-shadow-md: 0 2px 8px rgb(20 19 42 / 0.08);
+  --xr-shadow-lg: 0 8px 32px rgb(20 19 42 / 0.12);
+  --xr-shadow-nav: 0 -8px 32px rgb(20 19 42 / 0.1);
+  --xr-glow-primary: 0 8px 24px rgb(30 91 216 / 0.22);
+  --xr-glow-accent: 0 8px 24px rgb(224 138 21 / 0.22);
+  --xr-mini-app-header-color: #f4f4fa;
+  --xr-mini-app-bottom-color: #f4f4fa;
+  --xr-body-gradient:
+    radial-gradient(ellipse 60% 40% at 50% 0%, rgb(30 91 216 / 0.08), transparent 70%),
+    linear-gradient(180deg, #f4f4fa 0%, #eaeaf4 100%);
+  --background: var(--xr-color-background);
+  --foreground: var(--xr-color-text);
+  --card: var(--xr-card-background);
+  --card-foreground: var(--xr-color-text);
+  --popover: var(--xr-color-surface-strong);
+  --popover-foreground: var(--xr-color-text);
+  --primary: var(--xr-color-primary);
+  --primary-foreground: var(--xr-color-primary-contrast);
+  --secondary: var(--xr-control-background);
+  --secondary-foreground: var(--xr-color-text);
+  --muted: var(--xr-control-background);
+  --muted-foreground: var(--xr-color-muted);
+  --accent: rgb(30 91 216 / 0.1);
+  --accent-foreground: var(--xr-color-primary);
+  --destructive: var(--xr-color-destructive);
+  --destructive-foreground: var(--xr-color-destructive-contrast);
+  --border: var(--xr-color-border);
+  --input: var(--xr-color-border);
+  --ring: #1e5bd8;
+  --sidebar: #ffffff;
+  --sidebar-foreground: var(--xr-color-text);
+  --sidebar-primary: var(--xr-color-primary);
+  --sidebar-primary-foreground: var(--xr-color-primary-contrast);
+  --sidebar-accent: var(--accent);
+  --sidebar-accent-foreground: var(--accent-foreground);
+  --sidebar-border: var(--xr-color-border);
+  --sidebar-ring: var(--xr-color-primary);
 }
 
 *,
@@ -220,10 +340,25 @@ body {
   margin: 0;
   min-width: 320px;
   background: var(--xr-body-gradient);
+  background-attachment: fixed;
   color: var(--xr-color-text);
   font-family: var(--xr-font-family);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
+}
+
+/* Montserrat carries the headings, Manrope the body. Both are self-hosted from
+   @fontsource-variable with cyrillic + cyrillic-ext subsets — ru is the primary
+   locale, which is why Poppins (the original reference face) is not used. */
+h1,
+h2,
+h3,
+h4,
+.xr-page-header__title,
+.xr-stat-wells__value,
+.xr-stat-chip__value {
+  font-family: var(--xr-font-display);
+  letter-spacing: -0.02em;
 }
 
 button,
@@ -793,34 +928,39 @@ a {
   background: var(--xr-mini-app-bottom-color);
 }
 
+/* Clear the floating island: its own height (3.25rem content + 1rem padding)
+   plus the 0.75rem gap it floats above the safe area. */
 .xr-mini-app-shell .xr-shell {
   min-height: var(--tg-viewport-stable-height, 100svh);
-  padding-bottom: calc(4.5rem + var(--xr-mini-app-safe-bottom));
+  padding-bottom: calc(6rem + var(--xr-mini-app-safe-bottom));
 }
 
+/* The header no longer paints a coloured band. On a near-black canvas a solid
+   brand bar just cuts the screen in half; the content itself carries hierarchy. */
 .xr-mini-app-shell .xr-header {
-  min-height: calc(4.5rem + var(--xr-mini-app-safe-top));
+  min-height: calc(3.5rem + var(--xr-mini-app-safe-top));
   padding: calc(0.75rem + var(--xr-mini-app-safe-top)) max(1rem, var(--xr-mini-app-safe-right)) 0.75rem
     max(1rem, var(--xr-mini-app-safe-left));
-  border-bottom-color: color-mix(in srgb, white 24%, transparent);
-  background: var(--xr-mini-app-header-color);
-  box-shadow: 0 8px 28px hsl(221 83% 28% / 0.28);
-  color: white;
+  border-bottom-color: transparent;
+  background: transparent;
+  box-shadow: none;
+  color: var(--xr-color-text);
 }
 
 .xr-mini-app-shell .xr-brand,
 .xr-mini-app-shell .xr-header .xr-status-pill {
-  color: white;
+  color: var(--xr-color-text);
 }
 
 .xr-mini-app-shell .xr-brand__mark {
-  background: var(--xr-color-primary-strong);
-  color: white;
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, white 30%, transparent);
+  background-color: var(--xr-color-primary);
+  background-image: linear-gradient(180deg, var(--xr-color-primary) 0%, var(--xr-color-primary-strong) 100%);
+  color: var(--xr-color-primary-contrast);
+  box-shadow: none;
 }
 
 .xr-mini-app-shell .xr-header .xr-field__label {
-  color: white;
+  color: var(--xr-color-muted);
 }
 
 .xr-mini-app-shell .xr-hero,
@@ -830,25 +970,31 @@ a {
 
 .xr-mini-app-control {
   display: inline-flex;
-  min-height: 2.5rem;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
   align-items: center;
   justify-content: center;
   gap: 0.35rem;
-  border: 1px solid color-mix(in srgb, white 30%, transparent);
+  border: 1px solid var(--xr-color-border);
   border-radius: 999px;
-  background: color-mix(in srgb, black 16%, transparent);
-  color: white;
+  background: var(--xr-color-well);
+  color: var(--xr-color-text);
   cursor: pointer;
   padding: 0.5rem 0.75rem;
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 700;
 }
 
 .xr-mini-app-control:hover,
 .xr-mini-app-control:focus-visible {
-  background: color-mix(in srgb, white 24%, transparent);
+  border-color: color-mix(in srgb, var(--xr-color-primary) 45%, var(--xr-color-border));
+  background: var(--xr-color-surface-strong);
 }
 
+/* Floating island rather than an edge-to-edge bar: it detaches the nav from the
+   OS chrome underneath, which matters inside Telegram where the host draws its
+   own controls right below us. The outer wrapper owns the safe-area inset so
+   the island itself can stay a fixed shape. */
 .xr-mini-app-bottom-bar {
   position: fixed;
   right: 0;
@@ -858,39 +1004,64 @@ a {
   display: grid;
   grid-auto-columns: minmax(3.25rem, 1fr);
   grid-auto-flow: column;
-  min-height: calc(4.25rem + var(--xr-mini-app-safe-bottom));
-  padding: 0.45rem max(0.5rem, var(--xr-mini-app-safe-right)) max(0.45rem, var(--xr-mini-app-safe-bottom))
-    max(0.5rem, var(--xr-mini-app-safe-left));
-  border-top: 1px solid color-mix(in srgb, white 16%, transparent);
-  background: color-mix(in srgb, var(--xr-mini-app-bottom-color) 94%, transparent);
-  box-shadow: 0 -12px 32px hsl(222 47% 4% / 0.24);
-  backdrop-filter: blur(18px) saturate(140%);
+  gap: 0.125rem;
+  margin: 0 auto;
+  max-width: 30rem;
+  padding: 0.5rem;
+  border: 1px solid var(--xr-color-border);
+  border-radius: var(--xr-radius-xl);
+  background-color: var(--xr-color-surface);
+  background-image: var(--xr-color-surface-gradient);
+  box-shadow: var(--xr-shadow-nav);
+  inset-inline: max(0.75rem, var(--xr-mini-app-safe-left)) max(0.75rem, var(--xr-mini-app-safe-right));
+  margin-bottom: calc(0.75rem + var(--xr-mini-app-safe-bottom));
 }
 
 .xr-mini-app-bottom-bar__action {
   display: grid;
+  gap: 0.2rem;
   min-width: 0;
-  min-height: 2.75rem;
-  place-items: center;
+  min-height: 3.25rem;
+  align-content: center;
+  justify-items: center;
   border: 0;
-  border-radius: 0.75rem;
+  border-radius: var(--xr-radius-sm);
   background: transparent;
-  color: hsl(215 20% 76%);
+  color: var(--xr-color-muted);
   cursor: pointer;
-  padding: 0.35rem 0.25rem;
-  font-size: clamp(0.62rem, 2.5vw, 0.76rem);
-  font-weight: 750;
+  padding: 0.4rem 0.15rem;
+  font-size: clamp(0.62rem, 2.5vw, 0.72rem);
+  font-weight: 700;
   line-height: 1.1;
   overflow-wrap: anywhere;
   text-align: center;
   text-decoration: none;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease;
 }
 
-.xr-mini-app-bottom-bar__action[data-current='true'],
-.xr-mini-app-bottom-bar__action:hover,
-.xr-mini-app-bottom-bar__action:focus-visible {
-  background: color-mix(in srgb, var(--xr-mini-app-header-color) 42%, transparent);
-  color: white;
+/* Active state is a filled plate behind the icon, as in the reference. Colour
+   alone never carries it — the label also goes full-strength, and the anchor
+   keeps aria-current="page" for assistive tech. */
+.xr-mini-app-bottom-bar__action[data-current='true'] {
+  background-color: var(--xr-color-primary);
+  background-image: linear-gradient(180deg, var(--xr-color-primary) 0%, var(--xr-color-primary-strong) 100%);
+  color: var(--xr-color-primary-contrast);
+}
+
+.xr-mini-app-bottom-bar__action:not([data-current='true']):hover,
+.xr-mini-app-bottom-bar__action:not([data-current='true']):focus-visible {
+  background: var(--xr-color-well);
+  color: var(--xr-color-text);
+}
+
+.xr-mini-app-bottom-bar__label {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .xr-hero {
@@ -977,6 +1148,10 @@ a {
   gap: 1rem;
 }
 
+/* Panels are the one elevated surface family. Depth is the 1px lighter border
+   plus the top-lit gradient, not a drop shadow — shadows read as mud on a
+   near-black canvas. background-color stays set so color-mix() consumers and
+   any no-gradient fallback still resolve to a solid panel. */
 .xr-card,
 .xr-stat-card,
 .xr-feedback,
@@ -985,10 +1160,11 @@ a {
 .xr-notification,
 .xr-shell-surface {
   border: 1px solid var(--xr-color-border);
-  border-radius: var(--xr-radius-lg);
-  background: var(--xr-card-background);
+  border-radius: var(--xr-radius-xl);
+  background-color: var(--xr-card-background);
+  background-image: var(--xr-color-surface-gradient);
   color: var(--xr-color-text);
-  box-shadow: var(--xr-shadow-sm);
+  box-shadow: none;
 }
 
 .xr-shell-surface {
@@ -1006,9 +1182,14 @@ a {
 }
 
 .xr-card:hover {
-  border-color: color-mix(in srgb, var(--xr-color-primary) 28%, var(--xr-color-border));
-  box-shadow: var(--xr-shadow-md);
+  border-color: color-mix(in srgb, var(--xr-color-primary) 45%, var(--xr-color-border));
   transform: translateY(-1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .xr-card:hover {
+    transform: none;
+  }
 }
 
 .xr-card__title {
@@ -1026,13 +1207,17 @@ a {
   line-height: 1.7;
 }
 
+/* 2.75rem = 44px, the touch-target floor. The reference's controls are chunky
+   because the whole product is thumb-driven; the dense 2rem step survives only
+   for `sm`, which is admin-table furniture and never a primary action. */
 .xr-button {
   position: relative;
-  height: 2.25rem;
-  min-height: 2.25rem;
-  padding: 0.5rem 0.8rem;
-  border-radius: 0.55rem;
+  height: 2.75rem;
+  min-height: 2.75rem;
+  padding: 0.75rem 1.25rem;
+  border-radius: var(--xr-radius-md);
   box-shadow: none;
+  font-weight: 700;
   line-height: 1.15;
   user-select: none;
   white-space: nowrap;
@@ -1043,21 +1228,24 @@ a {
 }
 
 .xr-button[data-size='sm'] {
-  height: 2rem;
-  min-height: 2rem;
-  padding: 0.4rem 0.65rem;
+  height: 2.25rem;
+  min-height: 2.25rem;
+  padding: 0.45rem 0.85rem;
+  border-radius: var(--xr-radius-sm);
 }
 
 .xr-button[data-size='lg'] {
-  height: 2.5rem;
-  min-height: 2.5rem;
-  padding: 0.6rem 1rem;
+  height: 3rem;
+  min-height: 3rem;
+  padding: 0.85rem 1.5rem;
+  font-size: 1rem;
 }
 
 .xr-button[data-size='icon'] {
-  width: 2.25rem;
-  min-width: 2.25rem;
+  width: 2.75rem;
+  min-width: 2.75rem;
   padding: 0;
+  border-radius: 999px;
 }
 
 .xr-button[data-variant='link'] {
@@ -1076,15 +1264,34 @@ a {
   box-shadow: var(--xr-focus-ring);
 }
 
+/* The one loud control per screen: gradient fill plus a coloured glow. Nothing
+   else in the system carries a glow, which is what keeps "the primary action"
+   unambiguous on a busy panel. */
 .xr-button--primary {
   border-color: transparent;
-  background: var(--xr-color-primary);
+  background-color: var(--xr-color-primary);
+  background-image: linear-gradient(180deg, var(--xr-color-primary) 0%, var(--xr-color-primary-strong) 100%);
   color: var(--xr-color-primary-contrast);
+  box-shadow: var(--xr-glow-primary);
 }
 
 .xr-button--primary:not(:disabled):not([aria-disabled='true']):hover {
-  background: var(--xr-color-primary-strong);
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--xr-color-primary-strong) 28%, transparent);
+  background-image: linear-gradient(180deg, var(--xr-color-primary-strong) 0%, var(--xr-color-primary-strong) 100%);
+  box-shadow: var(--xr-glow-primary);
+}
+
+/* Secondary emphasis in the reference's warm hue — "collect"/"confirm value"
+   actions. Dark ink on gold clears 10.6:1. */
+.xr-button--accent {
+  border-color: transparent;
+  background-color: var(--xr-color-accent);
+  background-image: linear-gradient(180deg, var(--xr-color-accent) 0%, var(--xr-color-accent-strong) 100%);
+  color: var(--xr-color-accent-contrast);
+  box-shadow: var(--xr-glow-accent);
+}
+
+.xr-button--accent:not(:disabled):not([aria-disabled='true']):hover {
+  background-image: linear-gradient(180deg, var(--xr-color-accent-strong) 0%, var(--xr-color-accent-strong) 100%);
 }
 
 .xr-button--secondary {
@@ -2245,4 +2452,279 @@ a {
   :root {
     --shell-gutter: 1.5rem;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Mini-app composition primitives
+
+   Five shapes carry the whole skin: a stat chip, a page header, a list row, a
+   stat grid, and the nav island above. Product pages compose these instead of
+   inventing per-screen layout, which is what keeps the app reading as one
+   system rather than a pile of individually-styled screens.
+   --------------------------------------------------------------------------- */
+
+/* Stat chip — the persistent resource/status readout that sits under the
+   header. Pill, dark well, optional trailing action button. */
+.xr-stat-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  padding: 0 var(--xr-space-4);
+}
+
+.xr-stat-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  border: 1px solid var(--xr-color-border-soft);
+  border-radius: 999px;
+  background: var(--xr-color-well);
+  color: var(--xr-color-text);
+  padding: 0.3rem 0.35rem 0.3rem 0.85rem;
+  max-width: 100%;
+}
+
+.xr-stat-chip--plain {
+  padding-right: 0.85rem;
+}
+
+.xr-stat-chip__icon {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  color: var(--xr-color-accent-text);
+}
+
+.xr-stat-chip__value {
+  font-size: 0.95rem;
+  font-weight: 800;
+  line-height: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.xr-stat-chip__label {
+  color: var(--xr-color-muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.xr-stat-chip__action {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 0;
+  border-radius: 999px;
+  background-color: var(--xr-color-primary);
+  background-image: linear-gradient(180deg, var(--xr-color-primary) 0%, var(--xr-color-primary-strong) 100%);
+  color: var(--xr-color-primary-contrast);
+  cursor: pointer;
+  padding: 0;
+}
+
+/* The 1.9rem visual button is smaller than the 44px touch floor, so the hit
+   area is extended with a transparent ::after rather than by growing the chip. */
+.xr-stat-chip__action::after {
+  content: '';
+  position: absolute;
+  inset: 50% auto auto 50%;
+  width: 2.75rem;
+  height: 2.75rem;
+  transform: translate(-50%, -50%);
+}
+
+.xr-stat-chip__action:hover,
+.xr-stat-chip__action:focus-visible {
+  background-image: linear-gradient(180deg, var(--xr-color-primary-strong) 0%, var(--xr-color-primary-strong) 100%);
+}
+
+/* Page header — centred title over a muted single-line subtitle. */
+.xr-page-header {
+  display: grid;
+  gap: 0.4rem;
+  padding: var(--xr-space-6) var(--xr-space-4) var(--xr-space-4);
+  text-align: center;
+}
+
+.xr-page-header--start {
+  text-align: start;
+}
+
+.xr-page-header__title {
+  margin: 0;
+  font-size: clamp(1.5rem, 6vw, 1.75rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.xr-page-header__subtitle {
+  margin: 0 auto;
+  max-width: 32rem;
+  color: var(--xr-color-muted);
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.xr-page-header--start .xr-page-header__subtitle {
+  margin-inline: 0;
+}
+
+/* List row — coloured icon plate, title, meta, trailing affordance. Used for
+   catalogue entries, tasks, offers, orders, and leaderboard rows alike. */
+.xr-list-rows {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.xr-list-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  min-height: 3.5rem;
+  border: 0;
+  border-radius: var(--xr-radius-md);
+  background: transparent;
+  color: var(--xr-color-text);
+  padding: 0.6rem;
+  font: inherit;
+  text-align: start;
+  text-decoration: none;
+}
+
+a.xr-list-row,
+button.xr-list-row {
+  cursor: pointer;
+  transition: background-color 160ms ease;
+}
+
+a.xr-list-row:hover,
+a.xr-list-row:focus-visible,
+button.xr-list-row:hover,
+button.xr-list-row:focus-visible {
+  background: var(--xr-color-well);
+}
+
+.xr-list-row__plate {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--xr-radius-sm);
+  background: var(--xr-color-well);
+  color: var(--xr-color-primary);
+}
+
+.xr-list-row__plate[data-tone='accent'] {
+  background: color-mix(in srgb, var(--xr-color-accent) 20%, transparent);
+  color: var(--xr-color-accent-text);
+}
+
+.xr-list-row__plate[data-tone='success'] {
+  background: color-mix(in srgb, var(--xr-color-success) 20%, transparent);
+  color: var(--xr-color-success-text);
+}
+
+.xr-list-row__plate[data-tone='destructive'] {
+  background: color-mix(in srgb, var(--xr-color-destructive) 20%, transparent);
+  color: var(--xr-color-destructive);
+}
+
+.xr-list-row__copy {
+  display: grid;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.xr-list-row__title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.xr-list-row__meta {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  color: var(--xr-color-muted);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.xr-list-row__meta[data-tone='accent'] {
+  color: var(--xr-color-accent-text);
+}
+
+.xr-list-row__trailing {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--xr-color-muted);
+}
+
+/* Stat grid — the "well cells" pattern: a row of big numbers over small muted
+   labels, inside a panel. Countdowns, profile counters, order summaries. */
+.xr-stat-wells {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(4.5rem, 1fr));
+  gap: 0.5rem;
+  margin: 0;
+}
+
+/* column-reverse: the <dt> label precedes its <dd> value in the DOM so the pair
+   reads correctly aloud, while the value still renders on top. */
+.xr-stat-wells__cell {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 0.2rem;
+  border-radius: var(--xr-radius-lg);
+  background: var(--xr-color-well);
+  padding: 0.85rem 0.5rem;
+  text-align: center;
+}
+
+.xr-stat-wells__cell dd {
+  margin: 0;
+}
+
+.xr-stat-wells__value {
+  font-size: clamp(1.15rem, 5vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.xr-stat-wells__value[data-tone='accent'] {
+  color: var(--xr-color-accent-text);
+}
+
+.xr-stat-wells__value[data-tone='success'] {
+  color: var(--xr-color-success-text);
+}
+
+.xr-stat-wells__label {
+  color: var(--xr-color-muted);
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+/* Illustration slot for empty states and category headers. */
+.xr-illustration {
+  display: block;
+  margin-inline: auto;
+  max-width: 100%;
+  height: auto;
 }
