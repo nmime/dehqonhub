@@ -393,7 +393,12 @@ export function MarketplaceReviewsSection({
     list = <MarketplaceListSkeleton count={2} lines={3} tone="plain" trailing={false} />;
   } else if (reviews.data.length > 0) {
     list = (
-      <div className="dh-review-list">
+      <div
+        aria-label={t('agritech.marketplace.product.reviewsTab')}
+        className="dh-review-list"
+        role="group"
+        tabIndex={0}
+      >
         {reviews.data.map((review) => (
           <ReviewRow
             canReplyToReviews={canReplyToReviews}

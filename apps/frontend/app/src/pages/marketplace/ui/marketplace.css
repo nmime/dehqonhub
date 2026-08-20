@@ -2224,6 +2224,13 @@ label.dh-check {
 .dh-review-list {
   display: grid;
   gap: 0.75rem;
+  grid-auto-columns: min(22rem, 100%);
+  grid-auto-flow: column;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  padding-bottom: 0.5rem;
+  scroll-snap-type: x proximity;
+  scrollbar-width: thin;
 }
 
 .dh-review-list article {
@@ -2231,6 +2238,18 @@ label.dh-check {
   border: 1px solid var(--dh-border);
   border-radius: 1rem;
   padding: 1rem;
+  scroll-snap-align: start;
+}
+
+/* The quote is the variable part, so it takes the slack and every card in the row
+   keeps the same height. */
+.dh-review-list article > p {
+  overflow-wrap: anywhere;
+}
+
+.dh-review-list:focus-visible {
+  outline: 0.2rem solid var(--dh-green-strong);
+  outline-offset: 0.16rem;
 }
 
 .dh-review-reply {
@@ -2300,7 +2319,7 @@ label.dh-check {
   margin: 1rem 0;
 }
 
-.dh-review-list article > div {
+.dh-review-list article > div:not(.dh-review-actions) {
   display: flex;
   gap: 1rem;
   justify-content: space-between;

@@ -101,15 +101,9 @@ function ProfileReviewSection({ headingId, title, ...list }: Readonly<ProfileRev
           <p className="dh-muted">{list.emptyDescription}</p>
         </div>
       ) : (
-        <div className="dh-review-list">
+        <div aria-label={title} className="dh-review-list" role="group" tabIndex={0}>
           {list.reviews.map((review) => (
-            <ProfileReview
-              key={review.id}
-              locale={list.locale}
-              navigate={list.navigate}
-              review={review}
-              t={list.t}
-            />
+            <ProfileReview key={review.id} locale={list.locale} navigate={list.navigate} review={review} t={list.t} />
           ))}
         </div>
       )}
@@ -248,13 +242,7 @@ export function MarketplacePublicProfile({
       }
       t={t}
     >
-      <MarketplacePublicProfileBody
-        identity={identity}
-        locale={locale}
-        navigate={navigate}
-        profile={profile}
-        t={t}
-      >
+      <MarketplacePublicProfileBody identity={identity} locale={locale} navigate={navigate} profile={profile} t={t}>
         {children}
       </MarketplacePublicProfileBody>
     </MarketplaceLoadingRegion>
@@ -287,32 +275,32 @@ function MarketplacePublicProfileBody({
   return (
     <div className="dh-page-stack">
       {identity ? (
-      <div className="dh-account-hero">
-        <div>
-          <p className="dh-eyebrow">{t('agritech.marketplace.profile.title')}</p>
-          <h1>{data.displayName}</h1>
-          <p>{data.description ?? t('agritech.marketplace.profile.noDescription')}</p>
-          <small>{data.region}</small>
-          <p className="dh-profile-roles">
-            {data.roles.map((role) => (
-              <span className="dh-badge dh-badge--outline" key={role}>
-                {t(
-                  role === 'seller'
-                    ? 'agritech.marketplace.profile.role.seller'
-                    : 'agritech.marketplace.profile.role.buyer',
-                )}
+        <div className="dh-account-hero">
+          <div>
+            <p className="dh-eyebrow">{t('agritech.marketplace.profile.title')}</p>
+            <h1>{data.displayName}</h1>
+            <p>{data.description ?? t('agritech.marketplace.profile.noDescription')}</p>
+            <small>{data.region}</small>
+            <p className="dh-profile-roles">
+              {data.roles.map((role) => (
+                <span className="dh-badge dh-badge--outline" key={role}>
+                  {t(
+                    role === 'seller'
+                      ? 'agritech.marketplace.profile.role.seller'
+                      : 'agritech.marketplace.profile.role.buyer',
+                  )}
+                </span>
+              ))}
+              <span className="dh-badge dh-badge--neutral">
+                {t('agritech.marketplace.profile.publicSince', { date: formatDate(data.publicSince, locale) })}
               </span>
-            ))}
-            <span className="dh-badge dh-badge--neutral">
-              {t('agritech.marketplace.profile.publicSince', { date: formatDate(data.publicSince, locale) })}
-            </span>
-          </p>
+            </p>
+          </div>
+          <div className={`dh-verification-chip${data.verified ? ' dh-verification-chip--verified' : ''}`}>
+            <MarketplaceIcon name="shield" />
+            <span>{t('agritech.marketplace.profile.verified')}</span>
+          </div>
         </div>
-        <div className={`dh-verification-chip${data.verified ? ' dh-verification-chip--verified' : ''}`}>
-          <MarketplaceIcon name="shield" />
-          <span>{t('agritech.marketplace.profile.verified')}</span>
-        </div>
-      </div>
       ) : null}
       <ProfileReputation locale={locale} profile={data} t={t} />
       <ProfileReviewSection
