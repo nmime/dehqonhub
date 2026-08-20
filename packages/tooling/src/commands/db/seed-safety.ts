@@ -1,3 +1,5 @@
+import { isDeploymentEnvironment } from "./deployment-environment.ts";
+
 export const DefaultAdminEmail = "admin@example.com";
 export const DefaultAdminPassword = "ChangeMe123!";
 
@@ -32,10 +34,7 @@ export function isLocalDevelopmentDatabase(
   // the internet as a production one. An unset value stays permitted because a
   // local seed routinely runs without it; any other named environment is treated
   // as a deployment and must opt in explicitly.
-  const localEnvironments = new Set(["development", "test"]);
-  if (env.NODE_ENV !== undefined && env.NODE_ENV !== "" && !localEnvironments.has(env.NODE_ENV)) {
-    return false;
-  }
+  if (isDeploymentEnvironment(env)) return false;
   const url = new URL(connectionString);
   const hosts = [url.host].map((host) =>
     host.startsWith("[") ? host.slice(1, host.indexOf("]")).toLowerCase() : host.replace(/:\d+$/u, "").toLowerCase(),
