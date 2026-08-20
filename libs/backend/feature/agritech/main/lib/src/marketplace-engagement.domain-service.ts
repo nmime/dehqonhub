@@ -55,8 +55,22 @@ const unwrap = <T>(result: OperationResult<T>, resource: string): T => {
   throw new BadRequestException({ meta: { field: result.field, resourceType: resource } });
 };
 
+/**
+ * Proof that a review photograph belongs to the party attaching it.
+ *
+ * Narrowed to the one method this service needs so the engagement domain does
+ * not depend on the whole media service; `MarketplaceMediaDomainService`
+ * satisfies it structurally.
+ */
+export interface MarketplaceEngagementAssetGuard {
+  requireOwnedReferences(owner: AgriTechOwner, references: readonly string[], field: string): Promise<void>;
+}
+
 export class MarketplaceEngagementDomainService {
-  constructor(protected readonly repository: MarketplaceEngagementRepository) {}
+  constructor(
+    protected readonly repository: MarketplaceEngagementRepository,
+    protected readonly assets: MarketplaceEngagementAssetGuard,
+  ) {}
 
   addFavorite(
     owner: AgriTechOwner,
@@ -191,17 +205,22 @@ export class MarketplaceEngagementDomainService {
       throw validationError('assetReferences');
     }
     const comment = normalizeOptionalText(input.comment, 2_000, 'comment');
-    return this.repository
-      .submitReview(
-        owner,
-        {
-          assetReferences: [...input.assetReferences],
-          listingPublicationId: input.listingPublicationId,
-          rating: input.rating,
-          ...(comment ? { comment } : {}),
-        },
-        requireIdempotencyKey(idempotencyKey),
-      )
+    const commandKey = requireIdempotencyKey(idempotencyKey);
+    const review = {
+      assetReferences: [...input.assetReferences],
+      listingPublicationId: input.listingPublicationId,
+      rating: input.rating,
+      ...(comment ? { comment } : {}),
+    };
+
+    // Every bound above is decided before the first await, so a malformed review
+    // is refused without a round trip. What remains needs one: the shape of a
+    // handle is provable here, but whether this party uploaded the photograph it
+    // names is not. A reference the caller does not own is refused exactly like a
+    // malformed one — the field is named and nothing says whether it exists.
+    return this.assets
+      .requireOwnedReferences(owner, review.assetReferences, 'assetReferences')
+      .then(() => this.repository.submitReview(owner, review, commandKey))
       .then((result) => unwrap(result, 'marketplace-review'));
   }
 

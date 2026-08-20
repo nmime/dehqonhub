@@ -126,6 +126,24 @@ export const ProblemTypeDefinitions = [
     ],
   },
   {
+    code: 'marketplace-media-storage-unavailable',
+    title: 'Marketplace Photograph Storage Unavailable',
+    status: 503,
+    detail: 'This deployment cannot store photographs because its object storage is not configured or not reachable.',
+    resolution:
+      'Configure the object-storage bucket and credentials, then retry only when retryable is true. Nothing was stored.',
+    extensions: [
+      {
+        name: 'code',
+        description: 'Stable short alias for the problem type URI.',
+      },
+      {
+        name: 'retryable',
+        description: 'Whether the caller may retry the same upload; false means the deployment has no storage at all.',
+      },
+    ],
+  },
+  {
     code: 'step-up-required',
     title: 'Step-up Authentication Required',
     status: 403,

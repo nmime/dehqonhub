@@ -41,7 +41,11 @@ function fixture() {
     submitSampleFeedback: vi.fn().mockResolvedValue(ok({ id: 'sample-1' })),
     transitionSample: vi.fn().mockResolvedValue(ok({ id: 'sample-1' })),
   };
-  return { repository, service: new MarketplaceEngagementDomainService(repository as never) };
+  // A review may only carry photographs the reviewing account uploaded. The
+  // guard is a collaborator so this suite can assert it is consulted, and so a
+  // future asset store cannot be swapped in without the check going with it.
+  const assets = { requireOwnedReferences: vi.fn().mockResolvedValue(undefined) };
+  return { assets, repository, service: new MarketplaceEngagementDomainService(repository as never, assets) };
 }
 
 describe('MarketplaceEngagementDomainService favorites and reads', () => {
@@ -217,6 +221,23 @@ describe('MarketplaceEngagementDomainService samples', () => {
 describe('MarketplaceEngagementDomainService reviews', () => {
   const reviewId = 'review-1';
 
+  it('refuses a photograph the reviewing party did not upload, and never reaches the repository', async () => {
+    const { assets, repository, service } = fixture();
+    const input = { assetReferences: ['public-asset:abcdefgh'], listingPublicationId, rating: 4 };
+
+    await service.submitReview(owner, input as never, key);
+    // The guard sees exactly the handles the review will carry, so a reference
+    // cannot be checked and then replaced on the way to persistence.
+    expect(assets.requireOwnedReferences).toHaveBeenCalledWith(owner, ['public-asset:abcdefgh'], 'assetReferences');
+
+    assets.requireOwnedReferences.mockRejectedValueOnce(
+      new BadRequestException({ meta: { field: 'assetReferences' } }),
+    );
+    repository.submitReview.mockClear();
+    await expect(service.submitReview(owner, input as never, key)).rejects.toThrow(BadRequestException);
+    expect(repository.submitReview).not.toHaveBeenCalled();
+  });
+
   it('accepts up to three distinct public asset references and normalizes the comment', async () => {
     const { repository, service } = fixture();
     const submit = (input: unknown) => service.submitReview(owner, input as never, key);
@@ -227,6 +248,7 @@ describe('MarketplaceEngagementDomainService reviews', () => {
       listingPublicationId,
       rating: 5,
     });
+
     expect(repository.submitReview).toHaveBeenCalledWith(
       owner,
       {

@@ -10,6 +10,7 @@ import {
   MarketplaceContractNotificationRepositoryInjectToken,
   MarketplaceDashboardAiRepositoryInjectToken,
   MarketplaceEngagementRepositoryInjectToken,
+  MarketplaceMediaRepositoryInjectToken,
   MarketplaceProviderOperationRepositoryInjectToken,
   MarketplacePublicRepositoryInjectToken,
   MarketplacePublicProfileRepositoryInjectToken,
@@ -76,6 +77,7 @@ import {
   MarketplaceEngagementEventEntitySchema,
   MarketplaceEngagementNotificationIntentEntitySchema,
   MarketplaceEngagementOperationEntitySchema,
+  MarketplaceMediaAssetEntitySchema,
 } from './entities';
 import {
   PostgresAgriTechOperationsRepository,
@@ -88,6 +90,7 @@ import {
   PostgresMarketplaceContractNotificationRepository,
   PostgresMarketplaceDashboardAiRepository,
   PostgresMarketplaceEngagementRepository,
+  PostgresMarketplaceMediaRepository,
   PostgresPaymentRepository,
   PostgresOrderRepository,
   PostgresProductRepository,
@@ -106,6 +109,7 @@ const repositoryProviders = [
   PostgresMarketplaceContractNotificationRepository,
   PostgresMarketplaceDashboardAiRepository,
   PostgresMarketplaceEngagementRepository,
+  PostgresMarketplaceMediaRepository,
   PostgresPaymentRepository,
   { provide: FarmerRepositoryInjectToken, useExisting: PostgresFarmerRepository },
   { provide: ProductRepositoryInjectToken, useExisting: PostgresProductRepository },
@@ -130,6 +134,10 @@ const repositoryProviders = [
   {
     provide: MarketplaceEngagementRepositoryInjectToken,
     useExisting: PostgresMarketplaceEngagementRepository,
+  },
+  {
+    provide: MarketplaceMediaRepositoryInjectToken,
+    useExisting: PostgresMarketplaceMediaRepository,
   },
   { provide: MarketplaceProviderOperationRepositoryInjectToken, useExisting: PostgresMarketplaceRepository },
   { provide: MarketplaceVerificationRepositoryInjectToken, useExisting: PostgresMarketplaceRepository },
@@ -198,6 +206,7 @@ const repositoryProviders = [
       MarketplaceEngagementEventEntitySchema,
       MarketplaceEngagementNotificationIntentEntitySchema,
       MarketplaceEngagementOperationEntitySchema,
+      MarketplaceMediaAssetEntitySchema,
     ]),
   ],
   providers: repositoryProviders,

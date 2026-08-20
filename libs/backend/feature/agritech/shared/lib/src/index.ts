@@ -14,3 +14,4 @@ export * from './marketplace-dashboard-ai';
 export * from './marketplace-contract-lifecycle';
 export * from './marketplace-contract-notification';
 export * from './marketplace-engagement';
+export * from './marketplace-media';

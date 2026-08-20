@@ -1,5 +1,6 @@
 // @requirements REQ-AGRITECH-INTEGRATION-013 REQ-AGRITECH-STAGE2-017
 import { Module } from '@nestjs/common';
+import { S3ConfigService, S3Module, S3Service } from '@app/backend-common-s3';
 import {
   MarketplaceDocumentProviderInjectToken,
   MarketplaceContractArtifactStorageProviderInjectToken,
@@ -7,6 +8,7 @@ import {
   MarketplaceDisputeEvidenceStorageProviderInjectToken,
   MarketplaceFactoringProviderInjectToken,
   MarketplaceIdentityProviderInjectToken,
+  MarketplaceMediaObjectStorageInjectToken,
   MarketplacePromotionBillingProviderInjectToken,
   MarketplaceQualifiedSignatureProviderInjectToken,
 } from '@app/backend-feature-agritech-shared';
@@ -40,6 +42,9 @@ import {
   MarketplacePublicEngagementController,
 } from './marketplace-engagement.controller';
 import { MarketplaceEngagementService } from './marketplace-engagement.service';
+import { MarketplaceMediaController, MarketplacePublicMediaController } from './marketplace-media.controller';
+import { MarketplaceMediaService } from './marketplace-media.service';
+import { createMarketplaceMediaObjectStorage } from './marketplace-media.storage';
 import {
   createContractArtifactStorageProvider,
   createDirectPaymentProvider,
@@ -48,6 +53,21 @@ import {
   createQualifiedSignatureProvider,
 } from './marketplace-contract.mock-providers';
 import { createPromotionBillingProvider } from './marketplace-promotion.mock-providers';
+
+/**
+ * The photograph bucket, resolved from configuration rather than assumed.
+ *
+ * It is a provider like any other external capability here: the factory decides
+ * once whether the deployment has object storage, and the upload route refuses
+ * with a typed 503 when it does not. `S3Module.forRoot()` is imported here so
+ * this feature carries its own storage wiring instead of depending on an app
+ * having wired it — the app's own global registration simply shadows it.
+ */
+const marketplaceMediaObjectStorage = {
+  provide: MarketplaceMediaObjectStorageInjectToken,
+  inject: [S3ConfigService, S3Service],
+  useFactory: (config: S3ConfigService, storage: S3Service) => createMarketplaceMediaObjectStorage(config, storage),
+};
 
 const marketplaceProviderConfig = {
   provide: MarketplaceProviderConfigInjectToken,
@@ -103,6 +123,7 @@ const marketplaceFactoringProvider = {
 };
 
 @Module({
+  imports: [S3Module.forRoot()],
   providers: [
     AgriTechNotificationPublisher,
     AgriTechOperationsService,
@@ -115,7 +136,9 @@ const marketplaceFactoringProvider = {
     MarketplaceContractNotificationQueryService,
     MarketplaceDashboardAiService,
     MarketplaceEngagementService,
+    MarketplaceMediaService,
     marketplaceProviderConfig,
+    marketplaceMediaObjectStorage,
     marketplaceIdentityProvider,
     marketplaceDocumentProvider,
     marketplaceContractArtifactStorageProvider,
@@ -136,6 +159,7 @@ const marketplaceFactoringProvider = {
     MarketplaceContractNotificationQueryService,
     MarketplaceDashboardAiService,
     MarketplaceEngagementService,
+    MarketplaceMediaService,
   ],
 })
 export class AgriTechCoreModule {}
@@ -154,6 +178,8 @@ export class AgriTechCoreModule {}
     MarketplaceDashboardAiController,
     MarketplaceEngagementController,
     MarketplacePublicEngagementController,
+    MarketplaceMediaController,
+    MarketplacePublicMediaController,
   ],
   exports: [AgriTechCoreModule],
 })

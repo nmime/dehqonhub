@@ -21,7 +21,13 @@ import { ApiExceptions, ApiOkDataResponse, ApiSessionCookieAuth } from '@app/bac
 import { createOkResponse } from '@app/backend-common-response';
 import { CurrentUser, type AuthenticatedPrincipal } from '@app/backend-feature-auth-shared';
 import { AgriTechOperationsService } from './agritech.service';
-import type { AgriTechOwner, DeliveryStatus, ProduceGrade } from '@app/backend-feature-agritech-shared';
+import {
+  marketplaceListingImagePattern,
+  maximumMarketplaceListingImages,
+  type AgriTechOwner,
+  type DeliveryStatus,
+  type ProduceGrade,
+} from '@app/backend-feature-agritech-shared';
 import {
   AdvisoryListDto,
   AssignedFarmerListDto,
@@ -46,26 +52,20 @@ const deliveryStatuses = ['assigned', 'picked_up', 'in_transit', 'delivered', 'c
 const maximumIntegerQuantity = 2_147_483_647;
 const maximumSupplierPriceUzs = 9_999_999_999_999;
 /**
- * How many photographs one listing may carry.
+ * The two shapes a listing photograph may take.
  *
- * `ck__marketplace_listing_publications__content` refuses a snapshot holding
- * more than five images, and the publication projection slices the source array
- * to the same bound. Rejecting the sixth here tells the seller which field is
- * wrong instead of letting the photograph disappear at publication time.
- */
-const maximumSupplierProductImages = 5;
-/**
- * The only shape a listing photograph may take.
+ * Either a root-relative path into the checked-in same-origin media directory,
+ * or `/marketplace/media/{id}` — one photograph this account uploaded, served
+ * back by this API from the page's own origin. Both are same-origin by
+ * construction, which is what `img-src 'self'` requires; a URL to any other
+ * host, a traversal segment and a non-image path all fail the anchored
+ * alternation rather than being stored as a string the catalog cannot render.
  *
- * Listing images are root-relative paths into the checked-in, same-origin media
- * directory. Every deployment sends `img-src 'self' data:`, so a URL to any
- * other host resolves in a dev server and then silently fails in production,
- * and `/marketplace/` is a reserved API namespace. Pinning the prefix, the
- * character class and the extension rejects a remote host, a traversal segment
- * and a non-image path in one predicate rather than storing a string the
- * catalog cannot render.
+ * The pattern proves the shape only. Whether an uploaded identifier belongs to
+ * this account is a separate check in `AgriTechOperationsService`, because no
+ * pattern can answer that.
  */
-const supplierProductImagePattern = /^\/media\/marketplace\/[a-z0-9]+(?:-[a-z0-9]+)*\.webp$/u;
+const supplierProductImagePattern = marketplaceListingImagePattern;
 
 class CreatePartnerDto {
   @ApiProperty({ enum: partnerKinds }) @IsIn(partnerKinds) kind!: 'supplier' | 'buyer';
@@ -113,13 +113,13 @@ class CreateSupplierProductDto {
   @ApiProperty() @IsString() region!: string;
   @ApiPropertyOptional({
     description: 'Root-relative same-origin listing photographs, at most five.',
-    example: ['/media/marketplace/wheat-grain.webp'],
-    maxItems: maximumSupplierProductImages,
+    example: ['/media/marketplace/wheat-grain.webp', '/marketplace/media/AAAAAAAAAAAAAAAAAAAAAA'],
+    maxItems: maximumMarketplaceListingImages,
     type: [String],
   })
   @IsOptional()
   @IsArray()
-  @ArrayMaxSize(maximumSupplierProductImages)
+  @ArrayMaxSize(maximumMarketplaceListingImages)
   @IsString({ each: true })
   @Matches(supplierProductImagePattern, { each: true })
   images?: string[];
@@ -178,6 +178,18 @@ class CreateProduceDto {
   @Max(maximumSupplierPriceUzs)
   pricePerKgUzs!: number;
   @ApiProperty() @IsString() region!: string;
+  @ApiPropertyOptional({
+    description: 'Root-relative same-origin harvest photographs, at most five.',
+    example: ['/marketplace/media/AAAAAAAAAAAAAAAAAAAAAA'],
+    maxItems: maximumMarketplaceListingImages,
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(maximumMarketplaceListingImages)
+  @IsString({ each: true })
+  @Matches(supplierProductImagePattern, { each: true })
+  images?: string[];
   @ApiProperty({ format: 'date-time' }) @Type(() => Date) @IsDate() availableFrom!: Date;
   @ApiProperty({ format: 'date-time' }) @Type(() => Date) @IsDate() availableUntil!: Date;
 }

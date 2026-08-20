@@ -10,6 +10,7 @@ import {
   type AgriTechOperationsRepository,
 } from '@app/backend-feature-agritech-shared';
 import { AgriTechNotificationPublisher } from './agritech-notification.publisher';
+import { MarketplaceMediaService } from './marketplace-media.service';
 import type {
   AgriTechOwner,
   CreatePartnerInput,
@@ -29,6 +30,7 @@ export class AgriTechOperationsService {
     @Inject(AgriTechOperationsRepositoryInjectToken)
     private readonly repository: AgriTechOperationsRepository,
     private readonly notifications: AgriTechNotificationPublisher,
+    private readonly media: MarketplaceMediaService,
   ) {}
 
   async createPartner(owner: AgriTechOwner, input: CreatePartnerInput) {
@@ -39,7 +41,17 @@ export class AgriTechOperationsService {
     return this.repository.listOwnedPartners(owner);
   }
 
+  /**
+   * A listing may only carry photographs this account uploaded.
+   *
+   * The DTO already proved that every reference has one of the two accepted
+   * shapes. This proves the other half: an uploaded reference must resolve to an
+   * object this exact tenant and user own, so one seller cannot attach another
+   * seller's photograph to their own listing by quoting its identifier. Library
+   * paths belong to the deployment and pass through untouched.
+   */
   async createSupplierProduct(owner: AgriTechOwner, input: SupplierProductInput) {
+    await this.media.requireOwnedReferences(owner, input.images ?? [], 'images');
     return unwrap(await this.repository.createSupplierProduct(owner, input), 'supplier-product');
   }
 
@@ -52,6 +64,7 @@ export class AgriTechOperationsService {
   }
 
   async createProduceListing(owner: AgriTechOwner, input: CreateProduceListingInput) {
+    await this.media.requireOwnedReferences(owner, input.images ?? [], 'images');
     return unwrap(await this.repository.createProduceListing(owner, input), 'produce-listing');
   }
 

@@ -50,9 +50,11 @@ export interface SupplierProductInput {
   sampleAvailable?: boolean;
   region: string;
   /**
-   * Root-relative same-origin listing photographs. The publication projection
-   * copies at most five of them into the public snapshot, so this is the one
-   * writable image carrier a seller-side listing has.
+   * Root-relative same-origin listing photographs: a checked-in library path or
+   * one this account uploaded through `POST /marketplace/media`. The
+   * publication projection copies at most five of them into the public
+   * snapshot, so this is the one writable image carrier a seller-side listing
+   * has.
    */
   images?: string[];
 }
@@ -109,6 +111,13 @@ export interface ProduceListing {
   sampleAvailable: boolean;
   pricePerKgUzs: number;
   region: string;
+  /**
+   * The harvest's own photographs, in the same two reference shapes a supplier
+   * product accepts. The publication projection reads them from here, so a
+   * farmer's harvest publishes with the pictures they uploaded instead of
+   * always publishing assetless.
+   */
+  images: string[];
   availableFrom: Date;
   availableUntil: Date;
   status: ProduceStatus;
@@ -124,6 +133,7 @@ export interface CreateProduceListingInput {
   sampleAvailable?: boolean;
   pricePerKgUzs: number;
   region: string;
+  images?: string[];
   availableFrom: Date;
   availableUntil: Date;
 }

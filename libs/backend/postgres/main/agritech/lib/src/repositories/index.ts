@@ -11,3 +11,4 @@ export * from './marketplace-contract-lifecycle.repository';
 export * from './marketplace-contract-notification.repository';
 export * from './marketplace-dashboard-ai.repository';
 export * from './marketplace-engagement.repository';
+export * from './marketplace-media.repository';

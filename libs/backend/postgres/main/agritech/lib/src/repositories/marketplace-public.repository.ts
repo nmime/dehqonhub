@@ -920,10 +920,10 @@ export class PostgresMarketplacePublicRepository implements MarketplacePublicRep
         crop: produce?.crop ?? undefined,
         description: product?.description ?? undefined,
         grade: produce?.grade ?? undefined,
-        // The snapshot inherits the locked source's own photographs. A produce
-        // listing carries none, so a harvest publishes assetless and the client
-        // renders its category illustration instead.
-        images: imagesFrom(product?.images).slice(0, maxPublicImages),
+        // The snapshot inherits the locked source's own photographs, whichever
+        // kind of source it is. A listing that carries none publishes assetless
+        // and the client renders its category illustration instead.
+        images: imagesFrom(product?.images ?? produce?.images).slice(0, maxPublicImages),
         region: product?.region ?? produce?.region ?? '',
         section: input.section,
         sourceKind: input.sourceKind,
