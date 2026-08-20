@@ -1,36 +1,42 @@
-import { createHash } from "node:crypto";
-
 import { DemoProducts } from "../../../../../libs/backend/feature/product/shared/lib/src/domain/demo-catalog.ts";
+import {
+  buyerEmail,
+  demoMarketplaceBuyerOrganizations,
+  demoMarketplaceIdentities,
+  demoMarketplaceSuppliers,
+  farmerEmail,
+  marketplaceFixtureTaxId,
+  marketplaceFixtureUuid,
+  marketplaceSupplierOwner,
+  sellerEmail,
+  supplierPartnerIdForSlug,
+  supplierPartnerKey,
+} from "./marketplace-seed-roster.ts";
 
 /**
  * DehqonHub demo marketplace fixture.
  *
- * The three review logins published on the marketplace banner could sign in and
+ * The review logins published on the marketplace banner could sign in and
  * browse, but every commercial action answered 403 or 404. Two reasons: the
  * repository gates buying on an approved `buyer` organization plus a verified
  * marketplace role and selling on an approved `supplier` one, and the catalog
  * those actions resolve against was the in-memory demo dataset rather than rows
  * a cart can point at. This fixture persists that dataset for the default tenant
- * and hands each review login the organization and verification the gates ask
- * for, so a reviewer can walk a listing all the way to a signed contract.
+ * and hands every login in `marketplace-seed-roster` the organizations and
+ * verification the gates ask for, so a reviewer can walk a listing all the way
+ * to a signed contract as any of them.
  *
  * Postgres only, because the marketplace repository has no MongoDB counterpart.
  */
 
-const fixtureNamespace = "dehqonhub-demo-marketplace";
-
-/**
- * Every row here needs an id that survives re-seeding, and a product carries its
- * supplier's partner id, so the two have to agree without a lookup table that
- * can drift. Hashing the fixture key into a v5-shaped uuid gives both: the same
- * key always resolves to the same id, and a new supplier cannot renumber the
- * existing ones.
- */
-export function marketplaceFixtureUuid(key: string): string {
-  const hex = createHash("sha1").update(`${fixtureNamespace}:${key}`).digest("hex");
-  const variant = ((Number.parseInt(hex.slice(16, 17), 16) & 0x3) | 0x8).toString(16);
-  return `${hex.slice(0, 8)}-${hex.slice(8, 12)}-5${hex.slice(13, 16)}-${variant}${hex.slice(17, 20)}-${hex.slice(20, 32)}`;
-}
+export {
+  buyerEmail,
+  farmerEmail,
+  marketplaceFixtureUuid,
+  sellerEmail,
+  supplierPartnerIdForSlug,
+  supplierPartnerKey,
+} from "./marketplace-seed-roster.ts";
 
 export interface DemoPartnerFixture {
   id: string;
@@ -91,100 +97,30 @@ export interface DemoProductFixture {
   updatedAt: Date;
 }
 
-export const farmerEmail = "dehqon@demo.dehqonhub.uz";
-export const sellerEmail = "sotuvchi@demo.dehqonhub.uz";
-export const buyerEmail = "xaridor@demo.dehqonhub.uz";
-
 /**
- * Who owns which catalog supplier. The farmer login owns the co-operatives that
- * list produce, which is what makes it a seller as well as a buyer, and the
- * seller login owns the input and machinery suppliers. Anything not named here
- * falls to the seller login, so adding a demo supplier needs no edit.
+ * Every organization a listing may be sold through, in roster order.
  *
- * A produce co-operative has to be owned by the farmer login and by no other:
- * the public catalog joins a produce publication to `farmers` on
- * `farmer.user_id = seller.owner_user_id`, so a harvest listed through an
- * organization the farmer does not own is invisible however well-formed the rest
- * of the chain is.
+ * It is no longer derived from the catalog. A produce co-operative sells only
+ * harvests, which live in `produce_listings` rather than in `products`, so a
+ * catalog-derived list could not name one at all — and the roster has to declare
+ * the owner anyway, because the database resolves a selling party through that
+ * owner's membership and verification.
+ *
+ * The catalog is checked against the roster instead of the other way round: a
+ * product naming a supplier nobody owns would publish under a seller profile the
+ * seed never wrote, and `marketplaceSupplierOwner` says which product is at
+ * fault rather than leaving a foreign key to fail unnamed.
  */
-export const catalogSupplierOwners: Record<string, string> = {
-  "Dehqon Bozori Kooperativi": farmerEmail,
-  "Farg'ona Dehqon Kooperativi": farmerEmail,
-  "Xorazm Dehqon Kooperativi": farmerEmail,
-};
+export const catalogSuppliers: readonly { name: string; region: string; slug: string }[] =
+  demoMarketplaceSuppliers.map((supplier) => ({
+    name: supplier.legalName,
+    region: supplier.region,
+    slug: supplier.slug,
+  }));
 
-/**
- * The fixture key behind the organization a catalog listing is sold through. It
- * is the catalog's own supplier slug, not the trade name on screen: the name is
- * display text, and correcting the typography of `Urug'chilik` renumbered the
- * partner every listing points at, while the slug survives any such edit.
- */
-export const supplierPartnerKey = (supplierSlug: string): string => `partner:supplier:${supplierSlug}`;
-
-/** The partner id a catalog listing is sold through — see `marketplaceFixtureUuid`. */
-const supplierPartnerId = (supplierSlug: string): string => marketplaceFixtureUuid(supplierPartnerKey(supplierSlug));
-
-/**
- * Nine obviously synthetic digits, derived from the same key as the row's id so
- * that the two always move together. A positional numbering read better but
- * collided with `ux__agritech_partners__tenant_kind_tax` as soon as a key did
- * change: the replacement row arrives with a new id, the row it supersedes keeps
- * its number, and the seed aborted on any database seeded before the change.
- */
-function fixtureTaxId(key: string): string {
-  const hex = createHash("sha1").update(`${fixtureNamespace}:tax:${key}`).digest("hex").slice(0, 10);
-  return `3${String(Number.parseInt(hex, 16) % 100_000_000).padStart(8, "0")}`;
+for (const product of DemoProducts) {
+  marketplaceSupplierOwner(product.supplierName);
 }
-
-/**
- * The region each seeded organization trades from, pinned per supplier.
- *
- * It cannot be derived from the supplier's listings.
- * `enforce_marketplace_public_seller_revision_immutability` refuses any change to
- * an approved revision's `region`, so a value that follows whichever listing
- * happens to come first in the catalog turns a re-seed into a failed transaction
- * the moment a new listing is added ahead of the old one. Pinning it here makes
- * the seeded value independent of catalog order.
- *
- * Two entries look wrong and are deliberate: `Samarqand Bog'dorchilik` and
- * `Xorazm Hosil Eksport` record the regions that were derived and approved
- * before this map existed. Correcting them needs a second seller revision rather
- * than an edit, which is not this fixture's job.
- */
-const supplierRegions: Record<string, string> = {
-  "Agro Kimyo Servis": "Navoiy",
-  "Andijon Urug'chilik": "Andijon",
-  "Buxoro Agro Ta'minot": "Buxoro",
-  "Dehqon Bozori Kooperativi": "Toshkent",
-  "Farg'ona Agrotexnika": "Farg'ona",
-  "Farg'ona Dehqon Kooperativi": "Farg'ona",
-  "Namangan Issiqxona Servis": "Namangan",
-  "Qashqadaryo Suv Tizim": "Qashqadaryo",
-  "Samarqand Bog'dorchilik": "Toshkent",
-  "Sirdaryo Don Terminali": "Sirdaryo",
-  "Surxon Meva Savdo": "Surxondaryo",
-  "Toshkent Agroservis Markazi": "Toshkent",
-  "Xorazm Dehqon Kooperativi": "Xorazm",
-  "Xorazm Hosil Eksport": "Farg'ona",
-};
-
-/** Distinct suppliers in catalog order, so their fixture numbering is stable. */
-export const catalogSuppliers = DemoProducts.reduce<{ name: string; region: string; slug: string }[]>(
-  (suppliers, product) => {
-    if (suppliers.some((supplier) => supplier.slug === product.supplierId)) {
-      return suppliers;
-    }
-    const region = supplierRegions[product.supplierName];
-    if (!region) {
-      throw new Error(
-        `Demo catalog supplier ${product.supplierName} has no pinned region; a seeded seller profile cannot change it later.`,
-      );
-    }
-    suppliers.push({ name: product.supplierName, region, slug: product.supplierId });
-    return suppliers;
-  },
-  [],
-);
 
 /**
  * Organizations a reviewer buys and sells through. The trade name doubles as the
@@ -193,33 +129,25 @@ export const catalogSuppliers = DemoProducts.reduce<{ name: string; region: stri
  * and a plausible-looking INN would belong to a real company.
  */
 export const demoMarketplacePartners: readonly DemoPartnerFixture[] = [
-  ...catalogSuppliers.map((supplier) => ({
-    key: supplierPartnerKey(supplier.slug),
-    ownerEmail: catalogSupplierOwners[supplier.name] ?? sellerEmail,
+  ...demoMarketplaceSuppliers.map((supplier) => ({
+    id: marketplaceFixtureUuid(supplierPartnerKey(supplier.slug)),
+    taxId: marketplaceFixtureTaxId(supplierPartnerKey(supplier.slug)),
+    ownerEmail: supplier.ownerEmail,
     kind: "supplier" as const,
-    legalName: supplier.name,
+    legalName: supplier.legalName,
+    phone: supplier.phone,
     region: supplier.region,
   })),
-  {
-    key: "partner:buyer:farmer",
-    ownerEmail: farmerEmail,
+  ...demoMarketplaceBuyerOrganizations.map((organization) => ({
+    id: marketplaceFixtureUuid(organization.partnerKey),
+    taxId: marketplaceFixtureTaxId(organization.partnerKey),
+    ownerEmail: organization.ownerEmail,
     kind: "buyer" as const,
-    legalName: "Dehqon Demo Xo'jaligi",
-    region: "Toshkent",
-  },
-  {
-    key: "partner:buyer:buyer",
-    ownerEmail: buyerEmail,
-    kind: "buyer" as const,
-    legalName: "Xaridor Demo Savdo",
-    region: "Toshkent",
-  },
-].map(({ key, ...partner }, index) => ({
-  ...partner,
-  id: marketplaceFixtureUuid(key),
-  taxId: fixtureTaxId(key),
-  phone: `+998 71 200-00-${String(index + 1).padStart(2, "0")}`,
-}));
+    legalName: organization.legalName,
+    phone: organization.phone,
+    region: organization.region,
+  })),
+];
 
 /**
  * Marketplace roles, which decide what each login may do at all: `farmer` both
@@ -227,29 +155,15 @@ export const demoMarketplacePartners: readonly DemoPartnerFixture[] = [
  * a demo row pointing at storage keys that hold nothing would read as a broken
  * upload rather than a fixture.
  */
-export const demoMarketplaceVerifications: readonly DemoVerificationFixture[] = [
-  {
-    id: marketplaceFixtureUuid("verification:farmer"),
-    ownerEmail: farmerEmail,
-    role: "farmer",
-    level: "trusted",
-    oneIdLinked: true,
-  },
-  {
-    id: marketplaceFixtureUuid("verification:seller"),
-    ownerEmail: sellerEmail,
-    role: "seller",
-    level: "verified",
-    oneIdLinked: true,
-  },
-  {
-    id: marketplaceFixtureUuid("verification:buyer"),
-    ownerEmail: buyerEmail,
-    role: "buyer",
-    level: "basic",
-    oneIdLinked: false,
-  },
-];
+export const demoMarketplaceVerifications: readonly DemoVerificationFixture[] = demoMarketplaceIdentities.map(
+  (identity) => ({
+    id: marketplaceFixtureUuid(identity.verificationKey),
+    ownerEmail: identity.email,
+    role: identity.role,
+    level: identity.level,
+    oneIdLinked: identity.oneIdLinked,
+  }),
+);
 
 /**
  * The demo catalog as rows. The API serves the same dataset from memory when a
@@ -267,7 +181,7 @@ export const demoMarketplaceProducts: readonly DemoProductFixture[] = DemoProduc
   category: product.category,
   description: product.description,
   images: product.images,
-  supplierId: supplierPartnerId(product.supplierId),
+  supplierId: supplierPartnerIdForSlug(product.supplierId),
   supplierName: product.supplierName,
   priceUzs: product.priceUzs,
   unit: product.unit,

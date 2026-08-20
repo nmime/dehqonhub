@@ -3,8 +3,12 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { demoMarketplaceContracts } from "./marketplace-seed-contracts.ts";
-import { demoMarketplaceListingPublications } from "./marketplace-seed-publications.ts";
+import {
+  demoMarketplaceListingPublications,
+  demoMarketplaceProducePublications,
+} from "./marketplace-seed-publications.ts";
 import { demoMarketplaceReviewEligibilities, demoMarketplaceReviews } from "./marketplace-seed-reviews.ts";
+import { marketplaceIdentity } from "./marketplace-seed-roster.ts";
 
 /**
  * These fixtures are inserted inside the seed transaction that also carries the
@@ -55,12 +59,20 @@ describe("demo marketplace review fixture", () => {
 
   it("points every eligibility at a publication the seed actually writes", () => {
     const publicationIds = new Map(
-      demoMarketplaceListingPublications.map((publication) => [publication.id, publication] as const),
+      [...demoMarketplaceListingPublications, ...demoMarketplaceProducePublications].map(
+        (publication) => [publication.id, publication] as const,
+      ),
     );
     for (const eligibility of eligibilities) {
       const publication = publicationIds.get(eligibility.sourcePublicationId);
       assert.ok(publication, `${eligibility.sourceName} quotes an unseeded publication`);
-      assert.equal(publication.productId, eligibility.sourceId);
+      // `assert_marketplace_listing_review_coherence` compares the eligibility's
+      // source against the publication's own, on whichever column the kind names.
+      assert.equal(publication.sourceKind, eligibility.sourceKind);
+      assert.equal(
+        eligibility.sourceKind === "product" ? publication.productId : publication.produceListingId,
+        eligibility.sourceId,
+      );
     }
   });
 
@@ -82,18 +94,50 @@ describe("demo marketplace review fixture", () => {
     }
   });
 
-  it("leaves an unconsumed eligibility for each demo buyer, so the entry is reachable", () => {
+  it("leaves every buying login an unconsumed eligibility, so the entry is reachable", () => {
     const consumed = new Set(reviews.map((review) => review.eligibilityId));
-    const remaining = eligibilities.filter((eligibility) => !consumed.has(eligibility.id));
-    assert.deepEqual(
-      new Set(remaining.map((eligibility) => eligibility.buyerOwnerEmail)),
-      new Set(["xaridor@demo.dehqonhub.uz", "dehqon@demo.dehqonhub.uz"]),
+    const remaining = new Set(
+      eligibilities
+        .filter((eligibility) => !consumed.has(eligibility.id))
+        .map((eligibility) => eligibility.buyerOwnerEmail),
     );
+    // Every login that completed a purchase must still have one left to rate;
+    // otherwise the review form is a screen only a test can reach.
+    for (const buyer of new Set(eligibilities.map((eligibility) => eligibility.buyerOwnerEmail))) {
+      assert.ok(remaining.has(buyer), `${buyer} has rated every purchase it ever made`);
+    }
+    assert.ok(remaining.size >= 12, `only ${remaining.size} logins can still leave a review`);
   });
 
-  it("keeps one review per buyer and product, as the partial unique indexes require", () => {
-    const keys = reviews.map((review) => `${review.buyerOwnerEmail}|${review.sourceId}`);
+  it("gives every buying login at least one review of its own", () => {
+    const authors = new Set(reviews.map((review) => review.buyerOwnerEmail));
+    for (const buyer of new Set(eligibilities.map((eligibility) => eligibility.buyerOwnerEmail))) {
+      assert.ok(authors.has(buyer), `${buyer} completed purchases but rated none of them`);
+    }
+  });
+
+  it("keeps one review per buyer and source, as the partial unique indexes require", () => {
+    const keys = reviews.map((review) => `${review.buyerOwnerEmail}|${review.sourceKind}|${review.sourceId}`);
     assert.equal(new Set(keys).size, keys.length);
+  });
+
+  it("rates harvests as well as catalog rows, so the produce section carries ratings too", () => {
+    const produce = reviews.filter((review) => review.sourceKind === "produce");
+    assert.ok(produce.length >= 8, `only ${produce.length} harvests carry a rating`);
+    assert.ok(reviews.some((review) => review.sourceKind === "product"));
+  });
+
+  it("attaches no photograph, because nothing in the deployment can serve one", () => {
+    // `asset_references` takes up to three `public-asset:<id>` handles, but no
+    // upload endpoint, storage or client renderer for them exists in this
+    // repository. The fixture therefore has no field to put one in, and this
+    // assertion is what keeps a later edit from inventing storage.
+    for (const review of reviews) {
+      assert.ok(
+        !Object.hasOwn(review, "assetReferences"),
+        `${review.id} claims review media the deployment cannot serve`,
+      );
+    }
   });
 
   it("writes ratings the check constraint accepts, and more than one distinct value", () => {
@@ -144,9 +188,20 @@ describe("demo marketplace review fixture", () => {
     assert.ok(replies.length > 0, "no seller reply is exercised");
     assert.equal(new Set(replies.map((review) => review.reply?.id)).size, replies.length);
     for (const review of replies) {
-      assert.equal(review.reply?.sellerOwnerEmail, "sotuvchi@demo.dehqonhub.uz");
+      // A reply is written by the organization that sold the goods, never by a
+      // third party: `marketplace_review_replies` carries the seller partner and
+      // `uq__marketplace_review_replies__review_id` allows exactly one.
+      assert.equal(review.reply?.sellerOwnerEmail, review.sellerOwnerEmail);
       assert.equal(review.reply?.sellerPartnerId, review.sellerPartnerId);
+      assert.ok(
+        ["seller", "farmer"].includes(marketplaceIdentity(review.reply?.sellerOwnerEmail ?? "").role),
+        `${review.reply?.sellerOwnerEmail} replied to a review without a selling role`,
+      );
     }
+    assert.ok(
+      new Set(replies.map((review) => review.sellerOwnerEmail)).size > 1,
+      "only one organization ever answers a review",
+    );
   });
 
   it("keeps stable ids across calls, so a re-seed updates rather than duplicates", () => {

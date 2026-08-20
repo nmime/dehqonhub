@@ -1,15 +1,17 @@
 import { createHash } from "node:crypto";
 
 import { DemoProducts } from "../../../../../libs/backend/feature/product/shared/lib/src/domain/demo-catalog.ts";
+import { catalogSuppliers } from "./marketplace-seed-data.ts";
 import {
   buyerEmail,
-  catalogSupplierOwners,
-  catalogSuppliers,
+  demoMarketplaceIdentities,
   farmerEmail,
   marketplaceFixtureUuid,
-  sellerEmail,
+  marketplaceSupplierBySlug,
+  marketplaceSupplierOwner,
   supplierPartnerKey,
-} from "./marketplace-seed-data.ts";
+  type DemoFarmFixture,
+} from "./marketplace-seed-roster.ts";
 
 /**
  * The published half of the DehqonHub demo marketplace.
@@ -192,7 +194,7 @@ const sectionForCategory = (category: string): "equipment" | "seeds" | null => {
 export const demoMarketplacePublicSellers: readonly DemoPublicSellerFixture[] = catalogSuppliers.map((supplier) => ({
   id: marketplaceFixtureUuid(`public-seller:${supplier.slug}`),
   partnerId: marketplaceFixtureUuid(supplierPartnerKey(supplier.slug)),
-  ownerEmail: catalogSupplierOwners[supplier.name] ?? sellerEmail,
+  ownerEmail: marketplaceSupplierOwner(supplier.name).email,
   displayName: supplier.name,
   description: `Demo marketplace profile for ${supplier.name}.`,
   region: supplier.region,
@@ -252,41 +254,50 @@ export const demoMarketplaceListingPublications: readonly DemoListingPublication
 );
 
 /**
- * The farm behind the produce section. Publishing produce is gated on the
- * publisher being a farmer whose own organization is the public seller, so the
- * harvest can only be listed by the farmer login.
+ * The farms behind the produce section, one per farmer login in the roster.
+ *
+ * Publishing produce is gated on the publisher being a farmer whose own
+ * organization is the public seller: the catalog joins a produce publication to
+ * `farmers` on `farmer.user_id = seller.owner_user_id`, so a harvest listed
+ * through an organization whose owner has no farm row never reaches the catalog,
+ * however well-formed the rest of the chain is. Deriving the list from the roster
+ * makes that pairing impossible to get wrong — a co-operative can only be named
+ * below if its owner declares a farm.
  */
-export const demoMarketplaceFarmer: DemoFarmerFixture = {
-  id: marketplaceFixtureUuid("farmer:dehqon"),
-  ownerEmail: farmerEmail,
-  firstName: "Dehqon",
-  lastName: "Demo",
-  phone: "+998 71 200-01-00",
-  region: "Toshkent",
-  district: "Zangiota",
-  farmSizeHectares: "12.5",
-  crops: ["grape", "melon", "onion", "potato"],
-};
+/**
+ * The original demo farm keeps the fixture key `farmer:dehqon` it was seeded
+ * under: every produce listing and every organization binding written before the
+ * roster existed points at the id that key resolves to, and a derived key would
+ * have issued a second farm row while the first stayed active.
+ */
+const farmKey = (email: string): string => (email === farmerEmail ? "farmer:dehqon" : `farmer:${email}`);
+
+export const demoMarketplaceFarmers: readonly DemoFarmerFixture[] = demoMarketplaceIdentities.flatMap((identity) =>
+  identity.farm
+    ? [
+        {
+          id: marketplaceFixtureUuid(farmKey(identity.email)),
+          ownerEmail: identity.email,
+          ...(identity.farm as DemoFarmFixture),
+        },
+      ]
+    : [],
+);
+
+const farmerByOwnerEmail = new Map(demoMarketplaceFarmers.map((farmer) => [farmer.ownerEmail, farmer]));
+
+/** The original demo farm, still the one the produce fixture was written around. */
+export const demoMarketplaceFarmer: DemoFarmerFixture = farmerByOwnerEmail.get(farmerEmail) as DemoFarmerFixture;
 
 /**
- * The organizations a harvest is sold through. All three are owned by the farmer
- * login, because the public catalog joins a produce publication to `farmers` on
- * `farmer.user_id = seller.owner_user_id`: a harvest listed through an
- * organization the farmer does not own never reaches the catalog, however
- * well-formed the rest of the chain is. Splitting the harvest across three gives
- * the produce section more than one seller to filter by.
+ * The organizations a harvest is sold through, each owned by a farmer login that
+ * also owns a farm row. Eight co-operatives across eight oblasts give the produce
+ * section a real set of sellers to filter by rather than one voice.
  */
 const produceCooperatives = new Map(
-  ["Dehqon Bozori Kooperativi", "Farg'ona Dehqon Kooperativi", "Xorazm Dehqon Kooperativi"].map((displayName) => {
-    const seller = demoMarketplacePublicSellers.find((candidate) => candidate.displayName === displayName);
-    if (!seller) {
-      throw new Error(`Demo marketplace fixture expects a produce co-operative named ${displayName}.`);
-    }
-    if (seller.ownerEmail !== farmerEmail) {
-      throw new Error(`${displayName} lists produce, so it has to be owned by the farmer login.`);
-    }
-    return [displayName, seller] as const;
-  }),
+  demoMarketplacePublicSellers
+    .filter((seller) => farmerByOwnerEmail.has(seller.ownerEmail))
+    .map((seller) => [seller.displayName, seller] as const),
 );
 
 /**
@@ -553,6 +564,146 @@ const harvest = [
     cooperative: "Farg'ona Dehqon Kooperativi",
     availableUntil: "2026-11-15T00:00:00.000Z",
   },
+  {
+    crop: "Milling wheat, class 3",
+    cropRu: "Пшеница продовольственная, 3 класс",
+    cropUz: "Oziq-ovqat bug'doyi, 3-sinf",
+    cropUzCyrl: "Озиқ-овқат буғдойи, 3-синф",
+    grade: "A",
+    tons: 90,
+    pricePerKgUzs: 4_450,
+    region: "Samarqand",
+    sample: true,
+    images: [photo("winter-wheat-field"), photo("wheat-grain")],
+    cooperative: "Samarqand Meva Kooperativi",
+    availableUntil: "2027-05-01T00:00:00.000Z",
+  },
+  {
+    crop: "Sweet cherry, calibre 24+",
+    cropRu: "Черешня, калибр 24+",
+    cropUz: "Shirin gilos, kalibr 24+",
+    cropUzCyrl: "Ширин гилос, калибр 24+",
+    grade: "A",
+    tons: 5,
+    pricePerKgUzs: 34_500,
+    region: "Samarqand",
+    sample: true,
+    images: [],
+    cooperative: "Samarqand Meva Kooperativi",
+    availableUntil: "2026-10-01T00:00:00.000Z",
+  },
+  {
+    crop: "Seed cotton, hand picked",
+    cropRu: "Хлопок-сырец, ручной сбор",
+    cropUz: "Paxta xom-ashyosi, qo'lda yig'ilgan",
+    cropUzCyrl: "Пахта хом-ашёси, қўлда йиғилган",
+    grade: "A",
+    tons: 150,
+    pricePerKgUzs: 5_800,
+    region: "Andijon",
+    sample: false,
+    images: [photo("cotton-bolls"), photo("cotton-field")],
+    cooperative: "Andijon Bog' Kooperativi",
+    availableUntil: "2027-01-01T00:00:00.000Z",
+  },
+  {
+    crop: "Apple, Golden Delicious, calibre 70+",
+    cropRu: "Яблоко «Голден Делишес», калибр 70+",
+    cropUz: "Olma «Golden Delicious», kalibr 70+",
+    cropUzCyrl: "Олма «Голден Делишес», калибр 70+",
+    grade: "B",
+    tons: 40,
+    pricePerKgUzs: 6_900,
+    region: "Andijon",
+    sample: true,
+    images: [photo("uzbek-bazaar")],
+    cooperative: "Andijon Bog' Kooperativi",
+    availableUntil: "2027-02-01T00:00:00.000Z",
+  },
+  {
+    crop: "Sugar beet, factory grade",
+    cropRu: "Сахарная свёкла, заводская",
+    cropUz: "Qand lavlagi, zavod navi",
+    cropUzCyrl: "Қанд лавлаги, завод нави",
+    grade: "B",
+    tons: 200,
+    pricePerKgUzs: 1_150,
+    region: "Xorazm",
+    sample: false,
+    images: [],
+    cooperative: "Xorazm Poliz Kooperativi",
+    availableUntil: "2026-12-01T00:00:00.000Z",
+  },
+  {
+    crop: "Muskmelon, Ichkizil",
+    cropRu: "Дыня «Ичкизил»",
+    cropUz: "Qovun «Ichqizil»",
+    cropUzCyrl: "Қовун «Ичқизил»",
+    grade: "A",
+    tons: 28,
+    pricePerKgUzs: 6_400,
+    region: "Xorazm",
+    sample: true,
+    images: [photo("melon")],
+    cooperative: "Xorazm Poliz Kooperativi",
+    availableUntil: "2026-11-01T00:00:00.000Z",
+  },
+  {
+    crop: "Feed barley, bulk",
+    cropRu: "Ячмень фуражный, навалом",
+    cropUz: "Yem arpasi, bo'sh holda",
+    cropUzCyrl: "Ем арпаси, бўш ҳолда",
+    grade: "B",
+    tons: 120,
+    pricePerKgUzs: 2_750,
+    region: "Qashqadaryo",
+    sample: false,
+    images: [photo("wheat-grain")],
+    cooperative: "Qashqadaryo Dehqon Kooperativi",
+    availableUntil: "2027-04-01T00:00:00.000Z",
+  },
+  {
+    crop: "Alfalfa hay, third cut",
+    cropRu: "Сено люцерны, третий укос",
+    cropUz: "Beda pichani, uchinchi o'rim",
+    cropUzCyrl: "Беда пичани, учинчи ўрим",
+    grade: "A",
+    tons: 85,
+    pricePerKgUzs: 2_050,
+    region: "Qashqadaryo",
+    sample: true,
+    images: [photo("alfalfa-field")],
+    cooperative: "Qashqadaryo Dehqon Kooperativi",
+    availableUntil: "2027-03-01T00:00:00.000Z",
+  },
+  {
+    crop: "Table grapes, Kishmish Kherson",
+    cropRu: "Виноград столовый «Кишмиш херсонский»",
+    cropUz: "Uzum «Kishmish xerson»",
+    cropUzCyrl: "Узум «Кишмиш херсон»",
+    grade: "A",
+    tons: 22,
+    pricePerKgUzs: 12_900,
+    region: "Namangan",
+    sample: true,
+    images: [photo("table-grapes")],
+    cooperative: "Namangan Bog'bon Kooperativi",
+    availableUntil: "2026-11-20T00:00:00.000Z",
+  },
+  {
+    crop: "Walnut, in shell, calibre 32+",
+    cropRu: "Орех грецкий в скорлупе, калибр 32+",
+    cropUz: "Yong'oq, po'stlog'i bilan, kalibr 32+",
+    cropUzCyrl: "Ёнғоқ, пўстлоғи билан, калибр 32+",
+    grade: "A",
+    tons: 15,
+    pricePerKgUzs: 46_500,
+    region: "Namangan",
+    sample: true,
+    images: [],
+    cooperative: "Namangan Bog'bon Kooperativi",
+    availableUntil: "2027-06-01T00:00:00.000Z",
+  },
 ] as const;
 
 const harvestByCrop = new Map<string, (typeof harvest)[number]>(
@@ -577,10 +728,20 @@ const cooperativeFor = (crop: string): DemoPublicSellerFixture => {
   return seller;
 };
 
+/** The farm whose harvest a co-operative lists, which is always its owner's. */
+const farmFor = (crop: string): DemoFarmerFixture => {
+  const owner = cooperativeFor(crop).ownerEmail;
+  const farmer = farmerByOwnerEmail.get(owner);
+  if (!farmer) {
+    throw new Error(`Demo marketplace harvest ${crop} is listed by ${owner}, which declares no farm.`);
+  }
+  return farmer;
+};
+
 export const demoMarketplaceProduceListings: readonly DemoProduceListingFixture[] = harvest.map((entry) => ({
   id: marketplaceFixtureUuid(`produce:${entry.crop}`),
-  farmerId: demoMarketplaceFarmer.id,
-  ownerEmail: farmerEmail,
+  farmerId: farmFor(entry.crop).id,
+  ownerEmail: cooperativeFor(entry.crop).ownerEmail,
   crop: entry.crop,
   grade: entry.grade,
   quantityKg: entry.tons * 1000,
@@ -600,7 +761,7 @@ export const demoMarketplaceProducePublications: readonly DemoListingPublication
     const cooperative = cooperativeFor(listing.crop);
     return {
       id: marketplaceFixtureUuid(key),
-      ownerEmail: farmerEmail,
+      ownerEmail: cooperative.ownerEmail,
       sellerPublicId: cooperative.id,
       sellerRevisionId: cooperative.revisionId,
       sourceKind: "produce" as const,
@@ -626,13 +787,16 @@ export const demoMarketplaceProducePublications: readonly DemoListingPublication
   });
 
 /**
- * A reverse auction a reviewer can read without creating anything first. Every
- * request belongs to the wholesale buyer and every offer to the seller logins,
- * because the database resolves a bound party only against a verification whose
- * role is exactly `buyer` or exactly `seller`: the farmer login trades as
- * `farmer`, so it can list its harvest in the catalog but cannot hold a resolved
- * request or offer. All three are published and approved — an unapproved request
- * is invisible to sellers and cannot receive an offer at all.
+ * A reverse auction a reviewer can read without creating anything first, posted
+ * by three different wholesale buyers so the feed is not one account talking to
+ * itself. Every request is published and approved — an unapproved request is
+ * invisible to sellers and cannot receive an offer at all.
+ *
+ * A request resolves its buying party through `assert_marketplace_resolved_request_party`,
+ * which since `Migration20260811110000AlignMarketplaceBuyerPartyRole` admits
+ * `('buyer', 'farmer')`; the seller side of an offer admits `('seller', 'farmer')`.
+ * A farmer login can therefore both post a request and answer one, which is what
+ * the role model has always said it may do.
  */
 export const demoMarketplaceRequests: readonly DemoRequestFixture[] = [
   {
@@ -677,6 +841,34 @@ export const demoMarketplaceRequests: readonly DemoRequestFixture[] = [
     requirements: "Calibrated, in 25 kg mesh bags.",
     status: "open" as const,
   },
+  {
+    key: "request:barley",
+    buyerEmail: "saida@demo.dehqonhub.uz",
+    buyerPartnerKey: "partner:buyer:saida",
+    buyerDisplayName: "Sirdaryo Don Xarid",
+    title: "Feed barley, 200 tonnes for the season",
+    product: "Feed barley, bulk",
+    volume: "200 t",
+    region: "Qashqadaryo",
+    deadline: "2026-10-20",
+    budgetUzs: 560_000_000,
+    requirements: "Moisture up to 14%, weighing on the buyer's scales.",
+    status: "offering" as const,
+  },
+  {
+    key: "request:greenhouse-film",
+    buyerEmail: "nigora@demo.dehqonhub.uz",
+    buyerPartnerKey: "partner:buyer:nigora",
+    buyerDisplayName: "Farg'ona Qayta Ishlash",
+    title: "Greenhouse film, 40 rolls before the winter turn",
+    product: "Greenhouse film, 200 micron",
+    volume: "40 rolls",
+    region: "Navoiy",
+    deadline: "2026-09-25",
+    budgetUzs: 220_000_000,
+    requirements: "Three-layer, stabilised, delivery in two batches.",
+    status: "offering" as const,
+  },
 ].map((entry, index) => {
   const { key, ...request } = entry;
   return {
@@ -700,14 +892,18 @@ const requestByKey = (key: string): DemoRequestFixture => {
 
 /**
  * Competing offers, so the buyer's screen has something to compare rather than
- * an empty list. The grape request gets two, which is what makes the "best
+ * an empty list. Two requests get two offers each, which is what makes the "best
  * price" marker meaningful; the seed request gets one.
+ *
+ * The answering login is derived from the organization the offer is made
+ * through, never named alongside it: `assert_marketplace_resolved_commerce_parties`
+ * resolves the seller against an active membership on that exact organization, so
+ * an offer whose login and organization disagree fails inside the transaction.
  */
 export const demoMarketplaceOffers: readonly DemoOfferFixture[] = [
   {
     key: "offer:grapes:orchard",
     request: requestByKey("request:grapes"),
-    sellerEmail,
     sellerSupplierSlug: "demo-supplier-samarqand-bog-dorchilik",
     priceUzs: 88_000_000,
     deliveryTerms: "seller_delivery" as const,
@@ -718,7 +914,6 @@ export const demoMarketplaceOffers: readonly DemoOfferFixture[] = [
   {
     key: "offer:grapes:export",
     request: requestByKey("request:grapes"),
-    sellerEmail,
     sellerSupplierSlug: "demo-supplier-xorazm-hosil-eksport",
     priceUzs: 93_500_000,
     deliveryTerms: "pickup" as const,
@@ -729,7 +924,6 @@ export const demoMarketplaceOffers: readonly DemoOfferFixture[] = [
   {
     key: "offer:wheat-seed:andijon",
     request: requestByKey("request:wheat-seed"),
-    sellerEmail,
     sellerSupplierSlug: "demo-supplier-andijon-urug-chilik",
     priceUzs: 16_800_000,
     deliveryTerms: "seller_delivery" as const,
@@ -737,10 +931,41 @@ export const demoMarketplaceOffers: readonly DemoOfferFixture[] = [
     deliveryDays: 6,
     deliveryNote: "Certificates travel with the shipment.",
   },
+  {
+    key: "offer:barley:qashqadaryo",
+    request: requestByKey("request:barley"),
+    sellerSupplierSlug: "demo-supplier-qashqadaryo-dehqon-kooperativi",
+    priceUzs: 528_000_000,
+    deliveryTerms: "pickup" as const,
+    deliveryPriceUzs: 0,
+    deliveryDays: 3,
+    deliveryNote: "Loading from the co-operative's own floor.",
+  },
+  {
+    key: "offer:barley:sirdaryo",
+    request: requestByKey("request:barley"),
+    sellerSupplierSlug: "demo-supplier-sirdaryo-don-terminali",
+    priceUzs: 551_000_000,
+    deliveryTerms: "seller_delivery" as const,
+    deliveryPriceUzs: 8_400_000,
+    deliveryDays: 5,
+    deliveryNote: "Terminal weighing certificate with every truck.",
+  },
+  {
+    key: "offer:greenhouse-film:navoiy",
+    request: requestByKey("request:greenhouse-film"),
+    sellerSupplierSlug: "demo-supplier-navoiy-agro-plastik",
+    priceUzs: 208_000_000,
+    deliveryTerms: "seller_delivery" as const,
+    deliveryPriceUzs: 3_200_000,
+    deliveryDays: 8,
+    deliveryNote: "Two batches, the second after the first is fitted.",
+  },
 ].map((entry, index) => {
   const { key, request, ...offer } = entry;
   return {
     ...offer,
+    sellerEmail: marketplaceSupplierBySlug(offer.sellerSupplierSlug).ownerEmail,
     id: marketplaceFixtureUuid(key),
     requestId: request.id,
     requestPublicId: request.publicationId,
@@ -806,6 +1031,9 @@ export const demoMarketplaceListingPromotions: readonly DemoListingPromotionFixt
   { key: "promotion:greenhouse-film", listing: "Greenhouse film, 150 micron, 8 m wide", planCode: "catalog_7d" as const },
   { key: "promotion:table-grapes", listing: "Table grapes, Husayni grade 1", planCode: "catalog_14d" as const },
   { key: "promotion:raisins", listing: "Dark raisins, sun-dried", planCode: "catalog_7d" as const },
+  { key: "promotion:sprinkler", listing: "Sprinkler irrigation set, 2 ha", planCode: "catalog_14d" as const },
+  { key: "promotion:seed-potato", listing: "Seed potato “Riviera”, first reproduction", planCode: "catalog_7d" as const },
+  { key: "promotion:milling-wheat", listing: "Milling wheat, class 3", planCode: "catalog_30d" as const },
 ].map((entry) => {
   const publication = promotedPublication(entry.listing);
   const seller = sellerByPublicId(publication.sellerPublicId);

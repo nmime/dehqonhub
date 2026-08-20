@@ -9,7 +9,7 @@ import {
 import { demoContractPartySnapshot, demoMarketplaceContracts } from './marketplace-seed-contracts.ts';
 import { demoMarketplaceReviewEligibilities, demoMarketplaceReviews } from './marketplace-seed-reviews.ts';
 import {
-  demoMarketplaceFarmer,
+  demoMarketplaceFarmers,
   demoMarketplaceListingPublications,
   demoMarketplaceOffers,
   demoMarketplaceProduceListings,
@@ -355,11 +355,13 @@ async function seed(
           ],
         );
       }
-      // The farm and its harvest, which is the only way the produce section gets
-      // rows: publishing produce is gated on the publisher being a farmer whose
-      // own organization is the public seller.
-      const farmerUserId = userIdsByEmail.get(demoMarketplaceFarmer.ownerEmail);
-      if (farmerUserId) {
+      // The farms and their harvests, which is the only way the produce section
+      // gets rows: publishing produce is gated on the publisher being a farmer
+      // whose own organization is the public seller, so every co-operative in the
+      // fixture needs its owner's `farmers` row to exist first.
+      for (const farmer of demoMarketplaceFarmers) {
+        const farmerUserId = userIdsByEmail.get(farmer.ownerEmail);
+        if (!farmerUserId) continue;
         await client.query(
           `INSERT INTO "farmers" (
              "id", "tenant_id", "user_id", "phone", "first_name", "last_name", "region",
@@ -372,60 +374,62 @@ async function seed(
              "farm_size_hectares" = excluded."farm_size_hectares", "crops" = excluded."crops",
              "status" = 'active', "updated_at" = now()`,
           [
-            demoMarketplaceFarmer.id,
+            farmer.id,
             DefaultTenantId,
             farmerUserId,
-            demoMarketplaceFarmer.phone,
-            demoMarketplaceFarmer.firstName,
-            demoMarketplaceFarmer.lastName,
-            demoMarketplaceFarmer.region,
-            demoMarketplaceFarmer.district,
-            demoMarketplaceFarmer.farmSizeHectares,
-            JSON.stringify(demoMarketplaceFarmer.crops),
+            farmer.phone,
+            farmer.firstName,
+            farmer.lastName,
+            farmer.region,
+            farmer.district,
+            farmer.farmSizeHectares,
+            JSON.stringify(farmer.crops),
           ],
         );
-        for (const listing of demoMarketplaceProduceListings) {
-          counts.demoProduceListings += await insertedCount(
-            client,
-            `INSERT INTO "produce_listings" (
-               "id", "tenant_id", "farmer_id", "crop", "grade", "quantity_kg",
-               "available_quantity_kg", "price_per_kg_uzs", "region", "available_from",
-               "available_until", "sample_available", "status", "created_at", "updated_at"
-             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', now(), now())
-             ON CONFLICT ("id") DO UPDATE SET
-               "crop" = excluded."crop", "grade" = excluded."grade",
-               "quantity_kg" = excluded."quantity_kg",
-               "available_quantity_kg" = excluded."available_quantity_kg",
-               "price_per_kg_uzs" = excluded."price_per_kg_uzs", "region" = excluded."region",
-               "available_from" = excluded."available_from", "available_until" = excluded."available_until",
-               "sample_available" = excluded."sample_available", "status" = 'active', "updated_at" = now()
-             RETURNING ("xmax" = 0) AS "inserted"`,
-            [
-              listing.id,
-              DefaultTenantId,
-              listing.farmerId,
-              listing.crop,
-              listing.grade,
-              listing.quantityKg,
-              listing.availableQuantityKg,
-              listing.pricePerKgUzs,
-              listing.region,
-              listing.availableFrom,
-              listing.availableUntil,
-              listing.sampleAvailable,
-            ],
-          );
-          await client.query(
-            `INSERT INTO "marketplace_produce_organization_bindings" (
-               "produce_listing_id", "tenant_id", "farmer_id", "owner_user_id",
-               "supplier_partner_id", "created_at"
-             ) VALUES ($1, $2, $3, $4, $5, now())
-             ON CONFLICT ("produce_listing_id") DO UPDATE SET
-               "farmer_id" = excluded."farmer_id", "owner_user_id" = excluded."owner_user_id",
-               "supplier_partner_id" = excluded."supplier_partner_id"`,
-            [listing.id, DefaultTenantId, listing.farmerId, farmerUserId, listing.supplierPartnerId],
-          );
-        }
+      }
+      for (const listing of demoMarketplaceProduceListings) {
+        const farmerUserId = userIdsByEmail.get(listing.ownerEmail);
+        if (!farmerUserId) continue;
+        counts.demoProduceListings += await insertedCount(
+          client,
+          `INSERT INTO "produce_listings" (
+             "id", "tenant_id", "farmer_id", "crop", "grade", "quantity_kg",
+             "available_quantity_kg", "price_per_kg_uzs", "region", "available_from",
+             "available_until", "sample_available", "status", "created_at", "updated_at"
+           ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'active', now(), now())
+           ON CONFLICT ("id") DO UPDATE SET
+             "crop" = excluded."crop", "grade" = excluded."grade",
+             "quantity_kg" = excluded."quantity_kg",
+             "available_quantity_kg" = excluded."available_quantity_kg",
+             "price_per_kg_uzs" = excluded."price_per_kg_uzs", "region" = excluded."region",
+             "available_from" = excluded."available_from", "available_until" = excluded."available_until",
+             "sample_available" = excluded."sample_available", "status" = 'active', "updated_at" = now()
+           RETURNING ("xmax" = 0) AS "inserted"`,
+          [
+            listing.id,
+            DefaultTenantId,
+            listing.farmerId,
+            listing.crop,
+            listing.grade,
+            listing.quantityKg,
+            listing.availableQuantityKg,
+            listing.pricePerKgUzs,
+            listing.region,
+            listing.availableFrom,
+            listing.availableUntil,
+            listing.sampleAvailable,
+          ],
+        );
+        await client.query(
+          `INSERT INTO "marketplace_produce_organization_bindings" (
+             "produce_listing_id", "tenant_id", "farmer_id", "owner_user_id",
+             "supplier_partner_id", "created_at"
+           ) VALUES ($1, $2, $3, $4, $5, now())
+           ON CONFLICT ("produce_listing_id") DO UPDATE SET
+             "farmer_id" = excluded."farmer_id", "owner_user_id" = excluded."owner_user_id",
+             "supplier_partner_id" = excluded."supplier_partner_id"`,
+          [listing.id, DefaultTenantId, listing.farmerId, farmerUserId, listing.supplierPartnerId],
+        );
       }
       for (const publication of [...demoMarketplaceListingPublications, ...demoMarketplaceProducePublications]) {
         const ownerUserId = userIdsByEmail.get(publication.ownerEmail);
@@ -769,13 +773,21 @@ async function seed(
         if (!buyerUserId || !sellerUserId) continue;
         counts.demoReviews += await insertedCount(
           client,
+          // `ck__marketplace_listing_reviews__source_pair` requires exactly one of
+          // the two source columns, chosen by `source_kind`, so the rated id goes
+          // to `product_id` for a catalog listing and to `produce_listing_id` for
+          // a harvest. `asset_references` stays empty: the column accepts up to
+          // three opaque `public-asset:<id>` handles, but nothing in this
+          // repository uploads, stores or serves one, so a seeded handle would
+          // render as a broken image.
           `INSERT INTO "marketplace_listing_reviews" (
-             "id", "listing_publication_id", "source_kind", "product_id", "review_eligibility_id",
+             "id", "listing_publication_id", "source_kind", "product_id", "produce_listing_id",
+             "review_eligibility_id",
              "buyer_tenant_id", "buyer_user_id", "buyer_partner_id", "seller_tenant_id",
              "seller_partner_id", "rating", "comment", "asset_references", "verified_deal",
              "visibility", "revision", "created_at", "updated_at"
            ) VALUES (
-             $1, $2, $3, $4, $5, $6, $7, $8, $6, $9, $10, $11, '[]'::jsonb, true,
+             $1, $2, $3, $4, $13, $5, $6, $7, $8, $6, $9, $10, $11, '[]'::jsonb, true,
              'visible', 1, $12, $12
            )
            ON CONFLICT ("id") DO NOTHING
@@ -784,7 +796,7 @@ async function seed(
             review.id,
             review.listingPublicationId,
             review.sourceKind,
-            review.sourceId,
+            review.sourceKind === 'product' ? review.sourceId : null,
             review.eligibilityId,
             DefaultTenantId,
             buyerUserId,
@@ -793,6 +805,7 @@ async function seed(
             review.rating,
             review.comment,
             review.createdAt,
+            review.sourceKind === 'produce' ? review.sourceId : null,
           ],
         );
         if (!review.reply) continue;

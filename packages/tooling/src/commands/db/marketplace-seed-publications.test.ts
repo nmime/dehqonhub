@@ -3,9 +3,11 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { DemoProducts } from "../../../../../libs/backend/feature/product/shared/lib/src/domain/demo-catalog.ts";
-import { catalogSuppliers, farmerEmail } from "./marketplace-seed-data.ts";
+import { catalogSuppliers } from "./marketplace-seed-data.ts";
+import { farmerEmail, marketplaceIdentity } from "./marketplace-seed-roster.ts";
 import {
   demoMarketplaceFarmer,
+  demoMarketplaceFarmers,
   demoMarketplaceListingPromotions,
   demoMarketplaceListingPublications,
   demoMarketplaceProduceListings,
@@ -218,12 +220,19 @@ describe("demo marketplace catalogue fixture", () => {
     }
   });
 
-  it("lists every harvest through a co-operative the farmer login owns", () => {
+  it("lists every harvest through a co-operative whose own owner holds the farm", () => {
+    // The public catalog joins a produce publication to `farmers` on
+    // `farmer.user_id = seller.owner_user_id`, so a harvest whose farm belongs to
+    // anyone but the co-operative's owner is invisible however well-formed the
+    // rest of the chain is — and only a `farmer` verification may sell it at all.
     const sellerById = new Map(demoMarketplacePublicSellers.map((seller) => [seller.id, seller] as const));
+    const farmById = new Map(demoMarketplaceFarmers.map((farmer) => [farmer.id, farmer] as const));
     const partnerIds = new Set(demoMarketplacePublicSellers.map((seller) => seller.partnerId));
     for (const listing of demoMarketplaceProduceListings) {
-      assert.equal(listing.farmerId, demoMarketplaceFarmer.id);
-      assert.equal(listing.ownerEmail, farmerEmail);
+      const farm = farmById.get(listing.farmerId);
+      assert.ok(farm, `${listing.crop} names a farm the seed never writes`);
+      assert.equal(farm.ownerEmail, listing.ownerEmail, `${listing.crop} is listed by someone else's farm`);
+      assert.equal(marketplaceIdentity(listing.ownerEmail).role, "farmer");
       assert.ok(partnerIds.has(listing.supplierPartnerId), `${listing.crop} binds an unseeded organization`);
       assert.ok(listing.availableQuantityKg > 0, `${listing.crop} has nothing available`);
       assert.ok(
@@ -233,8 +242,30 @@ describe("demo marketplace catalogue fixture", () => {
     }
     for (const publication of demoMarketplaceProducePublications) {
       const seller = sellerById.get(publication.sellerPublicId);
-      assert.equal(seller?.ownerEmail, farmerEmail, `${publication.title} publishes through a non-farmer seller`);
+      assert.ok(seller, `${publication.title} publishes through an unseeded seller`);
+      assert.equal(publication.ownerEmail, seller.ownerEmail);
+      assert.equal(
+        marketplaceIdentity(seller.ownerEmail).role,
+        "farmer",
+        `${publication.title} publishes through a non-farmer seller`,
+      );
     }
+    // The original farm keeps its own fixture key, because every produce row and
+    // organization binding written before the roster existed points at that id.
+    assert.equal(demoMarketplaceFarmer.ownerEmail, farmerEmail);
+    assert.ok(farmById.has(demoMarketplaceFarmer.id));
+  });
+
+  it("attributes a real share of the catalogue to sellers other than the first three logins", () => {
+    const originals = new Set(["dehqon@demo.dehqonhub.uz", "sotuvchi@demo.dehqonhub.uz", "xaridor@demo.dehqonhub.uz"]);
+    const visible = publications.filter(isVisible);
+    const rostered = visible.filter((publication) => !originals.has(publication.ownerEmail));
+    assert.ok(
+      rostered.length >= visible.length / 5,
+      `only ${rostered.length} of ${visible.length} visible listings belong to a login beyond the original three`,
+    );
+    const sellers = new Set(rostered.map((publication) => publication.ownerEmail));
+    assert.ok(sellers.size >= 8, `only ${sellers.size} further logins sell anything`);
   });
 });
 
