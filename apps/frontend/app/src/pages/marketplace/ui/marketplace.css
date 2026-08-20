@@ -3122,7 +3122,12 @@ label.dh-check {
 /* Toasts live in the bottom corner, clear of the sticky header, and stack
    upward so the newest is closest to the thumb. */
 .dh-notices {
-  bottom: max(1.5rem, var(--xr-mini-app-safe-bottom, 0px));
+  /* Stacked clear of the assistant button rather than over it: a notice takes
+     pointer events so it can be dismissed, and the two shared the bottom-right
+     corner, so a toast that dwells for seconds swallowed clicks meant for the
+     button. The offset is that button own bottom plus its height plus a gap, so
+     it cannot drift apart from it. */
+  bottom: calc(max(2.25rem, var(--xr-mini-app-safe-bottom, 0px)) + 4.375rem);
   display: grid;
   gap: 0.5rem;
   justify-items: end;
