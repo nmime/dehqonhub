@@ -7,11 +7,13 @@ import {
   type DurableDatabaseRuntime,
 } from '@app/backend-common-bootstrap';
 import { createPostgresMikroOrmOptions, type PostgresMikroOrmOverrides } from './data-source-options';
+import type { PostgresHealthIndicatorOptions } from './type';
 import {
   MikroOrmPostgresHealthAdapter,
   PostgresHealthAdapter,
   PostgresMigrationsHealthIndicator,
   PostgresReadinessHealthIndicator,
+  PostgresReadinessHealthOptions,
 } from './postgres.health';
 import { PostgresSessionStore } from './postgres-session.store';
 
@@ -49,6 +51,14 @@ export class PostgresMainModule {
         {
           provide: PostgresHealthAdapter,
           useExisting: MikroOrmPostgresHealthAdapter,
+        },
+        // Importing this module *is* the declaration that PostgreSQL is the
+        // selected durable provider, so its readiness is mandatory: an absent
+        // adapter or an unreachable database has to surface as an error rather
+        // than as an optional "skipped" pass.
+        {
+          provide: PostgresReadinessHealthOptions,
+          useValue: { mandatory: true } satisfies PostgresHealthIndicatorOptions,
         },
         PostgresReadinessHealthIndicator,
         PostgresMigrationsHealthIndicator,

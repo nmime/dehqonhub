@@ -1,12 +1,16 @@
 import { MikroORM } from '@mikro-orm/core';
-import { Injectable, Optional } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { PostgresDependencyNotConfiguredError, PostgresMigrationStatusUnsupportedError } from '../exception';
 import type { PostgresDependencyHealthAdapter, PostgresPendingMigration } from '../type';
 import { normalizePendingMigration } from '../util';
 
 @Injectable()
 export class MikroOrmPostgresHealthAdapter implements PostgresDependencyHealthAdapter {
-  constructor(@Optional() private readonly orm?: MikroORM | null) {}
+  // `MikroORM | null` erases `design:paramtypes` to `Object`, so Nest cannot
+  // infer this dependency from the reflected type: the token has to be named
+  // explicitly. Without it the ORM stayed `undefined` in every wired app and
+  // the readiness indicator reported "not configured" instead of querying.
+  constructor(@Optional() @Inject(MikroORM) private readonly orm?: MikroORM | null) {}
 
   get configured(): boolean {
     return Boolean(this.orm);
