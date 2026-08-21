@@ -16,7 +16,7 @@
   --dh-container: 96rem;
   --dh-star: #ffb800;
   /* Sticky panels and offsets measure from the real header, not a guess. */
-  --dh-header-h: 8.75rem;
+  --dh-header-h: 11rem;
   --dh-footer-bg: #1ca24c;
   --dh-footer-ink: #faf0de;
   --dh-footer-muted: #e2d9bf;
@@ -227,16 +227,17 @@
    to it, and object-fit protects the artwork if the box is ever non-square. */
 .dh-brand__mark {
   flex: 0 0 auto;
-  height: 2.75rem;
+  height: 5.5rem;
   object-fit: contain;
-  width: 2.75rem;
+  width: 5.5rem;
 }
 
 /* Brand artwork gets room only where a screen has it to spare. */
 .dh-emblem {
-  height: 7rem;
+  height: 14rem;
+  max-width: 100%;
   object-fit: contain;
-  width: 7rem;
+  width: 14rem;
 }
 
 .dh-brand__wordmark {
@@ -461,8 +462,7 @@
   color: var(--dh-green-strong);
 }
 
-.dh-header__nav > button > span,
-.dh-mobile-nav button > span {
+.dh-header__nav > button > span {
   display: inline-flex;
   position: relative;
 }
@@ -478,8 +478,7 @@
   color: var(--dh-green-strong);
 }
 
-.dh-header__nav small,
-.dh-mobile-nav small {
+.dh-header__nav small {
   font-size: 0.75rem;
   font-weight: 500;
   max-width: 100%;
@@ -510,8 +509,7 @@
   }
 }
 
-.dh-header__nav em,
-.dh-mobile-nav em {
+.dh-header__nav em {
   align-items: center;
   background: var(--dh-green);
   border-radius: 50%;
@@ -3124,7 +3122,12 @@ label.dh-check {
 /* Toasts live in the bottom corner, clear of the sticky header, and stack
    upward so the newest is closest to the thumb. */
 .dh-notices {
-  bottom: max(1.5rem, var(--xr-mini-app-safe-bottom, 0px));
+  /* Stacked clear of the assistant button rather than over it: a notice takes
+     pointer events so it can be dismissed, and the two shared the bottom-right
+     corner, so a toast that dwells for seconds swallowed clicks meant for the
+     button. The offset is that button own bottom plus its height plus a gap, so
+     it cannot drift apart from it. */
+  bottom: calc(max(2.25rem, var(--xr-mini-app-safe-bottom, 0px)) + 4.375rem);
   display: grid;
   gap: 0.5rem;
   justify-items: end;
@@ -3603,9 +3606,9 @@ label.dh-check {
 }
 
 .dh-brand--footer .dh-brand__mark {
-  flex-basis: 3rem;
-  height: 3rem;
-  width: 3rem;
+  flex-basis: 6rem;
+  height: 6rem;
+  width: 6rem;
 }
 .dh-brand--footer .dh-brand__wordmark > span {
   color: var(--dh-footer-ink);
@@ -3628,10 +3631,6 @@ label.dh-check {
   grid-column: 1 / -1;
   margin: 0;
   padding-top: 1rem;
-}
-
-.dh-mobile-nav {
-  display: none;
 }
 
 .dh-skeleton-grid {
@@ -3671,7 +3670,7 @@ label.dh-check {
   /* The mobile preferences row joins the sticky header at this width, so the
      offset the sticky panels measure from has to include it. */
   .dh-marketplace {
-    --dh-header-h: 12.5rem;
+    --dh-header-h: 14.625rem;
   }
 
   .dh-header__main {
@@ -3722,66 +3721,6 @@ label.dh-check {
 
   .dh-header__nav {
     display: none;
-  }
-
-  /* The header hands navigation to the bottom bar at the same width it drops it. */
-  .dh-marketplace {
-    padding-bottom: calc(4.7rem + var(--xr-mini-app-safe-bottom, 0px));
-  }
-
-  .dh-mobile-nav {
-    align-items: center;
-    background: color-mix(in srgb, var(--dh-cream) 94%, transparent);
-    border-top: 1px solid var(--dh-border);
-    bottom: 0;
-    display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
-    left: 0;
-    padding: 0.35rem max(0.35rem, var(--xr-mini-app-safe-right, 0px)) max(0.35rem, var(--xr-mini-app-safe-bottom, 0px))
-      max(0.35rem, var(--xr-mini-app-safe-left, 0px));
-    position: fixed;
-    right: 0;
-    z-index: 50;
-  }
-
-  /* The bar appears at this width, so the rules that make it a bar have to
-     appear at this width too, not one breakpoint later. Without them the five
-     buttons render as native UA controls about 30px tall. */
-  .dh-mobile-nav button {
-    align-items: center;
-    background: transparent;
-    border: 0;
-    border-radius: 999px;
-    color: var(--dh-muted);
-    display: grid;
-    gap: 0.25rem;
-    justify-items: center;
-    min-height: 3.75rem;
-    min-width: 0;
-    padding: 0.375rem 0.125rem;
-  }
-
-  .dh-mobile-nav button[aria-current='page'] {
-    background: var(--dh-green-soft);
-    color: var(--dh-green-strong);
-  }
-
-  .dh-mobile-nav svg {
-    height: 1.25rem;
-    width: 1.25rem;
-  }
-
-  /* Lifted clear of the bar at the width the bar appears, not one breakpoint
-     later; the 48rem block restates the same offset. */
-  .dh-ai-fab {
-    bottom: calc(5.4rem + var(--xr-mini-app-safe-bottom, 0px));
-  }
-
-  /* The bottom corner belongs to the navigation bar and the AI action at this
-     width. Toasts are interactive and dwell for seconds, so they stack above
-     both instead of on top of them. */
-  .dh-notices {
-    bottom: calc(9.25rem + var(--xr-mini-app-safe-bottom, 0px));
   }
 
   .dh-review-form {
@@ -3962,12 +3901,17 @@ label.dh-check {
     padding: 1.5rem;
   }
 
+  /* A narrow screen gets a smaller heading, not a bigger one: this clamp used to
+     rise to 3.1rem while the desktop rule tops out at 2.25rem, so the shortest
+     viewport rendered the largest type and the title took five lines. */
   .dh-hero h1 {
-    font-size: clamp(2.1rem, 11vw, 3.1rem);
+    font-size: clamp(1.5rem, 7vw, 1.875rem);
   }
 
+  /* The button selector used to sit in this list, which stacked each button own
+     label and arrow into two lines. Only the row stacks; a button keeps its
+     contents on one line and takes the full width from the rule below. */
   .dh-hero__actions,
-  .dh-hero__actions .dh-button,
   .dh-buy-row,
   .dh-form__actions,
   .dh-dialog__actions,
@@ -7130,5 +7074,300 @@ label.dh-check {
 @media (max-width: 48rem) {
   .dh-photo-upload__list {
     grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+  }
+}
+
+/* The narrow header row is the one that holds a burger, so it says so itself
+   rather than depending on a class the markup has to remember to add. Two
+   columns: the lockup takes the space it needs and may shrink, the burger keeps
+   its 44 px box at the end. */
+.dh-header__main:has(> .dh-burger) {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+/* At 320 px an 88 px mark, the wordmark and the burger have about 300 px between
+   them. The lockup gets the remainder and the wordmark is the part that gives:
+   it ellipsises rather than pushing the row into horizontal overflow, and the
+   mark keeps the size it was given. */
+.dh-header__main:has(> .dh-burger) > .dh-brand {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.dh-header__main:has(> .dh-burger) .dh-brand__wordmark {
+  display: inline-block;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dh-burger {
+  align-items: center;
+  background: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 999px;
+  color: var(--dh-ink);
+  cursor: pointer;
+  display: inline-flex;
+  flex: 0 0 auto;
+  height: 2.75rem;
+  justify-content: center;
+  justify-self: end;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  width: 2.75rem;
+}
+
+.dh-burger:hover,
+.dh-burger[aria-expanded='true'] {
+  background: var(--dh-green-soft);
+  border-color: color-mix(in srgb, var(--dh-green) 40%, var(--dh-border));
+  color: var(--dh-green-strong);
+}
+
+.dh-burger svg {
+  height: 1.375rem;
+  width: 1.375rem;
+}
+
+/* Below the confirmation dialog's backdrop (80) and above the header (60), the
+   toasts and the AI panel (70). */
+.dh-drawer-backdrop {
+  background: rgb(10 27 17 / 56%);
+  border: 0;
+  display: block;
+  inset: 0;
+  padding: 0;
+  position: fixed;
+  z-index: 74;
+}
+
+.dh-drawer {
+  animation: dh-drawer-in 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  background: var(--dh-cream);
+  border-left: 1.5px solid var(--dh-border);
+  bottom: 0;
+  box-shadow: -1rem 0 3rem rgb(43 43 43 / 22%);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  position: fixed;
+  right: 0;
+  top: 0;
+  width: min(21rem, 86vw);
+  z-index: 75;
+}
+
+@keyframes dh-drawer-in {
+  from {
+    transform: translateX(100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.dh-drawer__head {
+  align-items: center;
+  border-bottom: 1px solid var(--dh-border);
+  display: flex;
+  gap: 0.75rem;
+  justify-content: space-between;
+  padding: max(0.875rem, var(--xr-mini-app-safe-top, 0px)) max(1rem, var(--xr-mini-app-safe-right, 0px)) 0.875rem 1rem;
+}
+
+.dh-drawer__head > strong {
+  font-family: var(--dh-font-display);
+  font-size: 1rem;
+}
+
+.dh-drawer__body {
+  align-content: start;
+  display: grid;
+  gap: 1rem;
+  overflow-y: auto;
+  padding: 1rem max(1rem, var(--xr-mini-app-safe-right, 0px)) max(1.25rem, var(--xr-mini-app-safe-bottom, 0px)) 1rem;
+}
+
+/* The drawer's search is the header's search component, so it only needs the
+   shell to stop behaving like a grid cell in a wide row. */
+.dh-drawer__body > .dh-search-shell {
+  width: 100%;
+}
+
+/* The header search sizes its field and submit disc to a 38 px row, which is
+   right for a dense desktop bar and short of the 44 px touch minimum. Inside the
+   drawer — a touch surface — both reach 44 px. The header's own rule is left
+   exactly as it is. */
+.dh-drawer .dh-search {
+  padding: 0.3125rem;
+}
+
+.dh-drawer .dh-search input {
+  min-height: 2.75rem;
+}
+
+.dh-drawer .dh-search button {
+  height: 2.75rem;
+  width: 2.75rem;
+}
+
+.dh-drawer__nav {
+  display: grid;
+  gap: 0.25rem;
+}
+
+/* A row, not a caption under a glyph: the panel has the width for the whole
+   name, and a 3rem row clears the 44 px target with margin. */
+.dh-drawer__nav > button {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: var(--dh-ink);
+  cursor: pointer;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+  min-height: 3rem;
+  padding: 0.5rem 0.875rem;
+  text-align: left;
+  width: 100%;
+}
+
+.dh-drawer__nav > button:hover,
+.dh-drawer__nav > button:focus-visible,
+.dh-drawer__nav > button.is-active {
+  background: var(--dh-green-soft);
+  color: var(--dh-green-strong);
+}
+
+.dh-drawer__nav > button > span {
+  align-items: center;
+  display: inline-flex;
+  justify-content: center;
+}
+
+.dh-drawer__nav svg {
+  height: 1.375rem;
+  width: 1.375rem;
+}
+
+.dh-drawer__nav small {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* The counter has room to be a pill at the end of its own row instead of a disc
+   pinned to the corner of a glyph. */
+.dh-drawer__nav em {
+  align-items: center;
+  background: var(--dh-green);
+  border-radius: 999px;
+  color: white;
+  display: inline-flex;
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 700;
+  justify-content: center;
+  line-height: 1;
+  min-height: 1.25rem;
+  min-width: 1.25rem;
+  padding-inline: 0.35rem;
+}
+
+.dh-drawer__sections {
+  border-top: 1px solid var(--dh-border);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-top: 1rem;
+}
+
+.dh-drawer__sections button {
+  background: var(--dh-surface);
+  border: 1.5px solid var(--dh-border);
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  min-height: 2.75rem;
+  padding: 0.5rem 1rem;
+}
+
+.dh-drawer__sections button:hover {
+  background: var(--dh-green-soft);
+  border-color: color-mix(in srgb, var(--dh-green) 40%, var(--dh-border));
+}
+
+.dh-drawer__sections button[aria-current='true'] {
+  background: var(--dh-green);
+  border-color: var(--dh-green);
+  color: white;
+}
+
+.dh-drawer__preferences {
+  border-top: 1px solid var(--dh-border);
+  display: flex;
+  padding-top: 1rem;
+}
+
+.dh-drawer__preferences .xr-button {
+  border: 1.5px solid var(--dh-border);
+  border-radius: 999px;
+  color: var(--dh-ink);
+  min-height: 3rem;
+  width: 100%;
+}
+
+/* ==========================================================================
+   4. ADD (responsive) — standalone blocks, safe to append at the end of the
+   file. They land after every existing media query, which is what makes the
+   `--dh-header-h` override below take effect over the 70rem one.
+   ========================================================================== */
+
+@media (min-width: 56.001rem) {
+  /* A wide viewport has no burger and no drawer. If a stale state ever put one
+     in the document above the breakpoint, it stays invisible rather than
+     appearing beside the desktop header. */
+  .dh-burger,
+  .dh-drawer,
+  .dh-drawer-backdrop {
+    display: none;
+  }
+}
+
+@media (max-width: 56rem) {
+  /* The header is now one row — the lockup and the burger — because the section
+     chips and the preferences row moved into the drawer. Sticky panels measure
+     their offset from this value, so it has to shrink with the header. */
+  .dh-marketplace {
+    --dh-header-h: 7.25rem;
+  }
+}
+
+@media (max-width: 22rem) {
+  /* At the 320 px floor the gutter is 1.25rem, so the panel takes the width
+     minus that gutter rather than a fraction that leaves a sliver behind. */
+  .dh-drawer {
+    width: calc(100% - 1.25rem);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The global reduced-motion block flattens transitions, not animations, so the
+     slide has to be turned off by name. The panel still appears, it just does
+     not travel. */
+  .dh-drawer {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .dh-burger,
+  .dh-drawer {
+    border: 1px solid CanvasText;
   }
 }

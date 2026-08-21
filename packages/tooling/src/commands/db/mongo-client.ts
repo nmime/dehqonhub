@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { basename, dirname, resolve } from "node:path";
 import { createMongoMigrationEnvironment, parseMongoUri } from "./mongo-migrate.ts";
 import { isTruthyEnv } from "./env-loader.ts";
+import { isDeploymentEnvironment } from "./deployment-environment.ts";
 
 export const DefaultMongoDatabaseToolsVersion = "100.17.0";
 export const DefaultMongoDatabaseToolsImage = "mongo:8.0.28-noble";
@@ -111,7 +112,7 @@ export function isLocalMongoDatabase(
   connectionString: string,
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
-  if (env.NODE_ENV === "production") return false;
+  if (isDeploymentEnvironment(env)) return false;
   const url = parseMongoUri(connectionString);
   const hosts = url.hosts.map(normalizedMongoHost);
   const database = decodeURIComponent(url.pathname.replace(/^\//u, ""));
@@ -127,9 +128,9 @@ export function assertLocalMongoDatabase(
   const hosts = url.hosts.map(normalizedMongoHost);
   const database = decodeURIComponent(url.pathname.replace(/^\//u, ""));
   const displayHost = hosts.join(",");
-  if (env.NODE_ENV === "production" && !isTruthyEnv(env.DB_ALLOW_DESTRUCTIVE)) {
+  if (isDeploymentEnvironment(env) && !isTruthyEnv(env.DB_ALLOW_DESTRUCTIVE)) {
     throw new Error(
-      `Refusing destructive database operation while NODE_ENV=production (${displayHost}/${database}). The local host/name heuristic is not trusted here because production uses the same host and db name. Set DB_ALLOW_DESTRUCTIVE=true only for an intentional, controlled operation.`,
+      `Refusing destructive database operation while NODE_ENV=${env.NODE_ENV} (${displayHost}/${database}). The local host/name heuristic is not trusted for a deployment, which reaches the same host under the same database name as a local checkout. Set DB_ALLOW_DESTRUCTIVE=true only for an intentional, controlled operation.`,
     );
   }
   if (!isLocalMongoDatabase(connectionString, { ...env, NODE_ENV: undefined })) {

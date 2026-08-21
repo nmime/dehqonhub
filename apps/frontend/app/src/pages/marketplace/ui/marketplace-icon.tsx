@@ -7,6 +7,7 @@ import {
   Heart,
   House,
   Leaf,
+  Menu,
   Minus,
   PackageOpen,
   Plus,
@@ -42,6 +43,7 @@ export type MarketplaceIconName =
   | 'heart'
   | 'home'
   | 'input'
+  | 'menu'
   | 'minus'
   | 'orders'
   | 'pesticide'
@@ -70,6 +72,7 @@ const icons: Record<MarketplaceIconName, LucideIcon> = {
   heart: Heart,
   home: House,
   input: PackageOpen,
+  menu: Menu,
   minus: Minus,
   orders: ClipboardList,
   pesticide: SprayCan,

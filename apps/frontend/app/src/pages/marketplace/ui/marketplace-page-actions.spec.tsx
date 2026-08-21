@@ -1018,7 +1018,6 @@ describe('MarketplacePage route action orchestration', () => {
       '.dh-header__nav button',
       '.dh-header__categories button',
       '.dh-footer button',
-      '.dh-mobile-nav button',
     ]) {
       for (const button of document.querySelectorAll<HTMLButtonElement>(selector)) {
         fireEvent.click(button);

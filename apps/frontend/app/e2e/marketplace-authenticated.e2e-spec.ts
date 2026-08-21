@@ -871,7 +871,10 @@ test('reference-led public marketplace keeps local favorites on one light palett
       page.evaluate((id) => localStorage.getItem('dehqonhub.marketplace.guest-cart.v1')?.includes(id), demoListing.id),
     )
     .toBe(true);
-  await page.getByRole('button', { name: 'Cart' }).last().click();
+  // At 375 px the header keeps only the lockup and the burger, so the cart is
+  // reached through the drawer that holds the navigation.
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await page.getByRole('dialog', { name: 'Marketplace menu' }).getByRole('button', { name: 'Cart' }).click();
   await expect(page).toHaveURL(/\/cart$/u);
   // The checkout control names the one step this visitor has to clear, and its own
   // label carries that step: the generic preview sentence would also have told an

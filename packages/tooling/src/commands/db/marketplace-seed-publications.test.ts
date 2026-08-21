@@ -1,6 +1,9 @@
 // @requirements REQ-SCAFFOLD-SAFETY-008
 import assert from "node:assert/strict";
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import { describe, it } from "node:test";
+import { fileURLToPath } from "node:url";
 
 import { DemoProducts } from "../../../../../libs/backend/feature/product/shared/lib/src/domain/demo-catalog.ts";
 import { catalogSuppliers } from "./marketplace-seed-data.ts";
@@ -121,6 +124,33 @@ describe("demo marketplace catalogue fixture", () => {
       for (const image of publication.images) {
         assert.match(image, /^\/media\/marketplace\/[a-z0-9-]+\.webp$/u, `${publication.title} links ${image}`);
       }
+    }
+  });
+
+  /**
+   * A fresh clone is the machine that matters here. The check above accepts
+   * `/media/marketplace/anything.webp`, so a fixture could name a photograph
+   * nobody ever committed and still pass it — and that failure surfaces as a
+   * broken image on the reviewer's screen rather than as a red test. The
+   * checked-in library is the only reason the catalogue can be seeded at all:
+   * those files travel in git, unlike an uploaded object, which exists only in
+   * the bucket of the machine that uploaded it and is absent from every other
+   * install. Holding the fixture to the library keeps the seeded catalogue
+   * renderable on a deployment whose object storage is empty, or absent.
+   */
+  it("names only photographs that travel in git, so a fresh clone renders every card", () => {
+    const publicRoot = fileURLToPath(new URL("../../../../../apps/frontend/app/public/", import.meta.url));
+    // Publications carry both sections: a harvest's photographs live on its
+    // publication, because `produce_listings.images` is left at its empty default
+    // and the public catalogue reads the published snapshot.
+    const fixtureImages = new Set([
+      ...publications.flatMap((publication) => publication.images),
+      ...DemoProducts.flatMap((product) => product.images),
+    ]);
+    assert.ok(fixtureImages.size > 0, "the fixture names no photographs at all");
+    for (const image of fixtureImages) {
+      assert.match(image, /^\/media\/marketplace\/[a-z0-9-]+\.webp$/u, `${image} is not a checked-in library path`);
+      assert.ok(existsSync(join(publicRoot, image.slice(1))), `${image} has no file under apps/frontend/app/public`);
     }
   });
 

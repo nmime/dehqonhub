@@ -315,10 +315,25 @@ test('@critical user login honors safe return navigation, survives reload, and l
   expect(compactBrandTarget?.width).toBeGreaterThanOrEqual(44);
   expect(compactBrandTarget?.height).toBeGreaterThanOrEqual(44);
   await expect(page.locator('.dh-header .dh-brand__wordmark')).toBeVisible();
-  const mobileNavigationInsets = await readPaddingInsets(page.locator('.dh-mobile-nav'));
-  expect(mobileNavigationInsets.bottom).toBeGreaterThanOrEqual(safeArea.bottom);
-  expect(mobileNavigationInsets.left).toBeGreaterThanOrEqual(safeArea.left);
-  expect(mobileNavigationInsets.right).toBeGreaterThanOrEqual(safeArea.right);
+  // Navigation on a narrow screen lives in the header drawer, so the drawer is
+  // what has to respect the host's safe area rather than a bottom bar.
+  const burger = page.getByRole('button', { name: 'Open menu' });
+  await expect(burger).toBeVisible();
+  const burgerBox = await burger.boundingBox();
+  expect(burgerBox?.width).toBeGreaterThanOrEqual(44);
+  expect(burgerBox?.height).toBeGreaterThanOrEqual(44);
+  await burger.click();
+  const drawer = page.getByRole('dialog', { name: 'Marketplace menu' });
+  await expect(drawer).toBeVisible();
+  const drawerHeadInsets = await readPaddingInsets(drawer.locator('.dh-drawer__head'));
+  expect(drawerHeadInsets.top).toBeGreaterThanOrEqual(safeArea.top);
+  expect(drawerHeadInsets.right).toBeGreaterThanOrEqual(safeArea.right);
+  const drawerBodyInsets = await readPaddingInsets(drawer.locator('.dh-drawer__body'));
+  expect(drawerBodyInsets.bottom).toBeGreaterThanOrEqual(safeArea.bottom);
+  expect(drawerBodyInsets.right).toBeGreaterThanOrEqual(safeArea.right);
+  await expect(drawer.getByRole('searchbox', { name: /Search/ })).toBeVisible();
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('dialog', { name: 'Marketplace menu' })).toHaveCount(0);
   const confirmationDialogInsets = await page.evaluate(() => {
     const probe = document.createElement('div');
     probe.className = 'dh-dialog-backdrop';
@@ -357,14 +372,23 @@ test('@critical user login honors safe return navigation, survives reload, and l
   await aiDialog.getByRole('button', { name: 'Close' }).click();
   await expect(aiLauncher).toBeFocused();
 
-  await page.getByRole('button', { name: 'Cart', exact: true }).last().click();
+  // Navigation is in the drawer at this width, so reaching the cart starts at the burger.
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await page
+    .getByRole('dialog', { name: 'Marketplace menu' })
+    .getByRole('button', { name: 'Cart', exact: true })
+    .click();
   await expect(page).toHaveURL(`${urls.userApp}/cart`);
   await expect(page.getByRole('heading', { level: 1, name: 'Cart' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Your cart is empty' })).toBeVisible();
 
   await gotoWithRetry(page, urls.userApp);
   await applyTelegramSafeArea(page, safeArea);
-  await page.getByRole('button', { name: 'Catalog', exact: true }).first().click();
+  await page.getByRole('button', { name: 'Open menu' }).click();
+  await page
+    .getByRole('dialog', { name: 'Marketplace menu' })
+    .getByRole('button', { name: 'Catalog', exact: true })
+    .click();
   await expect(page).toHaveURL(`${urls.userApp}/catalog`);
   await expect(page.getByRole('heading', { level: 1, name: 'Catalog' })).toBeVisible();
   await page.getByRole('button', { name: 'Open filters' }).click();

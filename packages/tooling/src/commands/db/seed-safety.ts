@@ -1,3 +1,5 @@
+import { isDeploymentEnvironment } from "./deployment-environment.ts";
+
 export const DefaultAdminEmail = "admin@example.com";
 export const DefaultAdminPassword = "ChangeMe123!";
 
@@ -23,12 +25,16 @@ export function isLocalDevelopmentDatabase(
   connectionString: string,
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
-  // Fail closed: in production the host/name heuristic is not trustworthy because
-  // the default prod deployment also uses host "postgres" and db
-  // "nest_react_boilerplate" (matches the /_boilerplate/ heuristic). NODE_ENV is
-  // the primary signal (set to "production" in docker-compose.prod.yml); the
-  // host/name heuristic remains the secondary check for local/dev/test runs.
-  if (env.NODE_ENV === "production") return false;
+  // Fail closed: the host/name heuristic cannot tell a laptop from a deployment,
+  // because a deployed stack also reaches Postgres at host "postgres" with the
+  // default database name, which matches the /_boilerplate/ rule. NODE_ENV is the
+  // primary signal and it is read as an allowlist, not as a single exclusion:
+  // naming only "production" here let a staging deployment take the development
+  // branch and publish the seeded administrator login, which is as reachable from
+  // the internet as a production one. An unset value stays permitted because a
+  // local seed routinely runs without it; any other named environment is treated
+  // as a deployment and must opt in explicitly.
+  if (isDeploymentEnvironment(env)) return false;
   const url = new URL(connectionString);
   const hosts = [url.host].map((host) =>
     host.startsWith("[") ? host.slice(1, host.indexOf("]")).toLowerCase() : host.replace(/:\d+$/u, "").toLowerCase(),

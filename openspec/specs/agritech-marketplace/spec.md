@@ -168,6 +168,21 @@ their owning real state machines while following the same spacing, typography,
 icon, card, and responsive rules; the account surface additionally follows the
 cabinet clause below.
 
+Below the width at which the header stops carrying navigation, the header SHALL
+carry exactly two things: the brand lockup on the leading edge and one menu
+control on the trailing edge. The search field, the navigation entries, the
+category chips, and the preference controls SHALL leave the header for a single
+panel that the menu control opens from the trailing edge, and SHALL NOT be
+offered a second time anywhere else at that width. That panel SHALL present the
+search at its top and the navigation below it, SHALL offer every destination the
+wide header offers under exactly the same conditions the wide header applies —
+including its counters, the create-listing entry only for a role that creates
+one, and the deals entry only for a signed-in actor — and SHALL add the home and
+catalog destinations the wide header carries as the lockup and the catalog
+control. Choosing any destination SHALL navigate and dismiss the panel in one
+action, leaving the page scrollable. Above that width the header SHALL be
+unchanged and SHALL offer no menu control.
+
 The product detail route SHALL state the listing's own attributes, grouped as
 category-specific facts before commercial terms, using the same vocabulary the
 catalog facets filter on, and SHALL repeat the availability, sample, promotion,
@@ -358,6 +373,14 @@ return-route behavior.
   rather than a full-resolution master, and it MUST stay presentational so the
   clickable lockup keeps its own localized accessible name. That lockup is
   itself an interactive target and MUST meet the 44 px minimum.
+- The narrow-viewport navigation panel is a single modal dialog with an
+  accessible name, `aria-modal`, a labelled close control, and a trapped
+  tab ring. Escape and a press outside dismiss it, focus returns to the menu
+  control that opened it, the menu control reports its expanded state, page scrolling is
+  locked for exactly as long as the panel is open, and the panel enters with a
+  slide that reduced-motion preferences remove. Its search is the product's own
+  search control — suggestions, submission, and clearing included — not a
+  reduced copy of it.
 - Controls expose visible hover, focus, selected, disabled, loading, empty,
   validation, denied, error, and success states with a consistent 44 px minimum
   target where space permits.
@@ -469,6 +492,15 @@ return-route behavior.
   localized placeholder examples, active controls, equal-padding actions, and
   responsive navigation remain readable and operable without duplicate
   marketing content or horizontal overflow
+
+#### Scenario: Narrow header hands navigation to one panel
+
+- **WHEN** a signed-in seller opens the marketplace below the width at which the
+  header stops carrying navigation, opens the menu control, and chooses the cart
+- **THEN** the header holds only the brand lockup and the menu control, the panel
+  presents the search above every destination the wide header would offer for
+  that role with its counters, and the chosen destination opens with the panel
+  dismissed, focus back on the menu control, and the page scrolling again
 
 #### Scenario: One brand lockup and one restriction notice
 

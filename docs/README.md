@@ -65,6 +65,7 @@ Role-based entry points and reference guides for the Nest React Boilerplate mono
 - [Deployment](deployment.md) — Docker Compose, Dockerfiles, and multi-stage builds.
 - [Production Readiness](production-readiness.md) — checklists for launch.
 - [Release Hardening](release-hardening.md) — pre-release audit and verification steps.
+- [Demo Instance Hosting](demo-instance-hosting.md) — taking a fresh clone to the full DehqonHub demo state on somebody else's server: migrate plus seed, the `staging` provider decision and the overrides a public URL needs, photograph survival, demo credentials, and a post-deploy smoke check.
 - [Local Verification](local-verification.md) — reproducible workstation checks.
 - [Bun Runtime Support](bun-runtime-research.md) — pinned Bun 1.3.14 compatibility contract, evidence, and adoption boundaries.
 - [Validation Observability](ci-observability.md) — runner-neutral local assurance, evidence recording, and hosted-control gaps.

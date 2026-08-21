@@ -225,6 +225,10 @@ requirements:
         target: user-app:test
         lanes: [pr, main]
       - kind: vitest
+        file: apps/frontend/app/src/pages/marketplace/ui/marketplace-mobile-drawer.spec.tsx
+        target: user-app:test
+        lanes: [pr, main]
+      - kind: vitest
         file: apps/frontend/app/src/pages/marketplace/ui/marketplace-cabinet.spec.tsx
         target: user-app:test
         lanes: [pr, main]

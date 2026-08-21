@@ -83,6 +83,20 @@ describe("db seed safety guard", () => {
     );
   });
 
+  it("does not treat any named deployment environment as local-dev", () => {
+    // A staging deployment reaches Postgres at host "postgres" with the default
+    // database name, exactly like a laptop does, so naming only "production" here
+    // let it take the development branch and publish the seeded administrator
+    // login on a host reachable from the internet.
+    for (const environment of ["staging", "preview", "qa", "demo"]) {
+      assert.equal(
+        isLocalDevelopmentDatabase(defaultDatabase, { NODE_ENV: environment }),
+        false,
+        environment,
+      );
+    }
+  });
+
   it("still treats the default db name as local-dev for local development", () => {
     assert.equal(isLocalDevelopmentDatabase(defaultDatabase, {}), true);
     assert.equal(

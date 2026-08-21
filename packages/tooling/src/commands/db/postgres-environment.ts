@@ -1,4 +1,5 @@
 import { isTruthyEnv } from './env-loader.ts';
+import { isDeploymentEnvironment } from './deployment-environment.ts';
 
 export function postgresConnectionString(env: NodeJS.ProcessEnv = process.env): string {
   if (env.DATABASE_URL) return env.DATABASE_URL;
@@ -21,7 +22,7 @@ export function isLocalPostgresDatabase(
   connectionString: string,
   env: NodeJS.ProcessEnv = process.env,
 ): boolean {
-  if (env.NODE_ENV === 'production') return false;
+  if (isDeploymentEnvironment(env)) return false;
   const url = new URL(connectionString);
   const host = normalizedHost(url.host);
   const database = decodeURIComponent(url.pathname.replace(/^\//u, ''));
@@ -36,9 +37,9 @@ export function assertLocalPostgresDatabase(
   const url = new URL(connectionString);
   const host = normalizedHost(url.host);
   const database = decodeURIComponent(url.pathname.replace(/^\//u, ''));
-  if (env.NODE_ENV === 'production' && !isTruthyEnv(env.DB_ALLOW_DESTRUCTIVE)) {
+  if (isDeploymentEnvironment(env) && !isTruthyEnv(env.DB_ALLOW_DESTRUCTIVE)) {
     throw new Error(
-      `Refusing destructive database operation while NODE_ENV=production (${host}/${database}). The local host/name heuristic is not trusted here because production uses the same host and db name. Set DB_ALLOW_DESTRUCTIVE=true only for an intentional, controlled operation.`,
+      `Refusing destructive database operation while NODE_ENV=${env.NODE_ENV} (${host}/${database}). The local host/name heuristic is not trusted for a deployment, which reaches the same host under the same database name as a local checkout. Set DB_ALLOW_DESTRUCTIVE=true only for an intentional, controlled operation.`,
     );
   }
   if (!isLocalPostgresDatabase(connectionString, { ...env, NODE_ENV: undefined })) {
