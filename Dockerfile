@@ -212,9 +212,8 @@ RUN if [ "${NX_PROJECT}" = landing-app ]; then \
 # hooks (as uid 101) before starting, so flags come from the container
 # environment instead of the Vite build. Only runtime-config.js is made writable
 # by the runtime user — the rest of the bundle stays immutable.
-COPY docker/frontend-runtime-config.sh /docker-entrypoint.d/40-frontend-runtime-config.sh
-RUN chmod +x /docker-entrypoint.d/40-frontend-runtime-config.sh \
-  && chmod -R a=rX /usr/share/nginx/html \
+COPY --chmod=0555 docker/frontend-runtime-config.sh /docker-entrypoint.d/40-frontend-runtime-config.sh
+RUN chmod -R a=rX /usr/share/nginx/html \
   && touch /usr/share/nginx/html/runtime-config.js \
   && chown 101:101 /usr/share/nginx/html/runtime-config.js \
   && chmod 0644 /usr/share/nginx/html/runtime-config.js
