@@ -3,12 +3,21 @@ import assert from "node:assert/strict";
 import { describe, it } from "node:test";
 
 import { DemoProducts } from "../../../../../libs/backend/feature/product/shared/lib/src/domain/demo-catalog.ts";
-import { demoContractPartySnapshot, demoMarketplaceContracts } from "./marketplace-seed-contracts.ts";
+import { demoMarketplaceSellerCreatedProducts } from "./marketplace-seed-data.ts";
+import {
+  demoContractPartySnapshot,
+  demoMarketplaceCarts,
+  demoMarketplaceContracts,
+} from "./marketplace-seed-contracts.ts";
 import {
   demoMarketplaceListingPublications,
+  demoMarketplaceOffers,
   demoMarketplaceProduceListings,
   demoMarketplaceProducePublications,
+  demoMarketplaceRequests,
+  demoMarketplaceSellerCreatedPublications,
 } from "./marketplace-seed-publications.ts";
+import { demoMarketplaceContractLifecycle } from "./marketplace-seed-lifecycle.ts";
 import { demoMarketplaceIdentities, marketplaceIdentity } from "./marketplace-seed-roster.ts";
 
 /**
@@ -54,21 +63,32 @@ describe("demo marketplace contract fixture", () => {
   });
 
   it("freezes every line the way ck__marketplace_contracts__resolved_parties requires", () => {
-    const publicationIds = new Set(
-      [...demoMarketplaceListingPublications, ...demoMarketplaceProducePublications].map(
-        (publication) => publication.id,
-      ),
-    );
+    // A deal drawn from an awarded offer quotes the request rather than a
+    // catalogue row: `marketplace_contract_lines_are_frozen` admits `request`
+    // beside `product` and `produce`, and the publication it names is the
+    // request's public snapshot. So both families of publication and both
+    // families of source id count as seeded here.
+    const publicationIds = new Set([
+      ...demoMarketplaceListingPublications.map((publication) => publication.id),
+      ...demoMarketplaceSellerCreatedPublications.map((publication) => publication.id),
+      ...demoMarketplaceProducePublications.map((publication) => publication.id),
+      ...demoMarketplaceRequests.map((request) => request.publicationId),
+    ]);
     const sourceIds = new Set([
       ...DemoProducts.map((product) => product.id),
+      ...demoMarketplaceSellerCreatedProducts.map((product) => product.id),
       ...demoMarketplaceProduceListings.map((listing) => listing.id),
+      ...demoMarketplaceRequests.map((request) => request.id),
     ]);
     for (const contract of contracts) {
       assert.ok(contract.lines.length > 0, `${contract.id} has no lines`);
       for (const line of contract.lines) {
         assert.ok(publicationIds.has(line.sourcePublicationId), `${line.name} quotes an unseeded publication`);
         assert.ok(sourceIds.has(line.sourceId), `${line.name} quotes an unknown catalog row or harvest`);
-        assert.ok(["product", "produce"].includes(line.sourceKind), `${line.name} has an unknown source kind`);
+        assert.ok(
+      ["product", "produce", "request"].includes(line.sourceKind),
+      `${line.name} has an unknown source kind`,
+    );
         assert.ok(line.sourceRevision >= 1);
         assert.notEqual(line.name.trim(), "");
         assert.notEqual(line.unit.trim(), "");
@@ -193,6 +213,156 @@ describe("demo marketplace contract fixture", () => {
 
   it("uses every contract status the cabinet renders a badge for", () => {
     const statuses = new Set(contracts.map((contract) => contract.status));
-    assert.deepEqual([...statuses].sort(), ["active", "cancelled", "completed", "signed"]);
+    assert.deepEqual([...statuses].sort(), ["active", "cancelled", "completed", "draft", "signed"]);
+  });
+
+  it("names the cart or the offer every new deal was drawn from, and nothing else", () => {
+    const cartIds = new Set(demoMarketplaceCarts(now).map((cart) => cart.id));
+    const offerIds = new Set(demoMarketplaceOffers.map((offer) => offer.id));
+    for (const contract of contracts) {
+      if (contract.sourceType === null) {
+        assert.equal(contract.sourceId, null, `${contract.id} carries a source id with no source type`);
+        continue;
+      }
+      assert.ok(contract.sourceId, `${contract.id} names a source type with no id`);
+      const known = contract.sourceType === "cart_checkout" ? cartIds : offerIds;
+      assert.ok(known.has(contract.sourceId as string), `${contract.id} points at a source the seed never writes`);
+    }
+  });
+
+  it("keeps one live contract per awarded request, as the offer-selection trigger requires", () => {
+    const offersById = new Map(demoMarketplaceOffers.map((offer) => [offer.id, offer] as const));
+    const liveByRequest = new Map<string, number>();
+    for (const contract of contracts) {
+      if (contract.sourceType !== "offer_selection" || contract.status === "cancelled") continue;
+      const offer = offersById.get(contract.sourceId as string);
+      assert.ok(offer, `${contract.id} is drawn from an offer the seed never writes`);
+      liveByRequest.set(offer.requestId, (liveByRequest.get(offer.requestId) ?? 0) + 1);
+    }
+    for (const [requestId, live] of liveByRequest) {
+      assert.equal(live, 1, `request ${requestId} carries ${live} live contracts`);
+    }
+    // And exactly one accepted offer per request, which is the other half of the
+    // pair the database holds.
+    const acceptedByRequest = new Map<string, number>();
+    for (const offer of demoMarketplaceOffers.filter((candidate) => candidate.status === "accepted")) {
+      acceptedByRequest.set(offer.requestId, (acceptedByRequest.get(offer.requestId) ?? 0) + 1);
+    }
+    for (const [requestId, accepted] of acceptedByRequest) {
+      assert.equal(accepted, 1, `request ${requestId} carries ${accepted} accepted offers`);
+    }
+    assert.deepEqual([...acceptedByRequest.keys()].sort(), [...liveByRequest.keys()].sort());
+  });
+
+  it("hands one buying account two open carts from two sellers, so the switcher has a choice", () => {
+    const carts = demoMarketplaceCarts(now);
+    const open = carts.filter((cart) => cart.status === "open");
+    assert.ok(open.length >= 3, `only ${open.length} carts are open`);
+    const bySeller = new Map<string, Set<string>>();
+    for (const cart of open) {
+      const sellers = bySeller.get(cart.buyer.ownerEmail) ?? new Set<string>();
+      sellers.add(cart.seller.partnerId);
+      bySeller.set(cart.buyer.ownerEmail, sellers);
+    }
+    assert.ok(
+      [...bySeller.values()].some((sellers) => sellers.size >= 2),
+      "no buying account holds open carts from two different sellers",
+    );
+    // One open cart per buyer and seller pair, which is what the partial unique
+    // index allows, and every open cart is free of a contract so a reviewer can
+    // still check it out.
+    const pairs = open.map((cart) => `${cart.buyer.ownerEmail}|${cart.seller.partnerId}`);
+    assert.equal(new Set(pairs).size, pairs.length);
+    const sourced = new Set(contracts.map((contract) => contract.sourceId));
+    for (const cart of open) {
+      assert.ok(!sourced.has(cart.id), `open cart ${cart.id} has already been checked out`);
+    }
+    for (const cart of carts.filter((candidate) => candidate.status === "ordered")) {
+      assert.ok(sourced.has(cart.id), `ordered cart ${cart.id} produced no contract`);
+    }
+  });
+
+  it("leaves the settled half of every deal that reached it, and nothing for the ones that did not", () => {
+    const lifecycle = demoMarketplaceContractLifecycle(now);
+    const byId = new Map(contracts.map((contract) => [contract.id, contract] as const));
+    const settled = new Set(lifecycle.settlements.map((settlement) => settlement.contractId));
+    for (const contract of contracts) {
+      const reached = contract.status === "completed" || contract.status === "active";
+      assert.equal(settled.has(contract.id), reached, `${contract.id} disagrees with its settlement`);
+    }
+    // A settlement transfers goods plus haulage, which is what the buyer pays.
+    for (const settlement of lifecycle.settlements) {
+      const contract = byId.get(settlement.contractId);
+      assert.ok(contract);
+      assert.equal(settlement.amountUzs, contract.amountUzs + (contract.deliveryPriceUzs ?? 0));
+      assert.equal(settlement.amountUzs, Math.trunc(settlement.amountUzs));
+      assert.equal(settlement.selectedByEmail, contract.buyer.ownerEmail);
+    }
+    // `ck__contract_fulfillments__timeline` pairs each delivery state with the
+    // stamps it must and must not carry.
+    for (const fulfillment of lifecycle.fulfillments) {
+      const contract = byId.get(fulfillment.contractId);
+      assert.ok(contract);
+      assert.ok(fulfillment.startedAt, `${fulfillment.contractId} is being delivered with no start time`);
+      if (fulfillment.status === "completed") {
+        assert.ok(fulfillment.deliveredAt && fulfillment.completedAt);
+      } else {
+        assert.equal(fulfillment.deliveredAt, null);
+        assert.equal(fulfillment.completedAt, null);
+      }
+      assert.equal(contract.status === "completed", fulfillment.status === "completed");
+    }
+    assert.equal(lifecycle.disputes.length, 1);
+  });
+
+  it("writes one notification intent per party for every timeline event", () => {
+    const lifecycle = demoMarketplaceContractLifecycle(now);
+    const eventIds = new Set(lifecycle.events.map((event) => event.id));
+    assert.equal(lifecycle.intents.length, lifecycle.events.length * 2);
+    const seen = new Set<string>();
+    for (const intent of lifecycle.intents) {
+      assert.ok(eventIds.has(intent.timelineEventId), `an intent reports an event the seed never writes`);
+      const key = `${intent.timelineEventId}|${intent.recipientParty}`;
+      assert.ok(!seen.has(key), `two intents share ${key}`);
+      seen.add(key);
+      assert.match(intent.templateKey, /^marketplace\.contract\.[a-z.]+$/u);
+    }
+    // Sequences start at one and never repeat inside a contract, which is what
+    // `uq__contract_lifecycle_events__contract_id_sequence` requires.
+    const sequences = new Map<string, number[]>();
+    for (const event of lifecycle.events) {
+      sequences.set(event.contractId, [...(sequences.get(event.contractId) ?? []), event.sequence]);
+    }
+    for (const [contractId, values] of sequences) {
+      assert.deepEqual(
+        [...values].sort((left, right) => left - right),
+        values.map((_, index) => index + 1),
+        `${contractId} has a gap or a repeat in its timeline`,
+      );
+    }
+  });
+
+  it("charges the marketplace's commission on every closed deal and on no other", () => {
+    const lifecycle = demoMarketplaceContractLifecycle(now);
+    const charged = new Set(lifecycle.commissions.map((commission) => commission.contractId));
+    for (const contract of contracts) {
+      assert.equal(charged.has(contract.id), contract.status === "completed", `${contract.id} is charged wrongly`);
+    }
+    for (const commission of lifecycle.commissions) {
+      assert.ok(commission.baseAmountUzs > 0);
+      assert.ok(commission.amountUzs >= 0 && commission.amountUzs <= commission.baseAmountUzs);
+      assert.equal(commission.amountUzs, Math.trunc(commission.amountUzs));
+    }
+  });
+
+  it("holds a cart's quote and its contract's frozen lines to the same numbers", () => {
+    const cartsById = new Map(demoMarketplaceCarts(now).map((cart) => [cart.id, cart] as const));
+    for (const contract of contracts.filter((candidate) => candidate.sourceType === "cart_checkout")) {
+      const cart = cartsById.get(contract.sourceId as string);
+      assert.ok(cart, `${contract.id} names a cart the seed never writes`);
+      assert.deepEqual(cart.lines, contract.lines);
+      assert.equal(cart.seller.partnerId, contract.seller.partnerId);
+      assert.equal(cart.buyer.partnerId, contract.buyer.partnerId);
+    }
   });
 });

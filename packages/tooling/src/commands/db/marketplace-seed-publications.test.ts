@@ -1,21 +1,35 @@
 // @requirements REQ-SCAFFOLD-SAFETY-008
 import assert from "node:assert/strict";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import { fileURLToPath } from "node:url";
 
+import {
+  inspectMarketplaceMedia,
+  marketplaceMediaPathFor,
+  marketplaceMediaPathPattern,
+  marketplaceMediaPublicIdPattern,
+  marketplaceMediaReferenceFor,
+  marketplaceMediaStorageKey,
+} from "../../../../../libs/backend/feature/agritech/shared/lib/src/marketplace-media.ts";
 import { DemoProducts } from "../../../../../libs/backend/feature/product/shared/lib/src/domain/demo-catalog.ts";
-import { catalogSuppliers } from "./marketplace-seed-data.ts";
+import { catalogSuppliers, demoMarketplaceSellerCreatedProducts } from "./marketplace-seed-data.ts";
+import { demoMarketplaceMediaAsset, demoMarketplaceMediaAssets } from "./marketplace-seed-media.ts";
+import { demoMediaResolver, prepareDemoMarketplaceMedia } from "./marketplace-seed-media.storage.ts";
 import { farmerEmail, marketplaceIdentity } from "./marketplace-seed-roster.ts";
+import { DefaultTenantId } from "./seed-data.ts";
 import {
   demoMarketplaceFarmer,
   demoMarketplaceFarmers,
   demoMarketplaceListingPromotions,
   demoMarketplaceListingPublications,
+  demoMarketplaceOffers,
   demoMarketplaceProduceListings,
   demoMarketplaceProducePublications,
   demoMarketplacePublicSellers,
+  demoMarketplaceRequests,
+  demoMarketplaceSellerCreatedPublications,
   maxPublicImages,
   publicImages,
 } from "./marketplace-seed-publications.ts";
@@ -28,7 +42,11 @@ import {
  * constraint name — or one property a reviewer would notice was missing.
  */
 
-const publications = [...demoMarketplaceListingPublications, ...demoMarketplaceProducePublications];
+const publications = [
+  ...demoMarketplaceListingPublications,
+  ...demoMarketplaceSellerCreatedPublications,
+  ...demoMarketplaceProducePublications,
+];
 
 /** A publication the public catalog will actually serve: it filters empty stock. */
 const stockByProductId = new Map(DemoProducts.map((product) => [product.id, product.stockQuantity] as const));
@@ -154,6 +172,109 @@ describe("demo marketplace catalogue fixture", () => {
     }
   });
 
+  /**
+   * The other half of the same promise. A listing may carry photographs that live
+   * in object storage rather than in git, and those cannot travel in a clone — so
+   * every listing that names one also names a checked-in fallback, and the seed
+   * uses the fallback whenever the bucket did not take the bytes. Without this
+   * assertion a listing could be uploaded-only and would render as an empty card
+   * on any deployment without S3, which is the normal state of a fresh clone.
+   */
+  it("gives every listing whose photographs are uploaded objects a checked-in fallback", () => {
+    const uploading = [...publications, ...demoMarketplaceSellerCreatedProducts].filter(
+      (row) => (row.uploadedImageKeys ?? []).length > 0,
+    );
+    assert.ok(uploading.length > 0, "no listing demonstrates an uploaded photograph at all");
+    for (const row of uploading) {
+      assert.ok(row.images.length > 0, `a listing carries uploaded photographs and no fallback`);
+    }
+  });
+
+  it("mints the reference shapes the upload endpoint mints, owned by the account that publishes", () => {
+    const declared = new Set(demoMarketplaceMediaAssets.map((asset) => asset.key));
+    for (const publication of publications) {
+      for (const key of publication.uploadedImageKeys) {
+        assert.ok(declared.has(key), `${publication.title} names the photograph ${key}, which no media seed declares`);
+        const asset = demoMarketplaceMediaAsset(key);
+        assert.equal(
+          asset.ownerEmail,
+          publication.ownerEmail,
+          `${publication.title} shows a photograph ${publication.ownerEmail} did not upload`,
+        );
+        assert.equal(asset.path, marketplaceMediaPathFor(asset.publicId));
+        assert.equal(asset.reference, marketplaceMediaReferenceFor(asset.publicId));
+        assert.match(asset.path, marketplaceMediaPathPattern);
+        assert.equal(
+          asset.storageKey,
+          marketplaceMediaStorageKey({ tenantId: DefaultTenantId, userId: asset.ownerUserId }, asset.publicId),
+        );
+      }
+    }
+    // Opaque ids and storage keys are one to one, because a collision would make
+    // one photograph overwrite another in the bucket and in the index.
+    const publicIds = demoMarketplaceMediaAssets.map((asset) => asset.publicId);
+    assert.equal(new Set(publicIds).size, publicIds.length);
+    const storageKeys = demoMarketplaceMediaAssets.map((asset) => asset.storageKey);
+    assert.equal(new Set(storageKeys).size, storageKeys.length);
+    for (const publicId of publicIds) {
+      assert.match(publicId, marketplaceMediaPublicIdPattern);
+    }
+  });
+
+  it("reads every uploaded photograph out of the checked-in library and through the upload route's own inspection", () => {
+    const publicRoot = fileURLToPath(new URL("../../../../../", import.meta.url));
+    for (const asset of demoMarketplaceMediaAssets) {
+      assert.match(
+        asset.sourceFile,
+        /^apps\/frontend\/app\/public\/media\/marketplace\/[a-z0-9-]+\.webp$/u,
+        `${asset.key} reads bytes from outside the checked-in library`,
+      );
+      const path = join(publicRoot, asset.sourceFile);
+      assert.ok(existsSync(path), `${asset.key} reads ${asset.sourceFile}, which is not in the repository`);
+      const inspection = inspectMarketplaceMedia(new Uint8Array(readFileSync(path)));
+      assert.equal(inspection.status, "ok", `${asset.key} would be refused by the upload route`);
+    }
+  });
+
+  it("stores nothing and resolves nothing on a deployment with no bucket", async () => {
+    const plan = await prepareDemoMarketplaceMedia(undefined, {});
+    assert.equal(plan.stored, false);
+    assert.deepEqual(plan.objects, []);
+    assert.match(plan.reason ?? "", /S3_BUCKET/u);
+    const resolver = demoMediaResolver(plan);
+    for (const asset of demoMarketplaceMediaAssets) {
+      assert.equal(resolver.pathFor(asset.key), undefined);
+      assert.equal(resolver.referenceFor(asset.key), undefined);
+    }
+  });
+
+  it("publishes a request into the feed only when a moderator approved it", () => {
+    const states = new Set(demoMarketplaceRequests.map((request) => request.publication));
+    assert.deepEqual([...states].sort(), ["approved", "none", "pending", "rejected"]);
+    const stages = new Set(demoMarketplaceRequests.map((request) => request.status));
+    assert.deepEqual([...stages].sort(), ["offering", "open", "selected"]);
+    // An offer can only exist against an approved snapshot, which is what
+    // `assert_marketplace_offer_public_request` enforces.
+    const answerable = new Set(
+      demoMarketplaceRequests.filter((request) => request.publication === "approved").map((request) => request.id),
+    );
+    for (const offer of demoMarketplaceOffers) {
+      assert.ok(answerable.has(offer.requestId), `an offer answers a request no seller can see`);
+    }
+    // Every awarded request rests at `selected`, and no request rests there
+    // without an award.
+    const awarded = new Set(
+      demoMarketplaceOffers.filter((offer) => offer.status === "accepted").map((offer) => offer.requestId),
+    );
+    for (const request of demoMarketplaceRequests) {
+      assert.equal(
+        request.status === "selected",
+        awarded.has(request.id),
+        `${request.title} disagrees with its own award`,
+      );
+    }
+  });
+
   it("leaves one assetless listing in every section, so the category illustration stays exercised", () => {
     for (const section of ["seeds", "equipment", "produce"] as const) {
       const assetless = publications.filter(
@@ -227,7 +348,10 @@ describe("demo marketplace catalogue fixture", () => {
   });
 
   it("publishes only rows the seed also writes", () => {
-    const productIds = new Set(DemoProducts.map((product) => product.id));
+    const productIds = new Set([
+      ...DemoProducts.map((product) => product.id),
+      ...demoMarketplaceSellerCreatedProducts.map((product) => product.id),
+    ]);
     const produceIds = new Set(demoMarketplaceProduceListings.map((listing) => listing.id));
     const sellerIds = new Set(demoMarketplacePublicSellers.map((seller) => seller.id));
     for (const publication of publications) {

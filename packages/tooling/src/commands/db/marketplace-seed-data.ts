@@ -8,6 +8,7 @@ import {
   marketplaceFixtureTaxId,
   marketplaceFixtureUuid,
   marketplaceSupplierOwner,
+  marketplaceSupplierSlug,
   sellerEmail,
   supplierPartnerIdForSlug,
   supplierPartnerKey,
@@ -93,6 +94,13 @@ export interface DemoProductFixture {
    */
   sampleAvailable: boolean;
   region: string;
+  /**
+   * Photographs held in object storage, named by media fixture key. Only rows a
+   * seller created carry any; the demo dataset's photographs are checked-in
+   * files. When the seed reaches the bucket these replace `images`, and when it
+   * does not `images` stands.
+   */
+  uploadedImageKeys?: readonly string[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -172,7 +180,7 @@ export const demoMarketplaceVerifications: readonly DemoVerificationFixture[] = 
  * drawn against — so the seed writes it with the partner ids substituted for the
  * in-memory supplier slugs.
  */
-export const demoMarketplaceProducts: readonly DemoProductFixture[] = DemoProducts.map((product) => ({
+const demoCatalogProducts: readonly DemoProductFixture[] = DemoProducts.map((product) => ({
   id: product.id,
   name: product.name,
   nameRu: product.nameRu,
@@ -191,3 +199,129 @@ export const demoMarketplaceProducts: readonly DemoProductFixture[] = DemoProduc
   createdAt: product.createdAt,
   updatedAt: product.updatedAt,
 }));
+
+/**
+ * Catalogue rows a seller created through the marketplace's own form, rather
+ * than rows of the in-memory demo dataset.
+ *
+ * `DemoProducts` is what the API serves when a tenant has published nothing, so
+ * it is deliberately not where these belong: each of these was typed into
+ * `POST /marketplace/listings` on a seeded tenant, which is a different fact
+ * about the deployment and one worth showing. Two of them are published; the
+ * third is a catalogue row whose seller has not published it yet, which is the
+ * only place in the fixture that state appears.
+ *
+ * One carries photographs that are uploaded objects rather than checked-in
+ * files. It names them by media fixture key; the seed resolves each key to a
+ * `/marketplace/media/<id>` path when object storage accepted the bytes, and
+ * falls back to `images` when it did not.
+ */
+export interface DemoSellerCreatedProductFixture extends DemoProductFixture {
+  /** The catalog supplier slug, which resolves the seller profile and partner. */
+  supplierSlug: string;
+  /**
+   * Photographs held in object storage, in publication order. Empty for a row
+   * whose photographs are checked-in files.
+   */
+  uploadedImageKeys: readonly string[];
+  /** Whether the seed also writes an approved public snapshot for it. */
+  published: boolean;
+}
+
+const sellerCreatedPhoto = (name: string): string => `/media/marketplace/${name}.webp`;
+
+const sellerCreatedAt = new Date("2026-08-04T09:20:00.000Z");
+
+const sellerCreatedProductSeeds: readonly (Omit<
+  DemoSellerCreatedProductFixture,
+  "id" | "supplierId" | "supplierName" | "createdAt" | "updatedAt"
+> & { supplierName: string })[] = [
+  {
+    name: "Self-propelled greenhouse mist blower, 200 L",
+    nameRu: "Самоходный туманообразователь для теплиц, 200 л",
+    nameUz: "Issiqxona uchun o'zi yuruvchi tuman purkagich, 200 l",
+    nameUzCyrl: "Иссиқхона учун ўзи юрувчи туман пуркагич, 200 л",
+    category: "equipment",
+    description:
+      "Self-propelled mist blower for glasshouse and tunnel crops: 200 litre tank, adjustable droplet size, electric drive on rails or wheels. Serviced and demonstrated at the buyer's greenhouse.",
+    images: [sellerCreatedPhoto("pesticide-spraying"), sellerCreatedPhoto("knapsack-sprayer")],
+    uploadedImageKeys: [
+      "listing:trailed-sprayer:1",
+      "listing:trailed-sprayer:2",
+      "listing:trailed-sprayer:3",
+      "listing:trailed-sprayer:4",
+      "listing:trailed-sprayer:5",
+    ],
+    published: true,
+    supplierName: "Namangan Issiqxona Servis",
+    supplierSlug: marketplaceSupplierSlug("Namangan Issiqxona Servis"),
+    priceUzs: 42_000_000,
+    unit: "1 pc",
+    stockQuantity: 3,
+    sampleAvailable: false,
+    region: "Samarqand",
+  },
+  {
+    name: "Winter wheat seed “Krasnodar 99”",
+    nameRu: "Семена пшеницы озимой «Краснодар 99»",
+    nameUz: "Kuzgi bug'doy urug'i «Krasnodar 99»",
+    nameUzCyrl: "Кузги буғдой уруғи «Краснодар 99»",
+    category: "seed",
+    description:
+      "Certified first-reproduction winter wheat seed, 2026 season, germination 96 percent. State certificate travels with every consignment.",
+    images: [sellerCreatedPhoto("wheat-grain"), sellerCreatedPhoto("winter-wheat-field")],
+    uploadedImageKeys: [],
+    published: true,
+    supplierName: "Andijon Urug'chilik",
+    supplierSlug: marketplaceSupplierSlug("Andijon Urug'chilik"),
+    priceUzs: 9_800_000,
+    unit: "1 t",
+    stockQuantity: 48,
+    sampleAvailable: true,
+    region: "Andijon",
+  },
+  {
+    // Deliberately unpublished. The seller's cabinet shows it as a draft, the
+    // public catalogue does not show it at all, and that pairing is the only
+    // way a reviewer can see what publishing actually changes.
+    name: "Humate organic fertilizer, 25 kg",
+    nameRu: "Гуминовое органическое удобрение, 25 кг",
+    nameUz: "Gumat asosidagi organik o'g'it, 25 kg",
+    nameUzCyrl: "Гумат асосидаги органик ўғит, 25 кг",
+    category: "fertilizer",
+    description:
+      "Screened leonardite humate in 25 kg sacks, for pre-sowing soil treatment and drip fertigation. Co-operative's own production, sold by the pallet.",
+    images: [sellerCreatedPhoto("fertilizer-granules")],
+    uploadedImageKeys: [],
+    published: false,
+    supplierName: "Farg'ona Dehqon Kooperativi",
+    supplierSlug: marketplaceSupplierSlug("Farg'ona Dehqon Kooperativi"),
+    priceUzs: 250_000,
+    unit: "25 kg",
+    stockQuantity: 5,
+    sampleAvailable: false,
+    region: "Farg'ona",
+  },
+];
+
+export const demoMarketplaceSellerCreatedProducts: readonly DemoSellerCreatedProductFixture[] =
+  sellerCreatedProductSeeds.map((seed) => {
+    marketplaceSupplierOwner(seed.supplierName);
+    return {
+      ...seed,
+      createdAt: sellerCreatedAt,
+      id: marketplaceFixtureUuid(`product:${seed.name}`),
+      supplierId: supplierPartnerIdForSlug(seed.supplierSlug),
+      updatedAt: sellerCreatedAt,
+    };
+  });
+
+/**
+ * Every `products` row the seed writes: the demo dataset plus what the sellers
+ * added themselves. Kept as one list because the writer, the counters and the
+ * publication chain all treat a catalogue row the same way whoever created it.
+ */
+export const demoMarketplaceProducts: readonly DemoProductFixture[] = [
+  ...demoCatalogProducts,
+  ...demoMarketplaceSellerCreatedProducts,
+];
