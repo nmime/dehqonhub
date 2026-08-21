@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 import { DemoProducts } from "../../../../../libs/backend/feature/product/shared/lib/src/domain/demo-catalog.ts";
-import { catalogSuppliers } from "./marketplace-seed-data.ts";
+import { catalogSuppliers, demoMarketplaceSellerCreatedProducts } from "./marketplace-seed-data.ts";
 import {
   buyerEmail,
   demoMarketplaceIdentities,
@@ -9,6 +9,7 @@ import {
   marketplaceFixtureUuid,
   marketplaceSupplierBySlug,
   marketplaceSupplierOwner,
+  marketplaceSupplierSlug,
   supplierPartnerKey,
   type DemoFarmFixture,
 } from "./marketplace-seed-roster.ts";
@@ -92,6 +93,16 @@ export interface DemoListingPublicationFixture {
   region: string;
   /** The approved public snapshot's safe assets, capped at five by `publicImages`. */
   images: readonly string[];
+  /**
+   * Photographs held in object storage, named by media fixture key and in
+   * publication order.
+   *
+   * When the seed reaches the bucket these replace `images` entirely, so the
+   * snapshot carries `/marketplace/media/<id>` paths — the same references the
+   * upload endpoint mints. When it does not, `images` stands and the listing
+   * shows its checked-in photographs instead of a row of broken frames.
+   */
+  uploadedImageKeys: readonly string[];
   contentFingerprint: string;
   idempotencyKey: string;
   requestFingerprint: string;
@@ -157,7 +168,25 @@ export interface DemoRequestFixture {
   deadline: string;
   budgetUzs: number;
   requirements: string;
-  status: "open" | "offering";
+  /**
+   * The stage the request is resting at. `selected` means the buyer has awarded
+   * one offer, which is why three of these carry an accepted offer and a contract
+   * drawn from it; `tr__marketplace_requests__stage_authority` refuses any walk
+   * back from it, so the seed only ever advances a request still sitting at
+   * `open`.
+   */
+  status: "open" | "offering" | "selected";
+  /**
+   * Whether and how the request reached the public feed.
+   *
+   * `approved` is the only state a seller can answer — `assert_marketplace_offer_public_request`
+   * refuses an offer whose request publication is not published and approved — so
+   * the other three exist to show the surfaces around that: a request whose
+   * publication moderation rejected, one still waiting for a moderator, and one
+   * the buyer has drafted and not published at all, which lives in their cabinet
+   * and nowhere else.
+   */
+  publication: "approved" | "pending" | "rejected" | "none";
   contentFingerprint: string;
   idempotencyKey: string;
   requestFingerprint: string;
@@ -177,6 +206,16 @@ export interface DemoOfferFixture {
   deliveryPriceUzs: number | null;
   deliveryDays: number;
   deliveryNote: string;
+  /**
+   * What the buyer did with it.
+   *
+   * `uq__marketplace_request_offers__request_id` allows one `accepted` offer per
+   * request, and `assert_marketplace_single_offer_selection_contract` allows one
+   * contract that is not cancelled per awarded request — so an award and the
+   * contract drawn from it are a pair the fixture has to keep consistent, and a
+   * second accepted offer on the same request would abort the seed.
+   */
+  status: "pending" | "accepted" | "declined";
   createdAt: Date;
 }
 
@@ -244,6 +283,7 @@ export const demoMarketplaceListingPublications: readonly DemoListingPublication
         unit: product.unit,
         region: product.region,
         images: publicImages(key, product.images),
+        uploadedImageKeys: [],
         contentFingerprint: fingerprint(key),
         idempotencyKey: `seed:${key}`,
         requestFingerprint: fingerprint(`request:${key}`),
@@ -252,6 +292,57 @@ export const demoMarketplaceListingPublications: readonly DemoListingPublication
     ];
   },
 );
+
+/**
+ * Public snapshots for the catalogue rows the sellers created themselves.
+ *
+ * Built separately from the loop above because those rows are not in
+ * `DemoProducts` and because one of them is deliberately not published: a
+ * seller's unpublished draft is a state the fixture had no example of, and the
+ * only way to show it is to write the catalogue row and stop there.
+ */
+export const demoMarketplaceSellerCreatedPublications: readonly DemoListingPublicationFixture[] =
+  demoMarketplaceSellerCreatedProducts.flatMap((product) => {
+    if (!product.published) {
+      return [];
+    }
+    const section = sectionForCategory(product.category);
+    const seller = publicSellerBySlug.get(product.supplierSlug);
+    if (!section || !seller) {
+      throw new Error(
+        `Seller-created listing ${product.name} publishes into no section or through no seller profile.`,
+      );
+    }
+    const key = `listing-publication:${product.id}`;
+    return [
+      {
+        id: marketplaceFixtureUuid(key),
+        ownerEmail: seller.ownerEmail,
+        sellerPublicId: seller.id,
+        sellerRevisionId: seller.revisionId,
+        sourceKind: "product" as const,
+        productId: product.id,
+        produceListingId: null,
+        section,
+        title: product.name,
+        titleRu: product.nameRu ?? null,
+        titleUz: product.nameUz ?? null,
+        titleUzCyrl: product.nameUzCyrl ?? null,
+        description: product.description,
+        category: product.category,
+        crop: null,
+        grade: null,
+        unit: product.unit,
+        region: product.region,
+        images: publicImages(key, product.images),
+        uploadedImageKeys: publicImages(`${key}:uploaded`, product.uploadedImageKeys),
+        contentFingerprint: fingerprint(key),
+        idempotencyKey: `seed:${key}`,
+        requestFingerprint: fingerprint(`request:${key}`),
+        publishedAt: new Date("2026-08-04T09:30:00.000Z"),
+      },
+    ];
+  });
 
 /**
  * The farms behind the produce section, one per farmer login in the roster.
@@ -704,7 +795,71 @@ const harvest = [
     cooperative: "Namangan Bog'bon Kooperativi",
     availableUntil: "2027-06-01T00:00:00.000Z",
   },
+  // Harvests a farmer listed through the marketplace's own produce form rather
+  // than ones this fixture invented. They are kept because each shows something
+  // the rest of the produce section does not: a second calibre of a crop already
+  // listed at a different price, a third grape variety, and a harvest whose
+  // photograph is an uploaded object.
+  {
+    crop: "Pomegranate, calibre 350+, export",
+    cropRu: "Гранат, калибр 350+, экспортный",
+    cropUz: "Anor, kalibr 350+, eksport",
+    cropUzCyrl: "Анор, калибр 350+, экспорт",
+    grade: "A",
+    tons: 18,
+    pricePerKgUzs: 21_500,
+    region: "Farg'ona",
+    sample: true,
+    images: [photo("pomegranate")],
+    cooperative: "Farg'ona Dehqon Kooperativi",
+    availableUntil: "2026-12-15T00:00:00.000Z",
+  },
+  {
+    crop: "Table grapes, Rizamat",
+    cropRu: "Виноград столовый «Ризамат»",
+    cropUz: "Uzum «Rizamat»",
+    cropUzCyrl: "Узум «Ризамат»",
+    grade: "A",
+    tons: 12,
+    pricePerKgUzs: 18_000,
+    region: "Farg'ona",
+    sample: true,
+    images: [photo("table-grapes")],
+    cooperative: "Farg'ona Dehqon Kooperativi",
+    availableUntil: "2026-11-30T00:00:00.000Z",
+  },
+  {
+    crop: "Field tomato, processing grade",
+    cropRu: "Томат грунтовой, для переработки",
+    cropUz: "Dala pomidori, qayta ishlash uchun",
+    cropUzCyrl: "Дала помидори, қайта ишлаш учун",
+    grade: "A",
+    tons: 5,
+    pricePerKgUzs: 9_000,
+    region: "Samarqand",
+    sample: false,
+    images: [photo("tomato-fruit")],
+    cooperative: "Samarqand Meva Kooperativi",
+    availableUntil: "2026-11-30T00:00:00.000Z",
+  },
 ] as const;
+
+/**
+ * Harvests whose public snapshot carries an uploaded photograph.
+ *
+ * Kept beside the harvest table rather than inside it so the twenty-nine entries
+ * that carry only checked-in photographs do not each have to declare an empty
+ * list, and so a crop named here that no harvest declares fails loudly below.
+ */
+const harvestUploadedImages: Readonly<Record<string, readonly string[]>> = {
+  "Field tomato, processing grade": ["listing:field-tomato:1"],
+};
+
+for (const crop of Object.keys(harvestUploadedImages)) {
+  if (!harvest.some((entry) => entry.crop === crop)) {
+    throw new Error(`Demo marketplace declares uploaded photographs for the harvest ${crop}, which it never lists.`);
+  }
+}
 
 const harvestByCrop = new Map<string, (typeof harvest)[number]>(
   harvest.map((entry) => [entry.crop, entry] as const),
@@ -779,10 +934,14 @@ export const demoMarketplaceProducePublications: readonly DemoListingPublication
       unit: "kg",
       region: listing.region,
       images: publicImages(key, entry.images),
+      uploadedImageKeys: publicImages(`${key}:uploaded`, harvestUploadedImages[listing.crop] ?? []),
       contentFingerprint: fingerprint(key),
       idempotencyKey: `seed:${key}`,
       requestFingerprint: fingerprint(`request:${key}`),
-      publishedAt: new Date(`2026-08-${String(index + 2).padStart(2, "0")}T08:00:00.000Z`),
+      // One harvest published per day from the second of August. Wrapped rather
+      // than extended, because a thirty-second of August is an invalid date and
+      // the produce list has outgrown one month.
+      publishedAt: new Date(`2026-08-${String((index % 27) + 2).padStart(2, "0")}T08:00:00.000Z`),
     };
   });
 
@@ -811,7 +970,8 @@ export const demoMarketplaceRequests: readonly DemoRequestFixture[] = [
     deadline: "2026-09-15",
     budgetUzs: 96_000_000,
     requirements: "Grade 1 only, crates returned after unloading.",
-    status: "offering" as const,
+    status: "selected" as const,
+    publication: "approved" as const,
   },
   {
     key: "request:wheat-seed",
@@ -825,7 +985,8 @@ export const demoMarketplaceRequests: readonly DemoRequestFixture[] = [
     deadline: "2026-10-01",
     budgetUzs: 18_000_000,
     requirements: "State certificate required, germination above 95%.",
-    status: "offering" as const,
+    status: "selected" as const,
+    publication: "approved" as const,
   },
   {
     key: "request:onion",
@@ -839,7 +1000,8 @@ export const demoMarketplaceRequests: readonly DemoRequestFixture[] = [
     deadline: "2026-09-30",
     budgetUzs: 38_000_000,
     requirements: "Calibrated, in 25 kg mesh bags.",
-    status: "open" as const,
+    status: "selected" as const,
+    publication: "approved" as const,
   },
   {
     key: "request:barley",
@@ -854,6 +1016,7 @@ export const demoMarketplaceRequests: readonly DemoRequestFixture[] = [
     budgetUzs: 560_000_000,
     requirements: "Moisture up to 14%, weighing on the buyer's scales.",
     status: "offering" as const,
+    publication: "approved" as const,
   },
   {
     key: "request:greenhouse-film",
@@ -868,6 +1031,114 @@ export const demoMarketplaceRequests: readonly DemoRequestFixture[] = [
     budgetUzs: 220_000_000,
     requirements: "Three-layer, stabilised, delivery in two batches.",
     status: "offering" as const,
+    publication: "approved" as const,
+  },
+  // Requests a buyer posted through the marketplace itself. Each rests at a
+  // stage the five above do not reach, which is why they are kept rather than
+  // folded into one of them.
+  {
+    // A farmer buying inputs. The role model has always allowed it — the party
+    // policy admits ('buyer', 'farmer') on the buying side — but until this row
+    // no seeded request was posted by a farmer login, so the claim was untested
+    // on the running demo.
+    key: "request:farmer-alfalfa-seed",
+    buyerEmail: farmerEmail,
+    buyerPartnerKey: "partner:buyer:farmer",
+    buyerDisplayName: "Dehqon Demo Xo'jaligi",
+    title: "Certified seed for the next season",
+    product: "Alfalfa seed, first reproduction",
+    volume: "500 kg",
+    region: "Andijon",
+    deadline: "2026-10-05",
+    budgetUzs: 5_200_000,
+    requirements: "First reproduction, state certificate, delivery in 20 kg sacks.",
+    status: "offering" as const,
+    publication: "approved" as const,
+  },
+  {
+    key: "request:apples",
+    buyerEmail,
+    buyerPartnerKey: "partner:buyer:buyer",
+    buyerDisplayName: "Xaridor Demo Savdo",
+    title: "Table apples, 5 tonnes for the cold store",
+    product: "Apple, Golden Delicious, calibre 70+",
+    volume: "5 t",
+    region: "Toshkent",
+    deadline: "2026-12-01",
+    budgetUzs: 40_000_000,
+    requirements: "Grade A only, calibre 70+, delivered in returnable crates.",
+    status: "open" as const,
+    publication: "approved" as const,
+  },
+  {
+    // Waiting for a moderator. It is in the buyer's cabinet and out of the
+    // seller feed, which is the only difference a pending publication makes and
+    // the only way to see that the moderation queue is not decorative.
+    key: "request:melons",
+    buyerEmail,
+    buyerPartnerKey: "partner:buyer:buyer",
+    buyerDisplayName: "Xaridor Demo Savdo",
+    title: "Melons, 2 tonnes for the wholesale floor",
+    product: "Melon, Gurvak",
+    volume: "2 t",
+    region: "Toshkent",
+    deadline: "2026-12-31",
+    budgetUzs: 12_000_000,
+    requirements: "Sugar content above 12%, loaded in mesh.",
+    status: "open" as const,
+    publication: "pending" as const,
+  },
+  {
+    // Refused by moderation, and the request itself still open: a buyer may
+    // correct and resubmit. Nothing else in the fixture shows a rejected
+    // publication, so the moderator's refusal path had no example at rest.
+    key: "request:pears",
+    buyerEmail,
+    buyerPartnerKey: "partner:buyer:buyer",
+    buyerDisplayName: "Xaridor Demo Savdo",
+    title: "Pears, 3 tonnes for the season",
+    product: "Pear, autumn variety",
+    volume: "3 t",
+    region: "Toshkent",
+    deadline: "2026-06-30",
+    budgetUzs: 24_000_000,
+    requirements: "Autumn varieties only.",
+    status: "open" as const,
+    publication: "rejected" as const,
+  },
+  {
+    // Drafted and never published, so it exists for its author alone.
+    key: "request:onion-sets",
+    buyerEmail,
+    buyerPartnerKey: "partner:buyer:buyer",
+    buyerDisplayName: "Xaridor Demo Savdo",
+    title: "Onion sets, 2 tonnes for the spring planting",
+    product: "Onion seed, yellow storage type",
+    volume: "2 t",
+    region: "Toshkent",
+    deadline: "2026-11-15",
+    budgetUzs: 30_000_000,
+    requirements: "Calibre 14 to 21 mm, sprout-free.",
+    status: "open" as const,
+    publication: "none" as const,
+  },
+  {
+    // Drafted, never published, and the deadline has passed. Every screen that
+    // reads a deadline has to decide what to render for one in the past, and
+    // without this row none of them was ever asked.
+    key: "request:film-closed",
+    buyerEmail,
+    buyerPartnerKey: "partner:buyer:buyer",
+    buyerDisplayName: "Xaridor Demo Savdo",
+    title: "Greenhouse film, 8 rolls — season closed",
+    product: "Greenhouse film, 150 micron",
+    volume: "8 rolls",
+    region: "Toshkent",
+    deadline: "2026-05-20",
+    budgetUzs: 12_000_000,
+    requirements: "Eight metre width, three-layer.",
+    status: "open" as const,
+    publication: "none" as const,
   },
 ].map((entry, index) => {
   const { key, ...request } = entry;
@@ -878,7 +1149,7 @@ export const demoMarketplaceRequests: readonly DemoRequestFixture[] = [
     contentFingerprint: fingerprint(key),
     idempotencyKey: `seed:${key}`,
     requestFingerprint: fingerprint(`request:${key}`),
-    createdAt: new Date(`2026-08-1${index}T09:00:00.000Z`),
+    createdAt: new Date(`2026-08-${String(index + 10).padStart(2, "0")}T09:00:00.000Z`),
   };
 });
 
@@ -910,6 +1181,7 @@ export const demoMarketplaceOffers: readonly DemoOfferFixture[] = [
     deliveryPriceUzs: 2_400_000,
     deliveryDays: 4,
     deliveryNote: "Refrigerated truck, unloading included.",
+    status: "accepted" as const,
   },
   {
     key: "offer:grapes:export",
@@ -920,6 +1192,7 @@ export const demoMarketplaceOffers: readonly DemoOfferFixture[] = [
     deliveryPriceUzs: 0,
     deliveryDays: 2,
     deliveryNote: "Ready for pickup from the Xorazm warehouse.",
+    status: "declined" as const,
   },
   {
     key: "offer:wheat-seed:andijon",
@@ -930,6 +1203,7 @@ export const demoMarketplaceOffers: readonly DemoOfferFixture[] = [
     deliveryPriceUzs: 900_000,
     deliveryDays: 6,
     deliveryNote: "Certificates travel with the shipment.",
+    status: "accepted" as const,
   },
   {
     key: "offer:barley:qashqadaryo",
@@ -940,6 +1214,7 @@ export const demoMarketplaceOffers: readonly DemoOfferFixture[] = [
     deliveryPriceUzs: 0,
     deliveryDays: 3,
     deliveryNote: "Loading from the co-operative's own floor.",
+    status: "pending" as const,
   },
   {
     key: "offer:barley:sirdaryo",
@@ -950,6 +1225,7 @@ export const demoMarketplaceOffers: readonly DemoOfferFixture[] = [
     deliveryPriceUzs: 8_400_000,
     deliveryDays: 5,
     deliveryNote: "Terminal weighing certificate with every truck.",
+    status: "pending" as const,
   },
   {
     key: "offer:greenhouse-film:navoiy",
@@ -960,6 +1236,100 @@ export const demoMarketplaceOffers: readonly DemoOfferFixture[] = [
     deliveryPriceUzs: 3_200_000,
     deliveryDays: 8,
     deliveryNote: "Two batches, the second after the first is fitted.",
+    status: "pending" as const,
+  },
+  // The rest of the bidding on the two awarded requests, and the answer to the
+  // farmer's own request. Three sellers under-bid the grape award and were
+  // declined; each of those declines is paired with a cancelled contract further
+  // down, which is what the sequence "awarded, cancelled, awarded again" leaves
+  // behind and the only reason a cancelled contract exists in the fixture at all.
+  {
+    key: "offer:grapes:surxon",
+    request: requestByKey("request:grapes"),
+    sellerSupplierSlug: marketplaceSupplierSlug("Surxon Meva Savdo"),
+    priceUzs: 85_000_000,
+    deliveryTerms: "pickup" as const,
+    deliveryPriceUzs: 0,
+    deliveryDays: 3,
+    deliveryNote: "Collected from the Termiz cold store.",
+    status: "declined" as const,
+  },
+  {
+    key: "offer:grapes:namangan",
+    request: requestByKey("request:grapes"),
+    sellerSupplierSlug: marketplaceSupplierSlug("Namangan Bog'bon Kooperativi"),
+    priceUzs: 86_000_000,
+    deliveryTerms: "pickup" as const,
+    deliveryPriceUzs: 0,
+    deliveryDays: 4,
+    deliveryNote: "Loaded in ventilated crates at the co-operative.",
+    status: "declined" as const,
+  },
+  {
+    key: "offer:grapes:andijon-bog",
+    request: requestByKey("request:grapes"),
+    sellerSupplierSlug: marketplaceSupplierSlug("Andijon Bog' Kooperativi"),
+    priceUzs: 87_000_000,
+    deliveryTerms: "pickup" as const,
+    deliveryPriceUzs: 0,
+    deliveryDays: 5,
+    deliveryNote: "Pickup from the orchard, crates not returned.",
+    status: "declined" as const,
+  },
+  {
+    key: "offer:wheat-seed:toshkent",
+    request: requestByKey("request:wheat-seed"),
+    sellerSupplierSlug: marketplaceSupplierSlug("Toshkent Urug' Markazi"),
+    priceUzs: 17_100_000,
+    deliveryTerms: "pickup" as const,
+    deliveryPriceUzs: 0,
+    deliveryDays: 2,
+    deliveryNote: "Collected from the Toshkent seed store.",
+    status: "declined" as const,
+  },
+  {
+    key: "offer:onion:xorazm-poliz",
+    request: requestByKey("request:onion"),
+    sellerSupplierSlug: marketplaceSupplierSlug("Xorazm Poliz Kooperativi"),
+    priceUzs: 36_500_000,
+    deliveryTerms: "seller_delivery" as const,
+    deliveryPriceUzs: 1_200_000,
+    deliveryDays: 7,
+    deliveryNote: "Twelve tonnes in 25 kg mesh bags, delivered in two runs.",
+    status: "accepted" as const,
+  },
+  {
+    key: "offer:onion:xorazm-dehqon",
+    request: requestByKey("request:onion"),
+    sellerSupplierSlug: marketplaceSupplierSlug("Xorazm Dehqon Kooperativi"),
+    priceUzs: 35_000_000,
+    deliveryTerms: "by_agreement" as const,
+    deliveryPriceUzs: null,
+    deliveryDays: 10,
+    deliveryNote: "Terms and haulage to be agreed after weighing.",
+    status: "declined" as const,
+  },
+  {
+    key: "offer:onion:dehqon-bozori",
+    request: requestByKey("request:onion"),
+    sellerSupplierSlug: marketplaceSupplierSlug("Dehqon Bozori Kooperativi"),
+    priceUzs: 41_000_000,
+    deliveryTerms: "pickup" as const,
+    deliveryPriceUzs: 0,
+    deliveryDays: 2,
+    deliveryNote: "Available immediately, pickup only.",
+    status: "declined" as const,
+  },
+  {
+    key: "offer:farmer-alfalfa-seed:toshkent",
+    request: requestByKey("request:farmer-alfalfa-seed"),
+    sellerSupplierSlug: marketplaceSupplierSlug("Toshkent Urug' Markazi"),
+    priceUzs: 4_800_000,
+    deliveryTerms: "pickup" as const,
+    deliveryPriceUzs: 0,
+    deliveryDays: 3,
+    deliveryNote: "Certificates issued on collection.",
+    status: "pending" as const,
   },
 ].map((entry, index) => {
   const { key, request, ...offer } = entry;
@@ -971,7 +1341,7 @@ export const demoMarketplaceOffers: readonly DemoOfferFixture[] = [
     requestPublicId: request.publicationId,
     buyerEmail: request.buyerEmail,
     buyerPartnerKey: request.buyerPartnerKey,
-    createdAt: new Date(`2026-08-1${index + 2}T10:00:00.000Z`),
+    createdAt: new Date(`2026-08-${String(index + 12).padStart(2, "0")}T10:00:00.000Z`),
   };
 });
 
@@ -983,7 +1353,11 @@ const promotionPlans = {
 } as const;
 
 const publicationsByTitle = new Map(
-  [...demoMarketplaceListingPublications, ...demoMarketplaceProducePublications].map(
+  [
+    ...demoMarketplaceListingPublications,
+    ...demoMarketplaceSellerCreatedPublications,
+    ...demoMarketplaceProducePublications,
+  ].map(
     (publication) => [publication.title, publication] as const,
   ),
 );
@@ -1034,6 +1408,10 @@ export const demoMarketplaceListingPromotions: readonly DemoListingPromotionFixt
   { key: "promotion:sprinkler", listing: "Sprinkler irrigation set, 2 ha", planCode: "catalog_14d" as const },
   { key: "promotion:seed-potato", listing: "Seed potato “Riviera”, first reproduction", planCode: "catalog_7d" as const },
   { key: "promotion:milling-wheat", listing: "Milling wheat, class 3", planCode: "catalog_30d" as const },
+  // Bought through the marketplace rather than written by this fixture: the
+  // trailer's seller paid for a week in the catalogue while the row above it was
+  // still on its thirty-day slot, which is the only place two plans overlap.
+  { key: "promotion:trailer", listing: "Tipping trailer 2PTS-4, used", planCode: "catalog_7d" as const },
 ].map((entry) => {
   const publication = promotedPublication(entry.listing);
   const seller = sellerByPublicId(publication.sellerPublicId);

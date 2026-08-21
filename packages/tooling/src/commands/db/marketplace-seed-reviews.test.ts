@@ -7,6 +7,7 @@ import {
   demoMarketplaceListingPublications,
   demoMarketplaceProducePublications,
 } from "./marketplace-seed-publications.ts";
+import { demoMarketplaceMediaAsset } from "./marketplace-seed-media.ts";
 import { demoMarketplaceReviewEligibilities, demoMarketplaceReviews } from "./marketplace-seed-reviews.ts";
 import { marketplaceIdentity } from "./marketplace-seed-roster.ts";
 
@@ -127,17 +128,31 @@ describe("demo marketplace review fixture", () => {
     assert.ok(reviews.some((review) => review.sourceKind === "product"));
   });
 
-  it("attaches no photograph, because nothing in the deployment can serve one", () => {
-    // `asset_references` takes up to three `public-asset:<id>` handles, but no
-    // upload endpoint, storage or client renderer for them exists in this
-    // repository. The fixture therefore has no field to put one in, and this
-    // assertion is what keeps a later edit from inventing storage.
+  it("attaches photographs the deployment can actually serve, owned by the buyer who wrote the review", () => {
+    // `asset_references` takes up to three `public-asset:<id>` handles. The
+    // fixture names photographs by media fixture key rather than by handle, so a
+    // deployment without object storage writes none of them, and every key it does
+    // name has to belong to the buyer who wrote the review —
+    // `requireOwnedReferences` refuses a handle the acting account did not upload.
+    const withPhotos = reviews.filter((review) => review.assetMediaKeys.length > 0);
+    assert.ok(withPhotos.length >= 3, `only ${withPhotos.length} reviews carry a photograph`);
     for (const review of reviews) {
       assert.ok(
-        !Object.hasOwn(review, "assetReferences"),
-        `${review.id} claims review media the deployment cannot serve`,
+        review.assetMediaKeys.length <= 3,
+        `${review.id} carries ${review.assetMediaKeys.length} photographs; the column allows three`,
       );
+      for (const key of review.assetMediaKeys) {
+        assert.equal(
+          demoMarketplaceMediaAsset(key).ownerEmail,
+          review.buyerOwnerEmail,
+          `${review.id} attaches a photograph ${review.buyerOwnerEmail} did not upload`,
+        );
+      }
     }
+    // Both a catalogue listing and a harvest carry one, so neither renderer is
+    // exercised only by a test.
+    assert.ok(withPhotos.some((review) => review.sourceKind === "product"));
+    assert.ok(withPhotos.some((review) => review.sourceKind === "produce"));
   });
 
   it("writes ratings the check constraint accepts, and more than one distinct value", () => {
