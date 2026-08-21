@@ -16,7 +16,7 @@
   --dh-container: 96rem;
   --dh-star: #ffb800;
   /* Sticky panels and offsets measure from the real header, not a guess. */
-  --dh-header-h: 11rem;
+  --dh-header-h: 8.75rem;
   --dh-footer-bg: #1ca24c;
   --dh-footer-ink: #faf0de;
   --dh-footer-muted: #e2d9bf;
@@ -227,17 +227,17 @@
    to it, and object-fit protects the artwork if the box is ever non-square. */
 .dh-brand__mark {
   flex: 0 0 auto;
-  height: 5.5rem;
+  height: 2.75rem;
   object-fit: contain;
-  width: 5.5rem;
+  width: 2.75rem;
 }
 
 /* Brand artwork gets room only where a screen has it to spare. */
 .dh-emblem {
-  height: 14rem;
+  height: 7rem;
   max-width: 100%;
   object-fit: contain;
-  width: 14rem;
+  width: 7rem;
 }
 
 .dh-brand__wordmark {
@@ -3606,9 +3606,9 @@ label.dh-check {
 }
 
 .dh-brand--footer .dh-brand__mark {
-  flex-basis: 6rem;
-  height: 6rem;
-  width: 6rem;
+  flex-basis: 3rem;
+  height: 3rem;
+  width: 3rem;
 }
 .dh-brand--footer .dh-brand__wordmark > span {
   color: var(--dh-footer-ink);
@@ -3670,7 +3670,7 @@ label.dh-check {
   /* The mobile preferences row joins the sticky header at this width, so the
      offset the sticky panels measure from has to include it. */
   .dh-marketplace {
-    --dh-header-h: 14.625rem;
+    --dh-header-h: 12.5rem;
   }
 
   .dh-header__main {
@@ -7344,7 +7344,7 @@ label.dh-check {
      chips and the preferences row moved into the drawer. Sticky panels measure
      their offset from this value, so it has to shrink with the header. */
   .dh-marketplace {
-    --dh-header-h: 7.25rem;
+    --dh-header-h: 4.625rem;
   }
 }
 

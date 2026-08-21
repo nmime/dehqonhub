@@ -309,7 +309,7 @@ describe('User app shell', () => {
     const brandMarks = [...container.querySelectorAll<HTMLImageElement>('img.dh-brand__mark')];
     expect(brandMarks).toHaveLength(2);
     expect(brandMarks.every((mark) => mark.getAttribute('src') === '/dehqonhub-emblem-96.png')).toBe(true);
-    expect(brandMarks.every((mark) => mark.getAttribute('srcset')?.includes('/dehqonhub-emblem.png 512w'))).toBe(true);
+    expect(brandMarks.every((mark) => mark.getAttribute('srcset')?.includes('/dehqonhub-emblem.png 272w'))).toBe(true);
     expect(brandMarks.every((mark) => mark.getAttribute('alt') === '')).toBe(true);
     expect(container.querySelectorAll('.dh-brand__wordmark')).toHaveLength(2);
     expect(screen.getAllByRole('button', { name: 'Language' })).toHaveLength(2);
