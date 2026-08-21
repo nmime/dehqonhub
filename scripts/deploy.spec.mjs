@@ -124,6 +124,10 @@ test('final runtime assets remain readable by their non-root image users', () =>
   assert.match(frontend, /COPY --chmod=0644 \$\{NGINX_CONFIG\} \/etc\/nginx\/conf\.d\/default\.conf/u);
   assert.match(
     frontend,
+    /COPY --chmod=0555 docker\/frontend-runtime-config\.sh \/docker-entrypoint\.d\/40-frontend-runtime-config\.sh/u,
+  );
+  assert.match(
+    frontend,
     /USER 101\s+RUN test -r \/usr\/share\/nginx\/html\/index\.html \\\s+&& test -r \/etc\/nginx\/conf\.d\/default\.conf/u,
   );
 });
