@@ -6,8 +6,26 @@ import {
   demoMarketplaceProducts,
   demoMarketplaceVerifications,
 } from './marketplace-seed-data.ts';
-import { demoContractPartySnapshot, demoMarketplaceContracts } from './marketplace-seed-contracts.ts';
+import {
+  demoContractPartySnapshot,
+  demoMarketplaceCarts,
+  demoMarketplaceContracts,
+} from './marketplace-seed-contracts.ts';
+import {
+  demoMarketplaceOrders,
+  demoMarketplaceReviewReports,
+  demoMarketplaceSampleRequests,
+  demoSamplePolicy,
+} from './marketplace-seed-engagement.ts';
+import { demoMarketplaceContractLifecycle } from './marketplace-seed-lifecycle.ts';
 import { demoMarketplaceReviewEligibilities, demoMarketplaceReviews } from './marketplace-seed-reviews.ts';
+import {
+  demoMediaResolver,
+  prepareDemoMarketplaceMedia,
+  type DemoMediaPlan,
+  type DemoMediaResolver,
+} from './marketplace-seed-media.storage.ts';
+import { marketplaceFixtureUuid } from './marketplace-seed-roster.ts';
 import {
   demoMarketplaceFarmers,
   demoMarketplaceListingPublications,
@@ -17,6 +35,7 @@ import {
   demoMarketplaceListingPromotions,
   demoMarketplacePublicSellers,
   demoMarketplaceRequests,
+  demoMarketplaceSellerCreatedPublications,
   supplierPartnerIdForSlug,
 } from './marketplace-seed-publications.ts';
 import {
@@ -60,6 +79,22 @@ const marketplaceTables = [
   'marketplace_contract_review_eligibilities',
   'marketplace_listing_reviews',
   'marketplace_review_replies',
+  // Carts, the settled half of a deal and the photograph index arrive with later
+  // agritech migrations. Listing them here keeps a database migrated only as far
+  // as the catalog seeding its catalog instead of aborting the whole transaction
+  // on a table it has never heard of.
+  'marketplace_carts',
+  'marketplace_contract_settlements',
+  'marketplace_contract_fulfillments',
+  'marketplace_contract_lifecycle_events',
+  'marketplace_contract_notification_intents',
+  'marketplace_contract_disputes',
+  'marketplace_contract_commissions',
+  'marketplace_media_assets',
+  'marketplace_sample_policies',
+  'marketplace_listing_samples',
+  'marketplace_review_reports',
+  'orders',
 ];
 
 export async function seedPostgresDatabase(
@@ -78,7 +113,21 @@ export async function seedPostgresDatabase(
     const found = new Set(tableCheck.rows.map((row) => row.table_name as string));
     const missing = authTables.filter((table) => !found.has(table));
     if (missing.length > 0) throw new Error(`Missing tables: ${missing.join(', ')}. Run migrations first (pnpm db:migrate).`);
-    return await seed(client, seedUsers, marketplaceTables.every((table) => found.has(table)));
+    // Object storage is written to before the transaction opens, never inside it.
+    // A bucket is not transactional, so an upload cannot be rolled back, and
+    // holding a database transaction open across eleven network round trips would
+    // make a slow bucket look like a stuck seed. The order also matches the upload
+    // route's own: the object first, the row that points at it second, so a
+    // failure leaves an unreferenced object rather than a reference to nothing.
+    const media = await prepareDemoMarketplaceMedia();
+    // Said out loud, because "the listings have no photographs" and "this
+    // deployment has no bucket" look identical on screen otherwise.
+    console.log(
+      media.stored
+        ? `[seed] Stored ${media.objects.length} demo photographs in object storage.`
+        : `[seed] ${media.reason ?? 'Object storage was not used.'} Listings fall back to checked-in photographs and reviews carry none.`,
+    );
+    return await seed(client, seedUsers, marketplaceTables.every((table) => found.has(table)), media);
   } finally {
     await client.end();
   }
@@ -117,7 +166,9 @@ async function seed(
   client: pg.Client,
   seedUsers: SeedUser[],
   withMarketplace: boolean,
+  mediaPlan: DemoMediaPlan,
 ): Promise<Record<string, number>> {
+  const media = demoMediaResolver(mediaPlan);
   await client.query('BEGIN');
   const counts = {
     permissions: 0,
@@ -128,16 +179,27 @@ async function seed(
     demoPartners: 0,
     demoVerifications: 0,
     demoProducts: 0,
+    demoMediaAssets: 0,
     demoPublicSellers: 0,
     demoListingPublications: 0,
     demoListingPromotions: 0,
     demoProduceListings: 0,
     demoRequests: 0,
     demoOffers: 0,
+    demoCarts: 0,
     demoContracts: 0,
+    demoSettlements: 0,
+    demoFulfillments: 0,
+    demoLifecycleEvents: 0,
+    demoNotificationIntents: 0,
+    demoDisputes: 0,
+    demoCommissions: 0,
     demoReviewEligibilities: 0,
     demoReviews: 0,
     demoReviewReplies: 0,
+    demoSampleRequests: 0,
+    demoReviewReports: 0,
+    demoOrders: 0,
   };
   try {
     for (const permission of permissions) {
@@ -272,6 +334,7 @@ async function seed(
         );
       }
       for (const product of demoMarketplaceProducts) {
+        const productImages = resolvePublicationImages(product.uploadedImageKeys ?? [], product.images, media);
         counts.demoProducts += await insertedCount(
           client,
           `INSERT INTO "products" (
@@ -307,11 +370,40 @@ async function seed(
             product.stockQuantity,
             product.sampleAvailable,
             product.region,
-            JSON.stringify(product.images),
+            JSON.stringify(productImages),
             product.createdAt,
             product.updatedAt,
           ],
         );
+      }
+      // The index from an opaque public id to a stored object. Written only when
+      // the objects are actually in the bucket: a row without its object makes
+      // `/marketplace/media/<id>` answer 404 with a problem document, which is a
+      // broken photograph on every listing that points at it.
+      if (media.stored) {
+        for (const object of media.objects) {
+          counts.demoMediaAssets += await insertedCount(
+            client,
+            `INSERT INTO "marketplace_media_assets" (
+               "id", "tenant_id", "owner_user_id", "public_id", "storage_key",
+               "media_type", "byte_size", "checksum_sha256", "created_at"
+             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, now())
+             ON CONFLICT ("public_id") DO UPDATE SET
+               "storage_key" = excluded."storage_key", "media_type" = excluded."media_type",
+               "byte_size" = excluded."byte_size", "checksum_sha256" = excluded."checksum_sha256"
+             RETURNING ("xmax" = 0) AS "inserted"`,
+            [
+              marketplaceFixtureUuid(`media-asset:${object.key}`),
+              DefaultTenantId,
+              object.ownerUserId,
+              object.publicId,
+              object.storageKey,
+              object.mediaType,
+              object.byteSize,
+              object.checksumSha256,
+            ],
+          );
+        }
       }
       // A catalog row is invisible until it is published: the public catalog reads
       // publications joined to a moderated seller profile, and carts, offers and
@@ -431,9 +523,14 @@ async function seed(
           [listing.id, DefaultTenantId, listing.farmerId, farmerUserId, listing.supplierPartnerId],
         );
       }
-      for (const publication of [...demoMarketplaceListingPublications, ...demoMarketplaceProducePublications]) {
+      for (const publication of [
+        ...demoMarketplaceListingPublications,
+        ...demoMarketplaceSellerCreatedPublications,
+        ...demoMarketplaceProducePublications,
+      ]) {
         const ownerUserId = userIdsByEmail.get(publication.ownerEmail);
         if (!ownerUserId) continue;
+        const publicationImages = resolvePublicationImages(publication.uploadedImageKeys, publication.images, media);
         counts.demoListingPublications += await insertedCount(
           client,
           `INSERT INTO "marketplace_listing_publications" (
@@ -483,7 +580,7 @@ async function seed(
             publication.grade,
             publication.unit,
             publication.region,
-            JSON.stringify(publication.images),
+            JSON.stringify(publicationImages),
             publication.contentFingerprint,
             reviewedBy,
             publication.idempotencyKey,
@@ -502,6 +599,11 @@ async function seed(
       // refresh. Instead a row whose window no longer covers now is dropped first
       // and reinserted, which leaves a same-day re-seed at zero inserts while
       // still healing a fixture that has run past its end date.
+      //
+      // `uq__marketplace_listing_promotions__listing_publication_id` also allows
+      // one live slot per listing, and a seller who bought one through the API
+      // already holds it. The fixture yields to that row rather than aborting the
+      // whole seed on a slot somebody paid for.
       for (const promotion of demoMarketplaceListingPromotions) {
         const actorUserId = userIdsByEmail.get(promotion.actorEmail);
         if (!actorUserId) continue;
@@ -517,12 +619,17 @@ async function seed(
              "listing_publication_id", "plan_code", "status", "starts_at", "ends_at", "price_uzs",
              "currency", "idempotency_key", "request_fingerprint", "activation_reference",
              "activated_at", "revision", "created_at", "updated_at"
-           ) VALUES (
-             $1, $2, $3, $4, $5, $6, $7, 'active',
-             now() - interval '1 day',
-             now() - interval '1 day' + make_interval(days => $8::int),
-             $9, 'UZS', $10, $11, $12, now() - interval '1 day', 0, now(), now()
            )
+           SELECT $1::uuid, $2::varchar, $3::varchar, $4::uuid, $5::uuid, $6::uuid, $7::varchar, 'active',
+                  now() - interval '1 day',
+                  now() - interval '1 day' + make_interval(days => $8::int),
+                  $9::numeric, 'UZS', $10::varchar, $11::varchar, $12::varchar,
+                  now() - interval '1 day', 0, now(), now()
+            WHERE NOT EXISTS (
+              SELECT 1 FROM "marketplace_listing_promotions" "existing"
+               WHERE "existing"."listing_publication_id" = $6 AND "existing"."id" <> $1
+                 AND "existing"."starts_at" <= now() AND "existing"."ends_at" > now()
+            )
            ON CONFLICT ("id") DO NOTHING
            RETURNING ("xmax" = 0) AS "inserted"`,
           [
@@ -598,6 +705,10 @@ async function seed(
             request.createdAt,
           ],
         );
+        // A request the buyer never published has no public snapshot at all, and
+        // `assert_marketplace_offer_public_request` is what makes that matter: a
+        // seller cannot answer it. Skipping the insert is the whole of that state.
+        if (request.publication === 'none') continue;
         await client.query(
           `INSERT INTO "marketplace_request_organization_bindings" (
              "request_id", "tenant_id", "buyer_user_id", "buyer_partner_id", "created_at"
@@ -616,7 +727,10 @@ async function seed(
              "revision", "published_at", "created_at", "updated_at"
            ) VALUES (
              $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, 1,
-             'published', 'approved', $15, now(), $16, $17, 0, $18, now(), now()
+             $19::varchar, $20::varchar,
+             CASE WHEN $20::varchar = 'pending' THEN NULL ELSE $15 END,
+             CASE WHEN $20::varchar = 'pending' THEN NULL ELSE now() END,
+             $16, $17, 0, $18, now(), now()
            )
            ON CONFLICT ("id") DO UPDATE SET
              "public_title" = excluded."public_title", "public_product" = excluded."public_product",
@@ -625,8 +739,8 @@ async function seed(
              "public_budget_uzs" = excluded."public_budget_uzs",
              "public_requirements" = excluded."public_requirements",
              "content_fingerprint" = excluded."content_fingerprint",
-             "status" = 'published', "moderation_status" = 'approved',
-             "moderated_by" = excluded."moderated_by", "moderated_at" = now(),
+             "status" = excluded."status", "moderation_status" = excluded."moderation_status",
+             "moderated_by" = excluded."moderated_by", "moderated_at" = excluded."moderated_at",
              "published_at" = excluded."published_at", "updated_at" = now()`,
           [
             request.publicationId,
@@ -647,6 +761,11 @@ async function seed(
             request.idempotencyKey,
             request.requestFingerprint,
             request.createdAt,
+            // `ck__marketplace_request_publications__moderation` pairs the two:
+            // a pending snapshot has no moderator and no decision time, and an
+            // approved or rejected one must have both.
+            request.publication === 'rejected' ? 'rejected' : 'published',
+            request.publication,
           ],
         );
       }
@@ -665,7 +784,14 @@ async function seed(
              "seller_user_id", "seller_partner_id", "buyer_user_id", "buyer_partner_id",
              "price_uzs", "delivery_terms", "delivery_price_uzs", "delivery_days",
              "delivery_note", "status", "binding_status", "created_at"
-           ) VALUES ($1, $2, $3, $4, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending', 'resolved', $14)
+           )
+           SELECT $1::uuid, $2::uuid, $3::uuid, $4::varchar, $4, $5::varchar, $6::uuid, $7::varchar, $8::uuid,
+                  $9::numeric, $10::varchar, $11::numeric, $12::int, $13::varchar, $15::varchar, 'resolved',
+                  $14::timestamptz
+            WHERE NOT ($15::varchar = 'accepted' AND EXISTS (
+              SELECT 1 FROM "marketplace_request_offers" "existing"
+               WHERE "existing"."request_id" = $2 AND "existing"."status" = 'accepted' AND "existing"."id" <> $1
+            ))
            ON CONFLICT ("id") DO UPDATE SET
              "price_uzs" = excluded."price_uzs", "delivery_terms" = excluded."delivery_terms",
              "delivery_price_uzs" = excluded."delivery_price_uzs",
@@ -687,6 +813,74 @@ async function seed(
             offer.deliveryDays,
             offer.deliveryNote,
             offer.createdAt,
+            // The outcome is written on insert and never refreshed, and an award is
+            // skipped outright when another offer on the same request already holds
+            // it: `uq__marketplace_request_offers__request_id` allows one accepted
+            // offer per request, and a tender a person decided must not be
+            // re-decided by a re-seed.
+            //
+            // A reviewer who
+            // awards or declines a seeded offer through the API moves it, and that
+            // move is paired with a contract by
+            // `assert_marketplace_single_offer_selection_contract`; putting the
+            // fixture's own value back would break the pair and re-arm a decided
+            // tender for a second award.
+            offer.status,
+          ],
+        );
+      }
+      // The carts. Written before the deals because a cart-checkout contract names
+      // the cart it came out of, and a reviewer reading a deal should be able to
+      // reach the cart rather than a dangling id.
+      //
+      // The open ones are guarded rather than upserted blindly:
+      // `uq__marketplace_carts__tenant_id_user_id_buyer_partner...` allows one open
+      // cart per buyer and seller, and a reviewer who filled their own cart for the
+      // same pair already holds it. The fixture yields to that cart instead of
+      // aborting the seed on a bare constraint name.
+      for (const cart of demoMarketplaceCarts(new Date())) {
+        const buyerUserId = userIdsByEmail.get(cart.buyer.ownerEmail);
+        const sellerUserId = userIdsByEmail.get(cart.seller.ownerEmail);
+        if (!buyerUserId || !sellerUserId) continue;
+        counts.demoCarts += await insertedCount(
+          client,
+          `INSERT INTO "marketplace_carts" (
+             "id", "tenant_id", "user_id", "seller_id", "items", "status",
+             "buyer_partner_id", "seller_tenant_id", "seller_user_id", "seller_partner_id",
+             "binding_status", "created_at", "updated_at"
+           )
+           SELECT $1::uuid, $2::varchar, $3::varchar, $4::varchar, $5::jsonb, $6::varchar,
+                  $7::uuid, $2, $8::varchar, $9::uuid, 'resolved', $10::timestamptz, $10
+            WHERE NOT ($6 = 'open' AND EXISTS (
+              SELECT 1 FROM "marketplace_carts" "existing"
+               WHERE "existing"."tenant_id" = $2 AND "existing"."user_id" = $3
+                 AND "existing"."buyer_partner_id" = $7 AND "existing"."seller_tenant_id" = $2
+                 AND "existing"."seller_partner_id" = $9 AND "existing"."status" = 'open'
+                 AND "existing"."binding_status" = 'resolved' AND "existing"."id" <> $1
+            ))
+           ON CONFLICT ("id") DO UPDATE SET
+             "items" = excluded."items", "updated_at" = now()
+           RETURNING ("xmax" = 0) AS "inserted"`,
+          [
+            cart.id,
+            DefaultTenantId,
+            buyerUserId,
+            cart.seller.partnerId,
+            // The cart column carries only what a cart needs; the price a checkout
+            // freezes is read from the listing again at that moment.
+            JSON.stringify(
+              cart.lines.map((cartLine) => ({
+                listingPublicationId: cartLine.sourcePublicationId,
+                quantity: cartLine.quantity,
+                sourceId: cartLine.sourceId,
+                sourceKind: cartLine.sourceKind,
+              })),
+            ),
+            cart.status,
+            cart.buyer.partnerId,
+            sellerUserId,
+            cart.seller.partnerId,
+            cart.createdAt,
           ],
         );
       }
@@ -708,10 +902,10 @@ async function seed(
              "subject", "amount_uzs", "lines", "delivery_terms", "delivery_price_uzs",
              "delivery_days", "delivery_note", "factoring_enabled", "status",
              "buyer_signed_at", "seller_signed_at", "signed_at", "binding_status",
-             "version", "created_at", "updated_at"
+             "version", "created_at", "updated_at", "source_type", "source_id"
            ) VALUES (
              $1, $2, $3, $4, $5, $2, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15,
-             false, $16, $17, $18, $19, 'resolved', 0, $20, $21
+             false, $16, $17, $18, $19, 'resolved', 0, $20, $21, $22::varchar, $23::varchar
            )
            ON CONFLICT ("id") DO UPDATE SET
              "status" = excluded."status", "buyer_signed_at" = excluded."buyer_signed_at",
@@ -740,6 +934,218 @@ async function seed(
             contract.signedAt,
             contract.createdAt,
             contract.updatedAt,
+            // Provenance is written on insert only. It is inside the tuple
+            // `tr__marketplace_contracts__frozen_authority` refuses to see change,
+            // so an `ON CONFLICT` that touched it would abort the seed on any
+            // database that already holds the row.
+            contract.sourceType,
+            contract.sourceId,
+          ],
+        );
+      }
+      // What a settled deal left behind: the payment record, the delivery record,
+      // the timeline, and one notification per party per step.
+      //
+      // Both the settlement and the fulfilment are walked rather than written at
+      // their end state. `guard_marketplace_contract_settlement` and
+      // `guard_marketplace_contract_fulfillment` admit exactly one forward step at
+      // a time and require the revision to advance with it, so the initial row goes
+      // in and each transition is a guarded update that no-ops once the row has
+      // already arrived. That is also what makes a re-seed free: the second run
+      // matches nothing.
+      const lifecycle = demoMarketplaceContractLifecycle(new Date());
+      for (const settlement of lifecycle.settlements) {
+        const selectedByUserId = userIdsByEmail.get(settlement.selectedByEmail);
+        if (!selectedByUserId) continue;
+        counts.demoSettlements += await insertedCount(
+          client,
+          `INSERT INTO "marketplace_contract_settlements" (
+             "id", "contract_id", "kind", "status", "amount_uzs", "currency",
+             "selected_by_tenant_id", "selected_by_user_id", "selection_idempotency_key",
+             "selection_request_fingerprint", "latest_provider_mode", "reconciliation_state",
+             "revision", "created_at", "updated_at"
+           ) VALUES (
+             $1, $2, 'direct_payment', 'awaiting_buyer_confirmation', $3, 'UZS',
+             $4, $5, $6, $7, 'none', 'clear', 0, $8, $8
+           )
+           ON CONFLICT ("contract_id") DO NOTHING
+           RETURNING ("xmax" = 0) AS "inserted"`,
+          [
+            settlement.id,
+            settlement.contractId,
+            settlement.amountUzs,
+            DefaultTenantId,
+            selectedByUserId,
+            settlement.selectionIdempotencyKey,
+            settlement.selectionRequestFingerprint,
+            settlement.createdAt,
+          ],
+        );
+        if (settlement.status === 'awaiting_buyer_confirmation') continue;
+        await client.query(
+          `UPDATE "marketplace_contract_settlements"
+              SET "status" = 'buyer_confirmed', "revision" = "revision" + 1, "updated_at" = $2
+            WHERE "contract_id" = $1 AND "status" = 'awaiting_buyer_confirmation'`,
+          [settlement.contractId, settlement.updatedAt],
+        );
+        if (settlement.status === 'buyer_confirmed') continue;
+        await client.query(
+          `UPDATE "marketplace_contract_settlements"
+              SET "status" = 'seller_received', "revision" = "revision" + 1, "updated_at" = $2
+            WHERE "contract_id" = $1 AND "status" = 'buyer_confirmed'`,
+          [settlement.contractId, settlement.updatedAt],
+        );
+      }
+      for (const fulfillment of lifecycle.fulfillments) {
+        counts.demoFulfillments += await insertedCount(
+          client,
+          `INSERT INTO "marketplace_contract_fulfillments" (
+             "id", "contract_id", "status", "revision", "created_at", "updated_at"
+           ) VALUES ($1, $2, 'awaiting_settlement', 0, $3, $3)
+           ON CONFLICT ("contract_id") DO NOTHING
+           RETURNING ("xmax" = 0) AS "inserted"`,
+          [fulfillment.id, fulfillment.contractId, fulfillment.createdAt],
+        );
+        const advance = async (from: string, to: string, columns: string, values: unknown[]): Promise<void> => {
+          await client.query(
+            `UPDATE "marketplace_contract_fulfillments"
+                SET "status" = '${to}', "revision" = "revision" + 1, "updated_at" = $2${columns}
+              WHERE "contract_id" = $1 AND "status" = '${from}'`,
+            values,
+          );
+        };
+        if (fulfillment.status === 'awaiting_settlement') continue;
+        await advance('awaiting_settlement', 'ready', '', [fulfillment.contractId, fulfillment.updatedAt]);
+        // `ck__contract_fulfillments__timeline` requires the start time from
+        // `in_progress` onwards, and the delivery and completion times with their
+        // own statuses, so each step carries the stamp its state demands.
+        await advance('ready', 'in_progress', ', "started_at" = $3', [
+          fulfillment.contractId,
+          fulfillment.updatedAt,
+          fulfillment.startedAt,
+        ]);
+        if (fulfillment.status === 'in_progress') continue;
+        if (fulfillment.status === 'disputed') {
+          await advance('in_progress', 'disputed', '', [fulfillment.contractId, fulfillment.updatedAt]);
+          continue;
+        }
+        await advance('in_progress', 'delivered', ', "delivered_at" = $3', [
+          fulfillment.contractId,
+          fulfillment.updatedAt,
+          fulfillment.deliveredAt,
+        ]);
+        if (fulfillment.status === 'delivered') continue;
+        await advance('delivered', 'completed', ', "completed_at" = $3', [
+          fulfillment.contractId,
+          fulfillment.updatedAt,
+          fulfillment.completedAt,
+        ]);
+      }
+      for (const dispute of lifecycle.disputes) {
+        const openedByUserId = userIdsByEmail.get(dispute.openedByEmail);
+        if (!openedByUserId) continue;
+        counts.demoDisputes += await insertedCount(
+          client,
+          `INSERT INTO "marketplace_contract_disputes" (
+             "id", "contract_id", "opened_by_party", "opened_by_tenant_id", "opened_by_user_id",
+             "reason", "status", "previous_fulfillment_status", "revision", "created_at"
+           ) VALUES ($1, $2, $3, $4, $5, $6, 'open', $7, 0, $8)
+           ON CONFLICT ("contract_id") DO NOTHING
+           RETURNING ("xmax" = 0) AS "inserted"`,
+          [
+            dispute.id,
+            dispute.contractId,
+            dispute.openedByParty,
+            DefaultTenantId,
+            openedByUserId,
+            dispute.reason,
+            dispute.previousFulfillmentStatus,
+            dispute.createdAt,
+          ],
+        );
+      }
+      // The timeline. Every event here involves no external provider, which is why
+      // `provider_mode` is `none` and every provider column stays null — the same
+      // shape the running application writes for these five steps.
+      //
+      // The guard is on the sequence rather than the id, because
+      // `uq__contract_lifecycle_events__contract_id_sequence` can already be
+      // satisfied by an event a reviewer's own action wrote, and the immutability
+      // trigger refuses to let anything overwrite it.
+      for (const event of lifecycle.events) {
+        const actorUserId = userIdsByEmail.get(event.actorEmail);
+        if (!actorUserId) continue;
+        counts.demoLifecycleEvents += await insertedCount(
+          client,
+          `INSERT INTO "marketplace_contract_lifecycle_events" (
+             "id", "contract_id", "sequence", "category", "event_type",
+             "actor_party", "actor_tenant_id", "actor_user_id", "provider_mode", "created_at"
+           )
+           SELECT $1::uuid, $2::uuid, $3::int, $4::varchar, $5::varchar,
+                  $6::varchar, $7::varchar, $8::varchar, 'none', $9::timestamptz
+            WHERE NOT EXISTS (
+              SELECT 1 FROM "marketplace_contract_lifecycle_events" "existing"
+               WHERE "existing"."contract_id" = $2 AND ("existing"."sequence" = $3 OR "existing"."id" = $1)
+            )
+           ON CONFLICT ("id") DO NOTHING
+           RETURNING ("xmax" = 0) AS "inserted"`,
+          [
+            event.id,
+            event.contractId,
+            event.sequence,
+            event.category,
+            event.eventType,
+            event.actorParty,
+            DefaultTenantId,
+            actorUserId,
+            event.createdAt,
+          ],
+        );
+      }
+      // One durable intent per party per accepted transition, which is the
+      // invariant the repository upholds by writing both in the same transaction.
+      // Without them the notification surface answered an empty list to every
+      // login while the deals it reports on sat in the database.
+      //
+      // They are left `pending`: no notification provider is called while seeding,
+      // and a deployment that has one configured will dispatch them on its own
+      // schedule and watermark the result as a simulation.
+      for (const intent of lifecycle.intents) {
+        counts.demoNotificationIntents += await insertedCount(
+          client,
+          `INSERT INTO "marketplace_contract_notification_intents" (
+             "id", "contract_id", "timeline_event_id", "recipient_party", "template_key",
+             "status", "channel", "provider_mode", "recipient_locale", "simulation",
+             "attempts", "channel_attempts", "next_attempt_at", "created_at", "updated_at"
+           )
+           SELECT $1::uuid, $2::uuid, $3::uuid, $4::varchar, $5::varchar,
+                  'pending', 'telegram', 'none', 'en', false, 0, 0, $6::timestamptz, $6, $6
+            WHERE EXISTS (SELECT 1 FROM "marketplace_contract_lifecycle_events" WHERE "id" = $3)
+           ON CONFLICT ("timeline_event_id", "recipient_party") DO NOTHING
+           RETURNING ("xmax" = 0) AS "inserted"`,
+          [intent.id, intent.contractId, intent.timelineEventId, intent.recipientParty, intent.templateKey, intent.createdAt],
+        );
+      }
+      // The marketplace's own cut of a closed deal, charged against the rate policy
+      // the migrations activate. It is the only row that makes the revenue surface
+      // read as anything other than zero.
+      for (const commission of lifecycle.commissions) {
+        counts.demoCommissions += await insertedCount(
+          client,
+          `INSERT INTO "marketplace_contract_commissions" (
+             "id", "contract_id", "rate_version", "rate_snapshot", "base_amount_uzs",
+             "amount_uzs", "currency", "created_at"
+           ) VALUES ($1, $2, $3, $4::jsonb, $5, $6, 'UZS', $7)
+           ON CONFLICT ("contract_id") DO NOTHING
+           RETURNING ("xmax" = 0) AS "inserted"`,
+          [
+            commission.id,
+            commission.contractId,
+            commission.rateVersion,
+            JSON.stringify(commission.rateSnapshot),
+            commission.baseAmountUzs,
+            commission.amountUzs,
+            commission.createdAt,
           ],
         );
       }
@@ -800,10 +1206,11 @@ async function seed(
           // `ck__marketplace_listing_reviews__source_pair` requires exactly one of
           // the two source columns, chosen by `source_kind`, so the rated id goes
           // to `product_id` for a catalog listing and to `produce_listing_id` for
-          // a harvest. `asset_references` stays empty: the column accepts up to
-          // three opaque `public-asset:<id>` handles, but nothing in this
-          // repository uploads, stores or serves one, so a seeded handle would
-          // render as a broken image.
+          // a harvest. `asset_references` carries up to three
+          // `public-asset:<id>` handles, and it carries them only when the seed
+          // actually put those objects in the bucket — on a deployment without
+          // object storage the same review is written with none, because a handle
+          // whose object is missing is a photograph nobody can see.
           //
           // The casts in the `SELECT` list are load-bearing: in an
           // `INSERT ... SELECT` Postgres deduces a parameter's type from every
@@ -818,7 +1225,7 @@ async function seed(
            )
            SELECT $1::uuid, $2::uuid, $3::varchar, $4::uuid, $13::uuid, $5::uuid,
                   $6::varchar, $7::varchar, $8::uuid, $6, $9::uuid, $10::int, $11::varchar,
-                  '[]'::jsonb, true, 'visible', 1, $12::timestamptz, $12
+                  $14::jsonb, true, 'visible', 1, $12::timestamptz, $12
             WHERE NOT EXISTS (
               SELECT 1 FROM "marketplace_listing_reviews" "existing"
                WHERE "existing"."review_eligibility_id" = $5
@@ -843,6 +1250,7 @@ async function seed(
             review.comment,
             review.createdAt,
             review.sourceKind === 'produce' ? review.sourceId : null,
+            JSON.stringify(resolveReviewAssets(review.assetMediaKeys, media)),
           ],
         );
         if (!review.reply) continue;
@@ -872,6 +1280,140 @@ async function seed(
           ],
         );
       }
+      // Sample requests waiting on a seller. The policy row goes first: the
+      // sample's coherence trigger joins it to an active policy of the same
+      // version and monthly limit, and the same trigger writes the requester's
+      // monthly-usage row, so the fixture must not write that itself.
+      const engagementNow = new Date();
+      await client.query(
+        `INSERT INTO "marketplace_sample_policies" (
+           "id", "tenant_id", "version", "monthly_limit", "active", "activated_by_user_id",
+           "active_from", "created_at"
+         ) VALUES ($1, $2, $3, $4, true, $5, now(), now())
+         ON CONFLICT DO NOTHING`,
+        [demoSamplePolicy.id, DefaultTenantId, demoSamplePolicy.version, demoSamplePolicy.monthlyLimit, reviewedBy],
+      );
+      for (const sample of demoMarketplaceSampleRequests(engagementNow)) {
+        const requesterUserId = userIdsByEmail.get(sample.requesterEmail);
+        const sellerUserId = userIdsByEmail.get(sample.sellerOwnerEmail);
+        if (!requesterUserId || !sellerUserId) continue;
+        counts.demoSampleRequests += await insertedCount(
+          client,
+          // Guarded on the two partial unique indexes rather than upserted: a
+          // reviewer who asked for the same sample themselves already holds the
+          // row, and the coherence trigger increments a quota on every insert, so
+          // a second write would charge them twice.
+          `INSERT INTO "marketplace_listing_samples" (
+             "id", "listing_publication_id", "source_kind", "product_id",
+             "requester_tenant_id", "requester_user_id", "requester_partner_id",
+             "seller_tenant_id", "seller_user_id", "seller_partner_id",
+             "season_key", "month_key", "policy_id", "policy_version", "monthly_limit",
+             "delivery_method", "item_price_uzs", "status", "revision", "created_at", "updated_at"
+           )
+           SELECT $1::uuid, $2::uuid, 'product', $3::uuid, $4::varchar, $5::varchar, $6::uuid,
+                  $4, $7::varchar, $8::uuid,
+                  to_char($9::timestamptz, 'YYYY') || '-Q' || to_char($9::timestamptz, 'Q'),
+                  to_char($9::timestamptz, 'YYYY-MM'),
+                  $10::uuid, $11::int, $12::int, $13::varchar, 0, 'requested', 0, $9::timestamptz, $9
+            WHERE NOT EXISTS (
+              SELECT 1 FROM "marketplace_listing_samples" "existing"
+               WHERE "existing"."requester_tenant_id" = $4 AND "existing"."requester_user_id" = $5
+                 AND "existing"."product_id" = $3
+                 AND "existing"."season_key" = to_char($9::timestamptz, 'YYYY') || '-Q' || to_char($9::timestamptz, 'Q')
+            )
+           ON CONFLICT ("id") DO NOTHING
+           RETURNING ("xmax" = 0) AS "inserted"`,
+          [
+            sample.id,
+            sample.listingPublicationId,
+            sample.productId,
+            DefaultTenantId,
+            requesterUserId,
+            sample.requesterPartnerId,
+            sellerUserId,
+            sample.sellerPartnerId,
+            sample.createdAt,
+            sample.policyId,
+            sample.policyVersion,
+            sample.monthlyLimit,
+            sample.deliveryMethod,
+          ],
+        );
+      }
+      // One reported review, so the moderation queue has a subject. It stays
+      // `pending`: a decided report is a decision no moderator on this instance
+      // made.
+      for (const report of demoMarketplaceReviewReports(reviewNow)) {
+        const reporterUserId = userIdsByEmail.get(report.reporterEmail);
+        if (!reporterUserId) continue;
+        counts.demoReviewReports += await insertedCount(
+          client,
+          `INSERT INTO "marketplace_review_reports" (
+             "id", "review_id", "moderation_tenant_id", "reporter_tenant_id", "reporter_user_id",
+             "reason", "comment", "status", "review_snapshot", "revision", "created_at", "updated_at"
+           )
+           SELECT $1::uuid, $2::uuid, $3::varchar, $3, $4::varchar, $5::varchar, $6::varchar,
+                  'pending', $7::jsonb, 0, $8::timestamptz, $8
+            WHERE EXISTS (SELECT 1 FROM "marketplace_listing_reviews" WHERE "id" = $2)
+           ON CONFLICT ON CONSTRAINT "uq__marketplace_review_reports__reporter_reason" DO NOTHING
+           RETURNING ("xmax" = 0) AS "inserted"`,
+          [
+            report.id,
+            report.reviewId,
+            DefaultTenantId,
+            reporterUserId,
+            report.reason,
+            report.comment,
+            JSON.stringify(report.reviewSnapshot),
+            report.createdAt,
+          ],
+        );
+      }
+      // The older AgriTech order book, which the admin app lists beside partners
+      // and farmers. Without these that panel was blank on every install.
+      for (const order of demoMarketplaceOrders(engagementNow)) {
+        const buyerUserId = userIdsByEmail.get(order.buyerEmail);
+        if (!buyerUserId) continue;
+        counts.demoOrders += await insertedCount(
+          client,
+          `INSERT INTO "orders" (
+             "id", "tenant_id", "user_id", "farmer_id", "kind", "buyer_partner_id",
+             "produce_listing_id", "items", "total_amount_uzs", "status",
+             "delivery_address", "region", "notes", "history", "created_at", "updated_at"
+           ) VALUES (
+             $1, $2, $3, $4, 'produce', $5, $6, $7::jsonb, $8, $9, $10, $11, $12, $13::jsonb, $14, $14
+           )
+           ON CONFLICT ("id") DO UPDATE SET
+             "items" = excluded."items", "total_amount_uzs" = excluded."total_amount_uzs",
+             "status" = excluded."status", "delivery_address" = excluded."delivery_address",
+             "region" = excluded."region", "history" = excluded."history", "updated_at" = excluded."updated_at"
+           RETURNING ("xmax" = 0) AS "inserted"`,
+          [
+            order.id,
+            DefaultTenantId,
+            buyerUserId,
+            order.farmerId,
+            order.buyerPartnerId,
+            order.produceListingId,
+            JSON.stringify([
+              {
+                productId: order.produceListingId,
+                productName: order.crop,
+                quantity: order.quantityKg,
+                totalUzs: order.totalAmountUzs,
+                unitPriceUzs: order.unitPriceUzs,
+              },
+            ]),
+            order.totalAmountUzs,
+            order.status,
+            order.deliveryAddress,
+            order.region,
+            order.notes,
+            JSON.stringify([{ actorUserId: buyerUserId, at: order.createdAt.toISOString(), status: order.status }]),
+            order.createdAt,
+          ],
+        );
+      }
     }
     await client.query('COMMIT');
     return counts;
@@ -879,6 +1421,46 @@ async function seed(
     await client.query('ROLLBACK').catch(() => undefined);
     throw error;
   }
+}
+
+/**
+ * The photographs a published snapshot carries.
+ *
+ * A listing that declares uploaded photographs uses them outright rather than
+ * appending them to its checked-in ones: the five-asset cap is real, and mixing
+ * the two would show the same machine twice. When the objects are not stored the
+ * checked-in list stands, which is why every listing that names uploads also
+ * names a fallback.
+ */
+function resolvePublicationImages(
+  uploadedKeys: readonly string[],
+  fallback: readonly string[],
+  media: DemoMediaResolver,
+): readonly string[] {
+  if (uploadedKeys.length === 0 || !media.stored) {
+    return fallback;
+  }
+  const paths = uploadedKeys.map((key) => media.pathFor(key)).filter((path): path is string => path !== undefined);
+
+  return paths.length === uploadedKeys.length ? paths : fallback;
+}
+
+/**
+ * The handles a published review carries, or none.
+ *
+ * All or nothing per review: a review that showed one of its two photographs
+ * would read as a bug in the upload path rather than as a deployment without a
+ * bucket.
+ */
+function resolveReviewAssets(assetKeys: readonly string[], media: DemoMediaResolver): readonly string[] {
+  if (assetKeys.length === 0 || !media.stored) {
+    return [];
+  }
+  const references = assetKeys
+    .map((key) => media.referenceFor(key))
+    .filter((reference): reference is string => reference !== undefined);
+
+  return references.length === assetKeys.length ? references : [];
 }
 
 function hashPassword(password: string): string {

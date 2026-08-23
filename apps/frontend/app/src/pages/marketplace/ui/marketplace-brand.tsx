@@ -3,9 +3,14 @@ import type { MarketplaceTranslate } from './marketplace-ui';
 /**
  * The DehqonHub emblem at header and footer scale: a transparent raster with no
  * plate, so it sits directly on the cream shell beside the text wordmark. The
- * 96 px asset covers the 2.75rem header box through 2x density; the 512 px
- * master is offered for denser screens instead of being downloaded for every
- * 44 px mark.
+ * small asset covers the 2.75rem header box at 1x; the master is offered for
+ * denser screens instead of being downloaded for every 44 px mark.
+ *
+ * The width descriptors and the intrinsic size are the artwork's real
+ * dimensions. They matter: the source was recropped tighter than square, and
+ * descriptors that still claimed 96w and 512w told the browser the small file
+ * was twice its actual width, so a 2x screen picked it and rendered the mark
+ * soft.
  */
 export function MarketplaceBrandMark({ className }: Readonly<{ className?: string }>) {
   return (
@@ -14,20 +19,19 @@ export function MarketplaceBrandMark({ className }: Readonly<{ className?: strin
       aria-hidden="true"
       className={className}
       decoding="async"
-      height={96}
+      height={54}
       sizes="3rem"
       src="/dehqonhub-emblem-96.png"
-      srcSet="/dehqonhub-emblem-96.png 96w, /dehqonhub-emblem.png 512w"
-      width={96}
+      srcSet="/dehqonhub-emblem-96.png 52w, /dehqonhub-emblem.png 272w"
+      width={52}
     />
   );
 }
 
 /**
  * The same emblem where the brand gets room — the account entry and the empty
- * states. It renders the 512 px master because the artwork is displayed large
- * enough to resolve the ornamented leaves and the harvest motif along the top
- * edge.
+ * states. It renders the master because the artwork is displayed large enough to
+ * resolve the ornamented leaves and the harvest motif along the top edge.
  */
 export function MarketplaceEmblem({ className }: Readonly<{ className?: string }>) {
   return <img alt="" aria-hidden="true" className={className} src="/dehqonhub-emblem.png" />;

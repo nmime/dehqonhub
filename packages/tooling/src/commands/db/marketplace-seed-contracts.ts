@@ -1,11 +1,16 @@
 import { buyerEmail, farmerEmail, marketplaceBuyerOrganization, marketplaceFixtureUuid } from "./marketplace-seed-roster.ts";
 import {
   demoMarketplaceListingPublications,
+  demoMarketplaceOffers,
   demoMarketplaceProduceListings,
   demoMarketplaceProducePublications,
   demoMarketplacePublicSellers,
+  demoMarketplaceRequests,
+  demoMarketplaceSellerCreatedPublications,
   type DemoListingPublicationFixture,
+  type DemoOfferFixture,
 } from "./marketplace-seed-publications.ts";
+import { demoMarketplaceSellerCreatedProducts } from "./marketplace-seed-data.ts";
 import { DemoProducts } from "../../../../../libs/backend/feature/product/shared/lib/src/domain/demo-catalog.ts";
 
 /**
@@ -47,7 +52,13 @@ import { DemoProducts } from "../../../../../libs/backend/feature/product/shared
 
 export interface DemoContractLineFixture {
   sourcePublicationId: string;
-  sourceKind: "product" | "produce";
+  /**
+   * What the line quotes. `marketplace_contract_lines_are_frozen` admits
+   * `request` beside the two catalogue kinds: an offer prices a whole purchase
+   * request rather than a listing, so a deal drawn from an awarded offer quotes
+   * the request and its published volume.
+   */
+  sourceKind: "product" | "produce" | "request";
   sourceId: string;
   sourceRevision: number;
   name: string;
@@ -75,7 +86,20 @@ export interface DemoContractFixture {
   deliveryPriceUzs: number | null;
   deliveryDays: number | null;
   deliveryNote: string | null;
-  status: "signed" | "active" | "completed" | "cancelled";
+  status: "draft" | "signed" | "active" | "completed" | "cancelled";
+  /**
+   * Where the deal came from, when the fixture can name it.
+   *
+   * The rows written before carts and offers were seeded leave both null, and
+   * they have to stay null: `source_type` and `source_id` are inside the tuple
+   * `tr__marketplace_contracts__frozen_authority` refuses to see change, so
+   * attributing an existing contract to a cart afterwards would abort the seed on
+   * any database that already holds it. New deals carry the cart or the offer they
+   * were drawn from, which the two source uniqueness rules then hold to one
+   * contract each.
+   */
+  sourceType: "cart_checkout" | "offer_selection" | null;
+  sourceId: string | null;
   buyerSignedAt: Date | null;
   sellerSignedAt: Date | null;
   signedAt: Date | null;
@@ -83,7 +107,9 @@ export interface DemoContractFixture {
   updatedAt: Date;
 }
 
-const productByName = new Map(DemoProducts.map((product) => [product.name, product] as const));
+const productByName = new Map(
+  [...DemoProducts, ...demoMarketplaceSellerCreatedProducts].map((product) => [product.name, product] as const),
+);
 
 /**
  * The publication a line quotes, addressed by the same fixture key
@@ -93,7 +119,7 @@ const productByName = new Map(DemoProducts.map((product) => [product.name, produ
  * produce listing and has no `listing-publication:` row at all.
  */
 const publicationByProductId = new Map(
-  demoMarketplaceListingPublications
+  [...demoMarketplaceListingPublications, ...demoMarketplaceSellerCreatedPublications]
     .filter((publication) => publication.productId !== null)
     .map((publication) => [publication.productId as string, publication] as const),
 );
@@ -161,7 +187,11 @@ const harvestLine = (crop: string, kilograms: number): DemoContractLineFixture =
 };
 
 const publicationById = new Map(
-  [...demoMarketplaceListingPublications, ...demoMarketplaceProducePublications].map(
+  [
+    ...demoMarketplaceListingPublications,
+    ...demoMarketplaceSellerCreatedPublications,
+    ...demoMarketplaceProducePublications,
+  ].map(
     (publication) => [publication.id, publication] as const,
   ),
 );
@@ -1675,8 +1705,14 @@ const contractDate = (now: Date, monthsAgo: number, dayOfMonth: number): Date =>
   return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - monthsAgo, day, 10, 0, 0));
 };
 
-export function demoMarketplaceContracts(now: Date): readonly DemoContractFixture[] {
-  return [...demoBuyerContractSeeds, ...rosterContractSeeds, ...expandedTradeContractSeeds].map((seed) => {
+interface ContractSource {
+  sourceType: DemoContractFixture["sourceType"];
+  sourceId: DemoContractFixture["sourceId"];
+  /** Overrides the seller derived from the lines, for a request-priced deal. */
+  seller?: DemoContractPartyFixture;
+}
+
+function toContract(seed: ContractSeed, now: Date, source: ContractSource): DemoContractFixture {
     const settledAt = contractDate(now, seed.monthsAgo, seed.dayOfMonth);
     // Real contracts are drafted, signed by both parties and only then settled,
     // so the fixture backdates the draft rather than stamping one instant on
@@ -1689,7 +1725,7 @@ export function demoMarketplaceContracts(now: Date): readonly DemoContractFixtur
     return {
       id: marketplaceFixtureUuid(seed.key),
       buyer: buyerPartyFor(seed.buyer),
-      seller: sellerForLines(seed.lines),
+      seller: source.seller ?? sellerForLines(seed.lines),
       subject: seed.lines
         .map((entry) => entry.name)
         .join(", ")
@@ -1706,8 +1742,52 @@ export function demoMarketplaceContracts(now: Date): readonly DemoContractFixtur
       signedAt: bothSigned ? sellerSignedAt : null,
       createdAt,
       updatedAt: settledAt,
+      sourceType: source.sourceType,
+      sourceId: source.sourceId,
     };
-  });
+}
+
+/**
+ * Every contract the seed writes.
+ *
+ * The three original groups carry no provenance and never will; the cart and
+ * offer groups do, which is what lets a reviewer open a deal and reach the cart
+ * or the tender it came out of.
+ */
+export function demoMarketplaceContracts(now: Date): readonly DemoContractFixture[] {
+  const carts = new Map(demoMarketplaceCarts(now).map((cart) => [cart.id, cart] as const));
+  return [
+    ...[...demoBuyerContractSeeds, ...rosterContractSeeds, ...expandedTradeContractSeeds].map((seed) =>
+      toContract(seed, now, { sourceId: null, sourceType: null }),
+    ),
+    ...cartCheckoutSeeds.map((seed) => {
+      const cartId = marketplaceFixtureUuid(seed.cartKey);
+      if (!carts.has(cartId)) {
+        throw new Error(`Demo contract ${seed.key} names the cart ${seed.cartKey}, which the seed never writes.`);
+      }
+      return toContract(seed, now, { sourceId: cartId, sourceType: "cart_checkout" });
+    }),
+    ...offerSelectionSeeds.map((seed) => {
+      const offer = offerByKey(seed.offerKey);
+      const lines = [offerLine(offer)];
+      return toContract(
+        {
+          buyer: offer.buyerEmail,
+          dayOfMonth: seed.dayOfMonth,
+          deliveryDays: offer.deliveryDays,
+          deliveryNote: offer.deliveryNote || null,
+          deliveryPriceUzs: offer.deliveryPriceUzs,
+          deliveryTerms: offer.deliveryTerms,
+          key: seed.key,
+          lines,
+          monthsAgo: seed.monthsAgo,
+          status: seed.status,
+        },
+        now,
+        { seller: offerSeller(offer), sourceId: offer.id, sourceType: "offer_selection" },
+      );
+    }),
+  ];
 }
 
 /** The party snapshot the resolved-parties check validates against the row. */
@@ -1722,3 +1802,366 @@ export const demoContractPartySnapshot = (
   legalName: party.legalName,
   region: party.region,
 });
+
+/* ------------------------------------------------------------------------- *
+ * Carts, and the deals that came out of them
+ * ------------------------------------------------------------------------- */
+
+/**
+ * The carts a reviewer finds waiting, and the provenance of the deals below.
+ *
+ * A cart is not a scratch pad in this marketplace: it is keyed by the buyer, the
+ * buying organization and the selling organization, so a buyer shopping from
+ * three sellers holds three separate carts and switches between them. Nothing in
+ * the fixture demonstrated that. A fresh install had no cart at all, which meant
+ * the one feature the switcher exists for could not be seen without a reviewer
+ * building two carts by hand first — and the checkout that turns a cart into a
+ * contract had nothing to act on.
+ *
+ * So the fixture now carries both halves. Three carts are `open`, two of them
+ * for the same buying account from two different sellers, which is exactly the
+ * shape the switcher is for; they hold published, in-stock listings and no
+ * contract points at them, so a reviewer can carry either one through checkout
+ * into a real contract. Nine more are `ordered`: those are the carts the
+ * cart-checkout contracts below were drawn from, which is why those contracts can
+ * name a `cart_checkout` provenance the database will corroborate instead of
+ * carrying a null source.
+ *
+ * `uq__marketplace_carts__tenant_id_user_id_buyer_partner...` allows one open
+ * cart per buyer and seller pair, so the open three name three different sellers
+ * between them; an `ordered` cart is outside that index, which is what lets a
+ * buyer shop from the same seller again after checking out.
+ */
+export interface DemoCartFixture {
+  id: string;
+  buyer: DemoContractPartyFixture;
+  seller: DemoContractPartyFixture;
+  status: "open" | "ordered";
+  /**
+   * The quote the cart holds. It is the contract line shape on purpose: a
+   * checkout freezes the cart's own numbers into the contract, so a fixture that
+   * stated them twice could state them differently, and
+   * `ck__marketplace_contracts__resolved_parties` would reject the result with a
+   * bare constraint name.
+   */
+  lines: readonly DemoContractLineFixture[];
+  createdAt: Date;
+}
+
+interface CartSeed {
+  key: string;
+  buyer: string;
+  lines: readonly DemoContractLineFixture[];
+}
+
+/**
+ * Carts nobody has checked out. Each names a seller no other open cart of the
+ * same buyer names, and the first two belong to one account so the cart switcher
+ * has two carts to switch between on arrival.
+ */
+const openCartSeeds: readonly CartSeed[] = [
+  {
+    key: "cart:open:buyer:mist-blower",
+    buyer: buyerEmail,
+    lines: [line("Self-propelled greenhouse mist blower, 200 L", 1)],
+  },
+  {
+    key: "cart:open:buyer:urea",
+    buyer: buyerEmail,
+    lines: [line("Urea 46% N", 2)],
+  },
+  {
+    key: "cart:open:farmer:sprayers",
+    buyer: farmerEmail,
+    lines: [line("Knapsack sprayer, 16 L", 3)],
+  },
+];
+
+/**
+ * A deal and the cart it was checked out from, declared once.
+ *
+ * `source_type`/`source_id` on a contract is the claim "this came from that
+ * cart", and `uq__marketplace_contracts__source_type_source_id` holds the cart
+ * to one contract. Deriving both rows from one seed is what keeps the claim
+ * true: the cart's quote and the contract's frozen lines cannot drift, and no
+ * contract can point at a cart the seed never wrote.
+ */
+interface CartCheckoutSeed extends ContractSeed {
+  cartKey: string;
+}
+
+const cartCheckoutSeeds: readonly CartCheckoutSeed[] = [
+  {
+    key: "contract:cart:trailer",
+    cartKey: "cart:ordered:buyer:trailer",
+    buyer: buyerEmail,
+    lines: [line("Tipping trailer 2PTS-4, used", 1)],
+    deliveryTerms: "pickup",
+    deliveryPriceUzs: 0,
+    deliveryDays: null,
+    deliveryNote: "Collected from the Jizzax yard.",
+    status: "draft",
+    monthsAgo: 0,
+    dayOfMonth: 2,
+  },
+  {
+    key: "contract:cart:ammophos-three",
+    cartKey: "cart:ordered:buyer:ammophos",
+    buyer: buyerEmail,
+    lines: [line("Ammophos 12:52", 3)],
+    deliveryTerms: "pickup",
+    deliveryPriceUzs: 0,
+    deliveryDays: null,
+    deliveryNote: null,
+    status: "draft",
+    monthsAgo: 0,
+    dayOfMonth: 3,
+  },
+  {
+    key: "contract:cart:pump-and-drip",
+    cartKey: "cart:ordered:buyer:pump-and-drip",
+    buyer: buyerEmail,
+    lines: [line("Diesel water pump 4”", 1), line("Drip irrigation kit, 1 ha", 2)],
+    deliveryTerms: "by_agreement",
+    deliveryPriceUzs: null,
+    deliveryDays: null,
+    deliveryNote: null,
+    status: "draft",
+    monthsAgo: 0,
+    dayOfMonth: 4,
+  },
+  {
+    key: "contract:cart:seed-potato",
+    cartKey: "cart:ordered:buyer:seed-potato",
+    buyer: buyerEmail,
+    lines: [line("Seed potato “Riviera”, first reproduction", 2)],
+    deliveryTerms: "pickup",
+    deliveryPriceUzs: 0,
+    deliveryDays: null,
+    deliveryNote: null,
+    status: "draft",
+    monthsAgo: 0,
+    dayOfMonth: 5,
+  },
+  {
+    key: "contract:cart:rice-seed",
+    cartKey: "cart:ordered:buyer:rice-seed",
+    buyer: buyerEmail,
+    lines: [line("Rice seed, first reproduction", 3)],
+    deliveryTerms: "seller_delivery",
+    deliveryPriceUzs: 180_000,
+    deliveryDays: 4,
+    deliveryNote: "Three bags with the next scheduled run.",
+    status: "draft",
+    monthsAgo: 0,
+    dayOfMonth: 6,
+  },
+  {
+    key: "contract:cart:ammophos-two",
+    cartKey: "cart:ordered:farmer:ammophos",
+    buyer: farmerEmail,
+    lines: [line("Ammophos 12:52", 2)],
+    deliveryTerms: "pickup",
+    deliveryPriceUzs: 0,
+    deliveryDays: null,
+    deliveryNote: "Collected by the farm's own truck.",
+    status: "draft",
+    monthsAgo: 0,
+    dayOfMonth: 7,
+  },
+  // Both parties have signed these two, so they are live deals rather than
+  // drafts, and the settlement and fulfilment rows in
+  // `marketplace-seed-lifecycle` hang off them.
+  {
+    key: "contract:cart:greenhouse-film",
+    cartKey: "cart:ordered:farmer:greenhouse-film",
+    buyer: farmerEmail,
+    lines: [line("Greenhouse film, 150 micron, 8 m wide", 4)],
+    deliveryTerms: "pickup",
+    deliveryPriceUzs: 0,
+    deliveryDays: null,
+    deliveryNote: "Collected from the Namangan store.",
+    status: "active",
+    monthsAgo: 0,
+    dayOfMonth: 8,
+  },
+  {
+    key: "contract:cart:sprinkler",
+    cartKey: "cart:ordered:farmer:sprinkler",
+    buyer: farmerEmail,
+    lines: [line("Sprinkler irrigation set, 2 ha", 1)],
+    deliveryTerms: "by_agreement",
+    deliveryPriceUzs: null,
+    deliveryDays: null,
+    deliveryNote: null,
+    status: "active",
+    monthsAgo: 0,
+    dayOfMonth: 9,
+  },
+  {
+    // Closed and deliberately unrated: the review entry has to be reachable as
+    // this login too, and `marketplace-seed-reviews` asserts that every buying
+    // account keeps one unconsumed eligibility.
+    key: "contract:cart:mulch-film",
+    cartKey: "cart:ordered:buyer:mulch-film",
+    buyer: buyerEmail,
+    lines: [line("Mulch film, black, 1.2 m × 1000 m", 5)],
+    deliveryTerms: "seller_delivery",
+    deliveryPriceUzs: 260_000,
+    deliveryDays: 5,
+    deliveryNote: "Five rolls on one pallet.",
+    status: "completed",
+    monthsAgo: 0,
+    dayOfMonth: 14,
+  },
+  // Carried the whole way on the development stand: agreement, both signatures,
+  // buyer payment, seller receipt, delivery and completion. It is also the deal
+  // behind the review that carries photographs.
+  {
+    key: "contract:cart:raisins",
+    cartKey: "cart:ordered:buyer:raisins",
+    buyer: buyerEmail,
+    lines: [harvestLine("Dark raisins, sun-dried", 10)],
+    deliveryTerms: "seller_delivery",
+    deliveryPriceUzs: 150_000,
+    deliveryDays: 3,
+    deliveryNote: "Ten kilograms with the weekly Samarqand run.",
+    status: "completed",
+    monthsAgo: 0,
+    dayOfMonth: 10,
+  },
+];
+
+/**
+ * A deal drawn from an offer the buyer awarded.
+ *
+ * `assert_marketplace_single_offer_selection_contract` allows one contract that
+ * is not cancelled per awarded request, so each request here contributes exactly
+ * one live draft plus however many cancelled attempts preceded it. That is not a
+ * fixture convenience: it is what the sequence "award, cancel, award again"
+ * leaves in the table, and the three cancelled grape contracts are the record of
+ * a buyer changing supplier twice before settling.
+ *
+ * The line is `request`-kind, which `marketplace_contract_lines_are_frozen`
+ * admits alongside `product` and `produce`: an offer prices the whole request
+ * rather than a catalogue row, so the quote names the request and its published
+ * volume instead of inventing a per-unit price no listing carries.
+ */
+interface OfferSelectionSeed {
+  key: string;
+  /** The offer this contract was drawn from, awarded or since declined. */
+  offerKey: string;
+  status: DemoContractFixture["status"];
+  monthsAgo: number;
+  dayOfMonth: number;
+}
+
+const offerSelectionSeeds: readonly OfferSelectionSeed[] = [
+  { key: "contract:offer:grapes", offerKey: "offer:grapes:orchard", status: "draft", monthsAgo: 0, dayOfMonth: 11 },
+  {
+    key: "contract:offer:wheat-seed",
+    offerKey: "offer:wheat-seed:andijon",
+    status: "draft",
+    monthsAgo: 0,
+    dayOfMonth: 12,
+  },
+  { key: "contract:offer:onion", offerKey: "offer:onion:xorazm-poliz", status: "draft", monthsAgo: 0, dayOfMonth: 13 },
+  {
+    key: "contract:offer:grapes:surxon",
+    offerKey: "offer:grapes:surxon",
+    status: "cancelled",
+    monthsAgo: 0,
+    dayOfMonth: 1,
+  },
+  {
+    key: "contract:offer:grapes:namangan",
+    offerKey: "offer:grapes:namangan",
+    status: "cancelled",
+    monthsAgo: 0,
+    dayOfMonth: 1,
+  },
+  {
+    key: "contract:offer:grapes:andijon-bog",
+    offerKey: "offer:grapes:andijon-bog",
+    status: "cancelled",
+    monthsAgo: 0,
+    dayOfMonth: 1,
+  },
+];
+
+const offerById = new Map(demoMarketplaceOffers.map((offer) => [offer.id, offer] as const));
+
+const offerByKey = (key: string): DemoOfferFixture => {
+  const offer = offerById.get(marketplaceFixtureUuid(key));
+  if (!offer) {
+    throw new Error(`Demo contract fixture is drawn from the offer ${key}, which the seed never writes.`);
+  }
+  return offer;
+};
+
+const requestById = new Map(demoMarketplaceRequests.map((request) => [request.id, request] as const));
+
+/**
+ * The frozen quote an awarded offer becomes: the request as published, priced at
+ * the offer the buyer chose.
+ */
+const offerLine = (offer: DemoOfferFixture): DemoContractLineFixture => {
+  const request = requestById.get(offer.requestId);
+  if (!request) {
+    throw new Error(`Demo offer ${offer.id} answers a request the seed never writes.`);
+  }
+  return {
+    lineTotalUzs: offer.priceUzs,
+    name: request.title,
+    quantity: 1,
+    sourceId: request.id,
+    sourceKind: "request",
+    sourcePublicationId: request.publicationId,
+    sourceRevision: 1,
+    unit: request.volume,
+    unitPriceUzs: offer.priceUzs,
+  };
+};
+
+/** The selling party behind an offer, which is the organization it was made through. */
+const offerSeller = (offer: DemoOfferFixture): DemoContractPartyFixture => {
+  const seller = demoMarketplacePublicSellers.find(
+    (candidate) => candidate.partnerId === marketplaceFixtureUuid(`partner:supplier:${offer.sellerSupplierSlug}`),
+  );
+  if (!seller) {
+    throw new Error(`Demo offer ${offer.id} is made through an organization with no seller profile.`);
+  }
+  return {
+    legalName: seller.displayName,
+    ownerEmail: seller.ownerEmail,
+    partnerId: seller.partnerId,
+    region: seller.region,
+  };
+};
+
+/**
+ * Every cart the seed writes: the three nobody has checked out, and the nine each
+ * cart-checkout deal was drawn from.
+ */
+export function demoMarketplaceCarts(now: Date): readonly DemoCartFixture[] {
+  return [
+    ...openCartSeeds.map((seed) => ({
+      buyer: buyerPartyFor(seed.buyer),
+      createdAt: contractDate(now, 0, 1),
+      id: marketplaceFixtureUuid(seed.key),
+      lines: seed.lines,
+      seller: sellerForLines(seed.lines),
+      status: "open" as const,
+    })),
+    ...cartCheckoutSeeds.map((seed) => ({
+      buyer: buyerPartyFor(seed.buyer),
+      // A cart precedes the contract it produced, and the contract's own draft
+      // date is six days before it settled.
+      createdAt: new Date(contractDate(now, seed.monthsAgo, seed.dayOfMonth).getTime() - 7 * 24 * 60 * 60 * 1000),
+      id: marketplaceFixtureUuid(seed.cartKey),
+      lines: seed.lines,
+      seller: sellerForLines(seed.lines),
+      status: "ordered" as const,
+    })),
+  ];
+}

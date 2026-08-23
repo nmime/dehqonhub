@@ -60,6 +60,16 @@ export interface DemoReviewFixture {
   sellerPartnerId: string;
   rating: number;
   comment: string;
+  /**
+   * Photographs the buyer attached, named by media fixture key and capped at
+   * three by `ck__marketplace_listing_reviews__assets`.
+   *
+   * The seed turns each key into the `public-asset:<id>` handle the column
+   * accepts when object storage took the bytes, and writes an empty array when it
+   * did not: a handle whose object is missing renders as nothing, and a review
+   * that quietly loses its photograph is better than one that shows a hole.
+   */
+  assetMediaKeys: readonly string[];
   createdAt: Date;
   reply: DemoReviewReplyFixture | null;
 }
@@ -74,7 +84,14 @@ export function demoMarketplaceReviewEligibilities(now: Date): readonly DemoRevi
   return demoMarketplaceContracts(now)
     .filter((contract) => contract.status === "completed")
     .flatMap((contract) =>
-      contract.lines.map((line) => ({
+      contract.lines
+        // A rating is left on a listing, and a line drawn from an awarded offer
+        // quotes the purchase request instead: `marketplace_listing_reviews`
+        // has a column for a product and one for a harvest and none for a
+        // request, and its coherence trigger joins the eligibility to a listing
+        // publication. So an offer-priced line grants no eligibility.
+        .filter((line): line is typeof line & { sourceKind: "product" | "produce" } => line.sourceKind !== "request")
+        .map((line) => ({
         id: marketplaceFixtureUuid(`review-eligibility:${contract.id}:${line.sourceKind}:${line.sourceId}`),
         contractId: contract.id,
         buyerOwnerEmail: contract.buyer.ownerEmail,
@@ -87,8 +104,8 @@ export function demoMarketplaceReviewEligibilities(now: Date): readonly DemoRevi
         sourceName: line.name,
         // The lifecycle stamps an eligibility when delivery is accepted, which
         // for a settled fixture is the day the contract completed.
-        createdAt: contract.updatedAt,
-      })),
+          createdAt: contract.updatedAt,
+        })),
     );
 }
 
@@ -102,6 +119,13 @@ interface ReviewSeed {
   /** Days after delivery was accepted; a buyer rates a purchase, not a promise. */
   daysAfter: number;
   reply?: string;
+  /**
+   * Photographs the buyer took, by media fixture key. Only the buyer named above
+   * may own them: `requireOwnedReferences` refuses a handle the acting account
+   * did not upload, so a fixture that borrowed another login's photograph would be
+   * seeding a review the API itself would have refused.
+   */
+  photos?: readonly string[];
 }
 
 /**
@@ -118,13 +142,15 @@ interface ReviewSeed {
  * in as any of them finds a real review entry waiting on a real listing rather
  * than a catalog with nothing left to rate.
  *
- * No review carries a photograph. `marketplace_listing_reviews.asset_references`
- * exists and takes up to three entries, but the column stores opaque
- * `public-asset:<id>` handles and nothing in this repository uploads, stores or
- * resolves one — there is no asset endpoint, no storage bucket and no client code
- * that renders them. Seeding handles would assert a provenance the deployment
- * cannot honour and would render as three broken images, so the fixture attaches
- * none and says so here instead.
+ * Four reviews carry photographs. `marketplace_listing_reviews.asset_references`
+ * has always accepted up to three opaque `public-asset:<id>` handles, and there
+ * is now an upload endpoint that mints them, a bucket that holds the bytes, a
+ * same-origin read path that serves them and a client that renders them, so the
+ * fixture attaches them. It names each photograph by media fixture key rather
+ * than by handle, and `marketplace-seed-media.storage` decides whether those
+ * keys resolve: on a deployment whose bucket accepted the objects the review
+ * carries its handles, and on one without object storage it carries none. What
+ * the fixture never does is write a handle for an object that is not there.
  */
 const reviewSeeds: readonly ReviewSeed[] = [
   {
@@ -153,9 +179,10 @@ const reviewSeeds: readonly ReviewSeed[] = [
     buyer: buyerEmail,
     product: "Knapsack sprayer, 16 L",
     rating: 3,
-    comment: "Два опрыскивателя из двенадцати потекли по штуцеру в первый же день.",
+    comment: "Два опрыскивателя из двенадцати потекли по штуцеру в первый же день. Фото штуцера прилагаю.",
     daysAfter: 8,
     reply: "Заменили оба по гарантии, штуцеры новой партии уже с уплотнителем.",
+    photos: ["review:knapsack-sprayer:1"],
   },
   {
     buyer: farmerEmail,
@@ -182,8 +209,9 @@ const reviewSeeds: readonly ReviewSeed[] = [
     buyer: farmerEmail,
     product: "Drip irrigation kit, 1 ha",
     rating: 4,
-    comment: "Работает, но инструкция только на английском — собирали по картинкам.",
+    comment: "Работает, но инструкция только на английском — собирали по картинкам. Фото собранного узла прилагаю.",
     daysAfter: 9,
+    photos: ["review:drip-kit:1"],
   },
   {
     buyer: buyerEmail,
@@ -1074,6 +1102,33 @@ const expandedReviewSeeds: readonly ReviewSeed[] = [
   },
 ];
 
+/**
+ * Ratings left through the marketplace itself rather than written by this
+ * fixture. Both carry photographs, which is the whole reason they are kept: a
+ * marketplace that accepts a photograph with a review and shows none on screen
+ * has not demonstrated the feature.
+ */
+const uploadedPhotoReviewSeeds: readonly ReviewSeed[] = [
+  {
+    buyer: buyerEmail,
+    product: "Trailed field sprayer, 600 L",
+    rating: 5,
+    comment:
+      "Пришёл в срок, штанга ровная, форсунки без подтёков. Настройка нормы вылива заняла полчаса, фото на поле прилагаю.",
+    daysAfter: 7,
+    reply: "Спасибо. По этой модели держим сменные форсунки на складе, при необходимости поменяем по гарантии.",
+    photos: ["review:trailed-sprayer:1"],
+  },
+  {
+    buyer: buyerEmail,
+    product: "Dark raisins, sun-dried",
+    rating: 5,
+    comment: "Кишмиш сухой, без песка и черенков, калибр ровный. Десять килограммов на пробу, берём партию.",
+    daysAfter: 5,
+    photos: ["review:raisins:1", "review:raisins:2"],
+  },
+];
+
 const dayInMs = 24 * 60 * 60 * 1000;
 
 /**
@@ -1087,7 +1142,7 @@ export function demoMarketplaceReviews(now: Date): readonly DemoReviewFixture[] 
   const byBuyerAndProduct = new Map(
     eligibilities.map((eligibility) => [`${eligibility.buyerOwnerEmail}|${eligibility.sourceName}`, eligibility]),
   );
-  return [...reviewSeeds, ...expandedReviewSeeds].map((seed) => {
+  return [...reviewSeeds, ...expandedReviewSeeds, ...uploadedPhotoReviewSeeds].map((seed) => {
     const eligibility = byBuyerAndProduct.get(`${seed.buyer}|${seed.product}`);
     if (!eligibility) {
       throw new Error(
@@ -1109,6 +1164,7 @@ export function demoMarketplaceReviews(now: Date): readonly DemoReviewFixture[] 
       sellerPartnerId: eligibility.sellerPartnerId,
       rating: seed.rating,
       comment: seed.comment,
+      assetMediaKeys: seed.photos ?? [],
       createdAt,
       reply: seed.reply
         ? {

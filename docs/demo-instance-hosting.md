@@ -53,21 +53,78 @@ not advisory.
 
 ## What travels in git, and what does not
 
-|                                        | Travels in git                                                       | Consequence                                            |
-| -------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------ |
-| Schema                                 | yes — 56 MikroORM migrations                                         | `db:migrate` builds it                                 |
-| Demo rows                              | yes — `packages/tooling/src/commands/db/`                            | `db:seed` writes them, idempotently                    |
-| Catalogue photographs                  | yes — 42 WebP files in `apps/frontend/app/public/media/marketplace/` | served by whatever serves the SPA                      |
-| Uploaded photograph bytes              | **no**                                                               | they live in the uploader's object-storage bucket only |
-| Sessions, audit, outbox, carts, orders | no, and should not                                                   | runtime state                                          |
+|                                                    | Travels in git                                                       | Consequence                                                       |
+| -------------------------------------------------- | -------------------------------------------------------------------- | ----------------------------------------------------------------- |
+| Schema                                             | yes — 56 MikroORM migrations                                         | `db:migrate` builds it                                            |
+| Demo rows                                          | yes — `packages/tooling/src/commands/db/`                            | `db:seed` writes them, idempotently                               |
+| Catalogue photographs                              | yes — 42 WebP files in `apps/frontend/app/public/media/marketplace/` | served by whatever serves the SPA                                 |
+| Uploaded photograph bytes                          | as source files, not as objects                                      | `db:seed` puts eleven of them in **your** bucket, if you have one |
+| Carts, settlements, deliveries, timelines, intents | yes                                                                  | `db:seed` writes them; see below                                  |
+| Sessions, login events, audit, outbox, idempotency | no, and should not                                                   | runtime state of the machine it happened on                       |
 
-The seeded catalogue references **only** the checked-in files. Nothing in the
-fixture points at object storage, so a deployment with an empty bucket — or with
-no bucket at all — cannot render a broken image. This is enforced by a test
-(`packages/tooling/src/commands/db/marketplace-seed-publications.test.ts`), which
-asserts that every photograph the fixture names is a `/media/marketplace/*.webp`
-path **and** an existing file, so a future fixture cannot quietly reintroduce a
-reference that only resolves on the machine that uploaded it.
+The seeded catalogue references the checked-in files **and**, when the instance
+has object storage, eleven objects the seed puts there itself. The two are not
+interchangeable and the fixture never guesses which it has:
+
+- Every listing that carries uploaded photographs also names a checked-in
+  fallback, and a test
+  (`packages/tooling/src/commands/db/marketplace-seed-publications.test.ts`)
+  refuses a listing that names only uploads.
+- `db:seed` writes the objects **before** it opens its transaction, and treats
+  "configured" and "reachable" as different questions: it `PUT`s all eleven or
+  none. A configured bucket with nothing behind it — a stopped MinIO container is
+  the usual case — is the same outcome as no bucket at all.
+- Only when all eleven landed does the seed write `marketplace_media_assets` rows
+  and hand listings `/marketplace/media/<id>` paths and reviews
+  `public-asset:<id>` handles. Otherwise listings fall back to
+  `/media/marketplace/*.webp` and reviews carry no photograph. Either way the
+  command says which happened on stdout:
+
+  ```
+  [seed] Stored 11 demo photographs in object storage.
+  [seed] S3_BUCKET is not configured, so no photograph was uploaded. Listings fall
+         back to checked-in photographs and reviews carry none.
+  ```
+
+So a deployment with an empty bucket, or with no bucket, still cannot render a
+broken image — and one with a working bucket demonstrates the upload path with
+real stored objects rather than only with files the SPA serves.
+
+The seed reads those objects out of the same checked-in library, runs them
+through the upload route's own `inspectMarketplaceMedia` (so the stored bytes are
+metadata-stripped exactly as a seller's upload would be), and derives each opaque
+id from a fixture key so a re-seed overwrites the same object instead of orphaning
+it. The ids are therefore predictable, which a real upload's are not; that is
+acceptable for public demo photographs of files the repository already ships in
+the open, and nowhere else.
+
+### The settled half of a deal
+
+Contracts alone left four surfaces empty. The fixture now also writes, for every
+deal that reached them: the direct-payment settlement, the delivery record, the
+fulfilment and completion timeline, one durable notification intent per party per
+timeline event, the marketplace's commission on a closed deal, and one dispute.
+Carts travel too — three open (two of them for one buying account from two
+different sellers, so the cart switcher has something to switch between) and nine
+that were checked out, which is what lets a cart-checkout contract name the cart
+it came from.
+
+Three provider-produced documents deliberately do **not** travel: the contract
+artifact PDF, the two qualified signatures, and the direct-payment provider
+receipts, together with the `marketplace_provider_operations` ledger rows all
+three hang off by foreign key. Each is a receipt an external adapter issued, and
+a seeder that minted one would be forging it. A reviewer produces them by
+clicking through one of the nine seeded **draft** contracts on a running
+instance.
+
+### Identifiers change
+
+Fixture rows get ids derived from fixture keys, not the ids any particular
+database happens to hold. A listing, contract or photograph URL captured against
+one instance will **not** resolve on another — including against the development
+database this fixture was extracted from. Re-derive ids from the API on the
+instance you are demonstrating; never paste a captured deep link into a script or
+a walkthrough.
 
 Seven seeded listings deliberately carry no photograph at all, one per section.
 Those render the designed tinted category illustration (`ProductMedia`,
@@ -420,7 +477,13 @@ Each one fails distinctly, so a failure tells you which layer is wrong.
    should reach **89 items**: 31 seeds, 30 equipment, 28 produce.
 2. **A photograph loads.** Take an `images[0]` from that response and
    `curl -sI 'https://HOST<path>'`. Expect `200` and `Content-Type: image/webp`.
-   A 404 means whatever serves the SPA is not serving its `public/` tree.
+   Which component answered depends on the path: `/media/marketplace/*.webp` is
+   served by whatever serves the SPA, so a 404 there means its `public/` tree is
+   not being served; `/marketplace/media/<id>` is served by the user API from
+   object storage, so a 404 there means the seed did not put the objects in the
+   bucket — check the `[seed]` line the seed printed. On an instance with a
+   bucket, `q=mist blower` returns the one listing that carries five uploaded
+   photographs, which is the case worth checking.
 3. **Sign-in works.**
    `curl -s -c jar -X POST https://HOST/auth/login -H 'content-type: application/json' -d '{"email":"xaridor@demo.dehqonhub.uz","password":"DemoXaridor2026"}'`
    returns the user object.
@@ -431,13 +494,32 @@ Each one fails distinctly, so a failure tells you which layer is wrong.
 5. **Providers are armed.** `curl -s -b jar https://HOST/marketplace/verification/providers/readiness`
    should report every capability `ready: true, simulation: true`. Any
    `ready: false` is a `MARKETPLACE_*_PROVIDER_MODE` still at `disabled`.
-6. **A cart becomes a contract.** `GET /partners` for the buyer's
-   `actingPartnerId`, then `POST /marketplace/cart/items`, then
-   `POST /marketplace/cart/{id}/checkout` with `{"deliveryTerms":"pickup"}`.
-   You get a `contractId` in status `draft`.
+6. **A cart becomes a contract.** `GET /marketplace/cart` already answers two
+   open carts for this login, from two different sellers — that is the seeded
+   cart switcher. `POST /marketplace/cart/{id}/checkout` with
+   `{"deliveryTerms":"pickup"}` and an `Idempotency-Key` header turns one of them
+   into a `contractId` in status `draft`. (To start from nothing instead, `GET
+/partners` for the buyer's `actingPartnerId` and `POST
+/marketplace/cart/items` first.)
+
+   Note that checking a seeded cart out consumes it: a re-seed restores its items
+   but leaves it `ordered`, because a contract now points at it and resurrecting
+   it would deny that. The other open cart is untouched.
+
 7. **The artifact is produced.** `POST /marketplace/contracts/{id}/artifact`
    with `{"settlementKind":"direct_payment"}`. Expect `providerMode: "mock"` and
-   the watermark. A 503 here is the artifact-storage mode.
+   the watermark. A 503 here is the artifact-storage mode. The nine seeded draft
+   contracts (`GET /marketplace/contracts`) are the ones to use for this: the
+   fixture writes no artifact and no signature, so a draft is where the
+   provider-backed half of the lifecycle starts.
+
+   A seeded **completed** deal already carries its settlement, delivery record,
+   timeline and notification intents; `GET /marketplace/notifications` answers a
+   non-empty list on a fresh instance, and a review with photographs is visible
+   anonymously at
+   `GET /marketplace/public/catalog/{listingPublicationId}/reviews` for the
+   trailed sprayer and for the dark raisins.
+
 8. **Both parties sign.** `POST .../sign` as the buyer, then as the seller
    (`jahongir@demo.dehqonhub.uz` / `DemoJahongir2026` sells the seed listing).
    The contract moves `draft → active` and `signedAt` is set.
