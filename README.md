@@ -2,7 +2,7 @@
 
 <div align="center">
 
-# AgroUz — AgriTech Platform for Uzbekistan
+# DehqonHub — AgriTech Platform for Uzbekistan
 
 **B2B marketplace connecting farmers, input suppliers, and produce buyers — with field operations, fulfillment, payments, and pilot governance in one tenant-isolated platform.**
 
@@ -116,7 +116,7 @@ Also supported: Kubernetes/Helm (`.helm/`), single-server (`deploy/single-server
 
 | Doc                                                                                        | Contents                                                |
 | ------------------------------------------------------------------------------------------ | ------------------------------------------------------- |
-| [docs/why-us.md](docs/why-us.md) / [docs/why-us.ru.md](docs/why-us.ru.md)                  | **Positioning report: why AgroUz, not UFarmer** (EN/RU) |
+| [docs/why-us.md](docs/why-us.md) / [docs/why-us.ru.md](docs/why-us.ru.md)                  | **Positioning report: why DehqonHub, not UFarmer** (EN/RU) |
 | [docs/agritech-platform.md](docs/agritech-platform.md)                                     | Canonical product and operator guide                    |
 | [openspec/specs/agritech-marketplace/spec.md](openspec/specs/agritech-marketplace/spec.md) | Requirements (source of truth)                          |
 | [docs/production-deploy.md](docs/production-deploy.md)                                     | Production deployment                                   |
